@@ -779,6 +779,11 @@ assert.match(worldSrc, /tickHarborRpgCosmetic|playRpgPerform|Death01/, 'UAL outf
 }
 assert.match(worldSrc, /setCharacter[\s\S]{0,280}syncRpgCosmeticFromBag/, 'join body swaps the rigged kit')
 assert.match(playSrc, /HarborRpgJoin/, 'rpg lobby gates teleport')
+assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8'), /house-village\.glb/, 'join street uses harbor houses')
+assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8'), /joinLantern/, 'join street hangs red paper lanterns')
+assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8'), /hq-rpg-join-classes is-fit/, 'class list fits without a scrollbar')
+assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8'), /mountClassGear/, 'class choice dresses the sailor')
+assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8'), /hand_r/, 'class weapon attaches to the hand')
 assert.match(playSrc, /realmOverride !== 'rpg' \|\| !rpgEntered/, 'presence waits for enter')
 assert.match(playSrc, /realmOverride === 'rpg' && !rpgEntered/, 'world stays paused until enter')
 {

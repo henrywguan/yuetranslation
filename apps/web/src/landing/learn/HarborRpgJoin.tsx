@@ -14,6 +14,7 @@ import {
   loadHarborRpgCosmetic,
   type HarborRpgCosmeticInstance,
 } from './harborRpgCosmeticRuntime'
+import { loadHarborGlb } from './harborGlbAssets'
 import {
   harborRpgComposeStarterLook,
   harborRpgDefaultStarterPick,
@@ -42,8 +43,374 @@ type Props = {
   onBack: () => void
 }
 
-function RpgLookPreview({ looks }: { looks: HarborRpgEquippedLooks }) {
+/** Night alley behind the rotating sailor. Procedural lanterns stay if a GLB is missing. */
+function paperLantern(): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'rpg-join-lantern'
+  g.userData.joinLantern = true
+  const paper = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.11, 0.13, 0.28, 12),
+    new THREE.MeshLambertMaterial({ color: 0xc4202a, emissive: 0xff2a32, emissiveIntensity: 0.95 }),
+  )
+  const capMat = new THREE.MeshLambertMaterial({ color: 0x2a1214 })
+  const capTop = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.12, 0.035, 10), capMat)
+  capTop.position.y = 0.15
+  const capBot = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.03, 10), capMat)
+  capBot.position.y = -0.15
+  const tassel = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.012, 0.02, 0.12, 6),
+    new THREE.MeshLambertMaterial({ color: 0x6a1018 }),
+  )
+  tassel.position.y = -0.24
+  const light = new THREE.PointLight(0xff3038, 1.55, 3.6, 2)
+  g.add(paper, capTop, capBot, tassel, light)
+  return g
+}
+
+function hangLantern(parent: THREE.Object3D, x: number, y: number, z: number): THREE.Group {
+  const cord = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.008, 0.008, 0.42, 4),
+    new THREE.MeshLambertMaterial({ color: 0x1a1012 }),
+  )
+  cord.position.set(x, y + 0.2, z)
+  const lantern = paperLantern()
+  lantern.position.set(x, y, z)
+  parent.add(cord, lantern)
+  return lantern
+}
+
+function windowGlow(x: number, y: number, z: number): THREE.Mesh {
+  const glow = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.26, 0.36),
+    new THREE.MeshBasicMaterial({ color: 0xff4030, transparent: true, opacity: 0.82 }),
+  )
+  glow.position.set(x, y, z)
+  return glow
+}
+
+async function placeJoinBuilding(
+  scene: THREE.Scene,
+  file: string,
+  x: number,
+  z: number,
+  height: number,
+  rot: number,
+  alive: () => boolean,
+): Promise<void> {
+  const g = await loadHarborGlb(file, { targetHeight: height, name: 'rpg-join-building' })
+  if (!g || !alive()) return
+  g.position.set(x, 0, z)
+  g.rotation.y = rot
+  scene.add(g)
+}
+
+function dressJoinStreet(scene: THREE.Scene, alive: () => boolean): THREE.Group[] {
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(9, 28),
+    new THREE.MeshLambertMaterial({ color: 0x161014 }),
+  )
+  ground.rotation.x = -Math.PI / 2
+  const path = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.4, 8),
+    new THREE.MeshLambertMaterial({ color: 0x24161c }),
+  )
+  path.rotation.x = -Math.PI / 2
+  path.position.y = 0.012
+  const wire = new THREE.Mesh(
+    new THREE.BoxGeometry(5.4, 0.02, 0.02),
+    new THREE.MeshLambertMaterial({ color: 0x140c0e }),
+  )
+  wire.position.set(0, 2.62, -0.35)
+  scene.add(ground, path, wire)
+  const lanterns = [
+    hangLantern(scene, -1.35, 2.15, 0.55),
+    hangLantern(scene, 1.2, 2.28, 0.15),
+    hangLantern(scene, -0.15, 2.42, -1.15),
+    hangLantern(scene, -2.05, 2.2, -1.55),
+    hangLantern(scene, 2.15, 2.12, -1.35),
+    hangLantern(scene, 0.35, 2.55, -2.7),
+  ]
+  scene.add(
+    windowGlow(-2.35, 1.35, -1.15),
+    windowGlow(2.25, 1.5, -1.25),
+    windowGlow(-0.35, 1.7, -3.35),
+    windowGlow(1.15, 1.45, -3.2),
+  )
+  const buildings: Array<[string, number, number, number, number]> = [
+    ['v2/house-village.glb', -2.55, -2.15, 2.55, 0.45],
+    ['v2/house-village.glb', 2.6, -2.35, 2.7, -0.4],
+    ['v2/outfitter.glb', 0.15, -4.15, 3.15, 0.05],
+    ['v2/stall-market.glb', -1.85, -3.15, 1.55, 0.3],
+    ['v2/save-shack.glb', 2.15, -3.7, 2.45, -0.2],
+  ]
+  for (const [file, x, z, height, rot] of buildings) {
+    void placeJoinBuilding(scene, file, x, z, height, rot, alive)
+  }
+  return lanterns
+}
+
+type JoinWeapon = 'sword' | 'dagger' | 'lantern' | 'staff' | 'mace' | 'bow' | 'oar' | 'axe'
+type JoinArmor = 'plate' | 'hood' | 'circlet'
+
+const JOIN_CLASS_KIT: Record<HarborRpgClassId, { armor: JoinArmor; weapon: JoinWeapon; shield: boolean }> = {
+  tideblade: { armor: 'plate', weapon: 'sword', shield: false },
+  reedshadow: { armor: 'hood', weapon: 'dagger', shield: false },
+  lanternmancer: { armor: 'circlet', weapon: 'lantern', shield: false },
+  jadeheart: { armor: 'circlet', weapon: 'staff', shield: false },
+  ashbound: { armor: 'plate', weapon: 'mace', shield: true },
+  starferry: { armor: 'hood', weapon: 'bow', shield: false },
+  ironoar: { armor: 'plate', weapon: 'oar', shield: true },
+  mistweaver: { armor: 'circlet', weapon: 'staff', shield: false },
+  chopwright: { armor: 'plate', weapon: 'axe', shield: false },
+}
+
+function findJoinBone(root: THREE.Object3D, name: string): THREE.Object3D | null {
+  let hit: THREE.Object3D | null = null
+  root.traverse((o) => {
+    if (o.name === name) hit = o
+  })
+  return hit
+}
+
+function joinMetal(color: number, glow = 0.16): THREE.MeshLambertMaterial {
+  return new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: glow })
+}
+
+function joinSword(color: number, length: number, width: number): THREE.Group {
+  const g = new THREE.Group()
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.02, 0.16, 8), joinMetal(0x3a2418, 0))
+  handle.position.y = 0.08
+  const guard = new THREE.Mesh(new THREE.BoxGeometry(width * 3.2, 0.02, 0.03), joinMetal(0xe0c080, 0.05))
+  guard.position.y = 0.16
+  const edge = new THREE.Mesh(new THREE.CylinderGeometry(0.008, width, length, 5), joinMetal(color, 0.22))
+  edge.position.y = 0.16 + length / 2
+  g.add(handle, guard, edge)
+  g.position.set(0, 0.05, 0.02)
+  return g
+}
+
+function joinStaff(color: number, orb: number): THREE.Group {
+  const g = new THREE.Group()
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.018, 1.15, 8), joinMetal(0x4a3424, 0))
+  pole.position.y = 0.62
+  const gem = new THREE.Mesh(new THREE.SphereGeometry(orb, 12, 10), joinMetal(color, 0.55))
+  gem.position.y = 1.22
+  g.add(pole, gem)
+  g.position.set(0, 0.02, 0.02)
+  return g
+}
+
+function joinLanternFocus(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.42, 6), joinMetal(0x3a2418, 0))
+  stick.position.y = 0.22
+  const lamp = paperLantern()
+  lamp.scale.setScalar(0.7)
+  lamp.position.y = 0.52
+  const paper = lamp.children.find((c) => (c as THREE.Mesh).isMesh) as THREE.Mesh | undefined
+  const mat = paper?.material
+  if (mat && !Array.isArray(mat) && 'color' in mat) {
+    ;(mat as THREE.MeshLambertMaterial).color.setHex(color)
+    ;(mat as THREE.MeshLambertMaterial).emissive.setHex(color)
+  }
+  g.add(stick, lamp)
+  g.position.set(0, 0.04, 0.02)
+  return g
+}
+
+function joinBow(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const limb = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.012, 6, 18, Math.PI), joinMetal(color, 0.2))
+  limb.rotation.z = Math.PI / 2
+  const string = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.66, 0.008), joinMetal(0xf2e6d0, 0.05))
+  g.add(limb, string)
+  g.position.set(0, 0.12, 0.04)
+  g.rotation.y = Math.PI / 2
+  return g
+}
+
+function joinOar(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.024, 1.25, 8), joinMetal(0x5a4030, 0))
+  shaft.position.y = 0.7
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.38, 0.03), joinMetal(color, 0.15))
+  blade.position.y = 1.35
+  g.add(shaft, blade)
+  g.position.set(0, 0.02, 0.02)
+  return g
+}
+
+function joinAxe(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.02, 0.42, 8), joinMetal(0x4a3424, 0))
+  handle.position.y = 0.22
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.04), joinMetal(color, 0.2))
+  head.position.set(0.06, 0.4, 0)
+  g.add(handle, head)
+  g.position.set(0, 0.04, 0.02)
+  return g
+}
+
+function joinMace(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.022, 0.4, 8), joinMetal(0x3a2418, 0))
+  handle.position.y = 0.22
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), joinMetal(color, 0.2))
+  head.position.y = 0.46
+  g.add(handle, head)
+  g.position.set(0, 0.04, 0.02)
+  return g
+}
+
+function joinShield(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const face = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.035, 16), joinMetal(color, 0.12))
+  face.rotation.x = Math.PI / 2
+  const boss = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), joinMetal(0xe8c878, 0.15))
+  boss.position.z = 0.03
+  g.add(face, boss)
+  g.position.set(0, 0.1, 0.08)
+  return g
+}
+
+function joinPlate(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.07, 0.16), joinMetal(color, 0.12))
+  plate.position.set(0, 0.02, 0.04)
+  g.add(plate)
+  return g
+}
+
+function joinHood(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const cap = new THREE.Mesh(
+    new THREE.SphereGeometry(0.14, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
+    joinMetal(color, 0.08),
+  )
+  cap.position.y = 0.06
+  g.add(cap)
+  return g
+}
+
+function joinCirclet(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 6, 18), joinMetal(color, 0.35))
+  ring.rotation.x = Math.PI / 2
+  ring.position.y = 0.12
+  g.add(ring)
+  return g
+}
+
+function mountClassGear(body: THREE.Object3D, classId: HarborRpgClassId): THREE.Object3D[] {
+  const kit = JOIN_CLASS_KIT[classId]
+  const color = HARBOR_RPG_CLASS_DEFS[classId].color
+  const nodes: THREE.Object3D[] = []
+  const handR = findJoinBone(body, 'hand_r')
+  const handL = findJoinBone(body, 'hand_l')
+  const hold = handR ?? body
+  let weapon: THREE.Object3D
+  if (kit.weapon === 'sword') weapon = joinSword(color, 0.72, 0.045)
+  else if (kit.weapon === 'dagger') weapon = joinSword(color, 0.32, 0.028)
+  else if (kit.weapon === 'lantern') weapon = joinLanternFocus(color)
+  else if (kit.weapon === 'staff') weapon = joinStaff(color, classId === 'jadeheart' ? 0.09 : 0.055)
+  else if (kit.weapon === 'mace') weapon = joinMace(color)
+  else if (kit.weapon === 'bow') weapon = joinBow(color)
+  else if (kit.weapon === 'oar') weapon = joinOar(color)
+  else weapon = joinAxe(color)
+  if (kit.weapon === 'bow' && handL) handL.add(weapon)
+  else hold.add(weapon)
+  nodes.push(weapon)
+  if (kit.shield && handL) {
+    const shield = joinShield(color)
+    handL.add(shield)
+    nodes.push(shield)
+  }
+  if (kit.armor === 'plate') {
+    for (const boneName of ['clavicle_r', 'clavicle_l']) {
+      const bone = findJoinBone(body, boneName)
+      if (!bone) continue
+      const plate = joinPlate(color)
+      bone.add(plate)
+      nodes.push(plate)
+    }
+    if (kit.shield) {
+      const chest = findJoinBone(body, 'spine_02')
+      if (chest) {
+        const plate = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.08), joinMetal(color, 0.1))
+        plate.position.set(0, 0.04, 0.14)
+        chest.add(plate)
+        nodes.push(plate)
+      }
+    }
+  } else if (kit.armor === 'hood') {
+    const head = findJoinBone(body, 'Head')
+    if (head) {
+      const hood = joinHood(color)
+      head.add(hood)
+      nodes.push(hood)
+    }
+  } else {
+    const head = findJoinBone(body, 'Head')
+    if (head) {
+      const circlet = joinCirclet(color)
+      head.add(circlet)
+      nodes.push(circlet)
+    }
+  }
+  return nodes
+}
+
+function disposeJoinNode(node: THREE.Object3D) {
+  const geos = new Set<THREE.BufferGeometry>()
+  const mats = new Set<THREE.Material>()
+  node.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!mesh.isMesh) return
+    if (mesh.geometry) geos.add(mesh.geometry)
+    const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+    for (const mat of list) if (mat) mats.add(mat)
+  })
+  for (const geo of geos) geo.dispose()
+  for (const mat of mats) mat.dispose()
+}
+
+function releaseJoinSailor(inst: HarborRpgCosmeticInstance) {
+  const gear = inst.root.userData.joinGear as THREE.Object3D[] | undefined
+  if (gear) {
+    for (const node of gear) {
+      node.parent?.remove(node)
+      disposeJoinNode(node)
+    }
+    inst.root.userData.joinGear = undefined
+  }
+  inst.root.parent?.remove(inst.root)
+  disposeHarborRpgCosmetic(inst)
+}
+
+function disposeJoinProps(scene: THREE.Scene) {
+  const geos = new Set<THREE.BufferGeometry>()
+  const mats = new Set<THREE.Material>()
+  scene.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!mesh.isMesh || mesh.userData.harborGlbMesh) return
+    if (mesh.geometry) geos.add(mesh.geometry)
+    const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+    for (const mat of list) if (mat) mats.add(mat)
+  })
+  for (const geo of geos) geo.dispose()
+  for (const mat of mats) mat.dispose()
+}
+
+function RpgLookPreview({
+  looks,
+  classId,
+}: {
+  looks: HarborRpgEquippedLooks
+  classId: HarborRpgClassId | null
+}) {
   const hostRef = useRef<HTMLDivElement>(null)
+  const sceneRef = useRef<THREE.Scene | null>(null)
+  const sailorsRef = useRef<HarborRpgCosmeticInstance[]>([])
   const pieceKey = [looks.body, ...harborRpgWornLayerIds(looks)].join('|')
 
   useEffect(() => {
@@ -51,20 +418,25 @@ function RpgLookPreview({ looks }: { looks: HarborRpgEquippedLooks }) {
     if (!host) return
     let disposed = false
     let raf = 0
-    const insts: HarborRpgCosmeticInstance[] = []
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x12100e)
-    const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 20)
-    camera.position.set(1.15, 1.15, 2.45)
-    camera.lookAt(0, 0.85, 0)
+    scene.background = new THREE.Color(0x0c0608)
+    scene.fog = new THREE.FogExp2(0x10060a, 0.065)
+    sceneRef.current = scene
+    const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 40)
+    camera.position.set(0.9, 1.38, 3.55)
+    camera.lookAt(0, 0.95, -0.6)
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
     renderer.outputColorSpace = THREE.SRGBColorSpace
     host.appendChild(renderer.domElement)
-    scene.add(new THREE.AmbientLight(0xfff4e4, 0.85))
-    const sun = new THREE.DirectionalLight(0xffe2b0, 1.15)
-    sun.position.set(2, 4, 3)
-    scene.add(sun)
+    scene.add(new THREE.AmbientLight(0x4a2024, 0.55))
+    const key = new THREE.DirectionalLight(0xffe6d4, 1.05)
+    key.position.set(1.6, 3.2, 2.6)
+    scene.add(key)
+    const redFill = new THREE.DirectionalLight(0xff2230, 0.38)
+    redFill.position.set(-2.2, 1.6, -1.2)
+    scene.add(redFill)
+    const lanterns = dressJoinStreet(scene, () => !disposed && sceneRef.current === scene)
     const size = () => {
       const w = Math.max(1, host.clientWidth)
       const h = Math.max(1, host.clientHeight)
@@ -76,11 +448,12 @@ function RpgLookPreview({ looks }: { looks: HarborRpgEquippedLooks }) {
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(size) : null
     ro?.observe(host)
     const clock = new THREE.Clock()
-    const ids = pieceKey.split('|').filter((id): id is HarborRpgCosmeticId => Boolean(id))
     const loop = () => {
       if (disposed) return
       raf = requestAnimationFrame(loop)
       const dt = clock.getDelta()
+      const t = clock.elapsedTime
+      const insts = sailorsRef.current
       const leader = insts[0]
       if (leader) {
         leader.mixer?.update(dt)
@@ -93,32 +466,54 @@ function RpgLookPreview({ looks }: { looks: HarborRpgEquippedLooks }) {
         }
         inst.mixer?.update(0)
       }
+      for (const lantern of lanterns) {
+        const sway = Math.sin(t * 0.85 + lantern.position.x * 2.2) * 0.07
+        lantern.rotation.z = sway
+        const bulb = lantern.children.find((c) => (c as THREE.PointLight).isPointLight) as THREE.PointLight | undefined
+        if (bulb) bulb.intensity = 1.35 + Math.sin(t * 1.7 + lantern.position.x * 3) * 0.4
+      }
       renderer.render(scene, camera)
     }
-    void Promise.all(ids.map((id) => loadHarborRpgCosmetic(id))).then((loaded) => {
-      if (disposed) {
-        for (const inst of loaded) if (inst) disposeHarborRpgCosmetic(inst)
-        return
-      }
-      for (const inst of loaded) {
-        if (!inst) continue
-        insts.push(inst)
-        scene.add(inst.root)
-      }
-    })
     loop()
     return () => {
       disposed = true
       cancelAnimationFrame(raf)
       ro?.disconnect()
-      for (const inst of insts) {
-        inst.root.parent?.remove(inst.root)
-        disposeHarborRpgCosmetic(inst)
-      }
+      disposeJoinProps(scene)
       renderer.dispose()
+      sceneRef.current = null
       if (renderer.domElement.parentElement === host) host.removeChild(renderer.domElement)
     }
-  }, [pieceKey])
+  }, [])
+
+  useEffect(() => {
+    const scene = sceneRef.current
+    if (!scene) return
+    let cancelled = false
+    const ids = pieceKey.split('|').filter((id): id is HarborRpgCosmeticId => Boolean(id))
+    void Promise.all(ids.map((id) => loadHarborRpgCosmetic(id))).then((loaded) => {
+      if (cancelled || sceneRef.current !== scene) {
+        for (const inst of loaded) if (inst) disposeHarborRpgCosmetic(inst)
+        return
+      }
+      for (const old of sailorsRef.current) releaseJoinSailor(old)
+      const next: HarborRpgCosmeticInstance[] = []
+      for (const inst of loaded) {
+        if (!inst) continue
+        inst.root.userData.joinSailor = true
+        scene.add(inst.root)
+        next.push(inst)
+      }
+      const body = next[0]
+      if (classId && body) body.root.userData.joinGear = mountClassGear(body.root, classId)
+      sailorsRef.current = next
+    })
+    return () => {
+      cancelled = true
+      for (const inst of sailorsRef.current) releaseJoinSailor(inst)
+      sailorsRef.current = []
+    }
+  }, [pieceKey, classId])
 
   return <div className="hq-rpg-join-preview" ref={hostRef} />
 }
@@ -226,12 +621,18 @@ export function HarborRpgJoin({ bag, onCreate, onEnter, onBack }: Props) {
   return (
     <div className="hq-rpg-join" role="dialog" aria-modal="true" aria-label="HarborRPG character">
       <div className="hq-rpg-join-stage">
-        <RpgLookPreview looks={previewLooks} />
+        <RpgLookPreview
+          looks={previewLooks}
+          classId={making && (step === 'class' || step === 'confirm') ? classId : null}
+        />
         <p className="hq-rpg-join-caption">
           {pieceName(previewLooks.head) ?? 'Bare'} · {pieceName(previewLooks.top)} · {pieceName(previewLooks.bottom)} · {pieceName(previewLooks.feet)}
+          {making && (step === 'class' || step === 'confirm') && classId
+            ? ` · ${HARBOR_RPG_CLASS_DEFS[classId].name.en}`
+            : ''}
         </p>
       </div>
-      <div className="hq-rpg-join-sheet">
+      <div className={`hq-rpg-join-sheet${making && step === 'class' ? ' is-class' : ''}`}>
         <p className="hq-rpg-join-kicker">HarborRPG</p>
         <h2>{making ? 'Create your sailor' : 'Choose a sailor'}</h2>
         {making ? (
@@ -321,8 +722,8 @@ export function HarborRpgJoin({ bag, onCreate, onEnter, onBack }: Props) {
             ) : null}
             {step === 'class' ? (
               <div className="hq-rpg-join-choices">
-                <p className="hq-rpg-hint">Class. This is the adventure’s class. Specs stay in the Class tab after you enter.</p>
-                <ul className="hq-rpg-join-classes">
+                <p className="hq-rpg-hint">Pick a class. The sailor wears that weapon and armor.</p>
+                <ul className="hq-rpg-join-classes is-fit">
                   {HARBOR_RPG_CLASSES.map((id) => {
                     const def = HARBOR_RPG_CLASS_DEFS[id]
                     const on = classId === id
