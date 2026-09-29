@@ -43,27 +43,30 @@ type Props = {
   onBack: () => void
 }
 
-/** Night alley behind the rotating sailor. Procedural lanterns stay if a GLB is missing. */
-function paperLantern(): THREE.Group {
+/** Night festival behind the rotating sailor. Procedural lanterns stay if a GLB is missing. */
+function paperLantern(color = 0xffb23a, emissive = 0xffd27a, withLight = false): THREE.Group {
   const g = new THREE.Group()
   g.name = 'rpg-join-lantern'
   g.userData.joinLantern = true
   const paper = new THREE.Mesh(
     new THREE.CylinderGeometry(0.11, 0.13, 0.28, 12),
-    new THREE.MeshLambertMaterial({ color: 0xc4202a, emissive: 0xff2a32, emissiveIntensity: 0.95 }),
+    new THREE.MeshLambertMaterial({ color, emissive, emissiveIntensity: 0.95 }),
   )
-  const capMat = new THREE.MeshLambertMaterial({ color: 0x2a1214 })
+  const capMat = new THREE.MeshLambertMaterial({ color: 0x3a2214 })
   const capTop = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.12, 0.035, 10), capMat)
   capTop.position.y = 0.15
   const capBot = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.03, 10), capMat)
   capBot.position.y = -0.15
   const tassel = new THREE.Mesh(
     new THREE.CylinderGeometry(0.012, 0.02, 0.12, 6),
-    new THREE.MeshLambertMaterial({ color: 0x6a1018 }),
+    new THREE.MeshLambertMaterial({ color: 0x8a3030 }),
   )
   tassel.position.y = -0.24
-  const light = new THREE.PointLight(0xff3038, 1.55, 3.6, 2)
-  g.add(paper, capTop, capBot, tassel, light)
+  g.add(paper, capTop, capBot, tassel)
+  if (withLight) {
+    const light = new THREE.PointLight(emissive, 1.35, 4.2, 2)
+    g.add(light)
+  }
   return g
 }
 
@@ -104,49 +107,244 @@ async function placeJoinBuilding(
   scene.add(g)
 }
 
-function dressJoinStreet(scene: THREE.Scene, alive: () => boolean): THREE.Group[] {
+function festivalLantern(color: number, emissive: number, scale = 0.7): THREE.Group {
+  const lamp = paperLantern(color, emissive, false)
+  lamp.scale.setScalar(scale)
+  return lamp
+}
+
+/** Catenary of lanterns. Original harbor festival, not a copied skyline. */
+function lanternString(
+  parent: THREE.Object3D,
+  from: THREE.Vector3,
+  to: THREE.Vector3,
+  count: number,
+  sag: number,
+  color: number,
+  emissive: number,
+): THREE.Group[] {
+  const points: THREE.Vector3[] = []
+  const lanterns: THREE.Group[] = []
+  for (let i = 0; i <= count; i++) {
+    const t = i / count
+    const y = from.y + (to.y - from.y) * t - Math.sin(t * Math.PI) * sag
+    points.push(new THREE.Vector3(from.x + (to.x - from.x) * t, y, from.z + (to.z - from.z) * t))
+  }
+  const cord = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(points),
+    new THREE.LineBasicMaterial({ color: 0x8a3828 }),
+  )
+  parent.add(cord)
+  for (let i = 1; i < points.length - 1; i++) {
+    const at = points[i]!
+    const lamp = festivalLantern(color, emissive, i % 4 === 0 ? 0.85 : 0.62)
+    lamp.position.set(at.x, at.y - 0.22, at.z)
+    parent.add(lamp)
+    lanterns.push(lamp)
+  }
+  return lanterns
+}
+
+function lanternTower(parent: THREE.Object3D): THREE.Group[] {
+  const tower = new THREE.Group()
+  tower.name = 'rpg-join-tower'
+  tower.position.set(2.85, 0, -3.55)
+  const mast = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.14, 7.4, 8),
+    new THREE.MeshLambertMaterial({ color: 0x2a1c18 }),
+  )
+  mast.position.y = 3.7
+  tower.add(mast)
+  const lanterns: THREE.Group[] = []
+  for (let tier = 0; tier < 6; tier++) {
+    const y = 1.15 + tier * 1.05
+    const radius = 1.25 - tier * 0.12
+    const count = 7
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + tier * 0.35
+      const crimson = (i + tier) % 5 === 0
+      const lamp = festivalLantern(crimson ? 0xc4202a : 0xffb23a, crimson ? 0xff5a40 : 0xffd27a, 0.9)
+      lamp.position.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius)
+      tower.add(lamp)
+      lanterns.push(lamp)
+    }
+  }
+  for (let i = 0; i < 24; i++) {
+    const t = i / 24
+    const y = 0.7 + t * 6.4
+    const angle = t * Math.PI * 6
+    const radius = 0.72 + Math.sin(t * Math.PI) * 0.38
+    const lamp = festivalLantern(i % 4 === 0 ? 0xe23a32 : 0xffc14a, i % 4 === 0 ? 0xff6040 : 0xffe0a0, 0.78)
+    lamp.position.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius)
+    tower.add(lamp)
+    lanterns.push(lamp)
+  }
+  const eaveMat = new THREE.MeshLambertMaterial({ color: 0x6e2420, emissive: 0x3a1010, emissiveIntensity: 0.22 })
+  for (let e = 0; e < 3; e++) {
+    const eave = new THREE.Mesh(new THREE.ConeGeometry(1.55 - e * 0.28, 0.36, 6), eaveMat)
+    eave.position.y = 2.35 + e * 2.05
+    tower.add(eave)
+  }
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(1.15, 0.72, 6), eaveMat)
+  roof.position.y = 7.45
+  const finial = new THREE.Mesh(
+    new THREE.SphereGeometry(0.12, 10, 8),
+    new THREE.MeshLambertMaterial({ color: 0xffd27a, emissive: 0xffb23a, emissiveIntensity: 0.8 }),
+  )
+  finial.position.y = 7.9
+  tower.add(roof, finial)
+  const glow = new THREE.PointLight(0xffb060, 2.4, 16, 2)
+  glow.position.set(0, 3.4, 0.4)
+  tower.add(glow)
+  parent.add(tower)
+  return lanterns
+}
+
+/** Cool grove opposite the lantern tower: roots, a stone shrine, and a flower bank. */
+function spiritGrove(scene: THREE.Scene) {
+  const shrine = new THREE.Group()
+  shrine.name = 'rpg-join-shrine'
+  shrine.position.set(-3.6, 0, -4.6)
+  const stone = new THREE.MeshLambertMaterial({ color: 0x2a2438 })
+  const left = new THREE.Mesh(new THREE.BoxGeometry(0.28, 2.4, 0.28), stone)
+  left.position.set(-0.7, 1.2, 0)
+  const right = new THREE.Mesh(new THREE.BoxGeometry(0.28, 2.4, 0.28), stone)
+  right.position.set(0.7, 1.2, 0)
+  const lintel = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.28, 0.36), stone)
+  lintel.position.y = 2.5
+  const gate = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.9, 1.3),
+    new THREE.MeshBasicMaterial({ color: 0xc45cff, transparent: true, opacity: 0.45 }),
+  )
+  gate.position.y = 1.35
+  const shrineGlow = new THREE.PointLight(0xc45cff, 1.4, 9, 2)
+  shrineGlow.position.set(0, 1.4, 0.6)
+  shrine.add(left, right, lintel, gate, shrineGlow)
+  scene.add(shrine)
+
+  const rootMat = new THREE.MeshLambertMaterial({ color: 0x5a3a68 })
+  const arches: THREE.Vector3[][] = [
+    [new THREE.Vector3(-5.2, 0.2, -2.4), new THREE.Vector3(-2.4, 4.6, -1.2), new THREE.Vector3(0.4, 5.2, -3.4)],
+    [new THREE.Vector3(5.4, 0.4, -2.8), new THREE.Vector3(3.2, 4.8, -1.6), new THREE.Vector3(0.8, 5.4, -4.2)],
+    [new THREE.Vector3(-4.4, 0.3, -5.2), new THREE.Vector3(-1.2, 3.8, -4.4), new THREE.Vector3(1.6, 3.2, -5.6)],
+  ]
+  const blossomMat = new THREE.MeshBasicMaterial({ color: 0xd56bff })
+  const sparkMat = new THREE.MeshBasicMaterial({ color: 0x6ef0ff })
+  for (const pts of arches) {
+    const curve = new THREE.CatmullRomCurve3(pts)
+    scene.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 18, 0.09, 6, false), rootMat))
+    for (let i = 1; i < 9; i++) {
+      const at = curve.getPoint(i / 9)
+      const bud = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), i % 2 === 0 ? blossomMat : sparkMat)
+      bud.position.copy(at)
+      scene.add(bud)
+    }
+  }
+
+  const bank = new THREE.Group()
+  bank.name = 'rpg-join-flowers'
+  const cyanPetal = new THREE.MeshBasicMaterial({ color: 0x5ef0ff })
+  const magentaPetal = new THREE.MeshBasicMaterial({ color: 0xe060ff })
+  for (let i = 0; i < 72; i++) {
+    const petal = new THREE.Mesh(
+      new THREE.SphereGeometry(0.04 + (i % 4) * 0.014, 6, 5),
+      i % 2 === 0 ? cyanPetal : magentaPetal,
+    )
+    const t = (i % 36) / 36
+    const row = i < 36 ? 0 : 1
+    petal.position.set(-5.4 + t * 4.6, 0.05 + (i % 5) * 0.012, -1.35 - row * 0.28 - Math.sin(t * Math.PI) * 0.22)
+    bank.add(petal)
+  }
+  scene.add(bank)
+
+  // Side pool, clear of the camera dolly so zoom-in does not clip through it.
+  const water = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.6, 2.1),
+    new THREE.MeshBasicMaterial({ color: 0x12304a, transparent: true, opacity: 0.62 }),
+  )
+  water.rotation.x = -Math.PI / 2
+  water.position.set(-4.7, 0.02, -0.35)
+  scene.add(water)
+  for (let i = 0; i < 5; i++) {
+    const streak = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.15, 0.035),
+      new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0x7af6ff : 0xd070ff, transparent: true, opacity: 0.72 }),
+    )
+    streak.rotation.x = -Math.PI / 2
+    streak.position.set(-5.6 + i * 0.55, 0.03, -0.55 + (i % 2) * 0.28)
+    scene.add(streak)
+  }
+}
+
+function dressJoinStreet(scene: THREE.Scene, alive: () => boolean): { lanterns: THREE.Group[]; clouds: THREE.Mesh[] } {
   const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(9, 28),
-    new THREE.MeshLambertMaterial({ color: 0x161014 }),
+    new THREE.CircleGeometry(16, 32),
+    new THREE.MeshLambertMaterial({ color: 0x12161c }),
   )
   ground.rotation.x = -Math.PI / 2
   const path = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.4, 8),
-    new THREE.MeshLambertMaterial({ color: 0x24161c }),
+    new THREE.PlaneGeometry(2.6, 9),
+    new THREE.MeshLambertMaterial({ color: 0x1c1816 }),
   )
   path.rotation.x = -Math.PI / 2
   path.position.y = 0.012
-  const wire = new THREE.Mesh(
-    new THREE.BoxGeometry(5.4, 0.02, 0.02),
-    new THREE.MeshLambertMaterial({ color: 0x140c0e }),
+  scene.add(ground, path)
+
+  const moon = new THREE.Mesh(
+    new THREE.SphereGeometry(0.92, 28, 18),
+    new THREE.MeshBasicMaterial({ color: 0xf7fbff }),
   )
-  wire.position.set(0, 2.62, -0.35)
-  scene.add(ground, path, wire)
-  const lanterns = [
-    hangLantern(scene, -1.35, 2.15, 0.55),
-    hangLantern(scene, 1.2, 2.28, 0.15),
-    hangLantern(scene, -0.15, 2.42, -1.15),
-    hangLantern(scene, -2.05, 2.2, -1.55),
-    hangLantern(scene, 2.15, 2.12, -1.35),
-    hangLantern(scene, 0.35, 2.55, -2.7),
+  moon.name = 'rpg-join-moon'
+  moon.position.set(-5.4, 7.1, -12)
+  const halo = new THREE.Mesh(
+    new THREE.SphereGeometry(1.55, 20, 14),
+    new THREE.MeshBasicMaterial({ color: 0xb9d4ff, transparent: true, opacity: 0.22 }),
+  )
+  halo.position.copy(moon.position)
+  scene.add(moon, halo)
+
+  const clouds: THREE.Mesh[] = []
+  const cloudMat = new THREE.MeshBasicMaterial({ color: 0xd5e4f8, transparent: true, opacity: 0.28 })
+  for (const [x, y, z, sx] of [
+    [-3.2, 6.2, -11.2, 2.4],
+    [-1.1, 5.6, -10.4, 1.6],
+    [1.4, 6.6, -11.6, 2.1],
+  ] as const) {
+    const cloud = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 8), cloudMat)
+    cloud.scale.set(sx, 0.28, 1)
+    cloud.position.set(x, y, z)
+    scene.add(cloud)
+    clouds.push(cloud)
+  }
+
+  spiritGrove(scene)
+  const towerLanterns = lanternTower(scene)
+  const strings = [
+    lanternString(scene, new THREE.Vector3(2.4, 6.6, -3.4), new THREE.Vector3(-6.2, 3.1, -0.4), 9, 0.85, 0xffb23a, 0xffd27a),
+    lanternString(scene, new THREE.Vector3(2.2, 5.4, -3.2), new THREE.Vector3(-4.6, 4.4, -7.2), 8, 0.7, 0xffc14a, 0xffe0a0),
+    lanternString(scene, new THREE.Vector3(3.1, 4.2, -3.3), new THREE.Vector3(-1.2, 2.7, 1.1), 7, 0.55, 0xc4202a, 0xff5a40),
+    lanternString(scene, new THREE.Vector3(2.6, 7.2, -3.5), new THREE.Vector3(6.4, 3.3, -1.2), 6, 0.6, 0xffb23a, 0xffd27a),
+  ].flat()
+  const near = [
+    hangLantern(scene, -1.45, 2.25, 0.35),
+    hangLantern(scene, 1.35, 2.35, 0.2),
+    hangLantern(scene, -0.2, 2.55, -1.05),
   ]
-  scene.add(
-    windowGlow(-2.35, 1.35, -1.15),
-    windowGlow(2.25, 1.5, -1.25),
-    windowGlow(-0.35, 1.7, -3.35),
-    windowGlow(1.15, 1.45, -3.2),
-  )
+  for (const lamp of near) {
+    const bulb = new THREE.PointLight(0xffc56a, 0.8, 3.2, 2)
+    lamp.add(bulb)
+  }
+  scene.add(windowGlow(-2.4, 1.4, -1.7), windowGlow(1.1, 1.55, -2.4))
   const buildings: Array<[string, number, number, number, number]> = [
-    ['v2/house-village.glb', -2.55, -2.15, 2.55, 0.45],
-    ['v2/house-village.glb', 2.6, -2.35, 2.7, -0.4],
-    ['v2/outfitter.glb', 0.15, -4.15, 3.15, 0.05],
-    ['v2/stall-market.glb', -1.85, -3.15, 1.55, 0.3],
-    ['v2/save-shack.glb', 2.15, -3.7, 2.45, -0.2],
+    ['v2/house-village.glb', -3.1, -2.35, 2.45, 0.4],
+    ['v2/house-village.glb', 0.4, -2.7, 2.2, -0.15],
+    ['v2/stall-market.glb', -1.7, -3.3, 1.45, 0.25],
+    ['v2/save-shack.glb', 4.6, -4.4, 2.3, -0.5],
   ]
   for (const [file, x, z, height, rot] of buildings) {
     void placeJoinBuilding(scene, file, x, z, height, rot, alive)
   }
-  return lanterns
+  return { lanterns: [...towerLanterns, ...strings, ...near], clouds }
 }
 
 type JoinWeapon = 'sword' | 'dagger' | 'lantern' | 'staff' | 'mace' | 'bow' | 'oar' | 'axe'
@@ -392,7 +590,9 @@ function disposeJoinProps(scene: THREE.Scene) {
   const mats = new Set<THREE.Material>()
   scene.traverse((o) => {
     const mesh = o as THREE.Mesh
-    if (!mesh.isMesh || mesh.userData.harborGlbMesh) return
+    const line = o as THREE.Line
+    if (mesh.userData.harborGlbMesh) return
+    if (!mesh.isMesh && !line.isLine) return
     if (mesh.geometry) geos.add(mesh.geometry)
     const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
     for (const mat of list) if (mat) mats.add(mat)
@@ -411,6 +611,7 @@ function RpgLookPreview({
   const hostRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
   const sailorsRef = useRef<HarborRpgCosmeticInstance[]>([])
+  const zoomRef = useRef<(dir: -1 | 1) => void>(() => {})
   const pieceKey = [looks.body, ...harborRpgWornLayerIds(looks)].join('|')
 
   useEffect(() => {
@@ -419,24 +620,102 @@ function RpgLookPreview({
     let disposed = false
     let raf = 0
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x0c0608)
-    scene.fog = new THREE.FogExp2(0x10060a, 0.065)
+    scene.background = new THREE.Color(0x071422)
+    scene.fog = new THREE.FogExp2(0x0a1830, 0.028)
     sceneRef.current = scene
-    const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 40)
-    camera.position.set(0.9, 1.38, 3.55)
-    camera.lookAt(0, 0.95, -0.6)
+    const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 90)
+    const look = new THREE.Vector3(0, 1.05, -0.35)
+    const dolly = new THREE.Vector3(0.28, 0.7, 4.45)
+    const spun = new THREE.Vector3()
+    const yAxis = new THREE.Vector3(0, 1, 0)
+    let zoom = 1
+    let yaw = 0
+    let yawVel = 0
+    let holding = false
+    let lastDragAt = 0
+    const applyView = () => {
+      spun.copy(dolly).applyAxisAngle(yAxis, yaw)
+      camera.position.copy(look).addScaledVector(spun, zoom)
+      camera.lookAt(look)
+    }
+    applyView()
+    const nudgeZoom = (dir: -1 | 1) => {
+      zoom = THREE.MathUtils.clamp(zoom * (dir > 0 ? 1.14 : 0.88), 0.42, 2.35)
+      applyView()
+    }
+    zoomRef.current = nudgeZoom
+    const onWheel = (ev: WheelEvent) => {
+      ev.preventDefault()
+      const delta = ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaY
+      zoom = THREE.MathUtils.clamp(zoom * Math.exp(delta * 0.0011), 0.42, 2.35)
+      applyView()
+    }
+    const pointers = new Map<number, { x: number; y: number }>()
+    let pinchDist: number | null = null
+    const onPointerDown = (ev: PointerEvent) => {
+      if ((ev.target as HTMLElement).closest?.('button')) return
+      pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY })
+      holding = true
+      yawVel = 0
+      lastDragAt = performance.now()
+      try {
+        host.setPointerCapture(ev.pointerId)
+      } catch {
+        /* the canvas may already own the hit */
+      }
+    }
+    const onPointerMove = (ev: PointerEvent) => {
+      const prev = pointers.get(ev.pointerId)
+      if (!prev) return
+      const dx = ev.clientX - prev.x
+      pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY })
+      if (pointers.size === 2) {
+        const [a, b] = [...pointers.values()]
+        const dist = Math.hypot(a!.x - b!.x, a!.y - b!.y)
+        if (pinchDist != null && pinchDist > 0) {
+          zoom = THREE.MathUtils.clamp(zoom * (pinchDist / dist), 0.42, 2.35)
+          applyView()
+        }
+        pinchDist = dist
+        return
+      }
+      if (pointers.size !== 1 || dx === 0) return
+      const step = -dx * 0.006
+      yaw += step
+      const now = performance.now()
+      const dt = Math.max(0.008, (now - lastDragAt) / 1000)
+      yawVel = THREE.MathUtils.clamp(step / dt, -2.2, 2.2)
+      lastDragAt = now
+      applyView()
+    }
+    const onPointerUp = (ev: PointerEvent) => {
+      pointers.delete(ev.pointerId)
+      if (pointers.size < 2) pinchDist = null
+      holding = pointers.size > 0
+    }
+    host.addEventListener('wheel', onWheel, { passive: false })
+    host.addEventListener('pointerdown', onPointerDown)
+    host.addEventListener('pointermove', onPointerMove)
+    host.addEventListener('pointerup', onPointerUp)
+    host.addEventListener('pointercancel', onPointerUp)
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
     renderer.outputColorSpace = THREE.SRGBColorSpace
     host.appendChild(renderer.domElement)
-    scene.add(new THREE.AmbientLight(0x4a2024, 0.55))
-    const key = new THREE.DirectionalLight(0xffe6d4, 1.05)
-    key.position.set(1.6, 3.2, 2.6)
+    scene.add(new THREE.AmbientLight(0x1a2a44, 0.55))
+    const key = new THREE.DirectionalLight(0xfff0dc, 1.05)
+    key.position.set(1.4, 3.4, 2.8)
     scene.add(key)
-    const redFill = new THREE.DirectionalLight(0xff2230, 0.38)
-    redFill.position.set(-2.2, 1.6, -1.2)
-    scene.add(redFill)
-    const lanterns = dressJoinStreet(scene, () => !disposed && sceneRef.current === scene)
+    const moonLight = new THREE.DirectionalLight(0xc5d7ff, 0.62)
+    moonLight.position.set(-6, 8, -4)
+    scene.add(moonLight)
+    const lanternFill = new THREE.DirectionalLight(0xffb060, 0.42)
+    lanternFill.position.set(3.2, 4.5, -2)
+    scene.add(lanternFill)
+    const spiritFill = new THREE.DirectionalLight(0x7a4cff, 0.32)
+    spiritFill.position.set(-4.2, 2.4, 1.6)
+    scene.add(spiritFill)
+    const { lanterns, clouds } = dressJoinStreet(scene, () => !disposed && sceneRef.current === scene)
     const size = () => {
       const w = Math.max(1, host.clientWidth)
       const h = Math.max(1, host.clientHeight)
@@ -457,7 +736,12 @@ function RpgLookPreview({
       const leader = insts[0]
       if (leader) {
         leader.mixer?.update(dt)
-        leader.root.rotation.y += dt * 0.35
+        if (!holding) leader.root.rotation.y += dt * 0.35
+      }
+      if (!holding && Math.abs(yawVel) > 0.0008) {
+        yaw += yawVel * dt
+        yawVel *= Math.exp(-3.4 * dt)
+        applyView()
       }
       for (const inst of insts.slice(1)) {
         if (leader) {
@@ -470,7 +754,10 @@ function RpgLookPreview({
         const sway = Math.sin(t * 0.85 + lantern.position.x * 2.2) * 0.07
         lantern.rotation.z = sway
         const bulb = lantern.children.find((c) => (c as THREE.PointLight).isPointLight) as THREE.PointLight | undefined
-        if (bulb) bulb.intensity = 1.35 + Math.sin(t * 1.7 + lantern.position.x * 3) * 0.4
+        if (bulb) bulb.intensity = 1.15 + Math.sin(t * 1.7 + lantern.position.x * 3) * 0.35
+      }
+      for (const cloud of clouds) {
+        cloud.position.x += Math.sin(t * 0.12 + cloud.position.y) * dt * 0.08
       }
       renderer.render(scene, camera)
     }
@@ -479,6 +766,12 @@ function RpgLookPreview({
       disposed = true
       cancelAnimationFrame(raf)
       ro?.disconnect()
+      host.removeEventListener('wheel', onWheel)
+      host.removeEventListener('pointerdown', onPointerDown)
+      host.removeEventListener('pointermove', onPointerMove)
+      host.removeEventListener('pointerup', onPointerUp)
+      host.removeEventListener('pointercancel', onPointerUp)
+      zoomRef.current = () => {}
       disposeJoinProps(scene)
       renderer.dispose()
       sceneRef.current = null
@@ -515,7 +808,18 @@ function RpgLookPreview({
     }
   }, [pieceKey, classId])
 
-  return <div className="hq-rpg-join-preview" ref={hostRef} />
+  return (
+    <div className="hq-rpg-join-preview" ref={hostRef}>
+      <div className="hq-rpg-join-zoom">
+        <button type="button" aria-label="Zoom in" onClick={() => zoomRef.current(-1)}>
+          +
+        </button>
+        <button type="button" aria-label="Zoom out" onClick={() => zoomRef.current(1)}>
+          −
+        </button>
+      </div>
+    </div>
+  )
 }
 
 function lockTime(leader: HarborRpgCosmeticInstance, follower: HarborRpgCosmeticInstance) {
