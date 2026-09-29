@@ -272,6 +272,7 @@ assert.equal(HARBOR_RPG_PRESENCE_CHANNEL, 'harbor-rpg-realm')
 import {
   HARBOR_RPG_CLASSES,
   HARBOR_RPG_CLASS_DEFS,
+  HARBOR_RPG_SKILL_BAR_CAP,
   HARBOR_RPG_CLASS_LEVEL_CAP,
   harborRpgClassLevelFromXp,
   harborRpgSkillRankFromXp,
@@ -286,6 +287,7 @@ import {
 import {
   selectHarborRpgClass,
   selectHarborRpgSpec,
+  setHarborRpgSkillBar,
   spendHarborRpgTalent,
   prestigeHarborRpgClass,
   awardHarborRpgClassKillXp,
@@ -327,6 +329,19 @@ let classBag = selectHarborRpgClass(emptyHarborRpgBag(), 'tideblade')
 assert.equal(classBag.classId, 'tideblade')
 assert.equal(classBag.specId, harborRpgDefaultSpec('tideblade'))
 assert.ok(classBag.skillBar.includes('tb-riptide'))
+assert.ok(classBag.skillBar.length <= HARBOR_RPG_SKILL_BAR_CAP)
+{
+  const capped = { ...classBag, classXp: 50_000_000, skillBar: ['tb-riptide'] }
+  const filled = awardHarborRpgClassKillXp(capped, 'tb-riptide', 1)
+  const unlockedIds = harborRpgUnlockedSkills(
+    'tideblade',
+    harborRpgClassLevelFromXp(filled.classXp),
+  ).map((s) => s.id)
+  assert.equal(unlockedIds.length, HARBOR_RPG_SKILL_BAR_CAP)
+  assert.equal(filled.skillBar.length, HARBOR_RPG_SKILL_BAR_CAP)
+  const barred = setHarborRpgSkillBar(filled, [...unlockedIds, unlockedIds[0]!])
+  assert.deepEqual(barred?.skillBar, unlockedIds)
+}
 assert.ok(harborRpgMaxMp(classBag) > 0)
 const specPick = selectHarborRpgSpec(classBag, 'tideblade-ward')
 assert.ok(specPick)

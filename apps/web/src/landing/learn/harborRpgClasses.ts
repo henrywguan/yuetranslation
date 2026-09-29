@@ -24,6 +24,8 @@ export type HarborRpgTalentTree = (typeof HARBOR_RPG_TALENT_TREES)[number]
 export const HARBOR_RPG_CLASS_LEVEL_CAP = 50
 export const HARBOR_RPG_SKILL_RANK_CAP = 10
 export const HARBOR_RPG_PRESTIGE_CAP = 5
+/** Equipped action bar. Each class authors 7 skills; the bar holds all of them. */
+export const HARBOR_RPG_SKILL_BAR_CAP = 7
 /** Soft XP to advance one class level (quadratic-ish via helper). */
 export const HARBOR_RPG_CLASS_XP_BASE = 40
 

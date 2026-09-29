@@ -9227,8 +9227,8 @@
 }
 
 .hq-rpg-ability-bar {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.4rem, 1fr));
   gap: 0.35rem;
   margin: 0.5rem 0 0.75rem;
 }

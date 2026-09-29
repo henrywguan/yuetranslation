@@ -141,7 +141,7 @@ In-game **HarborRPG Wiki** (Field → HarborRPG Wiki):
 3. **Companion ally** — hired companion auto-swings nearby foes and follows as the Gobkit minion
 4. **Deeds HUD** — Achievements tab with progress bars; unlock titles → pin on Field
 5. **Professions** — 15 craft recipes · 11 gather nodes (mana / cloth / hood / wraps / sandals / tome / lantern)
-6. **Ability depth** — 7 skills per class (mid + late unlocks); bar still caps at 5
+6. **Ability depth** — 7 skills per class (mid + late unlocks); the action bar holds all 7 once they unlock
 
 Free animated cosmetics scout (Henry import): [`HARBORRPG-FREE-COSMETICS.md`](./HARBORRPG-FREE-COSMETICS.md). OGA mount `.blend` export stays Henry-owned. **Quaternius Modular Outfits first ship is live** (v6.3 Wardrobe).
 
