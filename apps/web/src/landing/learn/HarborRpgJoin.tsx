@@ -149,6 +149,244 @@ function dressJoinStreet(scene: THREE.Scene, alive: () => boolean): THREE.Group[
   return lanterns
 }
 
+type JoinWeapon = 'sword' | 'dagger' | 'lantern' | 'staff' | 'mace' | 'bow' | 'oar' | 'axe'
+type JoinArmor = 'plate' | 'hood' | 'circlet'
+
+const JOIN_CLASS_KIT: Record<HarborRpgClassId, { armor: JoinArmor; weapon: JoinWeapon; shield: boolean }> = {
+  tideblade: { armor: 'plate', weapon: 'sword', shield: false },
+  reedshadow: { armor: 'hood', weapon: 'dagger', shield: false },
+  lanternmancer: { armor: 'circlet', weapon: 'lantern', shield: false },
+  jadeheart: { armor: 'circlet', weapon: 'staff', shield: false },
+  ashbound: { armor: 'plate', weapon: 'mace', shield: true },
+  starferry: { armor: 'hood', weapon: 'bow', shield: false },
+  ironoar: { armor: 'plate', weapon: 'oar', shield: true },
+  mistweaver: { armor: 'circlet', weapon: 'staff', shield: false },
+  chopwright: { armor: 'plate', weapon: 'axe', shield: false },
+}
+
+function findJoinBone(root: THREE.Object3D, name: string): THREE.Object3D | null {
+  let hit: THREE.Object3D | null = null
+  root.traverse((o) => {
+    if (o.name === name) hit = o
+  })
+  return hit
+}
+
+function joinMetal(color: number, glow = 0.16): THREE.MeshLambertMaterial {
+  return new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: glow })
+}
+
+function joinSword(color: number, length: number, width: number): THREE.Group {
+  const g = new THREE.Group()
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.02, 0.16, 8), joinMetal(0x3a2418, 0))
+  handle.position.y = 0.08
+  const guard = new THREE.Mesh(new THREE.BoxGeometry(width * 3.2, 0.02, 0.03), joinMetal(0xe0c080, 0.05))
+  guard.position.y = 0.16
+  const edge = new THREE.Mesh(new THREE.CylinderGeometry(0.008, width, length, 5), joinMetal(color, 0.22))
+  edge.position.y = 0.16 + length / 2
+  g.add(handle, guard, edge)
+  g.position.set(0, 0.05, 0.02)
+  return g
+}
+
+function joinStaff(color: number, orb: number): THREE.Group {
+  const g = new THREE.Group()
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.018, 1.15, 8), joinMetal(0x4a3424, 0))
+  pole.position.y = 0.62
+  const gem = new THREE.Mesh(new THREE.SphereGeometry(orb, 12, 10), joinMetal(color, 0.55))
+  gem.position.y = 1.22
+  g.add(pole, gem)
+  g.position.set(0, 0.02, 0.02)
+  return g
+}
+
+function joinLanternFocus(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.42, 6), joinMetal(0x3a2418, 0))
+  stick.position.y = 0.22
+  const lamp = paperLantern()
+  lamp.scale.setScalar(0.7)
+  lamp.position.y = 0.52
+  const paper = lamp.children.find((c) => (c as THREE.Mesh).isMesh) as THREE.Mesh | undefined
+  const mat = paper?.material
+  if (mat && !Array.isArray(mat) && 'color' in mat) {
+    ;(mat as THREE.MeshLambertMaterial).color.setHex(color)
+    ;(mat as THREE.MeshLambertMaterial).emissive.setHex(color)
+  }
+  g.add(stick, lamp)
+  g.position.set(0, 0.04, 0.02)
+  return g
+}
+
+function joinBow(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const limb = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.012, 6, 18, Math.PI), joinMetal(color, 0.2))
+  limb.rotation.z = Math.PI / 2
+  const string = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.66, 0.008), joinMetal(0xf2e6d0, 0.05))
+  g.add(limb, string)
+  g.position.set(0, 0.12, 0.04)
+  g.rotation.y = Math.PI / 2
+  return g
+}
+
+function joinOar(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.024, 1.25, 8), joinMetal(0x5a4030, 0))
+  shaft.position.y = 0.7
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.38, 0.03), joinMetal(color, 0.15))
+  blade.position.y = 1.35
+  g.add(shaft, blade)
+  g.position.set(0, 0.02, 0.02)
+  return g
+}
+
+function joinAxe(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.02, 0.42, 8), joinMetal(0x4a3424, 0))
+  handle.position.y = 0.22
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.04), joinMetal(color, 0.2))
+  head.position.set(0.06, 0.4, 0)
+  g.add(handle, head)
+  g.position.set(0, 0.04, 0.02)
+  return g
+}
+
+function joinMace(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.022, 0.4, 8), joinMetal(0x3a2418, 0))
+  handle.position.y = 0.22
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), joinMetal(color, 0.2))
+  head.position.y = 0.46
+  g.add(handle, head)
+  g.position.set(0, 0.04, 0.02)
+  return g
+}
+
+function joinShield(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const face = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.035, 16), joinMetal(color, 0.12))
+  face.rotation.x = Math.PI / 2
+  const boss = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), joinMetal(0xe8c878, 0.15))
+  boss.position.z = 0.03
+  g.add(face, boss)
+  g.position.set(0, 0.1, 0.08)
+  return g
+}
+
+function joinPlate(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.07, 0.16), joinMetal(color, 0.12))
+  plate.position.set(0, 0.02, 0.04)
+  g.add(plate)
+  return g
+}
+
+function joinHood(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const cap = new THREE.Mesh(
+    new THREE.SphereGeometry(0.14, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
+    joinMetal(color, 0.08),
+  )
+  cap.position.y = 0.06
+  g.add(cap)
+  return g
+}
+
+function joinCirclet(color: number): THREE.Group {
+  const g = new THREE.Group()
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 6, 18), joinMetal(color, 0.35))
+  ring.rotation.x = Math.PI / 2
+  ring.position.y = 0.12
+  g.add(ring)
+  return g
+}
+
+function mountClassGear(body: THREE.Object3D, classId: HarborRpgClassId): THREE.Object3D[] {
+  const kit = JOIN_CLASS_KIT[classId]
+  const color = HARBOR_RPG_CLASS_DEFS[classId].color
+  const nodes: THREE.Object3D[] = []
+  const handR = findJoinBone(body, 'hand_r')
+  const handL = findJoinBone(body, 'hand_l')
+  const hold = handR ?? body
+  let weapon: THREE.Object3D
+  if (kit.weapon === 'sword') weapon = joinSword(color, 0.72, 0.045)
+  else if (kit.weapon === 'dagger') weapon = joinSword(color, 0.32, 0.028)
+  else if (kit.weapon === 'lantern') weapon = joinLanternFocus(color)
+  else if (kit.weapon === 'staff') weapon = joinStaff(color, classId === 'jadeheart' ? 0.09 : 0.055)
+  else if (kit.weapon === 'mace') weapon = joinMace(color)
+  else if (kit.weapon === 'bow') weapon = joinBow(color)
+  else if (kit.weapon === 'oar') weapon = joinOar(color)
+  else weapon = joinAxe(color)
+  if (kit.weapon === 'bow' && handL) handL.add(weapon)
+  else hold.add(weapon)
+  nodes.push(weapon)
+  if (kit.shield && handL) {
+    const shield = joinShield(color)
+    handL.add(shield)
+    nodes.push(shield)
+  }
+  if (kit.armor === 'plate') {
+    for (const boneName of ['clavicle_r', 'clavicle_l']) {
+      const bone = findJoinBone(body, boneName)
+      if (!bone) continue
+      const plate = joinPlate(color)
+      bone.add(plate)
+      nodes.push(plate)
+    }
+    if (kit.shield) {
+      const chest = findJoinBone(body, 'spine_02')
+      if (chest) {
+        const plate = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.08), joinMetal(color, 0.1))
+        plate.position.set(0, 0.04, 0.14)
+        chest.add(plate)
+        nodes.push(plate)
+      }
+    }
+  } else if (kit.armor === 'hood') {
+    const head = findJoinBone(body, 'Head')
+    if (head) {
+      const hood = joinHood(color)
+      head.add(hood)
+      nodes.push(hood)
+    }
+  } else {
+    const head = findJoinBone(body, 'Head')
+    if (head) {
+      const circlet = joinCirclet(color)
+      head.add(circlet)
+      nodes.push(circlet)
+    }
+  }
+  return nodes
+}
+
+function disposeJoinNode(node: THREE.Object3D) {
+  const geos = new Set<THREE.BufferGeometry>()
+  const mats = new Set<THREE.Material>()
+  node.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!mesh.isMesh) return
+    if (mesh.geometry) geos.add(mesh.geometry)
+    const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+    for (const mat of list) if (mat) mats.add(mat)
+  })
+  for (const geo of geos) geo.dispose()
+  for (const mat of mats) mat.dispose()
+}
+
+function releaseJoinSailor(inst: HarborRpgCosmeticInstance) {
+  const gear = inst.root.userData.joinGear as THREE.Object3D[] | undefined
+  if (gear) {
+    for (const node of gear) {
+      node.parent?.remove(node)
+      disposeJoinNode(node)
+    }
+    inst.root.userData.joinGear = undefined
+  }
+  inst.root.parent?.remove(inst.root)
+  disposeHarborRpgCosmetic(inst)
+}
+
 function disposeJoinProps(scene: THREE.Scene) {
   const geos = new Set<THREE.BufferGeometry>()
   const mats = new Set<THREE.Material>()
@@ -163,7 +401,13 @@ function disposeJoinProps(scene: THREE.Scene) {
   for (const mat of mats) mat.dispose()
 }
 
-function RpgLookPreview({ looks }: { looks: HarborRpgEquippedLooks }) {
+function RpgLookPreview({
+  looks,
+  classId,
+}: {
+  looks: HarborRpgEquippedLooks
+  classId: HarborRpgClassId | null
+}) {
   const hostRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
   const sailorsRef = useRef<HarborRpgCosmeticInstance[]>([])
@@ -252,10 +496,7 @@ function RpgLookPreview({ looks }: { looks: HarborRpgEquippedLooks }) {
         for (const inst of loaded) if (inst) disposeHarborRpgCosmetic(inst)
         return
       }
-      for (const old of sailorsRef.current) {
-        old.root.parent?.remove(old.root)
-        disposeHarborRpgCosmetic(old)
-      }
+      for (const old of sailorsRef.current) releaseJoinSailor(old)
       const next: HarborRpgCosmeticInstance[] = []
       for (const inst of loaded) {
         if (!inst) continue
@@ -263,17 +504,16 @@ function RpgLookPreview({ looks }: { looks: HarborRpgEquippedLooks }) {
         scene.add(inst.root)
         next.push(inst)
       }
+      const body = next[0]
+      if (classId && body) body.root.userData.joinGear = mountClassGear(body.root, classId)
       sailorsRef.current = next
     })
     return () => {
       cancelled = true
-      for (const inst of sailorsRef.current) {
-        inst.root.parent?.remove(inst.root)
-        disposeHarborRpgCosmetic(inst)
-      }
+      for (const inst of sailorsRef.current) releaseJoinSailor(inst)
       sailorsRef.current = []
     }
-  }, [pieceKey])
+  }, [pieceKey, classId])
 
   return <div className="hq-rpg-join-preview" ref={hostRef} />
 }
@@ -381,12 +621,18 @@ export function HarborRpgJoin({ bag, onCreate, onEnter, onBack }: Props) {
   return (
     <div className="hq-rpg-join" role="dialog" aria-modal="true" aria-label="HarborRPG character">
       <div className="hq-rpg-join-stage">
-        <RpgLookPreview looks={previewLooks} />
+        <RpgLookPreview
+          looks={previewLooks}
+          classId={making && (step === 'class' || step === 'confirm') ? classId : null}
+        />
         <p className="hq-rpg-join-caption">
           {pieceName(previewLooks.head) ?? 'Bare'} · {pieceName(previewLooks.top)} · {pieceName(previewLooks.bottom)} · {pieceName(previewLooks.feet)}
+          {making && (step === 'class' || step === 'confirm') && classId
+            ? ` · ${HARBOR_RPG_CLASS_DEFS[classId].name.en}`
+            : ''}
         </p>
       </div>
-      <div className="hq-rpg-join-sheet">
+      <div className={`hq-rpg-join-sheet${making && step === 'class' ? ' is-class' : ''}`}>
         <p className="hq-rpg-join-kicker">HarborRPG</p>
         <h2>{making ? 'Create your sailor' : 'Choose a sailor'}</h2>
         {making ? (
@@ -476,8 +722,8 @@ export function HarborRpgJoin({ bag, onCreate, onEnter, onBack }: Props) {
             ) : null}
             {step === 'class' ? (
               <div className="hq-rpg-join-choices">
-                <p className="hq-rpg-hint">Class. This is the adventure’s class. Specs stay in the Class tab after you enter.</p>
-                <ul className="hq-rpg-join-classes">
+                <p className="hq-rpg-hint">Pick a class. The sailor wears that weapon and armor.</p>
+                <ul className="hq-rpg-join-classes is-fit">
                   {HARBOR_RPG_CLASSES.map((id) => {
                     const def = HARBOR_RPG_CLASS_DEFS[id]
                     const on = classId === id
