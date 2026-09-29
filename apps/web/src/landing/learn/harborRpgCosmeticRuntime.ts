@@ -38,6 +38,97 @@ const cache = new Map<string, THREE.Group>()
 let ualClips: THREE.AnimationClip[] | null = null
 let ualPromise: Promise<THREE.AnimationClip[]> | null = null
 
+/**
+ * How much of the bind-pose cross-section to keep.
+ * The universal base body is bulkier than the modular shells, so untouched
+ * skin draws in front of the tunic, sleeves, and shoes.
+ */
+const BODY_SKIN_TUCK: Record<'male' | 'female', Array<[RegExp, number]>> = {
+  male: [
+    [/^(Head|neck_01|hand_|index_|middle_|ring_|pinky_|thumb_)/, 1],
+    [/^spine_03/, 0.73],
+    [/^spine_02/, 0.81],
+    [/^lowerarm_/, 0.71],
+    [/^upperarm_/, 0.77],
+    [/^foot_|^ball_/, 0.88],
+    [/^thigh_|^calf_|^spine_01|^pelvis|^clavicle_|^root$/, 0.96],
+  ],
+  female: [
+    [/^(Head|neck_01|hand_|index_|middle_|ring_|pinky_|thumb_)/, 1],
+    [/^upperarm_/, 0.83],
+    [/^calf_/, 0.8],
+    [/^thigh_/, 0.91],
+    [/^spine_|^pelvis|^clavicle_|^foot_|^ball_|^lowerarm_|^root$/, 0.94],
+  ],
+}
+
+function bodySkinKeep(gender: 'male' | 'female', boneName: string): number {
+  for (const [re, keep] of BODY_SKIN_TUCK[gender]) {
+    if (re.test(boneName)) return keep
+  }
+  return 0.94
+}
+
+const tuckHead = new THREE.Vector3()
+const tuckTail = new THREE.Vector3()
+const tuckAxis = new THREE.Vector3()
+const tuckVert = new THREE.Vector3()
+const tuckPoint = new THREE.Vector3()
+
+/** Slim covered skin toward each bone so modular clothes sit outside the body. */
+export function tuckHarborBodySkin(root: THREE.Object3D, gender: 'male' | 'female'): void {
+  root.updateMatrixWorld(true)
+  root.traverse((o) => {
+    const mesh = o as THREE.SkinnedMesh
+    if (!mesh.isSkinnedMesh) return
+    if (/Eye|Brow|Face/i.test(mesh.name)) return
+    const geo = mesh.geometry.clone()
+    mesh.geometry = geo
+    const pos = geo.attributes.position
+    const skinIndex = geo.attributes.skinIndex
+    const skinWeight = geo.attributes.skinWeight
+    if (!pos || !skinIndex || !skinWeight) return
+    mesh.skeleton.update()
+    const bones = mesh.skeleton.bones
+    for (let i = 0; i < pos.count; i++) {
+      tuckVert.fromBufferAttribute(pos, i)
+      let best = 0
+      let boneIndex = 0
+      for (let k = 0; k < 4; k++) {
+        const weight = skinWeight.getComponent(i, k)
+        if (weight > best) {
+          best = weight
+          boneIndex = skinIndex.getComponent(i, k)
+        }
+      }
+      const bone = bones[boneIndex]
+      const keep = bodySkinKeep(gender, bone?.name ?? '')
+      if (!bone || keep >= 0.999) continue
+      tuckHead.set(0, 0, 0)
+      bone.localToWorld(tuckHead)
+      mesh.worldToLocal(tuckHead)
+      const child = bone.children.find((c) => (c as THREE.Bone).isBone)
+      if (child) {
+        tuckTail.set(0, 0, 0)
+        child.localToWorld(tuckTail)
+        mesh.worldToLocal(tuckTail)
+      } else {
+        tuckTail.copy(tuckHead)
+        tuckTail.y += 0.05
+      }
+      tuckAxis.subVectors(tuckTail, tuckHead)
+      const len2 = tuckAxis.lengthSq()
+      if (len2 < 1e-8) continue
+      const along = THREE.MathUtils.clamp(tuckPoint.copy(tuckVert).sub(tuckHead).dot(tuckAxis) / len2, 0, 1)
+      tuckPoint.copy(tuckHead).addScaledVector(tuckAxis, along)
+      tuckVert.lerp(tuckPoint, 1 - keep)
+      pos.setXYZ(i, tuckVert.x, tuckVert.y, tuckVert.z)
+    }
+    pos.needsUpdate = true
+    geo.computeVertexNormals()
+  })
+}
+
 function plantAndCel(
   root: THREE.Object3D,
   scale: number,
@@ -65,6 +156,15 @@ function plantAndCel(
     m.castShadow = false
     m.receiveShadow = false
     m.material = harborGlbMaterialToLambertCel(m.material)
+    if (name === 'rpg-cosmetic-attach') {
+      m.renderOrder = 2
+      const mats = Array.isArray(m.material) ? m.material : [m.material]
+      for (const mat of mats) {
+        mat.polygonOffset = true
+        mat.polygonOffsetFactor = -2
+        mat.polygonOffsetUnits = -2
+      }
+    }
   })
   return wrap
 }
@@ -152,6 +252,7 @@ export async function loadHarborRpgCosmetic(
   const name = def.kind === 'outfit' ? 'rpg-cosmetic-outfit' : 'rpg-cosmetic-attach'
   const cloned = skinned ? cloneSkinned(scene) : scene.clone(true)
   const root = plantAndCel(cloned, def.scale, name, def.bindWithBody === true)
+  if (id === 'rpg-base-m' || id === 'rpg-base-f') tuckHarborBodySkin(root, id === 'rpg-base-f' ? 'female' : 'male')
   root.userData.rpgCosmeticId = id
   root.userData.rpgCosmeticKind = def.kind
   const mixer = skinned && clips.length > 0 ? new THREE.AnimationMixer(root) : null
