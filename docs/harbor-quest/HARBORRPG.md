@@ -82,6 +82,20 @@ Bag: `ownedCosmetics`, `equippedLooks` (`body` / `head` / `shoulder` / `back`). 
 
 Town stalls in the town zone spawn Quaternius outfits on library idles (vendor, finder, market, bank, bench, stable, ravenpost, reliquary).
 
+## World kit
+
+Zones replace the box trees, bushes, rocks, flowers, town halls, and gather nodes with free Quaternius meshes once they load. The procedural shapes stay up until the GLB arrives.
+
+| Pack | What shows up |
+|---|---|
+| Stylized Nature MegaKit Standard | Trees, palms, bushes, flowers, rocks, ferns, mushrooms |
+| Medieval Village MegaKit Standard | Fences, vine, door, ruin walls and a roof |
+| Fantasy Props MegaKit Standard | Stall, chest, sword, bottle, anvil, torch, cauldron, crate, key, banner |
+| Pirate Kit | Dock houses, dock, ship, cannon, barrel, shark, skeleton, cutlass, wheat, gold |
+| Modular Dungeons | Arch, wall, and pillar in crypt, delve, ruins, and the tide halls |
+
+Credits: `apps/web/public/assets/harbor-quest/world/quaternius/CREDITS.md`. Paid MegaKit Source/Pro zips were not imported. Ultimate Fantasy RTS, Ultimate Modular Ruins, Ultimate Crops, the small Ships pack, and Ultimate RPG are still on a Google Drive quota and are not in this set.
+
 ## Companion and party heals (v6.7)
 
 Hired companion is the Gobkit Free Minion (`companions/gobkit/minion-a01.glb`, CC0): idle follow, attack clip on a swing. Healer casts heal the caster and, when the party has two or more members in this zone, broadcast `party-heal` so those members gain the same amount. No shared HP sim.

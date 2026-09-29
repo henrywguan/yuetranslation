@@ -922,6 +922,19 @@ assert.match(docs, /v6\.5|Ravenpost|Ash Reach/)
 
 assert.match(panelSrc, /Whisper|Ready check|Lock pattern|Draw tide chart|Save as B|FieldTracker|WorldBoard/)
 assert.match(worldSrc, /spawnRpgFloat/)
+assert.match(worldSrc, /dressHarborRpgWorldKit/)
 assert.match(docs, /14 zones/)
+assert.match(docs, /World kit/)
+{
+  const { HARBOR_RPG_WORLD_KIT_FILES } = await import('./harborRpgWorldKit.ts')
+  const kitDir = join(
+    dirname(fileURLToPath(import.meta.url)),
+    '../../../public/assets/harbor-quest/world/quaternius',
+  )
+  for (const file of HARBOR_RPG_WORLD_KIT_FILES) {
+    assert.ok(existsSync(join(kitDir, file)), `missing world kit ${file}`)
+  }
+  assert.ok(existsSync(join(kitDir, 'CREDITS.md')))
+}
 
 console.log('harborRpg.smoke: ok')

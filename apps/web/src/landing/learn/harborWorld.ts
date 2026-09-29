@@ -95,6 +95,7 @@ import {
   rpgZoneLookFor,
   type HarborRpgInteractId,
 } from './harborRpgRealm'
+import { dressHarborRpgWorldKit } from './harborRpgWorldKit'
 import {
   HARBOR_RPG_ZONE_META,
   HARBOR_RPG_ZONE_SPAWN,
@@ -4935,6 +4936,7 @@ export function createHarborWorld(
       }
     }
     world.add(rpgScene)
+    void dressHarborRpgWorldKit(rpgScene, rpgZone, () => !disposed && rpgScene != null)
     fxIndexDirty = true
     resetRpgCombatSessionCd()
     rpgMonsters = spawnRpgMonsters(
@@ -6550,6 +6552,8 @@ export function createHarborWorld(
           const phase = Number(o.userData.rpgPhase ?? 0)
           o.position.y = Math.max(0, Math.sin(now * 0.006 + phase) * 0.08)
         }
+        const kitMixer = o.userData.rpgKitMixer as THREE.AnimationMixer | undefined
+        if (kitMixer) kitMixer.update(dt)
       })
     }
 
