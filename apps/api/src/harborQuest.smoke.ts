@@ -113,7 +113,8 @@ assert.equal(rpgBag.rpg?.xp, 120)
 assert.equal(rpgBag.rpg?.gold, 9)
 assert.ok(rpgBag.rpg?.ownedCosmetics.includes('rpg-cloak-jade'))
 assert.ok(!rpgBag.rpg?.ownedCosmetics.includes('hack'))
-assert.equal(rpgBag.rpg?.equippedCosmetic, 'rpg-cloak-traveler')
+assert.equal(rpgBag.rpg?.equippedCosmetic, null)
+assert.equal(rpgBag.rpg?.equippedLooks?.back, 'rpg-cloak-traveler')
 const dusk = sanitizeHarborProgress({
   rpg: {
     ownedCosmetics: ['rpg-outfit-ranger-m-3', 'rpg-outfit-peasant-f-2'],
@@ -123,6 +124,7 @@ const dusk = sanitizeHarborProgress({
 assert.ok(dusk.rpg?.ownedCosmetics.includes('rpg-outfit-ranger-m-3'))
 assert.ok(dusk.rpg?.ownedCosmetics.includes('rpg-outfit-peasant-f-2'))
 assert.equal(dusk.rpg?.equippedCosmetic, 'rpg-outfit-ranger-m-3')
+assert.equal(dusk.rpg?.equippedLooks?.body, 'rpg-outfit-ranger-m-3')
 assert.equal(rpgBag.rpg?.shrineClaims, 3)
 assert.equal(rpgBag.xp, 0, 'rpg soft xp must not become pedagogy xp')
 

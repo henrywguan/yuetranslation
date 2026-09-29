@@ -509,7 +509,7 @@ export const HARBOR_RPG_CLASS_DEFS: Record<HarborRpgClassId, HarborRpgClassDef> 
         id: 'jh-mend',
         classId: 'jadeheart',
         name: { en: 'Harbor Mend', zh: '港癒' },
-        blurb: { en: 'Self heal (soft party heal later).', zh: '自我治療（日後可及隊友）。' },
+        blurb: { en: 'Heal yourself and party members in this zone.', zh: '治療自己與同區隊友。' },
         unlockLevel: 2,
         gcd: 1.1,
         cd: 6,

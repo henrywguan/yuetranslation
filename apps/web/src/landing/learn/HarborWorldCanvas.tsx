@@ -41,6 +41,7 @@ type Props = {
     toast?: { en: string; zh: string }
   }) => void
   onRpgPlayerDown?: (ev: { zone: HarborRpgZoneId; instance: boolean }) => void
+  onRpgPartyHeal?: (ev: { amount: number; zone: HarborRpgZoneId }) => void
   /** Pause simulation (chart / heavy overlays) — raf stays alive for a cheap resume. */
   paused?: boolean
   onVisitable?: (id: HarborVisitableId | null) => void
@@ -79,6 +80,7 @@ export function HarborWorldCanvas({
   rpgZonePeerIds,
   onRpgBossPhase,
   onRpgPlayerDown,
+  onRpgPartyHeal,
   paused = false,
   onVisitable,
   onDialogueNpc,
@@ -107,6 +109,8 @@ export function HarborWorldCanvas({
   onRpgBossPhaseRef.current = onRpgBossPhase
   const onRpgPlayerDownRef = useRef(onRpgPlayerDown)
   onRpgPlayerDownRef.current = onRpgPlayerDown
+  const onRpgPartyHealRef = useRef(onRpgPartyHeal)
+  onRpgPartyHealRef.current = onRpgPartyHeal
   const localUserIdRef = useRef(localUserId)
   localUserIdRef.current = localUserId
   const rpgPartySizeRef = useRef(rpgPartySize)
@@ -152,6 +156,7 @@ export function HarborWorldCanvas({
         rpgZonePeerIds: rpgZonePeerIdsRef.current,
         onRpgBossPhase: (ev) => onRpgBossPhaseRef.current?.(ev),
         onRpgPlayerDown: (ev) => onRpgPlayerDownRef.current?.(ev),
+        onRpgPartyHeal: (ev) => onRpgPartyHealRef.current?.(ev),
       })
     } catch (err) {
       console.error('[harbor] WebGL boot failed', err)

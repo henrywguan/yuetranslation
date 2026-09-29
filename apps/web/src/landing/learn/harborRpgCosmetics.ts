@@ -224,7 +224,7 @@ export const HARBOR_RPG_COSMETIC_DEFS: Record<HarborRpgCosmeticId, HarborRpgCosm
     scale: ATTACH_SCALE,
     cost: 55,
     gender: 'male',
-    blurb: { en: 'Modular hood — layers on Scout head.', zh: '模組風帽——疊在斥候頭上。' },
+    blurb: { en: 'Modular hood — layers on the library body.', zh: '模組風帽——疊在動作庫身體上。' },
   },
   'rpg-hood-ranger-f': {
     id: 'rpg-hood-ranger-f',
@@ -236,7 +236,7 @@ export const HARBOR_RPG_COSMETIC_DEFS: Record<HarborRpgCosmeticId, HarborRpgCosm
     scale: ATTACH_SCALE,
     cost: 55,
     gender: 'female',
-    blurb: { en: 'Modular hood — layers on Scout head.', zh: '模組風帽——疊在斥候頭上。' },
+    blurb: { en: 'Modular hood — layers on the library body.', zh: '模組風帽——疊在動作庫身體上。' },
   },
   'rpg-pauldron-ranger-m': {
     id: 'rpg-pauldron-ranger-m',

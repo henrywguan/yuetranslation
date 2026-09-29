@@ -50,6 +50,7 @@ type HarborStageProps = {
     toast?: { en: string; zh: string }
   }) => void
   onRpgPlayerDown?: (ev: { zone: HarborRpgZoneId; instance: boolean }) => void
+  onRpgPartyHeal?: (ev: { amount: number; zone: HarborRpgZoneId }) => void
   /** Landmark visit (Save Shack / Outfitter / Bank). */
   onVisitable?: (id: HarborVisitableId | null) => void
   /** Tap a nearby talkable NPC / speech bubble. */
@@ -86,6 +87,7 @@ export function HarborStage({
   rpgZonePeerIds,
   onRpgBossPhase,
   onRpgPlayerDown,
+  onRpgPartyHeal,
   onVisitable,
   onDialogueNpc,
   remotePlayers,
@@ -123,6 +125,7 @@ export function HarborStage({
         rpgZonePeerIds={rpgZonePeerIds}
         onRpgBossPhase={onRpgBossPhase}
         onRpgPlayerDown={onRpgPlayerDown}
+        onRpgPartyHeal={onRpgPartyHeal}
         paused={paused}
         onVisitable={onVisitable}
         onDialogueNpc={onDialogueNpc}

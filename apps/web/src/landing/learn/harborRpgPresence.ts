@@ -35,13 +35,14 @@ export const HARBOR_RPG_MARKET_EVENT = 'harbor-rpg-market' as const
 export const HARBOR_RPG_SOCIAL_EVENT = 'harbor-rpg-social' as const
 
 export type HarborRpgSocialPacket = {
-  kind: 'mail' | 'whisper' | 'duel-challenge' | 'duel-accept' | 'duel-hit' | 'pledge'
+  kind: 'mail' | 'whisper' | 'duel-challenge' | 'duel-accept' | 'duel-hit' | 'pledge' | 'party-heal'
   to: string
   from: string
   fromId: string
   mail?: import('./harborRpgMedium').HarborRpgMail
   body?: string
   damage?: number
+  zone?: string
   text?: string
   id?: string
   fleet?: string
@@ -258,7 +259,8 @@ function sanitizeSocial(raw: unknown): HarborRpgSocialPacket | null {
     kind !== 'duel-challenge' &&
     kind !== 'duel-accept' &&
     kind !== 'duel-hit' &&
-    kind !== 'pledge'
+    kind !== 'pledge' &&
+    kind !== 'party-heal'
   ) {
     return null
   }
@@ -274,8 +276,9 @@ function sanitizeSocial(raw: unknown): HarborRpgSocialPacket | null {
   if (typeof o.id === 'string') packet.id = o.id.slice(0, 40)
   if (typeof o.fleet === 'string') packet.fleet = o.fleet.slice(0, 24)
   if (typeof o.damage === 'number' && Number.isFinite(o.damage)) {
-    packet.damage = Math.max(1, Math.min(80, Math.floor(o.damage)))
+    packet.damage = Math.max(1, Math.min(400, Math.floor(o.damage)))
   }
+  if (typeof o.zone === 'string' && o.zone.length < 20) packet.zone = o.zone
   if (o.mail && typeof o.mail === 'object') {
     const m = o.mail as Record<string, unknown>
     if (typeof m.id === 'string' && typeof m.subject === 'string') {

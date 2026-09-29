@@ -65,6 +65,7 @@ import {
   HARBOR_RPG_PERFORM_GROUPS,
   HARBOR_RPG_PERFORMS,
 } from './harborRpgAnims'
+import { HARBOR_RPG_LOOK_SLOTS } from './harborRpgLooks'
 import {
   HARBOR_RPG_EMOTES,
   harborRpgWeatherForZone,
@@ -775,11 +776,13 @@ export function HarborRpgPanel({
         {tab === 'wardrobe' ? (
           <>
             <p className="hq-rpg-hint">
-              Wardrobe · Quaternius Modular Outfits (CC0) + soft placeholders. Equip one look at a
-              time · outfits replace Scout · hoods/pauldrons layer on.
-              {bag.equippedCosmetic && HARBOR_RPG_COSMETIC_DEFS[bag.equippedCosmetic as HarborRpgCosmeticId]
-                ? ` Wearing ${HARBOR_RPG_COSMETIC_DEFS[bag.equippedCosmetic as HarborRpgCosmeticId].name.en}.`
-                : ' Nothing equipped.'}
+              Wardrobe · body, head, shoulder, and back can be worn together. Motion is the
+              animation library.
+              {HARBOR_RPG_LOOK_SLOTS.map((slot) => {
+                const id = bag.equippedLooks[slot]
+                const name = id ? HARBOR_RPG_COSMETIC_DEFS[id as HarborRpgCosmeticId]?.name.en : null
+                return name ? ` ${slot}: ${name}.` : ''
+              }).join('')}
             </p>
             <div className="hq-rpg-inv-act" style={{ marginBottom: 8 }}>
               <button
@@ -794,7 +797,7 @@ export function HarborRpgPanel({
               {HARBOR_RPG_COSMETIC_IDS.map((id) => {
                 const def = HARBOR_RPG_COSMETIC_DEFS[id]
                 const owned = bag.ownedCosmetics.includes(id)
-                const active = bag.equippedCosmetic === id
+                const active = bag.equippedLooks[def.slot] === id
                 return (
                   <li key={id} className="hq-rpg-inv-row">
                     <span>
@@ -817,7 +820,7 @@ export function HarborRpgPanel({
                           Buy
                         </button>
                       ) : active ? (
-                        <button type="button" onClick={() => onEquipCosmetic(null)}>
+                        <button type="button" onClick={() => onEquipCosmetic(id)}>
                           Unequip
                         </button>
                       ) : (

@@ -136,17 +136,18 @@ export async function loadHarborRpgCosmetic(
 ): Promise<HarborRpgCosmeticInstance | null> {
   const def = HARBOR_RPG_COSMETIC_DEFS[id]
   if (!def.src) return null
+  const skinned = def.kind === 'outfit' || def.kind === 'attach'
   const [scene, clips] = await Promise.all([
     loadScene(def.src),
-    def.kind === 'outfit' ? loadHarborRpgUalClips() : Promise.resolve([] as THREE.AnimationClip[]),
+    skinned ? loadHarborRpgUalClips() : Promise.resolve([] as THREE.AnimationClip[]),
   ])
   if (!scene) return null
   const name = def.kind === 'outfit' ? 'rpg-cosmetic-outfit' : 'rpg-cosmetic-attach'
-  const cloned = def.kind === 'outfit' ? cloneSkinned(scene) : scene.clone(true)
+  const cloned = skinned ? cloneSkinned(scene) : scene.clone(true)
   const root = plantAndCel(cloned, def.scale, name)
   root.userData.rpgCosmeticId = id
   root.userData.rpgCosmeticKind = def.kind
-  const mixer = def.kind === 'outfit' && clips.length > 0 ? new THREE.AnimationMixer(root) : null
+  const mixer = skinned && clips.length > 0 ? new THREE.AnimationMixer(root) : null
   const inst: HarborRpgCosmeticInstance = {
     id,
     root,
@@ -220,8 +221,14 @@ export function tickHarborRpgCosmetic(
   dt: number,
   moving: boolean,
   sprint: boolean,
+  holdClip?: string | null,
 ): void {
   if (!inst.mixer) return
+  if (holdClip && isHarborRpgAnimClip(holdClip)) {
+    playHarborRpgCosmeticClip(inst, holdClip, harborRpgAnimLoops(holdClip), true)
+    inst.mixer.update(dt)
+    return
+  }
   if (inst.mode === 'perform') {
     const expired = !inst.performLoop && performance.now() >= inst.performUntil
     // Loops and the shrine death pose yield as soon as you walk.
@@ -236,6 +243,20 @@ export function tickHarborRpgCosmetic(
     playLoco(inst, 'idle')
   }
   inst.mixer.update(dt)
+}
+
+/** Keep a layered hood / pauldron on the same frame as the body. */
+export function lockHarborRpgCosmeticTime(
+  leader: HarborRpgCosmeticInstance,
+  follower: HarborRpgCosmeticInstance,
+): void {
+  if (!leader.action || !follower.mixer) return
+  const name = leader.action.getClip().name
+  const loop = leader.mode !== 'perform' || leader.performLoop
+  if (!follower.action || follower.action.getClip().name !== name) {
+    playHarborRpgCosmeticClip(follower, name, loop, true)
+  }
+  if (follower.action) follower.action.time = leader.action.time
 }
 
 export function disposeHarborRpgCosmetic(inst: HarborRpgCosmeticInstance): void {

@@ -1,6 +1,6 @@
 # HarborRPG · Separate adventure game (soft Realtime multiplayer)
 
-**Status:** v6.6 — Quaternius dye kits + Universal Animation Library on outfits · v6.5 medium loops · soft polish v6.2  
+**Status:** v6.7 — library motion on every body, layered looks, Gobkit companion, party heals, town folk · v6.6 dyes + UAL · v6.5 medium loops  
 **Branch:** `cursor/harborrpg-safe-impl-d66b`  
 **Audience:** Henry + engineering agents  
 
@@ -61,20 +61,26 @@ Town **Ferry Stable** (`rpg-stable`) sells / summons CC0 rideables:
 
 Bag fields: `ownedMounts` (starter includes `horse`), `activeMountId`. Summon boards a GLB + Idle/Walk/Gallop mixer; walk speed uses `speedMult`. Dismount from Stable tab. Credits: `apps/web/public/assets/harbor-quest/mounts/CREDITS.md`. OGA `.blend` sources kept under `oga-source/` (not rideable until GLB export).
 
-## Wardrobe cosmetics (v6.6)
+## Wardrobe cosmetics (v6.7)
 
-Town outfitter (`rpg-vendor`) + **Wardrobe** tab sell / equip CC0 looks:
+Town outfitter (`rpg-vendor`) + **Wardrobe** tab sell / equip CC0 looks. Body, head, shoulder, and back wear together.
 
 | Pack | Examples | Kind |
 |---|---|---|
-| Soft placeholders | Traveler Cloak (starter), Jade Cloak, helms, Ember Cape | Bag-only (no mesh yet) |
-| Quaternius Modular Outfits Fantasy | Ranger / Peasant (M/F), Dusk Ranger, Field Peasant, Ranger hood, pauldrons | `outfit` replaces Scout · `attach` layers on Scout |
+| Soft placeholders | Traveler Cloak (starter, back), Jade Cloak, helms, Ember Cape | Bag-only (no mesh yet) |
+| Quaternius Modular Outfits Fantasy | Ranger / Peasant (M/F), Dusk Ranger, Field Peasant, Ranger hood, pauldrons | `outfit` is the body · `attach` time-locks to that body |
 
 The free Standard zip (29 Jan 2026) is Ranger + Peasant plus two dye textures. Paid Source kits were not imported.
 
-Full outfits play Quaternius **Universal Animation Library 1 + 2** in place (`ual1.glb`, `ual2.glb`): idle / walk / sprint from foot movement, Wave · Bow · Cheer · Toast, a Perform menu, `Sword_Attack` on a landed hit, `Hit_Chest` when struck, `Death01` at the shrine after the existing instant respawn. Pose packets carry the clip so remotes play it. Hoods and pauldrons stay on the bind pose.
+HarborRPG hides River Scout. Motion is Quaternius **Universal Animation Library 1 + 2** (`ual1.glb`, `ual2.glb`) on the equipped outfit, or the peasant kit when the body slot has no mesh. Sit and mount hold `Sitting_Idle_Loop`. Perform lists the rest of the library. `Sword_Attack` plays on a landed hit, `Hit_Chest` when struck, `Death01` at the shrine after the instant respawn. Pose packets carry the clip and the visual body id so remotes use the same library.
 
-Bag: `ownedCosmetics`, `equippedCosmetic` (one look at a time). Presence / pose carry `equippedCosmetic`. Credits: `apps/web/public/assets/harbor-quest/cosmetics/CREDITS.md`. Research backlog: [`HARBORRPG-FREE-COSMETICS.md`](./HARBORRPG-FREE-COSMETICS.md).
+Bag: `ownedCosmetics`, `equippedLooks` (`body` / `head` / `shoulder` / `back`). `equippedCosmetic` mirrors the body slot. Credits: `apps/web/public/assets/harbor-quest/cosmetics/CREDITS.md`. Research backlog: [`HARBORRPG-FREE-COSMETICS.md`](./HARBORRPG-FREE-COSMETICS.md).
+
+Town stalls in the town zone spawn Quaternius outfits on library idles (vendor, finder, market, bank, bench, stable, ravenpost, reliquary).
+
+## Companion and party heals (v6.7)
+
+Hired companion is the Gobkit Free Minion (`companions/gobkit/minion-a01.glb`, CC0): idle follow, attack clip on a swing. Healer casts heal the caster and, when the party has two or more members in this zone, broadcast `party-heal` so those members gain the same amount. No shared HP sim.
 
 ## Medium systems (v6.5)
 
@@ -114,7 +120,7 @@ In-game **HarborRPG Wiki** (Field → HarborRPG Wiki):
 
 1. **Player-down** — toast + SFX; overworld soft shrine respawn; **instance wipe** reseeds packs
 2. **Remote mounts** — presence / pose carry `activeMountId`; remotes render the same GLB ride
-3. **Companion ally** — hired companion auto-swings nearby foes + follows as a soft fox mesh
+3. **Companion ally** — hired companion auto-swings nearby foes and follows as the Gobkit minion
 4. **Deeds HUD** — Achievements tab with progress bars; unlock titles → pin on Field
 5. **Professions** — 15 craft recipes · 11 gather nodes (mana / cloth / hood / wraps / sandals / tome / lantern)
 6. **Ability depth** — 7 skills per class (mid + late unlocks); bar still caps at 5
@@ -139,7 +145,7 @@ Zone **host** = lowest `userId` in zone; ~5 Hz monster snaps (`harbor-rpg-world`
 4. **Quest density** · finder roles · companion fill
 5. **Mounts:** 30+ CC0 animals · Ferry Stable · board/ride/dismount
 6. **Wiki:** every entity page · loot sources · mount/achievement obtain
-7. **Wardrobe:** Quaternius Ranger/Peasant + dusk/field dyes · UAL1/UAL2 on full outfits · hood/pauldron attaches · soft placeholders
+7. **Wardrobe:** layered body / head / shoulder / back · peasant fallback · full UAL Perform menu · town folk · Gobkit companion · party heals
 7. **Art/SFX:** curated dungeon/raid props + boss meshes; soft WebAudio stings
 
 ## Feel bar

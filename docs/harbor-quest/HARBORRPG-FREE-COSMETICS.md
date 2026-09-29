@@ -1,6 +1,6 @@
 # HarborRPG · Free cosmetic / animated asset scout
 
-**Status:** v6.6 live — free Standard kits (Ranger, Peasant, two dyes) + UAL1/UAL2 on full outfits  
+**Status:** v6.7 live — always-UAL body, layered looks, Gobkit minion, town folk · v6.6 dyes + UAL1/UAL2  
 **Date:** 2026-09-29  
 **Goal:** CC0 / free-for-commercial models with **motion or animation-friendly rigs** that can become HarborRPG show / cloak / hat / companion flair — **not** ClaudeCraft IP, not Jagex art.
 
@@ -52,8 +52,8 @@ Still soft placeholders (no mesh): `rpg-cloak-traveler` (starter), jade cloak, l
 ## Suggested next imports
 
 1. ~~Quaternius Modular Outfits Fantasy (cloak + hood + helm parts)~~ **shipped v6.3**
-2. ~~Universal Animation Library (death / wave / bow for deeds / titles)~~ **shipped v6.6** (UAL1 + UAL2, in-place)
-3. Gobkit Free Minions (animated companion skins to replace the soft fox primitive)
+2. ~~Universal Animation Library (death / wave / bow for deeds / titles)~~ **shipped v6.6**, full Perform menu **v6.7** (UAL1 + UAL2, in-place)
+3. ~~Gobkit Free Minions (animated companion skins to replace the soft fox primitive)~~ **shipped v6.7** (`minion-a01.glb`)
 4. Optional: Kenney Animated Characters skins for town NPCs
 5. More Quaternius modular outfits — free Standard (verified 29 Jan 2026) still has only Ranger + Peasant. Knight / Mage / Noble / Wizard are outside that zip.
 

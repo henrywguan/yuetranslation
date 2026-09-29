@@ -255,15 +255,6 @@ function npcStall(
   g.add(postL)
   const postR = hqPost(0.06, 0.06, 1.3, 0x5a4030, 0.7, 0.65, 0.4)
   g.add(postR)
-  const figure = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.25, 0.3, 0.9, 8),
-    hqMat(0x506888),
-  )
-  figure.position.set(0, 0.55, -0.35)
-  g.add(figure)
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), hqMat(P.skin))
-  head.position.set(0, 1.15, -0.35)
-  g.add(head)
   g.userData.rpgInteract = interactId
   return g
 }

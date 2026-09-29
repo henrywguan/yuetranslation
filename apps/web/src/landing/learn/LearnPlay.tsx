@@ -69,6 +69,7 @@ import {
 import { HarborRpgPanel } from './HarborRpgPanel'
 import { HarborRpgWiki } from './HarborRpgWiki'
 import { awardRpgContestedLoot } from './harborRpgCombat'
+import { harborRpgVisualBodyId } from './harborRpgLooks'
 import { emptyHarborRpgBag, sanitizeHarborRpgBag } from './harborRpgProgress'
 import { harborRpgEmoteClip } from './harborRpgAnims'
 import { applyRpgMedium } from './harborRpgMedium'
@@ -291,6 +292,13 @@ export function LearnSession({
   const [rpgZonePeers, setRpgZonePeers] = useState<string[]>([])
   const [rpgTrade, setRpgTrade] = useState<HarborRpgTradeSession | null>(null)
   const [rpgPartyLive, setRpgPartyLive] = useState<HarborRpgPartyState | null>(null)
+  const rpgPartyLiveRef = useRef(rpgPartyLive)
+  rpgPartyLiveRef.current = rpgPartyLive
+  const rpgVisualBodyRef = useRef('rpg-outfit-peasant-m')
+  rpgVisualBodyRef.current = harborRpgVisualBodyId(
+    progressSnap.rpg?.equippedLooks,
+    progressSnap.gender === 'female' ? 'female' : 'male',
+  )
   const [rpgPartyInvite, setRpgPartyInvite] = useState<HarborRpgPartyInvite | null>(null)
   const rpgFinderLookingRef = useRef<{
     lookingRole: import('./harborRpgFinder').HarborRpgFinderRole | null
@@ -550,6 +558,17 @@ export function LearnSession({
           handleRpgTradeOfferRef.current?.(offer)
         },
         onSocial: (packet) => {
+          if (packet.kind === 'party-heal') {
+            const selfId = localUserIdRef.current ?? 'local'
+            const party = rpgPartyLiveRef.current
+            const zone = progressSnap.rpg?.zone ?? rpgZone
+            if (packet.fromId === selfId) return
+            if (!party || packet.zone !== zone) return
+            if (!party.members.some((m) => m.userId === packet.fromId)) return
+            if (!party.members.some((m) => m.userId === selfId)) return
+            worldApiRef.current?.applyRpgHeal(packet.damage ?? 1)
+            return
+          }
           const bag = sanitizeHarborRpgBag(progressSnap.rpg)
           const charName =
             bag.characters.find((c) => c.id === bag.activeCharacterId)?.name ?? ''
@@ -649,7 +668,7 @@ export function LearnSession({
           lookingRole: rpgFinderLookingRef.current.lookingRole,
           lookingDungeon: rpgFinderLookingRef.current.lookingDungeon,
           activeMountId: progressSnap.rpg?.activeMountId ?? null,
-          equippedCosmetic: progressSnap.rpg?.equippedCosmetic ?? null,
+          equippedCosmetic: rpgVisualBodyRef.current,
           afk: progressSnap.rpg?.afk === true,
           fleetName: progressSnap.rpg?.fleetName ?? null,
           activeTitleId: progressSnap.rpg?.activeTitleId ?? null,
@@ -661,7 +680,7 @@ export function LearnSession({
           yaw: pose.yaw,
           zone,
           activeMountId: progressSnap.rpg?.activeMountId ?? null,
-          equippedCosmetic: progressSnap.rpg?.equippedCosmetic ?? null,
+          equippedCosmetic: rpgVisualBodyRef.current,
           emote: worldApiRef.current?.getRpgPerformClip() ?? null,
         })
       }
@@ -1579,6 +1598,23 @@ export function LearnSession({
           onRpgBossPhase={(ev) => {
             playHarborRpgBossPhase()
             flashRpgToast(ev.toast?.en ?? `${ev.name.en} (phase ${ev.phase + 1})`)
+          }}
+          onRpgPartyHeal={(ev) => {
+            const party = rpgPartyLive
+            const selfId = localUserIdRef.current ?? 'local'
+            if (!party || party.members.length < 2) return
+            if (!party.members.some((m) => m.userId === selfId)) return
+            const from =
+              progressSnap.rpg?.characters.find((c) => c.id === progressSnap.rpg?.activeCharacterId)
+                ?.name || 'Adventurer'
+            rpgPresenceRef.current?.broadcastSocial({
+              kind: 'party-heal',
+              to: 'party',
+              from,
+              fromId: selfId,
+              damage: ev.amount,
+              zone: ev.zone,
+            })
           }}
           onRpgPlayerDown={(ev) => {
             playHarborRpgPlayerDown()

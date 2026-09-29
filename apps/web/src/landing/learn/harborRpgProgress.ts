@@ -78,6 +78,14 @@ import {
   isHarborRpgCosmeticId,
   type HarborRpgCosmeticId,
 } from './harborRpgCosmetics'
+import {
+  emptyHarborRpgLooks,
+  equipHarborRpgLook,
+  harborRpgLookSlot,
+  sanitizeHarborRpgLooks,
+  starterHarborRpgLooks,
+  type HarborRpgEquippedLooks,
+} from './harborRpgLooks'
 
 export {
   HARBOR_RPG_COSMETICS,
@@ -119,7 +127,9 @@ export type HarborRpgBag = {
   xp: number
   gold: number
   ownedCosmetics: string[]
+  /** Body slot. Mirrors `equippedLooks.body`. */
   equippedCosmetic: string | null
+  equippedLooks: HarborRpgEquippedLooks
   boosts: HarborRpgBoosts
   shrineClaims: number
   dummyKills: number
@@ -223,7 +233,8 @@ export function emptyHarborRpgBag(): HarborRpgBag {
     xp: 0,
     gold: 12,
     ownedCosmetics: ['rpg-cloak-traveler'],
-    equippedCosmetic: 'rpg-cloak-traveler',
+    equippedCosmetic: null,
+    equippedLooks: starterHarborRpgLooks(),
     boosts: { xpMultUntil: 0, creditMultUntil: 0 },
     shrineClaims: 0,
     dummyKills: 0,
@@ -573,14 +584,8 @@ export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
       if (typeof id === 'string' && COSMETIC_SET.has(id)) owned.add(id)
     }
   }
-  const equippedCosmetic: string | null =
-    o.equippedCosmetic === null
-      ? null
-      : typeof o.equippedCosmetic === 'string' && owned.has(o.equippedCosmetic)
-        ? o.equippedCosmetic
-        : owned.has('rpg-cloak-traveler')
-          ? 'rpg-cloak-traveler'
-          : null
+  const equippedLooks = sanitizeHarborRpgLooks(o.equippedLooks, owned, o.equippedCosmetic)
+  const equippedCosmetic = equippedLooks.body
 
   const boostsRaw =
     o.boosts && typeof o.boosts === 'object' ? (o.boosts as Record<string, unknown>) : {}
@@ -630,6 +635,7 @@ export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
     gold,
     ownedCosmetics: [...owned],
     equippedCosmetic,
+    equippedLooks,
     boosts,
     shrineClaims,
     dummyKills,
@@ -801,10 +807,31 @@ export function mergeHarborRpgBag(a: HarborRpgBag, b: HarborRpgBag): HarborRpgBa
       : null) ||
     characters[0]?.id ||
     null
-  const equipped =
+  const equippedLooks = sanitizeHarborRpgLooks(
+    {
+      body:
+        (b.equippedLooks?.body && owned.has(b.equippedLooks.body) && b.equippedLooks.body) ||
+        (a.equippedLooks?.body && owned.has(a.equippedLooks.body) && a.equippedLooks.body) ||
+        null,
+      head:
+        (b.equippedLooks?.head && owned.has(b.equippedLooks.head) && b.equippedLooks.head) ||
+        (a.equippedLooks?.head && owned.has(a.equippedLooks.head) && a.equippedLooks.head) ||
+        null,
+      shoulder:
+        (b.equippedLooks?.shoulder && owned.has(b.equippedLooks.shoulder) && b.equippedLooks.shoulder) ||
+        (a.equippedLooks?.shoulder && owned.has(a.equippedLooks.shoulder) && a.equippedLooks.shoulder) ||
+        null,
+      back:
+        (b.equippedLooks?.back && owned.has(b.equippedLooks.back) && b.equippedLooks.back) ||
+        (a.equippedLooks?.back && owned.has(a.equippedLooks.back) && a.equippedLooks.back) ||
+        null,
+    },
+    owned,
     (b.equippedCosmetic && owned.has(b.equippedCosmetic) && b.equippedCosmetic) ||
-    (a.equippedCosmetic && owned.has(a.equippedCosmetic) && a.equippedCosmetic) ||
-    'rpg-cloak-traveler'
+      (a.equippedCosmetic && owned.has(a.equippedCosmetic) && a.equippedCosmetic) ||
+      null,
+  )
+  const equipped = equippedLooks.body
   const inventory = mergeInv(a.inventory, b.inventory, HARBOR_RPG_MAX_INV_STACKS)
   const bank = mergeInv(a.bank, b.bank, HARBOR_RPG_MAX_BANK_STACKS)
   const kills: HarborRpgKillCounts = { ...a.kills }
@@ -846,6 +873,7 @@ export function mergeHarborRpgBag(a: HarborRpgBag, b: HarborRpgBag): HarborRpgBa
     gold: Math.max(a.gold, b.gold),
     ownedCosmetics: [...owned],
     equippedCosmetic: equipped,
+    equippedLooks,
     boosts: {
       xpMultUntil: Math.max(a.boosts.xpMultUntil, b.boosts.xpMultUntil),
       creditMultUntil: Math.max(a.boosts.creditMultUntil, b.boosts.creditMultUntil),
@@ -958,14 +986,24 @@ export function buyRpgCosmetic(
   }
 }
 
-/** Equip (or clear) a wardrobe cosmetic. Must be owned. */
+/** Equip into that piece's slot. The same id again clears only that slot. Null clears every slot. */
 export function setRpgEquippedCosmetic(
   bag: HarborRpgBag,
   cosmeticId: HarborRpgCosmeticId | null,
 ): HarborRpgBag | null {
-  if (cosmeticId == null) return { ...bag, equippedCosmetic: null }
+  if (cosmeticId == null) {
+    const equippedLooks = equipHarborRpgLook(bag.equippedLooks ?? emptyHarborRpgLooks(), null)
+    return { ...bag, equippedLooks, equippedCosmetic: null }
+  }
   if (!bag.ownedCosmetics.includes(cosmeticId)) return null
-  return { ...bag, equippedCosmetic: cosmeticId }
+  const current = bag.equippedLooks ?? emptyHarborRpgLooks()
+  const slot = harborRpgLookSlot(cosmeticId)
+  if (current[slot] === cosmeticId) {
+    const equippedLooks = { ...current, [slot]: null }
+    return { ...bag, equippedLooks, equippedCosmetic: equippedLooks.body }
+  }
+  const equippedLooks = equipHarborRpgLook(current, cosmeticId)
+  return { ...bag, equippedLooks, equippedCosmetic: equippedLooks.body }
 }
 
 export function createHarborRpgCharacter(input: {

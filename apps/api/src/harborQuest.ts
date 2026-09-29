@@ -86,6 +86,12 @@ export type HarborQuestProgress = {
     gold: number
     ownedCosmetics: string[]
     equippedCosmetic: string | null
+    equippedLooks?: {
+      body: string | null
+      head: string | null
+      shoulder: string | null
+      back: string | null
+    }
     boosts: { xpMultUntil: number; creditMultUntil: number }
     shrineClaims: number
     dummyKills: number
@@ -468,7 +474,13 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     xp: 0,
     gold: 0,
     ownedCosmetics: ['rpg-cloak-traveler'],
-    equippedCosmetic: 'rpg-cloak-traveler' as string | null,
+    equippedCosmetic: null as string | null,
+    equippedLooks: {
+      body: null as string | null,
+      head: null as string | null,
+      shoulder: null as string | null,
+      back: 'rpg-cloak-traveler' as string | null,
+    },
     boosts: { xpMultUntil: 0, creditMultUntil: 0 },
     shrineClaims: 0,
     dummyKills: 0,
@@ -603,14 +615,29 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
       if (typeof id === 'string' && HARBOR_RPG_COSMETICS.has(id)) owned.add(id)
     }
   }
-  let equippedCosmetic: string | null =
-    o.equippedCosmetic === null
-      ? null
-      : typeof o.equippedCosmetic === 'string' && owned.has(o.equippedCosmetic)
-        ? o.equippedCosmetic
-        : owned.has('rpg-cloak-traveler')
-          ? 'rpg-cloak-traveler'
-          : null
+  const lookSlots = ['body', 'head', 'shoulder', 'back'] as const
+  const lookSlotOf = (id: string) =>
+    id.includes('hood') ? 'head'
+    : id.includes('pauldron') ? 'shoulder'
+    : id.includes('cloak') || id.includes('cape') ? 'back'
+    : 'body'
+  const equippedLooks = { body: null as string | null, head: null as string | null, shoulder: null as string | null, back: null as string | null }
+  const rawLooks = o.equippedLooks && typeof o.equippedLooks === 'object' ? (o.equippedLooks as Record<string, unknown>) : null
+  if (rawLooks) {
+    for (const slot of lookSlots) {
+      const id = rawLooks[slot]
+      if (typeof id === 'string' && HARBOR_RPG_COSMETICS.has(id) && owned.has(id) && lookSlotOf(id) === slot) {
+        equippedLooks[slot] = id
+      }
+    }
+  }
+  if (typeof o.equippedCosmetic === 'string' && HARBOR_RPG_COSMETICS.has(o.equippedCosmetic) && owned.has(o.equippedCosmetic)) {
+    const slot = lookSlotOf(o.equippedCosmetic)
+    if (!equippedLooks[slot]) equippedLooks[slot] = o.equippedCosmetic
+  } else if (o.equippedCosmetic !== null && !rawLooks && owned.has('rpg-cloak-traveler')) {
+    if (!equippedLooks.back) equippedLooks.back = 'rpg-cloak-traveler'
+  }
+  const equippedCosmetic = equippedLooks.body
   const boostsRaw =
     o.boosts && typeof o.boosts === 'object' ? (o.boosts as Record<string, unknown>) : {}
   const boosts = {
@@ -796,6 +823,7 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     gold,
     ownedCosmetics: [...owned],
     equippedCosmetic,
+    equippedLooks,
     boosts,
     shrineClaims,
     dummyKills,

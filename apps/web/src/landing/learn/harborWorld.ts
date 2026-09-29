@@ -130,10 +130,18 @@ import {
   disposeHarborRpgCosmetic,
   harborRpgCosmeticPerforming,
   loadHarborRpgCosmetic,
+  lockHarborRpgCosmeticTime,
   playHarborRpgCosmeticClip,
   tickHarborRpgCosmetic,
   type HarborRpgCosmeticInstance,
 } from './harborRpgCosmeticRuntime'
+import {
+  disposeHarborRpgCompanion,
+  loadHarborRpgCompanion,
+  tickHarborRpgCompanion,
+  type HarborRpgCompanionInstance,
+} from './harborRpgCompanionRuntime'
+import { HARBOR_RPG_TOWN_FOLK, harborRpgFallbackBodyId } from './harborRpgLooks'
 import { harborRpgAnimLoops, isHarborRpgAnimClip } from './harborRpgAnims'
 import {
   harborRpgCosmeticById,
@@ -269,6 +277,8 @@ export type HarborWorldOptions = {
     instance: boolean
     recap?: { monsterId: string; damage: number }[]
   }) => void
+  /** Healer cast — party members in the zone apply this on their client. */
+  onRpgPartyHeal?: (ev: { amount: number; zone: HarborRpgZoneId }) => void
   /** Fires when the canoe enters / leaves a visitable landmark. */
   onVisitable?: (id: HarborVisitableId | null) => void
   /** Tap a talkable NPC / speech bubble while in range. */
@@ -352,6 +362,8 @@ export type HarborWorldHandle = {
   playRpgPerform: (clip: string, force?: boolean) => void
   /** Clip currently broadcasting to remotes, or null. */
   getRpgPerformClip: () => string | null
+  /** Incoming party heal (soft client). */
+  applyRpgHeal: (amount: number) => void
   /** Soft Realtime: apply host monster snapshot (non-host clients). */
   applyRpgWorldSnapshot: (
     packet: import('./harborRpgWorldSync').HarborRpgWorldPacket,
@@ -4664,6 +4676,12 @@ export function createHarborWorld(
   let rpgMountWantId: HarborRpgMountId | null = null
   let rpgMountLoadingId: HarborRpgMountId | null = null
   let rpgCompanionMesh: THREE.Group | null = null
+  let rpgCompanionInst: HarborRpgCompanionInstance | null = null
+  let rpgCompanionLoading = false
+  let rpgCompanionAttackUntil = 0
+  let rpgLayers: HarborRpgCosmeticInstance[] = []
+  let rpgLayerKey = ''
+  const rpgTownFolk: HarborRpgCosmeticInstance[] = []
   let rpgCosmeticLive: HarborRpgCosmeticInstance | null = null
   let rpgCosmeticWantId: HarborRpgCosmeticId | null = null
   let rpgCosmeticLoadingId: HarborRpgCosmeticId | null = null
@@ -4673,52 +4691,41 @@ export function createHarborWorld(
   const remoteRpgCosmetics = new Map<string, HarborRpgCosmeticInstance>()
   const remoteRpgCosmeticLoading = new Map<string, string>()
 
-  const buildRpgCompanionMesh = (name: string) => {
-    const g = new THREE.Group()
-    g.name = 'rpg-companion'
-    const body = new THREE.Mesh(
-      new THREE.SphereGeometry(0.28, 10, 8),
-      new THREE.MeshLambertMaterial({ color: 0xc4783a }),
-    )
-    body.position.y = 0.32
-    body.scale.set(1, 0.85, 1.15)
-    const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.18, 8, 6),
-      new THREE.MeshLambertMaterial({ color: 0xd4924a }),
-    )
-    head.position.set(0, 0.52, 0.16)
-    const earL = new THREE.Mesh(
-      new THREE.ConeGeometry(0.07, 0.16, 5),
-      new THREE.MeshLambertMaterial({ color: 0xa85e2a }),
-    )
-    earL.position.set(-0.1, 0.68, 0.1)
-    const earR = earL.clone()
-    earR.position.x = 0.1
-    g.add(body, head, earL, earR)
-    g.userData.companionName = name
-    return g
+  const clearRpgCompanion = () => {
+    if (rpgCompanionInst) {
+      rpgCompanionInst.root.parent?.remove(rpgCompanionInst.root)
+      disposeHarborRpgCompanion(rpgCompanionInst)
+      rpgCompanionInst = null
+    }
+    rpgCompanionMesh = null
+    rpgCompanionLoading = false
   }
 
   const syncRpgCompanion = () => {
     if (!isRpg || !rpgScene) {
-      if (rpgCompanionMesh) {
-        rpgCompanionMesh.parent?.remove(rpgCompanionMesh)
-        rpgCompanionMesh = null
-      }
+      clearRpgCompanion()
       return
     }
     const on = rpgHasCompanion(rpgBagLive)
     if (!on) {
-      if (rpgCompanionMesh) {
-        rpgCompanionMesh.parent?.remove(rpgCompanionMesh)
-        rpgCompanionMesh = null
-      }
+      clearRpgCompanion()
       return
     }
-    if (!rpgCompanionMesh) {
-      rpgCompanionMesh = buildRpgCompanionMesh(rpgBagLive.companionName ?? 'Ally')
-      rpgScene.add(rpgCompanionMesh)
-    }
+    if (rpgCompanionInst || rpgCompanionLoading) return
+    rpgCompanionLoading = true
+    const name = rpgBagLive.companionName ?? 'Ally'
+    void loadHarborRpgCompanion(name).then((inst) => {
+      rpgCompanionLoading = false
+      if (disposed || !rpgHasCompanion(rpgBagLive)) {
+        if (inst) disposeHarborRpgCompanion(inst)
+        return
+      }
+      if (!inst || !rpgScene) return
+      clearRpgCompanion()
+      rpgCompanionInst = inst
+      rpgCompanionMesh = inst.root
+      rpgScene.add(inst.root)
+    })
   }
   // Guan Harbor / HarborRPG always force sunny daylight.
   const weather: HarborWeather = isGuan
@@ -4904,6 +4911,22 @@ export function createHarborWorld(
     fxIndexDirty = true
   } else if (isRpg) {
     rpgScene = buildRpgZoneScene(rpgZone)
+    if (rpgZone === 'town') {
+      for (const folk of HARBOR_RPG_TOWN_FOLK) {
+        if (!isHarborRpgCosmeticId(folk.id)) continue
+        void loadHarborRpgCosmetic(folk.id).then((inst) => {
+          if (disposed || !inst || !rpgScene) {
+            if (inst) disposeHarborRpgCosmetic(inst)
+            return
+          }
+          inst.root.position.set(folk.x, 0, folk.z)
+          inst.root.rotation.y = Math.atan2(-folk.x, -folk.z)
+          scene.add(inst.root)
+          playHarborRpgCosmeticClip(inst, folk.clip, harborRpgAnimLoops(folk.clip), true)
+          rpgTownFolk.push(inst)
+        })
+      }
+    }
     world.add(rpgScene)
     fxIndexDirty = true
     resetRpgCombatSessionCd()
@@ -5052,7 +5075,7 @@ export function createHarborWorld(
   if (isRpg) {
     boat.visible = false
     if (scout) scout.visible = false
-    scoutWalk.visible = true
+    scoutWalk.visible = false
   }
   let scoutAnim: HarborProtagonistAnimState = { mode: 'idle', t: 0 }
   /** Seated land mesh — shown when the sailor sits on a chair / stool. */
@@ -5117,7 +5140,7 @@ export function createHarborWorld(
       sitTarget = null
       moveTarget.x = footX
       moveTarget.z = footZ
-      scoutWalk.visible = true
+      if (!isRpg) scoutWalk.visible = true
       if (scoutSit) scoutSit.visible = false
     }
     // Aim past the splash but keep the sailor in frame — the cast / reel
@@ -5252,10 +5275,15 @@ export function createHarborWorld(
   }
 
   const syncRemoteRpgCosmetic = (userId: string, cosmeticId: string | null) => {
-    const want =
-      cosmeticId && isHarborRpgCosmeticId(cosmeticId) && harborRpgCosmeticById(cosmeticId)?.src
-        ? (cosmeticId as HarborRpgCosmeticId)
-        : null
+    const picked =
+      cosmeticId && isHarborRpgCosmeticId(cosmeticId) ? harborRpgCosmeticById(cosmeticId) : null
+    const resolved =
+      picked?.kind === 'outfit' && picked.src
+        ? cosmeticId
+        : isRpg
+          ? harborRpgFallbackBodyId('male')
+          : null
+    const want = resolved && isHarborRpgCosmeticId(resolved) ? resolved : null
     const live = remoteRpgCosmetics.get(userId)
     if (!want) {
       if (live) {
@@ -5432,16 +5460,25 @@ export function createHarborWorld(
     rpgMountLoadingId = null
   }
 
+  const clearRpgLayers = () => {
+    for (const layer of rpgLayers) {
+      layer.root.parent?.remove(layer.root)
+      disposeHarborRpgCosmetic(layer)
+    }
+    rpgLayers = []
+    rpgLayerKey = ''
+  }
+
   const clearRpgCosmetic = () => {
     if (rpgCosmeticLive) {
       rpgCosmeticLive.root.parent?.remove(rpgCosmeticLive.root)
       disposeHarborRpgCosmetic(rpgCosmeticLive)
       rpgCosmeticLive = null
     }
+    clearRpgLayers()
     rpgCosmeticWantId = null
     rpgCosmeticLoadingId = null
-    // Restore scout when outfit cleared (unless mounted / sitting)
-    if (travelMode === 'foot' && !sitting && !rpgMountLive) {
+    if (!isRpg && travelMode === 'foot' && !sitting && !rpgMountLive) {
       scoutWalk.visible = true
     }
   }
@@ -5451,26 +5488,43 @@ export function createHarborWorld(
       clearRpgCosmetic()
       return
     }
-    const raw = rpgBagLive.equippedCosmetic
-    const want =
-      raw && isHarborRpgCosmeticId(raw) && harborRpgCosmeticById(raw)?.src
-        ? (raw as HarborRpgCosmeticId)
-        : null
-    rpgCosmeticWantId = want
-    if (!want) {
-      clearRpgCosmetic()
-      return
+    const looks = rpgBagLive.equippedLooks
+    const bodyPick = looks?.body
+    const bodyDef = bodyPick ? harborRpgCosmeticById(bodyPick) : null
+    const actorId =
+      bodyDef?.kind === 'outfit' && bodyDef.src
+        ? bodyPick
+        : harborRpgFallbackBodyId(currentGender === 'female' ? 'female' : 'male')
+    const layerIds = (['head', 'shoulder', 'back'] as const)
+      .map((slot) => looks?.[slot])
+      .filter((id): id is string => {
+        if (!id || !isHarborRpgCosmeticId(id)) return false
+        const def = harborRpgCosmeticById(id)
+        return Boolean(def?.src && def.kind === 'attach')
+      })
+    const layerKey = layerIds.join('|')
+    if (rpgLayerKey !== layerKey) {
+      clearRpgLayers()
+      rpgLayerKey = layerKey
+      for (const id of layerIds) {
+        if (!isHarborRpgCosmeticId(id)) continue
+        void loadHarborRpgCosmetic(id).then((inst) => {
+          if (disposed || !inst || rpgLayerKey !== layerKey) {
+            if (inst) disposeHarborRpgCosmetic(inst)
+            return
+          }
+          scene.add(inst.root)
+          rpgLayers.push(inst)
+        })
+      }
     }
-    if (rpgCosmeticLive?.id === want) return
-    if (rpgCosmeticLoadingId === want) return
-    const def = harborRpgCosmeticById(want)
-    if (!def?.src) {
-      clearRpgCosmetic()
-      return
-    }
-    rpgCosmeticLoadingId = want
-    void loadHarborRpgCosmetic(want).then((inst) => {
-      if (disposed || rpgCosmeticWantId !== want) {
+    if (!isHarborRpgCosmeticId(actorId)) return
+    rpgCosmeticWantId = actorId
+    if (rpgCosmeticLive?.id === actorId) return
+    if (rpgCosmeticLoadingId === actorId) return
+    rpgCosmeticLoadingId = actorId
+    void loadHarborRpgCosmetic(actorId).then((inst) => {
+      if (disposed || rpgCosmeticWantId !== actorId) {
         if (inst) disposeHarborRpgCosmetic(inst)
         return
       }
@@ -5481,26 +5535,16 @@ export function createHarborWorld(
       rpgCosmeticLive = inst
       rpgCosmeticLoadingId = null
       if (!inst) return
-      if (inst.def.kind === 'outfit') {
-        scene.add(inst.root)
-        // Outfit replaces scout body while on foot (mount / sit still win)
-        if (travelMode === 'foot' && !sitting && !rpgMountLive) {
-          scoutWalk.visible = false
-        }
-        if (rpgPerformClip) {
-          playHarborRpgCosmeticClip(
-            inst,
-            rpgPerformClip,
-            harborRpgAnimLoops(rpgPerformClip),
-            rpgPerformClip === 'Death01',
-          )
-        }
-      } else {
-        // Attach layers on scout — keep scout visible
-        scoutWalk.add(inst.root)
-        if (travelMode === 'foot' && !sitting && !rpgMountLive) {
-          scoutWalk.visible = true
-        }
+      scene.add(inst.root)
+      scoutWalk.visible = false
+      if (scoutSit) scoutSit.visible = false
+      if (rpgPerformClip) {
+        playHarborRpgCosmeticClip(
+          inst,
+          rpgPerformClip,
+          harborRpgAnimLoops(rpgPerformClip),
+          rpgPerformClip === 'Death01',
+        )
       }
     })
   }
@@ -6006,7 +6050,7 @@ export function createHarborWorld(
       // Fold Scout armature into a canoe sit — without this the GLB stays T-pose.
       if (scout && fishAnim.phase === 'idle') {
         scout.visible = true
-        scoutAnim = tickHarborProtagonistAnim(scout, { ...scoutAnim, mode: 'sit' }, dt, { reduced })
+        if (!isRpg) scoutAnim = tickHarborProtagonistAnim(scout, { ...scoutAnim, mode: 'sit' }, dt, { reduced })
       }
       // Landmark panels only when the sailor steered here and arrived —
       // never while auto-quest sailing past Save / Outfitter / Bank / etc.
@@ -6035,7 +6079,7 @@ export function createHarborWorld(
             scoutSit.position.z = footZ
           }
           if (fishAnim.phase === 'idle') {
-            scoutAnim = tickHarborProtagonistAnim(scoutSit, { ...scoutAnim, mode: 'sit' }, dt, {
+            if (!isRpg) scoutAnim = tickHarborProtagonistAnim(scoutSit, { ...scoutAnim, mode: 'sit' }, dt, {
               reduced,
             })
           }
@@ -6068,14 +6112,14 @@ export function createHarborWorld(
             )
             sit.rotation.y = rpgMountLive.root.rotation.y
             if (fishAnim.phase === 'idle') {
-              scoutAnim = tickHarborProtagonistAnim(sit, { ...scoutAnim, mode: 'sit' }, dt, {
+              if (!isRpg) scoutAnim = tickHarborProtagonistAnim(sit, { ...scoutAnim, mode: 'sit' }, dt, {
                 reduced,
               })
             }
           } else {
             if (fishAnim.phase === 'idle') {
               scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 10)
-              scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: 'walk' }, dt, {
+              if (!isRpg) scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: 'walk' }, dt, {
                 reduced,
               })
             }
@@ -6094,13 +6138,13 @@ export function createHarborWorld(
             sit.position.set(footX, gy + rpgMountLive.def.saddleY, footZ)
             sit.rotation.y = rpgMountLive.root.rotation.y
             if (fishAnim.phase === 'idle') {
-              scoutAnim = tickHarborProtagonistAnim(sit, { ...scoutAnim, mode: 'sit' }, dt, {
+              if (!isRpg) scoutAnim = tickHarborProtagonistAnim(sit, { ...scoutAnim, mode: 'sit' }, dt, {
                 reduced,
               })
             }
           } else {
             if (fishAnim.phase === 'idle') {
-              scoutAnim = tickHarborProtagonistAnim(
+              if (!isRpg) scoutAnim = tickHarborProtagonistAnim(
                 scoutWalk,
                 { ...scoutAnim, mode: sitting ? 'sit' : 'idle' },
                 dt,
@@ -6125,27 +6169,42 @@ export function createHarborWorld(
         }
       }
 
-      // HarborRPG wardrobe — outfit follows feet; attach is parented to scoutWalk
+      // HarborRPG body is always a UAL humanoid — Scout motion stays hidden.
+      if (isRpg) {
+        scoutWalk.visible = false
+        if (scoutSit) scoutSit.visible = false
+        if (scout) scout.visible = false
+      }
       if (isRpg && rpgCosmeticLive) {
         const cos = rpgCosmeticLive
         const mountedNow = Boolean(rpgMountLive && rpgBagLive.activeMountId)
-        if (cos.def.kind === 'outfit') {
-          if (sitting || mountedNow) {
-            cos.root.visible = false
-          } else {
-            cos.root.visible = true
-            scoutWalk.visible = false
-            const gyCos = groundYAt(footX, footZ)
-            cos.root.position.set(footX, gyCos, footZ)
-            cos.root.rotation.y = scoutWalk.rotation.y
-          }
-          const distCos = Math.hypot(moveTarget.x - footX, moveTarget.z - footZ)
-          const movingCos = !sitting && !mountedNow && distCos >= HARBOR_TAP_ARRIVE
-          tickHarborRpgCosmetic(cos, dt, movingCos, movingCos && distCos > 4.5)
-          if (rpgPerformClip && !harborRpgCosmeticPerforming(cos)) rpgPerformClip = null
-        } else {
-          // Attach stays on scoutWalk; hide with scout when mounted/sitting
-          cos.root.visible = scoutWalk.visible
+        const gyCos = groundYAt(footX, footZ)
+        let y = gyCos
+        let yaw = scoutWalk.rotation.y
+        let hold: string | null = null
+        if (sitting) {
+          y = scoutSit ? scoutSit.position.y : gyCos
+          yaw = scoutSit ? scoutSit.rotation.y : yaw
+          hold = 'Sitting_Idle_Loop'
+        } else if (mountedNow && rpgMountLive) {
+          y = gyCos + rpgMountLive.def.saddleY
+          yaw = rpgMountLive.root.rotation.y
+          hold = 'Sitting_Idle_Loop'
+        }
+        cos.root.visible = true
+        cos.root.position.set(footX, y, footZ)
+        cos.root.rotation.y = yaw
+        const distCos = Math.hypot(moveTarget.x - footX, moveTarget.z - footZ)
+        const movingCos = !hold && distCos >= HARBOR_TAP_ARRIVE
+        if (hold) rpgPerformClip = null
+        tickHarborRpgCosmetic(cos, dt, movingCos, movingCos && distCos > 4.5, hold)
+        if (rpgPerformClip && !harborRpgCosmeticPerforming(cos)) rpgPerformClip = null
+        for (const layer of rpgLayers) {
+          layer.root.visible = true
+          layer.root.position.set(footX, y, footZ)
+          layer.root.rotation.y = yaw
+          tickHarborRpgCosmetic(layer, dt, movingCos, movingCos && distCos > 4.5, hold)
+          lockHarborRpgCosmeticTime(cos, layer)
         }
       }
 
@@ -6382,7 +6441,8 @@ export function createHarborWorld(
     if (isRpg) {
       syncRpgCompanion()
       if (rpgCompanionMesh) {
-        const ang = (scoutWalk.visible ? scoutWalk.rotation.y : 0) + Math.PI * 0.55
+        const yawBody = rpgCosmeticLive ? rpgCosmeticLive.root.rotation.y : scoutWalk.rotation.y
+        const ang = yawBody + Math.PI * 0.55
         const tx = footX + Math.sin(ang) * 0.85
         const tz = footZ + Math.cos(ang) * 0.85
         rpgCompanionMesh.position.x += (tx - rpgCompanionMesh.position.x) * Math.min(1, dt * 4)
@@ -6394,7 +6454,13 @@ export function createHarborWorld(
         rpgCompanionMesh.rotation.y = Math.atan2(footX - rpgCompanionMesh.position.x, footZ - rpgCompanionMesh.position.z)
         const bounce = Math.sin(now * 0.01) * 0.04
         rpgCompanionMesh.position.y += bounce
+        if (rpgCompanionInst) {
+          tickHarborRpgCompanion(rpgCompanionInst, dt, performance.now() < rpgCompanionAttackUntil)
+        }
       }
+    }
+    if (isRpg && rpgTownFolk.length > 0) {
+      for (const folk of rpgTownFolk) folk.mixer?.update(dt)
     }
 
     // Guan armored patrol brothers — roam + limb walk cycle
@@ -6558,6 +6624,11 @@ export function createHarborWorld(
         }
         if (ev.type === 'heal') {
           spawnRpgFloat(`+${ev.amount}`, '#9dffb0', footX, 1.8, footZ, now)
+          startRpgPerform('Spell_Simple_Shoot')
+          options.onRpgPartyHeal?.({ amount: ev.amount, zone: rpgZone })
+        }
+        if (ev.type === 'companion-hit') {
+          rpgCompanionAttackUntil = now + 900
         }
         if (ev.type === 'boss-phase') {
           flash = 'ok'
@@ -7005,6 +7076,12 @@ if (o.userData.cigaretteSmoke && !reduced) {
       if (!isRpg || disposed) return
       startRpgPerform(clip, Boolean(force))
     },
+    applyRpgHeal(amount) {
+      if (!isRpg || disposed) return
+      const n = Math.max(1, Math.min(400, Math.floor(amount)))
+      rpgPlayerHp = Math.min(harborRpgMaxHp(rpgBagLive), rpgPlayerHp + n)
+      spawnRpgFloat(`+${n}`, '#9dffb0', footX, 1.8, footZ, performance.now())
+    },
     getRpgPerformClip() {
       return rpgPerformClip
     },
@@ -7059,10 +7136,12 @@ if (o.userData.cigaretteSmoke && !reduced) {
       disposed = true
       clearRpgMount()
       clearRpgCosmetic()
-      if (rpgCompanionMesh) {
-        rpgCompanionMesh.parent?.remove(rpgCompanionMesh)
-        rpgCompanionMesh = null
+      clearRpgCompanion()
+      for (const folk of rpgTownFolk) {
+        folk.root.parent?.remove(folk.root)
+        disposeHarborRpgCosmetic(folk)
       }
+      rpgTownFolk.length = 0
       for (const [, mount] of remoteRpgMounts) {
         mount.root.parent?.remove(mount.root)
         disposeHarborRpgMount(mount)
