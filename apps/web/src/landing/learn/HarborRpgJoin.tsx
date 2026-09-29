@@ -633,10 +633,33 @@ function RpgLookPreview({
     let yawVel = 0
     let holding = false
     let lastDragAt = 0
+    const spotTarget = new THREE.Object3D()
+    spotTarget.name = 'rpg-join-spot'
+    spotTarget.position.set(0, 1.2, 0)
+    const spot = new THREE.SpotLight(0xfff6ee, 260, 8.5, 0.72, 0.58, 2)
+    spot.position.set(0.4, 3.1, 2.5)
+    scene.add(spotTarget, spot)
+    spot.target = spotTarget
+    const keyTarget = new THREE.Object3D()
+    keyTarget.position.set(0, 1.15, 0)
+    const key = new THREE.DirectionalLight(0xfff0dc, 2.4)
+    key.position.set(1.4, 3.4, 2.8)
+    scene.add(keyTarget, key)
+    key.target = keyTarget
+    const spotPlace = new THREE.Vector3()
     const applyView = () => {
       spun.copy(dolly).applyAxisAngle(yAxis, yaw)
       camera.position.copy(look).addScaledVector(spun, zoom)
       camera.lookAt(look)
+      // Keep a stage spot a fixed distance in front of the sailor so zoom does not blow it out.
+      spotPlace.copy(camera.position).sub(spotTarget.position)
+      const reach = spotPlace.length()
+      if (reach > 0.05) {
+        spotPlace.multiplyScalar(2.45 / reach)
+        spot.position.copy(spotTarget.position).add(spotPlace)
+        spot.position.y += 0.7
+        key.position.copy(spot.position)
+      }
     }
     applyView()
     const nudgeZoom = (dir: -1 | 1) => {
@@ -701,11 +724,10 @@ function RpgLookPreview({
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
     renderer.outputColorSpace = THREE.SRGBColorSpace
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = 1.08
     host.appendChild(renderer.domElement)
-    scene.add(new THREE.AmbientLight(0x1a2a44, 0.55))
-    const key = new THREE.DirectionalLight(0xfff0dc, 1.05)
-    key.position.set(1.4, 3.4, 2.8)
-    scene.add(key)
+    scene.add(new THREE.AmbientLight(0x24344e, 0.72))
     const moonLight = new THREE.DirectionalLight(0xc5d7ff, 0.62)
     moonLight.position.set(-6, 8, -4)
     scene.add(moonLight)
