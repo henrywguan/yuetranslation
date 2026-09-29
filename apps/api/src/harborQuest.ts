@@ -80,6 +80,15 @@ export type HarborQuestProgress = {
       gender: 'male' | 'female'
       appearance: { skinTone: number; hairStyle: string; hairColor: number }
       createdAt: number
+      looks?: {
+        body: string | null
+        head: string | null
+        shoulder: string | null
+        back: string | null
+        top: string | null
+        bottom: string | null
+        feet: string | null
+      }
     }[]
     activeCharacterId: string | null
     xp: number
@@ -91,6 +100,9 @@ export type HarborQuestProgress = {
       head: string | null
       shoulder: string | null
       back: string | null
+      top: string | null
+      bottom: string | null
+      feet: string | null
     }
     boosts: { xpMultUntil: number; creditMultUntil: number }
     shrineClaims: number
@@ -400,6 +412,38 @@ const HARBOR_RPG_COSMETICS = new Set([
   'rpg-hood-ranger-f',
   'rpg-pauldron-ranger-m',
   'rpg-pauldrons-ranger-f',
+  'rpg-base-m',
+  'rpg-base-f',
+  'rpg-top-peasant-m',
+  'rpg-top-peasant-m-2',
+  'rpg-top-ranger-m',
+  'rpg-top-ranger-m-3',
+  'rpg-top-peasant-f',
+  'rpg-top-peasant-f-2',
+  'rpg-top-ranger-f',
+  'rpg-top-ranger-f-3',
+  'rpg-bottom-peasant-m',
+  'rpg-bottom-peasant-m-2',
+  'rpg-bottom-ranger-m',
+  'rpg-bottom-ranger-m-3',
+  'rpg-bottom-peasant-f',
+  'rpg-bottom-peasant-f-2',
+  'rpg-bottom-ranger-f',
+  'rpg-bottom-ranger-f-3',
+  'rpg-feet-peasant-m',
+  'rpg-feet-peasant-m-2',
+  'rpg-feet-ranger-m',
+  'rpg-feet-ranger-m-3',
+  'rpg-feet-peasant-f',
+  'rpg-feet-peasant-f-2',
+  'rpg-feet-ranger-f',
+  'rpg-feet-ranger-f-3',
+  'rpg-hair-buzzed',
+  'rpg-hair-parted',
+  'rpg-hair-beard',
+  'rpg-hair-buzzed-f',
+  'rpg-hair-buns',
+  'rpg-hair-long',
 ])
 const HARBOR_RPG_ITEMS = new Set([
   'rpg-item-herb','rpg-item-bone','rpg-item-shard','rpg-item-hide','rpg-item-ore','rpg-item-reed','rpg-item-ash-core',
@@ -473,13 +517,16 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     activeCharacterId: null as string | null,
     xp: 0,
     gold: 0,
-    ownedCosmetics: ['rpg-cloak-traveler'],
+    ownedCosmetics: ['rpg-cloak-traveler', 'rpg-base-m', 'rpg-base-f'],
     equippedCosmetic: null as string | null,
     equippedLooks: {
       body: null as string | null,
       head: null as string | null,
       shoulder: null as string | null,
       back: 'rpg-cloak-traveler' as string | null,
+      top: null as string | null,
+      bottom: null as string | null,
+      feet: null as string | null,
     },
     boosts: { xpMultUntil: 0, creditMultUntil: 0 },
     shrineClaims: 0,
@@ -550,6 +597,21 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
   }
   if (!raw || typeof raw !== 'object') return empty
   const o = raw as Record<string, unknown>
+  const salonSlot = (id: string) =>
+    id.startsWith('rpg-hair-') || id.includes('hood') || id.includes('helm')
+      ? 'head'
+      : id.includes('pauldron')
+        ? 'shoulder'
+        : id.includes('cloak') || id.includes('cape')
+          ? 'back'
+          : id.startsWith('rpg-top-')
+            ? 'top'
+            : id.startsWith('rpg-bottom-')
+              ? 'bottom'
+              : id.startsWith('rpg-feet-')
+                ? 'feet'
+                : 'body'
+  const salonSlots = ['body', 'head', 'shoulder', 'back', 'top', 'bottom', 'feet'] as const
   const characters: NonNullable<HarborQuestProgress['rpg']>['characters'] = []
   const seen = new Set<string>()
   if (Array.isArray(o.characters)) {
@@ -584,12 +646,34 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
         typeof c.createdAt === 'number' && Number.isFinite(c.createdAt) && c.createdAt >= 0
           ? Math.floor(c.createdAt)
           : Date.now()
+      let looks:
+        | {
+            body: string | null
+            head: string | null
+            shoulder: string | null
+            back: string | null
+            top: string | null
+            bottom: string | null
+            feet: string | null
+          }
+        | undefined
+      if (c.looks && typeof c.looks === 'object') {
+        const rawLooks = c.looks as Record<string, unknown>
+        looks = { body: null, head: null, shoulder: null, back: null, top: null, bottom: null, feet: null }
+        for (const slot of salonSlots) {
+          const piece = rawLooks[slot]
+          if (typeof piece === 'string' && HARBOR_RPG_COSMETICS.has(piece) && salonSlot(piece) === slot) {
+            looks[slot] = piece
+          }
+        }
+      }
       characters.push({
         id,
         name,
         gender,
         appearance: { skinTone, hairStyle, hairColor },
         createdAt,
+        ...(looks ? { looks } : {}),
       })
     }
   }
@@ -609,19 +693,36 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     typeof o.gold === 'number' && Number.isFinite(o.gold) && o.gold >= 0
       ? Math.min(Math.floor(o.gold), 10_000_000)
       : 0
-  const owned = new Set<string>(['rpg-cloak-traveler'])
+  const owned = new Set<string>(['rpg-cloak-traveler', 'rpg-base-m', 'rpg-base-f'])
   if (Array.isArray(o.ownedCosmetics)) {
     for (const id of o.ownedCosmetics) {
       if (typeof id === 'string' && HARBOR_RPG_COSMETICS.has(id)) owned.add(id)
     }
   }
-  const lookSlots = ['body', 'head', 'shoulder', 'back'] as const
-  const lookSlotOf = (id: string) =>
-    id.includes('hood') ? 'head'
-    : id.includes('pauldron') ? 'shoulder'
-    : id.includes('cloak') || id.includes('cape') ? 'back'
-    : 'body'
-  const equippedLooks = { body: null as string | null, head: null as string | null, shoulder: null as string | null, back: null as string | null }
+  const lookSlots = ['body', 'head', 'shoulder', 'back', 'top', 'bottom', 'feet'] as const
+  const lookSlotOf = (id: string): (typeof lookSlots)[number] =>
+    id.startsWith('rpg-hair-') || id.includes('hood') || id.includes('helm')
+      ? 'head'
+      : id.includes('pauldron')
+        ? 'shoulder'
+        : id.includes('cloak') || id.includes('cape')
+          ? 'back'
+          : id.startsWith('rpg-top-')
+            ? 'top'
+            : id.startsWith('rpg-bottom-')
+              ? 'bottom'
+              : id.startsWith('rpg-feet-')
+                ? 'feet'
+                : 'body'
+  const equippedLooks = {
+    body: null as string | null,
+    head: null as string | null,
+    shoulder: null as string | null,
+    back: null as string | null,
+    top: null as string | null,
+    bottom: null as string | null,
+    feet: null as string | null,
+  }
   const rawLooks = o.equippedLooks && typeof o.equippedLooks === 'object' ? (o.equippedLooks as Record<string, unknown>) : null
   if (rawLooks) {
     for (const slot of lookSlots) {

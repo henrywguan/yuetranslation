@@ -776,8 +776,8 @@ export function HarborRpgPanel({
         {tab === 'wardrobe' ? (
           <>
             <p className="hq-rpg-hint">
-              Wardrobe · body, head, shoulder, and back can be worn together. Motion is the
-              animation library.
+              Wardrobe · hair, tunic, trousers, shoes, hood, and cloak can be worn together.
+              Sleeves follow the tunic. Motion is the animation library.
               {HARBOR_RPG_LOOK_SLOTS.map((slot) => {
                 const id = bag.equippedLooks[slot]
                 const name = id ? HARBOR_RPG_COSMETIC_DEFS[id as HarborRpgCosmeticId]?.name.en : null
@@ -796,6 +796,7 @@ export function HarborRpgPanel({
             <ul className="hq-rpg-inv">
               {HARBOR_RPG_COSMETIC_IDS.map((id) => {
                 const def = HARBOR_RPG_COSMETIC_DEFS[id]
+                if (def.slot === 'sleeve' || id.startsWith('rpg-base-')) return null
                 const owned = bag.ownedCosmetics.includes(id)
                 const active = bag.equippedLooks[def.slot] === id
                 return (

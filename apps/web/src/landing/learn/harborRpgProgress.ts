@@ -101,6 +101,8 @@ export type HarborRpgCharacter = {
   gender: HarborGender
   appearance: HarborAppearance
   createdAt: number
+  /** Salon choices. Restored when this sailor is selected. */
+  looks?: HarborRpgEquippedLooks
 }
 
 export type HarborRpgBoosts = {
@@ -232,7 +234,7 @@ export function emptyHarborRpgBag(): HarborRpgBag {
     activeCharacterId: null,
     xp: 0,
     gold: 12,
-    ownedCosmetics: ['rpg-cloak-traveler'],
+    ownedCosmetics: ['rpg-cloak-traveler', 'rpg-base-m', 'rpg-base-f'],
     equippedCosmetic: null,
     equippedLooks: starterHarborRpgLooks(),
     boosts: { xpMultUntil: 0, creditMultUntil: 0 },
@@ -426,7 +428,7 @@ function sanitizeCharId(raw: unknown): string | null {
   return t
 }
 
-function sanitizeCharacter(raw: unknown): HarborRpgCharacter | null {
+function sanitizeCharacter(raw: unknown, owned: Set<string>): HarborRpgCharacter | null {
   if (!raw || typeof raw !== 'object') return null
   const o = raw as Record<string, unknown>
   const id = sanitizeCharId(o.id)
@@ -435,13 +437,17 @@ function sanitizeCharacter(raw: unknown): HarborRpgCharacter | null {
     typeof o.createdAt === 'number' && Number.isFinite(o.createdAt) && o.createdAt >= 0
       ? Math.floor(o.createdAt)
       : Date.now()
-  return {
+  const character: HarborRpgCharacter = {
     id,
     name: sanitizeName(o.name),
     gender: sanitizeHarborGender(o.gender),
     appearance: sanitizeHarborAppearance(o.appearance),
     createdAt,
   }
+  if (o.looks && typeof o.looks === 'object') {
+    character.looks = sanitizeHarborRpgLooks(o.looks, owned, null)
+  }
+  return character
 }
 
 function sanitizeInventory(
@@ -552,12 +558,18 @@ export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
   const empty = emptyHarborRpgBag()
   if (!raw || typeof raw !== 'object') return empty
   const o = raw as Record<string, unknown>
+  const owned = new Set<string>(['rpg-cloak-traveler', 'rpg-base-m', 'rpg-base-f'])
+  if (Array.isArray(o.ownedCosmetics)) {
+    for (const id of o.ownedCosmetics) {
+      if (typeof id === 'string' && COSMETIC_SET.has(id)) owned.add(id)
+    }
+  }
   const chars: HarborRpgCharacter[] = []
   const seen = new Set<string>()
   if (Array.isArray(o.characters)) {
     for (const row of o.characters) {
       if (chars.length >= HARBOR_RPG_MAX_CHARS) break
-      const c = sanitizeCharacter(row)
+      const c = sanitizeCharacter(row, owned)
       if (!c || seen.has(c.id)) continue
       seen.add(c.id)
       chars.push(c)
@@ -578,12 +590,6 @@ export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
       ? Math.min(Math.floor(o.gold), 10_000_000)
       : 0
 
-  const owned = new Set<string>(['rpg-cloak-traveler'])
-  if (Array.isArray(o.ownedCosmetics)) {
-    for (const id of o.ownedCosmetics) {
-      if (typeof id === 'string' && COSMETIC_SET.has(id)) owned.add(id)
-    }
-  }
   const equippedLooks = sanitizeHarborRpgLooks(o.equippedLooks, owned, o.equippedCosmetic)
   const equippedCosmetic = equippedLooks.body
 
@@ -798,6 +804,8 @@ export function mergeHarborRpgBag(a: HarborRpgBag, b: HarborRpgBag): HarborRpgBa
     if (!COSMETIC_SET.has(id)) owned.delete(id)
   }
   owned.add('rpg-cloak-traveler')
+  owned.add('rpg-base-m')
+  owned.add('rpg-base-f')
   const active =
     (b.activeCharacterId && characters.some((c) => c.id === b.activeCharacterId)
       ? b.activeCharacterId
@@ -824,6 +832,18 @@ export function mergeHarborRpgBag(a: HarborRpgBag, b: HarborRpgBag): HarborRpgBa
       back:
         (b.equippedLooks?.back && owned.has(b.equippedLooks.back) && b.equippedLooks.back) ||
         (a.equippedLooks?.back && owned.has(a.equippedLooks.back) && a.equippedLooks.back) ||
+        null,
+      top:
+        (b.equippedLooks?.top && owned.has(b.equippedLooks.top) && b.equippedLooks.top) ||
+        (a.equippedLooks?.top && owned.has(a.equippedLooks.top) && a.equippedLooks.top) ||
+        null,
+      bottom:
+        (b.equippedLooks?.bottom && owned.has(b.equippedLooks.bottom) && b.equippedLooks.bottom) ||
+        (a.equippedLooks?.bottom && owned.has(a.equippedLooks.bottom) && a.equippedLooks.bottom) ||
+        null,
+      feet:
+        (b.equippedLooks?.feet && owned.has(b.equippedLooks.feet) && b.equippedLooks.feet) ||
+        (a.equippedLooks?.feet && owned.has(a.equippedLooks.feet) && a.equippedLooks.feet) ||
         null,
     },
     owned,
@@ -993,17 +1013,55 @@ export function setRpgEquippedCosmetic(
 ): HarborRpgBag | null {
   if (cosmeticId == null) {
     const equippedLooks = equipHarborRpgLook(bag.equippedLooks ?? emptyHarborRpgLooks(), null)
-    return { ...bag, equippedLooks, equippedCosmetic: null }
+    return stampActiveLook({ ...bag, equippedLooks, equippedCosmetic: null })
   }
   if (!bag.ownedCosmetics.includes(cosmeticId)) return null
   const current = bag.equippedLooks ?? emptyHarborRpgLooks()
   const slot = harborRpgLookSlot(cosmeticId)
   if (current[slot] === cosmeticId) {
     const equippedLooks = { ...current, [slot]: null }
-    return { ...bag, equippedLooks, equippedCosmetic: equippedLooks.body }
+    return stampActiveLook({ ...bag, equippedLooks, equippedCosmetic: equippedLooks.body })
   }
-  const equippedLooks = equipHarborRpgLook(current, cosmeticId)
-  return { ...bag, equippedLooks, equippedCosmetic: equippedLooks.body }
+  let equippedLooks = equipHarborRpgLook(current, cosmeticId)
+  if (cosmeticId.startsWith('rpg-top-')) {
+    const gender = HARBOR_RPG_COSMETIC_DEFS[cosmeticId].gender
+    equippedLooks = {
+      ...equippedLooks,
+      body: gender === 'female' ? 'rpg-base-f' : 'rpg-base-m',
+    }
+  }
+  if (cosmeticId.startsWith('rpg-outfit-')) {
+    equippedLooks = { ...equippedLooks, top: null, bottom: null, feet: null }
+  }
+  return stampActiveLook({ ...bag, equippedLooks, equippedCosmetic: equippedLooks.body })
+}
+
+function stampActiveLook(bag: HarborRpgBag): HarborRpgBag {
+  if (!bag.activeCharacterId) return bag
+  return {
+    ...bag,
+    characters: bag.characters.map((c) =>
+      c.id === bag.activeCharacterId ? { ...c, looks: bag.equippedLooks } : c,
+    ),
+  }
+}
+
+/** Own the salon pieces and wear them on the active sailor. */
+export function grantHarborRpgLook(bag: HarborRpgBag, looks: HarborRpgEquippedLooks): HarborRpgBag {
+  const owned = new Set(bag.ownedCosmetics)
+  for (const id of Object.values(looks)) {
+    if (id) owned.add(id)
+  }
+  owned.add('rpg-cloak-traveler')
+  owned.add('rpg-base-m')
+  owned.add('rpg-base-f')
+  const next: HarborRpgBag = {
+    ...bag,
+    ownedCosmetics: HARBOR_RPG_COSMETICS.filter((id) => owned.has(id)),
+    equippedLooks: looks,
+    equippedCosmetic: looks.body,
+  }
+  return stampActiveLook(next)
 }
 
 export function createHarborRpgCharacter(input: {

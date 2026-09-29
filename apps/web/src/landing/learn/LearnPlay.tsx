@@ -70,7 +70,7 @@ import { HarborRpgPanel } from './HarborRpgPanel'
 import { HarborRpgWiki } from './HarborRpgWiki'
 import { awardRpgContestedLoot } from './harborRpgCombat'
 import { HarborRpgJoin } from './HarborRpgJoin'
-import { harborRpgVisualBodyId } from './harborRpgLooks'
+import { harborRpgVisualBodyId, harborRpgWornLayerIds } from './harborRpgLooks'
 import { emptyHarborRpgBag, sanitizeHarborRpgBag } from './harborRpgProgress'
 import { harborRpgEmoteClip } from './harborRpgAnims'
 import { applyRpgMedium } from './harborRpgMedium'
@@ -297,12 +297,14 @@ export function LearnSession({
   const rpgPartyLiveRef = useRef(rpgPartyLive)
   rpgPartyLiveRef.current = rpgPartyLive
   const rpgVisualBodyRef = useRef('rpg-outfit-peasant-m')
+  const rpgLayerRef = useRef<string[]>([])
   const rpgActiveChar = progressSnap.rpg?.characters.find(
     (c) => c.id === progressSnap.rpg?.activeCharacterId,
   )
   const rpgBodyGender =
     rpgActiveChar?.gender ?? (progressSnap.gender === 'female' ? 'female' : 'male')
   rpgVisualBodyRef.current = harborRpgVisualBodyId(progressSnap.rpg?.equippedLooks, rpgBodyGender)
+  rpgLayerRef.current = harborRpgWornLayerIds(progressSnap.rpg?.equippedLooks)
   const [rpgPartyInvite, setRpgPartyInvite] = useState<HarborRpgPartyInvite | null>(null)
   const rpgFinderLookingRef = useRef<{
     lookingRole: import('./harborRpgFinder').HarborRpgFinderRole | null
@@ -526,6 +528,7 @@ export function LearnSession({
               updatedAt: r.updatedAt,
               rpgMountId: r.activeMountId,
               rpgCosmeticId: r.equippedCosmetic,
+              rpgCosmeticLayers: r.layers,
             }))
           worldApiRef.current?.setRemotePlayers(asWorld)
         },
@@ -539,6 +542,7 @@ export function LearnSession({
             t: pose.t,
             rpgMountId: pose.activeMountId ?? null,
             rpgCosmeticId: pose.equippedCosmetic ?? null,
+            rpgCosmeticLayers: pose.layers,
             rpgEmote: pose.emote ?? null,
           })
         },
@@ -673,6 +677,7 @@ export function LearnSession({
           lookingDungeon: rpgFinderLookingRef.current.lookingDungeon,
           activeMountId: progressSnap.rpg?.activeMountId ?? null,
           equippedCosmetic: rpgVisualBodyRef.current,
+          layers: rpgLayerRef.current,
           afk: progressSnap.rpg?.afk === true,
           fleetName: progressSnap.rpg?.fleetName ?? null,
           activeTitleId: progressSnap.rpg?.activeTitleId ?? null,
@@ -685,6 +690,7 @@ export function LearnSession({
           zone,
           activeMountId: progressSnap.rpg?.activeMountId ?? null,
           equippedCosmetic: rpgVisualBodyRef.current,
+          layers: rpgLayerRef.current,
           emote: worldApiRef.current?.getRpgPerformClip() ?? null,
         })
       }
@@ -1675,6 +1681,7 @@ export function LearnSession({
                     updatedAt: r.updatedAt,
                     rpgMountId: r.activeMountId,
                     rpgCosmeticId: r.equippedCosmetic,
+                    rpgCosmeticLayers: r.layers,
                   }))
               : remotePlayers
           }
@@ -2318,9 +2325,9 @@ export function LearnSession({
             setRealmOverride(null)
             startHarborBgm('river')
           }}
-          onCreate={({ name, gender, classId }) => {
+          onCreate={({ name, gender, classId, looks }) => {
             const hadClass = Boolean(progressSnap.rpg?.classId)
-            const created = createHarborRpgCharacterSlot({ name, gender })
+            const created = createHarborRpgCharacterSlot({ name, gender, looks })
             if (!created) return
             const next = hadClass ? created : selectHarborRpgClassPick(classId)
             pushRpgProgress(next)

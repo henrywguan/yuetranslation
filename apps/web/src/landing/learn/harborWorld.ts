@@ -141,7 +141,13 @@ import {
   tickHarborRpgCompanion,
   type HarborRpgCompanionInstance,
 } from './harborRpgCompanionRuntime'
-import { HARBOR_RPG_TOWN_FOLK, harborRpgFallbackBodyId, harborRpgVisualBodyId } from './harborRpgLooks'
+import {
+  HARBOR_RPG_TOWN_FOLK,
+  harborRpgFallbackBodyId,
+  harborRpgIsModularBody,
+  harborRpgVisualBodyId,
+  harborRpgWornLayerIds,
+} from './harborRpgLooks'
 import { harborRpgAnimLoops, isHarborRpgAnimClip } from './harborRpgAnims'
 import {
   harborRpgCosmeticById,
@@ -4689,6 +4695,7 @@ export function createHarborWorld(
   const remoteRpgMounts = new Map<string, HarborRpgMountInstance>()
   const remoteRpgMountLoading = new Map<string, string>()
   const remoteRpgCosmetics = new Map<string, HarborRpgCosmeticInstance>()
+  const remoteRpgLayers = new Map<string, { key: string; insts: HarborRpgCosmeticInstance[] }>()
   const remoteRpgCosmeticLoading = new Map<string, string>()
 
   const clearRpgCompanion = () => {
@@ -5214,6 +5221,14 @@ export function createHarborWorld(
         remoteRpgCosmetics.delete(id)
       }
       remoteRpgCosmeticLoading.delete(id)
+      const layers = remoteRpgLayers.get(id)
+      if (layers) {
+        for (const inst of layers.insts) {
+          inst.root.parent?.remove(inst.root)
+          disposeHarborRpgCosmetic(inst)
+        }
+        remoteRpgLayers.delete(id)
+      }
     }
     for (const player of players) {
       const existing = remoteById.get(player.userId)
@@ -5231,7 +5246,7 @@ export function createHarborWorld(
         root.userData.rpgCosmeticId = player.rpgCosmeticId ?? null
       }
       syncRemoteRpgMount(player.userId, player.rpgMountId ?? null)
-      syncRemoteRpgCosmetic(player.userId, player.rpgCosmeticId ?? null)
+      syncRemoteRpgCosmetic(player.userId, player.rpgCosmeticId ?? null, player.rpgCosmeticLayers ?? [])
     }
   }
 
@@ -5274,7 +5289,34 @@ export function createHarborWorld(
     })
   }
 
-  const syncRemoteRpgCosmetic = (userId: string, cosmeticId: string | null) => {
+  const syncRemoteRpgLayers = (userId: string, ids: readonly string[]) => {
+    const key = ids.join('|')
+    const prev = remoteRpgLayers.get(userId)
+    if (prev?.key === key) return
+    if (prev) {
+      for (const inst of prev.insts) {
+        inst.root.parent?.remove(inst.root)
+        disposeHarborRpgCosmetic(inst)
+      }
+    }
+    const bucket = { key, insts: [] as HarborRpgCosmeticInstance[] }
+    remoteRpgLayers.set(userId, bucket)
+    for (const id of ids) {
+      if (!isHarborRpgCosmeticId(id)) continue
+      void loadHarborRpgCosmetic(id).then((inst) => {
+        const live = remoteRpgLayers.get(userId)
+        if (disposed || !live || live.key !== key) {
+          if (inst) disposeHarborRpgCosmetic(inst)
+          return
+        }
+        if (!inst) return
+        scene.add(inst.root)
+        live.insts.push(inst)
+      })
+    }
+  }
+
+  const syncRemoteRpgCosmetic = (userId: string, cosmeticId: string | null, layers: readonly string[] = []) => {
     const picked =
       cosmeticId && isHarborRpgCosmeticId(cosmeticId) ? harborRpgCosmeticById(cosmeticId) : null
     const resolved =
@@ -5294,8 +5336,10 @@ export function createHarborWorld(
       remoteRpgCosmeticLoading.delete(userId)
       const root = remoteById.get(userId)
       if (root && root.userData.remoteMode === 'foot') root.visible = true
+      syncRemoteRpgLayers(userId, [])
       return
     }
+    syncRemoteRpgLayers(userId, layers)
     if (live?.id === want) return
     if (remoteRpgCosmeticLoading.get(userId) === want) return
     remoteRpgCosmeticLoading.set(userId, want)
@@ -5338,9 +5382,20 @@ export function createHarborWorld(
       root.userData.rpgMountId = pose.rpgMountId
       syncRemoteRpgMount(pose.userId, pose.rpgMountId ?? null)
     }
-    if (pose.rpgCosmeticId !== undefined) {
-      root.userData.rpgCosmeticId = pose.rpgCosmeticId
-      syncRemoteRpgCosmetic(pose.userId, pose.rpgCosmeticId ?? null)
+    if (pose.rpgCosmeticLayers) {
+      root.userData.rpgCosmeticLayers = pose.rpgCosmeticLayers
+    }
+    if (pose.rpgCosmeticId !== undefined || pose.rpgCosmeticLayers) {
+      const cosmeticId =
+        pose.rpgCosmeticId !== undefined
+          ? pose.rpgCosmeticId
+          : (root.userData.rpgCosmeticId as string | null | undefined)
+      if (pose.rpgCosmeticId !== undefined) root.userData.rpgCosmeticId = pose.rpgCosmeticId
+      const layers =
+        pose.rpgCosmeticLayers ??
+        (root.userData.rpgCosmeticLayers as string[] | undefined) ??
+        []
+      syncRemoteRpgCosmetic(pose.userId, cosmeticId ?? null, layers)
     }
     if (pose.rpgEmote !== undefined) {
       root.userData.rpgEmote = pose.rpgEmote
@@ -5493,13 +5548,12 @@ export function createHarborWorld(
       looks,
       currentGender === 'female' ? 'female' : 'male',
     )
-    const layerIds = (['head', 'shoulder', 'back'] as const)
-      .map((slot) => looks?.[slot])
-      .filter((id): id is string => {
-        if (!id || !isHarborRpgCosmeticId(id)) return false
-        const def = harborRpgCosmeticById(id)
-        return Boolean(def?.src && def.kind === 'attach')
-      })
+    const layerIds = harborRpgWornLayerIds(looks).filter((id) => {
+      if (!harborRpgIsModularBody(actorId) && (id.startsWith('rpg-top-') || id.startsWith('rpg-bottom-') || id.startsWith('rpg-feet-') || id.startsWith('rpg-arms-'))) {
+        return false
+      }
+      return true
+    })
     const layerKey = layerIds.join('|')
     if (rpgLayerKey !== layerKey) {
       clearRpgLayers()
@@ -6428,6 +6482,16 @@ export function createHarborWorld(
               }
               tickHarborRpgCosmetic(cos, dt, moving, false)
             }
+            const worn = remoteRpgLayers.get(uid)
+            if (worn && !mid) {
+              for (const layer of worn.insts) {
+                layer.root.visible = true
+                layer.root.position.set(root.position.x, root.position.y, root.position.z)
+                layer.root.rotation.y = root.rotation.y
+                tickHarborRpgCosmetic(layer, dt, moving, false)
+                lockHarborRpgCosmeticTime(cos, layer)
+              }
+            }
           } else {
             cos.root.visible = root.visible
           }
@@ -7152,6 +7216,13 @@ if (o.userData.cigaretteSmoke && !reduced) {
       }
       remoteRpgCosmetics.clear()
       remoteRpgCosmeticLoading.clear()
+      for (const [, worn] of remoteRpgLayers) {
+        for (const inst of worn.insts) {
+          inst.root.parent?.remove(inst.root)
+          disposeHarborRpgCosmetic(inst)
+        }
+      }
+      remoteRpgLayers.clear()
       fishAnim = { phase: 'idle', t: 0, faceYaw: 0 }
       fishSplash.visible = false
       scene.remove(fishSplash)

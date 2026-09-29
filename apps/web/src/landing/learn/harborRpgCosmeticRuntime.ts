@@ -38,19 +38,26 @@ const cache = new Map<string, THREE.Group>()
 let ualClips: THREE.AnimationClip[] | null = null
 let ualPromise: Promise<THREE.AnimationClip[]> | null = null
 
-function plantAndCel(root: THREE.Object3D, scale: number, name: string): THREE.Group {
+function plantAndCel(
+  root: THREE.Object3D,
+  scale: number,
+  name: string,
+  bindWithBody = false,
+): THREE.Group {
   const wrap = new THREE.Group()
   wrap.name = name
   wrap.add(root)
   wrap.scale.setScalar(scale)
   wrap.updateMatrixWorld(true)
-  // Keep authored Y (hoods/pauldrons sit at head/shoulder in armature space).
-  // Only center XZ so feet/root line up under the scout.
-  const box = new THREE.Box3().setFromObject(wrap)
-  wrap.position.x -= (box.min.x + box.max.x) * 0.5
-  wrap.position.z -= (box.min.z + box.max.z) * 0.5
-  if (name === 'rpg-cosmetic-outfit') {
-    wrap.position.y -= box.min.y
+  // Modular hair and clothes stay on the authored origin so they share one skeleton.
+  // Other meshes center XZ; full outfits also drop to the feet.
+  if (!bindWithBody) {
+    const box = new THREE.Box3().setFromObject(wrap)
+    wrap.position.x -= (box.min.x + box.max.x) * 0.5
+    wrap.position.z -= (box.min.z + box.max.z) * 0.5
+    if (name === 'rpg-cosmetic-outfit') {
+      wrap.position.y -= box.min.y
+    }
   }
   wrap.traverse((o) => {
     const m = o as THREE.Mesh
@@ -144,7 +151,7 @@ export async function loadHarborRpgCosmetic(
   if (!scene) return null
   const name = def.kind === 'outfit' ? 'rpg-cosmetic-outfit' : 'rpg-cosmetic-attach'
   const cloned = skinned ? cloneSkinned(scene) : scene.clone(true)
-  const root = plantAndCel(cloned, def.scale, name)
+  const root = plantAndCel(cloned, def.scale, name, def.bindWithBody === true)
   root.userData.rpgCosmeticId = id
   root.userData.rpgCosmeticKind = def.kind
   const mixer = skinned && clips.length > 0 ? new THREE.AnimationMixer(root) : null

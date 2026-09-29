@@ -39,6 +39,8 @@ export type HarborPresenceState = {
   rpgMountId?: string | null
   /** HarborRPG only — equipped wardrobe cosmetic id (optional). */
   rpgCosmeticId?: string | null
+  /** HarborRPG only — hair, sleeves, top, bottom, feet worn with the body. */
+  rpgCosmeticLayers?: string[]
 }
 
 export type HarborRemotePlayer = HarborPresenceState
@@ -55,6 +57,8 @@ export type HarborPosePacket = {
   rpgMountId?: string | null
   /** HarborRPG only — equipped wardrobe cosmetic id (optional). */
   rpgCosmeticId?: string | null
+  /** HarborRPG only — layered starter pieces worn with the body. */
+  rpgCosmeticLayers?: string[]
   /** HarborRPG only — UAL clip name while an outfit is performing. */
   rpgEmote?: string | null
 }

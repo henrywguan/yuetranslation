@@ -14,7 +14,17 @@ import {
   loadHarborRpgCosmetic,
   type HarborRpgCosmeticInstance,
 } from './harborRpgCosmeticRuntime'
-import { harborRpgFallbackBodyId } from './harborRpgLooks'
+import {
+  harborRpgComposeStarterLook,
+  harborRpgDefaultStarterPick,
+  harborRpgStarterBottoms,
+  harborRpgStarterFeet,
+  harborRpgStarterHair,
+  harborRpgStarterTops,
+  harborRpgWornLayerIds,
+  type HarborRpgEquippedLooks,
+} from './harborRpgLooks'
+import { HARBOR_RPG_COSMETIC_DEFS, type HarborRpgCosmeticId } from './harborRpgCosmetics'
 import { HARBOR_RPG_MAX_CHARS, type HarborRpgBag } from './harborRpgProgress'
 import { harborRpgJoinPhase } from './harborRpgJoin'
 
@@ -22,26 +32,31 @@ type CreateStep = 'name' | 'body' | 'class' | 'confirm'
 
 type Props = {
   bag: HarborRpgBag
-  onCreate: (input: { name: string; gender: HarborGender; classId: HarborRpgClassId }) => void
+  onCreate: (input: {
+    name: string
+    gender: HarborGender
+    classId: HarborRpgClassId
+    looks: HarborRpgEquippedLooks
+  }) => void
   onEnter: (input: { characterId: string; classId: HarborRpgClassId | null }) => void
   onBack: () => void
 }
 
-function RpgBodyPreview({ gender }: { gender: HarborGender }) {
+function RpgLookPreview({ looks }: { looks: HarborRpgEquippedLooks }) {
   const hostRef = useRef<HTMLDivElement>(null)
-  const bodyId = harborRpgFallbackBodyId(gender)
+  const pieceKey = [looks.body, ...harborRpgWornLayerIds(looks)].join('|')
 
   useEffect(() => {
     const host = hostRef.current
     if (!host) return
     let disposed = false
     let raf = 0
-    let inst: HarborRpgCosmeticInstance | null = null
+    const insts: HarborRpgCosmeticInstance[] = []
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x12100e)
     const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 20)
-    camera.position.set(1.15, 1.35, 2.35)
-    camera.lookAt(0, 0.95, 0)
+    camera.position.set(1.15, 1.15, 2.45)
+    camera.lookAt(0, 0.85, 0)
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
     renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -61,38 +76,106 @@ function RpgBodyPreview({ gender }: { gender: HarborGender }) {
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(size) : null
     ro?.observe(host)
     const clock = new THREE.Clock()
+    const ids = pieceKey.split('|').filter((id): id is HarborRpgCosmeticId => Boolean(id))
     const loop = () => {
       if (disposed) return
       raf = requestAnimationFrame(loop)
       const dt = clock.getDelta()
-      inst?.mixer?.update(dt)
-      if (inst) inst.root.rotation.y += dt * 0.35
+      const leader = insts[0]
+      if (leader) {
+        leader.mixer?.update(dt)
+        leader.root.rotation.y += dt * 0.35
+      }
+      for (const inst of insts.slice(1)) {
+        if (leader) {
+          inst.root.rotation.y = leader.root.rotation.y
+          lockTime(leader, inst)
+        }
+        inst.mixer?.update(0)
+      }
       renderer.render(scene, camera)
     }
-    void loadHarborRpgCosmetic(bodyId).then((loaded) => {
+    void Promise.all(ids.map((id) => loadHarborRpgCosmetic(id))).then((loaded) => {
       if (disposed) {
-        if (loaded) disposeHarborRpgCosmetic(loaded)
+        for (const inst of loaded) if (inst) disposeHarborRpgCosmetic(inst)
         return
       }
-      inst = loaded
-      if (!inst) return
-      scene.add(inst.root)
+      for (const inst of loaded) {
+        if (!inst) continue
+        insts.push(inst)
+        scene.add(inst.root)
+      }
     })
     loop()
     return () => {
       disposed = true
       cancelAnimationFrame(raf)
       ro?.disconnect()
-      if (inst) {
+      for (const inst of insts) {
         inst.root.parent?.remove(inst.root)
         disposeHarborRpgCosmetic(inst)
       }
       renderer.dispose()
       if (renderer.domElement.parentElement === host) host.removeChild(renderer.domElement)
     }
-  }, [bodyId])
+  }, [pieceKey])
 
   return <div className="hq-rpg-join-preview" ref={hostRef} />
+}
+
+function lockTime(leader: HarborRpgCosmeticInstance, follower: HarborRpgCosmeticInstance) {
+  if (!leader.action || !follower.mixer) return
+  const name = leader.action.getClip().name
+  if (!follower.action || follower.action.getClip().name !== name) {
+    const clip = follower.clips.find((c) => c.name === name)
+    if (!clip) return
+    const next = follower.mixer.clipAction(clip)
+    next.reset()
+    next.setLoop(THREE.LoopRepeat, Infinity)
+    next.play()
+    follower.action = next
+  }
+  if (follower.action) follower.action.time = leader.action.time
+}
+
+function pieceName(id: string | null | undefined): string | null {
+  if (!id) return null
+  const def = HARBOR_RPG_COSMETIC_DEFS[id as HarborRpgCosmeticId]
+  return def?.name.en ?? null
+}
+
+function chipOf(id: HarborRpgCosmeticId): { id: HarborRpgCosmeticId; label: string } {
+  return { id, label: HARBOR_RPG_COSMETIC_DEFS[id].name.en }
+}
+
+function LookRow({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: { id: HarborRpgCosmeticId | null; label: string }[]
+  value: HarborRpgCosmeticId | null
+  onChange: (id: HarborRpgCosmeticId | null) => void
+}) {
+  return (
+    <div>
+      <p className="hq-rpg-join-row-label">{label}</p>
+      <div className="hq-rpg-join-row">
+        {options.map((opt) => (
+          <button
+            key={`${label}-${opt.label}`}
+            type="button"
+            className={`hq-rpg-join-chip${value === opt.id ? ' is-on' : ''}`}
+            onClick={() => onChange(opt.id)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export function HarborRpgJoin({ bag, onCreate, onEnter, onBack }: Props) {
@@ -102,11 +185,22 @@ export function HarborRpgJoin({ bag, onCreate, onEnter, onBack }: Props) {
   const [name, setName] = useState('')
   const [nameError, setNameError] = useState<string | null>(null)
   const [gender, setGender] = useState<HarborGender>('male')
+  const [pick, setPick] = useState(() => harborRpgDefaultStarterPick('male'))
   const [classId, setClassId] = useState<HarborRpgClassId | null>(bag.classId)
   const [pickedId, setPickedId] = useState<string | null>(bag.activeCharacterId ?? bag.characters[0]?.id ?? null)
   const picked = bag.characters.find((c) => c.id === pickedId) ?? bag.characters[0] ?? null
   const previewGender: HarborGender = making ? gender : (picked?.gender ?? 'male')
+  const draftLooks = harborRpgComposeStarterLook(gender, pick)
+  const previewLooks =
+    making
+      ? draftLooks
+      : (picked?.looks ??
+        harborRpgComposeStarterLook(previewGender, harborRpgDefaultStarterPick(previewGender)))
   const needsClass = !bag.classId
+  const chooseGender = (next: HarborGender) => {
+    setGender(next)
+    setPick(harborRpgDefaultStarterPick(next))
+  }
 
   const acceptName = () => {
     const trimmed = name.trim()
@@ -126,15 +220,15 @@ export function HarborRpgJoin({ bag, onCreate, onEnter, onBack }: Props) {
 
   const finishCreate = () => {
     if (!classId) return
-    onCreate({ name: name.trim(), gender, classId })
+    onCreate({ name: name.trim(), gender, classId, looks: harborRpgComposeStarterLook(gender, pick) })
   }
 
   return (
     <div className="hq-rpg-join" role="dialog" aria-modal="true" aria-label="HarborRPG character">
       <div className="hq-rpg-join-stage">
-        <RpgBodyPreview gender={previewGender} />
+        <RpgLookPreview looks={previewLooks} />
         <p className="hq-rpg-join-caption">
-          Rigged harbor kit · {previewGender === 'female' ? 'female' : 'male'}. Wardrobe outfits unlock with gold after you enter.
+          {pieceName(previewLooks.head) ?? 'Bare'} · {pieceName(previewLooks.top)} · {pieceName(previewLooks.bottom)} · {pieceName(previewLooks.feet)}
         </p>
       </div>
       <div className="hq-rpg-join-sheet">
@@ -173,23 +267,48 @@ export function HarborRpgJoin({ bag, onCreate, onEnter, onBack }: Props) {
             ) : null}
             {step === 'body' ? (
               <div className="hq-rpg-join-choices">
-                <p className="hq-rpg-hint">Body. Both kits are fully rigged and use the animation library.</p>
-                <div className="hq-rpg-create-actions">
-                  <button
-                    type="button"
-                    className={`hq-btn${gender === 'male' ? ' hq-btn--solid' : ' hq-btn--ghost'}`}
-                    onClick={() => setGender('male')}
-                  >
+                <p className="hq-rpg-hint">Body, hair, tunic, trousers, and shoes. Sleeves follow the tunic.</p>
+                <div className="hq-rpg-join-row">
+                  <button type="button" className={`hq-rpg-join-chip${gender === 'male' ? ' is-on' : ''}`} onClick={() => chooseGender('male')}>
                     Male
                   </button>
-                  <button
-                    type="button"
-                    className={`hq-btn${gender === 'female' ? ' hq-btn--solid' : ' hq-btn--ghost'}`}
-                    onClick={() => setGender('female')}
-                  >
+                  <button type="button" className={`hq-rpg-join-chip${gender === 'female' ? ' is-on' : ''}`} onClick={() => chooseGender('female')}>
                     Female
                   </button>
                 </div>
+                <LookRow
+                  label="Hair"
+                  options={harborRpgStarterHair(gender).map((row) => ({ id: row.id, label: row.label }))}
+                  value={pick.hair}
+                  onChange={(id) => setPick((prev) => ({ ...prev, hair: id }))}
+                />
+                <LookRow
+                  label="Top"
+                  options={harborRpgStarterTops(gender).map(chipOf)}
+                  value={pick.top}
+                  onChange={(id) => {
+                    if (!id) return
+                    setPick((prev) => ({ ...prev, top: id }))
+                  }}
+                />
+                <LookRow
+                  label="Bottom"
+                  options={harborRpgStarterBottoms(gender).map(chipOf)}
+                  value={pick.bottom}
+                  onChange={(id) => {
+                    if (!id) return
+                    setPick((prev) => ({ ...prev, bottom: id }))
+                  }}
+                />
+                <LookRow
+                  label="Shoes"
+                  options={harborRpgStarterFeet(gender).map(chipOf)}
+                  value={pick.feet}
+                  onChange={(id) => {
+                    if (!id) return
+                    setPick((prev) => ({ ...prev, feet: id }))
+                  }}
+                />
                 <div className="hq-rpg-create-actions">
                   <button type="button" className="hq-btn hq-btn--solid" onClick={() => setStep(needsClass ? 'class' : 'confirm')}>
                     Next
@@ -242,7 +361,7 @@ export function HarborRpgJoin({ bag, onCreate, onEnter, onBack }: Props) {
             {step === 'confirm' && classId ? (
               <div className="hq-rpg-join-choices">
                 <p className="hq-rpg-hint">
-                  {name.trim()} · {gender === 'female' ? 'Female' : 'Male'} kit · {HARBOR_RPG_CLASS_DEFS[classId].name.en}
+                  {name.trim()} · {gender === 'female' ? 'Female' : 'Male'} · {pieceName(pick.hair) ?? 'Bare'} · {pieceName(pick.top)} · {HARBOR_RPG_CLASS_DEFS[classId].name.en}
                 </p>
                 <div className="hq-rpg-create-actions">
                   <button type="button" className="hq-btn hq-btn--solid" onClick={finishCreate}>

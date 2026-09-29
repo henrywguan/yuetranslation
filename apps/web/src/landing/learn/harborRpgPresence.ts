@@ -63,6 +63,8 @@ export type HarborRpgPresenceState = {
   activeMountId: string | null
   /** Equipped wardrobe cosmetic id (null = River Scout look). */
   equippedCosmetic: string | null
+  /** Hair, sleeves, tunic, trousers, shoes worn with the body. */
+  layers: string[]
   afk: boolean
   fleetName: string | null
   activeTitleId: string | null
@@ -79,8 +81,19 @@ export type HarborRpgPosePacket = {
   t: number
   activeMountId?: string | null
   equippedCosmetic?: string | null
+  layers?: string[]
   /** UAL clip while a full outfit is performing (null = locomotion). */
   emote?: string | null
+}
+
+function sanitizeLayers(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return []
+  const out: string[] = []
+  for (const id of raw) {
+    if (out.length >= 8) break
+    if (typeof id === 'string' && id.length > 0 && id.length < 40) out.push(id)
+  }
+  return out
 }
 
 export type HarborRpgRemotePlayer = HarborRpgPresenceState
@@ -129,6 +142,7 @@ function sanitizePresence(raw: unknown, key: string): HarborRpgPresenceState | n
       typeof o.equippedCosmetic === 'string' && o.equippedCosmetic.length < 40
         ? o.equippedCosmetic
         : null,
+    layers: sanitizeLayers(o.layers),
     afk: o.afk === true,
     fleetName:
       typeof o.fleetName === 'string' && o.fleetName.trim()
@@ -173,6 +187,7 @@ function sanitizePose(raw: unknown): HarborRpgPosePacket | null {
         : o.equippedCosmetic === null
           ? null
           : undefined,
+    layers: Array.isArray(o.layers) ? sanitizeLayers(o.layers) : undefined,
     emote:
       typeof o.emote === 'string' && isHarborRpgAnimClip(o.emote)
         ? o.emote
@@ -226,6 +241,7 @@ export type HarborRpgPresenceSession = {
     lookingDungeon?: HarborRpgPresenceState['lookingDungeon']
     activeMountId?: string | null
     equippedCosmetic?: string | null
+    layers?: string[]
     afk?: boolean
     fleetName?: string | null
     activeTitleId?: string | null
@@ -238,6 +254,7 @@ export type HarborRpgPresenceSession = {
     zone: HarborRpgZoneId
     activeMountId?: string | null
     equippedCosmetic?: string | null
+    layers?: string[]
     emote?: string | null
   }) => void
   broadcastParty: (party: HarborRpgPartyState | HarborRpgPartyInvite) => void
@@ -385,6 +402,7 @@ export function startHarborRpgPresence(opts: {
         lookingDungeon: pose.lookingDungeon ?? null,
         activeMountId: pose.activeMountId ?? null,
         equippedCosmetic: pose.equippedCosmetic ?? null,
+        layers: sanitizeLayers(pose.layers),
         afk: pose.afk === true,
         fleetName: pose.fleetName ?? null,
         activeTitleId: pose.activeTitleId ?? null,
@@ -403,6 +421,7 @@ export function startHarborRpgPresence(opts: {
         t: Date.now(),
         activeMountId: pose.activeMountId ?? null,
         equippedCosmetic: pose.equippedCosmetic ?? null,
+        layers: sanitizeLayers(pose.layers),
         emote:
           typeof pose.emote === 'string' && isHarborRpgAnimClip(pose.emote) ? pose.emote : null,
       }

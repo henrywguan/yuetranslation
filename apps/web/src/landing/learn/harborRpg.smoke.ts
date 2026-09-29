@@ -759,7 +759,15 @@ assert.match(worldSrc, /tickHarborRpgCosmetic|playRpgPerform|Death01/, 'UAL outf
   assert.equal(harborRpgVisualBodyId(starterHarborRpgLooks(), 'female'), 'rpg-outfit-peasant-f')
   assert.equal(
     harborRpgVisualBodyId(
-      { body: 'rpg-outfit-ranger-m', head: 'rpg-hood-ranger-m', shoulder: null, back: null },
+      {
+        body: 'rpg-outfit-ranger-m',
+        head: 'rpg-hood-ranger-m',
+        shoulder: null,
+        back: null,
+        top: null,
+        bottom: null,
+        feet: null,
+      },
       'male',
     ),
     'rpg-outfit-ranger-m',
@@ -777,6 +785,28 @@ assert.match(playSrc, /realmOverride === 'rpg' && !rpgEntered/, 'world stays pau
   const { harborRpgJoinPhase } = await import('./harborRpgJoin.ts')
   assert.equal(harborRpgJoinPhase(0), 'create')
   assert.equal(harborRpgJoinPhase(2), 'select')
+  const {
+    harborRpgStarterHair,
+    harborRpgStarterTops,
+    harborRpgStarterBottoms,
+    harborRpgStarterFeet,
+    harborRpgComposeStarterLook,
+    harborRpgDefaultStarterPick,
+    harborRpgWornLayerIds,
+  } = await import('./harborRpgLooks.ts')
+  for (const gender of ['male', 'female'] as const) {
+    assert.ok(harborRpgStarterHair(gender).length >= 4, `${gender} haircuts`)
+    assert.equal(harborRpgStarterTops(gender).length, 4, `${gender} tops`)
+    assert.equal(harborRpgStarterBottoms(gender).length, 4, `${gender} bottoms`)
+    assert.equal(harborRpgStarterFeet(gender).length, 4, `${gender} shoes`)
+    const look = harborRpgComposeStarterLook(gender, harborRpgDefaultStarterPick(gender))
+    assert.equal(look.body, gender === 'female' ? 'rpg-base-f' : 'rpg-base-m')
+    assert.ok(look.head)
+    assert.ok(look.top && look.bottom && look.feet)
+    const layers = harborRpgWornLayerIds(look)
+    assert.ok(layers.some((id) => id.startsWith('rpg-arms-')), 'sleeves follow the tunic')
+    assert.ok(layers.some((id) => id === look.top))
+  }
 }
 assert.match(worldSrc, /harborRpgFallbackBodyId/, 'UAL fallback body')
 assert.match(worldSrc, /loadHarborRpgCompanion|HARBOR_RPG_COMPANION_SRC/, 'companion mesh')

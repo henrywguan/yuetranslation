@@ -20,7 +20,7 @@ Persistence may nest under `harbor_quest_progress.progress.rpg` for storage only
 
 ## Character join
 
-Teleporting into HarborRPG opens a lobby. With no sailor, creation is name → rigged male/female kit (live preview) → class → **Enter the harbor**. With a sailor already made, the lobby is character select, then the same enter. The world stays paused until that confirm. The kit is the peasant body on the animation library. Wardrobe outfits stay gold purchases after entry. The adventure has one class; specs stay on the Class tab.
+Teleporting into HarborRPG opens a lobby. With no sailor, creation is name → body, hair, tunic, trousers, and shoes (live preview; sleeves follow the tunic) → class → **Enter the harbor**. Each gender has a bare head plus three haircuts, and four tops, trousers, and shoes (peasant, field dye, ranger, dusk dye) from the free Quaternius modular kit. With a sailor already made, the lobby is character select, then the same enter, and that sailor’s look is restored. The world stays paused until that confirm. Full wardrobe outfits stay gold purchases after entry. The adventure has one class; specs stay on the Class tab.
 
 ## Soft trust (Henry 2026-09-28)
 

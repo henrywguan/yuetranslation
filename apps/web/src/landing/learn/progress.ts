@@ -15,6 +15,7 @@ import {
   type HarborProgress,
 } from './progressMerge'
 import { sanitizeHarborFishingBag, type HarborFishingBag } from './harborFishing'
+import type { HarborRpgEquippedLooks } from './harborRpgLooks'
 import {
   createHarborRpgCharacter,
   HARBOR_RPG_DUMMY_GOLD,
@@ -34,6 +35,7 @@ import {
   setRpgActiveMount,
   buyRpgMount,
   buyRpgCosmetic,
+  grantHarborRpgLook,
   setRpgEquippedCosmetic,
   spendHarborRpgTalent,
   prestigeHarborRpgClass,
@@ -267,22 +269,26 @@ export function createHarborRpgCharacterSlot(input: {
   name: string
   gender?: HarborGender
   appearance?: HarborAppearance
+  looks?: HarborRpgEquippedLooks
 }): HarborProgress | null {
   const p = read()
-  const bag = sanitizeHarborRpgBag(p.rpg)
+  let bag = sanitizeHarborRpgBag(p.rpg)
   if (bag.characters.length >= HARBOR_RPG_MAX_CHARS) return null
   const c = createHarborRpgCharacter(input)
   bag.characters = [...bag.characters, c]
   bag.activeCharacterId = c.id
+  if (input.looks) bag = grantHarborRpgLook(bag, input.looks)
   return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
 }
 
 /** Switch active RPG character. */
 export function setHarborRpgActiveCharacter(id: string): HarborProgress | null {
   const p = read()
-  const bag = sanitizeHarborRpgBag(p.rpg)
-  if (!bag.characters.some((c) => c.id === id)) return null
+  let bag = sanitizeHarborRpgBag(p.rpg)
+  const char = bag.characters.find((c) => c.id === id)
+  if (!char) return null
   bag.activeCharacterId = id
+  if (char.looks) bag = grantHarborRpgLook(bag, char.looks)
   return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
 }
 

@@ -2,27 +2,154 @@
  * HarborRPG layered wardrobe — body, head, shoulder, and back can be worn together.
  * `equippedCosmetic` stays the body slot so older bags still load.
  */
-import { harborRpgCosmeticById, type HarborRpgCosmeticSlot } from './harborRpgCosmetics'
+import {
+  harborRpgCosmeticById,
+  isHarborRpgCosmeticId,
+  type HarborRpgCosmeticId,
+  type HarborRpgCosmeticSlot,
+} from './harborRpgCosmetics'
 
-export const HARBOR_RPG_LOOK_SLOTS = ['body', 'head', 'shoulder', 'back'] as const
+export const HARBOR_RPG_LOOK_SLOTS = ['body', 'head', 'shoulder', 'back', 'top', 'bottom', 'feet'] as const
 
 export type HarborRpgLookSlot = (typeof HARBOR_RPG_LOOK_SLOTS)[number]
 
 export type HarborRpgEquippedLooks = Record<HarborRpgLookSlot, string | null>
 
 export function emptyHarborRpgLooks(): HarborRpgEquippedLooks {
-  return { body: null, head: null, shoulder: null, back: null }
+  return { body: null, head: null, shoulder: null, back: null, top: null, bottom: null, feet: null }
 }
 
 /** Starter bag wears the soft traveler cloak on the back. Body stays empty so the peasant kit shows. */
 export function starterHarborRpgLooks(): HarborRpgEquippedLooks {
-  return { body: null, head: null, shoulder: null, back: 'rpg-cloak-traveler' }
+  return {
+    body: null,
+    head: null,
+    shoulder: null,
+    back: 'rpg-cloak-traveler',
+    top: null,
+    bottom: null,
+    feet: null,
+  }
 }
 
 export function harborRpgLookSlot(id: string): HarborRpgLookSlot {
   const slot = harborRpgCosmeticById(id)?.slot
-  if (slot === 'head' || slot === 'shoulder' || slot === 'back' || slot === 'body') return slot
+  if (slot && (HARBOR_RPG_LOOK_SLOTS as readonly string[]).includes(slot)) return slot as HarborRpgLookSlot
   return 'body'
+}
+
+function starterPieceIds(
+  slot: 'top' | 'bottom' | 'feet',
+  gender: 'male' | 'female',
+): HarborRpgCosmeticId[] {
+  const g = gender === 'female' ? 'f' : 'm'
+  return [
+    `rpg-${slot}-peasant-${g}`,
+    `rpg-${slot}-peasant-${g}-2`,
+    `rpg-${slot}-ranger-${g}`,
+    `rpg-${slot}-ranger-${g}-3`,
+  ].filter(isHarborRpgCosmeticId)
+}
+
+export function harborRpgStarterTops(gender: 'male' | 'female'): HarborRpgCosmeticId[] {
+  return starterPieceIds('top', gender)
+}
+
+export function harborRpgStarterBottoms(gender: 'male' | 'female'): HarborRpgCosmeticId[] {
+  return starterPieceIds('bottom', gender)
+}
+
+export function harborRpgStarterFeet(gender: 'male' | 'female'): HarborRpgCosmeticId[] {
+  return starterPieceIds('feet', gender)
+}
+
+export function harborRpgStarterHair(
+  gender: 'male' | 'female',
+): { id: HarborRpgCosmeticId | null; label: string }[] {
+  if (gender === 'female') {
+    return [
+      { id: null, label: 'Bare' },
+      { id: 'rpg-hair-buzzed-f', label: 'Buzzed' },
+      { id: 'rpg-hair-buns', label: 'Buns' },
+      { id: 'rpg-hair-long', label: 'Long' },
+    ]
+  }
+  return [
+    { id: null, label: 'Bare' },
+    { id: 'rpg-hair-buzzed', label: 'Buzzed' },
+    { id: 'rpg-hair-parted', label: 'Parted' },
+    { id: 'rpg-hair-beard', label: 'Beard' },
+  ]
+}
+
+export function harborRpgDefaultStarterPick(gender: 'male' | 'female'): {
+  hair: HarborRpgCosmeticId | null
+  top: HarborRpgCosmeticId
+  bottom: HarborRpgCosmeticId
+  feet: HarborRpgCosmeticId
+} {
+  const hair = harborRpgStarterHair(gender)[1]?.id ?? null
+  const top = harborRpgStarterTops(gender)[0]
+  const bottom = harborRpgStarterBottoms(gender)[0]
+  const feet = harborRpgStarterFeet(gender)[0]
+  if (!top || !bottom || !feet) {
+    throw new Error('starter kit missing')
+  }
+  return { hair, top, bottom, feet }
+}
+
+export function harborRpgComposeStarterLook(
+  gender: 'male' | 'female',
+  pick: {
+    hair: HarborRpgCosmeticId | null
+    top: HarborRpgCosmeticId
+    bottom: HarborRpgCosmeticId
+    feet: HarborRpgCosmeticId
+  },
+): HarborRpgEquippedLooks {
+  return {
+    body: gender === 'female' ? 'rpg-base-f' : 'rpg-base-m',
+    head: pick.hair,
+    shoulder: null,
+    back: 'rpg-cloak-traveler',
+    top: pick.top,
+    bottom: pick.bottom,
+    feet: pick.feet,
+  }
+}
+
+export function harborRpgIsModularBody(id: string | null | undefined): boolean {
+  return typeof id === 'string' && id.startsWith('rpg-base-')
+}
+
+/** Sleeves follow the tunic so the dye matches. */
+export function harborRpgArmsForTop(topId: string | null | undefined): HarborRpgCosmeticId | null {
+  if (!topId?.startsWith('rpg-top-')) return null
+  const arms = `rpg-arms-${topId.slice('rpg-top-'.length)}`
+  return isHarborRpgCosmeticId(arms) ? arms : null
+}
+
+/** Attach meshes worn with the current body. */
+export function harborRpgWornLayerIds(
+  looks: HarborRpgEquippedLooks | null | undefined,
+): HarborRpgCosmeticId[] {
+  if (!looks) return []
+  const modular = harborRpgIsModularBody(looks.body)
+  const slots = modular
+    ? (['head', 'shoulder', 'back', 'top', 'bottom', 'feet'] as const)
+    : (['head', 'shoulder', 'back'] as const)
+  const ids: HarborRpgCosmeticId[] = []
+  if (modular) {
+    const arms = harborRpgArmsForTop(looks.top)
+    if (arms) ids.push(arms)
+  }
+  for (const slot of slots) {
+    const id = looks[slot]
+    if (!id || !isHarborRpgCosmeticId(id)) continue
+    const def = harborRpgCosmeticById(id)
+    if (def?.src && def.kind === 'attach') ids.push(id)
+  }
+  return ids
 }
 
 export function sanitizeHarborRpgLooks(
