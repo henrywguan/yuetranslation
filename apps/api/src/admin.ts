@@ -1195,6 +1195,10 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
         nextMove: parsed.data.nextMove,
         review: parsed.data.review,
         lastMiss: parsed.data.lastMiss,
+        mode: parsed.data.mode,
+        place: parsed.data.place,
+        sceneTurn: parsed.data.sceneTurn,
+        sceneTurns: parsed.data.sceneTurns,
       },
     )
     const { addPracticePartnerCount } = await import('./usage.js')
@@ -1220,6 +1224,7 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
         move: parsed.data.move || 'repeat',
         nextMove: parsed.data.nextMove || parsed.data.move || 'repeat',
         hadLastMiss: Boolean(parsed.data.lastMiss),
+        mode: parsed.data.mode || 'drill',
       },
     })
     // Model id stays in audit only — omit from client response.

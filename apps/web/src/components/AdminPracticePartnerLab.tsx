@@ -27,6 +27,21 @@ import {
   withLockedPhrase,
   type PartnerPerformance,
 } from '../lib/practicePartnerPerformance'
+import { glossForChar, isHanChar } from '../lib/charGloss'
+import { sceneLineAt, scenePlaceFor, sceneTurnCount } from '../lib/practicePartnerScene'
+import {
+  beginPartnerSitting,
+  linesForCategory,
+  readPartnerSitting,
+  rememberPartnerLine,
+  rememberPartnerMiss,
+  reviewBankForCategory,
+  writePartnerSitting,
+  type PartnerKeptLine,
+  type PartnerSitting,
+  type PartnerSittingMiss,
+} from '../lib/practicePartnerSitting'
+import { toneNoteForSyllable, type PartnerToneNote } from '../lib/practicePartnerToneNote'
 import { createWebSpeechSession } from '../lib/webSpeech'
 import {
   isAppleTouchDevice,
@@ -329,6 +344,21 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [youLive, setYouLive] = useState<{ text: string; interim: boolean } | null>(null)
   /** Bumps to replay the jade sweep on the drill 漢字. */
   const [zhFlash, setZhFlash] = useState(0)
+  const [sessionKind, setSessionKind] = useState<'drill' | 'open' | 'scene'>('drill')
+  const [sceneOffer, setSceneOffer] = useState<{
+    category: PracticePartnerCategory
+    placeEn: string
+    placeZh: string
+  } | null>(null)
+  const [sceneStep, setSceneStep] = useState({ index: 0, total: 0 })
+  const [sceneDone, setSceneDone] = useState(false)
+  const [recap, setRecap] = useState<{
+    lines: PartnerKeptLine[]
+    misses: PartnerSittingMiss[]
+  } | null>(null)
+  const [keptLines, setKeptLines] = useState<PartnerKeptLine[]>(() => readPartnerSitting().lines)
+  const [gloss, setGloss] = useState<{ char: string; meaning: string } | null>(null)
+  const [tonePop, setTonePop] = useState<PartnerToneNote | null>(null)
 
   const draftInputRef = useRef<HTMLInputElement | null>(null)
   const sessionRef = useRef<LiveSession | null>(null)
@@ -362,6 +392,12 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const publishScoreRef = useRef<(scores: PracticePartnerScores) => void>(() => {})
   const pathRef = useRef(path)
   const pathNoteTimerRef = useRef(0)
+  const sessionKindRef = useRef<'drill' | 'open' | 'scene'>('drill')
+  const sittingRef = useRef<PartnerSitting>(readPartnerSitting())
+  const sceneStepRef = useRef({ index: 0, total: 0 })
+  const sceneLinesRef = useRef<PartnerKeptLine[]>([])
+  const scenePlaceRef = useRef('')
+  const sceneDoneRef = useRef(false)
 
   useEffect(() => {
     messagesRef.current = messages
@@ -521,9 +557,18 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setVhsCue(0)
   }, [stopMic])
 
+  const commitSitting = useCallback((next: PartnerSitting) => {
+    sittingRef.current = next
+    writePartnerSitting(next)
+    setKeptLines(next.lines)
+  }, [])
+
   const applyDrill = useCallback((drill: PracticePartnerDrill | null) => {
     if (!drill) return
+    const kind = sessionKindRef.current
     const justPassed = activeDrillRef.current
+    setGloss(null)
+    setTonePop(null)
     setActiveDrill({ en: drill.en, zh: drill.zh, jyutping: drill.jyutping })
     window.clearTimeout(verdictTimerRef.current)
     if (drill.verdict === 'pass') {
@@ -532,63 +577,105 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       missStreakRef.current = 0
       hitsRef.current += 1
       const passedAReview = cardIsReviewRef.current
-      if (justPassed?.zh) {
+      if (kind === 'drill' && justPassed?.zh) {
         if (passedAReview) {
           passedRef.current = passedRef.current.filter((row) => row.zh !== justPassed.zh)
         } else if (!passedRef.current.some((row) => row.zh === justPassed.zh)) {
           passedRef.current = [...passedRef.current, justPassed].slice(-8)
         }
+        commitSitting(
+          rememberPartnerLine(sittingRef.current, {
+            en: justPassed.en,
+            zh: justPassed.zh,
+            jyutping: justPassed.jyutping,
+            category: categoryRef.current,
+          }),
+        )
       }
-      const gained = practicePartnerXpForPass(pendingActiveMoveRef.current, passedAReview)
-      setXp((n) => n + gained)
-      moveRef.current = pendingNextMoveRef.current
-      setMove(moveRef.current)
-      cardIsReviewRef.current = incomingReviewRef.current
-      incomingReviewRef.current = false
+      if (kind === 'drill') {
+        const gained = practicePartnerXpForPass(pendingActiveMoveRef.current, passedAReview)
+        setXp((n) => n + gained)
+        moveRef.current = pendingNextMoveRef.current
+        setMove(moveRef.current)
+        cardIsReviewRef.current = incomingReviewRef.current
+        incomingReviewRef.current = false
+        if (justPassed?.zh || justPassed?.en) {
+          const nextScores = recordPracticePartnerPass({
+            streak: nextStreak,
+            category: categoryRef.current,
+            zh: justPassed.zh || '',
+            en: justPassed.en || '',
+            xpGain: gained,
+          })
+          setScoreboard(nextScores)
+          publishScoreRef.current(nextScores)
+        }
+        const credited = creditPracticePartnerPath(
+          pathRef.current,
+          categoryRef.current,
+          pendingActiveMoveRef.current,
+        )
+        pathRef.current = credited.next
+        writePracticePartnerPath(credited.next)
+        setPath(credited.next)
+        setPathFresh(credited.fresh)
+        if (credited.note) {
+          setPathNote(credited.note)
+          window.clearTimeout(pathNoteTimerRef.current)
+          pathNoteTimerRef.current = window.setTimeout(() => setPathNote(null), 2600)
+          if (credited.note.kind === 'section') {
+            const place = scenePlaceFor(categoryRef.current)
+            const kept = linesForCategory(sittingRef.current.lines, categoryRef.current)
+            if (place && kept.length) {
+              setSceneOffer({
+                category: categoryRef.current,
+                placeEn: place.placeEn,
+                placeZh: place.placeZh,
+              })
+            }
+          }
+        }
+      }
       setStreak(nextStreak)
       setHits(hitsRef.current)
-      if (justPassed?.zh || justPassed?.en) {
-        const nextScores = recordPracticePartnerPass({
-          streak: nextStreak,
-          category: categoryRef.current,
-          zh: justPassed.zh || '',
-          en: justPassed.en || '',
-          xpGain: gained,
-        })
-        setScoreboard(nextScores)
-        publishScoreRef.current(nextScores)
-      }
-      const credited = creditPracticePartnerPath(
-        pathRef.current,
-        categoryRef.current,
-        pendingActiveMoveRef.current,
-      )
-      pathRef.current = credited.next
-      writePracticePartnerPath(credited.next)
-      setPath(credited.next)
-      setPathFresh(credited.fresh)
-      if (credited.note) {
-        setPathNote(credited.note)
-        window.clearTimeout(pathNoteTimerRef.current)
-        pathNoteTimerRef.current = window.setTimeout(() => setPathNote(null), 2600)
-      }
       playPracticePartnerPassSfx()
       setVerdictFlash('pass')
       verdictTimerRef.current = window.setTimeout(() => setVerdictFlash(null), 1800)
     } else if (drill.verdict === 'fail') {
       streakRef.current = 0
       missStreakRef.current += 1
-      moveRef.current = 'repeat'
-      setMove('repeat')
+      if (kind === 'drill') {
+        moveRef.current = 'repeat'
+        setMove('repeat')
+      }
       setStreak(0)
       setMisses((n) => n + 1)
+      if (justPassed?.zh) {
+        commitSitting(
+          rememberPartnerMiss(sittingRef.current, {
+            said: lastMissRef.current?.said || justPassed.zh,
+            zh: justPassed.zh,
+            en: justPassed.en,
+          }),
+        )
+      }
       playPracticePartnerFailSfx()
       setVerdictFlash('fail')
       verdictTimerRef.current = window.setTimeout(() => setVerdictFlash(null), 1800)
     } else {
       setVerdictFlash(null)
+      if (kind === 'open' && drill.zh && drill.en) {
+        commitSitting(
+          rememberPartnerLine(sittingRef.current, {
+            en: drill.en,
+            zh: drill.zh,
+            jyutping: drill.jyutping,
+            category: 'open',
+          }),
+        )
+      }
     }
-  }, [])
+  }, [commitSitting])
 
   const playPartnerReply = useCallback(
     async (reply: string, beats?: PartnerPerformance | null) => {
@@ -705,19 +792,38 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setYouLive(null)
     setFsTypeOpen(false)
     setMood('thinking')
+    const kind = sessionKindRef.current
     const deck = PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === categoryRef.current)
+    const sceneLine =
+      kind === 'scene' ? sceneLineAt(sceneLinesRef.current, sceneStepRef.current.index) : null
     setCaption({
       role: 'system',
-      text: `港灣 is picking a ${deck?.labelEn.toLowerCase() || 'common'} line…`,
+      text:
+        kind === 'open'
+          ? '港灣 is opening the conversation…'
+          : kind === 'scene'
+            ? `港灣 is setting ${scenePlaceRef.current || 'the scene'}…`
+            : `港灣 is picking a ${deck?.labelEn.toLowerCase() || 'common'} line…`,
     })
     try {
       lastMissRef.current = null
       const { reply, drill, beats } = await postPracticePartnerChat(
         messagesRef.current,
-        null,
+        sceneLine
+          ? { en: sceneLine.en, zh: sceneLine.zh, jyutping: sceneLine.jyutping }
+          : null,
         categoryRef.current,
         difficultyRef.current,
-        { streak: 0, missStreak: 0, move: 'repeat', nextMove: 'repeat' },
+        {
+          streak: 0,
+          missStreak: 0,
+          move: 'repeat',
+          nextMove: 'repeat',
+          mode: kind,
+          place: kind === 'scene' ? scenePlaceRef.current : null,
+          sceneTurn: kind === 'scene' ? sceneStepRef.current.index + 1 : null,
+          sceneTurns: kind === 'scene' ? sceneStepRef.current.total : null,
+        },
       )
       const performed = performedLine(
         reply,
@@ -753,19 +859,23 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const runPartnerTurn = useCallback(
     async (userText: string) => {
       const text = userText.trim()
-      if (!text || turnLockRef.current) return
+      if (!text || turnLockRef.current || sceneDoneRef.current) return
       const target = activeDrillRef.current
       if (!target) {
         await startDrill()
         return
       }
+      const kind = sessionKindRef.current
       turnLockRef.current = true
       setBusy(true)
       setError('')
       setYouLive(null)
       setFsTypeOpen(false)
       setMood('thinking')
-      setCaption({ role: 'system', text: '港灣 is judging…' })
+      setCaption({
+        role: 'system',
+        text: kind === 'open' ? '港灣 is answering…' : '港灣 is judging…',
+      })
 
       const nextMessages: PracticePartnerChatMessage[] = [
         ...messagesRef.current,
@@ -773,17 +883,20 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       ]
       setMessages(nextMessages)
 
-      const plan = planPracticePartnerAdvance(hitsRef.current, passedRef.current)
+      const plan =
+        kind === 'drill'
+          ? planPracticePartnerAdvance(hitsRef.current, passedRef.current)
+          : { nextMove: moveRef.current, review: null as PracticePartnerDrillTarget | null }
       pendingActiveMoveRef.current = moveRef.current
       pendingNextMoveRef.current = plan.nextMove
       pendingReviewRef.current = plan.review
 
-      const lastMiss = lastMissRef.current
+      const lastMiss = kind === 'open' ? null : lastMissRef.current
       lastMissRef.current = null
       try {
         const { reply, drill: rawDrill, beats } = await postPracticePartnerChat(
           nextMessages,
-          target,
+          kind === 'open' ? null : target,
           categoryRef.current,
           difficultyRef.current,
           {
@@ -791,31 +904,81 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             missStreak: missStreakRef.current,
             move: moveRef.current,
             nextMove: plan.nextMove,
-            review: plan.review,
+            review: kind === 'drill' ? plan.review : null,
             lastMiss,
+            mode: kind,
+            place: kind === 'scene' ? scenePlaceRef.current : null,
+            sceneTurn: kind === 'scene' ? sceneStepRef.current.index + 1 : null,
+            sceneTurns: kind === 'scene' ? sceneStepRef.current.total : null,
           },
         )
         incomingReviewRef.current = false
-        const drill =
-          rawDrill?.verdict === 'fail'
-            ? {
-                ...rawDrill,
-                en: target.en,
-                zh: target.zh,
-                jyutping: target.jyutping,
-                verdict: 'fail' as const,
-                advance: false,
-              }
-            : rawDrill?.verdict === 'pass' && plan.review
-              ? { ...rawDrill, ...plan.review, verdict: 'pass' as const, advance: true }
+        let drill =
+          kind !== 'drill'
+            ? rawDrill?.verdict === 'fail' && kind === 'scene'
+              ? {
+                  ...rawDrill,
+                  en: target.en,
+                  zh: target.zh,
+                  jyutping: target.jyutping,
+                  verdict: 'fail' as const,
+                  advance: false,
+                }
               : rawDrill
-        if (drill?.verdict === 'pass' && plan.review) incomingReviewRef.current = true
-        const phrase =
-          drill?.verdict === 'fail'
-            ? target.zh
-            : drill?.verdict === 'pass' && plan.review
-              ? plan.review.zh
-              : drill?.zh || beats?.phrase || ''
+                ? { ...rawDrill, verdict: kind === 'open' ? ('none' as const) : rawDrill.verdict, advance: kind === 'open' ? false : rawDrill.advance }
+                : rawDrill
+            : rawDrill?.verdict === 'fail'
+              ? {
+                  ...rawDrill,
+                  en: target.en,
+                  zh: target.zh,
+                  jyutping: target.jyutping,
+                  verdict: 'fail' as const,
+                  advance: false,
+                }
+              : rawDrill?.verdict === 'pass' && plan.review
+                ? { ...rawDrill, ...plan.review, verdict: 'pass' as const, advance: true }
+                : rawDrill
+        if (kind === 'drill' && drill?.verdict === 'pass' && plan.review) incomingReviewRef.current = true
+        let phrase =
+          kind === 'open'
+            ? drill?.zh || beats?.phrase || ''
+            : drill?.verdict === 'fail'
+              ? target.zh
+              : drill?.verdict === 'pass' && plan.review
+                ? plan.review.zh
+                : drill?.zh || beats?.phrase || ''
+        let closing = false
+        if (kind === 'scene' && drill?.verdict === 'pass') {
+          const nextIndex = sceneStepRef.current.index + 1
+          if (nextIndex >= sceneStepRef.current.total) {
+            closing = true
+            phrase = target.zh
+            drill = {
+              ...drill,
+              en: target.en,
+              zh: target.zh,
+              jyutping: target.jyutping,
+              verdict: 'pass',
+              advance: true,
+            }
+          } else {
+            const next = sceneLineAt(sceneLinesRef.current, nextIndex)
+            if (next) {
+              sceneStepRef.current = { index: nextIndex, total: sceneStepRef.current.total }
+              setSceneStep(sceneStepRef.current)
+              drill = {
+                ...drill,
+                en: next.en,
+                zh: next.zh,
+                jyutping: next.jyutping,
+                verdict: 'pass',
+                advance: true,
+              }
+              phrase = next.zh
+            }
+          }
+        }
         const performed = performedLine(
           reply,
           beats,
@@ -824,6 +987,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           streakRef.current,
           missStreakRef.current,
         )
+        if (closing && performed.beats) {
+          performed.beats = { ...performed.beats, cue: 'The road is still there.' }
+          performed.caption = partnerCaption(performed.beats)
+        }
         void loadTtsAudio(performed.caption, 'yue', partnerVoice, {
           loud: true,
           performance: performed.beats,
@@ -840,6 +1007,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           setMissCard(null)
         }
         applyDrill(drill)
+        if (closing) {
+          sceneDoneRef.current = true
+          setSceneDone(true)
+        }
         await playPartnerReply(performed.caption, performed.beats)
       } catch (e) {
         setMood('idle')
@@ -998,6 +1169,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   }, [busy, listening, mood, partnerHold, stopMic])
 
   const toggleTalk = useCallback(() => {
+    if (!listening && sceneDoneRef.current) return
     if (listening) {
       // Flip iOS out of the mic session in this gesture, then judge.
       // A plain unlock is a no-op after the first tap — that left later
@@ -1032,7 +1204,15 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   const resetChat = useCallback(() => {
     clearDrillSession()
-  }, [clearDrillSession])
+    sceneDoneRef.current = false
+    setSceneDone(false)
+    commitSitting(beginPartnerSitting(sittingRef.current))
+    if (sessionKindRef.current === 'drill') {
+      passedRef.current = reviewBankForCategory(sittingRef.current.lines, categoryRef.current).map(
+        (line) => ({ en: line.en, zh: line.zh, jyutping: line.jyutping }),
+      )
+    }
+  }, [clearDrillSession, commitSitting])
 
   const pickTopic = useCallback(
     (next: PracticePartnerCategory) => {
@@ -1045,19 +1225,83 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       writePartnerDifficulty(level)
       difficultyRef.current = level
       clearDrillSession()
+      sessionKindRef.current = 'drill'
+      setSessionKind('drill')
+      setSceneOffer(null)
+      setRecap(null)
+      sceneDoneRef.current = false
+      setSceneDone(false)
+      passedRef.current = reviewBankForCategory(sittingRef.current.lines, id).map((line) => ({
+        en: line.en,
+        zh: line.zh,
+        jyutping: line.jyutping,
+      }))
+      commitSitting(beginPartnerSitting(sittingRef.current))
       setTopicReady(true)
       setFullscreen(false)
     },
-    [clearDrillSession],
+    [clearDrillSession, commitSitting],
   )
+
+  const beginOpenChat = useCallback(() => {
+    clearDrillSession()
+    sessionKindRef.current = 'open'
+    setSessionKind('open')
+    setSceneOffer(null)
+    setRecap(null)
+    sceneDoneRef.current = false
+    setSceneDone(false)
+    commitSitting(beginPartnerSitting(sittingRef.current))
+    setTopicReady(true)
+    setFullscreen(false)
+  }, [clearDrillSession, commitSitting])
 
   const changeTopic = useCallback(() => {
     if (busy || listening) return
+    const sitting = sittingRef.current
+    const lines = sitting.sessionLines
+    const misses = sitting.misses
     clearDrillSession()
+    sessionKindRef.current = 'drill'
+    setSessionKind('drill')
+    setSceneOffer(null)
+    setGloss(null)
+    setTonePop(null)
+    sceneDoneRef.current = false
+    setSceneDone(false)
+    if (lines.length || misses.length) setRecap({ lines, misses })
+    commitSitting(beginPartnerSitting(sitting))
     setFullscreen(false)
     setScoresOpen(false)
     setTopicReady(false)
-  }, [busy, clearDrillSession, listening])
+  }, [busy, clearDrillSession, commitSitting, listening])
+
+  const enterScene = useCallback(() => {
+    const id = sceneOffer?.category || categoryRef.current
+    const lines = linesForCategory(sittingRef.current.lines, id)
+    const total = sceneTurnCount(lines.length)
+    const first = sceneLineAt(lines, 0)
+    const place = scenePlaceFor(id)
+    if (!first || !total || !place || busy || listening) return
+    ttsGenRef.current += 1
+    ttsLiveRef.current = false
+    stopSpeaking()
+    sceneLinesRef.current = lines
+    sceneStepRef.current = { index: 0, total }
+    setSceneStep(sceneStepRef.current)
+    scenePlaceRef.current = `${place.placeEn} (${place.placeZh})`
+    sceneDoneRef.current = false
+    setSceneDone(false)
+    sessionKindRef.current = 'scene'
+    setSessionKind('scene')
+    setSceneOffer(null)
+    setMessages([])
+    messagesRef.current = []
+    setActiveDrill(null)
+    activeDrillRef.current = null
+    setMissCard(null)
+    void startDrill()
+  }, [busy, listening, sceneOffer, startDrill])
 
   const onCategoryChange = (next: PracticePartnerCategory) => {
     pickTopic(next)
@@ -1175,30 +1419,51 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   }
 
   const talkLabel = listening
-    ? 'Stop & judge'
-    : !activeDrill
-      ? busy
-        ? 'Working…'
-        : 'Begin drill'
-      : busy
-        ? 'Working…'
-        : 'Say it'
+    ? sessionKind === 'open'
+      ? 'Stop'
+      : 'Stop & judge'
+    : sceneDone
+      ? 'Scene done'
+      : !activeDrill
+        ? busy
+          ? 'Working…'
+          : sessionKind === 'open'
+            ? 'Begin chat'
+            : sessionKind === 'scene'
+              ? 'Begin scene'
+              : 'Begin drill'
+        : busy
+          ? 'Working…'
+          : sessionKind === 'open'
+            ? 'Talk'
+            : 'Say it'
 
   const categoryMeta =
-    PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === category) || PRACTICE_PARTNER_CATEGORIES[2]
+    sessionKind === 'open'
+      ? { labelEn: 'Open chat', labelZh: '自由講' }
+      : PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === category) || PRACTICE_PARTNER_CATEGORIES[2]
   const difficultyMeta =
     PRACTICE_PARTNER_DIFFICULTIES.find((d) => d.id === difficulty) ||
     PRACTICE_PARTNER_DIFFICULTIES[1]
 
   const drillCloze = activeDrill ? finishLineCloze(activeDrill.zh) : null
   const cardFace = practicePartnerCardShows(move, difficulty, Boolean(drillCloze))
-  const drillKicker = verdictFlash === 'fail'
-    ? 'Try again'
-    : verdictFlash === 'pass'
-      ? 'Next phrase'
-      : activeDrill
-        ? PRACTICE_PARTNER_MOVE_LABEL[move]
-        : categoryMeta.labelEn
+  const freeLine = sessionKind !== 'drill'
+  const scenePlaceLabel = scenePlaceRef.current
+  const drillKicker =
+    sessionKind === 'open'
+      ? 'Open chat'
+      : sessionKind === 'scene'
+        ? sceneDone
+          ? 'Scene done'
+          : `${scenePlaceLabel || 'Scene'} · ${Math.min(sceneStep.total, sceneStep.index + 1)} of ${sceneStep.total || 1}`
+        : verdictFlash === 'fail'
+          ? 'Try again'
+          : verdictFlash === 'pass'
+            ? 'Next phrase'
+            : activeDrill
+              ? PRACTICE_PARTNER_MOVE_LABEL[move]
+              : categoryMeta.labelEn
 
   const partnerSpeaker = voiceSpeakerName(partnerVoice)
   const speakerName =
@@ -1221,8 +1486,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             </p>
             <h2 className="partner-lab-title">Choose difficulty & topic</h2>
             <p className="partner-lab-lede">
-              Difficulty sets how much English 港灣 uses. The path is the course — sections,
-              then short units you can finish.
+              Difficulty sets how much English 港灣 uses. The path is the course. Open chat
+              is a conversation beside it.
             </p>
           </div>
           <div className="partner-lab-scores-wrap">
@@ -1343,6 +1608,73 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             listClassName="partner-lab-topic-list"
           />
         </div>
+
+        {recap ? (
+          <div className="partner-lab-recap" role="region" aria-label="This sitting">
+            <p className="partner-lab-chooser-label">This sitting</p>
+            {recap.lines.length ? (
+              <ul className="partner-lab-recap-list">
+                {recap.lines.map((line) => (
+                  <li key={`clear-${line.zh}`}>
+                    <span lang="zh-HK">{line.zh}</span>
+                    <span>{line.en}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="partner-lab-recap-empty">No lines cleared.</p>
+            )}
+            {recap.misses.length ? (
+              <ul className="partner-lab-recap-list is-miss">
+                {recap.misses.map((miss, i) => (
+                  <li key={`miss-${miss.at}-${i}`}>
+                    <span>Heard {miss.said}</span>
+                    <span lang="zh-HK">Target {miss.zh}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <button type="button" className="partner-lab-recap-dismiss" onClick={() => setRecap(null)}>
+              Close recap
+            </button>
+          </div>
+        ) : null}
+
+        <div className="partner-lab-chooser-block">
+          <p className="partner-lab-chooser-label" id="partner-lab-open-label">
+            Also
+          </p>
+          <button type="button" className="partner-lab-open" onClick={beginOpenChat}>
+            <span className="partner-lab-open-en">Open chat</span>
+            <span className="partner-lab-open-zh" lang="zh-HK">
+              自由講
+            </span>
+            <span className="partner-lab-open-hint">Talk with 港灣. No card to clear, no score.</span>
+          </button>
+        </div>
+
+        {keptLines.length ? (
+          <div className="partner-lab-chooser-block">
+            <p className="partner-lab-chooser-label">Lines you kept</p>
+            <ul className="partner-lab-kept">
+              {keptLines.slice(-6).reverse().map((line) => (
+                <li key={`${line.category}-${line.zh}`}>
+                  <span lang="zh-HK">{line.zh}</span>
+                  <span>{line.en}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      unlockTtsPlayback({ force: true })
+                      void playPhrase(line.zh)
+                    }}
+                  >
+                    Replay
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </section>
     )
   }
@@ -1361,7 +1693,11 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </p>
           <h2 className="partner-lab-title">Practice Partner</h2>
           <p className="partner-lab-lede">
-            Follow along! The practice partner will start off and repeat.
+            {sessionKind === 'open'
+              ? 'Talk with 港灣. The path stays where you left it.'
+              : sessionKind === 'scene'
+                ? 'Use a line you already kept.'
+                : 'Follow along! The practice partner will start off and repeat.'}
           </p>
         </div>
         <div className="partner-lab-scores-wrap">
@@ -1528,14 +1864,33 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               </span>
             ) : null}
           </p>
-          <PracticePartnerPath
-            compact
-            progress={path}
-            activeId={category}
-            activeUnit={practicePartnerUnitForMove(move)}
-            fresh={pathFresh}
-            note={pathNote}
-          />
+          {sessionKind === 'drill' ? (
+            <PracticePartnerPath
+              compact
+              progress={path}
+              activeId={category}
+              activeUnit={practicePartnerUnitForMove(move)}
+              fresh={pathFresh}
+              note={pathNote}
+            />
+          ) : null}
+          {sessionKind === 'drill' && sceneOffer ? (
+            <div className="partner-lab-scene-offer">
+              <p>
+                {sceneOffer.placeEn} is open. Use the lines you kept.
+                <span lang="zh-HK"> {sceneOffer.placeZh}</span>
+              </p>
+              <button type="button" disabled={busy || listening} onClick={enterScene}>
+                Enter
+              </button>
+              <button type="button" onClick={() => setSceneOffer(null)}>
+                Later
+              </button>
+            </div>
+          ) : null}
+          {sceneDone ? (
+            <p className="partner-lab-scene-done">That scene is done. The road is still there.</p>
+          ) : null}
           {activeDrill ? (
             <>
               {missCard ? (
@@ -1551,41 +1906,57 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               {difficulty === 'new_learner' ? (
                 <p className="partner-lab-drill-en is-primary">{activeDrill.en}</p>
               ) : null}
-              {difficulty === 'mainlander' && cardFace.zh === 'hidden' ? (
+              {difficulty === 'mainlander' && !freeLine && cardFace.zh === 'hidden' ? (
                 <p className="partner-lab-drill-prompt">
                   {move === 'listen' ? 'Listen, then say it back.' : 'Say it in Cantonese.'}
                 </p>
               ) : (
-                <button
-                  type="button"
+                <div
                   className={`partner-lab-drill-zh${difficulty === 'new_learner' ? ' is-support' : ''}${
                     zhFlash ? ' is-jade-flash' : ''
                   }`}
                   lang="zh-HK"
-                  aria-label={
-                    mood === 'speaking' || mood === 'reacting' || listening
-                      ? 'Highlight phrase'
-                      : 'Replay phrase'
-                  }
-                  onClick={flashDrillZh}
                 >
                   <span className="partner-lab-drill-zh-chars">
                     {[
-                      ...(difficulty === 'mainlander' && cardFace.zh === 'cloze' && drillCloze
+                      ...(difficulty === 'mainlander' && !freeLine && cardFace.zh === 'cloze' && drillCloze
                         ? drillCloze
                         : activeDrill.zh),
                     ].map((ch, i) => (
-                      <span
-                        key={`${zhFlash}-${i}`}
-                        className={zhFlash ? 'is-jade' : undefined}
+                      <button
+                        key={`${zhFlash}-${i}-${ch}`}
+                        type="button"
+                        className={`partner-lab-char${zhFlash ? ' is-jade' : ''}`}
                         style={zhFlash ? { animationDelay: `${i * 32}ms` } : undefined}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          const meaning = glossForChar(ch).trim()
+                          setTonePop(null)
+                          if (!isHanChar(ch) || !meaning) {
+                            setGloss(null)
+                            return
+                          }
+                          setGloss({ char: ch, meaning })
+                        }}
                       >
                         {ch}
-                      </span>
+                      </button>
                     ))}
                   </span>
+                  <button
+                    type="button"
+                    className="partner-lab-phrase-hear"
+                    aria-label={
+                      mood === 'speaking' || mood === 'reacting' || listening
+                        ? 'Highlight phrase'
+                        : 'Replay phrase'
+                    }
+                    onClick={flashDrillZh}
+                  >
+                    Hear
+                  </button>
                   {zhFlash ? <span className="partner-lab-drill-zh-line" aria-hidden="true" /> : null}
-                </button>
+                </div>
               )}
               {difficulty === 'abc' ? (
                 <p className="partner-lab-drill-en is-secondary">{activeDrill.en}</p>
@@ -1593,9 +1964,30 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               {difficulty === 'mainlander' && cardFace.en ? (
                 <p className="partner-lab-drill-en">{activeDrill.en}</p>
               ) : null}
-              {difficulty !== 'mainlander' || cardFace.jp ? (
+              {difficulty !== 'mainlander' || (!freeLine && cardFace.jp) ? (
                 <p className="partner-lab-drill-jp">
-                  <JyutpingChaoText text={activeDrill.jyutping} />
+                  <JyutpingChaoText
+                    text={activeDrill.jyutping}
+                    onSyllable={(jp) => {
+                      const note = toneNoteForSyllable(jp)
+                      setGloss(null)
+                      setTonePop(note)
+                    }}
+                  />
+                </p>
+              ) : null}
+              {gloss ? (
+                <p className="partner-lab-gloss" role="status">
+                  <span lang="zh-HK">{gloss.char}</span> {gloss.meaning}
+                </p>
+              ) : null}
+              {tonePop ? (
+                <p className="partner-lab-tone" role="status">
+                  <span>
+                    {tonePop.syllable}
+                    {tonePop.contour}
+                  </span>{' '}
+                  {tonePop.name}. {tonePop.blurb}
                 </p>
               ) : null}
             </>
@@ -1633,7 +2025,13 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                   <span lang="zh-HK">{learningCaption.secondaryScript.zh}</span>
                   {learningCaption.secondaryScript.jyutping ? (
                     <span className="partner-lab-subtitles-jp">
-                      <JyutpingChaoText text={learningCaption.secondaryScript.jyutping} />
+                      <JyutpingChaoText
+                        text={learningCaption.secondaryScript.jyutping}
+                        onSyllable={(jp) => {
+                          setGloss(null)
+                          setTonePop(toneNoteForSyllable(jp))
+                        }}
+                      />
                     </span>
                   ) : null}
                 </p>
@@ -1692,7 +2090,13 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                   </p>
                   {learningCaption.primaryScript.jyutping ? (
                     <p className="partner-lab-subtitles-jp">
-                      <JyutpingChaoText text={learningCaption.primaryScript.jyutping} />
+                      <JyutpingChaoText
+                        text={learningCaption.primaryScript.jyutping}
+                        onSyllable={(jp) => {
+                          setGloss(null)
+                          setTonePop(toneNoteForSyllable(jp))
+                        }}
+                      />
                     </p>
                   ) : null}
                 </>
@@ -1735,7 +2139,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               <button
                 type="button"
                 className={`partner-lab-fs-mic${listening ? ' is-live' : ''}`}
-                disabled={busy && !listening}
+                disabled={(busy && !listening) || sceneDone}
                 aria-label={talkLabel}
                 onClick={toggleTalk}
               >
@@ -1749,7 +2153,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               <button
                 type="button"
                 className={`partner-lab-fs-keyboard${fsTypeOpen ? ' is-open' : ''}`}
-                disabled={busy || listening || !activeDrill}
+                disabled={busy || listening || !activeDrill || sceneDone}
                 aria-label="Type instead"
                 aria-expanded={fsTypeOpen}
                 onClick={openFsKeyboard}
@@ -1842,7 +2246,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             <button
               type="button"
               className={`partner-lab-talk${listening ? ' is-live' : ''}${busy && !listening ? '' : ' is-pulse'}`}
-              disabled={busy && !listening}
+              disabled={(busy && !listening) || sceneDone}
               onClick={toggleTalk}
             >
               <span className="partner-lab-talk-label">{talkLabel}</span>
@@ -1861,7 +2265,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               disabled={busy || listening}
               onClick={resetChat}
             >
-              New drill
+              {sessionKind === 'open' ? 'New chat' : sessionKind === 'scene' ? 'Restart scene' : 'New drill'}
             </button>
           </>
         )}

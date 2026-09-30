@@ -781,9 +781,14 @@ export async function postPracticePartnerChat(
     nextMove?: 'repeat' | 'listen' | 'translate' | 'finish'
     review?: PracticePartnerDrillTarget | null
     lastMiss?: PartnerLastMiss | null
+    mode?: 'drill' | 'open' | 'scene'
+    place?: string | null
+    sceneTurn?: number | null
+    sceneTurns?: number | null
   } | null,
 ): Promise<{ ok: boolean; reply: string; drill: PracticePartnerDrill | null; beats: PartnerPerformance | null }> {
   const lastMiss = cleanPartnerLastMiss(tone?.lastMiss)
+  const mode = tone?.mode === 'open' || tone?.mode === 'scene' ? tone.mode : 'drill'
   const res = await adminFetch('/admin/practice-partner/chat', {
     method: 'POST',
     body: JSON.stringify({
@@ -797,6 +802,10 @@ export async function postPracticePartnerChat(
       nextMove: tone?.nextMove ?? tone?.move ?? 'repeat',
       review: tone?.review ?? null,
       lastMiss,
+      mode,
+      place: tone?.place?.trim().slice(0, 80) || null,
+      sceneTurn: tone?.sceneTurn ?? null,
+      sceneTurns: tone?.sceneTurns ?? null,
     }),
   })
   const data = await res.json().catch(() => ({}))

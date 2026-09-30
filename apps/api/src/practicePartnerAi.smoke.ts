@@ -12,8 +12,11 @@ import {
   PRACTICE_PARTNER_FAIL_OPENERS,
   PRACTICE_PARTNER_PASS_OPENERS,
   PRACTICE_PARTNER_SYSTEM,
+  PRACTICE_PARTNER_OPEN_SYSTEM,
+  PRACTICE_PARTNER_SCENE_SYSTEM,
   PracticePartnerChatBodySchema,
   buildPracticePartnerTurn,
+  practicePartnerSystemFor,
   categoryLockLine,
   difficultyLockLine,
   moveLockLine,
@@ -330,5 +333,49 @@ const blankMiss = PracticePartnerChatBodySchema.safeParse({
   lastMiss: { said: '   ', zh: '狗', en: 'dog' },
 })
 assert.ok(!blankMiss.success, 'a blank last miss is rejected')
+
+const openBody = PracticePartnerChatBodySchema.safeParse({
+  messages: [],
+  mode: 'open',
+  difficulty: 'abc',
+})
+assert.ok(openBody.success, 'open chat is a mode, not a deck')
+
+const badMode = PracticePartnerChatBodySchema.safeParse({
+  messages: [],
+  mode: 'lesson',
+})
+assert.ok(!badMode.success, 'unknown modes are rejected')
+
+const openKick = buildPracticePartnerTurn([], null, 'animals', 'new_learner', { mode: 'open' })
+assert.match(openKick.turn, /\[OPEN CHAT\]/)
+assert.doesNotMatch(openKick.turn, /\[MOVE\]/)
+assert.doesNotMatch(openKick.turn, /\[CATEGORY\]/)
+assert.equal(practicePartnerSystemFor('open'), PRACTICE_PARTNER_OPEN_SYSTEM)
+assert.match(PRACTICE_PARTNER_OPEN_SYSTEM, /not a say-this drill/)
+
+const openJudge = buildPracticePartnerTurn(
+  [{ role: 'user', content: 'I want tea' }],
+  { en: 'tea', zh: '茶', jyutping: 'caa4' },
+  'foods',
+  'abc',
+  { mode: 'open' },
+)
+assert.match(openJudge.turn, /THEY SAID: I want tea/)
+assert.doesNotMatch(openJudge.turn, /\[JUDGE\]/)
+
+const sceneKick = buildPracticePartnerTurn([], { en: 'water', zh: '水', jyutping: 'seoi2' }, 'foods', 'abc', {
+  mode: 'scene',
+  place: 'Night Market (夜市)',
+  sceneTurn: 1,
+  sceneTurns: 4,
+})
+assert.match(sceneKick.turn, /\[SCENE\] Night Market/)
+assert.match(sceneKick.turn, /Turn 1 of 4/)
+assert.match(sceneKick.turn, /TARGET ZH: 水/)
+assert.match(sceneKick.turn, /does not score the road/)
+assert.equal(practicePartnerSystemFor('scene'), PRACTICE_PARTNER_SCENE_SYSTEM)
+assert.equal(practicePartnerSystemFor('drill'), PRACTICE_PARTNER_SYSTEM)
+assert.equal(practicePartnerSystemFor(null), PRACTICE_PARTNER_SYSTEM)
 
 console.log('practicePartnerAi.smoke: ok')

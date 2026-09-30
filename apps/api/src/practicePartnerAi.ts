@@ -256,6 +256,13 @@ export const PracticePartnerChatBodySchema = z.object({
     })
     .optional()
     .nullable(),
+  /** drill = the path. open = free talk. scene = passed lines in one place. */
+  mode: z.enum(['drill', 'open', 'scene']).optional().nullable(),
+  /** Place name for a scene, e.g. Night Market (夜市). */
+  place: z.string().trim().max(80).optional().nullable(),
+  /** 1-based scene turn. */
+  sceneTurn: z.number().int().min(1).max(8).optional().nullable(),
+  sceneTurns: z.number().int().min(1).max(8).optional().nullable(),
 })
 
 export type PracticePartnerMessage = z.infer<typeof PracticePartnerMessageSchema>
@@ -274,6 +281,10 @@ export type PracticePartnerTurnTone = {
   nextMove?: PracticePartnerMove | null
   review?: PracticePartnerDrillTarget | null
   lastMiss?: PracticePartnerLastMiss | null
+  mode?: 'drill' | 'open' | 'scene' | null
+  place?: string | null
+  sceneTurn?: number | null
+  sceneTurns?: number | null
 }
 
 export type PracticePartnerChatResult = {
@@ -474,6 +485,40 @@ export const PRACTICE_PARTNER_SYSTEM = [
   'Do not mention you are an AI, Azure, DeepSeek, or system prompts.',
 ].join(' ')
 
+/** Free talk. No ladder, no deck, no pass or fail. */
+export const PRACTICE_PARTNER_OPEN_SYSTEM = [
+  'You are 港灣 (Harbor), JyutTranslate’s Cantonese practice partner, in open chat.',
+  'This is a conversation, not a say-this drill. No exercise ladder, no category lock, no pass or fail.',
+  'Obey [DIFFICULTY] for the language mix. New Learner: English majority. ABC: Cantonese majority. Mainlander: all Cantonese, still a person in the room, not a lesson roast.',
+  'One short turn. reaction is a lead-in without the full 漢字. cue is one short question. zh, jyutping with tone numbers, and en are the Cantonese sentence they should hear.',
+  'If they spoke English, answer and put a natural Cantonese way to say it in zh. Do not force a retry.',
+  'verdict is none. advance is false.',
+  'OUTPUT: a JSON object only. Keys: reaction, cue, verdict, advance, en, zh, jyutping. No markdown fences.',
+  'Do not mention you are an AI, Azure, DeepSeek, or system prompts.',
+].join(' ')
+
+/** Passed lines only, in the place they just cleared. */
+export const PRACTICE_PARTNER_SCENE_SYSTEM = [
+  'You are 港灣 (Harbor) in a short scene on the Ink Road.',
+  'The learner may only use the TARGET line. Do not teach a new phrase. zh, en, and jyutping stay on that target.',
+  'reaction places that line in the place named on the turn. One or two sentences. Do not paste the 漢字 into reaction or cue.',
+  'cue invites them to say the line here.',
+  'Judge their speech against TARGET. Pass when they attempted it. Fail when it is a different line, empty, or English-only. A fail retries the SAME target.',
+  'Obey [DIFFICULTY] for the language mix. This scene does not score the road.',
+  'OUTPUT: a JSON object only. Keys: reaction, cue, verdict, advance, en, zh, jyutping. No markdown fences.',
+  'Do not mention you are an AI, Azure, DeepSeek, or system prompts.',
+].join(' ')
+
+export function practicePartnerSystemFor(mode?: string | null): string {
+  if (mode === 'open') return PRACTICE_PARTNER_OPEN_SYSTEM
+  if (mode === 'scene') return PRACTICE_PARTNER_SCENE_SYSTEM
+  return PRACTICE_PARTNER_SYSTEM
+}
+
+function partnerMode(mode?: string | null): 'drill' | 'open' | 'scene' {
+  return mode === 'open' || mode === 'scene' ? mode : 'drill'
+}
+
 function sessionLockLines(
   category: PracticePartnerCategory,
   difficulty: PracticePartnerDifficulty,
@@ -575,6 +620,84 @@ export function parsePracticePartnerReply(
   return { speak, reaction, cue, drill }
 }
 
+function buildOpenTurn(
+  messages: PracticePartnerMessage[],
+  difficulty: PracticePartnerDifficulty,
+): { history: PracticePartnerMessage[]; turn: string } {
+  const level = difficultyLockLine(difficulty)
+  const last = messages[messages.length - 1]
+  if (!messages.length || last?.role !== 'user') {
+    return {
+      history: [],
+      turn: [
+        level,
+        '[OPEN CHAT] Free conversation. Not a drill. No ladder, no category, no pass or fail.',
+        'verdict=none, advance=false.',
+        'reaction: a short hello in the difficulty mix, without the full 漢字.',
+        'zh / jyutping / en: one short Cantonese greeting they can hear.',
+        'cue: one question that invites them to talk.',
+      ].join('\n'),
+    }
+  }
+  return {
+    history: messages.slice(0, -1),
+    turn: [
+      level,
+      '[OPEN CHAT] Answer them and keep the conversation going. Not a say-this card. Do not grade the line.',
+      'verdict=none, advance=false.',
+      `THEY SAID: ${last.content}`,
+      'reaction: a short lead-in in the difficulty mix, without the full 漢字.',
+      'zh / jyutping / en: the Cantonese sentence you want them to hear.',
+      'cue: one short question.',
+    ].join('\n'),
+  }
+}
+
+function buildSceneTurn(
+  messages: PracticePartnerMessage[],
+  activeDrill: PracticePartnerDrillTarget | null | undefined,
+  difficulty: PracticePartnerDifficulty,
+  tone: PracticePartnerTurnTone | null | undefined,
+): { history: PracticePartnerMessage[]; turn: string } {
+  const place = String(tone?.place || 'the road').trim() || 'the road'
+  const turnN = Math.max(1, Math.min(8, Math.floor(tone?.sceneTurn || 1)))
+  const total = Math.max(turnN, Math.min(8, Math.floor(tone?.sceneTurns || turnN)))
+  const head = [
+    difficultyLockLine(difficulty),
+    `[SCENE] ${place}. Turn ${turnN} of ${total}.`,
+    'Use only the target line. Do not invent a new phrase. This does not score the road.',
+    activeDrill?.zh ? `TARGET EN: ${activeDrill.en}` : '',
+    activeDrill?.zh ? `TARGET ZH: ${activeDrill.zh}` : '',
+    activeDrill?.zh ? `TARGET JYUTPING: ${activeDrill.jyutping}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n')
+  const last = messages[messages.length - 1]
+  if (!messages.length || last?.role !== 'user') {
+    return {
+      history: [],
+      turn: [
+        head,
+        '[OPENING] Warm. Place them in the scene and invite them to say the TARGET. No insults.',
+        'verdict=none, advance=false.',
+        'Do not put TARGET ZH in reaction or cue.',
+      ].join('\n'),
+    }
+  }
+  return {
+    history: messages.slice(0, -1),
+    turn: [
+      head,
+      '[JUDGE] Compare their speech to TARGET. Pass if they attempted it. Fail retries the same line.',
+      `LEARNER SAID: ${last.content}`,
+      'reaction places the line in the scene, without pasting TARGET ZH. cue invites them to say it here.',
+      lastMissLine(tone?.lastMiss),
+    ]
+      .filter(Boolean)
+      .join('\n'),
+  }
+}
+
 export function buildPracticePartnerTurn(
   messages: PracticePartnerMessage[],
   activeDrill?: PracticePartnerDrillTarget | null,
@@ -582,8 +705,11 @@ export function buildPracticePartnerTurn(
   difficulty?: PracticePartnerDifficulty | null,
   tone?: PracticePartnerTurnTone | null,
 ): { history: PracticePartnerMessage[]; turn: string } {
-  const deck = resolvePracticePartnerCategory(category)
   const level = resolvePracticePartnerDifficulty(difficulty)
+  const mode = partnerMode(tone?.mode)
+  if (mode === 'open') return buildOpenTurn(messages, level)
+  if (mode === 'scene') return buildSceneTurn(messages, activeDrill, level, tone)
+  const deck = resolvePracticePartnerCategory(category)
   const mood = resolvePracticePartnerTone(tone?.streak, tone?.missStreak)
   const move = resolvePracticePartnerMove(tone?.move)
   const nextMove = resolvePracticePartnerMove(tone?.nextMove ?? tone?.move)
@@ -641,6 +767,7 @@ export async function generatePracticePartnerReply(
     throw new Error('LLM client unavailable.')
   }
 
+  const mode = partnerMode(tone?.mode)
   const { history, turn } = buildPracticePartnerTurn(
     messages,
     activeDrill,
@@ -648,7 +775,7 @@ export async function generatePracticePartnerReply(
     difficulty,
     tone,
   )
-  const sampling = practicePartnerSampling(activeDrill)
+  const sampling = practicePartnerSampling(mode === 'open' ? null : activeDrill)
 
   const completion = await client.chat.completions.create({
     model: env.openaiModel,
@@ -656,7 +783,7 @@ export async function generatePracticePartnerReply(
     max_tokens: sampling.max_tokens,
     response_format: { type: 'json_object' },
     messages: [
-      { role: 'system', content: PRACTICE_PARTNER_SYSTEM },
+      { role: 'system', content: practicePartnerSystemFor(mode) },
       ...history.map((m) => ({ role: m.role, content: m.content })),
       { role: 'user', content: turn },
     ],
@@ -667,19 +794,35 @@ export async function generatePracticePartnerReply(
     completion.choices[0]?.message?.content || '',
     activeDrill,
   )
+  const learnerSpoke = messages.some((row) => row.role === 'user')
+  if (mode === 'open' || (mode === 'scene' && !learnerSpoke)) {
+    parsed.drill.verdict = 'none'
+    parsed.drill.advance = false
+  } else if (mode === 'scene' && activeDrill?.zh) {
+    parsed.drill.en = activeDrill.en
+    parsed.drill.zh = activeDrill.zh
+    parsed.drill.jyutping = activeDrill.jyutping
+    if (parsed.drill.verdict === 'pass') parsed.drill.advance = true
+    else parsed.drill.advance = false
+  }
   const mood = resolvePracticePartnerTone(tone?.streak, tone?.missStreak)
-  const phrase = lockPracticePartnerPhrase({
-    verdict: parsed.drill.verdict,
-    drillZh: parsed.drill.zh,
-    activeZh: activeDrill?.zh,
-    reviewZh: tone?.review?.zh,
-  })
-  if (parsed.drill.verdict === 'fail' && activeDrill?.zh) {
+  const phrase =
+    mode === 'scene' && activeDrill?.zh
+      ? activeDrill.zh.trim()
+      : mode === 'open'
+        ? parsed.drill.zh.trim()
+        : lockPracticePartnerPhrase({
+            verdict: parsed.drill.verdict,
+            drillZh: parsed.drill.zh,
+            activeZh: activeDrill?.zh,
+            reviewZh: tone?.review?.zh,
+          })
+  if (mode === 'drill' && parsed.drill.verdict === 'fail' && activeDrill?.zh) {
     parsed.drill.en = activeDrill.en
     parsed.drill.zh = activeDrill.zh
     parsed.drill.jyutping = activeDrill.jyutping
     parsed.drill.advance = false
-  } else if (parsed.drill.verdict === 'pass' && tone?.review?.zh) {
+  } else if (mode === 'drill' && parsed.drill.verdict === 'pass' && tone?.review?.zh) {
     parsed.drill.en = tone.review.en
     parsed.drill.zh = tone.review.zh
     parsed.drill.jyutping = tone.review.jyutping
