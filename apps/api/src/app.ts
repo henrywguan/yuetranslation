@@ -19,6 +19,7 @@ import {
 import { handleSignupNotify } from './signupNotify.js'
 import { handleAuthSendEmail } from './authSendEmail.js'
 import { issueSpeechToken, synthesize, SPEECH_TOKEN_MAX_TTL_S, SPEECH_TOKEN_MIN_REMAINING_S, SPEECH_TOKEN_PREPAY_S } from './azure.js'
+import { parseTtsPerformance, spokenPerformanceChars } from './practicePartnerPerformance.js'
 import { breakdown } from './breakdown.js'
 import { enrichDictionaryEntry } from './detailsEnrich.js'
 import { translate } from './translate.js'
@@ -377,12 +378,15 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
     const lang = String(req.body?.lang || 'yue')
     const voiceOverride = typeof req.body?.voice === 'string' ? req.body.voice.trim() : null
     const loud = Boolean(req.body?.loud)
-    if (!text) {
+    const performance = parseTtsPerformance(req.body?.performance)
+    if (!text && !performance) {
       res.status(400).json({ message: 'text required' })
       return
     }
     // Bound Azure TTS spend per request (matches translate max length).
-    if (text.length > 2000) {
+    // Performance meters spoken characters, not SSML tags.
+    const spokenChars = performance ? spokenPerformanceChars(performance) : text.length
+    if (text.length > 2000 || spokenChars > 2000) {
       res.status(400).json({ message: 'text too long (max 2000 characters)' })
       return
     }
@@ -422,17 +426,22 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredTh: ent.prefs?.ttsVoiceTh,
       preferredLo: ent.prefs?.ttsVoiceLo,
       loud,
+      performance,
     })
     // Meter Free (hard cap), Family/Business (unlimited), and guest trial (unlimited).
     if (!env.openMode) {
-      if (req.auth?.userId) await addTtsChars(req.auth.userId, text.length)
+      if (req.auth?.userId) await addTtsChars(req.auth.userId, spokenChars)
       else if ((req as GuestRequest).guestId) {
-        await addGuestTtsChars((req as GuestRequest).guestId!, text.length)
+        await addGuestTtsChars((req as GuestRequest).guestId!, spokenChars)
       }
     }
     res.setHeader('Content-Type', 'audio/mpeg')
     res.send(audio)
   } catch (e) {
+    if (e instanceof ZodError) {
+      res.status(400).json({ message: 'Invalid voice performance' })
+      return
+    }
     res.status(500).json({ message: e instanceof Error ? e.message : 'TTS error' })
   }
 })

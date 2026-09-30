@@ -18,6 +18,14 @@ import {
   type PracticePartnerDrill,
   type PracticePartnerDrillTarget,
 } from '../lib/adminApi'
+import {
+  deliveryForPartnerTurn,
+  partnerCaption,
+  reactionHoldMs,
+  retryChunk,
+  withLockedPhrase,
+  type PartnerPerformance,
+} from '../lib/practicePartnerPerformance'
 import { createWebSpeechSession } from '../lib/webSpeech'
 import {
   isAppleTouchDevice,
@@ -144,7 +152,7 @@ function voiceSpeakerName(id: YueVoiceId): string {
   return meta.labelEn.split('·')[0]?.trim() || meta.labelEn
 }
 
-export type PartnerMood = 'idle' | 'listening' | 'thinking' | 'speaking'
+export type PartnerMood = 'idle' | 'listening' | 'thinking' | 'reacting' | 'speaking'
 
 type SubtitleRole = 'you' | 'partner' | 'system'
 
@@ -158,7 +166,8 @@ const MOODS: { id: PartnerMood; label: string; hint: string }[] = [
   { id: 'idle', label: 'Idle', hint: 'Waiting — soft drift' },
   { id: 'listening', label: 'Listening', hint: 'Mic / your words' },
   { id: 'thinking', label: 'Thinking', hint: 'LLM reply' },
-  { id: 'speaking', label: 'Speaking', hint: 'Azure TTS' },
+  { id: 'reacting', label: 'Reacting', hint: 'Judgment before the phrase' },
+  { id: 'speaking', label: 'Speaking', hint: 'The phrase, loud and steady' },
 ]
 
 const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
@@ -186,6 +195,14 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
     haloOpacity: 0.28,
     hue: 18,
   },
+  reacting: {
+    speed: 1.35,
+    scale: 1.06,
+    particleOpacity: 0.78,
+    orbitOpacity: 0.36,
+    haloOpacity: 0.4,
+    hue: 28,
+  },
   speaking: {
     speed: 1.65,
     scale: 1.14,
@@ -197,6 +214,37 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
 }
 
 const SILENCE_MS = 1600
+
+function performedLine(
+  reply: string,
+  beats: PartnerPerformance | null,
+  phrase: string,
+  verdict: 'none' | 'pass' | 'fail',
+  streak: number,
+  missStreak: number,
+): { caption: string; beats: PartnerPerformance | null } {
+  const locked = phrase.trim()
+  const base =
+    beats ??
+    (locked
+      ? {
+          reaction: reply.trim(),
+          phrase: locked,
+          cue: '',
+          delivery: deliveryForPartnerTurn(verdict, { streak, missStreak }),
+        }
+      : null)
+  if (!base?.phrase && !locked) return { caption: reply, beats: null }
+  const next = base
+    ? withLockedPhrase(base, locked || base.phrase)
+    : {
+        reaction: '',
+        phrase: locked,
+        cue: '',
+        delivery: deliveryForPartnerTurn(verdict, { streak, missStreak }),
+      }
+  return { caption: partnerCaption(next) || reply, beats: next.phrase ? next : null }
+}
 
 const EMPTY_CAPTION =
   'Begin drill! Follow along with the practice partner and advance!'
@@ -273,6 +321,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   )
   /** Last partner line — stays on screen until the user starts speaking. */
   const [partnerHold, setPartnerHold] = useState<string | null>(null)
+  /** Fail correction: what was heard, plus the piece to retry. */
+  const [missCard, setMissCard] = useState<{ said: string; chunk: string } | null>(null)
   /** Live STT (interim + accumulating finals) while the mic is open. */
   const [youLive, setYouLive] = useState<{ text: string; interim: boolean } | null>(null)
   /** Bumps to replay the jade sweep on the drill 漢字. */
@@ -282,6 +332,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const sessionRef = useRef<LiveSession | null>(null)
   const ttsLiveRef = useRef(false)
   const ttsGenRef = useRef(0)
+  const beatTimerRef = useRef(0)
+  const partnerBeatsRef = useRef<PartnerPerformance | null>(null)
+  const lastMissRef = useRef<{ said: string; zh: string; en: string } | null>(null)
   const zhFlashTimerRef = useRef(0)
   /** True while getUserMedia / recognition.start handshake is in flight. */
   const startingMicRef = useRef(false)
@@ -454,8 +507,12 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setYouLive(null)
     setFsTypeOpen(false)
     setVoiceMenuOpen(false)
+    window.clearTimeout(beatTimerRef.current)
     ttsGenRef.current += 1
     ttsLiveRef.current = false
+    partnerBeatsRef.current = null
+    lastMissRef.current = null
+    setMissCard(null)
     setMood('idle')
     setCaption({ role: 'system', text: EMPTY_CAPTION })
     setVhsCue(0)
@@ -531,14 +588,23 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   }, [])
 
   const playPartnerReply = useCallback(
-    async (reply: string) => {
+    async (reply: string, beats?: PartnerPerformance | null) => {
       if (ttsLiveRef.current) return
       const gen = (ttsGenRef.current += 1)
       ttsLiveRef.current = true
-      setMood('speaking')
+      partnerBeatsRef.current = beats ?? null
+      const reacting = Boolean(beats?.reaction.trim())
+      setMood(reacting ? 'reacting' : 'speaking')
       setPartnerHold(reply)
       setYouLive(null)
       setCaption({ role: 'partner', text: reply })
+      window.clearTimeout(beatTimerRef.current)
+      if (reacting && beats) {
+        beatTimerRef.current = window.setTimeout(() => {
+          if (ttsGenRef.current !== gen || !ttsLiveRef.current) return
+          setMood('speaking')
+        }, reactionHoldMs(beats.reaction))
+      }
       // After the LLM round-trip we are outside the user gesture. Unlock must
       // have run on Talk/Send; still bound speak so a stalled play()/speechSynthesis
       // cannot leave the lab stuck on Speaking forever.
@@ -550,7 +616,41 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       prepareLoudTtsPlayback()
       try {
         await Promise.race([
-          speakText(reply, 'yue', partnerVoice, { loud: true }),
+          speakText(reply, 'yue', partnerVoice, { loud: true, performance: beats }),
+          new Promise<never>((_, reject) => {
+            window.setTimeout(
+              () => reject(new Error('Voice playback timed out — tap Say it again.')),
+              25_000,
+            )
+          }),
+        ])
+      } catch (ttsErr) {
+        stopSpeaking()
+        const ttsMsg =
+          ttsErr instanceof Error ? ttsErr.message : 'Voice playback failed.'
+        setError(ttsMsg)
+      } finally {
+        window.clearTimeout(beatTimerRef.current)
+      }
+      if (ttsGenRef.current !== gen) return
+      ttsLiveRef.current = false
+      setMood((current) => (current === 'listening' ? current : 'idle'))
+      setCaption({ role: 'partner', text: reply })
+    },
+    [partnerVoice],
+  )
+
+  const playPhrase = useCallback(
+    async (zh: string) => {
+      if (ttsLiveRef.current) return
+      const gen = (ttsGenRef.current += 1)
+      ttsLiveRef.current = true
+      window.clearTimeout(beatTimerRef.current)
+      setMood('speaking')
+      prepareLoudTtsPlayback()
+      try {
+        await Promise.race([
+          speakText(zh, 'yue', partnerVoice, { loud: true }),
           new Promise<never>((_, reject) => {
             window.setTimeout(
               () => reject(new Error('Voice playback timed out — tap Say it again.')),
@@ -566,26 +666,32 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       }
       if (ttsGenRef.current !== gen) return
       ttsLiveRef.current = false
-      setMood('idle')
-      setCaption({ role: 'partner', text: reply })
+      setMood((current) => (current === 'listening' ? current : 'idle'))
     },
     [partnerVoice],
   )
 
   const replayPartnerVoice = useCallback(() => {
     const line = partnerHold
-    if (!line || ttsLiveRef.current || mood === 'speaking' || listening) return
+    if (!line || ttsLiveRef.current || mood === 'speaking' || mood === 'reacting' || listening) return
     unlockTtsPlayback({ force: true })
-    void playPartnerReply(line)
+    void playPartnerReply(line, partnerBeatsRef.current)
   }, [listening, mood, partnerHold, playPartnerReply])
+
+  const replayPhrase = useCallback(() => {
+    const zh = activeDrillRef.current?.zh.trim()
+    if (!zh || ttsLiveRef.current || mood === 'speaking' || mood === 'reacting' || listening) return
+    unlockTtsPlayback({ force: true })
+    void playPhrase(zh)
+  }, [listening, mood, playPhrase])
 
   const flashDrillZh = useCallback((event: { stopPropagation: () => void }) => {
     event.stopPropagation()
     setZhFlash((n) => n + 1)
     window.clearTimeout(zhFlashTimerRef.current)
     zhFlashTimerRef.current = window.setTimeout(() => setZhFlash(0), 980)
-    replayPartnerVoice()
-  }, [replayPartnerVoice])
+    replayPhrase()
+  }, [replayPhrase])
 
   const startDrill = useCallback(async () => {
     if (turnLockRef.current || activeDrillRef.current) return
@@ -601,21 +707,34 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       text: `港灣 is picking a ${deck?.labelEn.toLowerCase() || 'common'} line…`,
     })
     try {
-      const { reply, drill } = await postPracticePartnerChat(
+      lastMissRef.current = null
+      const { reply, drill, beats } = await postPracticePartnerChat(
         messagesRef.current,
         null,
         categoryRef.current,
         difficultyRef.current,
         { streak: 0, missStreak: 0, move: 'repeat', nextMove: 'repeat' },
       )
-      void loadTtsAudio(reply, 'yue', partnerVoice, { loud: true }).catch(() => undefined)
+      const performed = performedLine(
+        reply,
+        beats,
+        drill?.zh || beats?.phrase || '',
+        drill?.verdict ?? 'none',
+        0,
+        0,
+      )
+      void loadTtsAudio(performed.caption, 'yue', partnerVoice, {
+        loud: true,
+        performance: performed.beats,
+      }).catch(() => undefined)
       const withReply: PracticePartnerChatMessage[] = [
         ...messagesRef.current,
-        { role: 'assistant', content: reply },
+        { role: 'assistant', content: performed.caption },
       ]
       setMessages(withReply)
+      setMissCard(null)
       applyDrill(drill)
-      await playPartnerReply(reply)
+      await playPartnerReply(performed.caption, performed.beats)
     } catch (e) {
       setMood('idle')
       const msg = e instanceof Error ? e.message : 'Could not start drill'
@@ -655,8 +774,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       pendingNextMoveRef.current = plan.nextMove
       pendingReviewRef.current = plan.review
 
+      const lastMiss = lastMissRef.current
+      lastMissRef.current = null
       try {
-        const { reply, drill: rawDrill } = await postPracticePartnerChat(
+        const { reply, drill: rawDrill, beats } = await postPracticePartnerChat(
           nextMessages,
           target,
           categoryRef.current,
@@ -667,6 +788,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             move: moveRef.current,
             nextMove: plan.nextMove,
             review: plan.review,
+            lastMiss,
           },
         )
         incomingReviewRef.current = false
@@ -684,14 +806,37 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               ? { ...rawDrill, ...plan.review, verdict: 'pass' as const, advance: true }
               : rawDrill
         if (drill?.verdict === 'pass' && plan.review) incomingReviewRef.current = true
-        void loadTtsAudio(reply, 'yue', partnerVoice, { loud: true }).catch(() => undefined)
+        const phrase =
+          drill?.verdict === 'fail'
+            ? target.zh
+            : drill?.verdict === 'pass' && plan.review
+              ? plan.review.zh
+              : drill?.zh || beats?.phrase || ''
+        const performed = performedLine(
+          reply,
+          beats,
+          phrase,
+          drill?.verdict ?? 'none',
+          streakRef.current,
+          missStreakRef.current,
+        )
+        void loadTtsAudio(performed.caption, 'yue', partnerVoice, {
+          loud: true,
+          performance: performed.beats,
+        }).catch(() => undefined)
         const withReply: PracticePartnerChatMessage[] = [
           ...nextMessages,
-          { role: 'assistant', content: reply },
+          { role: 'assistant', content: performed.caption },
         ]
         setMessages(withReply)
+        if (drill?.verdict === 'fail') {
+          setMissCard({ said: text, chunk: retryChunk(target.zh) })
+          lastMissRef.current = { said: text, zh: target.zh, en: target.en }
+        } else {
+          setMissCard(null)
+        }
         applyDrill(drill)
-        await playPartnerReply(reply)
+        await playPartnerReply(performed.caption, performed.beats)
       } catch (e) {
         setMood('idle')
         const msg = e instanceof Error ? e.message : 'Partner turn failed'
@@ -741,7 +886,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   const startListening = useCallback(async () => {
     if (listening || startingMicRef.current) return
-    const canBargeIn = mood === 'speaking' || isTtsPlaying()
+    const canBargeIn = mood === 'speaking' || mood === 'reacting' || isTtsPlaying()
     if ((busy || turnLockRef.current) && !canBargeIn) return
     setError('')
     finalsRef.current = ''
@@ -814,6 +959,12 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     }
 
     sessionRef.current = session
+    window.clearTimeout(beatTimerRef.current)
+    if (ttsLiveRef.current || isTtsPlaying()) {
+      // In-flight reply must not snap the orb to idle after the mic is live.
+      ttsGenRef.current += 1
+      ttsLiveRef.current = false
+    }
     setYouLive(null)
     setMood('listening')
     // Keep partner subtitles visible until STT produces text.
@@ -937,6 +1088,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       window.clearTimeout(silenceTimerRef.current)
       window.clearTimeout(verdictTimerRef.current)
       window.clearTimeout(zhFlashTimerRef.current)
+      window.clearTimeout(beatTimerRef.current)
       void stopMic()
       stopSpeaking()
     }
@@ -980,7 +1132,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   const orbitProps = useMemo((): Partial<OrbitalSphereOptions> => {
     const base = { ...ORBITAL_SPHERE_DEFAULTS, ...MOOD_ORBIT[mood] }
-    const breathe = mood === 'speaking' || mood === 'listening' ? amp * 0.12 : 0
+    const breathe = mood === 'speaking' || mood === 'reacting' || mood === 'listening' ? amp * 0.12 : 0
     return {
       ...base,
       placement: 'stage',
@@ -1370,6 +1522,16 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           />
           {activeDrill ? (
             <>
+              {missCard ? (
+                <p className="partner-lab-miss">
+                  <span className="partner-lab-miss-heard">Heard {missCard.said}</span>
+                  {missCard.chunk ? (
+                    <span className="partner-lab-miss-chunk" lang="zh-HK">
+                      Retry {missCard.chunk}
+                    </span>
+                  ) : null}
+                </p>
+              ) : null}
               {cardFace.zh === 'hidden' ? (
                 <p className="partner-lab-drill-prompt">
                   {move === 'listen' ? 'Listen, then say it back.' : 'Say it in Cantonese.'}
@@ -1380,7 +1542,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                   className={`partner-lab-drill-zh${zhFlash ? ' is-jade-flash' : ''}`}
                   lang="zh-HK"
                   aria-label={
-                    mood === 'speaking' || listening ? 'Highlight phrase' : 'Replay phrase'
+                    mood === 'speaking' || mood === 'reacting' || listening
+                      ? 'Highlight phrase'
+                      : 'Replay phrase'
                   }
                   onClick={flashDrillZh}
                 >
@@ -1432,9 +1596,11 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           {fullscreen && partnerHold ? (
             <button
               type="button"
-              className={`partner-lab-replay${mood === 'speaking' ? ' is-speaking' : ''}`}
-              disabled={mood === 'speaking' || listening}
-              aria-label={mood === 'speaking' ? 'Partner is speaking' : 'Replay partner'}
+              className={`partner-lab-replay${mood === 'speaking' || mood === 'reacting' ? ' is-speaking' : ''}`}
+              disabled={mood === 'speaking' || mood === 'reacting' || listening}
+              aria-label={
+                mood === 'speaking' || mood === 'reacting' ? 'Partner is speaking' : 'Replay partner'
+              }
               onClick={(event) => {
                 event.stopPropagation()
                 replayPartnerVoice()

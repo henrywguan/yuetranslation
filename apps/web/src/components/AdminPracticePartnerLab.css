@@ -1657,6 +1657,13 @@
   border-color: color-mix(in srgb, #c9a86a 35%, var(--glass-border));
 }
 
+.partner-lab-stage--reacting {
+  border-color: color-mix(in srgb, #e7c27a 55%, var(--glass-border));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #e7c27a 24%, transparent),
+    0 0 48px color-mix(in srgb, #e7c27a 22%, transparent);
+}
+
 .partner-lab-stage--speaking {
   border-color: color-mix(in srgb, var(--jade) 55%, var(--glass-border));
   box-shadow:
@@ -1698,6 +1705,17 @@
 .partner-lab-stage--listening .partner-lab-glow {
   opacity: 0.85;
   transform: scale(1.08);
+}
+
+.partner-lab-stage--reacting .partner-lab-glow {
+  opacity: 0.92;
+  transform: scale(1.08);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, #e7c27a 42%, transparent),
+    transparent 68%
+  );
+  animation: partner-lab-pulse 1.35s ease-in-out infinite alternate;
 }
 
 .partner-lab-stage--speaking .partner-lab-glow {
@@ -2288,6 +2306,35 @@
   }
 }
 
+.partner-lab-miss {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  margin: 0.28rem 0 0.2rem;
+  padding: 0.32rem 0.55rem 0.38rem;
+  border-radius: 0.65rem;
+  text-align: left;
+  background: color-mix(in srgb, #ff4d4d 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #ff4d4d 35%, transparent);
+}
+
+.partner-lab-miss-heard,
+.partner-lab-miss-chunk {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.partner-lab-miss-heard {
+  font-size: 0.78rem;
+  color: color-mix(in srgb, #ffb4b4 88%, var(--ink-bright));
+}
+
+.partner-lab-miss-chunk {
+  font-family: 'Noto Sans HK', 'Noto Sans', var(--font-body);
+  font-size: 0.95rem;
+  color: var(--ink-bright);
+}
+
 .partner-lab-drill-en,
 .partner-lab-drill-jp,
 .partner-lab-drill-empty {
@@ -2367,7 +2414,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .partner-lab-stage--speaking .partner-lab-glow {
+  .partner-lab-stage--speaking .partner-lab-glow,
+  .partner-lab-stage--reacting .partner-lab-glow {
     animation: none;
   }
 
@@ -2892,6 +2940,10 @@
 .partner-lab.is-fullscreen .partner-lab-drill-en,
 .partner-lab.is-fullscreen .partner-lab-drill-jp {
   font-size: clamp(0.9rem, 2.4vw, 1.1rem);
+}
+
+.partner-lab.is-fullscreen .partner-lab-miss-chunk {
+  font-size: clamp(1rem, 2.8vw, 1.25rem);
 }
 
 .partner-lab.is-fullscreen .partner-lab-live,

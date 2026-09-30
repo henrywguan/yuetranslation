@@ -1194,6 +1194,7 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
         move: parsed.data.move,
         nextMove: parsed.data.nextMove,
         review: parsed.data.review,
+        lastMiss: parsed.data.lastMiss,
       },
     )
     const { addPracticePartnerCount } = await import('./usage.js')
@@ -1218,10 +1219,11 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
         missStreak: parsed.data.missStreak ?? 0,
         move: parsed.data.move || 'repeat',
         nextMove: parsed.data.nextMove || parsed.data.move || 'repeat',
+        hadLastMiss: Boolean(parsed.data.lastMiss),
       },
     })
     // Model id stays in audit only — omit from client response.
-    res.json({ ok: true, reply: result.reply, drill: result.drill })
+    res.json({ ok: true, reply: result.reply, drill: result.drill, beats: result.beats })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Practice partner chat failed'
     const status = /not configured|unavailable/i.test(msg) ? 503 : 500

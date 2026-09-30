@@ -277,8 +277,26 @@ export async function fetchTtsAudio(
   text: string,
   lang: Lang,
   voice?: string | null,
-  opts?: { loud?: boolean },
+  opts?: {
+    loud?: boolean
+    /** Structured beats. The server writes SSML. Never send markup here. */
+    performance?: {
+      delivery: string
+      reaction: string
+      phrase: string
+      cue: string
+    } | null
+  },
 ): Promise<Blob | null> {
+  const performance =
+    opts?.performance?.phrase && opts.performance.delivery
+      ? {
+          delivery: opts.performance.delivery,
+          reaction: opts.performance.reaction,
+          phrase: opts.performance.phrase,
+          cue: opts.performance.cue,
+        }
+      : null
   const res = await apiFetch('/tts', {
     method: 'POST',
     body: JSON.stringify({
@@ -286,6 +304,7 @@ export async function fetchTtsAudio(
       lang,
       ...(voice ? { voice } : {}),
       ...(opts?.loud ? { loud: true } : {}),
+      ...(performance ? { performance } : {}),
     }),
   })
   if (!res.ok) {

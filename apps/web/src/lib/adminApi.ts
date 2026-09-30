@@ -1,6 +1,12 @@
 import { getAccessToken } from './auth'
 import { resolveApiBase } from './api'
 import type { IncidentBannerSettings } from './types'
+import {
+  asPartnerPerformance,
+  cleanPartnerLastMiss,
+  type PartnerLastMiss,
+  type PartnerPerformance,
+} from './practicePartnerPerformance'
 
 async function adminFetch(path: string, init: RequestInit = {}) {
   const headers: Record<string, string> = {
@@ -774,8 +780,10 @@ export async function postPracticePartnerChat(
     move?: 'repeat' | 'listen' | 'translate' | 'finish'
     nextMove?: 'repeat' | 'listen' | 'translate' | 'finish'
     review?: PracticePartnerDrillTarget | null
+    lastMiss?: PartnerLastMiss | null
   } | null,
-): Promise<{ ok: boolean; reply: string; drill: PracticePartnerDrill | null }> {
+): Promise<{ ok: boolean; reply: string; drill: PracticePartnerDrill | null; beats: PartnerPerformance | null }> {
+  const lastMiss = cleanPartnerLastMiss(tone?.lastMiss)
   const res = await adminFetch('/admin/practice-partner/chat', {
     method: 'POST',
     body: JSON.stringify({
@@ -788,6 +796,7 @@ export async function postPracticePartnerChat(
       move: tone?.move ?? 'repeat',
       nextMove: tone?.nextMove ?? tone?.move ?? 'repeat',
       review: tone?.review ?? null,
+      lastMiss,
     }),
   })
   const data = await res.json().catch(() => ({}))
@@ -796,5 +805,10 @@ export async function postPracticePartnerChat(
   }
   const reply = typeof (data as { reply?: unknown }).reply === 'string' ? (data as { reply: string }).reply : ''
   if (!reply.trim()) throw new Error('Practice partner returned an empty reply')
-  return { ok: true, reply, drill: asDrill((data as { drill?: unknown }).drill) }
+  return {
+    ok: true,
+    reply,
+    drill: asDrill((data as { drill?: unknown }).drill),
+    beats: asPartnerPerformance((data as { beats?: unknown }).beats),
+  }
 }

@@ -39,6 +39,11 @@ assert.match(PRACTICE_PARTNER_SYSTEM, /THE JUDGMENT/, 'judgment phase')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Jyutping/, 'Jyutping required on the card')
 assert.match(PRACTICE_PARTNER_SYSTEM, /json object/i, 'structured JSON for the UI loop')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Azure TTS/, 'TTS-safe speak line')
+assert.match(PRACTICE_PARTNER_SYSTEM, /SPOKEN BEATS/)
+assert.match(PRACTICE_PARTNER_SYSTEM, /SITUATIONAL/)
+assert.match(PRACTICE_PARTNER_SYSTEM, /少甜/)
+assert.match(PRACTICE_PARTNER_SYSTEM, /LAST MISS/)
+assert.match(PRACTICE_PARTNER_SYSTEM, /Do not emit SSML/)
 assert.match(PRACTICE_PARTNER_SYSTEM, /CATEGORY LOCK/, 'deck lock')
 assert.match(PRACTICE_PARTNER_SYSTEM, /DIFFICULTY LOCK/, 'difficulty lock')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Do not put Jyutping romanization/, 'speak stays 漢字 + English')
@@ -233,6 +238,28 @@ assert.match(judge.turn, /Banned defaults/)
 assert.match(judge.turn, /哼。勉強過關/)
 assert.match(judge.turn, /有冇搞錯/)
 assert.match(judge.turn, /playful and meme/)
+assert.match(judge.turn, /SITUATIONAL|少甜/)
+assert.doesNotMatch(judge.turn, /\[LAST MISS\]/)
+
+const withMiss = buildPracticePartnerTurn(
+  [
+    { role: 'assistant', content: 'Repeat after me. 狗' },
+    { role: 'user', content: 'cat' },
+  ],
+  { en: 'dog', zh: '狗', jyutping: 'gau2' },
+  'animals',
+  'abc',
+  {
+    streak: 4,
+    missStreak: 0,
+    move: 'repeat',
+    nextMove: 'listen',
+    lastMiss: { said: 'gau', zh: '狗', en: 'dog' },
+  },
+)
+assert.match(withMiss.turn, /\[LAST MISS\]/)
+assert.match(withMiss.turn, /gau/)
+assert.match(withMiss.turn, /does NOT soften/)
 
 const climbed = buildPracticePartnerTurn(
   [
@@ -290,5 +317,18 @@ const badBody = PracticePartnerChatBodySchema.safeParse({
   messages: [{ role: 'user', content: '' }],
 })
 assert.ok(!badBody.success, 'blank user lines stay rejected')
+
+const withLastMiss = PracticePartnerChatBodySchema.safeParse({
+  messages: [{ role: 'user', content: 'dog' }],
+  activeDrill: previous,
+  lastMiss: { said: 'dok', zh: '狗', en: 'dog' },
+})
+assert.ok(withLastMiss.success, 'a bounded last miss is accepted')
+
+const blankMiss = PracticePartnerChatBodySchema.safeParse({
+  messages: [{ role: 'user', content: 'dog' }],
+  lastMiss: { said: '   ', zh: '狗', en: 'dog' },
+})
+assert.ok(!blankMiss.success, 'a blank last miss is rejected')
 
 console.log('practicePartnerAi.smoke: ok')

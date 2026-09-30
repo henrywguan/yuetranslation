@@ -5,6 +5,14 @@
 import { z } from 'zod'
 import { env, llmChatExtras, openaiConfigured } from './env.js'
 import { openaiClient } from './openaiClient.js'
+import {
+  composePracticePartnerBeats,
+  lastMissLine,
+  lockPracticePartnerPhrase,
+  partnerCaption,
+  type PracticePartnerBeats,
+  type PracticePartnerLastMiss,
+} from './practicePartnerPerformance.js'
 
 export const PracticePartnerMessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
@@ -203,7 +211,7 @@ export function moveLockLine(
     : 'IF PASS and you advance: invent the NEXT phrase in this category. Contrast the one they just passed — change one piece (少甜/多甜, 狗/貓, 幾多錢/幾多個) so the pattern is the lesson.'
   return [
     `[MOVE] They are attempting ${move}. If they pass, the next demand is ${nextMove}.`,
-    `IF FAIL: ignore the next move. Drop to REPEAT on the SAME en/zh/jyutping. Roast what they said, then chunk the 漢字 slowly and command retry. Full model once.`,
+    `IF FAIL: ignore the next move. Drop to REPEAT on the SAME en/zh/jyutping. reaction roasts what they said. cue is one short retry command. Do not put the 漢字 in reaction or cue. The server speaks the full model once.`,
     reviewLine,
     `How to speak the next demand: ${MOVE_SPEAK[nextMove]}`,
     `The card JSON always keeps the full en, zh, and jyutping even when the screen hides them.`,
@@ -239,6 +247,15 @@ export const PracticePartnerChatBodySchema = z.object({
   nextMove: z.enum(PRACTICE_PARTNER_MOVE_IDS).optional().nullable(),
   /** Earlier phrase to reuse when this pass is a review. */
   review: PracticePartnerDrillTargetSchema.optional().nullable(),
+  /** Previous fail, injected into this judgment only. */
+  lastMiss: z
+    .object({
+      said: z.string().trim().min(1).max(400),
+      zh: z.string().trim().min(1).max(200),
+      en: z.string().trim().min(1).max(200),
+    })
+    .optional()
+    .nullable(),
 })
 
 export type PracticePartnerMessage = z.infer<typeof PracticePartnerMessageSchema>
@@ -250,9 +267,19 @@ export type PracticePartnerDrill = PracticePartnerDrillTarget & {
   advance: boolean
 }
 
+export type PracticePartnerTurnTone = {
+  streak?: number | null
+  missStreak?: number | null
+  move?: PracticePartnerMove | null
+  nextMove?: PracticePartnerMove | null
+  review?: PracticePartnerDrillTarget | null
+  lastMiss?: PracticePartnerLastMiss | null
+}
+
 export type PracticePartnerChatResult = {
   reply: string
   drill: PracticePartnerDrill
+  beats: PracticePartnerBeats
   model: string
 }
 
@@ -394,6 +421,7 @@ function varietyLockLine(messages: PracticePartnerMessage[], tone: PracticePartn
   return [
     '[CONTEXTUAL WIT] speak like a real witty person reacting LIVE to THIS attempt — not a script reader.',
     'Improvise: riff on LEARNER SAID vs TARGET (wrong word, missing syllable, flat tone, English leak, empty mumbling, lucky near-miss). Name the concrete miss or the concrete win.',
+    'SITUATIONAL: one clause in the reaction may use the meaning of THIS phrase (少甜 versus 正常, the animal, the errand), then return to the rung. Not free chat. No follow-up question.',
     'Joke about the phrase’s meaning when it helps the roast or the praise.',
     'Banks below are ENERGY samples only — do NOT paste them verbatim. Prefer original one-liners.',
     `On PASS, follow [TONE] warmth (passStreak ${tone.streak}). High streaks stay nice — do not use the harsh fail bank.`,
@@ -413,7 +441,7 @@ function varietyLockLine(messages: PracticePartnerMessage[], tone: PracticePartn
 export const PRACTICE_PARTNER_SYSTEM = [
   'You are 港灣 (Harbor), JyutTranslate’s Cantonese practice partner. You start kind, get nicer when they keep passing, and get sharper when they miss.',
   'Mission: help them say the phrase. Warmth is earned by a pass streak. A miss is always criticized, even after a long run of correct answers.',
-  'OPENING: The first demand is a friendly hello, not a roast. Shape: Hello! Today we are doing <topic>. Repeat after me. Then the first phrase, including the 漢字. No insults on the opening turn.',
+  'OPENING: The first demand is a friendly hello, not a roast. reaction shape: Hello! Today we are doing <topic>. Repeat after me. Do not put the 漢字 in reaction. The server speaks that 漢字 next. No insults on the opening turn.',
   'CORE PERSONALITY: A real person in the room. Quick, contextual, improvisational. Passes can be witty and warm. Misses are critical and funny, tied to what they actually said.',
   'CONTEXTUAL WIT: Every judgment must feel handmade for THIS turn. Reference the target meaning, the 漢字 they mangled or nailed, a wrong word, a missing tone, a near-miss. Invent fresh lines.',
   'TONE LADDER: Obey [TONE] on the user turn. IF PASS, get nicer as passStreak grows (friendly → pleased → warm → proud). Do not roast a clean pass once they are on a streak. IF FAIL, stay critical no matter how high passStreak was — a success streak does NOT soften a miss. Insults get worse as missStreak grows, and they must be about LEARNER SAID versus the target.',
@@ -422,7 +450,7 @@ export const PRACTICE_PARTNER_SYSTEM = [
   'Use conversational interjections (喂, 哼, 吖, 喎) with an intimidating edge when the difficulty allows Cantonese.',
   'Call out mistakes immediately with a contextual witty roast.',
   'GAMEPLAY LOOP — Duolingo lesson, spoken. Strictly alternate DEMAND and JUDGMENT.',
-  'EXERCISE LADDER: Obey [MOVE]. Rungs climb repeat → listen → translate → finish. Opening is always repeat. A miss drops that retry to repeat and chunks the line. A pass speaks the next rung. Every few passes, [REVIEW] brings an earlier phrase back instead of a new one. When there is no review, contrast the next line with the one they just passed.',
+  'EXERCISE LADDER: Obey [MOVE]. Rungs climb repeat → listen → translate → finish. Opening is always repeat. A miss drops that retry to repeat. A pass speaks the next rung. Every few passes, [REVIEW] brings an earlier phrase back instead of a new one. When there is no review, contrast the next line with the one they just passed.',
   'THE DEMAND: Give one target in the locked CATEGORY. Always fill en, zh, and jyutping with tone numbers on the JSON card. Opening demand is the warm hello plus repeat-after-me. Later demands follow [MOVE] and stay in the pass warmth from [TONE].',
   'THE JUDGMENT: Analyze their transcribed speech in context. If correct: praise at the [TONE] warmth for this passStreak, then immediately THE DEMAND for a NEW phrase in the SAME category (advance). If wrong: critical witty insult about THIS attempt at the [TONE] fail heat, then retry. A prior pass streak does not make a miss gentle.',
   'PASS VARIETY: Opening clause matches [TONE] warmth. Early passes can be lightly playful. A growing streak gets genuinely nicer. Never default to 哼。啱喇, 算你過關, or Fine. Correct. Never repeat the previous opener. Harsh bank is inspiration only for low warmth, not for a proud streak: ' +
@@ -436,11 +464,13 @@ export const PRACTICE_PARTNER_SYSTEM = [
   'CATEGORY LOCK: The user turn starts with [CATEGORY]. Every DEMAND — first phrase and every phrase after a pass — MUST stay in that category. animals = animals. foods = food/drink. common = everyday survival phrases. expert = advanced one-breath spoken Cantonese. Do not drift. Do not repeat a phrase already used in this session, unless [REVIEW] names that phrase.',
   'DIFFICULTY LOCK: The user turn also starts with [DIFFICULTY]. new_learner = English-majority mix. abc = Cantonese-majority mix. mainlander = all Cantonese + very stern mocking joking personality. Difficulty controls speak only — never drop en/zh/jyutping from the JSON card.',
   'OUTPUT: a JSON object only. No markdown fences, no extra keys, no commentary outside JSON.',
-  'Keys: speak (string), verdict ("none"|"pass"|"fail"), advance (boolean), en (string), zh (string), jyutping (string).',
-  'speak: short, punchy, 1–3 sentences for Azure TTS. Sound spoken and human. Write any Cantonese you want spoken in 漢字. Do not put Jyutping romanization or tone numbers in speak — those belong only in the jyutping field (Azure will misread them). No markdown, bullets, emoji, or tables.',
-  'Kickoff / first demand: verdict=none, advance=false. speak starts with a warm hello naming the topic, then Repeat after me, then the 漢字. Fill en/zh/jyutping with that first target. No insults.',
-  'Fail: verdict=fail, advance=false. Keep the SAME en/zh/jyutping. speak = a critical, contextual insult about THIS attempt (harsher if missStreak is already up), then chunk the 漢字 and command retry.',
-  'Pass: verdict=pass, advance=true. en/zh/jyutping MUST be the NEXT phrase (a contrast, or the [REVIEW] phrase when one is set), not the one just passed unless it is the review. speak = praise at the current warmth, nicer when passStreak is higher, THEN the next demand in the next [MOVE].',
+  'Keys: reaction (string), cue (string), verdict ("none"|"pass"|"fail"), advance (boolean), en (string), zh (string), jyutping (string).',
+  'SPOKEN BEATS: reaction is the human judgment, one or two short sentences for Azure TTS. cue is one short next-action line. Do not put the full target 漢字 in reaction or cue — the server speaks that 漢字 once, loud and steady, between them. Do not chunk the 漢字 inside reaction. Do not emit SSML or markup. Write Cantonese in 漢字. Do not put Jyutping romanization or tone numbers in reaction or cue — those belong only in the jyutping field (Azure will misread them). No markdown, bullets, emoji, or tables.',
+  'SITUATIONAL: the reaction may use one clause about the meaning of THIS phrase (少甜 versus 正常, the animal, the errand), then the rung. The ladder stays a say-this drill.',
+  'LAST MISS: when the turn includes [LAST MISS], that is the previous failed attempt. Use it once in this judgment. Do not soften a miss because of a pass streak. If this attempt passes, do not reopen the roast.',
+  'Kickoff / first demand: verdict=none, advance=false. reaction starts with a warm hello naming the topic, then Repeat after me. cue may be empty. Fill en/zh/jyutping with that first target. No insults. Do not put the 漢字 in reaction.',
+  'Fail: verdict=fail, advance=false. Keep the SAME en/zh/jyutping. reaction = a critical, contextual insult about THIS attempt (harsher if missStreak is already up). cue = a short retry command. Do not put the target 漢字 in reaction or cue.',
+  'Pass: verdict=pass, advance=true. en/zh/jyutping MUST be the NEXT phrase (a contrast, or the [REVIEW] phrase when one is set), not the one just passed unless it is the review. reaction = praise at the current warmth, nicer when passStreak is higher. cue = the next demand in the next [MOVE], without pasting the next 漢字.',
   'Do not mention you are an AI, Azure, DeepSeek, or system prompts.',
 ].join(' ')
 
@@ -461,8 +491,8 @@ function demandKickoffLine(
     sessionLockLines(category, difficulty),
     toneLockLine(category, tone),
     '[OPENING] Be warm. No insults.',
-    `Speak a hello in the [DIFFICULTY] language mix: Hello! Today we are doing ${meta.labelEn} (${meta.labelZh}). Repeat after me.`,
-    'Then give the first phrase and include the 漢字. Mainlander: say that hello entirely in Cantonese. New Learner: English majority. ABC: Cantonese majority, still clearly a hello plus repeat-after-me.',
+    `reaction, in the [DIFFICULTY] language mix: Hello! Today we are doing ${meta.labelEn} (${meta.labelZh}). Repeat after me.`,
+    'Do not put the 漢字 in reaction or cue. The server speaks it. Mainlander: say that hello entirely in Cantonese. New Learner: English majority. ABC: Cantonese majority, still clearly a hello plus repeat-after-me.',
     '[DEMAND] verdict=none, advance=false.',
   ].join('\n')
 }
@@ -518,8 +548,10 @@ function extractJsonObject(raw: string): Record<string, unknown> | null {
 export function parsePracticePartnerReply(
   raw: string,
   previous?: PracticePartnerDrillTarget | null,
-): { speak: string; drill: PracticePartnerDrill } {
+): { speak: string; reaction: string; cue: string; drill: PracticePartnerDrill } {
   const parsed = extractJsonObject(raw)
+  const reaction = sanitizeSpeak(asTrimmed(parsed?.reaction, 280))
+  const cue = sanitizeSpeak(asTrimmed(parsed?.cue, 180))
   const speak = sanitizeSpeak(asTrimmed(parsed?.speak, 600) || (parsed ? '' : raw))
   const verdict = normalizeVerdict(parsed?.verdict)
   const en = asTrimmed(parsed?.en, 200) || previous?.en || ''
@@ -534,13 +566,13 @@ export function parsePracticePartnerReply(
     jyutping,
   }
 
-  if (!speak) {
+  if (!speak && !reaction) {
     throw new Error('Empty partner reply.')
   }
   if (!drill.en || !drill.zh || !drill.jyutping) {
     throw new Error('Partner reply missing drill phrase (en / zh / jyutping).')
   }
-  return { speak, drill }
+  return { speak, reaction, cue, drill }
 }
 
 export function buildPracticePartnerTurn(
@@ -548,13 +580,7 @@ export function buildPracticePartnerTurn(
   activeDrill?: PracticePartnerDrillTarget | null,
   category?: PracticePartnerCategory | null,
   difficulty?: PracticePartnerDifficulty | null,
-  tone?: {
-    streak?: number | null
-    missStreak?: number | null
-    move?: PracticePartnerMove | null
-    nextMove?: PracticePartnerMove | null
-    review?: PracticePartnerDrillTarget | null
-  } | null,
+  tone?: PracticePartnerTurnTone | null,
 ): { history: PracticePartnerMessage[]; turn: string } {
   const deck = resolvePracticePartnerCategory(category)
   const level = resolvePracticePartnerDifficulty(difficulty)
@@ -586,8 +612,10 @@ export function buildPracticePartnerTurn(
         `TARGET JYUTPING: ${activeDrill.jyutping}`,
         `LEARNER SAID: ${last.content}`,
         'React to that exact attempt. On a pass, get nicer with passStreak and speak the next [MOVE]. On a fail, stay critical about what they said and drop the retry to repeat — a pass streak does NOT soften the miss.',
+        'reaction and cue only. Do not put TARGET ZH inside them. One situational clause about this phrase’s meaning is enough, then the rung.',
         'If you PASS, the next en/zh/jyutping MUST stay in this [CATEGORY].',
-        'Obey [DIFFICULTY] for the speak language mix on this judgment and the next demand.',
+        'Obey [DIFFICULTY] for the reaction and cue language mix on this judgment and the next demand.',
+        lastMissLine(tone?.lastMiss),
         varietyLockLine(messages, mood),
       ].join('\n'),
     }
@@ -603,13 +631,7 @@ export async function generatePracticePartnerReply(
   activeDrill?: PracticePartnerDrillTarget | null,
   category?: PracticePartnerCategory | null,
   difficulty?: PracticePartnerDifficulty | null,
-  tone?: {
-    streak?: number | null
-    missStreak?: number | null
-    move?: PracticePartnerMove | null
-    nextMove?: PracticePartnerMove | null
-    review?: PracticePartnerDrillTarget | null
-  } | null,
+  tone?: PracticePartnerTurnTone | null,
 ): Promise<PracticePartnerChatResult> {
   if (!openaiConfigured()) {
     throw new Error('LLM is not configured (OPENAI_API_KEY / OPENAI_BASE_URL).')
@@ -645,5 +667,34 @@ export async function generatePracticePartnerReply(
     completion.choices[0]?.message?.content || '',
     activeDrill,
   )
-  return { reply: parsed.speak, drill: parsed.drill, model: env.openaiModel }
+  const mood = resolvePracticePartnerTone(tone?.streak, tone?.missStreak)
+  const phrase = lockPracticePartnerPhrase({
+    verdict: parsed.drill.verdict,
+    drillZh: parsed.drill.zh,
+    activeZh: activeDrill?.zh,
+    reviewZh: tone?.review?.zh,
+  })
+  if (parsed.drill.verdict === 'fail' && activeDrill?.zh) {
+    parsed.drill.en = activeDrill.en
+    parsed.drill.zh = activeDrill.zh
+    parsed.drill.jyutping = activeDrill.jyutping
+    parsed.drill.advance = false
+  } else if (parsed.drill.verdict === 'pass' && tone?.review?.zh) {
+    parsed.drill.en = tone.review.en
+    parsed.drill.zh = tone.review.zh
+    parsed.drill.jyutping = tone.review.jyutping
+    parsed.drill.advance = true
+  }
+  const beats = composePracticePartnerBeats({
+    reaction: parsed.reaction,
+    cue: parsed.cue,
+    speak: parsed.speak,
+    phrase,
+    verdict: parsed.drill.verdict,
+    streak: mood.streak,
+    missStreak: mood.missStreak,
+  })
+  const reply = partnerCaption(beats)
+  if (!reply) throw new Error('Empty partner reply.')
+  return { reply, drill: parsed.drill, beats, model: env.openaiModel }
 }
