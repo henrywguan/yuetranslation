@@ -66,6 +66,11 @@ assert.match(tsx, /practicePartnerCardShows/)
 assert.match(tsx, /planPracticePartnerAdvance/)
 assert.match(tsx, /Listen, then say it back/)
 assert.match(tsx, /JyutpingChaoText text=\{activeDrill\.jyutping\}/)
+assert.match(tsx, /partnerCaptionLayout/)
+assert.match(tsx, /difficulty !== 'mainlander'/)
+assert.match(tsx, /learningCaption\.secondaryScript/)
+assert.match(tsx, /learningCaption\.primaryScript/)
+assert.match(css, /partner-lab-subtitles-secondary\.is-reading/)
 assert.match(
   tsx,
   /if \(!activeDrill\) \{[\s\S]*unlockTtsPlayback\(\{ force: true \}\)[\s\S]*setFullscreen\(true\)[\s\S]*prefersReducedMotion\(\)[\s\S]*setVhsCue[\s\S]*void startDrill\(\)/,

@@ -96,6 +96,91 @@ export function asPartnerPerformance(raw: unknown): PartnerPerformance | null {
   return { delivery, reaction: reaction.slice(0, 280), phrase: phrase.slice(0, 200), cue: cue.slice(0, 180) }
 }
 
+export type PartnerCaptionScript = {
+  zh: string
+  jyutping: string
+}
+
+/** What the subtitle band shows for the current phrase. */
+export type PartnerCaptionLayout = {
+  /** Largest line. English gloss for New Learner. Empty when the phrase script is the primary. */
+  primaryText: string
+  /** 漢字 plus Jyutping when that pair is the primary caption (ABC). */
+  primaryScript: PartnerCaptionScript | null
+  /** Spoken coaching in the primary language, above the largest line. */
+  coachText: string
+  /** English gloss when it is the secondary caption (ABC). */
+  secondaryText: string
+  /** 漢字 plus Jyutping when that pair is the secondary caption (New Learner). */
+  secondaryScript: PartnerCaptionScript | null
+}
+
+function tidyCaption(text: string): string {
+  return text.replace(/\s+/g, ' ').trim()
+}
+
+function withoutPhrase(text: string, phrase: string): string {
+  const raw = tidyCaption(text)
+  const target = tidyCaption(phrase)
+  if (!raw || !target) return raw
+  return tidyCaption(raw.split(target).join(' '))
+}
+
+/**
+ * New Learner: English is the large caption, 漢字 and Jyutping stay visible above it.
+ * ABC: 漢字 and Jyutping are the large caption, English sits above them.
+ * Mainlander: the spoken Chinese line only.
+ */
+export function partnerCaptionLayout(input: {
+  difficulty: 'new_learner' | 'abc' | 'mainlander'
+  en: string
+  zh: string
+  jyutping: string
+  spoken?: string | null
+  reaction?: string | null
+  cue?: string | null
+}): PartnerCaptionLayout {
+  const en = tidyCaption(input.en)
+  const zh = tidyCaption(input.zh)
+  const jyutping = tidyCaption(input.jyutping)
+  const spoken = tidyCaption(input.spoken || '')
+  const coach = tidyCaption(
+    [withoutPhrase(input.reaction || '', zh), withoutPhrase(input.cue || '', zh)].filter(Boolean).join(' '),
+  )
+  const script = zh ? { zh, jyutping } : null
+
+  if (input.difficulty === 'mainlander') {
+    return {
+      primaryText: spoken || zh,
+      primaryScript: null,
+      coachText: '',
+      secondaryText: '',
+      secondaryScript: null,
+    }
+  }
+
+  if (input.difficulty === 'abc') {
+    return {
+      primaryText: '',
+      primaryScript: script,
+      coachText: coach || withoutPhrase(spoken, zh),
+      secondaryText: en,
+      secondaryScript: null,
+    }
+  }
+
+  const gloss = en || withoutPhrase(spoken, zh) || spoken
+  const coachText =
+    coach && gloss && coach.toLowerCase() === gloss.toLowerCase() ? '' : coach
+  return {
+    primaryText: gloss,
+    primaryScript: null,
+    coachText,
+    secondaryText: '',
+    secondaryScript: script,
+  }
+}
+
 export function cleanPartnerLastMiss(raw: PartnerLastMiss | null | undefined): PartnerLastMiss | null {
   if (!raw) return null
   const said = raw.said.replace(/\s+/g, ' ').trim().slice(0, 400)

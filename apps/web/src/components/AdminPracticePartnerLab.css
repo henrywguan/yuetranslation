@@ -2135,6 +2135,66 @@
   color: color-mix(in srgb, var(--ink-bright) 82%, transparent);
 }
 
+.partner-lab-subtitles-secondary.is-reading {
+  opacity: 1;
+  font-size: clamp(0.95rem, 2.3vw, 1.12rem);
+  color: var(--ink-bright);
+}
+
+.partner-lab-subtitles-secondary.is-reading .partner-lab-subtitles-secondary-text {
+  color: var(--ink-bright);
+}
+
+.partner-lab-subtitles-script {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+  margin: 0;
+}
+
+.partner-lab-subtitles-jp {
+  margin: 0.12rem 0 0;
+  font-family: 'Noto Sans', var(--font-body);
+  font-size: 0.92em;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--jade) 68%, var(--ink-bright));
+}
+
+.partner-lab-subtitles-jp .chao-face {
+  margin-left: 0.02em;
+}
+
+.partner-lab-subtitles-coach {
+  margin: 0 0 0.28rem;
+  font-family: 'Noto Sans HK', 'Noto Sans', var(--font-body);
+  font-size: clamp(0.92rem, 2.2vw, 1.05rem);
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--ink-bright) 90%, transparent);
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--harbor) 80%, transparent);
+}
+
+.partner-lab-subtitles-youline {
+  margin: 0 0 0.4rem;
+}
+
+.partner-lab-subtitles-youline .partner-lab-subtitles-speaker {
+  color: var(--mint);
+}
+
+.partner-lab-subtitles-youline-text {
+  display: block;
+  font-family: 'Noto Sans HK', 'Noto Sans', var(--font-body);
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  line-height: 1.35;
+  color: var(--ink-bright);
+}
+
+.partner-lab-subtitles-youline.is-interim .partner-lab-subtitles-youline-text {
+  opacity: 0.88;
+}
+
 .partner-lab-status {
   position: absolute;
   left: 1rem;
@@ -2332,6 +2392,17 @@
 .partner-lab-miss-chunk {
   font-family: 'Noto Sans HK', 'Noto Sans', var(--font-body);
   font-size: 0.95rem;
+  color: var(--ink-bright);
+}
+
+.partner-lab-drill-zh.is-support {
+  font-size: clamp(0.98rem, 2.2vw, 1.15rem);
+  font-weight: 650;
+}
+
+.partner-lab-drill-en.is-primary {
+  font-size: clamp(1.2rem, 3vw, 1.7rem);
+  font-weight: 680;
   color: var(--ink-bright);
 }
 
@@ -2918,6 +2989,14 @@
   font-size: clamp(0.85rem, 2.6vw, 1.05rem);
 }
 
+.partner-lab.is-fullscreen .partner-lab-subtitles-secondary.is-reading {
+  font-size: clamp(1rem, 3vw, 1.28rem);
+}
+
+.partner-lab.is-fullscreen .partner-lab-subtitles-jp {
+  font-size: clamp(0.95rem, 2.6vw, 1.15rem);
+}
+
 .partner-lab.is-fullscreen .partner-lab-status {
   top: max(0.85rem, env(safe-area-inset-top));
   left: max(1rem, env(safe-area-inset-left));
@@ -2934,6 +3013,14 @@
 }
 
 .partner-lab.is-fullscreen .partner-lab-drill-zh {
+  font-size: clamp(1.35rem, 4vw, 2rem);
+}
+
+.partner-lab.is-fullscreen .partner-lab-drill-zh.is-support {
+  font-size: clamp(1.05rem, 3vw, 1.35rem);
+}
+
+.partner-lab.is-fullscreen .partner-lab-drill-en.is-primary {
   font-size: clamp(1.35rem, 4vw, 2rem);
 }
 
@@ -3092,6 +3179,12 @@
   line-height: 1.35;
   opacity: 0.72;
   color: color-mix(in srgb, var(--ink-bright) 82%, transparent);
+}
+
+.partner-lab.is-fullscreen .partner-lab-subtitles-secondary.is-reading {
+  opacity: 1;
+  font-size: clamp(1rem, 3vw, 1.28rem);
+  color: var(--ink-bright);
 }
 
 .partner-lab.is-fullscreen .partner-lab-subtitles-secondary .partner-lab-subtitles-role {

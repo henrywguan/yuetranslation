@@ -21,6 +21,7 @@ import {
 import {
   deliveryForPartnerTurn,
   partnerCaption,
+  partnerCaptionLayout,
   reactionHoldMs,
   retryChunk,
   withLockedPhrase,
@@ -321,6 +322,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   )
   /** Last partner line — stays on screen until the user starts speaking. */
   const [partnerHold, setPartnerHold] = useState<string | null>(null)
+  const [partnerBeats, setPartnerBeats] = useState<PartnerPerformance | null>(null)
   /** Fail correction: what was heard, plus the piece to retry. */
   const [missCard, setMissCard] = useState<{ said: string; chunk: string } | null>(null)
   /** Live STT (interim + accumulating finals) while the mic is open. */
@@ -504,6 +506,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setVerdictFlash(null)
     setError('')
     setPartnerHold(null)
+    setPartnerBeats(null)
     setYouLive(null)
     setFsTypeOpen(false)
     setVoiceMenuOpen(false)
@@ -596,6 +599,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       const reacting = Boolean(beats?.reaction.trim())
       setMood(reacting ? 'reacting' : 'speaking')
       setPartnerHold(reply)
+      setPartnerBeats(beats ?? null)
       setYouLive(null)
       setCaption({ role: 'partner', text: reply })
       window.clearTimeout(beatTimerRef.current)
@@ -1151,6 +1155,18 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   // When you are speaking, keep the last partner line visible above your STT.
   const displaySecondary =
     youLive && partnerHold ? { role: 'partner' as const, text: partnerHold } : null
+  const learningCaption =
+    activeDrill && difficulty !== 'mainlander' && caption.role !== 'system'
+      ? partnerCaptionLayout({
+          difficulty,
+          en: activeDrill.en,
+          zh: activeDrill.zh,
+          jyutping: activeDrill.jyutping,
+          spoken: partnerHold,
+          reaction: partnerBeats?.reaction,
+          cue: partnerBeats?.cue,
+        })
+      : null
 
   const openFsKeyboard = () => {
     if (busy || listening || !activeDrill) return
@@ -1532,14 +1548,19 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                   ) : null}
                 </p>
               ) : null}
-              {cardFace.zh === 'hidden' ? (
+              {difficulty === 'new_learner' ? (
+                <p className="partner-lab-drill-en is-primary">{activeDrill.en}</p>
+              ) : null}
+              {difficulty === 'mainlander' && cardFace.zh === 'hidden' ? (
                 <p className="partner-lab-drill-prompt">
                   {move === 'listen' ? 'Listen, then say it back.' : 'Say it in Cantonese.'}
                 </p>
               ) : (
                 <button
                   type="button"
-                  className={`partner-lab-drill-zh${zhFlash ? ' is-jade-flash' : ''}`}
+                  className={`partner-lab-drill-zh${difficulty === 'new_learner' ? ' is-support' : ''}${
+                    zhFlash ? ' is-jade-flash' : ''
+                  }`}
                   lang="zh-HK"
                   aria-label={
                     mood === 'speaking' || mood === 'reacting' || listening
@@ -1549,23 +1570,30 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                   onClick={flashDrillZh}
                 >
                   <span className="partner-lab-drill-zh-chars">
-                    {[...(cardFace.zh === 'cloze' && drillCloze ? drillCloze : activeDrill.zh)].map(
-                      (ch, i) => (
-                        <span
-                          key={`${zhFlash}-${i}`}
-                          className={zhFlash ? 'is-jade' : undefined}
-                          style={zhFlash ? { animationDelay: `${i * 32}ms` } : undefined}
-                        >
-                          {ch}
-                        </span>
-                      ),
-                    )}
+                    {[
+                      ...(difficulty === 'mainlander' && cardFace.zh === 'cloze' && drillCloze
+                        ? drillCloze
+                        : activeDrill.zh),
+                    ].map((ch, i) => (
+                      <span
+                        key={`${zhFlash}-${i}`}
+                        className={zhFlash ? 'is-jade' : undefined}
+                        style={zhFlash ? { animationDelay: `${i * 32}ms` } : undefined}
+                      >
+                        {ch}
+                      </span>
+                    ))}
                   </span>
                   {zhFlash ? <span className="partner-lab-drill-zh-line" aria-hidden="true" /> : null}
                 </button>
               )}
-              {cardFace.en ? <p className="partner-lab-drill-en">{activeDrill.en}</p> : null}
-              {cardFace.jp ? (
+              {difficulty === 'abc' ? (
+                <p className="partner-lab-drill-en is-secondary">{activeDrill.en}</p>
+              ) : null}
+              {difficulty === 'mainlander' && cardFace.en ? (
+                <p className="partner-lab-drill-en">{activeDrill.en}</p>
+              ) : null}
+              {difficulty !== 'mainlander' || cardFace.jp ? (
                 <p className="partner-lab-drill-jp">
                   <JyutpingChaoText text={activeDrill.jyutping} />
                 </p>
@@ -1581,13 +1609,38 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         <div className="partner-lab-subtitle-band" aria-hidden="true" />
 
         <div
-          className={`partner-lab-subtitles partner-lab-subtitles--fallout partner-lab-subtitles--${displayPrimary.role}${
-            displayPrimary.interim ? ' is-interim' : ''
-          }${displaySecondary ? ' has-secondary' : ''}`}
+          className={`partner-lab-subtitles partner-lab-subtitles--fallout partner-lab-subtitles--${
+            learningCaption ? 'partner' : displayPrimary.role
+          }${displayPrimary.interim ? ' is-interim' : ''}${
+            displaySecondary || learningCaption ? ' has-secondary' : ''
+          }`}
           aria-live="polite"
           onClick={(event) => event.stopPropagation()}
         >
-          {displaySecondary ? (
+          {learningCaption && youLive ? (
+            <p className={`partner-lab-subtitles-youline${youLive.interim ? ' is-interim' : ''}`}>
+              <span className="partner-lab-subtitles-speaker">You</span>
+              <span className="partner-lab-subtitles-youline-text">{youLive.text}</span>
+            </p>
+          ) : null}
+          {learningCaption && (learningCaption.secondaryText || learningCaption.secondaryScript) ? (
+            <div className="partner-lab-subtitles-secondary is-reading">
+              {learningCaption.secondaryText ? (
+                <p className="partner-lab-subtitles-secondary-text">{learningCaption.secondaryText}</p>
+              ) : null}
+              {learningCaption.secondaryScript ? (
+                <p className="partner-lab-subtitles-script">
+                  <span lang="zh-HK">{learningCaption.secondaryScript.zh}</span>
+                  {learningCaption.secondaryScript.jyutping ? (
+                    <span className="partner-lab-subtitles-jp">
+                      <JyutpingChaoText text={learningCaption.secondaryScript.jyutping} />
+                    </span>
+                  ) : null}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+          {!learningCaption && displaySecondary ? (
             <p className="partner-lab-subtitles-secondary">
               <span className="partner-lab-subtitles-speaker">{partnerSpeaker}</span>
               <span className="partner-lab-subtitles-secondary-text">{displaySecondary.text}</span>
@@ -1621,8 +1674,33 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               </span>
             </button>
           ) : null}
-          <p className="partner-lab-subtitles-speaker">{speakerName}</p>
-          <p className="partner-lab-subtitles-text">{displayPrimary.text}</p>
+          <p className="partner-lab-subtitles-speaker">
+            {learningCaption ? partnerSpeaker : speakerName}
+          </p>
+          {learningCaption?.coachText ? (
+            <p className="partner-lab-subtitles-coach">{learningCaption.coachText}</p>
+          ) : null}
+          {learningCaption ? (
+            <>
+              {learningCaption.primaryText ? (
+                <p className="partner-lab-subtitles-text">{learningCaption.primaryText}</p>
+              ) : null}
+              {learningCaption.primaryScript ? (
+                <>
+                  <p className="partner-lab-subtitles-text" lang="zh-HK">
+                    {learningCaption.primaryScript.zh}
+                  </p>
+                  {learningCaption.primaryScript.jyutping ? (
+                    <p className="partner-lab-subtitles-jp">
+                      <JyutpingChaoText text={learningCaption.primaryScript.jyutping} />
+                    </p>
+                  ) : null}
+                </>
+              ) : null}
+            </>
+          ) : (
+            <p className="partner-lab-subtitles-text">{displayPrimary.text}</p>
+          )}
           {listening && !youLive ? (
             <p className="partner-lab-subtitles-listening">Listening… your words appear here</p>
           ) : null}
