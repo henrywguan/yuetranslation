@@ -9,13 +9,14 @@ import { getAccessToken } from './auth'
 import { captureDiagnostic } from './diagnostics'
 import { guestDeviceHeaders } from './guestDevice'
 import { messageFromApiBody } from './apiError'
+import { sanitizeApiBase, sanitizeLeaveUrl } from './safeUrl'
 
 export function resolveApiBase(): string {
-  if (typeof window !== 'undefined') {
-    const fromQuery = new URLSearchParams(window.location.search).get('api')
-    if (fromQuery) return fromQuery.replace(/\/$/, '')
-  }
-  return (import.meta.env.VITE_API_BASE as string) || '/api'
+  const fallback = (import.meta.env.VITE_API_BASE as string) || '/api'
+  if (typeof window === 'undefined') return fallback
+  const fromQuery = new URLSearchParams(window.location.search).get('api')
+  // Never allow ?api=https://evil — that exfiltrates Bearer tokens.
+  return sanitizeApiBase(fromQuery, fallback, window.location.origin)
 }
 
 function resolveWpNonce(): string {
@@ -25,7 +26,8 @@ function resolveWpNonce(): string {
 
 export function getUpgradeUrl(): string {
   if (typeof window === 'undefined') return ''
-  return new URLSearchParams(window.location.search).get('upgrade') || ''
+  const raw = new URLSearchParams(window.location.search).get('upgrade') || ''
+  return sanitizeLeaveUrl(raw, window.location.origin) || ''
 }
 
 const API_BASE = resolveApiBase()

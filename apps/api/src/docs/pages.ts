@@ -5,6 +5,9 @@
 import JSZip from 'jszip'
 
 const CHARS_PER_PAGE = 1800
+/** Defense against OOXML zip bombs (compressed ≤8MB upstream). */
+const MAX_OOXML_ENTRIES = 800
+const MAX_OOXML_TEXT_CHARS = 8_000_000
 
 function pagesFromChars(chars: number): number {
   return Math.max(1, Math.ceil(Math.max(0, chars) / CHARS_PER_PAGE))
@@ -18,8 +21,17 @@ function stripXml(xml: string): string {
     .trim()
 }
 
-async function ooxmlTextChars(buf: Buffer, pathPrefix: string): Promise<number> {
+async function loadOoxmlZip(buf: Buffer): Promise<JSZip> {
   const zip = await JSZip.loadAsync(buf)
+  const entries = Object.keys(zip.files)
+  if (entries.length > MAX_OOXML_ENTRIES) {
+    throw new Error('Document archive has too many entries.')
+  }
+  return zip
+}
+
+async function ooxmlTextChars(buf: Buffer, pathPrefix: string): Promise<number> {
+  const zip = await loadOoxmlZip(buf)
   let chars = 0
   const files = Object.keys(zip.files).filter(
     (p) => p.startsWith(pathPrefix) && p.endsWith('.xml') && !zip.files[p]?.dir,
@@ -27,12 +39,15 @@ async function ooxmlTextChars(buf: Buffer, pathPrefix: string): Promise<number> 
   for (const path of files) {
     const xml = await zip.files[path]!.async('string')
     chars += stripXml(xml).length
+    if (chars > MAX_OOXML_TEXT_CHARS) {
+      throw new Error('Document expands too large to process safely.')
+    }
   }
   return chars
 }
 
 async function pptxSlideCount(buf: Buffer): Promise<number> {
-  const zip = await JSZip.loadAsync(buf)
+  const zip = await loadOoxmlZip(buf)
   const slides = Object.keys(zip.files).filter((p) =>
     /^ppt\/slides\/slide\d+\.xml$/i.test(p),
   )
@@ -40,7 +55,7 @@ async function pptxSlideCount(buf: Buffer): Promise<number> {
 }
 
 async function xlsxSheetCount(buf: Buffer): Promise<number> {
-  const zip = await JSZip.loadAsync(buf)
+  const zip = await loadOoxmlZip(buf)
   const sheets = Object.keys(zip.files).filter((p) =>
     /^xl\/worksheets\/sheet\d+\.xml$/i.test(p),
   )

@@ -120,6 +120,21 @@ self.addEventListener('notificationclick', (event) => {
     const actionUrl = (data as Record<string, unknown>)[`action:${action}`]
     if (typeof actionUrl === 'string' && actionUrl) target = actionUrl
   }
+  // Only same-origin hash / path — never open arbitrary https://attacker from a push.
+  const origin = self.location.origin
+  const sanitize = (raw: string): string => {
+    const t = (raw || '').trim() || '#/app'
+    if (t.startsWith('#/')) return t
+    if (t.startsWith('/') && !t.startsWith('//')) return t
+    try {
+      const u = new URL(t, origin)
+      if (u.origin === origin) return `${u.pathname}${u.search}${u.hash}` || '#/app'
+    } catch {
+      /* ignore */
+    }
+    return '#/app'
+  }
+  target = sanitize(target)
 
   event.waitUntil(
     (async () => {
@@ -137,11 +152,12 @@ self.addEventListener('notificationclick', (event) => {
           await client.focus()
           if ('navigate' in client && typeof (client as WindowClient).navigate === 'function') {
             try {
-              // Prefer hash updates for SPA when already on origin
               if (target.startsWith('#')) {
                 await (client as WindowClient).navigate(`${self.location.origin}/${target}`)
               } else {
-                await (client as WindowClient).navigate(target)
+                await (client as WindowClient).navigate(
+                  target.startsWith('/') ? `${self.location.origin}${target}` : target,
+                )
               }
             } catch {
               // ignore navigate failures
@@ -156,7 +172,7 @@ self.addEventListener('notificationclick', (event) => {
         ? `${self.location.origin}/${target}`
         : target.startsWith('/')
           ? `${self.location.origin}${target}`
-          : target
+          : `${self.location.origin}/#/app`
       await self.clients.openWindow(openUrl)
     })(),
   )

@@ -244,8 +244,15 @@ app.get('/api/speech-token', async (req: AuthedRequest, res) => {
   }
   const ttl = env.openMode
     ? SPEECH_TOKEN_MAX_TTL_S
-    : Math.min(SPEECH_TOKEN_MAX_TTL_S, Math.max(SPEECH_TOKEN_MIN_REMAINING_S, remaining))
-  const debit = env.openMode ? 0 : Math.min(SPEECH_TOKEN_PREPAY_S, remaining)
+    : Math.min(
+        SPEECH_TOKEN_MAX_TTL_S,
+        Math.max(
+          SPEECH_TOKEN_MIN_REMAINING_S,
+          // Token lifetime must not exceed prepaid debit (closes 180s-with-60s-debit hole).
+          Math.min(SPEECH_TOKEN_PREPAY_S, remaining),
+        ),
+      )
+  const debit = env.openMode ? 0 : Math.min(SPEECH_TOKEN_PREPAY_S, remaining, ttl)
   try {
     const token = await issueSpeechToken({ expiresIn: ttl })
     if (debit > 0) {
@@ -791,10 +798,14 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
   try {
     const allowAiVision = env.openMode || Boolean(ent.allowed.aiVision)
     const result = await cameraScan(req.body, { allowAiVision })
-    // Cam AR/Upload: 1 scan credit per successful call. Docs hybrid uses docs pages.
-    if (!forDocs && !env.openMode) {
-      if (req.auth?.userId) await addCameraTranslateCount(req.auth.userId, 1)
-      else if ((req as GuestRequest).guestId) {
+    // Cam AR/Upload: 1 scan credit per successful call.
+    // Docs hybrid OCR (`forDocs`): bill ≥1 docs page so Vision cannot run unbounded.
+    if (!env.openMode) {
+      if (forDocs) {
+        if (req.auth?.userId) await addDocsPages(req.auth.userId, 1)
+      } else if (req.auth?.userId) {
+        await addCameraTranslateCount(req.auth.userId, 1)
+      } else if ((req as GuestRequest).guestId) {
         await addGuestCameraTranslateCount((req as GuestRequest).guestId!, 1)
       }
     }

@@ -922,7 +922,14 @@ export async function acceptHouseholdInvite(input: {
     await client.from('household_invites').update({ status: 'expired' }).eq('id', row.id)
     return { ok: false, code: 'expired', message: 'This invite has expired.' }
   }
-  if (input.email && normalizeEmail(input.email) !== normalizeEmail(row.email)) {
+  if (!input.email) {
+    return {
+      ok: false,
+      code: 'email_required',
+      message: 'Sign in with the invited email address to accept this invite.',
+    }
+  }
+  if (normalizeEmail(input.email) !== normalizeEmail(row.email)) {
     return {
       ok: false,
       code: 'email_mismatch',

@@ -118,8 +118,18 @@ function listPaths(zip: JSZip, pred: (name: string) => boolean): string[] {
   return Object.keys(zip.files).filter((n) => !zip.files[n]?.dir && pred(n))
 }
 
-export async function translateDocx(input: Buffer, from: DocLang, to: DocLang): Promise<Buffer> {
+const MAX_OOXML_ENTRIES = 800
+
+async function loadOoxmlZip(input: Buffer): Promise<JSZip> {
   const zip = await JSZip.loadAsync(input)
+  if (Object.keys(zip.files).length > MAX_OOXML_ENTRIES) {
+    throw new Error('Document archive has too many entries.')
+  }
+  return zip
+}
+
+export async function translateDocx(input: Buffer, from: DocLang, to: DocLang): Promise<Buffer> {
+  const zip = await loadOoxmlZip(input)
   const paths = listPaths(
     zip,
     (n) =>
@@ -134,7 +144,7 @@ export async function translateDocx(input: Buffer, from: DocLang, to: DocLang): 
 }
 
 export async function translatePptx(input: Buffer, from: DocLang, to: DocLang): Promise<Buffer> {
-  const zip = await JSZip.loadAsync(input)
+  const zip = await loadOoxmlZip(input)
   const paths = listPaths(
     zip,
     (n) =>
@@ -145,7 +155,7 @@ export async function translatePptx(input: Buffer, from: DocLang, to: DocLang): 
 }
 
 export async function translateXlsx(input: Buffer, from: DocLang, to: DocLang): Promise<Buffer> {
-  const zip = await JSZip.loadAsync(input)
+  const zip = await loadOoxmlZip(input)
   const ss = zip.file('xl/sharedStrings.xml')
   if (ss) {
     const original = await ss.async('string')
