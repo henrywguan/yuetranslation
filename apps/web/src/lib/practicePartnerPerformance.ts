@@ -85,6 +85,46 @@ export function reactionHoldMs(reaction: string): number {
   return Math.min(4200, Math.max(480, chars * 85 + 360))
 }
 
+export function phraseHoldMs(phrase: string): number {
+  const chars = [...phrase.trim()].length
+  return Math.min(5200, Math.max(700, chars * 110 + 280))
+}
+
+export function cueHoldMs(cue: string): number {
+  const chars = [...cue.trim()].length
+  return Math.min(2800, Math.max(420, chars * 70 + 200))
+}
+
+function isHan(ch: string): boolean {
+  return /\p{Script=Han}/u.test(ch)
+}
+
+/** How many 漢字 of the target were said, in order, from the start. */
+export function litHanCount(target: string, heard: string): number {
+  const heardHan = [...heard].filter(isHan)
+  let heardAt = 0
+  let count = 0
+  for (const ch of target) {
+    if (!isHan(ch)) continue
+    if (heardHan[heardAt] !== ch) break
+    heardAt += 1
+    count += 1
+  }
+  return count
+}
+
+/** True where the better line’s 漢字 differs from what was heard, in order. */
+export function betterLineMarks(better: string, heard: string): boolean[] {
+  const heardHan = [...heard].filter(isHan)
+  let heardAt = 0
+  return [...better].map((ch) => {
+    if (!isHan(ch)) return false
+    const changed = heardHan[heardAt] !== ch
+    heardAt += 1
+    return changed
+  })
+}
+
 export function asPartnerPerformance(raw: unknown): PartnerPerformance | null {
   if (!raw || typeof raw !== 'object') return null
   const row = raw as Record<string, unknown>
@@ -139,21 +179,25 @@ export function partnerCaptionLayout(input: {
   spoken?: string | null
   reaction?: string | null
   cue?: string | null
+  /** While the clip plays, the small line is only the beat you can hear. The phrase stays. */
+  beat?: 'reaction' | 'phrase' | 'cue' | null
 }): PartnerCaptionLayout {
   const en = tidyCaption(input.en)
   const zh = tidyCaption(input.zh)
   const jyutping = tidyCaption(input.jyutping)
   const spoken = tidyCaption(input.spoken || '')
-  const coach = tidyCaption(
-    [withoutPhrase(input.reaction || '', zh), withoutPhrase(input.cue || '', zh)].filter(Boolean).join(' '),
-  )
+  const reaction = tidyCaption(withoutPhrase(input.reaction || '', zh))
+  const cue = tidyCaption(withoutPhrase(input.cue || '', zh))
+  const coach = tidyCaption([reaction, cue].filter(Boolean).join(' '))
+  const stepped =
+    input.beat === 'reaction' ? reaction : input.beat === 'cue' ? cue : input.beat === 'phrase' ? '' : coach
   const script = zh ? { zh, jyutping } : null
 
   if (input.difficulty === 'mainlander') {
     return {
-      primaryText: spoken || zh,
+      primaryText: input.beat ? zh || spoken : spoken || zh,
       primaryScript: null,
-      coachText: '',
+      coachText: input.beat ? stepped : '',
       secondaryText: '',
       secondaryScript: null,
     }
@@ -163,15 +207,16 @@ export function partnerCaptionLayout(input: {
     return {
       primaryText: '',
       primaryScript: script,
-      coachText: coach || withoutPhrase(spoken, zh),
+      coachText: input.beat ? stepped : coach || withoutPhrase(spoken, zh),
       secondaryText: en,
       secondaryScript: null,
     }
   }
 
   const gloss = en || withoutPhrase(spoken, zh) || spoken
+  const coachSource = input.beat ? stepped : coach
   const coachText =
-    coach && gloss && coach.toLowerCase() === gloss.toLowerCase() ? '' : coach
+    coachSource && gloss && coachSource.toLowerCase() === gloss.toLowerCase() ? '' : coachSource
   return {
     primaryText: gloss,
     primaryScript: null,

@@ -6,6 +6,10 @@ import {
   deliveryForPartnerTurn,
   partnerCaption,
   partnerCaptionLayout,
+  betterLineMarks,
+  cueHoldMs,
+  litHanCount,
+  phraseHoldMs,
   reactionHoldMs,
   retryChunk,
   withLockedPhrase,
@@ -27,6 +31,13 @@ assert.equal(locked.phrase, '狗')
 assert.equal(partnerCaption(locked), 'Again. 狗 Retry.')
 assert.ok(reactionHoldMs('Hello') >= 480)
 assert.ok(reactionHoldMs('x'.repeat(200)) <= 4200)
+assert.ok(phraseHoldMs('茶') >= 700)
+assert.ok(phraseHoldMs('茶') <= 5200)
+assert.ok(cueHoldMs('Again.') >= 420)
+assert.equal(litHanCount('我要茶', '我要'), 2)
+assert.equal(litHanCount('我要茶', '茶'), 0)
+assert.equal(litHanCount('我要茶', 'I want tea'), 0)
+assert.deepEqual(betterLineMarks('我要茶', '我要水'), [false, false, true])
 
 const learner = partnerCaptionLayout({
   difficulty: 'new_learner',
@@ -72,5 +83,29 @@ assert.equal(mainland.primaryText, '跟住我講。狗')
 assert.equal(mainland.primaryScript, null)
 assert.equal(mainland.secondaryText, '')
 assert.equal(mainland.secondaryScript, null)
+
+const stepped = partnerCaptionLayout({
+  difficulty: 'new_learner',
+  en: 'dog',
+  zh: '狗',
+  jyutping: 'gau2',
+  reaction: 'Repeat after me.',
+  cue: 'Your turn.',
+  beat: 'cue',
+})
+assert.equal(stepped.coachText, 'Your turn.')
+assert.equal(stepped.primaryText, 'dog')
+assert.equal(stepped.secondaryScript?.zh, '狗')
+const phraseBeat = partnerCaptionLayout({
+  difficulty: 'abc',
+  en: 'dog',
+  zh: '狗',
+  jyutping: 'gau2',
+  reaction: 'Repeat after me.',
+  cue: 'Your turn.',
+  beat: 'phrase',
+})
+assert.equal(phraseBeat.coachText, '')
+assert.equal(phraseBeat.primaryScript?.zh, '狗')
 
 console.log('practicePartnerPerformance.web.smoke: ok')

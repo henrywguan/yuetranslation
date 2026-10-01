@@ -19,16 +19,26 @@ import {
   type PracticePartnerDrillTarget,
 } from '../lib/adminApi'
 import {
+  betterLineMarks,
   deliveryForPartnerTurn,
+  litHanCount,
   partnerCaption,
   partnerCaptionLayout,
+  phraseHoldMs,
   reactionHoldMs,
   retryChunk,
   withLockedPhrase,
   type PartnerPerformance,
 } from '../lib/practicePartnerPerformance'
 import { glossForChar, isHanChar } from '../lib/charGloss'
+import { readLastTalk, writeLastTalk } from '../lib/practicePartnerLastTalk'
 import { missReasonFallback } from '../lib/practicePartnerMissReason'
+import {
+  noteBetterLine,
+  notePartnerLine,
+  noteYouSaid,
+  type PartnerThreadTurn,
+} from '../lib/practicePartnerThread'
 import { keptSceneBundle, sceneLineAt, scenePlaceFor, sceneTurnCount } from '../lib/practicePartnerScene'
 import {
   PRACTICE_PARTNER_GOALS,
@@ -417,6 +427,11 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   )
   /** Last partner line — stays on screen until the user starts speaking. */
   const [partnerHold, setPartnerHold] = useState<string | null>(null)
+  const [spokenBeat, setSpokenBeat] = useState<'reaction' | 'phrase' | 'cue' | null>(null)
+  const [sealOpen, setSealOpen] = useState(false)
+  const [thread, setThread] = useState<PartnerThreadTurn[]>([])
+  const threadRef = useRef<PartnerThreadTurn[]>([])
+  threadRef.current = thread
   const [partnerBeats, setPartnerBeats] = useState<PartnerPerformance | null>(null)
   /** Fail correction: what was heard, plus the piece to retry. */
   const [missCard, setMissCard] = useState<{ said: string; chunk: string } | null>(null)
@@ -457,6 +472,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const ttsLiveRef = useRef(false)
   const ttsGenRef = useRef(0)
   const beatTimerRef = useRef(0)
+  const phraseBeatTimerRef = useRef(0)
   const partnerBeatsRef = useRef<PartnerPerformance | null>(null)
   const lastMissRef = useRef<{ said: string; zh: string; en: string } | null>(null)
   const zhFlashTimerRef = useRef(0)
@@ -639,6 +655,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setFsTypeOpen(false)
     setVoiceMenuOpen(false)
     window.clearTimeout(beatTimerRef.current)
+    window.clearTimeout(phraseBeatTimerRef.current)
     ttsGenRef.current += 1
     ttsLiveRef.current = false
     partnerBeatsRef.current = null
@@ -785,11 +802,23 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       setYouLive(null)
       setCaption({ role: 'partner', text: reply })
       window.clearTimeout(beatTimerRef.current)
-      if (reacting && beats) {
+      window.clearTimeout(phraseBeatTimerRef.current)
+      const reactionMs = reacting && beats ? reactionHoldMs(beats.reaction) : 0
+      const phraseMs = beats?.phrase ? phraseHoldMs(beats.phrase) : 0
+      const hasCue = Boolean(beats?.cue.trim())
+      setSpokenBeat(reactionMs ? 'reaction' : beats?.phrase ? 'phrase' : null)
+      if (reactionMs) {
         beatTimerRef.current = window.setTimeout(() => {
           if (ttsGenRef.current !== gen || !ttsLiveRef.current) return
           setMood('speaking')
-        }, reactionHoldMs(beats.reaction))
+          setSpokenBeat('phrase')
+        }, reactionMs)
+      }
+      if (hasCue) {
+        phraseBeatTimerRef.current = window.setTimeout(() => {
+          if (ttsGenRef.current !== gen || !ttsLiveRef.current) return
+          setSpokenBeat('cue')
+        }, reactionMs + phraseMs)
       }
       // After the LLM round-trip we are outside the user gesture. Unlock must
       // have run on Talk/Send; still bound speak so a stalled play()/speechSynthesis
@@ -817,9 +846,11 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         setError(ttsMsg)
       } finally {
         window.clearTimeout(beatTimerRef.current)
+        window.clearTimeout(phraseBeatTimerRef.current)
       }
       if (ttsGenRef.current !== gen) return
       ttsLiveRef.current = false
+      setSpokenBeat(null)
       setMood((current) => (current === 'listening' ? current : 'idle'))
       setCaption({ role: 'partner', text: reply })
     },
@@ -832,6 +863,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       const gen = (ttsGenRef.current += 1)
       ttsLiveRef.current = true
       window.clearTimeout(beatTimerRef.current)
+      window.clearTimeout(phraseBeatTimerRef.current)
+      setSpokenBeat('phrase')
       setMood('speaking')
       prepareLoudTtsPlayback()
       try {
@@ -852,6 +885,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       }
       if (ttsGenRef.current !== gen) return
       ttsLiveRef.current = false
+      setSpokenBeat(null)
       setMood((current) => (current === 'listening' ? current : 'idle'))
     },
     [partnerVoice],
@@ -954,6 +988,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       ]
       setMessages(withReply)
       setMissCard(null)
+      if (drill?.zh) {
+        setThread((current) => notePartnerLine(current, { zh: drill.zh, en: drill.en }))
+      }
       applyDrill(drill)
       await playPartnerReply(performed.caption, performed.beats)
     } catch (e) {
@@ -993,6 +1030,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         { role: 'user', content: text },
       ]
       setMessages(nextMessages)
+      setThread((current) => noteYouSaid(current, text))
 
       const plan =
         kind === 'drill'
@@ -1129,6 +1167,15 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           { role: 'assistant', content: performed.caption },
         ]
         setMessages(withReply)
+        setThread((current) => {
+          const withBetter =
+            isTalk(kind) && aside.correction
+              ? noteBetterLine(current, aside.correction.zh)
+              : current
+          return phrase
+            ? notePartnerLine(withBetter, { zh: phrase, en: drill?.en || target.en })
+            : withBetter
+        })
         if (drill?.verdict === 'fail') {
           setMissCard({ said: text, chunk: retryChunk(target.zh) })
           lastMissRef.current = { said: text, zh: target.zh, en: target.en }
@@ -1278,6 +1325,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
     sessionRef.current = session
     window.clearTimeout(beatTimerRef.current)
+    window.clearTimeout(phraseBeatTimerRef.current)
     if (ttsLiveRef.current || isTtsPlaying()) {
       // In-flight reply must not snap the orb to idle after the mic is live.
       ttsGenRef.current += 1
@@ -1382,6 +1430,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         jyutping: line.jyutping,
       }))
       commitSitting(beginPartnerSitting(sittingRef.current))
+      setThread([])
       setTopicReady(true)
       setFullscreen(true)
       setOrbitSheet(null)
@@ -1400,6 +1449,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     sceneDoneRef.current = false
     setSceneDone(false)
     commitSitting(beginPartnerSitting(sittingRef.current))
+    setThread([])
+    writeLastTalk({ kind: 'open' })
     setTopicReady(true)
     setFullscreen(true)
     setOrbitSheet(null)
@@ -1424,7 +1475,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     commitSitting(beginPartnerSitting(sitting))
     setFullscreen(false)
     setScoresOpen(false)
-    setOrbitSheet(lines.length || misses.length ? 'saved' : null)
+    setOrbitSheet(lines.length || misses.length || threadRef.current.length ? 'saved' : null)
     setTopicReady(false)
   }, [busy, clearDrillSession, commitSitting, listening])
 
@@ -1452,6 +1503,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       setActiveDrill(null)
       activeDrillRef.current = null
       setMissCard(null)
+      setThread([])
       setTopicReady(true)
       setFullscreen(true)
       void startDrill()
@@ -1498,12 +1550,23 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       sceneDoneRef.current = false
       setSceneDone(false)
       commitSitting(beginPartnerSitting(sittingRef.current))
+      setThread([])
+      writeLastTalk({ kind: 'situation', situation: id })
       setTopicReady(true)
       setFullscreen(true)
       setOrbitSheet(null)
     },
     [clearDrillSession, commitSitting],
   )
+
+  const speakWithHarbor = useCallback(() => {
+    const last = readLastTalk()
+    if (last?.kind === 'situation') {
+      beginSituation(last.situation)
+      return
+    }
+    beginOpenChat()
+  }, [beginOpenChat, beginSituation])
 
   const retryCorrection = useCallback(() => {
     const zh = correction?.zh.trim()
@@ -1606,6 +1669,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       window.clearTimeout(verdictTimerRef.current)
       window.clearTimeout(zhFlashTimerRef.current)
       window.clearTimeout(beatTimerRef.current)
+    window.clearTimeout(phraseBeatTimerRef.current)
       void stopMic()
       stopSpeaking()
     }
@@ -1648,13 +1712,23 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   }, [fullscreen, fsTypeOpen])
 
   const orbitProps = useMemo((): Partial<OrbitalSphereOptions> => {
+    const base = MOOD_ORBIT[mood]
+    const cast =
+      personality === 'busy'
+        ? { speed: (base.speed ?? 1) * 1.28 }
+        : personality === 'elder'
+          ? { speed: (base.speed ?? 1) * 0.62 }
+          : personality === 'formal'
+            ? { scale: (base.scale ?? 1) * 0.94, orbitOpacity: 0.18 }
+            : {}
     return {
       ...ORBITAL_SPHERE_DEFAULTS,
-      ...MOOD_ORBIT[mood],
+      ...base,
+      ...cast,
       placement: 'stage',
       hue: 0,
     }
-  }, [mood])
+  }, [mood, personality])
 
   const moodMeta = MOODS.find((m) => m.id === mood)!
 
@@ -1674,6 +1748,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           spoken: partnerHold,
           reaction: partnerBeats?.reaction,
           cue: partnerBeats?.cue,
+          beat: spokenBeat,
         })
       : null
 
@@ -1717,6 +1792,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     PRACTICE_PARTNER_DIFFICULTIES.find((d) => d.id === difficulty) ||
     PRACTICE_PARTNER_DIFFICULTIES[1]
 
+  const litCount =
+    listening && youLive && activeDrill ? litHanCount(activeDrill.zh, youLive.text) : 0
+  const lineMarks = correction ? betterLineMarks(correction.zh, correction.said) : []
   const drillCloze = activeDrill ? finishLineCloze(activeDrill.zh) : null
   const cardFace = practicePartnerCardShows(move, difficulty, Boolean(drillCloze))
   const freeLine = sessionKind !== 'drill'
@@ -1773,19 +1851,25 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         <div className="partner-lab-presence" aria-hidden="true">
           <span />
         </div>
-        <h2 className="partner-companion-whisper">Choose difficulty & topic</h2>
+        <h2 className="partner-companion-whisper" lang="zh-HK">
+          港灣
+        </h2>
         <nav className="partner-outer-ring" aria-label="Around 港灣">
           <button type="button" className={orbitSheet === 'level' ? 'is-on' : undefined} onClick={() => openSheet('level')}>
-            Level
+            <span>Level</span>
+            <span lang="zh-HK">程度</span>
           </button>
           <button type="button" className={orbitSheet === 'path' ? 'is-on' : undefined} onClick={() => openSheet('path')}>
-            Path
+            <span>Path</span>
+            <span lang="zh-HK">路</span>
           </button>
           <button type="button" className={orbitSheet === 'scenes' ? 'is-on' : undefined} onClick={() => openSheet('scenes')}>
-            Scenarios
+            <span>Scenarios</span>
+            <span lang="zh-HK">情境</span>
           </button>
           <button type="button" className={orbitSheet === 'saved' ? 'is-on' : undefined} onClick={() => openSheet('saved')}>
-            Saved
+            <span>Saved</span>
+            <span lang="zh-HK">記住</span>
           </button>
           <button type="button" className="partner-lab-open" onClick={beginOpenChat}>
             <span className="partner-lab-open-en">Open chat</span>
@@ -1794,7 +1878,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             </span>
           </button>
         </nav>
-        <button type="button" className="partner-companion-mic" onClick={() => pickTopic(category)}>
+        <button type="button" className="partner-companion-mic" onClick={speakWithHarbor}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
               fill="currentColor"
@@ -2005,15 +2089,19 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 {group.labelEn}
                 <span lang="zh-HK"> {group.labelZh}</span>
               </p>
-              <ul className="partner-lab-situation-list">
+              <ul className="partner-lab-place-rail">
                 {situationsInGroup(group.id).map((place) => (
                   <li key={place.id}>
-                    <button type="button" className="partner-lab-open" onClick={() => beginSituation(place.id)}>
-                      <span className="partner-lab-open-en">{place.placeEn}</span>
-                      <span className="partner-lab-open-zh" lang="zh-HK">
+                    <button
+                      type="button"
+                      className={`partner-lab-place partner-lab-place--${group.id}`}
+                      onClick={() => beginSituation(place.id)}
+                    >
+                      <span className="partner-lab-place-zh" lang="zh-HK">
                         {place.placeZh}
                       </span>
-                      <span className="partner-lab-open-hint">{place.blurb}</span>
+                      <span className="partner-lab-place-en">{place.placeEn}</span>
+                      <span className="partner-lab-place-blurb">{place.blurb}</span>
                     </button>
                   </li>
                 ))}
@@ -2022,6 +2110,36 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           ))}
         </div>
         </>
+        ) : null}
+
+        {orbitSheet === 'saved' && thread.length ? (
+          <div className="partner-lab-chooser-block">
+            <p className="partner-lab-chooser-label">This talk</p>
+            <ol className="partner-lab-thread">
+              {thread.map((turn, index) => (
+                <li key={`${turn.partnerZh}-${index}`}>
+                  {turn.partnerZh ? (
+                    <button
+                      type="button"
+                      lang="zh-HK"
+                      onClick={() => {
+                        unlockTtsPlayback({ force: true })
+                        void playPhrase(turn.partnerZh)
+                      }}
+                    >
+                      {turn.partnerZh}
+                    </button>
+                  ) : null}
+                  {turn.you ? <p>You {turn.you}</p> : null}
+                  {turn.betterZh ? (
+                    <p className="is-better" lang="zh-HK">
+                      {turn.betterZh}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          </div>
         ) : null}
 
         {orbitSheet === 'saved' && keptLines.length ? (
@@ -2059,6 +2177,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       className={`partner-lab partner-lab--companion${entry === 'hub' ? ' is-hub' : ''}${fullscreen ? ' is-fullscreen' : ''}${
         verdictFlash === 'fail' ? ' is-fail-flash' : ''
       }`}
+      data-wash={sessionKind === 'situation' ? situationMeta?.group : undefined}
+      data-cast={sessionKind === 'situation' ? personality : undefined}
       aria-label="Practice Partner lab"
     >
       <header className="partner-lab-head">
@@ -2151,13 +2271,27 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         </div>
       </header>
 
-      {sessionKind === 'situation' && !fullscreen ? (
-        <PartnerSituationMix
-          personality={personality}
-          goal={goal}
-          onPersonality={choosePersonality}
-          onGoal={chooseGoal}
-        />
+      {sessionKind === 'situation' && situationMeta && !fullscreen ? (
+        <div className="partner-lab-seal-row">
+          <button
+            type="button"
+            className="partner-lab-seal"
+            aria-expanded={sealOpen}
+            onClick={() => setSealOpen((open) => !open)}
+          >
+            <span lang="zh-HK">{situationMeta.placeZh}</span>
+            <span>{practicePartnerPersonality(personality)?.labelEn}</span>
+            <span>{practicePartnerGoal(goal)?.labelEn}</span>
+          </button>
+          {sealOpen ? (
+            <PartnerSituationMix
+              personality={personality}
+              goal={goal}
+              onPersonality={choosePersonality}
+              onGoal={chooseGoal}
+            />
+          ) : null}
+        </div>
       ) : null}
 
       <div
@@ -2192,13 +2326,21 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         />
         <div className="partner-lab-orbit-ring" aria-hidden="true">
           <i className="partner-lab-orbit-arc" />
-          <span className="is-state">{moodMeta.label}</span>
+          <span className="is-state">{listening ? 'You' : moodMeta.label}</span>
           <span className="is-place">{categoryMeta.labelEn}</span>
           <span className="is-time" ref={sittingLabelRef}>
             0:00
           </span>
           <span className="is-kept">{keptLines.length} kept</span>
         </div>
+
+        {spokenBeat ? (
+          <div className="partner-lab-beats" aria-hidden="true">
+            <i className={spokenBeat === 'reaction' ? 'is-on' : undefined} />
+            <i className={spokenBeat === 'phrase' ? 'is-on' : undefined} />
+            <i className={spokenBeat === 'cue' ? 'is-on' : undefined} />
+          </div>
+        ) : null}
 
         {verdictFlash === 'pass' ? (
           <div className="partner-lab-pass-burst" aria-hidden="true">
@@ -2308,9 +2450,15 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               ) : null}
               {correction ? (
                 <div className="partner-lab-correction">
-                  <p>Heard {correction.said}</p>
-                  <p lang="zh-HK">{correction.zh}</p>
-                  {correction.why ? <p>{correction.why}</p> : null}
+                  <p className="partner-lab-ribbon is-heard">{correction.said}</p>
+                  <p className="partner-lab-ribbon is-better" lang="zh-HK">
+                    {[...correction.zh].map((ch, i) => (
+                      <span key={`${i}-${ch}`} className={lineMarks[i] ? 'is-changed' : undefined}>
+                        {ch}
+                      </span>
+                    ))}
+                  </p>
+                  {correction.why ? <p className="partner-lab-miss-why">{correction.why}</p> : null}
                   <button type="button" onClick={retryCorrection}>
                     Retry
                   </button>
@@ -2333,7 +2481,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 <div
                   className={`partner-lab-drill-zh${difficulty === 'new_learner' ? ' is-support' : ''}${
                     zhFlash ? ' is-jade-flash' : ''
-                  }`}
+                  }${spokenBeat === 'phrase' ? ' is-phrase-beat' : ''}`}
                   lang="zh-HK"
                 >
                   <span className="partner-lab-drill-zh-chars">
@@ -2341,11 +2489,17 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                       ...(difficulty === 'mainlander' && !freeLine && cardFace.zh === 'cloze' && drillCloze
                         ? drillCloze
                         : activeDrill.zh),
-                    ].map((ch, i) => (
+                    ].map((ch, i) => {
+                      const hanBefore = [...(difficulty === 'mainlander' && !freeLine && cardFace.zh === 'cloze' && drillCloze
+                        ? drillCloze
+                        : activeDrill.zh
+                      ).slice(0, i)].filter((unit) => isHanChar(unit)).length
+                      const lit = isHanChar(ch) && hanBefore < litCount
+                      return (
                       <button
                         key={`${zhFlash}-${i}-${ch}`}
                         type="button"
-                        className={`partner-lab-char${zhFlash ? ' is-jade' : ''}`}
+                        className={`partner-lab-char${zhFlash ? ' is-jade' : ''}${lit ? ' is-lit' : ''}`}
                         style={zhFlash ? { animationDelay: `${i * 32}ms` } : undefined}
                         onClick={(event) => {
                           event.stopPropagation()
@@ -2360,7 +2514,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                       >
                         {ch}
                       </button>
-                    ))}
+                      )
+                    })}
                   </span>
                   <button
                     type="button"
@@ -2428,13 +2583,25 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           aria-live="polite"
           onClick={(event) => event.stopPropagation()}
         >
-          {learningCaption && youLive ? (
-            <p className={`partner-lab-subtitles-youline${youLive.interim ? ' is-interim' : ''}`}>
-              <span className="partner-lab-subtitles-speaker">You</span>
-              <span className="partner-lab-subtitles-youline-text">{youLive.text}</span>
-            </p>
+          {youLive && activeDrill ? (
+            <div className="partner-lab-subtitles-secondary is-reading">
+              <p className="partner-lab-subtitles-script">
+                <span lang="zh-HK">{activeDrill.zh}</span>
+                {activeDrill.jyutping ? (
+                  <span className="partner-lab-subtitles-jp">
+                    <JyutpingChaoText
+                      text={activeDrill.jyutping}
+                      onSyllable={(jp) => {
+                        setGloss(null)
+                        setTonePop(toneNoteForSyllable(jp))
+                      }}
+                    />
+                  </span>
+                ) : null}
+              </p>
+            </div>
           ) : null}
-          {learningCaption && (learningCaption.secondaryText || learningCaption.secondaryScript) ? (
+          {learningCaption && !youLive && (learningCaption.secondaryText || learningCaption.secondaryScript) ? (
             <div className="partner-lab-subtitles-secondary is-reading">
               {learningCaption.secondaryText ? (
                 <p className="partner-lab-subtitles-secondary-text">{learningCaption.secondaryText}</p>
@@ -2457,7 +2624,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               ) : null}
             </div>
           ) : null}
-          {!learningCaption && displaySecondary ? (
+          {!learningCaption && displaySecondary && !youLive ? (
             <p className="partner-lab-subtitles-secondary">
               <span className="partner-lab-subtitles-speaker">{partnerSpeaker}</span>
               <span className="partner-lab-subtitles-secondary-text">{displaySecondary.text}</span>
@@ -2492,17 +2659,21 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             </button>
           ) : null}
           <p className="partner-lab-subtitles-speaker">
-            {learningCaption ? partnerSpeaker : speakerName}
+            {youLive ? 'You' : learningCaption ? partnerSpeaker : speakerName}
           </p>
-          {learningCaption?.coachText ? (
+          {learningCaption?.coachText && !youLive ? (
             <p className="partner-lab-subtitles-coach">{learningCaption.coachText}</p>
           ) : null}
           {learningCaption ? (
             <>
-              {learningCaption.primaryText ? (
+              {youLive ? (
+                <p className={`partner-lab-subtitles-text${youLive.interim ? ' is-interim' : ''}`}>
+                  {youLive.text}
+                </p>
+              ) : learningCaption.primaryText ? (
                 <p className="partner-lab-subtitles-text">{learningCaption.primaryText}</p>
               ) : null}
-              {learningCaption.primaryScript ? (
+              {learningCaption.primaryScript && !youLive ? (
                 <>
                   <p className="partner-lab-subtitles-text" lang="zh-HK">
                     {learningCaption.primaryScript.zh}
