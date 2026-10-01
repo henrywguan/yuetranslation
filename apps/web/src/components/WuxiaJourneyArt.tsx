@@ -1,6 +1,7 @@
 import { memo, type ReactNode } from 'react'
 import type { PathCategory, PracticePartnerPathState } from '../lib/practicePartnerPath'
 import { PARTNER_MAP_VIEWBOX, practicePartnerChapterReveal } from '../lib/practicePartnerMapLayout'
+import { Crest, Cun, MistBank } from './wuxiaBrush'
 
 const VB = `0 0 ${PARTNER_MAP_VIEWBOX.w} ${PARTNER_MAP_VIEWBOX.h}`
 
@@ -169,8 +170,19 @@ function Lantern({ x, y, s = 1, hue = '#c23a2e' }: { x: number; y: number; s?: n
 function Stall({ x, y, awning, sign }: { x: number; y: number; awning: string; sign?: string }) {
   return (
     <g>
+      <ellipse cx={x + 34} cy={y + 74} rx="36" ry="5.5" fill="#1a120c" opacity="0.2" />
       <TileRoof x={x} y={y} w={64} h={30} fill={awning} />
-      <path d={`M${x + 10} ${y + 40} H${x + 54} V${y + 68} H${x + 10} Z`} fill="#f4ead4" stroke="#5c4a32" strokeWidth="1" />
+      <path
+        d={`M${x + 8} ${y + 38} C${x + 22} ${y + 46} ${x + 40} ${y + 34} ${x + 62} ${y + 42} L${x + 58} ${y + 70} C${x + 44} ${y + 62} ${x + 30} ${y + 76} ${x + 16} ${y + 66} C${x + 10} ${y + 74} ${x + 8} ${y + 60} ${x + 8} ${y + 52} Z`}
+        fill="#f4ead4"
+        stroke="#5c4a32"
+        strokeWidth="1.05"
+      />
+      <path
+        d={`M${x + 16} ${y + 48} C${x + 30} ${y + 42} ${x + 44} ${y + 54} ${x + 52} ${y + 46} L${x + 50} ${y + 64} C${x + 36} ${y + 70} ${x + 24} ${y + 58} ${x + 16} ${y + 66} Z`}
+        fill={awning}
+        opacity="0.16"
+      />
       <path d={`M${x + 14} ${y + 46} H${x + 30} V${y + 56} H${x + 14} Z`} fill="#e7c98a" stroke="#8a6230" strokeWidth="0.7" />
       <circle cx={x + 19} cy={y + 51} r="2.1" fill="#f7f1df" />
       <circle cx={x + 25} cy={y + 51} r="2.1" fill="#f7f1df" />
@@ -356,6 +368,11 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
           <stop offset="0.45" stopColor="#d5cbb6" stopOpacity="0.55" />
           <stop offset="1" stopColor="#e7dcc4" stopOpacity="0.04" />
         </linearGradient>
+        <radialGradient id="inkWarm" cx="0.5" cy="0.5" r="0.72">
+          <stop offset="0" stopColor="#f3e2c4" stopOpacity="0" />
+          <stop offset="0.72" stopColor="#f3e2c4" stopOpacity="0" />
+          <stop offset="1" stopColor="#c4a574" stopOpacity="0.28" />
+        </radialGradient>
         <symbol id="inkPine" viewBox="0 0 32 58">
           <path d="M14.5 56 C15 44 17 42 16.2 58 H13.2 Z" fill="#5a4030" />
           <path d="M16 3 L27 22 L22 22 L30 35 L20 35 L26 50 L6 50 L12 35 L2 35 L10 22 L5 22 Z" fill="#1b5230" stroke="#102e1c" strokeWidth="0.8" />
@@ -382,10 +399,16 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
         </symbol>
       </defs>
 
+      <rect x="16" y="40" width="368" height="3120" fill="url(#inkWarm)" />
       <rect x="16" y="40" width="368" height="3120" fill="none" stroke="#c4a574" strokeWidth="2" />
       <rect x="22" y="46" width="356" height="3108" fill="none" stroke="#6b5a40" strokeWidth="0.9" opacity="0.55" />
 
       <Chapter reveal={reveal.common} y={430} height={550}>
+        <path
+          d="M-20 540 C70 400 150 370 220 470 C280 390 340 420 430 500 L430 640 L-20 660 Z"
+          fill="#4a1828"
+          opacity="0.4"
+        />
         <path
           d="M-10 620 C40 470 100 420 170 510 C210 450 260 440 320 520 C360 460 400 490 420 550 L420 700 L-10 710 Z"
           fill="#2a1018"
@@ -414,6 +437,19 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
           fill="#4a1020"
           opacity="0.55"
         />
+        <path
+          d="M40 560 C90 500 140 520 190 470 C230 510 270 490 320 540 L300 620 C220 590 120 630 50 600 Z"
+          fill="#a05060"
+          opacity="0.55"
+        />
+        <Crest
+          d="M-10 620 C40 470 100 420 170 510 C210 450 260 440 320 520"
+          ink="#2a1014"
+          light="#f3e2c4"
+        />
+        <Cun x={48} y={560} rows={4} cols={6} ink="#f3e2c4" opacity={0.4} />
+        <Cun x={230} y={520} rows={3} cols={5} ink="#f3e2c4" opacity={0.32} />
+        <MistBank cx={200} cy={860} rx={160} ry={22} fill="#f3e2c4" slow strength={0.85} />
         <g style={{ filter: 'brightness(0.45) saturate(0.55)' }}>
           <Pines points={GATE_PINES} />
         </g>
@@ -494,6 +530,19 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
           fill="#3a2412"
           opacity="0.55"
         />
+        <path
+          d="M30 1320 C90 1240 160 1260 220 1320 C270 1260 330 1280 400 1360 L380 1440 C280 1400 160 1460 50 1400 Z"
+          fill="#a07848"
+          opacity="0.5"
+        />
+        <Crest
+          d="M-10 1280 C50 1200 110 1188 170 1260 C220 1190 280 1200 340 1280"
+          ink="#2a1c12"
+          light="#f3e2c4"
+        />
+        <Cun x={40} y={1320} rows={4} cols={6} ink="#f3e2c4" opacity={0.38} />
+        <Cun x={240} y={1360} rows={3} cols={5} ink="#f3e2c4" opacity={0.3} />
+        <MistBank cx={180} cy={1588} rx={170} ry={20} fill="#f3e2c4" strength={0.7} />
         <path
           d="M-16 1505 C70 1460 130 1540 210 1488 C280 1440 340 1510 420 1468 L420 1565 C330 1605 250 1520 170 1588 C90 1640 20 1560 -16 1600 Z"
           fill="#6e9aaf"
@@ -585,6 +634,13 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
           fill="#5f9a62"
           opacity="0.38"
         />
+        <Crest
+          d="M-10 2080 C50 2000 120 1988 180 2080 C230 2010 290 2020 350 2100"
+          ink="#3d6840"
+          light="#f3e2c4"
+        />
+        <Cun x={36} y={2140} rows={4} cols={5} ink="#2f6b3a" opacity={0.28} gapY={18} />
+        <Cun x={250} y={2180} rows={3} cols={4} ink="#3d6840" opacity={0.22} />
         <path
           d="M8 2040 C40 2100 30 2180 70 2240 C110 2300 90 2360 130 2420"
           fill="none"
@@ -604,10 +660,8 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
         <use href="#inkRipple" x={78} y={2340} width="22" height="8" />
         <Grove points={BAMBOO_A} className="wuxia-sway" />
         <Grove points={BAMBOO_B} className="wuxia-sway is-alt" />
-        <g className="wuxia-mist-drift" fill="#f7f1df">
-          <ellipse cx="80" cy="2160" rx="70" ry="16" opacity="0.28" />
-          <ellipse cx="120" cy="2300" rx="60" ry="12" opacity="0.22" />
-        </g>
+        <MistBank cx={80} cy={2160} rx={70} ry={16} fill="#f7f1df" strength={0.9} />
+        <MistBank cx={120} cy={2300} rx={60} ry={12} fill="#f3e2c4" slow strength={0.8} />
         <g transform="translate(40 2288)">
           <TileRoof x={0} y={0} w={52} h={22} fill="#6b3a2a" />
           <Pillar x={8} y={28} h={36} />
@@ -650,6 +704,17 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
           stroke="#5c5144"
           strokeWidth="1.4"
         />
+        <path
+          d="M230 2840 C270 2780 320 2760 370 2820 L350 2900 C300 2860 250 2900 220 2860 Z"
+          fill="#fff6d4"
+          opacity="0.45"
+        />
+        <Crest
+          d="M210 2860 C230 2760 260 2700 300 2760 C340 2680 380 2720 420 2800"
+          ink="#8a7358"
+          light="#fff6d4"
+        />
+        <Cun x={240} y={2860} rows={4} cols={5} ink="#6e6254" opacity={0.3} />
         <path d="M230 2920 C280 2890 330 2940 400 2890" fill="none" stroke="#6e6254" strokeWidth="1.35" />
         <path d="M220 3000 C280 2970 340 3020 410 2975" fill="none" stroke="#5c5144" strokeWidth="1.2" />
         <path d="M236 2820 C290 2790 340 2830 390 2788" fill="none" stroke="#7a6e60" strokeWidth="1.1" opacity="0.8" />
@@ -665,11 +730,9 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
           <path d="M120 3040 C120 3020 146 3010 166 3022 C176 3004 206 3006 210 3028 C230 3018 244 3036 230 3052 C244 3062 236 3082 214 3078 C210 3096 180 3100 172 3084 C148 3094 126 3078 136 3060 C120 3052 118 3030 120 3040Z" />
           <path d="M250 3088 C250 3070 274 3060 294 3072 C304 3056 332 3058 336 3078 C354 3068 366 3084 354 3098 C366 3108 358 3126 338 3122 C334 3138 306 3142 298 3128 C276 3136 256 3122 266 3106 C250 3098 248 3078 250 3088Z" />
         </g>
-        <g className="wuxia-mist-drift" fill="#fbf6ea" opacity="0.85">
-          <ellipse cx="80" cy="2860" rx="54" ry="14" />
-          <ellipse cx="160" cy="3004" rx="48" ry="12" />
-          <ellipse cx="300" cy="2948" rx="60" ry="14" />
-        </g>
+        <MistBank cx={80} cy={2860} rx={54} ry={14} fill="#fbf6ea" strength={0.85} />
+        <MistBank cx={160} cy={3004} rx={48} ry={12} fill="#f3e2c4" slow strength={0.8} />
+        <MistBank cx={300} cy={2948} rx={60} ry={14} fill="#fff6d4" strength={0.75} />
         <Pines
           points={[
             [236, 2780, 0.55],

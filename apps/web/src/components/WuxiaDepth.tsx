@@ -1,5 +1,6 @@
 import { memo, type ReactNode } from 'react'
 import { PARTNER_MAP_VIEWBOX } from '../lib/practicePartnerMapLayout'
+import { Crest, Cun, MistBank } from './wuxiaBrush'
 
 const VB = `0 0 ${PARTNER_MAP_VIEWBOX.w} ${PARTNER_MAP_VIEWBOX.h}`
 
@@ -103,21 +104,78 @@ export const WuxiaFarPeaks = memo(function WuxiaFarPeaks() {
       </defs>
       <rect x="-20" y="0" width="440" height="3200" fill="url(#inkFarWash)" />
       <Range
+        d="M-40 360 C30 250 90 190 150 250 C200 180 250 200 310 260 C350 210 400 230 450 290 L450 430 L-40 450 Z"
+        fill="#3a1420"
+      />
+      <path
+        d="M20 340 C70 270 120 240 170 300 C215 255 265 270 320 320 L300 380 C220 350 120 390 40 360 Z"
+        fill="#6a3040"
+        opacity="0.55"
+      />
+      <Range
         d="M-30 420 C40 280 90 200 160 280 C210 200 260 180 320 270 C360 210 400 240 440 300 L440 520 L-30 540 Z"
         fill="#1a060c"
       />
+      <path
+        d="M20 390 C70 300 120 250 175 320 C220 270 270 255 325 320 C365 270 400 295 420 340 L400 430 C320 400 220 430 140 400 C70 420 30 410 20 390 Z"
+        fill="#a04858"
+        opacity="0.72"
+      />
+      <Crest
+        d="M-20 410 C50 290 100 220 165 300 C215 230 265 210 325 290 C365 230 405 260 430 315"
+        ink="#3a1820"
+        light="#f3e2c4"
+      />
+      <Cun x={70} y={330} rows={4} cols={7} ink="#f3e2c4" opacity={0.42} />
+      <MistBank cx={200} cy={500} rx={170} ry={22} fill="#f3e2c4" slow />
       <Range
         d="M-30 980 C50 860 120 820 190 920 C240 840 300 860 360 940 C400 880 430 910 440 960 L440 1100 L-30 1120 Z"
         fill="#120e14"
       />
+      <path
+        d="M10 960 C70 870 130 850 190 930 C240 860 300 880 355 950 L340 1020 C250 990 140 1030 60 990 Z"
+        fill="#6a5878"
+        opacity="0.7"
+      />
+      <Crest
+        d="M-20 970 C60 860 130 830 190 910 C245 850 305 870 360 940"
+        ink="#120e14"
+        light="#f3e2c4"
+      />
+      <Cun x={80} y={900} rows={4} cols={6} ink="#f3e2c4" opacity={0.36} />
+      <MistBank cx={210} cy={1080} rx={180} ry={20} fill="#e7dcc4" />
       <Range
         d="M-20 1680 C40 1540 110 1480 180 1580 C230 1500 290 1520 350 1620 C390 1540 420 1580 440 1640 L440 1760 L-20 1780 Z"
         fill="#8a6230"
       />
+      <path
+        d="M10 1660 C60 1560 120 1510 185 1590 C235 1520 295 1540 350 1630 L330 1700 C240 1670 120 1720 40 1680 Z"
+        fill="#e7c56a"
+        opacity="0.45"
+      />
+      <Crest
+        d="M-10 1670 C50 1550 115 1490 180 1575 C230 1510 290 1530 350 1615"
+        ink="#5c3a18"
+        light="#fff1c2"
+      />
+      <Cun x={60} y={1580} rows={4} cols={7} ink="#5c3a18" opacity={0.32} />
+      <MistBank cx={190} cy={1740} rx={160} ry={18} fill="#f3e2c4" slow />
       <Range
         d="M-20 2500 C50 2360 120 2300 190 2400 C240 2320 300 2340 360 2440 C400 2360 430 2400 440 2460 L440 2580 L-20 2600 Z"
         fill="#f0e2b0"
       />
+      <path
+        d="M15 2480 C70 2380 130 2330 195 2410 C245 2340 305 2360 360 2450 L340 2520 C250 2490 130 2540 40 2500 Z"
+        fill="#fffaf0"
+        opacity="0.7"
+      />
+      <Crest
+        d="M-10 2490 C55 2370 125 2310 190 2395 C240 2330 300 2350 360 2435"
+        ink="#8a7358"
+        light="#fff6d4"
+      />
+      <Cun x={70} y={2400} rows={4} cols={6} ink="#8a7358" opacity={0.28} />
+      <MistBank cx={200} cy={2560} rx={170} ry={20} fill="#fff6d4" />
     </svg>
   )
 })
@@ -163,6 +221,18 @@ export const WuxiaSectionSky = memo(function WuxiaSectionSky() {
           d="M-20 560 C40 430 110 400 170 500 C220 430 280 450 340 520 C380 460 410 490 440 540 L440 700 L-20 720 Z"
           fill="#14060c"
         />
+        <path
+          d="M30 540 C80 460 140 450 190 510 C240 455 290 470 340 530 L320 600 C230 570 120 610 40 570 Z"
+          fill="#8a3850"
+          opacity="0.62"
+        />
+        <Crest
+          d="M-10 550 C50 440 120 410 175 500 C225 440 285 460 345 520"
+          ink="#14060c"
+          light="#f3e2c4"
+        />
+        <Cun x={80} y={500} rows={3} cols={6} ink="#f3e2c4" opacity={0.4} />
+        <MistBank cx={200} cy={680} rx={150} ry={18} fill="#f3e2c4" slow />
         <g className="wuxia-sway is-soft">
           <path d="M16 180 H200" stroke="#2a1014" strokeWidth="1" />
           <GlowLantern x={36} y={196} s={0.7} />
@@ -174,11 +244,9 @@ export const WuxiaSectionSky = memo(function WuxiaSectionSky() {
 
       <Band>
         <rect x="-20" y="900" width="440" height="1100" fill="url(#skyMarket)" />
-        <g fill="#cbb89a">
-          <ellipse cx="80" cy="1180" rx="120" ry="28" opacity="0.16" className="wuxia-mist-drift" />
-          <ellipse cx="260" cy="1360" rx="150" ry="32" opacity="0.14" className="wuxia-mist-drift is-slow" />
-          <ellipse cx="140" cy="1580" rx="130" ry="26" opacity="0.18" className="wuxia-mist-drift" />
-        </g>
+        <MistBank cx={80} cy={1180} rx={120} ry={26} fill="#cbb89a" />
+        <MistBank cx={260} cy={1360} rx={150} ry={30} fill="#cbb89a" slow />
+        <MistBank cx={140} cy={1580} rx={130} ry={24} fill="#d9cbb0" />
         <g className="wuxia-sway is-alt">
           <path d="M180 1080 H390" stroke="#3a2418" strokeWidth="1" />
           <GlowLantern x={200} y={1096} s={0.7} hue="#e8a04a" />
@@ -363,8 +431,9 @@ export const WuxiaNearWeather = memo(function WuxiaNearWeather() {
 
       <Band>
         <g>
+          <ellipse cx="45" cy="1358" rx="42" ry="6" fill="#1a120c" opacity="0.2" />
           <path d="M12 1288 H78 V1304 H12 Z" fill="#8b1e2d" />
-          <path d="M12 1304 H78 V1352 H12 Z" fill="#241810" />
+          <path d="M12 1304 C28 1312 48 1298 66 1306 C72 1308 78 1304 78 1304 V1344 C60 1356 36 1340 12 1352 Z" fill="#241810" />
           <Skewer x={20} y={1336} />
           <Tanghulu x={48} y={1334} />
           <Bowl x={36} y={1320} fill="#e8c56b" />
@@ -373,8 +442,9 @@ export const WuxiaNearWeather = memo(function WuxiaNearWeather() {
           <path d="M16 1310 Q22 1300 28 1310" fill="none" stroke="#5c4030" strokeWidth="0.8" />
         </g>
         <g>
+          <ellipse cx="352" cy="1480" rx="44" ry="6" fill="#1a120c" opacity="0.2" />
           <path d="M318 1410 H386 V1426 H318 Z" fill="#1d3d6e" />
-          <path d="M318 1426 H386 V1476 H318 Z" fill="#1a140e" />
+          <path d="M318 1426 C336 1434 358 1418 376 1426 C382 1428 386 1424 386 1424 V1466 C368 1478 342 1462 318 1476 Z" fill="#1a140e" />
           <Fish x={336} y={1460} />
           <Bowl x={364} y={1452} fill="#f4ead4" />
           <Tanghulu x={324} y={1454} />
@@ -383,19 +453,18 @@ export const WuxiaNearWeather = memo(function WuxiaNearWeather() {
           <path d="M372 1434 V1468" stroke="#5c4030" strokeWidth="1.1" />
         </g>
         <g>
+          <ellipse cx="44" cy="1620" rx="36" ry="5.5" fill="#1a120c" opacity="0.18" />
           <path d="M16 1560 H72 V1574 H16 Z" fill="#2f6b3a" />
-          <path d="M16 1574 H72 V1616 H16 Z" fill="#1a140e" />
+          <path d="M16 1574 C30 1582 48 1568 64 1576 C70 1578 72 1574 72 1574 V1608 C56 1618 34 1604 16 1616 Z" fill="#1a140e" />
           <circle cx="30" cy="1596" r="4.5" fill="#e07a3d" />
           <circle cx="44" cy="1600" r="3.6" fill="#3dba74" />
           <circle cx="58" cy="1594" r="4" fill="#c41e3a" />
           <Bowl x={40} y={1584} fill="#6e9aaf" />
         </g>
-        <g fill="#d9cbb0">
-          <ellipse cx="120" cy="1240" rx="150" ry="36" opacity="0.2" className="wuxia-mist-drift" />
-          <ellipse cx="280" cy="1480" rx="160" ry="30" opacity="0.16" className="wuxia-mist-drift is-slow" />
-          <ellipse cx="70" cy="1660" rx="120" ry="24" opacity="0.18" className="wuxia-mist-drift" />
-          <ellipse cx="300" cy="1760" rx="140" ry="28" opacity="0.14" className="wuxia-haze" />
-        </g>
+        <MistBank cx={120} cy={1240} rx={150} ry={28} fill="#d9cbb0" />
+        <MistBank cx={280} cy={1480} rx={160} ry={26} fill="#d9cbb0" slow />
+        <MistBank cx={70} cy={1660} rx={120} ry={22} fill="#e7dcc4" />
+        <ellipse cx="300" cy="1760" rx="140" ry="28" fill="#d9cbb0" opacity="0.14" className="wuxia-haze" />
         <GlowLantern x={356} y={1288} s={0.8} hue="#e8a04a" />
         <GlowLantern x={18} y={1580} s={0.72} />
       </Band>
@@ -450,12 +519,10 @@ const PETAL = 'M0 0 C5 -8 9 -3 7 3 C3 5 0 2 0 0Z'
 export const WuxiaMistVeil = memo(function WuxiaMistVeil() {
   return (
     <svg className="partner-wuxia" viewBox={VB} preserveAspectRatio="none" aria-hidden="true">
-      <g className="wuxia-mist-drift" fill="#f7f1df">
-        <ellipse cx="100" cy="400" rx="120" ry="18" opacity="0.08" />
-        <ellipse cx="260" cy="1100" rx="140" ry="16" opacity="0.07" />
-        <ellipse cx="80" cy="1800" rx="110" ry="16" opacity="0.08" />
-        <ellipse cx="280" cy="2500" rx="130" ry="18" opacity="0.09" />
-      </g>
+      <MistBank cx={100} cy={400} rx={120} ry={18} fill="#f7f1df" strength={0.4} />
+      <MistBank cx={260} cy={1100} rx={140} ry={16} fill="#f7f1df" slow strength={0.35} />
+      <MistBank cx={80} cy={1800} rx={110} ry={16} fill="#f3e2c4" strength={0.4} />
+      <MistBank cx={280} cy={2500} rx={130} ry={18} fill="#f7f1df" slow strength={0.4} />
       <g transform="translate(70 340)">
         <g className="wuxia-petal">
           <path d={PETAL} fill="#e7b3b8" />
