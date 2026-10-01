@@ -16,8 +16,11 @@ import {
   PRACTICE_PARTNER_SCENE_SYSTEM,
   PracticePartnerChatBodySchema,
   buildPracticePartnerTurn,
+  PRACTICE_PARTNER_SITUATION_IDS,
+  PRACTICE_PARTNER_SITUATION_META,
   PRACTICE_PARTNER_SITUATION_SYSTEM,
   keptLinesNote,
+  situationMixNote,
   parsePracticePartnerReply,
   practicePartnerSystemFor,
   readPracticePartnerCorrection,
@@ -398,16 +401,40 @@ const badSituation = PracticePartnerChatBodySchema.safeParse({
   situation: 'debate',
 })
 assert.ok(!badSituation.success, 'unknown situations are rejected')
+assert.equal(PRACTICE_PARTNER_SITUATION_IDS.length, 22)
+for (const id of PRACTICE_PARTNER_SITUATION_IDS) {
+  assert.ok(PRACTICE_PARTNER_SITUATION_META[id], id)
+  assert.ok(
+    PracticePartnerChatBodySchema.safeParse({ messages: [], situation: id }).success,
+    id,
+  )
+}
+assert.equal(situationMixNote('busy', 'slang').includes('[CAST]'), true)
+assert.match(situationMixNote('busy', 'slang'), /\[AIM\].*colloquial/)
 
 const situationKick = buildPracticePartnerTurn([], null, 'common', 'abc', {
   mode: 'situation',
   situation: 'cafe',
+  personality: 'busy',
+  goal: 'task',
   kept: [{ en: 'water', zh: '水', jyutping: 'seoi2' }],
 })
 assert.match(situationKick.turn, /\[SITUATION\] Cha chaan teng/)
 assert.match(situationKick.turn, /茶餐廳/)
+assert.match(situationKick.turn, /\[CAST\]/)
+assert.match(situationKick.turn, /\[AIM\]/)
 assert.match(situationKick.turn, /\[KEPT LINES\].*水/)
 assert.doesNotMatch(situationKick.turn, /\[MOVE\]/)
+
+const dimsumKick = buildPracticePartnerTurn([], null, 'common', 'new_learner', {
+  mode: 'situation',
+  situation: 'dimsum',
+  personality: 'elder',
+  goal: 'casual',
+})
+assert.match(dimsumKick.turn, /\[SITUATION\] Dim sum/)
+assert.match(dimsumKick.turn, /飲茶/)
+assert.match(dimsumKick.turn, /older person/)
 assert.match(keptLinesNote([{ zh: '水', en: 'water' }]), /Do not quiz/)
 
 const hint = buildPracticePartnerTurn(

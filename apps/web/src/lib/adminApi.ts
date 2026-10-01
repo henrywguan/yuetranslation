@@ -795,7 +795,9 @@ export async function postPracticePartnerChat(
     place?: string | null
     sceneTurn?: number | null
     sceneTurns?: number | null
-    situation?: 'cafe' | 'mtr' | 'favor' | 'disagree' | null
+    situation?: import('./practicePartnerSituation').PracticePartnerSituationId | null
+    personality?: import('./practicePartnerSituation').PracticePartnerPersonalityId | null
+    goal?: import('./practicePartnerSituation').PracticePartnerGoalId | null
     kept?: PracticePartnerDrillTarget[] | null
     hint?: boolean | null
   } | null,
@@ -832,6 +834,8 @@ export async function postPracticePartnerChat(
       sceneTurn: tone?.sceneTurn ?? null,
       sceneTurns: tone?.sceneTurns ?? null,
       situation: tone?.situation ?? null,
+      personality: tone?.personality ?? null,
+      goal: tone?.goal ?? null,
       kept,
       hint: Boolean(tone?.hint),
     }),

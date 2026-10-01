@@ -1200,6 +1200,8 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
         sceneTurn: parsed.data.sceneTurn,
         sceneTurns: parsed.data.sceneTurns,
         situation: parsed.data.situation,
+        personality: parsed.data.personality,
+        goal: parsed.data.goal,
         kept: parsed.data.kept,
         hint: parsed.data.hint,
       },
@@ -1229,6 +1231,8 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
         hadLastMiss: Boolean(parsed.data.lastMiss),
         mode: parsed.data.mode || 'drill',
         situation: parsed.data.situation || null,
+        personality: parsed.data.personality || null,
+        goal: parsed.data.goal || null,
         hint: Boolean(parsed.data.hint),
       },
     })

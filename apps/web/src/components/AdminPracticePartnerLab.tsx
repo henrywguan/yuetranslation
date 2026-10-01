@@ -31,8 +31,15 @@ import { glossForChar, isHanChar } from '../lib/charGloss'
 import { missReasonFallback } from '../lib/practicePartnerMissReason'
 import { keptSceneBundle, sceneLineAt, scenePlaceFor, sceneTurnCount } from '../lib/practicePartnerScene'
 import {
-  PRACTICE_PARTNER_SITUATIONS,
+  PRACTICE_PARTNER_GOALS,
+  PRACTICE_PARTNER_PERSONALITIES,
+  PRACTICE_PARTNER_SITUATION_GROUPS,
+  situationsInGroup,
+  practicePartnerGoal,
+  practicePartnerPersonality,
   practicePartnerSituation,
+  type PracticePartnerGoalId,
+  type PracticePartnerPersonalityId,
   type PracticePartnerSituationId,
 } from '../lib/practicePartnerSituation'
 import {
@@ -307,6 +314,57 @@ const CROWN_ICON = (
  * Mic → Web Speech STT → DeepSeek (mean-tutor + history) → Azure TTS.
  * Harbor orb + captions. No Voice Live / Foundry.
  */
+function PartnerSituationMix({
+  personality,
+  goal,
+  onPersonality,
+  onGoal,
+}: {
+  personality: PracticePartnerPersonalityId
+  goal: PracticePartnerGoalId
+  onPersonality: (id: PracticePartnerPersonalityId) => void
+  onGoal: (id: PracticePartnerGoalId) => void
+}) {
+  return (
+    <div className="partner-lab-mix-block">
+      <p className="partner-lab-chooser-label" id="partner-lab-cast-label">
+        Who you meet
+      </p>
+      <div className="partner-lab-mix" role="group" aria-labelledby="partner-lab-cast-label">
+        {PRACTICE_PARTNER_PERSONALITIES.map((row) => (
+          <button
+            key={row.id}
+            type="button"
+            className={personality === row.id ? 'is-on' : undefined}
+            aria-pressed={personality === row.id}
+            onClick={() => onPersonality(row.id)}
+          >
+            {row.labelEn}
+            <span lang="zh-HK">{row.labelZh}</span>
+          </button>
+        ))}
+      </div>
+      <p className="partner-lab-chooser-label" id="partner-lab-aim-label">
+        What you want
+      </p>
+      <div className="partner-lab-mix" role="group" aria-labelledby="partner-lab-aim-label">
+        {PRACTICE_PARTNER_GOALS.map((row) => (
+          <button
+            key={row.id}
+            type="button"
+            className={goal === row.id ? 'is-on' : undefined}
+            aria-pressed={goal === row.id}
+            onClick={() => onGoal(row.id)}
+          >
+            {row.labelEn}
+            <span lang="zh-HK">{row.labelZh}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' | 'hub' }) {
   const [mood, setMood] = useState<PartnerMood>('idle')
   const [amp, setAmp] = useState(0)
@@ -381,6 +439,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   } | null>(null)
   const [hintLine, setHintLine] = useState<PracticePartnerDrillTarget | null>(null)
   const [situationId, setSituationId] = useState<PracticePartnerSituationId | null>(null)
+  const [personality, setPersonality] = useState<PracticePartnerPersonalityId>('friendly')
+  const [goal, setGoal] = useState<PracticePartnerGoalId>('task')
 
   const draftInputRef = useRef<HTMLInputElement | null>(null)
   const sessionRef = useRef<LiveSession | null>(null)
@@ -416,6 +476,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const pathNoteTimerRef = useRef(0)
   const sessionKindRef = useRef<PartnerSessionKind>('drill')
   const situationRef = useRef<PracticePartnerSituationId | null>(null)
+  const personalityRef = useRef<PracticePartnerPersonalityId>('friendly')
+  const goalRef = useRef<PracticePartnerGoalId>('task')
   const sittingRef = useRef<PartnerSitting>(readPartnerSitting())
   const sceneStepRef = useRef({ index: 0, total: 0 })
   const sceneLinesRef = useRef<PartnerKeptLine[]>([])
@@ -858,6 +920,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           sceneTurn: kind === 'scene' ? sceneStepRef.current.index + 1 : null,
           sceneTurns: kind === 'scene' ? sceneStepRef.current.total : null,
           situation: situationRef.current,
+          personality: personalityRef.current,
+          goal: goalRef.current,
           kept: sittingRef.current.lines.slice(-8).map((line) => ({
             en: line.en,
             zh: line.zh,
@@ -957,6 +1021,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             sceneTurn: kind === 'scene' ? sceneStepRef.current.index + 1 : null,
             sceneTurns: kind === 'scene' ? sceneStepRef.current.total : null,
             situation: situationRef.current,
+            personality: personalityRef.current,
+            goal: goalRef.current,
             kept: sittingRef.current.lines.slice(-8).map((line) => ({
               en: line.en,
               zh: line.zh,
@@ -1396,6 +1462,16 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     armScene(bundle.lines, bundle.placeEn, bundle.placeZh)
   }, [armScene])
 
+  const choosePersonality = (id: PracticePartnerPersonalityId) => {
+    personalityRef.current = id
+    setPersonality(id)
+  }
+
+  const chooseGoal = (id: PracticePartnerGoalId) => {
+    goalRef.current = id
+    setGoal(id)
+  }
+
   const beginSituation = useCallback(
     (id: PracticePartnerSituationId) => {
       const place = practicePartnerSituation(id)
@@ -1453,6 +1529,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         mode: kind,
         hint: true,
         situation: situationRef.current,
+        personality: personalityRef.current,
+        goal: goalRef.current,
         place: situation ? `${situation.placeEn} (${situation.placeZh})` : scenePlaceRef.current,
         kept: sittingRef.current.lines.slice(-8).map((line) => ({
           en: line.en,
@@ -1844,19 +1922,33 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           <p className="partner-lab-chooser-label" id="partner-lab-situation-label">
             Situation
           </p>
-          <ul className="partner-lab-situation-list" aria-labelledby="partner-lab-situation-label">
-            {PRACTICE_PARTNER_SITUATIONS.map((place) => (
-              <li key={place.id}>
-                <button type="button" className="partner-lab-open" onClick={() => beginSituation(place.id)}>
-                  <span className="partner-lab-open-en">{place.placeEn}</span>
-                  <span className="partner-lab-open-zh" lang="zh-HK">
-                    {place.placeZh}
-                  </span>
-                  <span className="partner-lab-open-hint">{place.blurb}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          <PartnerSituationMix
+            personality={personality}
+            goal={goal}
+            onPersonality={choosePersonality}
+            onGoal={chooseGoal}
+          />
+          {PRACTICE_PARTNER_SITUATION_GROUPS.map((group) => (
+            <div key={group.id} className="partner-lab-situation-group">
+              <p className="partner-lab-chooser-label">
+                {group.labelEn}
+                <span lang="zh-HK"> {group.labelZh}</span>
+              </p>
+              <ul className="partner-lab-situation-list">
+                {situationsInGroup(group.id).map((place) => (
+                  <li key={place.id}>
+                    <button type="button" className="partner-lab-open" onClick={() => beginSituation(place.id)}>
+                      <span className="partner-lab-open-en">{place.placeEn}</span>
+                      <span className="partner-lab-open-zh" lang="zh-HK">
+                        {place.placeZh}
+                      </span>
+                      <span className="partner-lab-open-hint">{place.blurb}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
         {keptLines.length ? (
@@ -1903,7 +1995,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           <h2 className="partner-lab-title">Practice Partner</h2>
           <p className="partner-lab-lede">
             {sessionKind === 'situation'
-              ? 'Stay in the place you picked.'
+              ? `${situationMeta?.placeEn || 'This place'}. ${practicePartnerPersonality(personality)?.labelEn || 'Friendly'}. ${practicePartnerGoal(goal)?.labelEn || 'Finish the task'}.`
               : sessionKind === 'open'
               ? 'Talk with 港灣. The path stays where you left it.'
               : sessionKind === 'scene'
@@ -1984,6 +2076,15 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           ) : null}
         </div>
       </header>
+
+      {sessionKind === 'situation' && !fullscreen ? (
+        <PartnerSituationMix
+          personality={personality}
+          goal={goal}
+          onPersonality={choosePersonality}
+          onGoal={chooseGoal}
+        />
+      ) : null}
 
       <div
         className={`partner-lab-stage partner-lab-stage--${mood}${

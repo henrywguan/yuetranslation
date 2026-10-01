@@ -146,6 +146,42 @@ export function clampPracticePartnerCount(raw: unknown): number {
 
 export const PRACTICE_PARTNER_MOVE_IDS = ['repeat', 'listen', 'translate', 'finish'] as const
 
+/** Keep aligned with apps/web/src/lib/practicePartnerSituation.ts */
+export const PRACTICE_PARTNER_SITUATION_IDS = [
+  'cafe',
+  'dimsum',
+  'coffee',
+  'mtr',
+  'taxi',
+  'directions',
+  'grocery',
+  'market',
+  'negotiate',
+  'intro',
+  'smalltalk',
+  'friends',
+  'plans',
+  'family',
+  'favor',
+  'disagree',
+  'doctor',
+  'apartment',
+  'service',
+  'workplace',
+  'interview',
+  'occasion',
+] as const
+
+export const PRACTICE_PARTNER_PERSONALITY_IDS = [
+  'friendly',
+  'formal',
+  'busy',
+  'elder',
+  'counter',
+] as const
+
+export const PRACTICE_PARTNER_GOAL_IDS = ['task', 'casual', 'fluency', 'slang'] as const
+
 export type PracticePartnerMove = (typeof PRACTICE_PARTNER_MOVE_IDS)[number]
 
 export function resolvePracticePartnerMove(raw: unknown): PracticePartnerMove {
@@ -263,8 +299,12 @@ export const PracticePartnerChatBodySchema = z.object({
   /** 1-based scene turn. */
   sceneTurn: z.number().int().min(1).max(8).optional().nullable(),
   sceneTurns: z.number().int().min(1).max(8).optional().nullable(),
-  /** cafe, mtr, favor, disagree. */
-  situation: z.enum(['cafe', 'mtr', 'favor', 'disagree']).optional().nullable(),
+  /** A place they picked. Ids match the web situation list. */
+  situation: z.enum(PRACTICE_PARTNER_SITUATION_IDS).optional().nullable(),
+  /** Who they are talking to. The level still sets the language mix. */
+  personality: z.enum(PRACTICE_PARTNER_PERSONALITY_IDS).optional().nullable(),
+  /** What the talk is for. */
+  goal: z.enum(PRACTICE_PARTNER_GOAL_IDS).optional().nullable(),
   /** Lines they can already say. Prefer them. Do not quiz. */
   kept: z.array(PracticePartnerDrillTargetSchema).max(8).optional().nullable(),
   /** They froze. One sentence they can say next. The road does not move. */
@@ -291,7 +331,9 @@ export type PracticePartnerTurnTone = {
   place?: string | null
   sceneTurn?: number | null
   sceneTurns?: number | null
-  situation?: 'cafe' | 'mtr' | 'favor' | 'disagree' | null
+  situation?: (typeof PRACTICE_PARTNER_SITUATION_IDS)[number] | null
+  personality?: (typeof PRACTICE_PARTNER_PERSONALITY_IDS)[number] | null
+  goal?: (typeof PRACTICE_PARTNER_GOAL_IDS)[number] | null
   kept?: PracticePartnerDrillTarget[] | null
   hint?: boolean | null
 }
@@ -532,7 +574,7 @@ export const PRACTICE_PARTNER_SCENE_SYSTEM = [
 export const PRACTICE_PARTNER_SITUATION_SYSTEM = [
   'You are 港灣 (Harbor), JyutTranslate’s Cantonese practice partner, in a situation the learner chose.',
   'Stay in that place. This is a conversation, not a say-this drill. No exercise ladder. The road does not score.',
-  'Obey [DIFFICULTY] for the language mix.',
+  'Obey [DIFFICULTY] for the language mix. Obey [CAST] for who you are in the place, and [AIM] for what the talk is for.',
   'One short turn. reaction is a lead-in without the full 漢字. cue is one short question. zh, jyutping with tone numbers, and en are the Cantonese sentence you say back.',
   'The conversation continues after every turn. If their line can be more natural, set correction to one better line {en, zh, jyutping} and why to one short written reason (the tone, the word, or the English). If the line was fine, correction is null and why is empty.',
   'Do not speak why or the correction 漢字 inside reaction or cue. Do not force a retry. Prefer [KEPT LINES] when they fit. Do not quiz them.',
@@ -543,10 +585,58 @@ export const PRACTICE_PARTNER_SITUATION_SYSTEM = [
 
 export const PRACTICE_PARTNER_SITUATION_META = {
   cafe: { labelEn: 'Cha chaan teng', labelZh: '茶餐廳', brief: 'Order, taste, and the bill.' },
+  dimsum: { labelEn: 'Dim sum', labelZh: '飲茶', brief: 'Tea, the carts, and the table.' },
+  coffee: { labelEn: 'Coffee shop', labelZh: '咖啡店', brief: 'A drink, a seat, and a short chat.' },
   mtr: { labelEn: 'MTR', labelZh: '地鐵', brief: 'Which way, which stop, a seat.' },
+  taxi: { labelEn: 'Red taxi', labelZh: '的士', brief: 'Where to, the tunnel, and the fare.' },
+  directions: { labelEn: 'Directions', labelZh: '問路', brief: 'On the street. Which way from here.' },
+  grocery: { labelEn: 'Grocery', labelZh: '超市', brief: 'Find it, ask, and pay.' },
+  market: { labelEn: 'Wet market', labelZh: '街市', brief: 'Fish, greens, and a price.' },
+  negotiate: { labelEn: 'The price', labelZh: '講價', brief: 'Ask, push a little, stay polite.' },
+  intro: { labelEn: 'Introduce yourself', labelZh: '自我介紹', brief: 'Your name, where you are from, a hello.' },
+  smalltalk: { labelEn: 'Small talk', labelZh: '傾兩句', brief: 'The day, the weather, something light.' },
+  friends: { labelEn: 'Meeting friends', labelZh: '見朋友', brief: 'A greeting, then catching up.' },
+  plans: { labelEn: 'Making plans', labelZh: '約出嚟', brief: 'When, where, and what.' },
+  family: { labelEn: 'Family dinner', labelZh: '家庭晚飯', brief: 'The table, relatives, and the food.' },
   favor: { labelEn: 'A favor', labelZh: '幫下手', brief: 'Ask someone to help.' },
   disagree: { labelEn: 'Disagreeing', labelZh: '唔同意', brief: 'Push back, and stay polite.' },
+  doctor: { labelEn: 'Doctor', labelZh: '睇醫生', brief: 'What hurts, and what to do next.' },
+  apartment: { labelEn: 'Apartment', labelZh: '睇樓', brief: 'Rent, the room, and moving in.' },
+  service: { labelEn: 'Customer service', labelZh: '客戶服務', brief: 'A problem on the phone, and a fix.' },
+  workplace: { labelEn: 'At work', labelZh: '返工', brief: 'A question, a hand, a status.' },
+  interview: { labelEn: 'Job interview', labelZh: '面試', brief: 'Who you are, and why this job.' },
+  occasion: { labelEn: 'A Hong Kong occasion', labelZh: '香港節日', brief: 'Lunar New Year, a greeting, a gathering.' },
 } as const
+
+export const PRACTICE_PARTNER_PERSONALITY_META = {
+  friendly: { brief: 'You are warm and unhurried.' },
+  formal: { brief: 'You are polite and a little distant. Use careful Cantonese.' },
+  busy: { brief: 'You are in a hurry. Short lines. Still not rude.' },
+  elder: { brief: 'You are an older person. Expect respectful address. Do not lecture.' },
+  counter: { brief: 'You are the person serving them. They are the customer.' },
+} as const
+
+export const PRACTICE_PARTNER_GOAL_META = {
+  task: { brief: 'Help them finish the errand here, one step at a time.' },
+  casual: { brief: 'Stay in the place and chat. The errand can wait.' },
+  fluency: { brief: 'Keep them speaking. One natural sentence, then a real question.' },
+  slang: { brief: 'Everyday Hong Kong colloquial. Clear. No insults and no profanity.' },
+} as const
+
+export function situationMixNote(
+  personality?: string | null,
+  goal?: string | null,
+): string {
+  const cast =
+    personality && personality in PRACTICE_PARTNER_PERSONALITY_META
+      ? PRACTICE_PARTNER_PERSONALITY_META[personality as keyof typeof PRACTICE_PARTNER_PERSONALITY_META]
+      : null
+  const aim =
+    goal && goal in PRACTICE_PARTNER_GOAL_META
+      ? PRACTICE_PARTNER_GOAL_META[goal as keyof typeof PRACTICE_PARTNER_GOAL_META]
+      : null
+  return [cast ? `[CAST] ${cast.brief}` : '', aim ? `[AIM] ${aim.brief}` : ''].filter(Boolean).join('\n')
+}
 
 export function practicePartnerSystemFor(mode?: string | null): string {
   if (mode === 'open') return PRACTICE_PARTNER_OPEN_SYSTEM
@@ -741,7 +831,13 @@ function buildSituationTurn(
   const place = situation
     ? `${situation.labelEn} (${situation.labelZh}). ${situation.brief}`
     : String(tone?.place || 'the place they chose')
-  const level = [difficultyLockLine(difficulty), keptLinesNote(tone?.kept)].filter(Boolean).join('\n')
+  const level = [
+    difficultyLockLine(difficulty),
+    situationMixNote(tone?.personality, tone?.goal),
+    keptLinesNote(tone?.kept),
+  ]
+    .filter(Boolean)
+    .join('\n')
   const last = messages[messages.length - 1]
   const head = [
     level,
@@ -787,6 +883,9 @@ function buildHintTurn(
     history: messages,
     turn: [
       difficultyLockLine(difficulty),
+      tone?.mode === 'situation' || tone?.situation
+        ? situationMixNote(tone?.personality, tone?.goal)
+        : '',
       keptLinesNote(tone?.kept),
       `[HINT] They froze in ${where}. Give one short Cantonese sentence they can say next.`,
       'verdict=none, advance=false. correction=null. why empty.',
