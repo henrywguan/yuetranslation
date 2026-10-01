@@ -171,10 +171,10 @@ Do these in dashboards (NEEDS_HUMAN):
 | --- | --- | --- |
 | P0 | Merge + deploy this hardenings PR | Henry |
 | P0 | Apply pending Supabase migrations (`035`, etc.) | Henry |
-| P1 | Decide Harbor + Practice leaderboard trust (accept spoof vs server awards) | Henry |
+| P1 | ~~Decide Harbor + Practice leaderboard trust~~ → **Accepted beta spoof (2026-10-01)** | — |
 | P1 | Guest TTS IP RL and/or Harbor TTS budget if Azure bill spikes | Henry |
 | P2 | Upstash shared rate limits + Vercel Firewall rules | Henry |
-| P2 | CSP `frame-ancestors` + admin MFA | Henry |
+| P2 | CSP `frame-ancestors` (optional; embed policy first) | Henry |
 | P2 | Before consumer Practice Partner: hard caps + server chat history | Henry |
 | P3 | Self-serve account deletion; fail-closed when usage DB down | Eng |
 
