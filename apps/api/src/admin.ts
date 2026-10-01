@@ -1194,6 +1194,16 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
         move: parsed.data.move,
         nextMove: parsed.data.nextMove,
         review: parsed.data.review,
+        lastMiss: parsed.data.lastMiss,
+        mode: parsed.data.mode,
+        place: parsed.data.place,
+        sceneTurn: parsed.data.sceneTurn,
+        sceneTurns: parsed.data.sceneTurns,
+        situation: parsed.data.situation,
+        personality: parsed.data.personality,
+        goal: parsed.data.goal,
+        kept: parsed.data.kept,
+        hint: parsed.data.hint,
       },
     )
     const { addPracticePartnerCount } = await import('./usage.js')
@@ -1218,10 +1228,22 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
         missStreak: parsed.data.missStreak ?? 0,
         move: parsed.data.move || 'repeat',
         nextMove: parsed.data.nextMove || parsed.data.move || 'repeat',
+        hadLastMiss: Boolean(parsed.data.lastMiss),
+        mode: parsed.data.mode || 'drill',
+        situation: parsed.data.situation || null,
+        personality: parsed.data.personality || null,
+        goal: parsed.data.goal || null,
+        hint: Boolean(parsed.data.hint),
       },
     })
     // Model id stays in audit only — omit from client response.
-    res.json({ ok: true, reply: result.reply, drill: result.drill })
+    res.json({
+      ok: true,
+      reply: result.reply,
+      drill: result.drill,
+      beats: result.beats,
+      aside: result.aside,
+    })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Practice partner chat failed'
     const status = /not configured|unavailable/i.test(msg) ? 503 : 500

@@ -1,4 +1,5 @@
 import { fetchTtsAudio } from './api'
+import type { PartnerPerformance } from './practicePartnerPerformance'
 import { ensureSharedAudioContext } from './audioReactive'
 import { isAppleTouchDevice } from './mediaAccess'
 import type { Lang } from './types'
@@ -491,8 +492,22 @@ const TTS_CACHE_MAX = 24
 const ttsBlobs = new Map<string, Blob>()
 const ttsInflight = new Map<string, Promise<Blob | null>>()
 
-function ttsCacheKey(text: string, lang: Lang, voice: string | null, loud = false) {
-  return `${lang}|${voice || ''}|${loud ? 'loud' : 'norm'}|${text}`
+function performanceCacheToken(performance?: PartnerPerformance | null): string {
+  if (!performance?.phrase) return ''
+  return `${performance.delivery}\u0001${performance.reaction}\u0001${performance.phrase}\u0001${performance.cue}`
+}
+
+function ttsCacheKey(
+  text: string,
+  lang: Lang,
+  voice: string | null,
+  loud = false,
+  performance?: PartnerPerformance | null,
+) {
+  const token = performanceCacheToken(performance)
+  return token
+    ? `${lang}|${voice || ''}|${loud ? 'loud' : 'norm'}|${token}|${text}`
+    : `${lang}|${voice || ''}|${loud ? 'loud' : 'norm'}|${text}`
 }
 
 function rememberTtsBlob(key: string, blob: Blob) {
@@ -523,13 +538,14 @@ export async function loadTtsAudio(
   text: string,
   lang: Lang,
   voice?: string | null,
-  opts?: { loud?: boolean },
+  opts?: { loud?: boolean; performance?: PartnerPerformance | null },
 ): Promise<Blob | null> {
   const trimmed = text.trim()
   if (!trimmed) return null
   const resolved = preferredVoiceFor(lang, voice)
   const loud = Boolean(opts?.loud)
-  const key = ttsCacheKey(trimmed, lang, resolved, loud)
+  const performance = opts?.performance?.phrase ? opts.performance : null
+  const key = ttsCacheKey(trimmed, lang, resolved, loud, performance)
   const cached = ttsBlobs.get(key)
   if (cached) {
     ttsBlobs.delete(key)
@@ -538,7 +554,7 @@ export async function loadTtsAudio(
   }
   const pending = ttsInflight.get(key)
   if (pending) return pending
-  const next = fetchTtsAudio(trimmed, lang, resolved, { loud })
+  const next = fetchTtsAudio(trimmed, lang, resolved, { loud, performance })
     .then((blob) => {
       if (blob && blob.size > 0) rememberTtsBlob(key, blob)
       return blob
@@ -716,7 +732,7 @@ export async function speakText(
   text: string,
   lang: Lang,
   voice?: string | null,
-  opts?: { loud?: boolean },
+  opts?: { loud?: boolean; performance?: PartnerPerformance | null },
 ) {
   const trimmed = text.trim()
   if (!trimmed) return
@@ -724,12 +740,13 @@ export async function speakText(
   stopSpeaking({ preserveSession: true })
   const g = gen
   const loud = Boolean(opts?.loud)
+  const performance = opts?.performance?.phrase ? opts.performance : null
   playing = true
   let fetchError: Error | null = null
   try {
     let blob: Blob | null = null
     try {
-      blob = await loadTtsAudio(trimmed, lang, voice, { loud })
+      blob = await loadTtsAudio(trimmed, lang, voice, { loud, performance })
     } catch (err) {
       fetchError = err instanceof Error ? err : new Error('Voice playback failed.')
     }

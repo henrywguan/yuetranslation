@@ -13,7 +13,14 @@ import {
  * Syllables use the same `JyutpingSylText` path as hear chips so Chao always
  * paints with Noto Sans (not Syne / Noto Sans HK fallbacks).
  */
-export function JyutpingChaoText({ text }: { text: string }): ReactNode {
+export function JyutpingChaoText({
+  text,
+  onSyllable,
+}: {
+  text: string
+  /** When set, each plain Jyutping syllable is a button. */
+  onSyllable?: (jp: string) => void
+}): ReactNode {
   const parts: ReactNode[] = []
   // Bare Jyutping syllables — leave already-Chao-enriched runs alone.
   const re = /[A-Za-z]+[1-6](?![\u02E5-\u02E9])/g
@@ -28,7 +35,24 @@ export function JyutpingChaoText({ text }: { text: string }): ReactNode {
     }
     const syl = match[0]
     if (parseJyutpingTone(syl)) {
-      parts.push(<JyutpingSylText key={key++} jp={syl} />)
+      const node = <JyutpingSylText jp={syl} />
+      parts.push(
+        onSyllable ? (
+          <button
+            key={key++}
+            type="button"
+            className="jyutping-tone-hit"
+            onClick={(event) => {
+              event.stopPropagation()
+              onSyllable(syl)
+            }}
+          >
+            {node}
+          </button>
+        ) : (
+          <Fragment key={key++}>{node}</Fragment>
+        ),
+      )
     } else {
       parts.push(<Fragment key={key++}>{withChaoFace(enrichJyutpingWithChao(syl))}</Fragment>)
     }

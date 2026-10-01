@@ -12,14 +12,23 @@ import {
   PRACTICE_PARTNER_FAIL_OPENERS,
   PRACTICE_PARTNER_PASS_OPENERS,
   PRACTICE_PARTNER_SYSTEM,
+  PRACTICE_PARTNER_OPEN_SYSTEM,
+  PRACTICE_PARTNER_SCENE_SYSTEM,
   PracticePartnerChatBodySchema,
   buildPracticePartnerTurn,
+  PRACTICE_PARTNER_SITUATION_IDS,
+  PRACTICE_PARTNER_SITUATION_META,
+  PRACTICE_PARTNER_SITUATION_SYSTEM,
+  keptLinesNote,
+  situationMixNote,
+  parsePracticePartnerReply,
+  practicePartnerSystemFor,
+  readPracticePartnerCorrection,
   categoryLockLine,
   difficultyLockLine,
   moveLockLine,
   toneLockLine,
   normalizeVerdict,
-  parsePracticePartnerReply,
   practicePartnerSampling,
   recentSpeakOpenings,
   resolvePracticePartnerCategory,
@@ -39,6 +48,11 @@ assert.match(PRACTICE_PARTNER_SYSTEM, /THE JUDGMENT/, 'judgment phase')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Jyutping/, 'Jyutping required on the card')
 assert.match(PRACTICE_PARTNER_SYSTEM, /json object/i, 'structured JSON for the UI loop')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Azure TTS/, 'TTS-safe speak line')
+assert.match(PRACTICE_PARTNER_SYSTEM, /SPOKEN BEATS/)
+assert.match(PRACTICE_PARTNER_SYSTEM, /SITUATIONAL/)
+assert.match(PRACTICE_PARTNER_SYSTEM, /少甜/)
+assert.match(PRACTICE_PARTNER_SYSTEM, /LAST MISS/)
+assert.match(PRACTICE_PARTNER_SYSTEM, /Do not emit SSML/)
 assert.match(PRACTICE_PARTNER_SYSTEM, /CATEGORY LOCK/, 'deck lock')
 assert.match(PRACTICE_PARTNER_SYSTEM, /DIFFICULTY LOCK/, 'difficulty lock')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Do not put Jyutping romanization/, 'speak stays 漢字 + English')
@@ -233,6 +247,28 @@ assert.match(judge.turn, /Banned defaults/)
 assert.match(judge.turn, /哼。勉強過關/)
 assert.match(judge.turn, /有冇搞錯/)
 assert.match(judge.turn, /playful and meme/)
+assert.match(judge.turn, /SITUATIONAL|少甜/)
+assert.doesNotMatch(judge.turn, /\[LAST MISS\]/)
+
+const withMiss = buildPracticePartnerTurn(
+  [
+    { role: 'assistant', content: 'Repeat after me. 狗' },
+    { role: 'user', content: 'cat' },
+  ],
+  { en: 'dog', zh: '狗', jyutping: 'gau2' },
+  'animals',
+  'abc',
+  {
+    streak: 4,
+    missStreak: 0,
+    move: 'repeat',
+    nextMove: 'listen',
+    lastMiss: { said: 'gau', zh: '狗', en: 'dog' },
+  },
+)
+assert.match(withMiss.turn, /\[LAST MISS\]/)
+assert.match(withMiss.turn, /gau/)
+assert.match(withMiss.turn, /does NOT soften/)
 
 const climbed = buildPracticePartnerTurn(
   [
@@ -290,5 +326,156 @@ const badBody = PracticePartnerChatBodySchema.safeParse({
   messages: [{ role: 'user', content: '' }],
 })
 assert.ok(!badBody.success, 'blank user lines stay rejected')
+
+const withLastMiss = PracticePartnerChatBodySchema.safeParse({
+  messages: [{ role: 'user', content: 'dog' }],
+  activeDrill: previous,
+  lastMiss: { said: 'dok', zh: '狗', en: 'dog' },
+})
+assert.ok(withLastMiss.success, 'a bounded last miss is accepted')
+
+const blankMiss = PracticePartnerChatBodySchema.safeParse({
+  messages: [{ role: 'user', content: 'dog' }],
+  lastMiss: { said: '   ', zh: '狗', en: 'dog' },
+})
+assert.ok(!blankMiss.success, 'a blank last miss is rejected')
+
+const openBody = PracticePartnerChatBodySchema.safeParse({
+  messages: [],
+  mode: 'open',
+  difficulty: 'abc',
+})
+assert.ok(openBody.success, 'open chat is a mode, not a deck')
+
+const badMode = PracticePartnerChatBodySchema.safeParse({
+  messages: [],
+  mode: 'lesson',
+})
+assert.ok(!badMode.success, 'unknown modes are rejected')
+
+const openKick = buildPracticePartnerTurn([], null, 'animals', 'new_learner', { mode: 'open' })
+assert.match(openKick.turn, /\[OPEN CHAT\]/)
+assert.doesNotMatch(openKick.turn, /\[MOVE\]/)
+assert.doesNotMatch(openKick.turn, /\[CATEGORY\]/)
+assert.equal(practicePartnerSystemFor('open'), PRACTICE_PARTNER_OPEN_SYSTEM)
+assert.match(PRACTICE_PARTNER_OPEN_SYSTEM, /not a say-this drill/)
+
+const openJudge = buildPracticePartnerTurn(
+  [{ role: 'user', content: 'I want tea' }],
+  { en: 'tea', zh: '茶', jyutping: 'caa4' },
+  'foods',
+  'abc',
+  { mode: 'open' },
+)
+assert.match(openJudge.turn, /THEY SAID: I want tea/)
+assert.doesNotMatch(openJudge.turn, /\[JUDGE\]/)
+
+const sceneKick = buildPracticePartnerTurn([], { en: 'water', zh: '水', jyutping: 'seoi2' }, 'foods', 'abc', {
+  mode: 'scene',
+  place: 'Night Market (夜市)',
+  sceneTurn: 1,
+  sceneTurns: 4,
+})
+assert.match(sceneKick.turn, /\[SCENE\] Night Market/)
+assert.match(sceneKick.turn, /Turn 1 of 4/)
+assert.match(sceneKick.turn, /TARGET ZH: 水/)
+assert.match(sceneKick.turn, /does not score the road/)
+assert.equal(practicePartnerSystemFor('scene'), PRACTICE_PARTNER_SCENE_SYSTEM)
+assert.equal(practicePartnerSystemFor('drill'), PRACTICE_PARTNER_SYSTEM)
+assert.equal(practicePartnerSystemFor(null), PRACTICE_PARTNER_SYSTEM)
+assert.match(PRACTICE_PARTNER_SYSTEM, /why is one short written sentence/)
+assert.equal(practicePartnerSystemFor('situation'), PRACTICE_PARTNER_SITUATION_SYSTEM)
+assert.match(PRACTICE_PARTNER_SITUATION_SYSTEM, /conversation continues/)
+assert.match(PRACTICE_PARTNER_OPEN_SYSTEM, /correction/)
+
+const situationBody = PracticePartnerChatBodySchema.safeParse({
+  messages: [],
+  mode: 'situation',
+  situation: 'cafe',
+  kept: [{ en: 'water', zh: '水', jyutping: 'seoi2' }],
+})
+assert.ok(situationBody.success, 'a chosen situation is accepted')
+
+const badSituation = PracticePartnerChatBodySchema.safeParse({
+  messages: [],
+  situation: 'debate',
+})
+assert.ok(!badSituation.success, 'unknown situations are rejected')
+assert.equal(PRACTICE_PARTNER_SITUATION_IDS.length, 22)
+for (const id of PRACTICE_PARTNER_SITUATION_IDS) {
+  assert.ok(PRACTICE_PARTNER_SITUATION_META[id], id)
+  assert.ok(
+    PracticePartnerChatBodySchema.safeParse({ messages: [], situation: id }).success,
+    id,
+  )
+}
+assert.equal(situationMixNote('busy', 'slang').includes('[CAST]'), true)
+assert.match(situationMixNote('busy', 'slang'), /\[AIM\].*colloquial/)
+
+const situationKick = buildPracticePartnerTurn([], null, 'common', 'abc', {
+  mode: 'situation',
+  situation: 'cafe',
+  personality: 'busy',
+  goal: 'task',
+  kept: [{ en: 'water', zh: '水', jyutping: 'seoi2' }],
+})
+assert.match(situationKick.turn, /\[SITUATION\] Cha chaan teng/)
+assert.match(situationKick.turn, /茶餐廳/)
+assert.match(situationKick.turn, /\[CAST\]/)
+assert.match(situationKick.turn, /\[AIM\]/)
+assert.match(situationKick.turn, /\[KEPT LINES\].*水/)
+assert.doesNotMatch(situationKick.turn, /\[MOVE\]/)
+
+const dimsumKick = buildPracticePartnerTurn([], null, 'common', 'new_learner', {
+  mode: 'situation',
+  situation: 'dimsum',
+  personality: 'elder',
+  goal: 'casual',
+})
+assert.match(dimsumKick.turn, /\[SITUATION\] Dim sum/)
+assert.match(dimsumKick.turn, /飲茶/)
+assert.match(dimsumKick.turn, /older person/)
+assert.match(keptLinesNote([{ zh: '水', en: 'water' }]), /Do not quiz/)
+
+const hint = buildPracticePartnerTurn(
+  [{ role: 'assistant', content: 'What do you want?' }],
+  null,
+  'common',
+  'new_learner',
+  { mode: 'situation', situation: 'mtr', hint: true },
+)
+assert.match(hint.turn, /\[HINT\]/)
+assert.match(hint.turn, /MTR/)
+assert.equal(hint.history.length, 1, 'a hint does not drop the conversation')
+
+const withWhy = parsePracticePartnerReply(
+  JSON.stringify({
+    reaction: 'Try the rising tone.',
+    cue: 'Again.',
+    verdict: 'fail',
+    en: 'water',
+    zh: '水',
+    jyutping: 'seoi2',
+    why: 'seoi2 rises.',
+    correction: { en: 'water', zh: '水', jyutping: 'seoi2' },
+  }),
+)
+assert.equal(withWhy.aside.why, 'seoi2 rises.')
+assert.equal(withWhy.aside.correction, null, 'a correction that repeats the spoken line is dropped')
+
+const withBetter = parsePracticePartnerReply(
+  JSON.stringify({
+    reaction: 'Tea, then.',
+    cue: 'Hot or cold?',
+    verdict: 'none',
+    en: 'Tea.',
+    zh: '茶呀。',
+    jyutping: 'caa4 aa3',
+    why: 'That came through in English.',
+    correction: { en: 'I want tea', zh: '我要茶', jyutping: 'ngo5 jiu3 caa4' },
+  }),
+)
+assert.equal(withBetter.aside.correction?.zh, '我要茶')
+assert.equal(readPracticePartnerCorrection({ en: 'tea', zh: '', jyutping: 'caa4' }), null)
 
 console.log('practicePartnerAi.smoke: ok')
