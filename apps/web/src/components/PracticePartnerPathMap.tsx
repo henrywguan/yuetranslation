@@ -25,11 +25,16 @@ import {
   type PracticePartnerPathState,
 } from '../lib/practicePartnerPath'
 
-const FAR_PARALLAX = 0.38
-const SKY_PARALLAX = 0.9
-const MID_PARALLAX = 0.96
-const NEAR_PARALLAX = 1.06
-const MIST_PARALLAX = 1.18
+const FAR_PARALLAX = 0.12
+const SKY_PARALLAX = 0.26
+const HANG_PARALLAX = 0.44
+const MID_PARALLAX = 0.6
+const LIFE_PARALLAX = 0.76
+const GROVE_PARALLAX = 0.86
+const AIR_PARALLAX = 1.22
+const MIST_PARALLAX = 1.48
+const NEAR_PARALLAX = 1.62
+const RAIN_PARALLAX = 1.9
 
 type Pan = { scale: number; x: number; y: number }
 
@@ -223,16 +228,31 @@ export function PracticePartnerPathMap({
         onPointerCancel={onPointerUp}
       >
         <div className="partner-map-depth is-far" style={layerStyle(box, pan, FAR_PARALLAX)}>
-          <WuxiaFarPeaks />
+          <div className="wuxia-layer-drift is-slow">
+            <WuxiaFarPeaks />
+          </div>
         </div>
         <div className="partner-map-depth is-sky" style={layerStyle(box, pan, SKY_PARALLAX)}>
-          <WuxiaSectionSky />
+          <WuxiaSectionSky sheet="wash" />
+        </div>
+        <div className="partner-map-depth is-hang" style={layerStyle(box, pan, HANG_PARALLAX)}>
+          <div className="wuxia-layer-drift">
+            <WuxiaSectionSky sheet="hang" />
+          </div>
         </div>
         <div className="partner-map-depth is-mid" style={layerStyle(box, pan, MID_PARALLAX)}>
-          <WuxiaSectionMid />
+          <WuxiaSectionMid sheet="silk" />
+        </div>
+        <div className="partner-map-depth is-life" style={layerStyle(box, pan, LIFE_PARALLAX)}>
+          <div className="wuxia-layer-drift is-life">
+            <WuxiaSectionMid sheet="life" />
+          </div>
+        </div>
+        <div className="partner-map-depth is-grove" style={layerStyle(box, pan, GROVE_PARALLAX)}>
+          <WuxiaJourneyArt progress={progress} mastery={progress.mastery} band="grove" />
         </div>
         <div className="partner-map-layer" style={layerStyle(box, pan, 1)}>
-          <WuxiaJourneyArt progress={progress} mastery={progress.mastery} />
+          <WuxiaJourneyArt progress={progress} mastery={progress.mastery} band="place" />
           <svg className="partner-map-road" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             {regions.map((region) => {
               const points = scrolls
@@ -306,11 +326,23 @@ export function PracticePartnerPathMap({
             })}
           </ul>
         </div>
+        <div className="partner-map-depth is-air" style={layerStyle(box, pan, AIR_PARALLAX)}>
+          <div className="wuxia-layer-drift is-air">
+            <WuxiaJourneyArt progress={progress} mastery={progress.mastery} band="air" />
+          </div>
+        </div>
         <div className="partner-map-depth is-mist" style={layerStyle(box, pan, MIST_PARALLAX)}>
-          <WuxiaMistVeil />
+          <div className="wuxia-layer-drift is-mist">
+            <WuxiaMistVeil />
+          </div>
         </div>
         <div className="partner-map-depth is-near" style={layerStyle(box, pan, NEAR_PARALLAX)}>
-          <WuxiaNearWeather />
+          <WuxiaNearWeather sheet="goods" />
+        </div>
+        <div className="partner-map-depth is-rain" style={layerStyle(box, pan, RAIN_PARALLAX)}>
+          <div className="wuxia-layer-drift is-fast">
+            <WuxiaNearWeather sheet="rain" />
+          </div>
         </div>
         <WuxiaCloudFrame pan={pan} />
         {nextScroll && nextPlace ? (

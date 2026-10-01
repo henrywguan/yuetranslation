@@ -19,24 +19,28 @@ function Chapter({
   y,
   height,
   children,
+  veil = true,
 }: {
   reveal: number
   y: number
   height: number
   children: ReactNode
+  veil?: boolean
 }) {
   return (
     <g className={`wuxia-chapter${reveal < 0.02 ? ' is-ink' : ''}`} style={{ filter: veilFilter(reveal) }}>
       {children}
-      <rect
-        className="wuxia-mist"
-        x="0"
-        y={y}
-        width={PARTNER_MAP_VIEWBOX.w}
-        height={height}
-        fill="url(#inkVeil)"
-        opacity={(1 - reveal) * 0.28}
-      />
+      {veil ? (
+        <rect
+          className="wuxia-mist"
+          x="0"
+          y={y}
+          width={PARTNER_MAP_VIEWBOX.w}
+          height={height}
+          fill="url(#inkVeil)"
+          opacity={(1 - reveal) * 0.28}
+        />
+      ) : null}
     </g>
   )
 }
@@ -343,9 +347,12 @@ const BAMBOO_B: Array<[number, number, number]> = [
 export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
   progress,
   mastery,
+  band = 'place',
 }: {
   progress: PracticePartnerPathState
   mastery: number
+  /** place stays with the stops. grove and air slide on their own. */
+  band?: 'place' | 'grove' | 'air'
 }) {
   const reveal: Reveals = {
     common: practicePartnerChapterReveal(progress, 'common'),
@@ -399,6 +406,8 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
         </symbol>
       </defs>
 
+      {band === 'place' ? (
+      <>
       <rect x="16" y="40" width="368" height="3120" fill="url(#inkWarm)" />
       <rect x="16" y="40" width="368" height="3120" fill="none" stroke="#c4a574" strokeWidth="2" />
       <rect x="22" y="46" width="356" height="3108" fill="none" stroke="#6b5a40" strokeWidth="0.9" opacity="0.55" />
@@ -449,10 +458,6 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
         />
         <Cun x={48} y={560} rows={4} cols={6} ink="#f3e2c4" opacity={0.4} />
         <Cun x={230} y={520} rows={3} cols={5} ink="#f3e2c4" opacity={0.32} />
-        <MistBank cx={200} cy={860} rx={160} ry={22} fill="#f3e2c4" slow strength={0.85} />
-        <g style={{ filter: 'brightness(0.45) saturate(0.55)' }}>
-          <Pines points={GATE_PINES} />
-        </g>
         <g className="wuxia-sway is-soft">
           <path d="M36 468 Q100 450 168 472" fill="none" stroke="#5c4030" strokeWidth="1.2" />
           <Lantern x={48} y={478} s={0.95} hue="#e1062a" />
@@ -460,10 +465,6 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
           <Lantern x={108} y={466} hue="#c41e3a" />
           <Lantern x={138} y={474} s={0.9} hue="#9b1230" />
           <Lantern x={164} y={482} s={0.85} hue="#e1062a" />
-        </g>
-        <g className="wuxia-veil" fill="#9b1c38">
-          <path d="M48 520 C70 560 40 640 62 700 C48 640 78 580 58 520 Z" opacity="0.42" />
-          <path d="M150 530 C176 580 148 660 172 720 C156 650 184 590 162 530 Z" opacity="0.36" />
         </g>
         <TileRoof x={34} y={500} w={150} h={52} fill="#8b1e2d" />
         <Pillar x={62} y={575} h={108} />
@@ -494,9 +495,6 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
         })}
         <Rocks x={18} y={800} />
         <Rocks x={150} y={830} />
-        <Blossom x={28} y={690} />
-        <Blossom x={176} y={640} fill="#f3c6d0" />
-        <Blossom x={360} y={650} />
         <use href="#inkTuft" x={188} y={760} width="18" height="14" />
         <use href="#inkTuft" x={250} y={700} width="16" height="12" />
         <use href="#inkTuft" x={300} y={820} width="18" height="14" />
@@ -542,7 +540,6 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
         />
         <Cun x={40} y={1320} rows={4} cols={6} ink="#f3e2c4" opacity={0.38} />
         <Cun x={240} y={1360} rows={3} cols={5} ink="#f3e2c4" opacity={0.3} />
-        <MistBank cx={180} cy={1588} rx={170} ry={20} fill="#f3e2c4" strength={0.7} />
         <path
           d="M-16 1505 C70 1460 130 1540 210 1488 C280 1440 340 1510 420 1468 L420 1565 C330 1605 250 1520 170 1588 C90 1640 20 1560 -16 1600 Z"
           fill="#6e9aaf"
@@ -560,22 +557,12 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
         <use href="#inkRipple" x={150} y={1508} width="26" height="9" />
         <use href="#inkRipple" x={260} y={1544} width="30" height="10" />
         <use href="#inkRipple" x={330} y={1496} width="24" height="8" />
-        <g transform="translate(300 1510)">
-          <g className="wuxia-koi">
-            <ellipse cx="0" cy="0" rx="7" ry="3.2" fill="#e07a3d" />
-            <path d="M7 0 L13 -3 L13 3 Z" fill="#c4513a" />
-            <circle cx="-3" cy="-0.6" r="0.7" fill="#1a120c" />
-          </g>
-        </g>
         <g transform="translate(250 1546)">
           <path d="M-18 2 Q0 12 20 2 L15 7 Q0 16 -14 7 Z" fill="#6b5344" stroke="#3e3428" strokeWidth="0.7" />
           <path d="M2 2 V-18" stroke="#5c4030" strokeWidth="1.3" />
           <path d="M2 -16 L16 -4" stroke="#f4ead4" strokeWidth="1.2" />
         </g>
         <ArchBridge x={124} y={1492} />
-        <Pines points={MARKET_PINES} />
-        <Willow x={28} y={1360} s={0.85} />
-        <Willow x={372} y={1320} s={0.72} />
         <TileRoof x={236} y={1160} w={120} h={40} fill="#1d3d6e" />
         <path d="M258 1224 H338 V1288 H258 Z" fill="#f4ead4" stroke="#5c4a32" strokeWidth="1" />
         <path d="M268 1236 H292 V1264 H268 Z" fill="#1a120c" opacity="0.35" />
@@ -592,8 +579,6 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
           <Lantern x={324} y={1192} s={0.85} />
           <Lantern x={360} y={1204} s={0.75} hue="#a12838" />
         </g>
-        <Blossom x={200} y={1360} />
-        <Blossom x={40} y={1400} fill="#f3c6d0" />
         <Rocks x={200} y={1580} />
         <use href="#inkTuft" x={96} y={1360} width="16" height="12" />
         <use href="#inkTuft" x={210} y={1320} width="16" height="12" />
@@ -603,15 +588,6 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
           stroke="#4a3018"
           strokeWidth="1"
         />
-        <Pines
-          points={[
-            [24, 1760, 0.72],
-            [48, 1820, 0.84],
-            [352, 1750, 0.66],
-            [374, 1810, 0.78],
-          ]}
-        />
-        <Willow x={300} y={1780} s={0.55} />
         <Rocks x={160} y={1720} />
         <use href="#inkTuft" x={120} y={1660} width="16" height="12" />
         <use href="#inkTuft" x={230} y={1704} width="16" height="12" />
@@ -658,10 +634,6 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
         <use href="#inkRipple" x={24} y={2120} width="22" height="8" />
         <use href="#inkRipple" x={48} y={2248} width="22" height="8" />
         <use href="#inkRipple" x={78} y={2340} width="22" height="8" />
-        <Grove points={BAMBOO_A} className="wuxia-sway" />
-        <Grove points={BAMBOO_B} className="wuxia-sway is-alt" />
-        <MistBank cx={80} cy={2160} rx={70} ry={16} fill="#f7f1df" strength={0.9} />
-        <MistBank cx={120} cy={2300} rx={60} ry={12} fill="#f3e2c4" slow strength={0.8} />
         <g transform="translate(40 2288)">
           <TileRoof x={0} y={0} w={52} h={22} fill="#6b3a2a" />
           <Pillar x={8} y={28} h={36} />
@@ -675,21 +647,7 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
             className="wuxia-steam"
           />
         </g>
-        <g transform="translate(96 2140)">
-          <g className="wuxia-bird">
-            <ellipse cx="0" cy="4" rx="18" ry="6" fill="#f7f3ea" stroke="#5c4e3c" strokeWidth="0.7" />
-            <path d="M12 2 C22 -14 28 -26 24 -36" fill="none" stroke="#f7f3ea" strokeWidth="2.4" />
-            <circle cx="24" cy="-38" r="3.4" fill="#f7f3ea" stroke="#5c4e3c" strokeWidth="0.6" />
-            <path d="M26 -37 L33 -35.5" stroke="#c4513a" strokeWidth="1.2" />
-            <path d="M20 -40 L16 -48 L23 -39" fill="#f7f3ea" stroke="#5c4e3c" strokeWidth="0.5" />
-            <path d="M-2 0 C2 -16 16 -18 18 -6 C8 -8 2 -4 -2 0Z" fill="#efe6d4" stroke="#5c4e3c" strokeWidth="0.55" className="wuxia-wing" />
-            <path d="M-16 4 C-32 0 -42 -12 -38 -20" fill="none" stroke="#f7f3ea" strokeWidth="1.7" />
-            <path d="M-14 7 C-30 10 -40 2 -36 -8" fill="none" stroke="#e7e0d4" strokeWidth="1.2" />
-            <path d="M-2 10 L0 22 M6 10 L9 22" stroke="#c4513a" strokeWidth="0.9" />
-          </g>
-        </g>
         <Rocks x={150} y={2360} />
-        <Blossom x={160} y={2080} fill="#f7f1df" />
         <use href="#inkTuft" x={168} y={2300} width="16" height="12" />
         <use href="#inkTuft" x={210} y={2140} width="16" height="12" />
         <circle cx="70" cy="2088" r="1.3" fill="#e8c56b" className="wuxia-lantern" />
@@ -730,18 +688,6 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
           <path d="M120 3040 C120 3020 146 3010 166 3022 C176 3004 206 3006 210 3028 C230 3018 244 3036 230 3052 C244 3062 236 3082 214 3078 C210 3096 180 3100 172 3084 C148 3094 126 3078 136 3060 C120 3052 118 3030 120 3040Z" />
           <path d="M250 3088 C250 3070 274 3060 294 3072 C304 3056 332 3058 336 3078 C354 3068 366 3084 354 3098 C366 3108 358 3126 338 3122 C334 3138 306 3142 298 3128 C276 3136 256 3122 266 3106 C250 3098 248 3078 250 3088Z" />
         </g>
-        <MistBank cx={80} cy={2860} rx={54} ry={14} fill="#fbf6ea" strength={0.85} />
-        <MistBank cx={160} cy={3004} rx={48} ry={12} fill="#f3e2c4" slow strength={0.8} />
-        <MistBank cx={300} cy={2948} rx={60} ry={14} fill="#fff6d4" strength={0.75} />
-        <Pines
-          points={[
-            [236, 2780, 0.55],
-            [252, 2810, 0.48],
-            [360, 2760, 0.5],
-            [18, 2860, 0.6],
-            [40, 2920, 0.5],
-          ]}
-        />
         <TileRoof x={248} y={2688} w={124} h={44} fill="#8b1e2d" />
         <TileRoof x={264} y={2752} w={92} h={30} fill="#a12838" />
         <Pillar x={276} y={2796} h={70} />
@@ -805,6 +751,101 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
           THE INK ROAD
         </text>
       </g>
+      </>
+      ) : null}
+      {band === 'grove' ? (
+        <>
+          <Chapter reveal={reveal.common} y={430} height={550} veil={false}>
+            <g className="wuxia-sway" style={{ filter: 'brightness(0.45) saturate(0.55)' }}>
+              <Pines points={GATE_PINES} />
+            </g>
+          </Chapter>
+          <Chapter reveal={reveal.foods} y={1220} height={480} veil={false}>
+            <g className="wuxia-sway is-soft">
+              <Pines points={MARKET_PINES} />
+              <Willow x={28} y={1360} s={0.85} />
+              <Willow x={372} y={1320} s={0.72} />
+              <Pines
+                points={[
+                  [24, 1760, 0.72],
+                  [48, 1820, 0.84],
+                  [352, 1750, 0.66],
+                  [374, 1810, 0.78],
+                ]}
+              />
+              <Willow x={300} y={1780} s={0.55} />
+            </g>
+          </Chapter>
+          <Chapter reveal={reveal.animals} y={2020} height={460} veil={false}>
+            <Grove points={BAMBOO_A} className="wuxia-sway" />
+            <Grove points={BAMBOO_B} className="wuxia-sway is-alt" />
+          </Chapter>
+          <Chapter reveal={reveal.expert} y={2720} height={440} veil={false}>
+            <g className="wuxia-sway is-soft">
+              <Pines
+                points={[
+                  [236, 2780, 0.55],
+                  [252, 2810, 0.48],
+                  [360, 2760, 0.5],
+                  [18, 2860, 0.6],
+                  [40, 2920, 0.5],
+                ]}
+              />
+            </g>
+          </Chapter>
+        </>
+      ) : null}
+      {band === 'air' ? (
+        <>
+          <Chapter reveal={reveal.common} y={430} height={550} veil={false}>
+            <MistBank cx={200} cy={860} rx={160} ry={22} fill="#f3e2c4" slow strength={0.85} />
+            <g className="wuxia-veil" fill="#9b1c38">
+              <path d="M48 520 C70 560 40 640 62 700 C48 640 78 580 58 520 Z" opacity="0.42" />
+              <path d="M150 530 C176 580 148 660 172 720 C156 650 184 590 162 530 Z" opacity="0.36" />
+            </g>
+            <g className="wuxia-bob">
+              <Blossom x={28} y={690} />
+              <Blossom x={176} y={640} fill="#f3c6d0" />
+              <Blossom x={360} y={650} />
+            </g>
+          </Chapter>
+          <Chapter reveal={reveal.foods} y={1220} height={480} veil={false}>
+            <MistBank cx={180} cy={1588} rx={170} ry={20} fill="#f3e2c4" strength={0.7} />
+            <g transform="translate(300 1510)">
+              <g className="wuxia-koi">
+                <ellipse cx="0" cy="0" rx="7" ry="3.2" fill="#e07a3d" />
+                <path d="M7 0 L13 -3 L13 3 Z" fill="#c4513a" />
+                <circle cx="-3" cy="-0.6" r="0.7" fill="#1a120c" />
+              </g>
+            </g>
+            <Blossom x={200} y={1360} />
+            <Blossom x={40} y={1400} fill="#f3c6d0" />
+          </Chapter>
+          <Chapter reveal={reveal.animals} y={2020} height={460} veil={false}>
+            <MistBank cx={80} cy={2160} rx={70} ry={16} fill="#f7f1df" strength={0.9} />
+            <MistBank cx={120} cy={2300} rx={60} ry={12} fill="#f3e2c4" slow strength={0.8} />
+            <g transform="translate(96 2140)">
+              <g className="wuxia-bird">
+                <ellipse cx="0" cy="4" rx="18" ry="6" fill="#f7f3ea" stroke="#5c4e3c" strokeWidth="0.7" />
+                <path d="M12 2 C22 -14 28 -26 24 -36" fill="none" stroke="#f7f3ea" strokeWidth="2.4" />
+                <circle cx="24" cy="-38" r="3.4" fill="#f7f3ea" stroke="#5c4e3c" strokeWidth="0.6" />
+                <path d="M26 -37 L33 -35.5" stroke="#c4513a" strokeWidth="1.2" />
+                <path d="M20 -40 L16 -48 L23 -39" fill="#f7f3ea" stroke="#5c4e3c" strokeWidth="0.5" />
+                <path d="M-2 0 C2 -16 16 -18 18 -6 C8 -8 2 -4 -2 0Z" fill="#efe6d4" stroke="#5c4e3c" strokeWidth="0.55" className="wuxia-wing" />
+                <path d="M-16 4 C-32 0 -42 -12 -38 -20" fill="none" stroke="#f7f3ea" strokeWidth="1.7" />
+                <path d="M-14 7 C-30 10 -40 2 -36 -8" fill="none" stroke="#e7e0d4" strokeWidth="1.2" />
+                <path d="M-2 10 L0 22 M6 10 L9 22" stroke="#c4513a" strokeWidth="0.9" />
+              </g>
+            </g>
+            <Blossom x={160} y={2080} fill="#f7f1df" />
+          </Chapter>
+          <Chapter reveal={reveal.expert} y={2720} height={440} veil={false}>
+            <MistBank cx={80} cy={2860} rx={54} ry={14} fill="#fbf6ea" strength={0.85} />
+            <MistBank cx={160} cy={3004} rx={48} ry={12} fill="#f3e2c4" slow strength={0.8} />
+            <MistBank cx={300} cy={2948} rx={60} ry={14} fill="#fff6d4" strength={0.75} />
+          </Chapter>
+        </>
+      ) : null}
     </svg>
   )
 })

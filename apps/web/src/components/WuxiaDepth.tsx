@@ -181,10 +181,16 @@ export const WuxiaFarPeaks = memo(function WuxiaFarPeaks() {
 })
 
 /** Section skies, locked close to the scroll so each weather stays with its chapter. */
-export const WuxiaSectionSky = memo(function WuxiaSectionSky() {
+export const WuxiaSectionSky = memo(function WuxiaSectionSky({
+  sheet = 'wash',
+}: {
+  sheet?: 'wash' | 'hang'
+}) {
+  const wash = sheet === 'wash'
+  const hang = sheet === 'hang'
   return (
     <svg className="partner-wuxia" viewBox={VB} preserveAspectRatio="none" aria-hidden="true">
-      <defs>
+      {wash ? <defs>
         <linearGradient id="skyGate" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#120208" />
           <stop offset="0.45" stopColor="#4a0c18" />
@@ -211,10 +217,12 @@ export const WuxiaSectionSky = memo(function WuxiaSectionSky() {
           <stop offset="0.62" stopColor="#fffaf0" />
           <stop offset="1" stopColor="#f3e2c4" />
         </linearGradient>
-      </defs>
+      </defs> : null}
 
       <Band>
-        <rect x="-20" y="0" width="440" height="1140" fill="url(#skyGate)" />
+        {wash ? <rect x="-20" y="0" width="440" height="1140" fill="url(#skyGate)" /> : null}
+        {wash ? (
+        <>
         <circle cx="300" cy="220" r="28" fill="#6e1020" opacity="0.45" className="wuxia-moon" />
         <circle cx="300" cy="220" r="16" fill="#a12838" opacity="0.35" />
         <Range
@@ -233,6 +241,9 @@ export const WuxiaSectionSky = memo(function WuxiaSectionSky() {
         />
         <Cun x={80} y={500} rows={3} cols={6} ink="#f3e2c4" opacity={0.4} />
         <MistBank cx={200} cy={680} rx={150} ry={18} fill="#f3e2c4" slow />
+        </>
+        ) : null}
+        {hang ? (
         <g className="wuxia-sway is-soft">
           <path d="M16 180 H200" stroke="#2a1014" strokeWidth="1" />
           <GlowLantern x={36} y={196} s={0.7} />
@@ -240,10 +251,13 @@ export const WuxiaSectionSky = memo(function WuxiaSectionSky() {
           <GlowLantern x={124} y={180} />
           <GlowLantern x={168} y={192} s={0.75} hue="#9b1230" />
         </g>
+        ) : null}
       </Band>
 
       <Band>
-        <rect x="-20" y="900" width="440" height="1100" fill="url(#skyMarket)" />
+        {wash ? <rect x="-20" y="900" width="440" height="1100" fill="url(#skyMarket)" /> : null}
+        {hang ? (
+        <>
         <MistBank cx={80} cy={1180} rx={120} ry={26} fill="#cbb89a" />
         <MistBank cx={260} cy={1360} rx={150} ry={30} fill="#cbb89a" slow />
         <MistBank cx={140} cy={1580} rx={130} ry={24} fill="#d9cbb0" />
@@ -254,10 +268,13 @@ export const WuxiaSectionSky = memo(function WuxiaSectionSky() {
           <GlowLantern x={310} y={1094} s={0.66} hue="#f0d48a" />
           <GlowLantern x={360} y={1102} s={0.72} hue="#a12838" />
         </g>
+        </>
+        ) : null}
       </Band>
 
       <Band>
-        <rect x="-20" y="1760" width="440" height="980" fill="url(#skyBamboo)" />
+        {wash ? <rect x="-20" y="1760" width="440" height="980" fill="url(#skyBamboo)" /> : null}
+        {wash ? (
         <g className="wuxia-sun">
           <circle cx="210" cy="1960" r="46" fill="#fff8dc" opacity="0.9" />
           <circle cx="210" cy="1960" r="70" fill="#ffe08a" opacity="0.35" />
@@ -270,20 +287,27 @@ export const WuxiaSectionSky = memo(function WuxiaSectionSky() {
             />
           ))}
         </g>
+        ) : null}
+        {hang ? (
         <g fill="#145c32" opacity="0.55">
           <path d="M20 2140 L28 1980 L36 2140 Z" />
           <path d="M48 2160 L58 1960 L68 2160 Z" />
           <path d="M330 2120 L340 1970 L350 2120 Z" />
           <path d="M360 2150 L372 1940 L384 2150 Z" />
         </g>
+        ) : null}
       </Band>
 
       <Band>
-        <rect x="-20" y="2500" width="440" height="700" fill="url(#skyTerrace)" />
+        {wash ? <rect x="-20" y="2500" width="440" height="700" fill="url(#skyTerrace)" /> : null}
+        {hang ? (
+        <>
         <Xiangyun x={30} y={2580} s={0.7} fill="#fffaf0" stroke="#e8c56b" />
         <Xiangyun x={240} y={2680} s={0.85} fill="#fff6d4" stroke="#e0b44a" />
         <Xiangyun x={120} y={2920} s={0.6} fill="#fffaf0" stroke="#e8c56b" />
         <SkyTemple x={300} y={2620} s={1.15} />
+        </>
+        ) : null}
       </Band>
     </svg>
   )
@@ -343,9 +367,17 @@ function Dumpling({ x, y }: { x: number; y: number }) {
 }
 
 /** Parallax props: lantern strings, market goods, bamboo, and the terrace flight. */
-export const WuxiaSectionMid = memo(function WuxiaSectionMid() {
+export const WuxiaSectionMid = memo(function WuxiaSectionMid({
+  sheet = 'silk',
+}: {
+  sheet?: 'silk' | 'life'
+}) {
+  const silk = sheet === 'silk'
+  const life = sheet === 'life'
   return (
     <svg className="partner-wuxia" viewBox={VB} preserveAspectRatio="none" aria-hidden="true">
+      {silk ? (
+      <>
       <Band>
         <g className="wuxia-veil" fill="#9b1c38">
           <path d="M40 360 C70 420 50 560 80 680 C60 600 90 480 70 360 Z" opacity="0.45" />
@@ -369,7 +401,11 @@ export const WuxiaSectionMid = memo(function WuxiaSectionMid() {
           <GlowLantern x={132} y={1054} s={0.66} hue="#f0d48a" />
         </g>
       </Band>
+      </>
+      ) : null}
 
+      {life ? (
+      <>
       <Band>
         {Array.from({ length: 9 }, (_, i) => {
           const x = 16 + (i % 5) * 22
@@ -407,12 +443,20 @@ export const WuxiaSectionMid = memo(function WuxiaSectionMid() {
         <SkyTemple x={70} y={2810} s={0.85} />
         <SunWukong />
       </Band>
+      </>
+      ) : null}
     </svg>
   )
 })
 
 /** Nearest weather: silk, fog, rain, and grass tips. Tracks just ahead of the scroll. */
-export const WuxiaNearWeather = memo(function WuxiaNearWeather() {
+export const WuxiaNearWeather = memo(function WuxiaNearWeather({
+  sheet = 'goods',
+}: {
+  sheet?: 'goods' | 'rain'
+}) {
+  const goods = sheet === 'goods'
+  const rainOn = sheet === 'rain'
   const rain = Array.from({ length: 18 }, (_, i) => {
     const x = 12 + ((i * 23) % 376)
     const y = 1880 + (i % 9) * 48
@@ -420,6 +464,8 @@ export const WuxiaNearWeather = memo(function WuxiaNearWeather() {
   })
   return (
     <svg className="partner-wuxia" viewBox={VB} preserveAspectRatio="none" aria-hidden="true">
+      {goods ? (
+      <>
       <Band>
         <g className="wuxia-veil" fill="#c41e3a">
           <path d="M8 240 C28 360 6 520 24 700 C8 540 36 380 18 240 Z" opacity="0.33" />
@@ -468,7 +514,11 @@ export const WuxiaNearWeather = memo(function WuxiaNearWeather() {
         <GlowLantern x={356} y={1288} s={0.8} hue="#e8a04a" />
         <GlowLantern x={18} y={1580} s={0.72} />
       </Band>
+      </>
+      ) : null}
 
+      {rainOn ? (
+      <>
       <Band>
         {[18, 36, 354, 374].map((x, i) => (
           <g key={x} className={i % 2 ? 'wuxia-sway is-alt' : 'wuxia-sway'}>
@@ -509,6 +559,8 @@ export const WuxiaNearWeather = memo(function WuxiaNearWeather() {
           <ellipse cx="300" cy="3040" rx="80" ry="16" />
         </g>
       </Band>
+      </>
+      ) : null}
     </svg>
   )
 })
