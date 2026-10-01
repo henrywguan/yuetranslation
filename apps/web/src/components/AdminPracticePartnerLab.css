@@ -2066,6 +2066,10 @@
   opacity: 0.88;
 }
 
+.partner-lab-subtitles.is-you-live .partner-lab-subtitles-held {
+  display: none;
+}
+
 /* Game plate: speaker name on its own line, dialogue beneath — Harbor palette only */
 .partner-lab-subtitles-speaker {
   display: block;
@@ -4270,6 +4274,11 @@
 .partner-orbit-comet.is-b {
   inset: 12%;
   animation: partner-orbit-spin-rev 13s linear infinite;
+}
+
+.partner-lab--topic.is-sheet .partner-orbit-comet,
+.partner-lab--topic.is-sheet .partner-orbit-bead {
+  animation-play-state: paused;
 }
 
 .partner-orbit-comet::after,

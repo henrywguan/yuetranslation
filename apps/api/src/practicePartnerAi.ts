@@ -460,6 +460,16 @@ export function speakOpeningKey(text: string): string {
     .slice(0, 18)
 }
 
+/** Turns kept on the model call. The active line and kept phrases are sent beside this. */
+export const PRACTICE_PARTNER_HISTORY_LIMIT = 12
+
+export function recentPracticePartnerMessages(
+  messages: PracticePartnerMessage[],
+): PracticePartnerMessage[] {
+  if (messages.length <= PRACTICE_PARTNER_HISTORY_LIMIT) return messages
+  return messages.slice(-PRACTICE_PARTNER_HISTORY_LIMIT)
+}
+
 export function recentSpeakOpenings(messages: PracticePartnerMessage[], limit = 6): string[] {
   const seen = new Set<string>()
   const out: string[] = []
@@ -952,12 +962,13 @@ export function buildPracticePartnerTurn(
   difficulty?: PracticePartnerDifficulty | null,
   tone?: PracticePartnerTurnTone | null,
 ): { history: PracticePartnerMessage[]; turn: string } {
+  const thread = recentPracticePartnerMessages(messages)
   const level = resolvePracticePartnerDifficulty(difficulty)
   const mode = partnerMode(tone?.mode)
-  if (tone?.hint && mode !== 'drill') return buildHintTurn(messages, level, tone)
-  if (mode === 'open') return buildOpenTurn(messages, level, tone?.kept)
-  if (mode === 'situation') return buildSituationTurn(messages, level, tone)
-  if (mode === 'scene') return buildSceneTurn(messages, activeDrill, level, tone)
+  if (tone?.hint && mode !== 'drill') return buildHintTurn(thread, level, tone)
+  if (mode === 'open') return buildOpenTurn(thread, level, tone?.kept)
+  if (mode === 'situation') return buildSituationTurn(thread, level, tone)
+  if (mode === 'scene') return buildSceneTurn(thread, activeDrill, level, tone)
   const deck = resolvePracticePartnerCategory(category)
   const mood = resolvePracticePartnerTone(tone?.streak, tone?.missStreak)
   const move = resolvePracticePartnerMove(tone?.move)
@@ -968,14 +979,14 @@ export function buildPracticePartnerTurn(
   const lock = [sessionLockLines(deck, level), toneLockLine(deck, mood), exercise]
     .filter(Boolean)
     .join('\n')
-  if (!messages.length) {
+  if (!thread.length) {
     return { history: [], turn: demandKickoffLine(deck, level) }
   }
-  const last = messages[messages.length - 1]
+  const last = thread[thread.length - 1]
   if (last.role !== 'user') {
-    return { history: messages, turn: demandKickoffLine(deck, level) }
+    return { history: thread, turn: demandKickoffLine(deck, level) }
   }
-  const history = messages.slice(0, -1)
+  const history = thread.slice(0, -1)
   if (activeDrill?.en && activeDrill.zh && activeDrill.jyutping) {
     return {
       history,
@@ -992,7 +1003,7 @@ export function buildPracticePartnerTurn(
         'If you PASS, the next en/zh/jyutping MUST stay in this [CATEGORY].',
         'Obey [DIFFICULTY] for the reaction and cue language mix on this judgment and the next demand.',
         lastMissLine(tone?.lastMiss),
-        varietyLockLine(messages, mood),
+        varietyLockLine(thread, mood),
       ].join('\n'),
     }
   }

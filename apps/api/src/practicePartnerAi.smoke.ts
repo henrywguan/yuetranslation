@@ -31,6 +31,8 @@ import {
   normalizeVerdict,
   practicePartnerSampling,
   recentSpeakOpenings,
+  recentPracticePartnerMessages,
+  PRACTICE_PARTNER_HISTORY_LIMIT,
   resolvePracticePartnerCategory,
   resolvePracticePartnerDifficulty,
   sanitizeSpeak,
@@ -229,6 +231,20 @@ const judge = buildPracticePartnerTurn(
   { streak: 6, missStreak: 0 },
 )
 assert.equal(judge.history.length, 1)
+
+const longThread = Array.from({ length: 30 }, (_, i) => ({
+  role: (i % 2 === 0 ? 'assistant' : 'user') as 'assistant' | 'user',
+  content: i === 29 ? '對唔住' : `line ${i}`,
+}))
+const windowed = recentPracticePartnerMessages(longThread)
+assert.equal(windowed.length, PRACTICE_PARTNER_HISTORY_LIMIT)
+assert.equal(windowed[windowed.length - 1]?.content, '對唔住')
+const capped = buildPracticePartnerTurn(longThread, previous, 'common', 'mainlander', {
+  streak: 0,
+  missStreak: 0,
+})
+assert.equal(capped.history.length, PRACTICE_PARTNER_HISTORY_LIMIT - 1)
+assert.match(capped.turn, /LEARNER SAID: 對唔住/)
 assert.match(judge.turn, /\[JUDGE\]/)
 assert.match(judge.turn, /\[CATEGORY\] common/)
 assert.match(judge.turn, /\[DIFFICULTY\] mainlander/)
