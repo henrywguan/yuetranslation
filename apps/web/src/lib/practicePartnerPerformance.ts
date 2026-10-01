@@ -85,6 +85,46 @@ export function reactionHoldMs(reaction: string): number {
   return Math.min(4200, Math.max(480, chars * 85 + 360))
 }
 
+export function phraseHoldMs(phrase: string): number {
+  const chars = [...phrase.trim()].length
+  return Math.min(5200, Math.max(700, chars * 110 + 280))
+}
+
+export function cueHoldMs(cue: string): number {
+  const chars = [...cue.trim()].length
+  return Math.min(2800, Math.max(420, chars * 70 + 200))
+}
+
+function isHan(ch: string): boolean {
+  return /\p{Script=Han}/u.test(ch)
+}
+
+/** How many 漢字 of the target were said, in order, from the start. */
+export function litHanCount(target: string, heard: string): number {
+  const heardHan = [...heard].filter(isHan)
+  let heardAt = 0
+  let count = 0
+  for (const ch of target) {
+    if (!isHan(ch)) continue
+    if (heardHan[heardAt] !== ch) break
+    heardAt += 1
+    count += 1
+  }
+  return count
+}
+
+/** True where the better line’s 漢字 differs from what was heard, in order. */
+export function betterLineMarks(better: string, heard: string): boolean[] {
+  const heardHan = [...heard].filter(isHan)
+  let heardAt = 0
+  return [...better].map((ch) => {
+    if (!isHan(ch)) return false
+    const changed = heardHan[heardAt] !== ch
+    heardAt += 1
+    return changed
+  })
+}
+
 export function asPartnerPerformance(raw: unknown): PartnerPerformance | null {
   if (!raw || typeof raw !== 'object') return null
   const row = raw as Record<string, unknown>

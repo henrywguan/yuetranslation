@@ -19,9 +19,12 @@ import {
   type PracticePartnerDrillTarget,
 } from '../lib/adminApi'
 import {
+  betterLineMarks,
   deliveryForPartnerTurn,
+  litHanCount,
   partnerCaption,
   partnerCaptionLayout,
+  phraseHoldMs,
   reactionHoldMs,
   retryChunk,
   withLockedPhrase,
@@ -417,6 +420,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   )
   /** Last partner line — stays on screen until the user starts speaking. */
   const [partnerHold, setPartnerHold] = useState<string | null>(null)
+  const [spokenBeat, setSpokenBeat] = useState<'reaction' | 'phrase' | 'cue' | null>(null)
+  const [sealOpen, setSealOpen] = useState(false)
   const [partnerBeats, setPartnerBeats] = useState<PartnerPerformance | null>(null)
   /** Fail correction: what was heard, plus the piece to retry. */
   const [missCard, setMissCard] = useState<{ said: string; chunk: string } | null>(null)
@@ -457,6 +462,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const ttsLiveRef = useRef(false)
   const ttsGenRef = useRef(0)
   const beatTimerRef = useRef(0)
+  const phraseBeatTimerRef = useRef(0)
   const partnerBeatsRef = useRef<PartnerPerformance | null>(null)
   const lastMissRef = useRef<{ said: string; zh: string; en: string } | null>(null)
   const zhFlashTimerRef = useRef(0)
@@ -639,6 +645,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setFsTypeOpen(false)
     setVoiceMenuOpen(false)
     window.clearTimeout(beatTimerRef.current)
+    window.clearTimeout(phraseBeatTimerRef.current)
     ttsGenRef.current += 1
     ttsLiveRef.current = false
     partnerBeatsRef.current = null
@@ -785,11 +792,23 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       setYouLive(null)
       setCaption({ role: 'partner', text: reply })
       window.clearTimeout(beatTimerRef.current)
-      if (reacting && beats) {
+      window.clearTimeout(phraseBeatTimerRef.current)
+      const reactionMs = reacting && beats ? reactionHoldMs(beats.reaction) : 0
+      const phraseMs = beats?.phrase ? phraseHoldMs(beats.phrase) : 0
+      const hasCue = Boolean(beats?.cue.trim())
+      setSpokenBeat(reactionMs ? 'reaction' : beats?.phrase ? 'phrase' : null)
+      if (reactionMs) {
         beatTimerRef.current = window.setTimeout(() => {
           if (ttsGenRef.current !== gen || !ttsLiveRef.current) return
           setMood('speaking')
-        }, reactionHoldMs(beats.reaction))
+          setSpokenBeat('phrase')
+        }, reactionMs)
+      }
+      if (hasCue) {
+        phraseBeatTimerRef.current = window.setTimeout(() => {
+          if (ttsGenRef.current !== gen || !ttsLiveRef.current) return
+          setSpokenBeat('cue')
+        }, reactionMs + phraseMs)
       }
       // After the LLM round-trip we are outside the user gesture. Unlock must
       // have run on Talk/Send; still bound speak so a stalled play()/speechSynthesis
@@ -817,9 +836,11 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         setError(ttsMsg)
       } finally {
         window.clearTimeout(beatTimerRef.current)
+        window.clearTimeout(phraseBeatTimerRef.current)
       }
       if (ttsGenRef.current !== gen) return
       ttsLiveRef.current = false
+      setSpokenBeat(null)
       setMood((current) => (current === 'listening' ? current : 'idle'))
       setCaption({ role: 'partner', text: reply })
     },
@@ -832,6 +853,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       const gen = (ttsGenRef.current += 1)
       ttsLiveRef.current = true
       window.clearTimeout(beatTimerRef.current)
+      window.clearTimeout(phraseBeatTimerRef.current)
+      setSpokenBeat('phrase')
       setMood('speaking')
       prepareLoudTtsPlayback()
       try {
@@ -852,6 +875,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       }
       if (ttsGenRef.current !== gen) return
       ttsLiveRef.current = false
+      setSpokenBeat(null)
       setMood((current) => (current === 'listening' ? current : 'idle'))
     },
     [partnerVoice],
@@ -1278,6 +1302,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
     sessionRef.current = session
     window.clearTimeout(beatTimerRef.current)
+    window.clearTimeout(phraseBeatTimerRef.current)
     if (ttsLiveRef.current || isTtsPlaying()) {
       // In-flight reply must not snap the orb to idle after the mic is live.
       ttsGenRef.current += 1
@@ -1606,6 +1631,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       window.clearTimeout(verdictTimerRef.current)
       window.clearTimeout(zhFlashTimerRef.current)
       window.clearTimeout(beatTimerRef.current)
+    window.clearTimeout(phraseBeatTimerRef.current)
       void stopMic()
       stopSpeaking()
     }
@@ -1717,6 +1743,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     PRACTICE_PARTNER_DIFFICULTIES.find((d) => d.id === difficulty) ||
     PRACTICE_PARTNER_DIFFICULTIES[1]
 
+  const litCount =
+    listening && youLive && activeDrill ? litHanCount(activeDrill.zh, youLive.text) : 0
+  const lineMarks = correction ? betterLineMarks(correction.zh, correction.said) : []
   const drillCloze = activeDrill ? finishLineCloze(activeDrill.zh) : null
   const cardFace = practicePartnerCardShows(move, difficulty, Boolean(drillCloze))
   const freeLine = sessionKind !== 'drill'
@@ -2005,15 +2034,19 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 {group.labelEn}
                 <span lang="zh-HK"> {group.labelZh}</span>
               </p>
-              <ul className="partner-lab-situation-list">
+              <ul className="partner-lab-place-rail">
                 {situationsInGroup(group.id).map((place) => (
                   <li key={place.id}>
-                    <button type="button" className="partner-lab-open" onClick={() => beginSituation(place.id)}>
-                      <span className="partner-lab-open-en">{place.placeEn}</span>
-                      <span className="partner-lab-open-zh" lang="zh-HK">
+                    <button
+                      type="button"
+                      className={`partner-lab-place partner-lab-place--${group.id}`}
+                      onClick={() => beginSituation(place.id)}
+                    >
+                      <span className="partner-lab-place-zh" lang="zh-HK">
                         {place.placeZh}
                       </span>
-                      <span className="partner-lab-open-hint">{place.blurb}</span>
+                      <span className="partner-lab-place-en">{place.placeEn}</span>
+                      <span className="partner-lab-place-blurb">{place.blurb}</span>
                     </button>
                   </li>
                 ))}
@@ -2059,6 +2092,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       className={`partner-lab partner-lab--companion${entry === 'hub' ? ' is-hub' : ''}${fullscreen ? ' is-fullscreen' : ''}${
         verdictFlash === 'fail' ? ' is-fail-flash' : ''
       }`}
+      data-wash={sessionKind === 'situation' ? situationMeta?.group : undefined}
       aria-label="Practice Partner lab"
     >
       <header className="partner-lab-head">
@@ -2151,13 +2185,27 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         </div>
       </header>
 
-      {sessionKind === 'situation' && !fullscreen ? (
-        <PartnerSituationMix
-          personality={personality}
-          goal={goal}
-          onPersonality={choosePersonality}
-          onGoal={chooseGoal}
-        />
+      {sessionKind === 'situation' && situationMeta && !fullscreen ? (
+        <div className="partner-lab-seal-row">
+          <button
+            type="button"
+            className="partner-lab-seal"
+            aria-expanded={sealOpen}
+            onClick={() => setSealOpen((open) => !open)}
+          >
+            <span lang="zh-HK">{situationMeta.placeZh}</span>
+            <span>{practicePartnerPersonality(personality)?.labelEn}</span>
+            <span>{practicePartnerGoal(goal)?.labelEn}</span>
+          </button>
+          {sealOpen ? (
+            <PartnerSituationMix
+              personality={personality}
+              goal={goal}
+              onPersonality={choosePersonality}
+              onGoal={chooseGoal}
+            />
+          ) : null}
+        </div>
       ) : null}
 
       <div
@@ -2199,6 +2247,14 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </span>
           <span className="is-kept">{keptLines.length} kept</span>
         </div>
+
+        {spokenBeat ? (
+          <div className="partner-lab-beats" aria-hidden="true">
+            <i className={spokenBeat === 'reaction' ? 'is-on' : undefined} />
+            <i className={spokenBeat === 'phrase' ? 'is-on' : undefined} />
+            <i className={spokenBeat === 'cue' ? 'is-on' : undefined} />
+          </div>
+        ) : null}
 
         {verdictFlash === 'pass' ? (
           <div className="partner-lab-pass-burst" aria-hidden="true">
@@ -2308,9 +2364,15 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               ) : null}
               {correction ? (
                 <div className="partner-lab-correction">
-                  <p>Heard {correction.said}</p>
-                  <p lang="zh-HK">{correction.zh}</p>
-                  {correction.why ? <p>{correction.why}</p> : null}
+                  <p className="partner-lab-ribbon is-heard">{correction.said}</p>
+                  <p className="partner-lab-ribbon is-better" lang="zh-HK">
+                    {[...correction.zh].map((ch, i) => (
+                      <span key={`${i}-${ch}`} className={lineMarks[i] ? 'is-changed' : undefined}>
+                        {ch}
+                      </span>
+                    ))}
+                  </p>
+                  {correction.why ? <p className="partner-lab-miss-why">{correction.why}</p> : null}
                   <button type="button" onClick={retryCorrection}>
                     Retry
                   </button>
@@ -2333,7 +2395,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 <div
                   className={`partner-lab-drill-zh${difficulty === 'new_learner' ? ' is-support' : ''}${
                     zhFlash ? ' is-jade-flash' : ''
-                  }`}
+                  }${spokenBeat === 'phrase' ? ' is-phrase-beat' : ''}`}
                   lang="zh-HK"
                 >
                   <span className="partner-lab-drill-zh-chars">
@@ -2341,11 +2403,17 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                       ...(difficulty === 'mainlander' && !freeLine && cardFace.zh === 'cloze' && drillCloze
                         ? drillCloze
                         : activeDrill.zh),
-                    ].map((ch, i) => (
+                    ].map((ch, i) => {
+                      const hanBefore = [...(difficulty === 'mainlander' && !freeLine && cardFace.zh === 'cloze' && drillCloze
+                        ? drillCloze
+                        : activeDrill.zh
+                      ).slice(0, i)].filter((unit) => isHanChar(unit)).length
+                      const lit = isHanChar(ch) && hanBefore < litCount
+                      return (
                       <button
                         key={`${zhFlash}-${i}-${ch}`}
                         type="button"
-                        className={`partner-lab-char${zhFlash ? ' is-jade' : ''}`}
+                        className={`partner-lab-char${zhFlash ? ' is-jade' : ''}${lit ? ' is-lit' : ''}`}
                         style={zhFlash ? { animationDelay: `${i * 32}ms` } : undefined}
                         onClick={(event) => {
                           event.stopPropagation()
@@ -2360,7 +2428,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                       >
                         {ch}
                       </button>
-                    ))}
+                      )
+                    })}
                   </span>
                   <button
                     type="button"
