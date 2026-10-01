@@ -2023,14 +2023,13 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             </span>
           </button>
         </nav>
-        <button type="button" className="partner-companion-mic" onClick={speakWithHarbor}>
+        <button type="button" className="partner-companion-mic" aria-label="Speak" onClick={speakWithHarbor}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
               fill="currentColor"
               d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-3.07A7 7 0 0 0 19 11h-2z"
             />
           </svg>
-          <span>Speak</span>
         </button>
         <header className="partner-lab-head partner-lab-head--topic">
           <div>
