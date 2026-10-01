@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react'
 import {
@@ -460,7 +461,180 @@ const PartnerYouLine = forwardRef<
   )
 })
 
-export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' | 'hub' }) {
+const STATUS_LOCK = (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      fill="currentColor"
+      d="M7 10V7a5 5 0 0 1 10 0v3h1.2A1.8 1.8 0 0 1 20 11.8v8.4A1.8 1.8 0 0 1 18.2 22H5.8A1.8 1.8 0 0 1 4 20.2v-8.4A1.8 1.8 0 0 1 5.8 10H7zm2 0h6V7a3 3 0 0 0-6 0v3z"
+    />
+  </svg>
+)
+
+const STATUS_UNLOCK = (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      fill="currentColor"
+      d="M8 10V7a4 4 0 0 1 7.4-2.1l1.7-1.1A6 6 0 0 0 6 7v3H5.8A1.8 1.8 0 0 0 4 11.8v8.4A1.8 1.8 0 0 0 5.8 22h12.4a1.8 1.8 0 0 0 1.8-1.8v-8.4a1.8 1.8 0 0 0-1.8-1.8H8zm-2.2 2h12.4v8.4H5.8V12z"
+    />
+  </svg>
+)
+
+const STATUS_MIN = (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path fill="currentColor" d="M6.7 9.2 12 14.5l5.3-5.3 1.4 1.4L12 17.3 5.3 10.6z" />
+  </svg>
+)
+
+function PartnerStatusCard({
+  timeRef,
+  status,
+  modeLabel,
+  modeEn,
+  modeZh,
+  kept,
+}: {
+  timeRef: RefObject<HTMLSpanElement | null>
+  status: string
+  modeLabel: string
+  modeEn: string
+  modeZh: string
+  kept: number
+}) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const drag = useRef<{ id: number; dx: number; dy: number } | null>(null)
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const [mini, setMini] = useState(false)
+  const [locked, setLocked] = useState(false)
+  const [pulse, setPulse] = useState(false)
+  const [shake, setShake] = useState(false)
+  const [dragging, setDragging] = useState(false)
+
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.stopPropagation()
+    if ((event.target as HTMLElement).closest('button')) return
+    if (locked) {
+      setShake(true)
+      return
+    }
+    const el = cardRef.current
+    const parent = el?.offsetParent as HTMLElement | null
+    if (!el || !parent) return
+    const rect = el.getBoundingClientRect()
+    const parentRect = parent.getBoundingClientRect()
+    drag.current = {
+      id: event.pointerId,
+      dx: event.clientX - rect.left,
+      dy: event.clientY - rect.top,
+    }
+    setPos((current) => current ?? { x: rect.left - parentRect.left, y: rect.top - parentRect.top })
+    setDragging(true)
+    el.setPointerCapture(event.pointerId)
+  }
+
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!drag.current || drag.current.id !== event.pointerId) return
+    const el = cardRef.current
+    const parent = el?.offsetParent as HTMLElement | null
+    if (!el || !parent) return
+    const parentRect = parent.getBoundingClientRect()
+    const maxX = Math.max(0, parent.clientWidth - el.offsetWidth)
+    const maxY = Math.max(0, parent.clientHeight - el.offsetHeight)
+    setPos({
+      x: Math.min(maxX, Math.max(0, event.clientX - parentRect.left - drag.current.dx)),
+      y: Math.min(maxY, Math.max(0, event.clientY - parentRect.top - drag.current.dy)),
+    })
+  }
+
+  const endDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (drag.current?.id !== event.pointerId) return
+    drag.current = null
+    setDragging(false)
+  }
+
+  return (
+    <div
+      ref={cardRef}
+      className={`partner-companion-readout is-sitting partner-status-card${mini ? ' is-mini' : ''}${
+        locked ? ' is-locked' : ''
+      }${pulse ? ' is-lock-anim' : ''}${shake ? ' is-locked-shake' : ''}${dragging ? ' is-dragging' : ''}`}
+      style={pos ? { left: pos.x, top: pos.y } : undefined}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onClick={(event) => event.stopPropagation()}
+      onAnimationEnd={(event) => {
+        if (event.animationName === 'partner-status-lock-spin') setPulse(false)
+        if (event.animationName === 'partner-status-shake') setShake(false)
+      }}
+    >
+      <div className="partner-status-tools">
+        <button
+          type="button"
+          className="partner-status-lock"
+          aria-pressed={locked}
+          aria-label={locked ? 'Unlock status' : 'Lock status'}
+          onClick={(event) => {
+            event.stopPropagation()
+            setLocked((value) => !value)
+            setPulse(true)
+          }}
+        >
+          {locked ? STATUS_LOCK : STATUS_UNLOCK}
+        </button>
+        <button
+          type="button"
+          className="partner-status-min"
+          aria-pressed={mini}
+          aria-label={mini ? 'Expand status' : 'Minimize status'}
+          onClick={(event) => {
+            event.stopPropagation()
+            setMini((value) => !value)
+          }}
+        >
+          {STATUS_MIN}
+        </button>
+      </div>
+      <p className="partner-status-mini">{status}</p>
+      <div className="partner-status-body">
+        <div className="partner-status-clip">
+          <dl>
+            <div>
+              <dt>Status</dt>
+              <dd>{status}</dd>
+            </div>
+            <div>
+              <dt>{modeLabel}</dt>
+              <dd>
+                {modeEn}
+                <span lang="zh-HK">{modeZh}</span>
+              </dd>
+            </div>
+            <div>
+              <dt>Time</dt>
+              <dd>
+                <span ref={timeRef}>0:00</span>
+              </dd>
+            </div>
+            <div>
+              <dt>Kept</dt>
+              <dd>{kept}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function AdminPracticePartnerLab({
+  entry = 'admin',
+  onHubPlace,
+}: {
+  entry?: 'admin' | 'hub'
+  /** Hub only. The page back arrow uses this to return to the orb. */
+  onHubPlace?: (place: { atOrb: boolean; backToOrb: () => void }) => void
+}) {
   const [mood, setMood] = useState<PartnerMood>('idle')
   const moodRef = useRef(mood)
   moodRef.current = mood
@@ -1557,8 +1731,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setOrbitSheet(null)
   }, [clearDrillSession, commitSitting])
 
-  const changeTopic = useCallback(() => {
-    if (busy || listening) return
+  const leaveSitting = useCallback(() => {
     const sitting = sittingRef.current
     const lines = sitting.sessionLines
     const misses = sitting.misses
@@ -1576,9 +1749,35 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     commitSitting(beginPartnerSitting(sitting))
     setFullscreen(false)
     setScoresOpen(false)
-    setOrbitSheet(lines.length || misses.length || threadRef.current.length ? 'saved' : null)
+    setFsTypeOpen(false)
+    setVoiceMenuOpen(false)
+    setOrbitSheet(null)
     setTopicReady(false)
-  }, [busy, clearDrillSession, commitSitting, listening])
+  }, [clearDrillSession, commitSitting])
+
+  const changeTopic = useCallback(() => {
+    if (busy || listening) return
+    const sitting = sittingRef.current
+    const hasKept = sitting.sessionLines.length || sitting.misses.length || threadRef.current.length
+    leaveSitting()
+    setOrbitSheet(hasKept ? 'saved' : null)
+  }, [busy, leaveSitting, listening])
+
+  const backToOrb = useCallback(() => {
+    if (topicReady) leaveSitting()
+    else setOrbitSheet(null)
+  }, [leaveSitting, topicReady])
+
+  const backToOrbRef = useRef(backToOrb)
+  backToOrbRef.current = backToOrb
+
+  useEffect(() => {
+    if (entry !== 'hub' || !onHubPlace) return
+    onHubPlace({
+      atOrb: !topicReady && orbitSheet == null,
+      backToOrb: () => backToOrbRef.current(),
+    })
+  }, [entry, onHubPlace, orbitSheet, topicReady])
 
   const armScene = useCallback(
     (lines: PartnerKeptLine[], placeEn: string, placeZh: string) => {
@@ -2493,29 +2692,14 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           <i className="partner-lab-orbit-arc is-b" />
           <i className="partner-lab-orbit-arc is-c" />
         </div>
-        <dl className="partner-companion-readout is-sitting">
-          <div>
-            <dt>Status</dt>
-            <dd>{listening ? 'You' : moodMeta.label}</dd>
-          </div>
-          <div>
-            <dt>{sessionKind === 'situation' ? 'Place' : sessionKind === 'open' ? 'Mode' : 'Path'}</dt>
-            <dd>
-              {categoryMeta.labelEn}
-              <span lang="zh-HK">{categoryMeta.labelZh}</span>
-            </dd>
-          </div>
-          <div>
-            <dt>Time</dt>
-            <dd>
-              <span ref={sittingLabelRef}>0:00</span>
-            </dd>
-          </div>
-          <div>
-            <dt>Kept</dt>
-            <dd>{keptLines.length}</dd>
-          </div>
-        </dl>
+        <PartnerStatusCard
+          timeRef={sittingLabelRef}
+          status={listening ? 'You' : moodMeta.label}
+          modeLabel={sessionKind === 'situation' ? 'Place' : sessionKind === 'open' ? 'Mode' : 'Path'}
+          modeEn={categoryMeta.labelEn}
+          modeZh={categoryMeta.labelZh}
+          kept={keptLines.length}
+        />
 
         {spokenBeat ? (
           <div className="partner-lab-beats" aria-hidden="true">
@@ -2914,6 +3098,16 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 aria-label={talkLabel}
                 onClick={toggleTalk}
               >
+                <OrbitalSphereBackground
+                  className="partner-companion-mic-globe"
+                  placement="badge"
+                  speed={0.9}
+                  particleSize={0.22}
+                  particleOpacity={0.92}
+                  orbitOpacity={0.55}
+                  haloOpacity={0.4}
+                  scale={1}
+                />
                 <svg viewBox="0 0 24 24" aria-hidden="true" className="partner-lab-fs-mic-icon">
                   <path
                     fill="currentColor"

@@ -1,9 +1,12 @@
+import { useCallback, useState } from 'react'
 import { AdminPracticePartnerLab } from '../components/AdminPracticePartnerLab'
 import { BiText } from '../components/BiText'
 import { openApp } from '../lib/siteLinks'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { ui } from '../lib/uiCopy'
 import './PracticePage.css'
+
+type HubPlace = { atOrb: boolean; backToOrb: () => void }
 
 const BACK_ARROW = (
   <svg viewBox="0 0 46 40" aria-hidden="true">
@@ -19,24 +22,37 @@ export function PracticePage() {
     path: '/#/practice',
   })
 
+  const [hubPlace, setHubPlace] = useState<HubPlace | null>(null)
+  const onHubPlace = useCallback((place: HubPlace) => {
+    setHubPlace(place)
+  }, [])
+  const atOrb = hubPlace?.atOrb !== false
+
   return (
     <div className="practice-page">
       <header className="practice-page-bar">
-        <button type="button" className="practice-back" onClick={() => openApp()}>
+        <button
+          type="button"
+          className="practice-back"
+          onClick={() => {
+            if (hubPlace && !hubPlace.atOrb) hubPlace.backToOrb()
+            else openApp()
+          }}
+        >
           <span className="practice-back-mark" aria-hidden="true">
             <span className="practice-back-box">
               <span className="practice-back-elem">{BACK_ARROW}</span>
               <span className="practice-back-elem">{BACK_ARROW}</span>
             </span>
           </span>
-          <BiText copy={ui.backToApp} size="sm" hideJp order="zh-first" />
+          <BiText copy={atOrb ? ui.backToApp : ui.backToHarbor} size="sm" hideJp order="zh-first" />
         </button>
         <h1 className="practice-page-title">
           <BiText copy={ui.practicePartnerShort} size="md" hideJp />
         </h1>
       </header>
       <div className="practice-page-lab">
-        <AdminPracticePartnerLab entry="hub" />
+        <AdminPracticePartnerLab entry="hub" onHubPlace={onHubPlace} />
       </div>
     </div>
   )

@@ -4061,19 +4061,6 @@ div.partner-map-next {
   background: none;
 }
 
-.partner-lab--companion.is-fullscreen .partner-lab-fs-mic {
-  grid-area: mic;
-  width: 6.6rem;
-  height: 6.6rem;
-  border: 1px solid color-mix(in srgb, #00e5ff 75%, white);
-  background:
-    radial-gradient(circle at 50% 36%, color-mix(in srgb, #fff 32%, transparent), transparent 38%),
-    radial-gradient(circle at 50% 62%, color-mix(in srgb, #00e5ff 42%, #071428), #050816 74%);
-  box-shadow:
-    0 0 0 12px color-mix(in srgb, #00e5ff 14%, transparent),
-    0 0 60px color-mix(in srgb, #00e5ff 40%, transparent);
-}
-
 .partner-lab--companion.is-fullscreen .partner-lab-fs-change-topic:nth-of-type(1) {
   grid-area: topic;
 }
@@ -4245,22 +4232,33 @@ div.partner-map-next {
 .partner-lab--companion.is-hub .partner-lab-fs-mic,
 .partner-lab--companion.is-fullscreen .partner-lab-fs-mic {
   grid-area: mic;
-  width: 6.6rem;
-  height: 6.6rem;
-  border: 1px solid color-mix(in srgb, #00e5ff 75%, white);
-  background:
-    radial-gradient(circle at 50% 36%, color-mix(in srgb, #fff 32%, transparent), transparent 38%),
-    radial-gradient(circle at 50% 62%, color-mix(in srgb, #00e5ff 42%, #071428), #050816 74%);
-  box-shadow:
-    0 0 0 12px color-mix(in srgb, #00e5ff 14%, transparent),
-    0 0 60px color-mix(in srgb, #00e5ff 40%, transparent);
+  width: 4.25rem;
+  height: 4.25rem;
+  overflow: hidden;
+  border: 1.5px solid color-mix(in srgb, #00e5ff 82%, white);
+  background: #050816;
+  box-shadow: none;
+  color: #e8fff8;
 }
 
-.partner-lab--companion.is-hub .partner-lab-fs-mic.is-live {
+.partner-lab--companion .partner-lab-fs-mic .partner-lab-fs-mic-icon {
+  position: relative;
+  z-index: 1;
+  width: 1.15rem;
+  height: 1.15rem;
+  filter: drop-shadow(0 0 5px #050816);
+}
+
+.partner-lab--companion .partner-lab-fs-mic:hover:not(:disabled),
+.partner-lab--companion .partner-lab-fs-mic:focus-visible {
+  border-color: #34d399;
+}
+
+.partner-lab--companion.is-hub .partner-lab-fs-mic.is-live,
+.partner-lab--companion.is-fullscreen .partner-lab-fs-mic.is-live {
+  border-color: #34d399;
   animation: partner-lab-mic-pulse 1.1s ease-in-out infinite alternate;
-  box-shadow:
-    0 0 0 14px color-mix(in srgb, #34d399 22%, transparent),
-    0 0 64px color-mix(in srgb, #34d399 36%, transparent);
+  box-shadow: none;
 }
 
 .partner-lab--companion.is-hub .partner-lab-fs-change-topic:nth-of-type(1),
@@ -4518,35 +4516,8 @@ div.partner-map-next {
   border-top-color: #8b5cf6;
 }
 
-.partner-lab--companion .partner-lab-fs-mic::before,
-.partner-lab--companion .partner-lab-fs-mic::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, #00e5ff 70%, white);
-  animation: partner-mic-sonar 3.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-  pointer-events: none;
-}
-
 .partner-lab--companion .partner-lab-fs-mic {
   position: relative;
-}
-
-.partner-lab--companion .partner-lab-fs-mic::after {
-  animation-delay: -1.7s;
-  border-color: color-mix(in srgb, #8b5cf6 80%, white);
-}
-
-@keyframes partner-mic-sonar {
-  0% {
-    transform: scale(1);
-    opacity: 0.65;
-  }
-  100% {
-    transform: scale(1.9);
-    opacity: 0;
-  }
 }
 
 .partner-lab--topic.partner-lab--companion .partner-lab-aura {
@@ -4579,8 +4550,6 @@ div.partner-map-next {
   .partner-outer-ring::before,
   .partner-outer-ring::after,
   .partner-outer-ring button::before,
-  .partner-lab--companion .partner-lab-fs-mic::before,
-  .partner-lab--companion .partner-lab-fs-mic::after,
   .partner-orbit-track,
   .partner-orbit-comet,
   .partner-orbit-bead,
@@ -4807,6 +4776,26 @@ div.partner-map-next {
   height: min(94vw, 440px);
 }
 
+/* Hub orb fills the phone. The rings are tall, not a small circle at the top. */
+.partner-lab--companion.is-hub .partner-orbit-field {
+  top: 52%;
+  width: 132vw;
+  height: 100dvh;
+  aspect-ratio: auto;
+}
+
+.partner-lab--topic.partner-lab--companion.is-hub:not(.is-sheet) .partner-outer-ring {
+  top: 52%;
+  width: min(94vw, 28rem);
+  height: min(62dvh, 36rem);
+}
+
+.partner-lab--topic.partner-lab--companion.is-hub:not(.is-sheet) .partner-lab-orbit-ring,
+.partner-lab--topic.partner-lab--companion.is-hub:not(.is-sheet) .partner-lab-aura,
+.partner-lab--topic.partner-lab--companion.is-hub:not(.is-sheet) .partner-companion-readout {
+  top: 52%;
+}
+
 .partner-lab--topic.partner-lab--companion .partner-lab-orbit-ring,
 .partner-lab--topic.partner-lab--companion .partner-lab-aura {
   top: 38%;
@@ -4857,6 +4846,40 @@ div.partner-map-next {
   padding-bottom: 0.85rem;
 }
 
+/* A circle on the hub takes the whole screen. The arrow returns to the orb. */
+.partner-lab--companion.is-hub.is-sheet .partner-outer-ring,
+.partner-lab--companion.is-hub.is-sheet .partner-orbit-field,
+.partner-lab--companion.is-hub.is-sheet .partner-companion-mic,
+.partner-lab--companion.is-hub.is-sheet .partner-companion-readout,
+.partner-lab--companion.is-hub.is-sheet .partner-lab-orbit-ring,
+.partner-lab--companion.is-hub.is-sheet .partner-lab-aura,
+.partner-lab--companion.is-hub.is-sheet .partner-lab-orb {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.partner-lab--companion.is-hub .partner-holo-sheet.is-open {
+  inset: 0;
+  z-index: 8;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  transform: none;
+  border: 0;
+  border-radius: 0;
+  background: #050816;
+  box-shadow: none;
+  padding:
+    max(4.8rem, calc(env(safe-area-inset-top) + 3.8rem))
+    max(1rem, env(safe-area-inset-right))
+    max(1.2rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.partner-lab--companion.is-hub .partner-holo-sheet.is-open .partner-map-frame {
+  height: min(68dvh, 720px);
+}
+
 .partner-holo-sheet .partner-path {
   gap: 0.35rem;
 }
@@ -4895,13 +4918,184 @@ div.partner-map-next {
   left: max(0.75rem, env(safe-area-inset-left));
   top: max(4.5rem, calc(env(safe-area-inset-top) + 3.4rem));
   width: max-content;
-  max-width: min(46vw, 12.5rem);
+  max-width: min(52vw, 14rem);
   transform: none;
-  padding: 0.45rem 0.6rem;
+  padding: 0.4rem 0.5rem 0.5rem;
   border-radius: 0.85rem;
   background: color-mix(in srgb, #050816 86%, transparent);
   box-shadow: 0 0 0 1px color-mix(in srgb, #00e5ff 18%, transparent);
-  z-index: 5;
+  z-index: 8;
+}
+
+.partner-status-card.partner-companion-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.partner-status-card.is-locked {
+  cursor: default;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #34d399 70%, white);
+}
+
+.partner-status-card.is-dragging {
+  cursor: grabbing;
+}
+
+.partner-status-card.is-lock-anim {
+  animation: partner-status-card-pulse 0.55s ease;
+}
+
+.partner-status-card.is-locked-shake {
+  animation: partner-status-shake 0.38s ease;
+}
+
+.partner-status-card .partner-status-tools,
+.partner-status-card .partner-status-clip {
+  display: flex;
+}
+
+.partner-status-tools {
+  justify-content: flex-end;
+  gap: 0.2rem;
+}
+
+.partner-status-lock,
+.partner-status-min {
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, #00e5ff 12%, transparent);
+  color: #e8fff8;
+  cursor: pointer;
+}
+
+.partner-status-lock svg,
+.partner-status-min svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.partner-status-card.is-lock-anim .partner-status-lock svg {
+  animation: partner-status-lock-spin 0.55s cubic-bezier(0.2, 0.85, 0.2, 1);
+}
+
+.partner-status-min svg {
+  transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.partner-status-card.is-mini .partner-status-min svg {
+  transform: rotate(180deg);
+}
+
+.partner-status-card.is-locked .partner-status-lock {
+  color: #34d399;
+  background: color-mix(in srgb, #34d399 16%, transparent);
+}
+
+.partner-status-mini {
+  display: none;
+  margin: 0;
+  font-family: Syne, var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e8fff8;
+}
+
+.partner-status-card.is-mini .partner-status-mini {
+  display: block;
+}
+
+.partner-status-card .partner-status-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.22s ease;
+}
+
+.partner-status-card.is-mini .partner-status-body {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+.partner-status-clip {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.partner-status-card dl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.28rem 0.45rem;
+  margin: 0;
+}
+
+.partner-status-card dl div {
+  display: contents;
+}
+
+@keyframes partner-status-lock-spin {
+  0% {
+    transform: rotate(-28deg) scale(0.72);
+  }
+  55% {
+    transform: rotate(12deg) scale(1.18);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@keyframes partner-status-card-pulse {
+  0% {
+    box-shadow: 0 0 0 1px #00e5ff;
+  }
+  45% {
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, #34d399 65%, transparent),
+      0 0 18px color-mix(in srgb, #34d399 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 1px color-mix(in srgb, #34d399 70%, white);
+  }
+}
+
+@keyframes partner-status-shake {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  20% {
+    translate: -6px 0;
+  }
+  40% {
+    translate: 6px 0;
+  }
+  60% {
+    translate: -3px 0;
+  }
+  80% {
+    translate: 3px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partner-status-card.is-lock-anim,
+  .partner-status-card.is-lock-anim .partner-status-lock svg,
+  .partner-status-card.is-locked-shake,
+  .partner-status-body,
+  .partner-status-min svg {
+    animation: none;
+    transition: none;
+  }
 }
 
 .partner-lab--companion .partner-lab-caption-well {
