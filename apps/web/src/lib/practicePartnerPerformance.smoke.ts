@@ -84,4 +84,28 @@ assert.equal(mainland.primaryScript, null)
 assert.equal(mainland.secondaryText, '')
 assert.equal(mainland.secondaryScript, null)
 
+const stepped = partnerCaptionLayout({
+  difficulty: 'new_learner',
+  en: 'dog',
+  zh: '狗',
+  jyutping: 'gau2',
+  reaction: 'Repeat after me.',
+  cue: 'Your turn.',
+  beat: 'cue',
+})
+assert.equal(stepped.coachText, 'Your turn.')
+assert.equal(stepped.primaryText, 'dog')
+assert.equal(stepped.secondaryScript?.zh, '狗')
+const phraseBeat = partnerCaptionLayout({
+  difficulty: 'abc',
+  en: 'dog',
+  zh: '狗',
+  jyutping: 'gau2',
+  reaction: 'Repeat after me.',
+  cue: 'Your turn.',
+  beat: 'phrase',
+})
+assert.equal(phraseBeat.coachText, '')
+assert.equal(phraseBeat.primaryScript?.zh, '狗')
+
 console.log('practicePartnerPerformance.web.smoke: ok')

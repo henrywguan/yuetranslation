@@ -179,21 +179,25 @@ export function partnerCaptionLayout(input: {
   spoken?: string | null
   reaction?: string | null
   cue?: string | null
+  /** While the clip plays, the small line is only the beat you can hear. The phrase stays. */
+  beat?: 'reaction' | 'phrase' | 'cue' | null
 }): PartnerCaptionLayout {
   const en = tidyCaption(input.en)
   const zh = tidyCaption(input.zh)
   const jyutping = tidyCaption(input.jyutping)
   const spoken = tidyCaption(input.spoken || '')
-  const coach = tidyCaption(
-    [withoutPhrase(input.reaction || '', zh), withoutPhrase(input.cue || '', zh)].filter(Boolean).join(' '),
-  )
+  const reaction = tidyCaption(withoutPhrase(input.reaction || '', zh))
+  const cue = tidyCaption(withoutPhrase(input.cue || '', zh))
+  const coach = tidyCaption([reaction, cue].filter(Boolean).join(' '))
+  const stepped =
+    input.beat === 'reaction' ? reaction : input.beat === 'cue' ? cue : input.beat === 'phrase' ? '' : coach
   const script = zh ? { zh, jyutping } : null
 
   if (input.difficulty === 'mainlander') {
     return {
-      primaryText: spoken || zh,
+      primaryText: input.beat ? zh || spoken : spoken || zh,
       primaryScript: null,
-      coachText: '',
+      coachText: input.beat ? stepped : '',
       secondaryText: '',
       secondaryScript: null,
     }
@@ -203,15 +207,16 @@ export function partnerCaptionLayout(input: {
     return {
       primaryText: '',
       primaryScript: script,
-      coachText: coach || withoutPhrase(spoken, zh),
+      coachText: input.beat ? stepped : coach || withoutPhrase(spoken, zh),
       secondaryText: en,
       secondaryScript: null,
     }
   }
 
   const gloss = en || withoutPhrase(spoken, zh) || spoken
+  const coachSource = input.beat ? stepped : coach
   const coachText =
-    coach && gloss && coach.toLowerCase() === gloss.toLowerCase() ? '' : coach
+    coachSource && gloss && coachSource.toLowerCase() === gloss.toLowerCase() ? '' : coachSource
   return {
     primaryText: gloss,
     primaryScript: null,
