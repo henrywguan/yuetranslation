@@ -91,17 +91,14 @@ export function PracticePartnerPath({
           {note ? <span className="partner-path-note">{noteText(note)}</span> : null}
         </p>
       ) : (
-        <div className="partner-path-plate">
-          <p className="partner-path-kicker">Harbor Score</p>
-          <p className="partner-path-score-line">
-            <span className="partner-path-score-num">{score}</span>
-            <span className="partner-path-band">
-              {band.cefr} · {band.label}
-            </span>
-          </p>
-          <p className="partner-path-blurb">{note ? noteText(note) : band.blurb}</p>
-          <p className="partner-path-disclaimer">Practice bands paced like A1–B2. Not a formal exam.</p>
-        </div>
+        <p className="partner-path-score-line partner-path-ladder-score">
+          <span className="partner-path-kicker">Harbor Score</span>
+          <span className="partner-path-score-num">{score}</span>
+          <span className="partner-path-band">
+            {band.cefr} · {band.label}
+          </span>
+          {note ? <span className="partner-path-note">{noteText(note)}</span> : null}
+        </p>
       )}
       {compact && active ? (
         <div className="partner-path-units" aria-hidden="true">
