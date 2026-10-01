@@ -20,7 +20,7 @@ Updated: **2026-10-01** — Deep attack-surface research (all routes + prod); se
 | `forDocs` Vision without page burn | **FIXED** — 1 docs page / success |
 | Household invite null-email steal | **FIXED** — email required |
 | OOXML zip bomb | **HARDENED** — entry/text caps |
-| Harbor / Practice leaderboards | **Still High** — client-trusted scores (product) |
+| Harbor / Practice leaderboards | **Accepted (beta)** — client-trusted scores OK; not cheat-proof esports. Revisit only if abuse shows up. |
 | Guest unlimited TTS | **Accepted product** + Harbor amplify residual |
 | Full narrative | [`security-attack-surface-2026-10-01.md`](./security-attack-surface-2026-10-01.md) |
 

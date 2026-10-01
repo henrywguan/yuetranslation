@@ -85,8 +85,8 @@ No live Critical finding in current `main` + prod health.
 
 | Attack | How | Status |
 | --- | --- | --- |
-| Harbor leaderboard spoof | `PUT /api/harbor-quest` client XP/gold | NEEDS_HUMAN (trust model) |
-| Practice Partner board spoof | `PUT /api/practice-partner/leaderboard` | NEEDS_HUMAN |
+| Harbor leaderboard spoof | `PUT /api/harbor-quest` client XP/gold | **ACCEPTED (beta)** — Henry 2026-10-01: leave client-trusted; not competitive integrity |
+| Practice Partner board spoof | `PUT /api/practice-partner/leaderboard` | **ACCEPTED (beta)** — same as Harbor |
 | Harbor Realtime chat impersonation | Client-chosen userId/username | NEEDS_HUMAN (Realtime auth) |
 | Gift spam after inventory spoof | Gift API + public UUIDs | Soft RL only |
 
