@@ -3102,8 +3102,11 @@
 }
 
 .partner-lab-fs-mic-icon {
+  display: block;
   width: 1.7rem;
   height: 1.7rem;
+  justify-self: center;
+  align-self: center;
 }
 
 .partner-lab-fs-keyboard {
@@ -3906,15 +3909,25 @@
 }
 
 .partner-companion-mic svg {
+  grid-area: 1 / 1;
   width: 1.7rem;
   height: 1.7rem;
+  justify-self: center;
+  align-self: center;
+  display: block;
 }
 
 .partner-companion-mic span {
+  position: absolute;
+  left: 50%;
+  bottom: 0.7rem;
+  transform: translateX(-50%);
   font-family: Syne, var(--font-display);
   font-size: 0.68rem;
+  line-height: 1;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  pointer-events: none;
 }
 
 .partner-holo-sheet {
