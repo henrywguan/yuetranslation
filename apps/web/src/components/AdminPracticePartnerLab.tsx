@@ -206,15 +206,15 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
     particleOpacity: 0.55,
     orbitOpacity: 0.22,
     haloOpacity: 0.18,
-    hue: 0,
+    hue: 22,
   },
   listening: {
     speed: 1.2,
-    scale: 1.1,
-    particleOpacity: 0.82,
-    orbitOpacity: 0.4,
-    haloOpacity: 0.36,
-    hue: -6,
+    scale: 1.12,
+    particleOpacity: 0.88,
+    orbitOpacity: 0.46,
+    haloOpacity: 0.42,
+    hue: 38,
   },
   thinking: {
     speed: 0.5,
@@ -222,7 +222,7 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
     particleOpacity: 0.42,
     orbitOpacity: 0.18,
     haloOpacity: 0.28,
-    hue: 18,
+    hue: 62,
   },
   reacting: {
     speed: 1.35,
@@ -230,19 +230,26 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
     particleOpacity: 0.78,
     orbitOpacity: 0.36,
     haloOpacity: 0.4,
-    hue: 28,
+    hue: 8,
   },
   speaking: {
     speed: 1.65,
-    scale: 1.14,
-    particleOpacity: 0.92,
-    orbitOpacity: 0.48,
-    haloOpacity: 0.44,
-    hue: -12,
+    scale: 1.16,
+    particleOpacity: 0.94,
+    orbitOpacity: 0.52,
+    haloOpacity: 0.5,
+    hue: 28,
   },
 }
 
 const SILENCE_MS = 1600
+
+function formatSitting(seconds: number) {
+  const safe = Math.max(0, Math.floor(seconds))
+  const min = Math.floor(safe / 60)
+  const sec = safe % 60
+  return `${min}:${String(sec).padStart(2, '0')}`
+}
 
 type PartnerSessionKind = 'drill' | 'open' | 'scene' | 'situation'
 
@@ -393,6 +400,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [scoresOpen, setScoresOpen] = useState(false)
   const [voiceMenuOpen, setVoiceMenuOpen] = useState(false)
   const [topicReady, setTopicReady] = useState(false)
+  const [sittingSec, setSittingSec] = useState(0)
   const [listening, setListening] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -565,6 +573,18 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       }
     })()
   }
+
+  useEffect(() => {
+    if (!topicReady) {
+      setSittingSec(0)
+      return undefined
+    }
+    const started = Date.now()
+    const id = window.setInterval(() => {
+      setSittingSec(Math.floor((Date.now() - started) / 1000))
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [topicReady])
 
   useEffect(() => {
     if (mood !== 'speaking' && mood !== 'listening') {
@@ -1746,6 +1766,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       <section className="partner-lab partner-lab--topic" aria-label="Choose Practice Partner topic">
         <header className="partner-lab-head partner-lab-head--topic">
           <div>
+            <div className="partner-lab-presence" aria-hidden="true">
+              <span />
+            </div>
             <p className="partner-lab-kicker">
               {entry === 'hub' ? 'Beta' : 'Internal · not in app'}
             </p>
@@ -2108,7 +2131,22 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         }}
       >
         <div className="partner-lab-glow" aria-hidden="true" />
+        <div className="partner-lab-stars" aria-hidden="true" />
         <OrbitalSphereBackground className="partner-lab-orb" {...orbitProps} />
+        <div
+          className={`partner-lab-aura${
+            mood === 'listening' || mood === 'speaking' || mood === 'reacting' ? ' is-live' : ''
+          }`}
+          style={{ ['--amp' as string]: amp.toFixed(3) }}
+          aria-hidden="true"
+        />
+        <div className="partner-lab-orbit-ring" aria-hidden="true">
+          <i className="partner-lab-orbit-arc" />
+          <span className="is-state">{moodMeta.label}</span>
+          <span className="is-place">{categoryMeta.labelEn}</span>
+          <span className="is-time">{formatSitting(sittingSec)}</span>
+          <span className="is-kept">{keptLines.length} kept</span>
+        </div>
 
         {verdictFlash === 'pass' ? (
           <div className="partner-lab-pass-burst" aria-hidden="true">
@@ -2149,7 +2187,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         )}
 
         <div
-          className={`partner-lab-drill${activeDrill ? '' : ' is-empty'}${
+          className={`partner-lab-drill partner-lab-holo${activeDrill ? '' : ' is-empty'}${
             verdictFlash ? ` is-${verdictFlash}` : ''
           }`}
           aria-live="polite"
