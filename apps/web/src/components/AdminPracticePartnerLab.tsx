@@ -201,11 +201,11 @@ const MOODS: { id: PartnerMood; label: string; hint: string }[] = [
 
 const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
   idle: {
-    speed: 0.85,
-    scale: 1,
-    particleOpacity: 0.55,
-    orbitOpacity: 0.22,
-    haloOpacity: 0.18,
+    speed: 1.08,
+    scale: 1.06,
+    particleOpacity: 0.72,
+    orbitOpacity: 0.4,
+    haloOpacity: 0.3,
     hue: 0,
   },
   listening: {
@@ -1762,14 +1762,46 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         <div className="partner-universe" aria-hidden="true" />
         <div className="partner-lab-stars" aria-hidden="true" />
         <OrbitalSphereBackground className="partner-lab-orb" {...orbitProps} />
+        <div className="partner-orbit-field" aria-hidden="true">
+          <i className="partner-orbit-track is-a" />
+          <i className="partner-orbit-track is-b" />
+          <i className="partner-orbit-track is-c" />
+          <i className="partner-orbit-comet" />
+          <i className="partner-orbit-comet is-b" />
+          <i className="partner-orbit-bead" />
+          <i className="partner-orbit-bead is-b" />
+          <i className="partner-orbit-bead is-c" />
+        </div>
         <div className="partner-lab-aura" aria-hidden="true" />
         <div className="partner-lab-orbit-ring" aria-hidden="true">
           <i className="partner-lab-orbit-arc" />
-          <span className="is-state">Ready</span>
-          <span className="is-place">{categoryMeta.labelEn}</span>
-          <span className="is-time">{difficultyMeta.labelEn}</span>
-          <span className="is-kept">{keptLines.length} kept</span>
+          <i className="partner-lab-orbit-arc is-b" />
+          <i className="partner-lab-orbit-arc is-c" />
         </div>
+        <dl className="partner-companion-readout">
+          <div>
+            <dt>Status</dt>
+            <dd>Ready</dd>
+          </div>
+          <div>
+            <dt>Path</dt>
+            <dd>
+              {categoryMeta.labelEn}
+              <span lang="zh-HK">{categoryMeta.labelZh}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Level</dt>
+            <dd>
+              {difficultyMeta.labelEn}
+              <span lang="zh-HK">{difficultyMeta.labelZh}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Kept</dt>
+            <dd>{keptLines.length}</dd>
+          </div>
+        </dl>
         <div className="partner-lab-presence" aria-hidden="true">
           <span />
         </div>
@@ -2190,15 +2222,44 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           }`}
           aria-hidden="true"
         />
+        <div className="partner-orbit-field" aria-hidden="true">
+          <i className="partner-orbit-track is-a" />
+          <i className="partner-orbit-track is-b" />
+          <i className="partner-orbit-track is-c" />
+          <i className="partner-orbit-comet" />
+          <i className="partner-orbit-comet is-b" />
+          <i className="partner-orbit-bead" />
+          <i className="partner-orbit-bead is-b" />
+          <i className="partner-orbit-bead is-c" />
+        </div>
         <div className="partner-lab-orbit-ring" aria-hidden="true">
           <i className="partner-lab-orbit-arc" />
-          <span className="is-state">{moodMeta.label}</span>
-          <span className="is-place">{categoryMeta.labelEn}</span>
-          <span className="is-time" ref={sittingLabelRef}>
-            0:00
-          </span>
-          <span className="is-kept">{keptLines.length} kept</span>
+          <i className="partner-lab-orbit-arc is-b" />
+          <i className="partner-lab-orbit-arc is-c" />
         </div>
+        <dl className="partner-companion-readout is-sitting">
+          <div>
+            <dt>Status</dt>
+            <dd>{moodMeta.label}</dd>
+          </div>
+          <div>
+            <dt>{sessionKind === 'situation' ? 'Place' : sessionKind === 'open' ? 'Mode' : 'Path'}</dt>
+            <dd>
+              {categoryMeta.labelEn}
+              <span lang="zh-HK">{categoryMeta.labelZh}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Time</dt>
+            <dd>
+              <span ref={sittingLabelRef}>0:00</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Kept</dt>
+            <dd>{keptLines.length}</dd>
+          </div>
+        </dl>
 
         {verdictFlash === 'pass' ? (
           <div className="partner-lab-pass-burst" aria-hidden="true">
