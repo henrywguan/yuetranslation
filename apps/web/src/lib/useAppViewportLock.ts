@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
 /**
- * Native-app viewport lock for `#/app` only.
+ * Native-app viewport lock for `#/app` and `#/practice`.
  * Locks document scroll / rubber-band on html+body.
  * Does not resize for the soft keyboard — shell stays on `100dvh`.
  */

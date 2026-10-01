@@ -1,8 +1,13 @@
 .practice-page {
-  height: 100dvh;
+  position: fixed;
+  inset: 0;
+  height: var(--practice-vh, 100svh);
+  max-height: var(--practice-vh, 100svh);
   overflow: hidden;
+  overscroll-behavior: none;
   background: #050816;
   color: #e8fff8;
+  touch-action: manipulation;
 }
 
 .practice-page-bar {
@@ -141,5 +146,7 @@
 }
 
 .practice-page-lab {
-  min-height: 100dvh;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
