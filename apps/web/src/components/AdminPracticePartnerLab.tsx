@@ -1851,6 +1851,19 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           beat: spokenBeat,
         })
       : null
+  const phraseZh = activeDrill?.zh.trim() || ''
+  const rawCoach = learningCaption
+    ? ''
+    : spokenBeat === 'reaction'
+      ? partnerBeats?.reaction || ''
+      : spokenBeat === 'cue'
+        ? partnerBeats?.cue || ''
+        : spokenBeat === 'phrase'
+          ? ''
+          : [partnerBeats?.reaction, partnerBeats?.cue].filter(Boolean).join(' ')
+  const coachLine = phraseZh
+    ? rawCoach.split(phraseZh).join(' ').replace(/\s+/g, ' ').trim()
+    : rawCoach.replace(/\s+/g, ' ').trim()
 
   const openFsKeyboard = () => {
     if (busy || listening || !activeDrill) return
@@ -2010,14 +2023,23 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             </span>
           </button>
         </nav>
-        <button type="button" className="partner-companion-mic" onClick={speakWithHarbor}>
+        <button type="button" className="partner-companion-mic" aria-label="Speak" onClick={speakWithHarbor}>
+          <OrbitalSphereBackground
+            className="partner-companion-mic-globe"
+            placement="badge"
+            speed={0.9}
+            particleSize={0.22}
+            particleOpacity={0.92}
+            orbitOpacity={0.55}
+            haloOpacity={0.4}
+            scale={1}
+          />
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
               fill="currentColor"
               d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-3.07A7 7 0 0 0 19 11h-2z"
             />
           </svg>
-          <span>Speak</span>
         </button>
         <header className="partner-lab-head partner-lab-head--topic">
           <div>
@@ -2541,6 +2563,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </button>
         )}
 
+        <div className="partner-lab-caption-well">
         <div
           className={`partner-lab-drill partner-lab-holo${activeDrill ? '' : ' is-empty'}${
             verdictFlash ? ` is-${verdictFlash}` : ''
@@ -2748,10 +2771,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           <PartnerYouLine
             ref={youLineRef}
             listening={listening}
-            partnerHold={learningCaption ? null : partnerHold}
+            partnerHold={null}
             speaker={partnerSpeaker}
             hostRef={subtitleHostRef}
-            phrase={activeDrill ? { zh: activeDrill.zh, jyutping: activeDrill.jyutping } : null}
+            phrase={null}
             onSyllable={(jp) => {
               setGloss(null)
               setTonePop(toneNoteForSyllable(jp))
@@ -2813,6 +2836,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </p>
           {learningCaption?.coachText ? (
             <p className="partner-lab-subtitles-coach">{learningCaption.coachText}</p>
+          ) : coachLine ? (
+            <p className="partner-lab-subtitles-coach">{coachLine}</p>
           ) : null}
           {learningCaption ? (
             <>
@@ -2841,6 +2866,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           ) : (
             <p className="partner-lab-subtitles-text partner-lab-subtitles-held">{displayPrimary.text}</p>
           )}
+        </div>
         </div>
 
         <p className="partner-lab-status" aria-live="polite">

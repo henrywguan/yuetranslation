@@ -13,22 +13,126 @@
   pointer-events: none;
 }
 
-.practice-page-back {
+/* Sliding arrow — Uiverse.io by xopc333 (MIT)
+   https://uiverse.io/xopc333/modern-stingray-68 */
+.practice-back {
   pointer-events: auto;
-  appearance: none;
-  border: 1px solid color-mix(in srgb, #00e5ff 42%, transparent);
-  background: color-mix(in srgb, #050816 55%, transparent);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
   color: #e8fff8;
-  border-radius: 999px;
-  padding: 0.35rem 0.75rem;
   font: inherit;
+  text-align: left;
   cursor: pointer;
 }
 
-.practice-page-back:hover,
-.practice-page-back:focus-visible {
-  border-color: #00e5ff;
+.practice-back-mark {
+  position: relative;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+}
+
+.practice-back-mark::before,
+.practice-back-mark::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  inset: 5px;
+}
+
+.practice-back-mark::before {
+  border: 2px solid color-mix(in srgb, #00e5ff 82%, white);
+  transition:
+    opacity 0.4s cubic-bezier(0.77, 0, 0.175, 1) 80ms,
+    transform 0.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) 80ms;
+}
+
+.practice-back-mark::after {
+  border: 2px solid #34d399;
+  transform: scale(1.25);
+  opacity: 0;
+  transition:
+    opacity 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+    transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.practice-back:hover .practice-back-mark::before,
+.practice-back:focus-visible .practice-back-mark::before,
+.practice-back:active .practice-back-mark::before {
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.practice-back:hover .practice-back-mark::after,
+.practice-back:focus-visible .practice-back-mark::after,
+.practice-back:active .practice-back-mark::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.practice-back-box {
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.practice-back-elem {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  transform: rotate(180deg);
+}
+
+.practice-back-elem svg {
+  width: 18px;
+  height: 16px;
+  fill: #e8fff8;
+}
+
+.practice-back:hover .practice-back-box,
+.practice-back:focus-visible .practice-back-box,
+.practice-back:active .practice-back-box {
+  transition: transform 0.4s cubic-bezier(0.77, 0, 0.175, 1);
+  transform: translateX(-48px);
+}
+
+.practice-back .bi-zh,
+.practice-back .bi-en {
+  color: #e8fff8;
+}
+
+.practice-back .bi-en {
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.practice-back:focus-visible {
   outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .practice-back-mark::before,
+  .practice-back-mark::after,
+  .practice-back-box {
+    transition: none;
+  }
+
+  .practice-back:hover .practice-back-box,
+  .practice-back:focus-visible .practice-back-box,
+  .practice-back:active .practice-back-box {
+    transform: none;
+  }
 }
 
 .practice-page-title {
