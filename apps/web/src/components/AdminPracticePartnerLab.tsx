@@ -253,6 +253,8 @@ function formatSitting(seconds: number) {
 
 type PartnerSessionKind = 'drill' | 'open' | 'scene' | 'situation'
 
+type PartnerOrbitSheet = 'level' | 'path' | 'scenes' | 'saved'
+
 function isTalk(kind: PartnerSessionKind) {
   return kind === 'open' || kind === 'situation'
 }
@@ -400,6 +402,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [scoresOpen, setScoresOpen] = useState(false)
   const [voiceMenuOpen, setVoiceMenuOpen] = useState(false)
   const [topicReady, setTopicReady] = useState(false)
+  const [orbitSheet, setOrbitSheet] = useState<PartnerOrbitSheet | null>(null)
   const [listening, setListening] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -1380,7 +1383,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       }))
       commitSitting(beginPartnerSitting(sittingRef.current))
       setTopicReady(true)
-      setFullscreen(false)
+      setFullscreen(true)
+      setOrbitSheet(null)
     },
     [clearDrillSession, commitSitting],
   )
@@ -1397,7 +1401,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setSceneDone(false)
     commitSitting(beginPartnerSitting(sittingRef.current))
     setTopicReady(true)
-    setFullscreen(false)
+    setFullscreen(true)
+    setOrbitSheet(null)
   }, [clearDrillSession, commitSitting])
 
   const changeTopic = useCallback(() => {
@@ -1419,6 +1424,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     commitSitting(beginPartnerSitting(sitting))
     setFullscreen(false)
     setScoresOpen(false)
+    setOrbitSheet(lines.length || misses.length ? 'saved' : null)
     setTopicReady(false)
   }, [busy, clearDrillSession, commitSitting, listening])
 
@@ -1447,6 +1453,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       activeDrillRef.current = null
       setMissCard(null)
       setTopicReady(true)
+      setFullscreen(true)
       void startDrill()
     },
     [busy, listening, startDrill],
@@ -1492,7 +1499,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       setSceneDone(false)
       commitSitting(beginPartnerSitting(sittingRef.current))
       setTopicReady(true)
-      setFullscreen(false)
+      setFullscreen(true)
+      setOrbitSheet(null)
     },
     [clearDrillSession, commitSitting],
   )
@@ -1741,9 +1749,60 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setVoiceMenuOpen(false)
   }
 
+  const openSheet = (id: PartnerOrbitSheet) => {
+    setOrbitSheet((current) => (current === id ? null : id))
+  }
+
   if (!topicReady) {
     return (
-      <section className="partner-lab partner-lab--topic" aria-label="Choose Practice Partner topic">
+      <section
+        className={`partner-lab partner-lab--companion partner-lab--topic${entry === 'hub' ? ' is-hub' : ''}`}
+        aria-label="Choose Practice Partner topic"
+      >
+        <div className="partner-universe" aria-hidden="true" />
+        <div className="partner-lab-stars" aria-hidden="true" />
+        <OrbitalSphereBackground className="partner-lab-orb" {...orbitProps} />
+        <div className="partner-lab-aura" aria-hidden="true" />
+        <div className="partner-lab-orbit-ring" aria-hidden="true">
+          <i className="partner-lab-orbit-arc" />
+          <span className="is-state">Ready</span>
+          <span className="is-place">{categoryMeta.labelEn}</span>
+          <span className="is-time">{difficultyMeta.labelEn}</span>
+          <span className="is-kept">{keptLines.length} kept</span>
+        </div>
+        <div className="partner-lab-presence" aria-hidden="true">
+          <span />
+        </div>
+        <h2 className="partner-companion-whisper">Choose difficulty & topic</h2>
+        <nav className="partner-outer-ring" aria-label="Around 港灣">
+          <button type="button" className={orbitSheet === 'level' ? 'is-on' : undefined} onClick={() => openSheet('level')}>
+            Level
+          </button>
+          <button type="button" className={orbitSheet === 'path' ? 'is-on' : undefined} onClick={() => openSheet('path')}>
+            Path
+          </button>
+          <button type="button" className={orbitSheet === 'scenes' ? 'is-on' : undefined} onClick={() => openSheet('scenes')}>
+            Scenarios
+          </button>
+          <button type="button" className={orbitSheet === 'saved' ? 'is-on' : undefined} onClick={() => openSheet('saved')}>
+            Saved
+          </button>
+          <button type="button" className="partner-lab-open" onClick={beginOpenChat}>
+            <span className="partner-lab-open-en">Open chat</span>
+            <span className="partner-lab-open-zh" lang="zh-HK">
+              自由講
+            </span>
+          </button>
+        </nav>
+        <button type="button" className="partner-companion-mic" onClick={() => pickTopic(category)}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-3.07A7 7 0 0 0 19 11h-2z"
+            />
+          </svg>
+          <span>Speak</span>
+        </button>
         <header className="partner-lab-head partner-lab-head--topic">
           <div>
             <div className="partner-lab-presence" aria-hidden="true">
@@ -1824,14 +1883,18 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </div>
         </header>
 
-        <PracticePartnerPodium
-          entries={board?.entries ?? []}
-          me={board?.me}
-          loading={boardLoading}
-          error={boardError}
-          signedIn={boardSignedIn}
-        />
+        <div className={`partner-holo-sheet${orbitSheet ? ' is-open' : ''}`}>
+        {orbitSheet === 'saved' ? (
+          <PracticePartnerPodium
+            entries={board?.entries ?? []}
+            me={board?.me}
+            loading={boardLoading}
+            error={boardError}
+            signedIn={boardSignedIn}
+          />
+        ) : null}
 
+        {orbitSheet === 'level' ? (
         <div className="partner-lab-chooser-block">
           <p className="partner-lab-chooser-label" id="partner-lab-diff-label">
             Difficulty
@@ -1862,7 +1925,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             ))}
           </ul>
         </div>
+        ) : null}
 
+        {orbitSheet === 'path' ? (
         <div className="partner-lab-chooser-block">
           <p className="partner-lab-chooser-label" id="partner-lab-topic-label">
             Path
@@ -1876,8 +1941,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             listClassName="partner-lab-topic-list"
           />
         </div>
+        ) : null}
 
-        {recap ? (
+        {orbitSheet === 'saved' && recap ? (
           <div className="partner-lab-recap" role="region" aria-label="This sitting">
             <p className="partner-lab-chooser-label">This sitting</p>
             {recap.lines.length ? (
@@ -1908,6 +1974,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </div>
         ) : null}
 
+        {orbitSheet === 'scenes' ? (
+        <>
         <div className="partner-lab-chooser-block">
           <p className="partner-lab-chooser-label" id="partner-lab-open-label">
             Also
@@ -1953,8 +2021,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             </div>
           ))}
         </div>
+        </>
+        ) : null}
 
-        {keptLines.length ? (
+        {orbitSheet === 'saved' && keptLines.length ? (
           <div className="partner-lab-chooser-block">
             <p className="partner-lab-chooser-label">Lines you kept</p>
             <button type="button" className="partner-lab-recap-dismiss" onClick={startKeptScene}>
@@ -1979,13 +2049,14 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             </ul>
           </div>
         ) : null}
+        </div>
       </section>
     )
   }
 
   return (
     <section
-      className={`partner-lab${fullscreen ? ' is-fullscreen' : ''}${
+      className={`partner-lab partner-lab--companion${entry === 'hub' ? ' is-hub' : ''}${fullscreen ? ' is-fullscreen' : ''}${
         verdictFlash === 'fail' ? ' is-fail-flash' : ''
       }`}
       aria-label="Practice Partner lab"
@@ -2465,11 +2536,11 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       </div>
 
       <div
-        className={`partner-lab-live${fullscreen ? ' is-fs-dock' : ''}`}
+        className={`partner-lab-live${fullscreen || entry === 'hub' ? ' is-fs-dock' : ''}`}
         role="group"
         aria-label="Practice Partner live controls"
       >
-        {fullscreen ? (
+        {fullscreen || entry === 'hub' ? (
           <>
             <div className="partner-lab-fs-dock">
               <button
