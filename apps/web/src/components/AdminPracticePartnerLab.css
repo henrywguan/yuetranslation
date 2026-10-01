@@ -4807,6 +4807,26 @@ div.partner-map-next {
   height: min(94vw, 440px);
 }
 
+/* Hub orb fills the phone. The rings are tall, not a small circle at the top. */
+.partner-lab--companion.is-hub .partner-orbit-field {
+  top: 52%;
+  width: 132vw;
+  height: 100dvh;
+  aspect-ratio: auto;
+}
+
+.partner-lab--topic.partner-lab--companion.is-hub:not(.is-sheet) .partner-outer-ring {
+  top: 52%;
+  width: min(94vw, 28rem);
+  height: min(62dvh, 36rem);
+}
+
+.partner-lab--topic.partner-lab--companion.is-hub:not(.is-sheet) .partner-lab-orbit-ring,
+.partner-lab--topic.partner-lab--companion.is-hub:not(.is-sheet) .partner-lab-aura,
+.partner-lab--topic.partner-lab--companion.is-hub:not(.is-sheet) .partner-companion-readout {
+  top: 52%;
+}
+
 .partner-lab--topic.partner-lab--companion .partner-lab-orbit-ring,
 .partner-lab--topic.partner-lab--companion .partner-lab-aura {
   top: 38%;
@@ -4855,6 +4875,40 @@ div.partner-map-next {
   bottom: 6.4rem;
   max-height: min(42dvh, calc(100dvh - 15.4rem));
   padding-bottom: 0.85rem;
+}
+
+/* A circle on the hub takes the whole screen. The arrow returns to the orb. */
+.partner-lab--companion.is-hub.is-sheet .partner-outer-ring,
+.partner-lab--companion.is-hub.is-sheet .partner-orbit-field,
+.partner-lab--companion.is-hub.is-sheet .partner-companion-mic,
+.partner-lab--companion.is-hub.is-sheet .partner-companion-readout,
+.partner-lab--companion.is-hub.is-sheet .partner-lab-orbit-ring,
+.partner-lab--companion.is-hub.is-sheet .partner-lab-aura,
+.partner-lab--companion.is-hub.is-sheet .partner-lab-orb {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.partner-lab--companion.is-hub .partner-holo-sheet.is-open {
+  inset: 0;
+  z-index: 8;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  transform: none;
+  border: 0;
+  border-radius: 0;
+  background: #050816;
+  box-shadow: none;
+  padding:
+    max(4.8rem, calc(env(safe-area-inset-top) + 3.8rem))
+    max(1rem, env(safe-area-inset-right))
+    max(1.2rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.partner-lab--companion.is-hub .partner-holo-sheet.is-open .partner-map-frame {
+  height: min(68dvh, 720px);
 }
 
 .partner-holo-sheet .partner-path {

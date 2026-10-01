@@ -1,5 +1,6 @@
 .practice-page {
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   background: #050816;
   color: #e8fff8;
 }

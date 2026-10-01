@@ -40,6 +40,7 @@ export const PRIMARY_UI_GLOSS: Record<string, PrimaryUiGlossRow> = {
   'Back': { tl: 'Bumalik', es: 'Atrás', eses: 'Atrás', vi: 'Quay lại', wuu: '返回', sichuan: '返回' },
   'Back to JyutTranslate home': { tl: 'Bumalik sa home ng JyutTranslate', es: 'Volver al inicio de JyutTranslate', eses: 'Volver al inicio de JyutTranslate', vi: 'Về trang chủ JyutTranslate', wuu: '回 JyutTranslate 首页', sichuan: '回 JyutTranslate 首页' },
   'Back to the app': { tl: 'Bumalik sa app', es: 'Volver a la app', eses: 'Volver a la app', vi: 'Về app', wuu: '回应用', sichuan: '回应用' },
+  'Back to 港灣': { tl: 'Bumalik sa 港灣', es: 'Volver a 港灣', eses: 'Volver a 港灣', vi: 'Về 港灣', wuu: '回港湾', sichuan: '回港湾' },
   'Badge shows': { tl: 'Ipinapakita ng badge', es: 'La insignia muestra', eses: 'La insignia muestra', vi: 'Huy hiệu hiện', wuu: '徽章显示', sichuan: '徽章显示' },
   'Billing': { tl: 'Billing', es: 'Facturación', eses: 'Facturación', vi: 'Thanh toán', wuu: '账单', sichuan: '账单' },
   'Building a unified entry…': { tl: 'Bumubuo ng unified entry…', es: 'Armando una entrada unificada…', eses: 'Armando una entrada unificada…', vi: 'Đang dựng mục từ thống nhất…', wuu: '正在整理统一词条…', sichuan: '正在整理统一词条…' },

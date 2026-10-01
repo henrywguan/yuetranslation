@@ -1714,6 +1714,7 @@ export const ui = {
     jp: 'hoi1 kai2 jing3 jung6 si3 haa5, waak6 ze2 faan1 heoi3 sau2 jap6 tai2 gung1 nang4.',
   },
   backToApp: { en: 'Back to the app', zh: '返去應用', jp: 'faan1 heoi3 jing3 jung6' },
+  backToHarbor: { en: 'Back to 港灣', zh: '返去港灣', jp: 'faan1 heoi3 gong2 waan1' },
 }
 
 export function biPlain(b: Bi, primary?: PrimaryLang): string {

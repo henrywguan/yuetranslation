@@ -460,7 +460,14 @@ const PartnerYouLine = forwardRef<
   )
 })
 
-export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' | 'hub' }) {
+export function AdminPracticePartnerLab({
+  entry = 'admin',
+  onHubPlace,
+}: {
+  entry?: 'admin' | 'hub'
+  /** Hub only. The page back arrow uses this to return to the orb. */
+  onHubPlace?: (place: { atOrb: boolean; backToOrb: () => void }) => void
+}) {
   const [mood, setMood] = useState<PartnerMood>('idle')
   const moodRef = useRef(mood)
   moodRef.current = mood
@@ -1557,8 +1564,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setOrbitSheet(null)
   }, [clearDrillSession, commitSitting])
 
-  const changeTopic = useCallback(() => {
-    if (busy || listening) return
+  const leaveSitting = useCallback(() => {
     const sitting = sittingRef.current
     const lines = sitting.sessionLines
     const misses = sitting.misses
@@ -1576,9 +1582,35 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     commitSitting(beginPartnerSitting(sitting))
     setFullscreen(false)
     setScoresOpen(false)
-    setOrbitSheet(lines.length || misses.length || threadRef.current.length ? 'saved' : null)
+    setFsTypeOpen(false)
+    setVoiceMenuOpen(false)
+    setOrbitSheet(null)
     setTopicReady(false)
-  }, [busy, clearDrillSession, commitSitting, listening])
+  }, [clearDrillSession, commitSitting])
+
+  const changeTopic = useCallback(() => {
+    if (busy || listening) return
+    const sitting = sittingRef.current
+    const hasKept = sitting.sessionLines.length || sitting.misses.length || threadRef.current.length
+    leaveSitting()
+    setOrbitSheet(hasKept ? 'saved' : null)
+  }, [busy, leaveSitting, listening])
+
+  const backToOrb = useCallback(() => {
+    if (topicReady) leaveSitting()
+    else setOrbitSheet(null)
+  }, [leaveSitting, topicReady])
+
+  const backToOrbRef = useRef(backToOrb)
+  backToOrbRef.current = backToOrb
+
+  useEffect(() => {
+    if (entry !== 'hub' || !onHubPlace) return
+    onHubPlace({
+      atOrb: !topicReady && orbitSheet == null,
+      backToOrb: () => backToOrbRef.current(),
+    })
+  }, [entry, onHubPlace, orbitSheet, topicReady])
 
   const armScene = useCallback(
     (lines: PartnerKeptLine[], placeEn: string, placeZh: string) => {
