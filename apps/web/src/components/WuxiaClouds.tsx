@@ -1,9 +1,9 @@
 type Pan = { x: number; y: number; scale: number }
 
 const CLOUD_LAYERS = [
-  { id: 'far', factor: 0.55, depth: 0.08 },
-  { id: 'mid', factor: 0.32, depth: 0.14 },
-  { id: 'near', factor: 0.14, depth: 0.22 },
+  { id: 'far', factor: 0.18, depth: 0.08 },
+  { id: 'mid', factor: 0.42, depth: 0.14 },
+  { id: 'near', factor: 0.78, depth: 0.22 },
 ] as const
 
 /** Auspicious cloud (祥雲). Drawn once and stamped around the frame. */

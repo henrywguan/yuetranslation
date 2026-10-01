@@ -10,32 +10,31 @@ import {
   PARTNER_MAP_HEIGHT,
   partnerMapLayerSize,
   practicePartnerChapterTale,
-  practicePartnerMapFocusY,
   practicePartnerMapRegions,
   practicePartnerMapScrolls,
+  type PartnerMapScroll,
 } from '../lib/practicePartnerMapLayout'
-import {
-  practicePartnerLessonCard,
-  practicePartnerRegionCard,
-  type MapStoryCardModel,
-} from '../lib/practicePartnerMapStory'
 import { WuxiaCloudFrame } from './WuxiaClouds'
 import { WuxiaFarPeaks, WuxiaMistVeil, WuxiaNearWeather, WuxiaSectionMid, WuxiaSectionSky } from './WuxiaDepth'
 import { WuxiaJourneyArt } from './WuxiaJourneyArt'
 import {
-  pathFocusSection,
+  PATH_LESSONS_PER_UNIT,
+  PATH_UNIT_LABELS,
   type PathCategory,
   type PathFresh,
   type PracticePartnerPathState,
 } from '../lib/practicePartnerPath'
 
-const ZOOM_MIN = 1
-const ZOOM_MAX = 3.2
-const FAR_PARALLAX = 0.38
-const SKY_PARALLAX = 0.9
-const MID_PARALLAX = 0.96
-const NEAR_PARALLAX = 1.06
-const MIST_PARALLAX = 1.18
+const FAR_PARALLAX = 0.12
+const SKY_PARALLAX = 0.26
+const HANG_PARALLAX = 0.44
+const MID_PARALLAX = 0.6
+const LIFE_PARALLAX = 0.76
+const GROVE_PARALLAX = 0.86
+const AIR_PARALLAX = 1.22
+const MIST_PARALLAX = 1.48
+const NEAR_PARALLAX = 1.62
+const RAIN_PARALLAX = 1.9
 
 type Pan = { scale: number; x: number; y: number }
 
@@ -62,19 +61,36 @@ function layerStyle(box: Box, pan: Pan, factor: number): CSSProperties {
   }
 }
 
+/** Vertical travel only. Scale and sideways drift stay locked. */
 function clampPan(pan: Pan, box: Box): Pan {
-  const scale = clamp(pan.scale, ZOOM_MIN, ZOOM_MAX)
+  const scale = 1
   const minY = Math.min(0, box.h - box.ch * scale)
-  const extraX = Math.max(0, (box.cw * scale - box.w) / 2)
   return {
     scale,
-    x: clamp(pan.x, -extraX, extraX),
+    x: 0,
     y: clamp(pan.y, minY, 0),
   }
 }
 
+function ScrollFace({ row, next }: { row: PartnerMapScroll; next: boolean }) {
+  return (
+    <>
+      {next ? <span className="partner-map-next-badge">Next</span> : null}
+      <span className="partner-map-scroll-roller" />
+      <span className="partner-map-scroll-sheet">
+        <span className="partner-map-scroll-cefr">{row.cefr}</span>
+        <span className="partner-map-scroll-mark" lang="zh-HK">
+          {row.mark}
+        </span>
+      </span>
+      <span className="partner-map-scroll-roller is-foot" />
+    </>
+  )
+}
+
 /**
- * The Ink Road. Drag travels the scroll. Pinch and wheel zoom.
+ * The Ink Road, read as a ladder.
+ * The sheet opens on the next open line. Drag moves up and down.
  */
 export function PracticePartnerPathMap({
   progress,
@@ -92,64 +108,33 @@ export function PracticePartnerPathMap({
   const frameRef = useRef<HTMLDivElement>(null)
   const panRef = useRef<Pan>({ scale: 1, x: 0, y: 0 })
   const [pan, setPan] = useState<Pan>({ scale: 1, x: 0, y: 0 })
-  const [full, setFull] = useState(false)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
-  const drag = useRef<{ x: number; y: number; ox: number; oy: number; moved: number } | null>(null)
-  const pinch = useRef<{ dist: number; scale: number; x: number; y: number } | null>(null)
+  const drag = useRef<{ y: number; oy: number; moved: number } | null>(null)
   const blockClick = useRef(false)
   const userMoved = useRef(false)
   const boxRef = useRef<Box>({ w: 0, h: 0, cw: 0, ch: 0 })
   const [box, setBox] = useState<Box>({ w: 0, h: 0, cw: 0, ch: 0 })
-  const focus = pathFocusSection(progress)
   const scrolls = practicePartnerMapScrolls(progress, fresh)
   const regions = practicePartnerMapRegions()
-  const currentId =
-    scrolls.find((row) => row.category === activeId && !row.colored)?.id ??
-    [...scrolls].reverse().find((row) => row.category === activeId)?.id
-  const currentScroll = scrolls.find((row) => row.id === currentId)
-  const tale = practicePartnerChapterTale(progress, activeId)
-  const [hoverId, setHoverId] = useState<string | null>(null)
-  const [pinnedId, setPinnedId] = useState<string | null>(null)
-  const [place, setPlace] = useState<{ left: number; top: number; width: number; below: boolean } | null>(
-    null,
-  )
-  const stopRefs = useRef(new Map<string, HTMLElement>())
-  const hoverTimer = useRef<number | null>(null)
-  const shownId = hoverId ?? pinnedId
-  const shownCard: MapStoryCardModel | null = (() => {
-    if (!shownId) return null
-    if (shownId.startsWith('region:')) {
-      const region = regions.find((row) => `region:${row.id}` === shownId)
-      return region ? practicePartnerRegionCard(region, progress) : null
-    }
-    const scroll = scrolls.find((row) => row.id === shownId)
-    return scroll ? practicePartnerLessonCard(scroll) : null
-  })()
-  const cardPinned = shownCard != null && shownId === pinnedId
+  const nextScroll = scrolls.find((row) => !row.colored) ?? scrolls[scrolls.length - 1]
+  const nextId = nextScroll?.id ?? ''
+  const nextTale = nextScroll ? practicePartnerChapterTale(progress, nextScroll.category) : ''
+  const nextPlace = regions.find((row) => row.id === nextScroll?.category)
+  const nextFilled = nextScroll ? (progress.units[nextScroll.category][nextScroll.unit] ?? 0) : 0
 
   const apply = (next: Pan) => {
     const sized = boxRef.current
-    const clamped = sized.w > 0 ? clampPan(next, sized) : next
+    const clamped = sized.w > 0 ? clampPan(next, sized) : { scale: 1, x: 0, y: next.y }
     const prev = panRef.current
     panRef.current = clamped
-    if (
-      prev.scale === clamped.scale &&
-      prev.x === clamped.x &&
-      prev.y === clamped.y
-    ) {
-      return
-    }
+    if (prev.scale === clamped.scale && prev.x === clamped.x && prev.y === clamped.y) return
     setPan(clamped)
-  }
-
-  const lookAt = (category: PathCategory, sized: Box) => {
-    const y = sized.h * 0.28 - practicePartnerMapFocusY(category) * sized.ch
-    apply({ scale: panRef.current.scale, x: 0, y })
   }
 
   useLayoutEffect(() => {
     const frame = frameRef.current
-    if (!frame) return
+    if (!frame || !nextScroll) return
+    const focusY = nextScroll.y
     const measure = () => {
       const w = frame.clientWidth
       const h = frame.clientHeight
@@ -162,130 +147,30 @@ export function PracticePartnerPathMap({
           ? prev
           : next,
       )
-      if (!userMoved.current) lookAt(focus, next)
-      else apply(panRef.current)
+      if (!userMoved.current) {
+        const y = next.h * 0.42 - focusY * next.ch
+        apply({ scale: 1, x: 0, y })
+      } else apply(panRef.current)
     }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(frame)
     return () => observer.disconnect()
-    // lookAt/apply read refs; re-measure when the focused section or fullscreen frame changes.
+    // apply reads refs; re-open on the next line when that line changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focus, full])
+  }, [nextId])
 
   useEffect(() => {
     const el = frameRef.current
     if (!el) return
-    const onWheel = (event: WheelEvent) => {
-      event.preventDefault()
-      const rect = el.getBoundingClientRect()
-      const px = event.clientX - rect.left
-      const py = event.clientY - rect.top
-      const z = panRef.current
-      const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12
-      const nextScale = clamp(z.scale * factor, ZOOM_MIN, ZOOM_MAX)
-      if (nextScale === z.scale) return
-      const contentX = (px - rect.width / 2 - z.x) / z.scale
-      const contentY = (py - z.y) / z.scale
-      userMoved.current = true
-      apply({
-        scale: nextScale,
-        x: px - rect.width / 2 - contentX * nextScale,
-        y: py - contentY * nextScale,
-      })
-    }
     const onTouchMove = (event: TouchEvent) => {
       if (pointers.current.size > 0) event.preventDefault()
     }
-    el.addEventListener('wheel', onWheel, { passive: false })
     el.addEventListener('touchmove', onTouchMove, { passive: false })
     return () => {
-      el.removeEventListener('wheel', onWheel)
       el.removeEventListener('touchmove', onTouchMove)
     }
-  }, [full])
-
-  useLayoutEffect(() => {
-    const id = hoverId ?? pinnedId
-    const frame = frameRef.current
-    const el = id ? stopRefs.current.get(id) : undefined
-    if (!frame || !el) {
-      setPlace(null)
-      return
-    }
-    const fr = frame.getBoundingClientRect()
-    const er = el.getBoundingClientRect()
-    const width = Math.min(288, Math.max(160, fr.width - 16))
-    const markerTop = er.top - fr.top
-    const markerBottom = er.bottom - fr.top
-    const below = fr.height - markerBottom > markerTop
-    const left = clamp(er.left - fr.left + er.width / 2 - width / 2, 8, Math.max(8, fr.width - width - 8))
-    const top = below ? markerBottom + 10 : markerTop - 8
-    setPlace((prev) =>
-      prev && prev.left === left && prev.top === top && prev.width === width && prev.below === below
-        ? prev
-        : { left, top, width, below },
-    )
-  }, [hoverId, pinnedId, pan, box, full])
-
-  useEffect(() => {
-    if (!full && !pinnedId) return
-    const prev = document.body.style.overflow
-    if (full) document.body.style.overflow = 'hidden'
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return
-      if (pinnedId) {
-        setPinnedId(null)
-        return
-      }
-      if (full) setFull(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => {
-      if (full) document.body.style.overflow = prev
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [full, pinnedId])
-
-  const cancelHoverClear = () => {
-    if (hoverTimer.current == null) return
-    window.clearTimeout(hoverTimer.current)
-    hoverTimer.current = null
-  }
-
-  useEffect(() => () => cancelHoverClear(), [])
-
-  const previewStop = (id: string) => {
-    if (drag.current && drag.current.moved > 6) return
-    cancelHoverClear()
-    setHoverId(id)
-  }
-
-  const clearPreview = (id: string) => {
-    cancelHoverClear()
-    hoverTimer.current = window.setTimeout(() => {
-      hoverTimer.current = null
-      setHoverId((cur) => (cur === id ? null : cur))
-    }, 160)
-  }
-
-  const pinStop = (id: string) => {
-    if (blockClick.current) return
-    setPinnedId((cur) => (cur === id ? null : id))
-  }
-
-  const bindStop = (id: string) => ({
-    ref: (el: HTMLButtonElement | null) => {
-      if (el) stopRefs.current.set(id, el)
-      else stopRefs.current.delete(id)
-    },
-    onPointerEnter: () => previewStop(id),
-    onPointerLeave: () => clearPreview(id),
-    onFocus: () => previewStop(id),
-    onBlur: () => clearPreview(id),
-    onClick: () => pinStop(id),
-    'aria-expanded': pinnedId === id,
-  })
+  }, [])
 
   const onPointerDown = (event: ReactPointerEvent) => {
     const target = event.target as HTMLElement
@@ -294,63 +179,26 @@ export function PracticePartnerPathMap({
     if (!el) return
     el.setPointerCapture(event.pointerId)
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
-    if (pointers.current.size === 2) {
-      const pts = [...pointers.current.values()]
-      const dist = Math.hypot(pts[0]!.x - pts[1]!.x, pts[0]!.y - pts[1]!.y)
-      const z = panRef.current
-      pinch.current = { dist: Math.max(1, dist), scale: z.scale, x: z.x, y: z.y }
-      drag.current = null
-      return
-    }
     const z = panRef.current
-    drag.current = { x: event.clientX, y: event.clientY, ox: z.x, oy: z.y, moved: 0 }
+    drag.current = { y: event.clientY, oy: z.y, moved: 0 }
   }
 
   const onPointerMove = (event: ReactPointerEvent) => {
-    if (!pointers.current.has(event.pointerId)) return
+    if (!pointers.current.has(event.pointerId) || !drag.current) return
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
-    if (pointers.current.size === 2 && pinch.current) {
-      const pts = [...pointers.current.values()]
-      const dist = Math.hypot(pts[0]!.x - pts[1]!.x, pts[0]!.y - pts[1]!.y)
-      const nextScale = clamp(
-        pinch.current.scale * (dist / pinch.current.dist),
-        ZOOM_MIN,
-        ZOOM_MAX,
-      )
-      userMoved.current = true
-      blockClick.current = true
-      apply({ scale: nextScale, x: pinch.current.x, y: pinch.current.y })
-      return
-    }
-    if (!drag.current || pointers.current.size !== 1) return
-    const dx = event.clientX - drag.current.x
     const dy = event.clientY - drag.current.y
-    drag.current.moved = Math.max(drag.current.moved, Math.hypot(dx, dy))
+    drag.current.moved = Math.max(drag.current.moved, Math.abs(dy))
     if (drag.current.moved < 6) return
     userMoved.current = true
     blockClick.current = true
-    apply({
-      scale: panRef.current.scale,
-      x: drag.current.ox + dx,
-      y: drag.current.oy + dy,
-    })
+    apply({ scale: 1, x: 0, y: drag.current.oy + dy })
   }
 
   const onPointerUp = (event: ReactPointerEvent) => {
     const moved = drag.current?.moved ?? 0
-    const pinched = pinch.current !== null
     pointers.current.delete(event.pointerId)
-    if (pointers.current.size < 2) pinch.current = null
     if (pointers.current.size === 0) drag.current = null
-    const target = event.target as HTMLElement
-    if (
-      moved < 6 &&
-      !pinched &&
-      !target.closest('.partner-map-scroll, .partner-map-region-btn, .partner-map-card')
-    ) {
-      setPinnedId(null)
-    }
-    if (moved > 6 || pinched) {
+    if (moved > 6) {
       blockClick.current = true
       window.setTimeout(() => {
         blockClick.current = false
@@ -363,28 +211,14 @@ export function PracticePartnerPathMap({
     }
   }
 
-  const bump = (dir: 1 | -1) => {
-    userMoved.current = true
-    apply({ ...panRef.current, scale: panRef.current.scale + dir * 0.28 })
+  const start = (id: PathCategory) => {
+    if (blockClick.current || !onPick) return
+    onPick(id)
   }
 
   return (
-    <div className={`partner-map${full ? ' is-fullscreen' : ''}`}>
-      <div className="partner-map-hud partner-map-chrome">
-        <div className="partner-map-copy">
-          <p className="partner-map-tale">{tale}</p>
-          <p className="partner-map-hint">
-            Drag the Ink Road. Hover or tap a stop to read the lesson before it starts.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="partner-map-full"
-          onClick={() => setFull((open) => !open)}
-        >
-          {full ? 'Close map' : 'Full screen'}
-        </button>
-      </div>
+    <div className="partner-map">
+      <p className="partner-map-hint">Drag up or down. Tap Next, or a finished line, to practice.</p>
       <div
         ref={frameRef}
         className="partner-map-frame"
@@ -394,16 +228,31 @@ export function PracticePartnerPathMap({
         onPointerCancel={onPointerUp}
       >
         <div className="partner-map-depth is-far" style={layerStyle(box, pan, FAR_PARALLAX)}>
-          <WuxiaFarPeaks />
+          <div className="wuxia-layer-drift is-slow">
+            <WuxiaFarPeaks />
+          </div>
         </div>
         <div className="partner-map-depth is-sky" style={layerStyle(box, pan, SKY_PARALLAX)}>
-          <WuxiaSectionSky />
+          <WuxiaSectionSky sheet="wash" />
+        </div>
+        <div className="partner-map-depth is-hang" style={layerStyle(box, pan, HANG_PARALLAX)}>
+          <div className="wuxia-layer-drift">
+            <WuxiaSectionSky sheet="hang" />
+          </div>
         </div>
         <div className="partner-map-depth is-mid" style={layerStyle(box, pan, MID_PARALLAX)}>
-          <WuxiaSectionMid />
+          <WuxiaSectionMid sheet="silk" />
+        </div>
+        <div className="partner-map-depth is-life" style={layerStyle(box, pan, LIFE_PARALLAX)}>
+          <div className="wuxia-layer-drift is-life">
+            <WuxiaSectionMid sheet="life" />
+          </div>
+        </div>
+        <div className="partner-map-depth is-grove" style={layerStyle(box, pan, GROVE_PARALLAX)}>
+          <WuxiaJourneyArt progress={progress} mastery={progress.mastery} band="grove" />
         </div>
         <div className="partner-map-layer" style={layerStyle(box, pan, 1)}>
-          <WuxiaJourneyArt progress={progress} mastery={progress.mastery} />
+          <WuxiaJourneyArt progress={progress} mastery={progress.mastery} band="place" />
           <svg className="partner-map-road" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             {regions.map((region) => {
               const points = scrolls
@@ -423,131 +272,110 @@ export function PracticePartnerPathMap({
             {regions.map((region) => (
               <li
                 key={region.id}
-                className={`partner-map-region${shownId === `region:${region.id}` ? ' is-reading' : ''}`}
+                className="partner-map-region"
                 style={{ left: `${region.x * 100}%`, top: `${region.y * 100}%` }}
               >
-                <button
-                  type="button"
-                  className={`partner-map-region-btn${activeId === region.id ? ' is-current' : ''}`}
-                  {...bindStop(`region:${region.id}`)}
-                >
+                <div className={`partner-map-region-plaque${activeId === region.id ? ' is-current' : ''}`}>
                   <span className="partner-map-region-cefr">{region.cefr}</span>
                   <span className="partner-map-region-place" lang="zh-HK">
                     {region.placeZh}
                   </span>
                   <span>{region.placeEn}</span>
                   <span className="partner-map-region-topic">{region.labelEn}</span>
-                </button>
+                </div>
               </li>
             ))}
-            {currentScroll ? (
+            {nextScroll ? (
               <li
                 aria-hidden="true"
                 className="partner-map-you-wrap"
-                style={{ left: `${currentScroll.x * 100}%`, top: `${currentScroll.y * 100}%` }}
+                style={{ left: `${nextScroll.x * 100}%`, top: `${nextScroll.y * 100}%` }}
               >
                 <span className="partner-map-you" />
               </li>
             ) : null}
-            {scrolls.map((row) => (
-              <li
-                key={row.id}
-                className={`partner-map-scroll-wrap${shownId === row.id ? ' is-reading' : ''}`}
-                style={{ left: `${row.x * 100}%`, top: `${row.y * 100}%` }}
-              >
-                <button
-                  type="button"
-                  className={`partner-map-scroll${row.colored ? ' is-colored' : ' is-sealed'}${
-                    row.fresh ? ' is-fresh' : ''
-                  }${row.id === currentId ? ' is-current' : ''}`}
-                  aria-label={row.title}
-                  aria-pressed={row.colored}
-                  {...bindStop(row.id)}
+            {scrolls.map((row) => {
+              const isNext = row.id === nextId
+              const locked = !row.colored && !isNext
+              const faceClass = `partner-map-scroll${row.colored ? ' is-colored' : ' is-sealed'}${
+                row.fresh ? ' is-fresh' : ''
+              }${isNext ? ' is-next' : ''}${locked ? ' is-locked' : ''}`
+              return (
+                <li
+                  key={row.id}
+                  className={`partner-map-scroll-wrap${isNext ? ' is-next' : ''}`}
+                  style={{ left: `${row.x * 100}%`, top: `${row.y * 100}%` }}
                 >
-                  <span className="partner-map-scroll-roller" />
-                  <span className="partner-map-scroll-sheet">
-                    <span className="partner-map-scroll-cefr">{row.cefr}</span>
-                    <span className="partner-map-scroll-mark" lang="zh-HK">
-                      {row.mark}
+                  {locked || !onPick ? (
+                    <span className={faceClass} aria-hidden="true">
+                      <ScrollFace row={row} next={isNext} />
                     </span>
-                  </span>
-                  <span className="partner-map-scroll-roller is-foot" />
-                </button>
-              </li>
-            ))}
+                  ) : (
+                    <button
+                      type="button"
+                      className={faceClass}
+                      aria-label={isNext ? `Next. ${row.title}` : row.title}
+                      aria-pressed={row.colored}
+                      onClick={() => start(row.category)}
+                    >
+                      <ScrollFace row={row} next={isNext} />
+                    </button>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         </div>
+        <div className="partner-map-depth is-air" style={layerStyle(box, pan, AIR_PARALLAX)}>
+          <div className="wuxia-layer-drift is-air">
+            <WuxiaJourneyArt progress={progress} mastery={progress.mastery} band="air" />
+          </div>
+        </div>
         <div className="partner-map-depth is-mist" style={layerStyle(box, pan, MIST_PARALLAX)}>
-          <WuxiaMistVeil />
+          <div className="wuxia-layer-drift is-mist">
+            <WuxiaMistVeil />
+          </div>
         </div>
         <div className="partner-map-depth is-near" style={layerStyle(box, pan, NEAR_PARALLAX)}>
-          <WuxiaNearWeather />
+          <WuxiaNearWeather sheet="goods" />
+        </div>
+        <div className="partner-map-depth is-rain" style={layerStyle(box, pan, RAIN_PARALLAX)}>
+          <div className="wuxia-layer-drift is-fast">
+            <WuxiaNearWeather sheet="rain" />
+          </div>
         </div>
         <WuxiaCloudFrame pan={pan} />
-        {shownCard && place ? (
-          <aside
-            className={`partner-map-card partner-map-chrome${cardPinned ? ' is-pinned' : ' is-preview'}`}
-            style={{
-              left: place.left,
-              top: place.top,
-              width: place.width,
-              transform: place.below ? undefined : 'translateY(-100%)',
-            }}
-            role={cardPinned ? 'dialog' : 'tooltip'}
-            aria-live="polite"
-            aria-label={`${shownCard.placeZh} ${shownCard.placeEn}`}
-            onPointerEnter={() => previewStop(shownId!)}
-            onPointerLeave={() => clearPreview(shownId!)}
-            onClick={(event) => {
-              const target = event.target as HTMLElement
-              if (cardPinned || target.closest('.partner-map-card-go, .partner-map-card-close')) return
-              pinStop(shownId!)
-            }}
-          >
-            <p className="partner-map-card-kicker">{shownCard.kicker}</p>
-            <p className="partner-map-card-place" lang="zh-HK">
-              {shownCard.placeZh}
-              <span lang="en">{shownCard.placeEn}</span>
-            </p>
-            <p className="partner-map-card-line">{shownCard.line}</p>
-            <p className="partner-map-card-tale">{shownCard.tale}</p>
-            <div className="partner-map-card-more">
-              <p className="partner-map-card-how">{shownCard.how}</p>
-              <p className="partner-map-card-before">{shownCard.before}</p>
-              <div className="partner-map-card-actions">
-                {onPick ? (
-                  <button
-                    type="button"
-                    className="partner-map-card-go"
-                    onClick={() => {
-                      setPinnedId(null)
-                      setHoverId(null)
-                      onPick(shownCard.category)
-                    }}
-                  >
-                    Practice {shownCard.placeEn}
-                  </button>
-                ) : null}
-                <button type="button" className="partner-map-card-close" onClick={() => setPinnedId(null)}>
-                  Close
-                </button>
-              </div>
+        {nextScroll && nextPlace ? (
+          onPick ? (
+            <button
+              type="button"
+              className="partner-map-next partner-map-chrome"
+              onClick={() => start(nextScroll.category)}
+            >
+              <span className="partner-map-next-kicker">Next</span>
+              <span className="partner-map-next-place" lang="zh-HK">
+                {nextPlace.placeZh}
+                <span lang="en">{nextPlace.placeEn}</span>
+              </span>
+              <span className="partner-map-next-meta">
+                {PATH_UNIT_LABELS[nextScroll.unit]} · {nextFilled} of {PATH_LESSONS_PER_UNIT}
+              </span>
+              <span className="partner-map-next-tale">{nextTale}</span>
+            </button>
+          ) : (
+            <div className="partner-map-next partner-map-chrome">
+              <span className="partner-map-next-kicker">Next</span>
+              <span className="partner-map-next-place" lang="zh-HK">
+                {nextPlace.placeZh}
+                <span lang="en">{nextPlace.placeEn}</span>
+              </span>
+              <span className="partner-map-next-meta">
+                {PATH_UNIT_LABELS[nextScroll.unit]} · {nextFilled} of {PATH_LESSONS_PER_UNIT}
+              </span>
+              <span className="partner-map-next-tale">{nextTale}</span>
             </div>
-          </aside>
+          )
         ) : null}
-        <div className="partner-map-zoom partner-map-chrome" role="group" aria-label="Map zoom">
-          <button type="button" aria-label="Zoom in" onClick={() => bump(1)}>
-            +
-          </button>
-          <button
-            type="button"
-            aria-label="Zoom out"
-            onClick={() => bump(-1)}
-            disabled={pan.scale <= ZOOM_MIN + 0.01}
-          >
-            −
-          </button>
-        </div>
       </div>
     </div>
   )
