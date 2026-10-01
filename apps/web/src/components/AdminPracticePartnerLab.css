@@ -3892,24 +3892,33 @@
   z-index: 7;
   display: grid;
   place-items: center;
-  width: 3.25rem;
-  height: 3.25rem;
+  width: 4.25rem;
+  height: 4.25rem;
   padding: 0;
+  overflow: hidden;
   transform: translateX(-50%);
   border-radius: 50%;
   border: 1.5px solid color-mix(in srgb, #00e5ff 82%, white);
-  background: color-mix(in srgb, #050816 78%, #071428);
+  background: #050816;
   color: #e8fff8;
   cursor: pointer;
   box-shadow: none;
 }
 
+.partner-companion-mic-globe {
+  z-index: 0;
+  border-radius: 50%;
+}
+
 .partner-companion-mic svg {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 1.15rem;
   height: 1.15rem;
   justify-self: center;
   align-self: center;
+  filter: drop-shadow(0 0 5px #050816);
 }
 
 .partner-companion-mic:hover,
@@ -4781,8 +4790,8 @@
 }
 
 .partner-lab--topic.is-sheet .partner-holo-sheet.is-open {
-  bottom: 5.6rem;
-  max-height: min(42dvh, calc(100dvh - 14.5rem));
+  bottom: 6.4rem;
+  max-height: min(42dvh, calc(100dvh - 15.4rem));
   padding-bottom: 0.85rem;
 }
 

@@ -2,7 +2,7 @@ import * as THREE from 'three'
 
 export type OrbitalSphereVariant = 'harbor' | 'creators'
 
-export type OrbitalSpherePlacement = 'page' | 'stage'
+export type OrbitalSpherePlacement = 'page' | 'stage' | 'badge'
 
 export type OrbitalSphereOptions = {
   speed: number
@@ -21,6 +21,7 @@ export type OrbitalSphereOptions = {
   /**
    * `page` — marketing hero: wide viewports park the globe on the right.
    * `stage` — Practice Partner: always centered in the host, including desktop.
+   * `badge` — a tight centered globe for a small circular control.
    */
   placement: OrbitalSpherePlacement
 }
@@ -215,6 +216,17 @@ export function resolveOrbitalSphereLayout(
   placement: OrbitalSpherePlacement = 'page',
 ): OrbitalSphereLayout {
   const isCreators = variant === 'creators'
+  if (placement === 'badge') {
+    // Fill most of a small square so the sphere reads inside a circular clip.
+    const cameraZ = 5.2
+    const z = -1.6
+    const depth = cameraZ - z
+    const halfH = depth * Math.tan((CAMERA_FOV * Math.PI) / 360)
+    const viewH = 2 * halfH
+    const viewW = viewH * (width / Math.max(1, height))
+    const worldR = 0.41 * Math.min(viewW, viewH)
+    return { x: 0, y: 0, z, scale: worldR / SPHERE_RADIUS, cameraZ }
+  }
   const pageWide = placement !== 'stage' && width >= 1024
   if (pageWide) {
     return {
@@ -256,11 +268,12 @@ export function createOrbitalSphereRenderer(
   const scene = new THREE.Scene()
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000)
   const stage = initial.placement === 'stage'
+  const badge = initial.placement === 'badge'
   const renderer = new THREE.WebGLRenderer({
     canvas,
     alpha: true,
-    antialias: !stage,
-    powerPreference: stage ? 'low-power' : 'default',
+    antialias: badge || !stage,
+    powerPreference: stage || badge ? 'low-power' : 'default',
   })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, stage ? 1.5 : 2))
 
@@ -268,7 +281,7 @@ export function createOrbitalSphereRenderer(
   scene.add(root)
 
   const radius = SPHERE_RADIUS
-  const maxParticles = isCreators ? 8_500 : stage ? 5_500 : 12_000
+  const maxParticles = isCreators ? 8_500 : badge ? 2_200 : stage ? 5_500 : 12_000
   const positions = new Float32Array(maxParticles * 3)
   const colors = new Float32Array(maxParticles * 3)
   const hi = new THREE.Color(palette.particleHi)

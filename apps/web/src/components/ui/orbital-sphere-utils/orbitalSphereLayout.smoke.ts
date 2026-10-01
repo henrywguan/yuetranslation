@@ -50,4 +50,14 @@ const phone = resolveOrbitalSphereLayout(390, 844, 'harbor', 'stage')
 assert.equal(phone.x, 0)
 assert.equal(phone.cameraZ, 6.5, 'portrait stage keeps the phone crop')
 
+const badge = resolveOrbitalSphereLayout(68, 68, 'harbor', 'badge')
+assert.equal(badge.x, 0)
+assert.equal(badge.y, 0, 'badge globe stays centered')
+const badgeFrame = project(68, 68, badge)
+assert.ok(Math.abs(badgeFrame.x - 34) < 1, `badge globe centered (x=${badgeFrame.x})`)
+assert.ok(
+  badgeFrame.radius > 68 * 0.32 && badgeFrame.radius < 68 * 0.48,
+  `badge globe fits a circle (radius=${badgeFrame.radius})`,
+)
+
 console.log('orbitalSphereLayout.smoke: ok')

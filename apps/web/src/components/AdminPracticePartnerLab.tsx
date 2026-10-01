@@ -2024,6 +2024,16 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </button>
         </nav>
         <button type="button" className="partner-companion-mic" aria-label="Speak" onClick={speakWithHarbor}>
+          <OrbitalSphereBackground
+            className="partner-companion-mic-globe"
+            placement="badge"
+            speed={0.9}
+            particleSize={0.22}
+            particleOpacity={0.92}
+            orbitOpacity={0.55}
+            haloOpacity={0.4}
+            scale={1}
+          />
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
               fill="currentColor"
