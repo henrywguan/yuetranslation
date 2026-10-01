@@ -85,8 +85,8 @@ No live Critical finding in current `main` + prod health.
 
 | Attack | How | Status |
 | --- | --- | --- |
-| Harbor leaderboard spoof | `PUT /api/harbor-quest` client XP/gold | NEEDS_HUMAN (trust model) |
-| Practice Partner board spoof | `PUT /api/practice-partner/leaderboard` | NEEDS_HUMAN |
+| Harbor leaderboard spoof | `PUT /api/harbor-quest` client XP/gold | **ACCEPTED (beta)** — Henry 2026-10-01: leave client-trusted; not competitive integrity |
+| Practice Partner board spoof | `PUT /api/practice-partner/leaderboard` | **ACCEPTED (beta)** — same as Harbor |
 | Harbor Realtime chat impersonation | Client-chosen userId/username | NEEDS_HUMAN (Realtime auth) |
 | Gift spam after inventory spoof | Gift API + public UUIDs | Soft RL only |
 
@@ -171,10 +171,10 @@ Do these in dashboards (NEEDS_HUMAN):
 | --- | --- | --- |
 | P0 | Merge + deploy this hardenings PR | Henry |
 | P0 | Apply pending Supabase migrations (`035`, etc.) | Henry |
-| P1 | Decide Harbor + Practice leaderboard trust (accept spoof vs server awards) | Henry |
+| P1 | ~~Decide Harbor + Practice leaderboard trust~~ → **Accepted beta spoof (2026-10-01)** | — |
 | P1 | Guest TTS IP RL and/or Harbor TTS budget if Azure bill spikes | Henry |
 | P2 | Upstash shared rate limits + Vercel Firewall rules | Henry |
-| P2 | CSP `frame-ancestors` + admin MFA | Henry |
+| P2 | CSP `frame-ancestors` (optional; embed policy first) | Henry |
 | P2 | Before consumer Practice Partner: hard caps + server chat history | Henry |
 | P3 | Self-serve account deletion; fail-closed when usage DB down | Eng |
 
