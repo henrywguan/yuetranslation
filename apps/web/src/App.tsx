@@ -11,6 +11,7 @@ import {
 import { isDisplayStandalone } from './lib/pwaInstall'
 import { bootstrapPwaLaunch } from './lib/pwaLaunch'
 import { listenPushNavigate, syncPushSubscriptionIfEnabled } from './lib/pushNotifications'
+import { sanitizePushNavigateUrl } from './lib/safeUrl'
 import { loadSiteConfig } from './lib/siteLinks'
 import { bindMicBackgroundRelease, shouldForceReleaseMicOnBackground } from './lib/micPrivacy'
 import { isAppleTouchDevice } from './lib/mediaAccess'
@@ -65,13 +66,11 @@ export default function App() {
     if (!ready) return
     void syncPushSubscriptionIfEnabled()
     return listenPushNavigate((url) => {
-      if (url.startsWith('#')) {
-        window.location.hash = url.replace(/^#/, '')
-      } else if (url.startsWith('/#') || url.includes('#')) {
-        const hash = url.includes('#') ? url.slice(url.indexOf('#') + 1) : url
-        window.location.hash = hash
-      } else {
-        window.location.assign(url)
+      const safe = sanitizePushNavigateUrl(url, window.location.origin)
+      if (safe.startsWith('#')) {
+        window.location.hash = safe.replace(/^#/, '')
+      } else if (safe.startsWith('/')) {
+        window.location.assign(`${window.location.origin}${safe}`)
       }
     })
   }, [ready])

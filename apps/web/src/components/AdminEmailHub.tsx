@@ -165,7 +165,13 @@ function LiveTemplateThumb({
   return (
     <div className="email-hub-thumb email-hub-thumb--live" aria-hidden>
       <div className="email-hub-thumb-scale">
-        <iframe title={`${name} preview`} className="email-hub-thumb-iframe" srcDoc={html} tabIndex={-1} />
+        <iframe
+          title={`${name} preview`}
+          className="email-hub-thumb-iframe"
+          srcDoc={html}
+          sandbox=""
+          tabIndex={-1}
+        />
       </div>
       <span className="email-hub-thumb-label">{name}</span>
     </div>
@@ -951,7 +957,12 @@ export function AdminEmailHub() {
           </div>
           <div className={`email-hub-iframe-wrap email-hub-iframe-wrap--${previewWidth}`}>
             {previewHtml ? (
-              <iframe title="Email preview" className="email-hub-iframe" srcDoc={previewHtml} />
+              <iframe
+                title="Email preview"
+                className="email-hub-iframe"
+                srcDoc={previewHtml}
+                sandbox=""
+              />
             ) : (
               <p className="admin-muted">{previewBusy ? 'Rendering…' : 'No preview yet.'}</p>
             )}

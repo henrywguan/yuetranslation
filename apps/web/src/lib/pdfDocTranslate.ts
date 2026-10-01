@@ -238,6 +238,8 @@ export async function translatePdfHybrid(
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
       const scan = await cameraScan({ image: dataUrl, target, forDocs: true })
       if (scan.entitlement) onEntitlement?.(scan.entitlement as Entitlement)
+      // Server debits 1 docs page per forDocs OCR scan — count as prepaid for commit.
+      prepaidPages += 1
       paintTranslations(
         ctx,
         canvas,

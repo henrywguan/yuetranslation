@@ -1,4 +1,5 @@
 import { navigate } from './useHashRoute'
+import { sanitizeLeaveUrl } from './safeUrl'
 
 export type SiteConfig = {
   /** Absolute URL of an external translator entry (optional; normally in-app `#/app`). */
@@ -20,13 +21,18 @@ function fromEnv(): SiteConfig {
   }
 }
 
+function safeQueryUrl(raw: string | null): string {
+  if (!raw?.trim() || typeof window === 'undefined') return ''
+  return sanitizeLeaveUrl(raw, window.location.origin) || ''
+}
+
 function fromQuery(): SiteConfig {
   if (typeof window === 'undefined') return {}
   const q = new URLSearchParams(window.location.search)
   return {
-    translatorUrl: q.get('translator') || '',
-    pricingUrl: q.get('pricing') || '',
-    marketingUrl: q.get('marketing') || '',
+    translatorUrl: safeQueryUrl(q.get('translator')),
+    pricingUrl: safeQueryUrl(q.get('pricing')),
+    marketingUrl: safeQueryUrl(q.get('marketing')),
   }
 }
 
@@ -72,9 +78,12 @@ function getSiteConfig(): SiteConfig {
 }
 
 function leaveTo(url: string) {
+  if (typeof window === 'undefined') return
+  const safe = sanitizeLeaveUrl(url, window.location.origin)
+  if (!safe) return
   // Break out of iframes so external pages load top-level.
   const target = window.top ?? window
-  target.location.assign(url)
+  target.location.assign(safe)
 }
 
 /** Open the translator: external URL when configured, else in-app `#/app`. */

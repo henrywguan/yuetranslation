@@ -4,11 +4,27 @@ Full-project Security Guardian pass (code review + safe `/api/health` + `npm aud
 Re-run via **Vulnerability Scanner** automation or chat: follow `docs/agents/security-guardian.md`.
 
 Date: 2026-09-04 · Scope: repo `main` + local cloud env health (not production HTTP)  
-Updated: **2026-09-19** — Harbor Quest + Practice Partner full-repo rescan; push subscribe RL; Harbor sync/gift RL; progress RLS service-role writes; Practice Partner meter await + hide model from client
+Updated: **2026-09-19** — Harbor Quest + Practice Partner full-repo rescan  
+Updated: **2026-10-01** — Deep attack-surface research (all routes + prod); see [`security-attack-surface-2026-10-01.md`](./security-attack-surface-2026-10-01.md)
 
 ---
 
-## Executive summary (2026-09-19)
+## Executive summary (2026-10-01)
+
+| Area | Status |
+| --- | --- |
+| Prod `jyuttranslate.com` | **Healthy** — `mode: cloud`; HSTS/nosniff; no open-mode |
+| Token exfil via `?api=` | **FIXED** — same-origin API base only |
+| Open redirects (query / push) | **FIXED** — URL allowlist |
+| Speech TTL vs prepaid | **FIXED** — TTL ≤ debit |
+| `forDocs` Vision without page burn | **FIXED** — 1 docs page / success |
+| Household invite null-email steal | **FIXED** — email required |
+| OOXML zip bomb | **HARDENED** — entry/text caps |
+| Harbor / Practice leaderboards | **Still High** — client-trusted scores (product) |
+| Guest unlimited TTS | **Accepted product** + Harbor amplify residual |
+| Full narrative | [`security-attack-surface-2026-10-01.md`](./security-attack-surface-2026-10-01.md) |
+
+### Prior executive summary (2026-09-19)
 
 | Area | Status |
 | --- | --- |
