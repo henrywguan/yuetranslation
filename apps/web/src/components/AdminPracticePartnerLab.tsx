@@ -28,7 +28,13 @@ import {
   type PartnerPerformance,
 } from '../lib/practicePartnerPerformance'
 import { glossForChar, isHanChar } from '../lib/charGloss'
-import { sceneLineAt, scenePlaceFor, sceneTurnCount } from '../lib/practicePartnerScene'
+import { missReasonFallback } from '../lib/practicePartnerMissReason'
+import { keptSceneBundle, sceneLineAt, scenePlaceFor, sceneTurnCount } from '../lib/practicePartnerScene'
+import {
+  PRACTICE_PARTNER_SITUATIONS,
+  practicePartnerSituation,
+  type PracticePartnerSituationId,
+} from '../lib/practicePartnerSituation'
 import {
   beginPartnerSitting,
   linesForCategory,
@@ -231,6 +237,12 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
 
 const SILENCE_MS = 1600
 
+type PartnerSessionKind = 'drill' | 'open' | 'scene' | 'situation'
+
+function isTalk(kind: PartnerSessionKind) {
+  return kind === 'open' || kind === 'situation'
+}
+
 function performedLine(
   reply: string,
   beats: PartnerPerformance | null,
@@ -344,7 +356,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [youLive, setYouLive] = useState<{ text: string; interim: boolean } | null>(null)
   /** Bumps to replay the jade sweep on the drill 漢字. */
   const [zhFlash, setZhFlash] = useState(0)
-  const [sessionKind, setSessionKind] = useState<'drill' | 'open' | 'scene'>('drill')
+  const [sessionKind, setSessionKind] = useState<PartnerSessionKind>('drill')
   const [sceneOffer, setSceneOffer] = useState<{
     category: PracticePartnerCategory
     placeEn: string
@@ -359,6 +371,16 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [keptLines, setKeptLines] = useState<PartnerKeptLine[]>(() => readPartnerSitting().lines)
   const [gloss, setGloss] = useState<{ char: string; meaning: string } | null>(null)
   const [tonePop, setTonePop] = useState<PartnerToneNote | null>(null)
+  const [whyNote, setWhyNote] = useState('')
+  const [correction, setCorrection] = useState<{
+    said: string
+    en: string
+    zh: string
+    jyutping: string
+    why: string
+  } | null>(null)
+  const [hintLine, setHintLine] = useState<PracticePartnerDrillTarget | null>(null)
+  const [situationId, setSituationId] = useState<PracticePartnerSituationId | null>(null)
 
   const draftInputRef = useRef<HTMLInputElement | null>(null)
   const sessionRef = useRef<LiveSession | null>(null)
@@ -392,7 +414,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const publishScoreRef = useRef<(scores: PracticePartnerScores) => void>(() => {})
   const pathRef = useRef(path)
   const pathNoteTimerRef = useRef(0)
-  const sessionKindRef = useRef<'drill' | 'open' | 'scene'>('drill')
+  const sessionKindRef = useRef<PartnerSessionKind>('drill')
+  const situationRef = useRef<PracticePartnerSituationId | null>(null)
   const sittingRef = useRef<PartnerSitting>(readPartnerSitting())
   const sceneStepRef = useRef({ index: 0, total: 0 })
   const sceneLinesRef = useRef<PartnerKeptLine[]>([])
@@ -552,6 +575,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     partnerBeatsRef.current = null
     lastMissRef.current = null
     setMissCard(null)
+    setWhyNote('')
+    setCorrection(null)
+    setHintLine(null)
     setMood('idle')
     setCaption({ role: 'system', text: EMPTY_CAPTION })
     setVhsCue(0)
@@ -664,13 +690,13 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       verdictTimerRef.current = window.setTimeout(() => setVerdictFlash(null), 1800)
     } else {
       setVerdictFlash(null)
-      if (kind === 'open' && drill.zh && drill.en) {
+      if (isTalk(kind) && drill.zh && drill.en) {
         commitSitting(
           rememberPartnerLine(sittingRef.current, {
             en: drill.en,
             zh: drill.zh,
             jyutping: drill.jyutping,
-            category: 'open',
+            category: kind === 'situation' ? situationRef.current || 'open' : 'open',
           }),
         )
       }
@@ -793,14 +819,17 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setFsTypeOpen(false)
     setMood('thinking')
     const kind = sessionKindRef.current
+    const situation = practicePartnerSituation(situationRef.current)
     const deck = PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === categoryRef.current)
     const sceneLine =
       kind === 'scene' ? sceneLineAt(sceneLinesRef.current, sceneStepRef.current.index) : null
     setCaption({
       role: 'system',
       text:
-        kind === 'open'
-          ? '港灣 is opening the conversation…'
+        isTalk(kind)
+          ? kind === 'situation'
+            ? `港灣 is setting ${situation?.placeEn || 'the situation'}…`
+            : '港灣 is opening the conversation…'
           : kind === 'scene'
             ? `港灣 is setting ${scenePlaceRef.current || 'the scene'}…`
             : `港灣 is picking a ${deck?.labelEn.toLowerCase() || 'common'} line…`,
@@ -820,9 +849,20 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           move: 'repeat',
           nextMove: 'repeat',
           mode: kind,
-          place: kind === 'scene' ? scenePlaceRef.current : null,
+          place:
+            kind === 'scene'
+              ? scenePlaceRef.current
+              : situation
+                ? `${situation.placeEn} (${situation.placeZh})`
+                : null,
           sceneTurn: kind === 'scene' ? sceneStepRef.current.index + 1 : null,
           sceneTurns: kind === 'scene' ? sceneStepRef.current.total : null,
+          situation: situationRef.current,
+          kept: sittingRef.current.lines.slice(-8).map((line) => ({
+            en: line.en,
+            zh: line.zh,
+            jyutping: line.jyutping,
+          })),
         },
       )
       const performed = performedLine(
@@ -874,7 +914,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       setMood('thinking')
       setCaption({
         role: 'system',
-        text: kind === 'open' ? '港灣 is answering…' : '港灣 is judging…',
+        text: isTalk(kind) ? '港灣 is answering…' : '港灣 is judging…',
       })
 
       const nextMessages: PracticePartnerChatMessage[] = [
@@ -891,12 +931,13 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       pendingNextMoveRef.current = plan.nextMove
       pendingReviewRef.current = plan.review
 
-      const lastMiss = kind === 'open' ? null : lastMissRef.current
+      const lastMiss = isTalk(kind) ? null : lastMissRef.current
       lastMissRef.current = null
+      const situation = practicePartnerSituation(situationRef.current)
       try {
-        const { reply, drill: rawDrill, beats } = await postPracticePartnerChat(
+        const { reply, drill: rawDrill, beats, aside } = await postPracticePartnerChat(
           nextMessages,
-          kind === 'open' ? null : target,
+          isTalk(kind) ? null : target,
           categoryRef.current,
           difficultyRef.current,
           {
@@ -907,9 +948,20 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             review: kind === 'drill' ? plan.review : null,
             lastMiss,
             mode: kind,
-            place: kind === 'scene' ? scenePlaceRef.current : null,
+            place:
+              kind === 'scene'
+                ? scenePlaceRef.current
+                : situation
+                  ? `${situation.placeEn} (${situation.placeZh})`
+                  : null,
             sceneTurn: kind === 'scene' ? sceneStepRef.current.index + 1 : null,
             sceneTurns: kind === 'scene' ? sceneStepRef.current.total : null,
+            situation: situationRef.current,
+            kept: sittingRef.current.lines.slice(-8).map((line) => ({
+              en: line.en,
+              zh: line.zh,
+              jyutping: line.jyutping,
+            })),
           },
         )
         incomingReviewRef.current = false
@@ -925,7 +977,11 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                   advance: false,
                 }
               : rawDrill
-                ? { ...rawDrill, verdict: kind === 'open' ? ('none' as const) : rawDrill.verdict, advance: kind === 'open' ? false : rawDrill.advance }
+                ? {
+                    ...rawDrill,
+                    verdict: isTalk(kind) ? ('none' as const) : rawDrill.verdict,
+                    advance: isTalk(kind) ? false : rawDrill.advance,
+                  }
                 : rawDrill
             : rawDrill?.verdict === 'fail'
               ? {
@@ -941,7 +997,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 : rawDrill
         if (kind === 'drill' && drill?.verdict === 'pass' && plan.review) incomingReviewRef.current = true
         let phrase =
-          kind === 'open'
+          isTalk(kind)
             ? drill?.zh || beats?.phrase || ''
             : drill?.verdict === 'fail'
               ? target.zh
@@ -1003,8 +1059,22 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         if (drill?.verdict === 'fail') {
           setMissCard({ said: text, chunk: retryChunk(target.zh) })
           lastMissRef.current = { said: text, zh: target.zh, en: target.en }
+          setWhyNote(aside.why || missReasonFallback(text, target.jyutping))
+          setCorrection(null)
+        } else if (isTalk(kind) && aside.correction) {
+          setMissCard(null)
+          setWhyNote('')
+          setCorrection({
+            said: text,
+            en: aside.correction.en,
+            zh: aside.correction.zh,
+            jyutping: aside.correction.jyutping,
+            why: aside.why,
+          })
         } else {
           setMissCard(null)
+          setWhyNote('')
+          setCorrection(null)
         }
         applyDrill(drill)
         if (closing) {
@@ -1227,6 +1297,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       clearDrillSession()
       sessionKindRef.current = 'drill'
       setSessionKind('drill')
+      situationRef.current = null
+      setSituationId(null)
       setSceneOffer(null)
       setRecap(null)
       sceneDoneRef.current = false
@@ -1247,6 +1319,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     clearDrillSession()
     sessionKindRef.current = 'open'
     setSessionKind('open')
+    situationRef.current = null
+    setSituationId(null)
     setSceneOffer(null)
     setRecap(null)
     sceneDoneRef.current = false
@@ -1264,6 +1338,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     clearDrillSession()
     sessionKindRef.current = 'drill'
     setSessionKind('drill')
+    situationRef.current = null
+    setSituationId(null)
     setSceneOffer(null)
     setGloss(null)
     setTonePop(null)
@@ -1276,32 +1352,135 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setTopicReady(false)
   }, [busy, clearDrillSession, commitSitting, listening])
 
+  const armScene = useCallback(
+    (lines: PartnerKeptLine[], placeEn: string, placeZh: string) => {
+      const total = sceneTurnCount(lines.length)
+      const first = sceneLineAt(lines, 0)
+      if (!first || !total || busy || listening) return
+      ttsGenRef.current += 1
+      ttsLiveRef.current = false
+      stopSpeaking()
+      sceneLinesRef.current = lines
+      sceneStepRef.current = { index: 0, total }
+      setSceneStep(sceneStepRef.current)
+      scenePlaceRef.current = `${placeEn} (${placeZh})`
+      sceneDoneRef.current = false
+      setSceneDone(false)
+      situationRef.current = null
+      setSituationId(null)
+      sessionKindRef.current = 'scene'
+      setSessionKind('scene')
+      setSceneOffer(null)
+      setMessages([])
+      messagesRef.current = []
+      setActiveDrill(null)
+      activeDrillRef.current = null
+      setMissCard(null)
+      setTopicReady(true)
+      void startDrill()
+    },
+    [busy, listening, startDrill],
+  )
+
   const enterScene = useCallback(() => {
     const id = sceneOffer?.category || categoryRef.current
     const lines = linesForCategory(sittingRef.current.lines, id)
-    const total = sceneTurnCount(lines.length)
-    const first = sceneLineAt(lines, 0)
     const place = scenePlaceFor(id)
-    if (!first || !total || !place || busy || listening) return
-    ttsGenRef.current += 1
-    ttsLiveRef.current = false
-    stopSpeaking()
-    sceneLinesRef.current = lines
-    sceneStepRef.current = { index: 0, total }
-    setSceneStep(sceneStepRef.current)
-    scenePlaceRef.current = `${place.placeEn} (${place.placeZh})`
-    sceneDoneRef.current = false
-    setSceneDone(false)
-    sessionKindRef.current = 'scene'
-    setSessionKind('scene')
-    setSceneOffer(null)
-    setMessages([])
-    messagesRef.current = []
-    setActiveDrill(null)
-    activeDrillRef.current = null
-    setMissCard(null)
-    void startDrill()
-  }, [busy, listening, sceneOffer, startDrill])
+    if (!place) return
+    armScene(lines, place.placeEn, place.placeZh)
+  }, [armScene, sceneOffer])
+
+  const startKeptScene = useCallback(() => {
+    const bundle = keptSceneBundle(sittingRef.current.lines)
+    if (!bundle) return
+    armScene(bundle.lines, bundle.placeEn, bundle.placeZh)
+  }, [armScene])
+
+  const beginSituation = useCallback(
+    (id: PracticePartnerSituationId) => {
+      const place = practicePartnerSituation(id)
+      if (!place) return
+      clearDrillSession()
+      sessionKindRef.current = 'situation'
+      setSessionKind('situation')
+      situationRef.current = id
+      setSituationId(id)
+      scenePlaceRef.current = `${place.placeEn} (${place.placeZh})`
+      setSceneOffer(null)
+      setRecap(null)
+      sceneDoneRef.current = false
+      setSceneDone(false)
+      commitSitting(beginPartnerSitting(sittingRef.current))
+      setTopicReady(true)
+      setFullscreen(false)
+    },
+    [clearDrillSession, commitSitting],
+  )
+
+  const retryCorrection = useCallback(() => {
+    const zh = correction?.zh.trim()
+    if (!zh || busy || listening || mood === 'speaking' || mood === 'reacting') return
+    unlockTtsPlayback({ force: true })
+    void playPhrase(zh)
+  }, [busy, correction, listening, mood, playPhrase])
+
+  const askForLine = useCallback(() => {
+    if (busy || listening || mood === 'speaking' || mood === 'reacting' || sceneDoneRef.current) return
+    const kind = sessionKindRef.current
+    const known = kind === 'drill' || kind === 'scene' ? activeDrillRef.current : null
+    if (known?.zh) {
+      unlockTtsPlayback({ force: true })
+      setHintLine(known)
+      void playPhrase(known.zh)
+      return
+    }
+    if (!isTalk(kind)) return
+    unlockTtsPlayback({ force: true })
+    const situation = practicePartnerSituation(situationRef.current)
+    turnLockRef.current = true
+    setBusy(true)
+    setError('')
+    void postPracticePartnerChat(
+      messagesRef.current,
+      null,
+      categoryRef.current,
+      difficultyRef.current,
+      {
+        streak: 0,
+        missStreak: 0,
+        move: 'repeat',
+        nextMove: 'repeat',
+        mode: kind,
+        hint: true,
+        situation: situationRef.current,
+        place: situation ? `${situation.placeEn} (${situation.placeZh})` : scenePlaceRef.current,
+        kept: sittingRef.current.lines.slice(-8).map((line) => ({
+          en: line.en,
+          zh: line.zh,
+          jyutping: line.jyutping,
+        })),
+      },
+    )
+      .then(({ reply, drill, beats }) => {
+        if (!drill?.zh) return
+        setHintLine({ en: drill.en, zh: drill.zh, jyutping: drill.jyutping })
+        const performed = performedLine(reply, beats, drill.zh, 'none', 0, 0)
+        const withReply: PracticePartnerChatMessage[] = [
+          ...messagesRef.current,
+          { role: 'assistant', content: performed.caption },
+        ]
+        setMessages(withReply)
+        void playPartnerReply(performed.caption, performed.beats)
+      })
+      .catch((e) => {
+        const msg = e instanceof Error ? e.message : 'Could not give a line'
+        setError(msg)
+      })
+      .finally(() => {
+        setBusy(false)
+        turnLockRef.current = false
+      })
+  }, [busy, listening, mood, playPartnerReply, playPhrase])
 
   const onCategoryChange = (next: PracticePartnerCategory) => {
     pickTopic(next)
@@ -1418,8 +1597,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setFsTypeOpen(true)
   }
 
+  const talking = isTalk(sessionKind)
+  const situationMeta = practicePartnerSituation(situationId)
   const talkLabel = listening
-    ? sessionKind === 'open'
+    ? talking
       ? 'Stop'
       : 'Stop & judge'
     : sceneDone
@@ -1429,19 +1610,23 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           ? 'Working…'
           : sessionKind === 'open'
             ? 'Begin chat'
-            : sessionKind === 'scene'
-              ? 'Begin scene'
-              : 'Begin drill'
+            : sessionKind === 'situation'
+              ? 'Begin'
+              : sessionKind === 'scene'
+                ? 'Begin scene'
+                : 'Begin drill'
         : busy
           ? 'Working…'
-          : sessionKind === 'open'
+          : talking
             ? 'Talk'
             : 'Say it'
 
   const categoryMeta =
-    sessionKind === 'open'
-      ? { labelEn: 'Open chat', labelZh: '自由講' }
-      : PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === category) || PRACTICE_PARTNER_CATEGORIES[2]
+    sessionKind === 'situation' && situationMeta
+      ? { labelEn: situationMeta.placeEn, labelZh: situationMeta.placeZh }
+      : sessionKind === 'open'
+        ? { labelEn: 'Open chat', labelZh: '自由講' }
+        : PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === category) || PRACTICE_PARTNER_CATEGORIES[2]
   const difficultyMeta =
     PRACTICE_PARTNER_DIFFICULTIES.find((d) => d.id === difficulty) ||
     PRACTICE_PARTNER_DIFFICULTIES[1]
@@ -1451,8 +1636,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const freeLine = sessionKind !== 'drill'
   const scenePlaceLabel = scenePlaceRef.current
   const drillKicker =
-    sessionKind === 'open'
-      ? 'Open chat'
+    sessionKind === 'situation'
+      ? situationMeta?.placeEn || 'Situation'
+      : sessionKind === 'open'
+        ? 'Open chat'
       : sessionKind === 'scene'
         ? sceneDone
           ? 'Scene done'
@@ -1653,9 +1840,31 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </button>
         </div>
 
+        <div className="partner-lab-chooser-block">
+          <p className="partner-lab-chooser-label" id="partner-lab-situation-label">
+            Situation
+          </p>
+          <ul className="partner-lab-situation-list" aria-labelledby="partner-lab-situation-label">
+            {PRACTICE_PARTNER_SITUATIONS.map((place) => (
+              <li key={place.id}>
+                <button type="button" className="partner-lab-open" onClick={() => beginSituation(place.id)}>
+                  <span className="partner-lab-open-en">{place.placeEn}</span>
+                  <span className="partner-lab-open-zh" lang="zh-HK">
+                    {place.placeZh}
+                  </span>
+                  <span className="partner-lab-open-hint">{place.blurb}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         {keptLines.length ? (
           <div className="partner-lab-chooser-block">
             <p className="partner-lab-chooser-label">Lines you kept</p>
+            <button type="button" className="partner-lab-recap-dismiss" onClick={startKeptScene}>
+              Use your lines
+            </button>
             <ul className="partner-lab-kept">
               {keptLines.slice(-6).reverse().map((line) => (
                 <li key={`${line.category}-${line.zh}`}>
@@ -1693,7 +1902,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </p>
           <h2 className="partner-lab-title">Practice Partner</h2>
           <p className="partner-lab-lede">
-            {sessionKind === 'open'
+            {sessionKind === 'situation'
+              ? 'Stay in the place you picked.'
+              : sessionKind === 'open'
               ? 'Talk with 港灣. The path stays where you left it.'
               : sessionKind === 'scene'
                 ? 'Use a line you already kept.'
@@ -1901,6 +2112,23 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                       Retry {missCard.chunk}
                     </span>
                   ) : null}
+                  {whyNote ? <span className="partner-lab-miss-why">{whyNote}</span> : null}
+                </p>
+              ) : null}
+              {correction ? (
+                <div className="partner-lab-correction">
+                  <p>Heard {correction.said}</p>
+                  <p lang="zh-HK">{correction.zh}</p>
+                  {correction.why ? <p>{correction.why}</p> : null}
+                  <button type="button" onClick={retryCorrection}>
+                    Retry
+                  </button>
+                </div>
+              ) : null}
+              {hintLine && talking ? (
+                <p className="partner-lab-hint-line">
+                  <span lang="zh-HK">{hintLine.zh}</span>
+                  <span>{hintLine.en}</span>
                 </p>
               ) : null}
               {difficulty === 'new_learner' ? (
@@ -2138,6 +2366,18 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               </button>
               <button
                 type="button"
+                className="partner-lab-fs-change-topic"
+                aria-label="Give me a line"
+                disabled={busy || listening || sceneDone || mood === 'speaking' || mood === 'reacting'}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  askForLine()
+                }}
+              >
+                A line
+              </button>
+              <button
+                type="button"
                 className={`partner-lab-fs-mic${listening ? ' is-live' : ''}`}
                 disabled={(busy && !listening) || sceneDone}
                 aria-label={talkLabel}
@@ -2254,6 +2494,14 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             <button
               type="button"
               className="partner-lab-change-topic"
+              disabled={busy || listening || sceneDone || mood === 'speaking' || mood === 'reacting'}
+              onClick={askForLine}
+            >
+              A line
+            </button>
+            <button
+              type="button"
+              className="partner-lab-change-topic"
               disabled={busy || listening}
               onClick={changeTopic}
             >
@@ -2265,7 +2513,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               disabled={busy || listening}
               onClick={resetChat}
             >
-              {sessionKind === 'open' ? 'New chat' : sessionKind === 'scene' ? 'Restart scene' : 'New drill'}
+              {sessionKind === 'open' ? 'New chat' : sessionKind === 'situation' ? 'New situation' : sessionKind === 'scene' ? 'Restart scene' : 'New drill'}
             </button>
           </>
         )}

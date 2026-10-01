@@ -16,13 +16,16 @@ import {
   PRACTICE_PARTNER_SCENE_SYSTEM,
   PracticePartnerChatBodySchema,
   buildPracticePartnerTurn,
+  PRACTICE_PARTNER_SITUATION_SYSTEM,
+  keptLinesNote,
+  parsePracticePartnerReply,
   practicePartnerSystemFor,
+  readPracticePartnerCorrection,
   categoryLockLine,
   difficultyLockLine,
   moveLockLine,
   toneLockLine,
   normalizeVerdict,
-  parsePracticePartnerReply,
   practicePartnerSampling,
   recentSpeakOpenings,
   resolvePracticePartnerCategory,
@@ -377,5 +380,75 @@ assert.match(sceneKick.turn, /does not score the road/)
 assert.equal(practicePartnerSystemFor('scene'), PRACTICE_PARTNER_SCENE_SYSTEM)
 assert.equal(practicePartnerSystemFor('drill'), PRACTICE_PARTNER_SYSTEM)
 assert.equal(practicePartnerSystemFor(null), PRACTICE_PARTNER_SYSTEM)
+assert.match(PRACTICE_PARTNER_SYSTEM, /why is one short written sentence/)
+assert.equal(practicePartnerSystemFor('situation'), PRACTICE_PARTNER_SITUATION_SYSTEM)
+assert.match(PRACTICE_PARTNER_SITUATION_SYSTEM, /conversation continues/)
+assert.match(PRACTICE_PARTNER_OPEN_SYSTEM, /correction/)
+
+const situationBody = PracticePartnerChatBodySchema.safeParse({
+  messages: [],
+  mode: 'situation',
+  situation: 'cafe',
+  kept: [{ en: 'water', zh: '水', jyutping: 'seoi2' }],
+})
+assert.ok(situationBody.success, 'a chosen situation is accepted')
+
+const badSituation = PracticePartnerChatBodySchema.safeParse({
+  messages: [],
+  situation: 'debate',
+})
+assert.ok(!badSituation.success, 'unknown situations are rejected')
+
+const situationKick = buildPracticePartnerTurn([], null, 'common', 'abc', {
+  mode: 'situation',
+  situation: 'cafe',
+  kept: [{ en: 'water', zh: '水', jyutping: 'seoi2' }],
+})
+assert.match(situationKick.turn, /\[SITUATION\] Cha chaan teng/)
+assert.match(situationKick.turn, /茶餐廳/)
+assert.match(situationKick.turn, /\[KEPT LINES\].*水/)
+assert.doesNotMatch(situationKick.turn, /\[MOVE\]/)
+assert.match(keptLinesNote([{ zh: '水', en: 'water' }]), /Do not quiz/)
+
+const hint = buildPracticePartnerTurn(
+  [{ role: 'assistant', content: 'What do you want?' }],
+  null,
+  'common',
+  'new_learner',
+  { mode: 'situation', situation: 'mtr', hint: true },
+)
+assert.match(hint.turn, /\[HINT\]/)
+assert.match(hint.turn, /MTR/)
+assert.equal(hint.history.length, 1, 'a hint does not drop the conversation')
+
+const withWhy = parsePracticePartnerReply(
+  JSON.stringify({
+    reaction: 'Try the rising tone.',
+    cue: 'Again.',
+    verdict: 'fail',
+    en: 'water',
+    zh: '水',
+    jyutping: 'seoi2',
+    why: 'seoi2 rises.',
+    correction: { en: 'water', zh: '水', jyutping: 'seoi2' },
+  }),
+)
+assert.equal(withWhy.aside.why, 'seoi2 rises.')
+assert.equal(withWhy.aside.correction, null, 'a correction that repeats the spoken line is dropped')
+
+const withBetter = parsePracticePartnerReply(
+  JSON.stringify({
+    reaction: 'Tea, then.',
+    cue: 'Hot or cold?',
+    verdict: 'none',
+    en: 'Tea.',
+    zh: '茶呀。',
+    jyutping: 'caa4 aa3',
+    why: 'That came through in English.',
+    correction: { en: 'I want tea', zh: '我要茶', jyutping: 'ngo5 jiu3 caa4' },
+  }),
+)
+assert.equal(withBetter.aside.correction?.zh, '我要茶')
+assert.equal(readPracticePartnerCorrection({ en: 'tea', zh: '', jyutping: 'caa4' }), null)
 
 console.log('practicePartnerAi.smoke: ok')

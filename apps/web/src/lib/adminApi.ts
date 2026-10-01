@@ -749,6 +749,16 @@ export type PracticePartnerDrill = PracticePartnerDrillTarget & {
   advance: boolean
 }
 
+function asDrillTarget(raw: unknown): PracticePartnerDrillTarget | null {
+  if (!raw || typeof raw !== 'object') return null
+  const d = raw as Record<string, unknown>
+  const en = typeof d.en === 'string' ? d.en.trim() : ''
+  const zh = typeof d.zh === 'string' ? d.zh.trim() : ''
+  const jyutping = typeof d.jyutping === 'string' ? d.jyutping.trim() : ''
+  if (!en || !zh || !jyutping) return null
+  return { en, zh, jyutping }
+}
+
 function asDrill(raw: unknown): PracticePartnerDrill | null {
   if (!raw || typeof raw !== 'object') return null
   const d = raw as Record<string, unknown>
@@ -781,14 +791,29 @@ export async function postPracticePartnerChat(
     nextMove?: 'repeat' | 'listen' | 'translate' | 'finish'
     review?: PracticePartnerDrillTarget | null
     lastMiss?: PartnerLastMiss | null
-    mode?: 'drill' | 'open' | 'scene'
+    mode?: 'drill' | 'open' | 'scene' | 'situation'
     place?: string | null
     sceneTurn?: number | null
     sceneTurns?: number | null
+    situation?: 'cafe' | 'mtr' | 'favor' | 'disagree' | null
+    kept?: PracticePartnerDrillTarget[] | null
+    hint?: boolean | null
   } | null,
-): Promise<{ ok: boolean; reply: string; drill: PracticePartnerDrill | null; beats: PartnerPerformance | null }> {
+): Promise<{
+  ok: boolean
+  reply: string
+  drill: PracticePartnerDrill | null
+  beats: PartnerPerformance | null
+  aside: { why: string; correction: PracticePartnerDrillTarget | null }
+}> {
   const lastMiss = cleanPartnerLastMiss(tone?.lastMiss)
-  const mode = tone?.mode === 'open' || tone?.mode === 'scene' ? tone.mode : 'drill'
+  const mode =
+    tone?.mode === 'open' || tone?.mode === 'scene' || tone?.mode === 'situation'
+      ? tone.mode
+      : 'drill'
+  const kept = (tone?.kept || [])
+    .filter((row) => row.en.trim() && row.zh.trim())
+    .slice(0, 8)
   const res = await adminFetch('/admin/practice-partner/chat', {
     method: 'POST',
     body: JSON.stringify({
@@ -806,6 +831,9 @@ export async function postPracticePartnerChat(
       place: tone?.place?.trim().slice(0, 80) || null,
       sceneTurn: tone?.sceneTurn ?? null,
       sceneTurns: tone?.sceneTurns ?? null,
+      situation: tone?.situation ?? null,
+      kept,
+      hint: Boolean(tone?.hint),
     }),
   })
   const data = await res.json().catch(() => ({}))
@@ -814,10 +842,22 @@ export async function postPracticePartnerChat(
   }
   const reply = typeof (data as { reply?: unknown }).reply === 'string' ? (data as { reply: string }).reply : ''
   if (!reply.trim()) throw new Error('Practice partner returned an empty reply')
+  const asideRaw = (data as { aside?: unknown }).aside
+  const asideRow =
+    asideRaw && typeof asideRaw === 'object' ? (asideRaw as Record<string, unknown>) : {}
+  const correctionRaw = asideRow.correction
+  const correction =
+    correctionRaw && typeof correctionRaw === 'object'
+      ? asDrillTarget(correctionRaw)
+      : null
   return {
     ok: true,
     reply,
     drill: asDrill((data as { drill?: unknown }).drill),
     beats: asPartnerPerformance((data as { beats?: unknown }).beats),
+    aside: {
+      why: typeof asideRow.why === 'string' ? asideRow.why.trim().slice(0, 180) : '',
+      correction,
+    },
   }
 }

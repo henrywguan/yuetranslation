@@ -256,13 +256,19 @@ export const PracticePartnerChatBodySchema = z.object({
     })
     .optional()
     .nullable(),
-  /** drill = the path. open = free talk. scene = passed lines in one place. */
-  mode: z.enum(['drill', 'open', 'scene']).optional().nullable(),
+  /** drill = the path. open = free talk. scene = passed lines. situation = a place they picked. */
+  mode: z.enum(['drill', 'open', 'scene', 'situation']).optional().nullable(),
   /** Place name for a scene, e.g. Night Market (夜市). */
   place: z.string().trim().max(80).optional().nullable(),
   /** 1-based scene turn. */
   sceneTurn: z.number().int().min(1).max(8).optional().nullable(),
   sceneTurns: z.number().int().min(1).max(8).optional().nullable(),
+  /** cafe, mtr, favor, disagree. */
+  situation: z.enum(['cafe', 'mtr', 'favor', 'disagree']).optional().nullable(),
+  /** Lines they can already say. Prefer them. Do not quiz. */
+  kept: z.array(PracticePartnerDrillTargetSchema).max(8).optional().nullable(),
+  /** They froze. One sentence they can say next. The road does not move. */
+  hint: z.boolean().optional().nullable(),
 })
 
 export type PracticePartnerMessage = z.infer<typeof PracticePartnerMessageSchema>
@@ -281,16 +287,25 @@ export type PracticePartnerTurnTone = {
   nextMove?: PracticePartnerMove | null
   review?: PracticePartnerDrillTarget | null
   lastMiss?: PracticePartnerLastMiss | null
-  mode?: 'drill' | 'open' | 'scene' | null
+  mode?: 'drill' | 'open' | 'scene' | 'situation' | null
   place?: string | null
   sceneTurn?: number | null
   sceneTurns?: number | null
+  situation?: 'cafe' | 'mtr' | 'favor' | 'disagree' | null
+  kept?: PracticePartnerDrillTarget[] | null
+  hint?: boolean | null
+}
+
+export type PracticePartnerAside = {
+  why: string
+  correction: PracticePartnerDrillTarget | null
 }
 
 export type PracticePartnerChatResult = {
   reply: string
   drill: PracticePartnerDrill
   beats: PracticePartnerBeats
+  aside: PracticePartnerAside
   model: string
 }
 
@@ -474,13 +489,14 @@ export const PRACTICE_PARTNER_SYSTEM = [
   'Speech-to-text is messy: if they clearly attempted the target meaning or key words, PASS. Fail only when it is a different phrase, empty, English-only when Cantonese was required, or obviously wrong. When failing, still joke about what you heard (LEARNER SAID) vs what you wanted.',
   'CATEGORY LOCK: The user turn starts with [CATEGORY]. Every DEMAND — first phrase and every phrase after a pass — MUST stay in that category. animals = animals. foods = food/drink. common = everyday survival phrases. expert = advanced one-breath spoken Cantonese. Do not drift. Do not repeat a phrase already used in this session, unless [REVIEW] names that phrase.',
   'DIFFICULTY LOCK: The user turn also starts with [DIFFICULTY]. new_learner = English-majority mix. abc = Cantonese-majority mix. mainlander = all Cantonese + very stern mocking joking personality. Difficulty controls speak only — never drop en/zh/jyutping from the JSON card.',
-  'OUTPUT: a JSON object only. No markdown fences, no extra keys, no commentary outside JSON.',
-  'Keys: reaction (string), cue (string), verdict ("none"|"pass"|"fail"), advance (boolean), en (string), zh (string), jyutping (string).',
+  'OUTPUT: a JSON object only. No markdown fences, no commentary outside JSON.',
+  'Keys: reaction (string), cue (string), verdict ("none"|"pass"|"fail"), advance (boolean), en (string), zh (string), jyutping (string), why (string).',
+  'WHY: on a fail, why is one short written sentence about THIS attempt — the tone, the wrong word, or English that leaked in. On a pass or an opening, why is empty. Do not speak why inside reaction or cue.',
   'SPOKEN BEATS: reaction is the human judgment, one or two short sentences for Azure TTS. cue is one short next-action line. Do not put the full target 漢字 in reaction or cue — the server speaks that 漢字 once, loud and steady, between them. Do not chunk the 漢字 inside reaction. Do not emit SSML or markup. Write Cantonese in 漢字. Do not put Jyutping romanization or tone numbers in reaction or cue — those belong only in the jyutping field (Azure will misread them). No markdown, bullets, emoji, or tables.',
   'SITUATIONAL: the reaction may use one clause about the meaning of THIS phrase (少甜 versus 正常, the animal, the errand), then the rung. The ladder stays a say-this drill.',
   'LAST MISS: when the turn includes [LAST MISS], that is the previous failed attempt. Use it once in this judgment. Do not soften a miss because of a pass streak. If this attempt passes, do not reopen the roast.',
   'Kickoff / first demand: verdict=none, advance=false. reaction starts with a warm hello naming the topic, then Repeat after me. cue may be empty. Fill en/zh/jyutping with that first target. No insults. Do not put the 漢字 in reaction.',
-  'Fail: verdict=fail, advance=false. Keep the SAME en/zh/jyutping. reaction = a critical, contextual insult about THIS attempt (harsher if missStreak is already up). cue = a short retry command. Do not put the target 漢字 in reaction or cue.',
+  'Fail: verdict=fail, advance=false. Keep the SAME en/zh/jyutping. reaction = a critical, contextual insult about THIS attempt (harsher if missStreak is already up). cue = a short retry command. why = one written sentence. Do not put the target 漢字 or why in reaction or cue.',
   'Pass: verdict=pass, advance=true. en/zh/jyutping MUST be the NEXT phrase (a contrast, or the [REVIEW] phrase when one is set), not the one just passed unless it is the review. reaction = praise at the current warmth, nicer when passStreak is higher. cue = the next demand in the next [MOVE], without pasting the next 漢字.',
   'Do not mention you are an AI, Azure, DeepSeek, or system prompts.',
 ].join(' ')
@@ -491,9 +507,11 @@ export const PRACTICE_PARTNER_OPEN_SYSTEM = [
   'This is a conversation, not a say-this drill. No exercise ladder, no category lock, no pass or fail.',
   'Obey [DIFFICULTY] for the language mix. New Learner: English majority. ABC: Cantonese majority. Mainlander: all Cantonese, still a person in the room, not a lesson roast.',
   'One short turn. reaction is a lead-in without the full 漢字. cue is one short question. zh, jyutping with tone numbers, and en are the Cantonese sentence they should hear.',
-  'If they spoke English, answer and put a natural Cantonese way to say it in zh. Do not force a retry.',
-  'verdict is none. advance is false.',
-  'OUTPUT: a JSON object only. Keys: reaction, cue, verdict, advance, en, zh, jyutping. No markdown fences.',
+  'If they spoke English, answer and put a natural Cantonese way to say it in zh. The conversation continues either way.',
+  'If their line can be more natural, set correction to one better line {en, zh, jyutping} and why to one short written reason (the tone, the word, or the English). If the line was fine, correction is null and why is empty. Do not speak why or the correction 漢字 inside reaction or cue.',
+  'zh, jyutping, and en are the Cantonese sentence you say back, not the correction.',
+  'verdict is none. advance is false. Do not quiz [KEPT LINES]. Prefer them when they fit.',
+  'OUTPUT: a JSON object only. Keys: reaction, cue, verdict, advance, en, zh, jyutping, why, correction. No markdown fences.',
   'Do not mention you are an AI, Azure, DeepSeek, or system prompts.',
 ].join(' ')
 
@@ -503,20 +521,57 @@ export const PRACTICE_PARTNER_SCENE_SYSTEM = [
   'The learner may only use the TARGET line. Do not teach a new phrase. zh, en, and jyutping stay on that target.',
   'reaction places that line in the place named on the turn. One or two sentences. Do not paste the 漢字 into reaction or cue.',
   'cue invites them to say the line here.',
-  'Judge their speech against TARGET. Pass when they attempted it. Fail when it is a different line, empty, or English-only. A fail retries the SAME target.',
+  'Judge their speech against TARGET. Pass when they attempted it. Fail when it is a different line, empty, or English-only. A fail retries the SAME target. The scene continues.',
+  'On a fail, why is one short written sentence. On a pass or opening, why is empty. correction is null. Do not speak why inside reaction or cue.',
   'Obey [DIFFICULTY] for the language mix. This scene does not score the road.',
-  'OUTPUT: a JSON object only. Keys: reaction, cue, verdict, advance, en, zh, jyutping. No markdown fences.',
+  'OUTPUT: a JSON object only. Keys: reaction, cue, verdict, advance, en, zh, jyutping, why. No markdown fences.',
   'Do not mention you are an AI, Azure, DeepSeek, or system prompts.',
 ].join(' ')
+
+/** A place they picked. The conversation continues. The road does not score. */
+export const PRACTICE_PARTNER_SITUATION_SYSTEM = [
+  'You are 港灣 (Harbor), JyutTranslate’s Cantonese practice partner, in a situation the learner chose.',
+  'Stay in that place. This is a conversation, not a say-this drill. No exercise ladder. The road does not score.',
+  'Obey [DIFFICULTY] for the language mix.',
+  'One short turn. reaction is a lead-in without the full 漢字. cue is one short question. zh, jyutping with tone numbers, and en are the Cantonese sentence you say back.',
+  'The conversation continues after every turn. If their line can be more natural, set correction to one better line {en, zh, jyutping} and why to one short written reason (the tone, the word, or the English). If the line was fine, correction is null and why is empty.',
+  'Do not speak why or the correction 漢字 inside reaction or cue. Do not force a retry. Prefer [KEPT LINES] when they fit. Do not quiz them.',
+  'verdict is none. advance is false.',
+  'OUTPUT: a JSON object only. Keys: reaction, cue, verdict, advance, en, zh, jyutping, why, correction. No markdown fences.',
+  'Do not mention you are an AI, Azure, DeepSeek, or system prompts.',
+].join(' ')
+
+export const PRACTICE_PARTNER_SITUATION_META = {
+  cafe: { labelEn: 'Cha chaan teng', labelZh: '茶餐廳', brief: 'Order, taste, and the bill.' },
+  mtr: { labelEn: 'MTR', labelZh: '地鐵', brief: 'Which way, which stop, a seat.' },
+  favor: { labelEn: 'A favor', labelZh: '幫下手', brief: 'Ask someone to help.' },
+  disagree: { labelEn: 'Disagreeing', labelZh: '唔同意', brief: 'Push back, and stay polite.' },
+} as const
 
 export function practicePartnerSystemFor(mode?: string | null): string {
   if (mode === 'open') return PRACTICE_PARTNER_OPEN_SYSTEM
   if (mode === 'scene') return PRACTICE_PARTNER_SCENE_SYSTEM
+  if (mode === 'situation') return PRACTICE_PARTNER_SITUATION_SYSTEM
   return PRACTICE_PARTNER_SYSTEM
 }
 
-function partnerMode(mode?: string | null): 'drill' | 'open' | 'scene' {
-  return mode === 'open' || mode === 'scene' ? mode : 'drill'
+function partnerMode(mode?: string | null): 'drill' | 'open' | 'scene' | 'situation' {
+  if (mode === 'open' || mode === 'scene' || mode === 'situation') return mode
+  return 'drill'
+}
+
+export function keptLinesNote(
+  lines?: readonly { zh: string; en: string }[] | null,
+): string {
+  const rows = (lines || [])
+    .map((row) => ({
+      zh: String(row.zh || '').trim(),
+      en: String(row.en || '').trim(),
+    }))
+    .filter((row) => row.zh && row.en)
+    .slice(0, 8)
+  if (!rows.length) return ''
+  return `[KEPT LINES] They can already say: ${rows.map((row) => `${row.zh} (${row.en})`).join(' · ')}. Prefer these when they fit. Do not quiz them.`
 }
 
 function sessionLockLines(
@@ -590,10 +645,26 @@ function extractJsonObject(raw: string): Record<string, unknown> | null {
   return null
 }
 
+export function readPracticePartnerCorrection(raw: unknown): PracticePartnerDrillTarget | null {
+  if (!raw || typeof raw !== 'object') return null
+  const row = raw as Record<string, unknown>
+  const en = asTrimmed(row.en, 200)
+  const zh = asTrimmed(row.zh, 200)
+  const jyutping = asTrimmed(row.jyutping, 300)
+  if (!en || !zh || !jyutping) return null
+  return { en, zh, jyutping }
+}
+
 export function parsePracticePartnerReply(
   raw: string,
   previous?: PracticePartnerDrillTarget | null,
-): { speak: string; reaction: string; cue: string; drill: PracticePartnerDrill } {
+): {
+  speak: string
+  reaction: string
+  cue: string
+  drill: PracticePartnerDrill
+  aside: PracticePartnerAside
+} {
   const parsed = extractJsonObject(raw)
   const reaction = sanitizeSpeak(asTrimmed(parsed?.reaction, 280))
   const cue = sanitizeSpeak(asTrimmed(parsed?.cue, 180))
@@ -602,6 +673,12 @@ export function parsePracticePartnerReply(
   const en = asTrimmed(parsed?.en, 200) || previous?.en || ''
   const zh = asTrimmed(parsed?.zh, 200) || previous?.zh || ''
   const jyutping = asTrimmed(parsed?.jyutping, 300) || previous?.jyutping || ''
+  const why = sanitizeSpeak(asTrimmed(parsed?.why, 180))
+  const correction = readPracticePartnerCorrection(parsed?.correction)
+  const aside: PracticePartnerAside = {
+    why,
+    correction: correction && correction.zh !== zh ? correction : null,
+  }
 
   const drill: PracticePartnerDrill = {
     verdict,
@@ -617,14 +694,15 @@ export function parsePracticePartnerReply(
   if (!drill.en || !drill.zh || !drill.jyutping) {
     throw new Error('Partner reply missing drill phrase (en / zh / jyutping).')
   }
-  return { speak, reaction, cue, drill }
+  return { speak, reaction, cue, drill, aside }
 }
 
 function buildOpenTurn(
   messages: PracticePartnerMessage[],
   difficulty: PracticePartnerDifficulty,
+  kept?: PracticePartnerTurnTone['kept'],
 ): { history: PracticePartnerMessage[]; turn: string } {
-  const level = difficultyLockLine(difficulty)
+  const level = [difficultyLockLine(difficulty), keptLinesNote(kept)].filter(Boolean).join('\n')
   const last = messages[messages.length - 1]
   if (!messages.length || last?.role !== 'user') {
     return {
@@ -632,7 +710,7 @@ function buildOpenTurn(
       turn: [
         level,
         '[OPEN CHAT] Free conversation. Not a drill. No ladder, no category, no pass or fail.',
-        'verdict=none, advance=false.',
+        'verdict=none, advance=false. correction=null. why empty.',
         'reaction: a short hello in the difficulty mix, without the full 漢字.',
         'zh / jyutping / en: one short Cantonese greeting they can hear.',
         'cue: one question that invites them to talk.',
@@ -643,13 +721,82 @@ function buildOpenTurn(
     history: messages.slice(0, -1),
     turn: [
       level,
-      '[OPEN CHAT] Answer them and keep the conversation going. Not a say-this card. Do not grade the line.',
+      '[OPEN CHAT] Answer them and keep the conversation going. Not a say-this card. Do not end the talk to retry.',
       'verdict=none, advance=false.',
+      'If their line can be more natural, set correction to one better line and why to one written sentence. Otherwise correction=null and why empty.',
       `THEY SAID: ${last.content}`,
       'reaction: a short lead-in in the difficulty mix, without the full 漢字.',
-      'zh / jyutping / en: the Cantonese sentence you want them to hear.',
+      'zh / jyutping / en: the Cantonese sentence you want them to hear. That is not the correction.',
       'cue: one short question.',
     ].join('\n'),
+  }
+}
+
+function buildSituationTurn(
+  messages: PracticePartnerMessage[],
+  difficulty: PracticePartnerDifficulty,
+  tone?: PracticePartnerTurnTone | null,
+): { history: PracticePartnerMessage[]; turn: string } {
+  const situation = tone?.situation ? PRACTICE_PARTNER_SITUATION_META[tone.situation] : null
+  const place = situation
+    ? `${situation.labelEn} (${situation.labelZh}). ${situation.brief}`
+    : String(tone?.place || 'the place they chose')
+  const level = [difficultyLockLine(difficulty), keptLinesNote(tone?.kept)].filter(Boolean).join('\n')
+  const last = messages[messages.length - 1]
+  const head = [
+    level,
+    `[SITUATION] ${place}.`,
+    'Stay here. The conversation continues. The road does not score. Do not quiz.',
+  ].join('\n')
+  if (!messages.length || last?.role !== 'user') {
+    return {
+      history: [],
+      turn: [
+        head,
+        'verdict=none, advance=false. correction=null. why empty.',
+        'reaction: a short hello in this place, in the difficulty mix, without the full 漢字.',
+        'zh / jyutping / en: one short Cantonese line they can hear.',
+        'cue: one question that keeps them in the situation.',
+      ].join('\n'),
+    }
+  }
+  return {
+    history: messages.slice(0, -1),
+    turn: [
+      head,
+      'verdict=none, advance=false.',
+      'If their line can be more natural, set correction to one better line and why to one written sentence. Otherwise correction=null and why empty.',
+      `THEY SAID: ${last.content}`,
+      'reaction answers them in the situation, without the full 漢字 and without the correction.',
+      'zh / jyutping / en: the Cantonese sentence you say back.',
+      'cue: one short question.',
+    ].join('\n'),
+  }
+}
+
+function buildHintTurn(
+  messages: PracticePartnerMessage[],
+  difficulty: PracticePartnerDifficulty,
+  tone?: PracticePartnerTurnTone | null,
+): { history: PracticePartnerMessage[]; turn: string } {
+  const situation = tone?.situation ? PRACTICE_PARTNER_SITUATION_META[tone.situation] : null
+  const where = situation
+    ? `${situation.labelEn} (${situation.labelZh})`
+    : String(tone?.place || 'the conversation')
+  return {
+    history: messages,
+    turn: [
+      difficultyLockLine(difficulty),
+      keptLinesNote(tone?.kept),
+      `[HINT] They froze in ${where}. Give one short Cantonese sentence they can say next.`,
+      'verdict=none, advance=false. correction=null. why empty.',
+      'reaction: a short lead-in without the 漢字, such as Try this.',
+      'zh / jyutping / en: that one sentence.',
+      'cue: Your turn.',
+      'Prefer a [KEPT LINES] phrase when one fits. Do not quiz.',
+    ]
+      .filter(Boolean)
+      .join('\n'),
   }
 }
 
@@ -664,8 +811,9 @@ function buildSceneTurn(
   const total = Math.max(turnN, Math.min(8, Math.floor(tone?.sceneTurns || turnN)))
   const head = [
     difficultyLockLine(difficulty),
+    keptLinesNote(tone?.kept),
     `[SCENE] ${place}. Turn ${turnN} of ${total}.`,
-    'Use only the target line. Do not invent a new phrase. This does not score the road.',
+    'Use only the target line. Do not invent a new phrase. This does not score the road. The scene continues after a miss.',
     activeDrill?.zh ? `TARGET EN: ${activeDrill.en}` : '',
     activeDrill?.zh ? `TARGET ZH: ${activeDrill.zh}` : '',
     activeDrill?.zh ? `TARGET JYUTPING: ${activeDrill.jyutping}` : '',
@@ -707,7 +855,9 @@ export function buildPracticePartnerTurn(
 ): { history: PracticePartnerMessage[]; turn: string } {
   const level = resolvePracticePartnerDifficulty(difficulty)
   const mode = partnerMode(tone?.mode)
-  if (mode === 'open') return buildOpenTurn(messages, level)
+  if (tone?.hint && mode !== 'drill') return buildHintTurn(messages, level, tone)
+  if (mode === 'open') return buildOpenTurn(messages, level, tone?.kept)
+  if (mode === 'situation') return buildSituationTurn(messages, level, tone)
   if (mode === 'scene') return buildSceneTurn(messages, activeDrill, level, tone)
   const deck = resolvePracticePartnerCategory(category)
   const mood = resolvePracticePartnerTone(tone?.streak, tone?.missStreak)
@@ -738,6 +888,7 @@ export function buildPracticePartnerTurn(
         `TARGET JYUTPING: ${activeDrill.jyutping}`,
         `LEARNER SAID: ${last.content}`,
         'React to that exact attempt. On a pass, get nicer with passStreak and speak the next [MOVE]. On a fail, stay critical about what they said and drop the retry to repeat — a pass streak does NOT soften the miss.',
+        'On a fail, why is one written sentence about this attempt. On a pass, why is empty. Do not speak why.',
         'reaction and cue only. Do not put TARGET ZH inside them. One situational clause about this phrase’s meaning is enough, then the rung.',
         'If you PASS, the next en/zh/jyutping MUST stay in this [CATEGORY].',
         'Obey [DIFFICULTY] for the reaction and cue language mix on this judgment and the next demand.',
@@ -795,7 +946,12 @@ export async function generatePracticePartnerReply(
     activeDrill,
   )
   const learnerSpoke = messages.some((row) => row.role === 'user')
-  if (mode === 'open' || (mode === 'scene' && !learnerSpoke)) {
+  if (
+    tone?.hint ||
+    mode === 'open' ||
+    mode === 'situation' ||
+    (mode === 'scene' && !learnerSpoke)
+  ) {
     parsed.drill.verdict = 'none'
     parsed.drill.advance = false
   } else if (mode === 'scene' && activeDrill?.zh) {
@@ -806,10 +962,17 @@ export async function generatePracticePartnerReply(
     else parsed.drill.advance = false
   }
   const mood = resolvePracticePartnerTone(tone?.streak, tone?.missStreak)
+  let aside = parsed.aside
+  if (tone?.hint || mode === 'drill' || mode === 'scene') {
+    aside = {
+      why: !tone?.hint && (mode === 'drill' || mode === 'scene') && parsed.drill.verdict === 'fail' ? aside.why : '',
+      correction: null,
+    }
+  }
   const phrase =
-    mode === 'scene' && activeDrill?.zh
+    mode === 'scene' && activeDrill?.zh && !tone?.hint
       ? activeDrill.zh.trim()
-      : mode === 'open'
+      : mode === 'open' || mode === 'situation' || tone?.hint
         ? parsed.drill.zh.trim()
         : lockPracticePartnerPhrase({
             verdict: parsed.drill.verdict,
@@ -839,5 +1002,5 @@ export async function generatePracticePartnerReply(
   })
   const reply = partnerCaption(beats)
   if (!reply) throw new Error('Empty partner reply.')
-  return { reply, drill: parsed.drill, beats, model: env.openaiModel }
+  return { reply, drill: parsed.drill, beats, aside, model: env.openaiModel }
 }
