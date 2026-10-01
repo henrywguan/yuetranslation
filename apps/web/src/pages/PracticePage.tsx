@@ -1,7 +1,8 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AdminPracticePartnerLab } from '../components/AdminPracticePartnerLab'
 import { BiText } from '../components/BiText'
 import { openApp } from '../lib/siteLinks'
+import { useAppViewportLock } from '../lib/useAppViewportLock'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { ui } from '../lib/uiCopy'
 import './PracticePage.css'
@@ -16,6 +17,24 @@ const BACK_ARROW = (
 
 /** Signed-in Practice Partner (`#/practice`) — Account Hub launcher destination. */
 export function PracticePage() {
+  useAppViewportLock(true)
+  useEffect(() => {
+    const root = document.documentElement
+    const apply = () => {
+      const height = window.visualViewport?.height ?? window.innerHeight
+      root.style.setProperty('--practice-vh', `${Math.round(height)}px`)
+    }
+    apply()
+    window.visualViewport?.addEventListener('resize', apply)
+    window.visualViewport?.addEventListener('scroll', apply)
+    window.addEventListener('resize', apply)
+    return () => {
+      root.style.removeProperty('--practice-vh')
+      window.visualViewport?.removeEventListener('resize', apply)
+      window.visualViewport?.removeEventListener('scroll', apply)
+      window.removeEventListener('resize', apply)
+    }
+  }, [])
   useDocumentMeta({
     title: 'Practice Partner — JyutTranslate',
     description: 'Speak with 港灣, your Cantonese practice partner.',

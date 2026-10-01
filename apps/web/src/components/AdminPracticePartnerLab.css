@@ -2990,10 +2990,11 @@ div.partner-map-next {
   position: fixed;
   inset: 0;
   z-index: 80;
-  width: 100vw;
-  height: 100dvh;
-  min-height: 100dvh;
-  max-height: none;
+  width: 100%;
+  height: var(--practice-vh, 100svh);
+  min-height: 0;
+  max-height: var(--practice-vh, 100svh);
+  overflow: hidden;
   border-radius: 0;
   border: none;
   cursor: default;
@@ -3784,14 +3785,25 @@ div.partner-map-next {
   overflow: hidden;
 }
 
-.partner-lab--companion.is-hub {
+.partner-lab.partner-lab--companion.is-hub {
   position: fixed;
   inset: 0;
   z-index: 40;
   max-width: none;
-  height: 100dvh;
+  width: 100%;
+  height: var(--practice-vh, 100svh);
+  max-height: var(--practice-vh, 100svh);
   border-radius: 0;
   padding: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+.partner-lab.partner-lab--companion.is-hub button,
+.partner-lab.partner-lab--companion.is-hub a,
+.partner-lab.partner-lab--companion.is-hub input {
+  touch-action: manipulation;
 }
 
 .partner-universe {
@@ -4776,18 +4788,24 @@ div.partner-map-next {
   height: min(94vw, 440px);
 }
 
-/* Hub orb fills the phone. The rings are tall, not a small circle at the top. */
+/* Hub orb fills the visible phone. Rings stay inside the screen so the page cannot scroll. */
 .partner-lab--companion.is-hub .partner-orbit-field {
-  top: 52%;
-  width: 132vw;
-  height: 100dvh;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
   aspect-ratio: auto;
 }
 
 .partner-lab--topic.partner-lab--companion.is-hub:not(.is-sheet) .partner-outer-ring {
-  top: 52%;
-  width: min(94vw, 28rem);
-  height: min(62dvh, 36rem);
+  top: calc(env(safe-area-inset-top) + 4.4rem);
+  right: max(0.4rem, env(safe-area-inset-right));
+  bottom: calc(env(safe-area-inset-bottom) + 5.6rem);
+  left: max(0.4rem, env(safe-area-inset-left));
+  width: auto;
+  height: auto;
+  transform: none;
 }
 
 .partner-lab--topic.partner-lab--companion.is-hub:not(.is-sheet) .partner-lab-orbit-ring,
