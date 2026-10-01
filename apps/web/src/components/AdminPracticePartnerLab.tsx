@@ -206,7 +206,7 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
     particleOpacity: 0.55,
     orbitOpacity: 0.22,
     haloOpacity: 0.18,
-    hue: 22,
+    hue: 0,
   },
   listening: {
     speed: 1.2,
@@ -214,7 +214,7 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
     particleOpacity: 0.88,
     orbitOpacity: 0.46,
     haloOpacity: 0.42,
-    hue: 38,
+    hue: 0,
   },
   thinking: {
     speed: 0.5,
@@ -222,7 +222,7 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
     particleOpacity: 0.42,
     orbitOpacity: 0.18,
     haloOpacity: 0.28,
-    hue: 62,
+    hue: 0,
   },
   reacting: {
     speed: 1.35,
@@ -230,7 +230,7 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
     particleOpacity: 0.78,
     orbitOpacity: 0.36,
     haloOpacity: 0.4,
-    hue: 8,
+    hue: 0,
   },
   speaking: {
     speed: 1.65,
@@ -238,7 +238,7 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
     particleOpacity: 0.94,
     orbitOpacity: 0.52,
     haloOpacity: 0.5,
-    hue: 28,
+    hue: 0,
   },
 }
 
@@ -374,7 +374,7 @@ function PartnerSituationMix({
 
 export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' | 'hub' }) {
   const [mood, setMood] = useState<PartnerMood>('idle')
-  const [amp, setAmp] = useState(0)
+  const sittingLabelRef = useRef<HTMLSpanElement>(null)
   const [caption, setCaption] = useState<SubtitleLine>({
     role: 'system',
     text: EMPTY_CAPTION,
@@ -400,7 +400,6 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [scoresOpen, setScoresOpen] = useState(false)
   const [voiceMenuOpen, setVoiceMenuOpen] = useState(false)
   const [topicReady, setTopicReady] = useState(false)
-  const [sittingSec, setSittingSec] = useState(0)
   const [listening, setListening] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -575,36 +574,21 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   }
 
   useEffect(() => {
+    const label = sittingLabelRef.current
     if (!topicReady) {
-      setSittingSec(0)
+      if (label) label.textContent = '0:00'
       return undefined
     }
     const started = Date.now()
-    const id = window.setInterval(() => {
-      setSittingSec(Math.floor((Date.now() - started) / 1000))
-    }, 1000)
+    const paint = () => {
+      const el = sittingLabelRef.current
+      if (!el) return
+      el.textContent = formatSitting(Math.floor((Date.now() - started) / 1000))
+    }
+    paint()
+    const id = window.setInterval(paint, 1000)
     return () => window.clearInterval(id)
   }, [topicReady])
-
-  useEffect(() => {
-    if (mood !== 'speaking' && mood !== 'listening') {
-      setAmp(0)
-      return undefined
-    }
-    let frame = 0
-    const start = performance.now()
-    const tick = (now: number) => {
-      const t = (now - start) / 1000
-      const wave =
-        mood === 'speaking'
-          ? 0.35 + 0.55 * Math.abs(Math.sin(t * 6.2)) * (0.6 + 0.4 * Math.sin(t * 2.1))
-          : 0.2 + 0.35 * Math.abs(Math.sin(t * 3.4))
-      setAmp(wave)
-      frame = requestAnimationFrame(tick)
-    }
-    frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
-  }, [mood])
 
   const stopMic = useCallback(async () => {
     window.clearTimeout(silenceTimerRef.current)
@@ -1656,17 +1640,13 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   }, [fullscreen, fsTypeOpen])
 
   const orbitProps = useMemo((): Partial<OrbitalSphereOptions> => {
-    const base = { ...ORBITAL_SPHERE_DEFAULTS, ...MOOD_ORBIT[mood] }
-    const breathe = mood === 'speaking' || mood === 'reacting' || mood === 'listening' ? amp * 0.12 : 0
     return {
-      ...base,
+      ...ORBITAL_SPHERE_DEFAULTS,
+      ...MOOD_ORBIT[mood],
       placement: 'stage',
-      scale: (base.scale ?? 1) * (1 + breathe),
-      speed: (base.speed ?? 1) * (1 + amp * 0.35),
-      particleOpacity: Math.min(1, (base.particleOpacity ?? 0.72) + amp * 0.12),
-      haloOpacity: Math.min(1, (base.haloOpacity ?? 0.22) + amp * 0.2),
+      hue: 0,
     }
-  }, [mood, amp])
+  }, [mood])
 
   const moodMeta = MOODS.find((m) => m.id === mood)!
 
@@ -2137,14 +2117,15 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           className={`partner-lab-aura${
             mood === 'listening' || mood === 'speaking' || mood === 'reacting' ? ' is-live' : ''
           }`}
-          style={{ ['--amp' as string]: amp.toFixed(3) }}
           aria-hidden="true"
         />
         <div className="partner-lab-orbit-ring" aria-hidden="true">
           <i className="partner-lab-orbit-arc" />
           <span className="is-state">{moodMeta.label}</span>
           <span className="is-place">{categoryMeta.labelEn}</span>
-          <span className="is-time">{formatSitting(sittingSec)}</span>
+          <span className="is-time" ref={sittingLabelRef}>
+            0:00
+          </span>
           <span className="is-kept">{keptLines.length} kept</span>
         </div>
 

@@ -255,14 +255,20 @@ export function createOrbitalSphereRenderer(
 
   const scene = new THREE.Scene()
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000)
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  const stage = initial.placement === 'stage'
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    alpha: true,
+    antialias: !stage,
+    powerPreference: stage ? 'low-power' : 'default',
+  })
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, stage ? 1.5 : 2))
 
   const root = new THREE.Group()
   scene.add(root)
 
   const radius = SPHERE_RADIUS
-  const maxParticles = isCreators ? 8_500 : 12_000
+  const maxParticles = isCreators ? 8_500 : stage ? 5_500 : 12_000
   const positions = new Float32Array(maxParticles * 3)
   const colors = new Float32Array(maxParticles * 3)
   const hi = new THREE.Color(palette.particleHi)
