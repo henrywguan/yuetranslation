@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react'
 import {
   OrbitalSphereBackground,
   ORBITAL_SPHERE_DEFAULTS,
@@ -211,11 +220,11 @@ const MOODS: { id: PartnerMood; label: string; hint: string }[] = [
 
 const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
   idle: {
-    speed: 0.85,
-    scale: 1,
-    particleOpacity: 0.55,
-    orbitOpacity: 0.22,
-    haloOpacity: 0.18,
+    speed: 1.08,
+    scale: 1.06,
+    particleOpacity: 0.72,
+    orbitOpacity: 0.4,
+    haloOpacity: 0.3,
     hue: 0,
   },
   listening: {
@@ -384,9 +393,80 @@ function PartnerSituationMix({
   )
 }
 
+type YouLineHandle = {
+  show: (text: string, interim: boolean) => void
+  clear: () => void
+}
+
+/** Interim STT lives here so the rest of the lab does not render on every partial. */
+const PartnerYouLine = forwardRef<
+  YouLineHandle,
+  {
+    listening: boolean
+    partnerHold: string | null
+    speaker: string
+    hostRef: RefObject<HTMLDivElement | null>
+    phrase: { zh: string; jyutping: string } | null
+    onSyllable: (jp: string) => void
+  }
+>(function PartnerYouLine({ listening, partnerHold, speaker, hostRef, phrase, onSyllable }, ref) {
+  const [line, setLine] = useState<{ text: string; interim: boolean } | null>(null)
+  useImperativeHandle(
+    ref,
+    () => ({
+      show(text, interim) {
+        setLine((prev) =>
+          prev && prev.text === text && prev.interim === interim ? prev : { text, interim },
+        )
+      },
+      clear() {
+        setLine(null)
+      },
+    }),
+    [],
+  )
+  useEffect(() => {
+    hostRef.current?.classList.toggle('is-you-live', Boolean(line))
+    return () => hostRef.current?.classList.remove('is-you-live')
+  }, [hostRef, line])
+  if (!line) {
+    if (!listening) return null
+    return <p className="partner-lab-subtitles-listening">Listening… your words appear here</p>
+  }
+  return (
+    <>
+      {phrase ? (
+        <div className="partner-lab-subtitles-secondary is-reading">
+          <p className="partner-lab-subtitles-script">
+            <span lang="zh-HK">{phrase.zh}</span>
+            {phrase.jyutping ? (
+              <span className="partner-lab-subtitles-jp">
+                <JyutpingChaoText text={phrase.jyutping} onSyllable={onSyllable} />
+              </span>
+            ) : null}
+          </p>
+        </div>
+      ) : partnerHold ? (
+        <p className="partner-lab-subtitles-secondary">
+          <span className="partner-lab-subtitles-speaker">{speaker}</span>
+          <span className="partner-lab-subtitles-secondary-text">{partnerHold}</span>
+        </p>
+      ) : null}
+      <p className={`partner-lab-subtitles-youline${line.interim ? ' is-interim' : ''}`}>
+        <span className="partner-lab-subtitles-speaker">You</span>
+        <span className="partner-lab-subtitles-youline-text">{line.text}</span>
+      </p>
+    </>
+  )
+})
+
 export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' | 'hub' }) {
   const [mood, setMood] = useState<PartnerMood>('idle')
+  const moodRef = useRef(mood)
+  moodRef.current = mood
   const sittingLabelRef = useRef<HTMLSpanElement>(null)
+  const youLineRef = useRef<YouLineHandle>(null)
+  const subtitleHostRef = useRef<HTMLDivElement>(null)
   const [caption, setCaption] = useState<SubtitleLine>({
     role: 'system',
     text: EMPTY_CAPTION,
@@ -406,7 +486,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [pathNote, setPathNote] = useState<PathCreditNote | null>(null)
   const [pathFresh, setPathFresh] = useState<PathFresh | null>(null)
   const [board, setBoard] = useState<PracticePartnerLeaderboardPayload | null>(null)
-  const [boardLoading, setBoardLoading] = useState(true)
+  const [boardLoading, setBoardLoading] = useState(false)
+  const boardRequestedRef = useRef(false)
   const [boardError, setBoardError] = useState('')
   const [boardSignedIn, setBoardSignedIn] = useState(false)
   const [scoresOpen, setScoresOpen] = useState(false)
@@ -435,8 +516,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [partnerBeats, setPartnerBeats] = useState<PartnerPerformance | null>(null)
   /** Fail correction: what was heard, plus the piece to retry. */
   const [missCard, setMissCard] = useState<{ said: string; chunk: string } | null>(null)
-  /** Live STT (interim + accumulating finals) while the mic is open. */
-  const [youLive, setYouLive] = useState<{ text: string; interim: boolean } | null>(null)
+  const [litCount, setLitCount] = useState(0)
   /** Bumps to replay the jade sweep on the drill 漢字. */
   const [zhFlash, setZhFlash] = useState(0)
   const [sessionKind, setSessionKind] = useState<PartnerSessionKind>('drill')
@@ -482,6 +562,16 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const silenceTimerRef = useRef(0)
   const messagesRef = useRef<PracticePartnerChatMessage[]>([])
   const activeDrillRef = useRef<PracticePartnerDrillTarget | null>(null)
+  const paintYouLine = (text: string, interim: boolean) => {
+    if (moodRef.current !== 'listening') {
+      moodRef.current = 'listening'
+      setMood('listening')
+    }
+    youLineRef.current?.show(text, interim)
+    const drill = activeDrillRef.current
+    const next = drill ? litHanCount(drill.zh, text) : 0
+    setLitCount((prev) => (prev === next ? prev : next))
+  }
   const categoryRef = useRef<PracticePartnerCategory>(category)
   const difficultyRef = useRef<PracticePartnerDifficulty>(difficulty)
   const turnLockRef = useRef(false)
@@ -530,6 +620,19 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   useEffect(() => {
     let cancelled = false
+    void getSession().then((session) => {
+      if (!cancelled) setBoardSignedIn(Boolean(session))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!scoresOpen && orbitSheet !== 'saved') return
+    if (boardRequestedRef.current) return
+    boardRequestedRef.current = true
+    let cancelled = false
     void (async () => {
       setBoardLoading(true)
       try {
@@ -560,6 +663,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         }
       } catch (e) {
         if (!cancelled) {
+          boardRequestedRef.current = false
           setBoardError(e instanceof Error ? e.message : 'Leaderboard unavailable')
         }
       } finally {
@@ -568,8 +672,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     })()
     return () => {
       cancelled = true
+      boardRequestedRef.current = false
     }
-  }, [])
+  }, [scoresOpen, orbitSheet])
 
   publishScoreRef.current = (scores) => {
     if (!boardSignedIn) return
@@ -651,7 +756,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setError('')
     setPartnerHold(null)
     setPartnerBeats(null)
-    setYouLive(null)
+    youLineRef.current?.clear()
     setFsTypeOpen(false)
     setVoiceMenuOpen(false)
     window.clearTimeout(beatTimerRef.current)
@@ -799,7 +904,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       setMood(reacting ? 'reacting' : 'speaking')
       setPartnerHold(reply)
       setPartnerBeats(beats ?? null)
-      setYouLive(null)
+      youLineRef.current?.clear()
       setCaption({ role: 'partner', text: reply })
       window.clearTimeout(beatTimerRef.current)
       window.clearTimeout(phraseBeatTimerRef.current)
@@ -918,7 +1023,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     turnLockRef.current = true
     setBusy(true)
     setError('')
-    setYouLive(null)
+    youLineRef.current?.clear()
     setFsTypeOpen(false)
     setMood('thinking')
     const kind = sessionKindRef.current
@@ -1017,7 +1122,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       turnLockRef.current = true
       setBusy(true)
       setError('')
-      setYouLive(null)
+      youLineRef.current?.clear()
       setFsTypeOpen(false)
       setMood('thinking')
       setCaption({
@@ -1229,7 +1334,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     if (!spoken) {
       await stopping
       setMood('idle')
-      setYouLive(null)
+      youLineRef.current?.clear()
       setCaption(
         partnerHold
           ? { role: 'partner', text: partnerHold }
@@ -1287,17 +1392,13 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       onInterim: (_lang, text) => {
         const t = text.trim()
         if (!t) return
-        setMood('listening')
-        setYouLive({ text: t, interim: true })
-        setCaption({ role: 'you', text: t, interim: true })
+        paintYouLine(t, true)
       },
       onFinal: (_lang, text) => {
         const t = text.trim()
         if (!t) return
         finalsRef.current = `${finalsRef.current} ${t}`.trim()
-        setMood('listening')
-        setYouLive({ text: finalsRef.current, interim: false })
-        setCaption({ role: 'you', text: finalsRef.current })
+        paintYouLine(finalsRef.current, false)
         window.clearTimeout(silenceTimerRef.current)
         silenceTimerRef.current = window.setTimeout(() => {
           finishRef.current()
@@ -1331,7 +1432,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       ttsGenRef.current += 1
       ttsLiveRef.current = false
     }
-    setYouLive(null)
+    youLineRef.current?.clear()
     setMood('listening')
     // Keep partner subtitles visible until STT produces text.
     if (partnerHold) {
@@ -1647,6 +1748,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   }
 
   useEffect(() => {
+    if (!listening) setLitCount(0)
+  }, [listening])
+
+  useEffect(() => {
     return bindMicBackgroundRelease(() => {
       // Desktop mic-permission UI briefly marks the document hidden. Do not
       // abort during the getUserMedia / recognition.start handshake (Solo #605).
@@ -1669,7 +1774,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       window.clearTimeout(verdictTimerRef.current)
       window.clearTimeout(zhFlashTimerRef.current)
       window.clearTimeout(beatTimerRef.current)
-    window.clearTimeout(phraseBeatTimerRef.current)
+      window.clearTimeout(phraseBeatTimerRef.current)
       void stopMic()
       stopSpeaking()
     }
@@ -1732,12 +1837,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   const moodMeta = MOODS.find((m) => m.id === mood)!
 
-  const displayPrimary: SubtitleLine = youLive
-    ? { role: 'you', text: youLive.text, interim: youLive.interim }
-    : caption
-  // When you are speaking, keep the last partner line visible above your STT.
-  const displaySecondary =
-    youLive && partnerHold ? { role: 'partner' as const, text: partnerHold } : null
+  const displayPrimary: SubtitleLine = caption
   const learningCaption =
     activeDrill && difficulty !== 'mainlander' && caption.role !== 'system'
       ? partnerCaptionLayout({
@@ -1792,8 +1892,6 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     PRACTICE_PARTNER_DIFFICULTIES.find((d) => d.id === difficulty) ||
     PRACTICE_PARTNER_DIFFICULTIES[1]
 
-  const litCount =
-    listening && youLive && activeDrill ? litHanCount(activeDrill.zh, youLive.text) : 0
   const lineMarks = correction ? betterLineMarks(correction.zh, correction.said) : []
   const drillCloze = activeDrill ? finishLineCloze(activeDrill.zh) : null
   const cardFace = practicePartnerCardShows(move, difficulty, Boolean(drillCloze))
@@ -1834,20 +1932,54 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   if (!topicReady) {
     return (
       <section
-        className={`partner-lab partner-lab--companion partner-lab--topic${entry === 'hub' ? ' is-hub' : ''}`}
+        className={`partner-lab partner-lab--companion partner-lab--topic${entry === 'hub' ? ' is-hub' : ''}${
+          orbitSheet ? ' is-sheet' : ''
+        }`}
         aria-label="Choose Practice Partner topic"
       >
         <div className="partner-universe" aria-hidden="true" />
         <div className="partner-lab-stars" aria-hidden="true" />
         <OrbitalSphereBackground className="partner-lab-orb" {...orbitProps} />
+        <div className="partner-orbit-field" aria-hidden="true">
+          <i className="partner-orbit-track is-a" />
+          <i className="partner-orbit-track is-b" />
+          <i className="partner-orbit-track is-c" />
+          <i className="partner-orbit-comet" />
+          <i className="partner-orbit-comet is-b" />
+          <i className="partner-orbit-bead" />
+          <i className="partner-orbit-bead is-b" />
+          <i className="partner-orbit-bead is-c" />
+        </div>
         <div className="partner-lab-aura" aria-hidden="true" />
         <div className="partner-lab-orbit-ring" aria-hidden="true">
           <i className="partner-lab-orbit-arc" />
-          <span className="is-state">Ready</span>
-          <span className="is-place">{categoryMeta.labelEn}</span>
-          <span className="is-time">{difficultyMeta.labelEn}</span>
-          <span className="is-kept">{keptLines.length} kept</span>
+          <i className="partner-lab-orbit-arc is-b" />
+          <i className="partner-lab-orbit-arc is-c" />
         </div>
+        <dl className="partner-companion-readout">
+          <div>
+            <dt>Status</dt>
+            <dd>Ready</dd>
+          </div>
+          <div>
+            <dt>Path</dt>
+            <dd>
+              {categoryMeta.labelEn}
+              <span lang="zh-HK">{categoryMeta.labelZh}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Level</dt>
+            <dd>
+              {difficultyMeta.labelEn}
+              <span lang="zh-HK">{difficultyMeta.labelZh}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Kept</dt>
+            <dd>{keptLines.length}</dd>
+          </div>
+        </dl>
         <div className="partner-lab-presence" aria-hidden="true">
           <span />
         </div>
@@ -2324,15 +2456,44 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           }`}
           aria-hidden="true"
         />
+        <div className="partner-orbit-field" aria-hidden="true">
+          <i className="partner-orbit-track is-a" />
+          <i className="partner-orbit-track is-b" />
+          <i className="partner-orbit-track is-c" />
+          <i className="partner-orbit-comet" />
+          <i className="partner-orbit-comet is-b" />
+          <i className="partner-orbit-bead" />
+          <i className="partner-orbit-bead is-b" />
+          <i className="partner-orbit-bead is-c" />
+        </div>
         <div className="partner-lab-orbit-ring" aria-hidden="true">
           <i className="partner-lab-orbit-arc" />
-          <span className="is-state">{listening ? 'You' : moodMeta.label}</span>
-          <span className="is-place">{categoryMeta.labelEn}</span>
-          <span className="is-time" ref={sittingLabelRef}>
-            0:00
-          </span>
-          <span className="is-kept">{keptLines.length} kept</span>
+          <i className="partner-lab-orbit-arc is-b" />
+          <i className="partner-lab-orbit-arc is-c" />
         </div>
+        <dl className="partner-companion-readout is-sitting">
+          <div>
+            <dt>Status</dt>
+            <dd>{listening ? 'You' : moodMeta.label}</dd>
+          </div>
+          <div>
+            <dt>{sessionKind === 'situation' ? 'Place' : sessionKind === 'open' ? 'Mode' : 'Path'}</dt>
+            <dd>
+              {categoryMeta.labelEn}
+              <span lang="zh-HK">{categoryMeta.labelZh}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Time</dt>
+            <dd>
+              <span ref={sittingLabelRef}>0:00</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Kept</dt>
+            <dd>{keptLines.length}</dd>
+          </div>
+        </dl>
 
         {spokenBeat ? (
           <div className="partner-lab-beats" aria-hidden="true">
@@ -2575,34 +2736,29 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         <div className="partner-lab-subtitle-band" aria-hidden="true" />
 
         <div
+          ref={subtitleHostRef}
           className={`partner-lab-subtitles partner-lab-subtitles--fallout partner-lab-subtitles--${
             learningCaption ? 'partner' : displayPrimary.role
           }${displayPrimary.interim ? ' is-interim' : ''}${
-            displaySecondary || learningCaption ? ' has-secondary' : ''
+            learningCaption ? ' has-secondary' : ''
           }`}
           aria-live="polite"
           onClick={(event) => event.stopPropagation()}
         >
-          {youLive && activeDrill ? (
-            <div className="partner-lab-subtitles-secondary is-reading">
-              <p className="partner-lab-subtitles-script">
-                <span lang="zh-HK">{activeDrill.zh}</span>
-                {activeDrill.jyutping ? (
-                  <span className="partner-lab-subtitles-jp">
-                    <JyutpingChaoText
-                      text={activeDrill.jyutping}
-                      onSyllable={(jp) => {
-                        setGloss(null)
-                        setTonePop(toneNoteForSyllable(jp))
-                      }}
-                    />
-                  </span>
-                ) : null}
-              </p>
-            </div>
-          ) : null}
-          {learningCaption && !youLive && (learningCaption.secondaryText || learningCaption.secondaryScript) ? (
-            <div className="partner-lab-subtitles-secondary is-reading">
+          <PartnerYouLine
+            ref={youLineRef}
+            listening={listening}
+            partnerHold={learningCaption ? null : partnerHold}
+            speaker={partnerSpeaker}
+            hostRef={subtitleHostRef}
+            phrase={activeDrill ? { zh: activeDrill.zh, jyutping: activeDrill.jyutping } : null}
+            onSyllable={(jp) => {
+              setGloss(null)
+              setTonePop(toneNoteForSyllable(jp))
+            }}
+          />
+          {learningCaption && (learningCaption.secondaryText || learningCaption.secondaryScript) ? (
+            <div className="partner-lab-subtitles-secondary is-reading is-partner-aside">
               {learningCaption.secondaryText ? (
                 <p className="partner-lab-subtitles-secondary-text">{learningCaption.secondaryText}</p>
               ) : null}
@@ -2623,12 +2779,6 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 </p>
               ) : null}
             </div>
-          ) : null}
-          {!learningCaption && displaySecondary && !youLive ? (
-            <p className="partner-lab-subtitles-secondary">
-              <span className="partner-lab-subtitles-speaker">{partnerSpeaker}</span>
-              <span className="partner-lab-subtitles-secondary-text">{displaySecondary.text}</span>
-            </p>
           ) : null}
           {fullscreen && partnerHold ? (
             <button
@@ -2659,21 +2809,17 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             </button>
           ) : null}
           <p className="partner-lab-subtitles-speaker">
-            {youLive ? 'You' : learningCaption ? partnerSpeaker : speakerName}
+            {learningCaption ? partnerSpeaker : speakerName}
           </p>
-          {learningCaption?.coachText && !youLive ? (
+          {learningCaption?.coachText ? (
             <p className="partner-lab-subtitles-coach">{learningCaption.coachText}</p>
           ) : null}
           {learningCaption ? (
             <>
-              {youLive ? (
-                <p className={`partner-lab-subtitles-text${youLive.interim ? ' is-interim' : ''}`}>
-                  {youLive.text}
-                </p>
-              ) : learningCaption.primaryText ? (
+              {learningCaption.primaryText ? (
                 <p className="partner-lab-subtitles-text">{learningCaption.primaryText}</p>
               ) : null}
-              {learningCaption.primaryScript && !youLive ? (
+              {learningCaption.primaryScript ? (
                 <>
                   <p className="partner-lab-subtitles-text" lang="zh-HK">
                     {learningCaption.primaryScript.zh}
@@ -2693,11 +2839,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               ) : null}
             </>
           ) : (
-            <p className="partner-lab-subtitles-text">{displayPrimary.text}</p>
+            <p className="partner-lab-subtitles-text partner-lab-subtitles-held">{displayPrimary.text}</p>
           )}
-          {listening && !youLive ? (
-            <p className="partner-lab-subtitles-listening">Listening… your words appear here</p>
-          ) : null}
         </div>
 
         <p className="partner-lab-status" aria-live="polite">

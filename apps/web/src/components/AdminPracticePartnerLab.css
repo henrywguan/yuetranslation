@@ -2066,6 +2066,19 @@
   opacity: 0.88;
 }
 
+.partner-lab-subtitles.is-you-live > .partner-lab-subtitles-speaker,
+.partner-lab-subtitles.is-you-live > .partner-lab-subtitles-coach,
+.partner-lab-subtitles.is-you-live > .partner-lab-subtitles-text,
+.partner-lab-subtitles.is-you-live > .is-partner-aside,
+.partner-lab-subtitles.is-you-live .partner-lab-subtitles-held {
+  display: none;
+}
+
+.partner-lab-subtitles.is-you-live .partner-lab-subtitles-youline-text {
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+  font-weight: 600;
+}
+
 /* Game plate: speaker name on its own line, dialogue beneath — Harbor palette only */
 .partner-lab-subtitles-speaker {
   display: block;
@@ -4196,9 +4209,322 @@
   grid-area: keys;
 }
 
+.partner-lab-orbit-arc.is-b,
+.partner-lab-orbit-arc.is-c {
+  border-top-color: transparent;
+  border-right-color: transparent;
+}
+
+.partner-lab-orbit-arc.is-b {
+  inset: 10%;
+  border-bottom-color: #34d399;
+  border-left-color: color-mix(in srgb, #00e5ff 75%, transparent);
+  animation: partner-orbit-spin-rev 19s linear infinite;
+}
+
+.partner-lab-orbit-arc.is-c {
+  inset: 20%;
+  border-top-color: #ffd166;
+  border-left-color: color-mix(in srgb, #8b5cf6 80%, transparent);
+  animation: partner-lab-spin 27s linear infinite;
+}
+
+@keyframes partner-orbit-spin-rev {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.partner-orbit-field {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  z-index: 3;
+  width: min(96vmin, 680px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.partner-lab-stage .partner-orbit-field {
+  top: 36%;
+  width: min(92vmin, 720px);
+}
+
+.partner-orbit-track,
+.partner-orbit-comet,
+.partner-orbit-bead {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.partner-orbit-track.is-a {
+  inset: 4%;
+  border: 1px solid transparent;
+  border-top-color: color-mix(in srgb, #00e5ff 85%, white);
+  border-right-color: color-mix(in srgb, #8b5cf6 70%, transparent);
+  animation: partner-lab-spin 14s linear infinite;
+}
+
+.partner-orbit-track.is-b {
+  inset: 12%;
+  border: 1px dashed color-mix(in srgb, #00e5ff 38%, transparent);
+  border-bottom-color: #34d399;
+  animation: partner-orbit-spin-rev 23s linear infinite;
+}
+
+.partner-orbit-track.is-c {
+  inset: 20%;
+  border: 1px solid transparent;
+  border-left-color: color-mix(in srgb, #ffd166 80%, white);
+  border-bottom-color: color-mix(in srgb, #8b5cf6 55%, transparent);
+  animation: partner-lab-spin 31s linear infinite;
+}
+
+.partner-orbit-comet {
+  inset: 4%;
+  animation: partner-lab-spin 9s linear infinite;
+}
+
+.partner-orbit-comet.is-b {
+  inset: 12%;
+  animation: partner-orbit-spin-rev 13s linear infinite;
+}
+
+.partner-lab--topic.is-sheet .partner-orbit-comet,
+.partner-lab--topic.is-sheet .partner-orbit-bead {
+  animation-play-state: paused;
+}
+
+.partner-orbit-comet::after,
+.partner-orbit-bead::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  box-shadow: 0 0 12px #00e5ff;
+}
+
+.partner-orbit-comet.is-b::after {
+  width: 0.32rem;
+  height: 0.32rem;
+  background: #ffd166;
+  box-shadow: 0 0 12px #ffd166;
+}
+
+.partner-orbit-bead {
+  inset: 20%;
+  animation: partner-lab-spin 17s linear infinite;
+}
+
+.partner-orbit-bead.is-b {
+  inset: 8%;
+  animation: partner-orbit-spin-rev 21s linear infinite;
+}
+
+.partner-orbit-bead.is-c {
+  inset: 16%;
+  animation: partner-lab-spin 12.5s linear infinite;
+}
+
+.partner-orbit-bead::after {
+  width: 0.28rem;
+  height: 0.28rem;
+  background: #34d399;
+  box-shadow: 0 0 10px #34d399;
+}
+
+.partner-orbit-bead.is-b::after {
+  background: #8b5cf6;
+  box-shadow: 0 0 10px #8b5cf6;
+}
+
+.partner-orbit-bead.is-c::after {
+  top: auto;
+  bottom: 0;
+  background: #00e5ff;
+}
+
+.partner-companion-readout {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  z-index: 4;
+  width: min(40vmin, 16.5rem);
+  transform: translate(-50%, -50%);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.42rem 0.65rem;
+  align-items: baseline;
+  margin: 0;
+  pointer-events: none;
+  text-align: left;
+}
+
+.partner-companion-readout div {
+  display: contents;
+}
+
+.partner-companion-readout dt {
+  margin: 0;
+  font-family: Syne, var(--font-display);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #00e5ff 82%, white);
+}
+
+.partner-companion-readout dd {
+  margin: 0;
+  font-family: Syne, var(--font-display);
+  font-size: 0.84rem;
+  font-weight: 650;
+  line-height: 1.25;
+  color: #e8fff8;
+  white-space: normal;
+  overflow: visible;
+}
+
+.partner-companion-readout dd span {
+  display: block;
+  margin-top: 0.08rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, #ffd166 82%, white);
+}
+
+.partner-companion-readout.is-sitting {
+  top: max(3.5rem, calc(env(safe-area-inset-top) + 2.7rem));
+  width: min(92vw, 22rem);
+  transform: translateX(-50%);
+}
+
+.partner-outer-ring::after {
+  content: '';
+  position: absolute;
+  inset: 1%;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  border-left-color: color-mix(in srgb, #ffd166 75%, white);
+  border-bottom-color: color-mix(in srgb, #8b5cf6 55%, transparent);
+  animation: partner-orbit-spin-rev 28s linear infinite;
+}
+
+.partner-outer-ring button::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  border-top-color: #00e5ff;
+  border-right-color: color-mix(in srgb, #8b5cf6 75%, transparent);
+  animation: partner-lab-spin 7.5s linear infinite;
+  pointer-events: none;
+}
+
+.partner-outer-ring button:nth-child(2)::before {
+  animation-duration: 11s;
+  animation-direction: reverse;
+}
+
+.partner-outer-ring button:nth-child(3)::before {
+  animation-duration: 8.5s;
+  border-top-color: #34d399;
+}
+
+.partner-outer-ring button:nth-child(4)::before {
+  animation-duration: 13s;
+  animation-direction: reverse;
+  border-top-color: #ffd166;
+}
+
+.partner-outer-ring button:nth-child(5)::before {
+  animation-duration: 9.2s;
+  border-top-color: #8b5cf6;
+}
+
+.partner-companion-mic::before,
+.partner-companion-mic::after,
+.partner-lab--companion .partner-lab-fs-mic::before,
+.partner-lab--companion .partner-lab-fs-mic::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, #00e5ff 70%, white);
+  animation: partner-mic-sonar 3.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  pointer-events: none;
+}
+
+.partner-lab--companion .partner-lab-fs-mic {
+  position: relative;
+}
+
+.partner-companion-mic::after,
+.partner-lab--companion .partner-lab-fs-mic::after {
+  animation-delay: -1.7s;
+  border-color: color-mix(in srgb, #8b5cf6 80%, white);
+}
+
+@keyframes partner-mic-sonar {
+  0% {
+    transform: scale(1);
+    opacity: 0.65;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+.partner-lab--topic.partner-lab--companion .partner-lab-aura {
+  animation: partner-lab-aura-pulse 4.6s ease-in-out infinite alternate;
+}
+
+.partner-lab--companion .partner-lab-stars::after {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  background-image:
+    radial-gradient(1.2px 1.2px at 18% 40%, color-mix(in srgb, #00e5ff 80%, transparent), transparent),
+    radial-gradient(1px 1px at 64% 16%, color-mix(in srgb, #fff 65%, transparent), transparent),
+    radial-gradient(1.4px 1.4px at 80% 62%, color-mix(in srgb, #8b5cf6 80%, transparent), transparent),
+    radial-gradient(1px 1px at 36% 78%, color-mix(in srgb, #ffd166 75%, transparent), transparent);
+  animation: partner-orbit-drift 26s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes partner-orbit-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-16px, 12px, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .partner-outer-ring::before,
-  .partner-companion-mic {
+  .partner-outer-ring::after,
+  .partner-outer-ring button::before,
+  .partner-companion-mic,
+  .partner-companion-mic::before,
+  .partner-companion-mic::after,
+  .partner-lab--companion .partner-lab-fs-mic::before,
+  .partner-lab--companion .partner-lab-fs-mic::after,
+  .partner-orbit-track,
+  .partner-orbit-comet,
+  .partner-orbit-bead,
+  .partner-lab-orbit-arc.is-b,
+  .partner-lab-orbit-arc.is-c,
+  .partner-lab--topic.partner-lab--companion .partner-lab-aura,
+  .partner-lab--companion .partner-lab-stars::after {
     animation: none;
   }
 }
