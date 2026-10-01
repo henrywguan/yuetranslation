@@ -1851,6 +1851,19 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           beat: spokenBeat,
         })
       : null
+  const phraseZh = activeDrill?.zh.trim() || ''
+  const rawCoach = learningCaption
+    ? ''
+    : spokenBeat === 'reaction'
+      ? partnerBeats?.reaction || ''
+      : spokenBeat === 'cue'
+        ? partnerBeats?.cue || ''
+        : spokenBeat === 'phrase'
+          ? ''
+          : [partnerBeats?.reaction, partnerBeats?.cue].filter(Boolean).join(' ')
+  const coachLine = phraseZh
+    ? rawCoach.split(phraseZh).join(' ').replace(/\s+/g, ' ').trim()
+    : rawCoach.replace(/\s+/g, ' ').trim()
 
   const openFsKeyboard = () => {
     if (busy || listening || !activeDrill) return
@@ -2541,6 +2554,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </button>
         )}
 
+        <div className="partner-lab-caption-well">
         <div
           className={`partner-lab-drill partner-lab-holo${activeDrill ? '' : ' is-empty'}${
             verdictFlash ? ` is-${verdictFlash}` : ''
@@ -2748,10 +2762,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           <PartnerYouLine
             ref={youLineRef}
             listening={listening}
-            partnerHold={learningCaption ? null : partnerHold}
+            partnerHold={null}
             speaker={partnerSpeaker}
             hostRef={subtitleHostRef}
-            phrase={activeDrill ? { zh: activeDrill.zh, jyutping: activeDrill.jyutping } : null}
+            phrase={null}
             onSyllable={(jp) => {
               setGloss(null)
               setTonePop(toneNoteForSyllable(jp))
@@ -2813,6 +2827,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </p>
           {learningCaption?.coachText ? (
             <p className="partner-lab-subtitles-coach">{learningCaption.coachText}</p>
+          ) : coachLine ? (
+            <p className="partner-lab-subtitles-coach">{coachLine}</p>
           ) : null}
           {learningCaption ? (
             <>
@@ -2841,6 +2857,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           ) : (
             <p className="partner-lab-subtitles-text partner-lab-subtitles-held">{displayPrimary.text}</p>
           )}
+        </div>
         </div>
 
         <p className="partner-lab-status" aria-live="polite">

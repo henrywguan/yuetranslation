@@ -3849,11 +3849,11 @@
   box-shadow: 0 0 28px color-mix(in srgb, #00e5ff 40%, transparent);
 }
 
-.partner-outer-ring button:nth-child(1) { top: 2%; left: 50%; transform: translate(-50%, 0); }
-.partner-outer-ring button:nth-child(2) { top: 24%; right: 0; }
-.partner-outer-ring button:nth-child(3) { bottom: 12%; right: 6%; }
-.partner-outer-ring button:nth-child(4) { bottom: 12%; left: 6%; }
-.partner-outer-ring button:nth-child(5) { top: 24%; left: 0; }
+.partner-outer-ring button:nth-child(1) { top: 0; left: 50%; transform: translate(-50%, -12%); }
+.partner-outer-ring button:nth-child(2) { top: 50%; right: 0; transform: translate(16%, -50%); }
+.partner-outer-ring button:nth-child(3) { bottom: 0; right: 16%; transform: translate(8%, 16%); }
+.partner-outer-ring button:nth-child(4) { bottom: 0; left: 16%; transform: translate(-8%, 16%); }
+.partner-outer-ring button:nth-child(5) { top: 50%; left: 0; transform: translate(-16%, -50%); }
 
 .partner-outer-ring .partner-lab-open {
   width: 5.25rem;
@@ -4735,4 +4735,207 @@
 .partner-lab-ribbon .is-changed {
   color: #e8a15a;
   text-shadow: 0 0 10px color-mix(in srgb, #e8a15a 55%, transparent);
+}
+
+/* Each layer keeps its own band: ring seals, center readout, caption, sheet, mic. */
+.partner-lab--topic.partner-lab--companion .partner-outer-ring {
+  top: 38%;
+  width: min(94vw, 440px);
+  height: min(94vw, 440px);
+}
+
+.partner-lab--topic.partner-lab--companion .partner-lab-orbit-ring,
+.partner-lab--topic.partner-lab--companion .partner-lab-aura {
+  top: 38%;
+}
+
+.partner-lab--topic .partner-companion-readout {
+  top: 38%;
+  z-index: 4;
+  width: 8.6rem;
+  gap: 0.28rem 0.45rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, #050816 88%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, #00e5ff 16%, transparent);
+}
+
+.partner-lab--topic .partner-companion-readout dd {
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.partner-lab--topic.is-sheet .partner-outer-ring {
+  top: 22%;
+  width: min(72vw, 300px);
+  height: min(72vw, 300px);
+}
+
+.partner-lab--topic.is-sheet .partner-outer-ring button {
+  width: 4.15rem;
+  min-height: 4.15rem;
+  font-size: 0.56rem;
+}
+
+.partner-lab--topic.is-sheet .partner-lab-orbit-ring,
+.partner-lab--topic.is-sheet .partner-lab-aura,
+.partner-lab--topic.is-sheet .partner-companion-readout {
+  top: 22%;
+}
+
+.partner-lab--topic.is-sheet .partner-companion-readout {
+  width: 7.2rem;
+  padding: 0.35rem 0.4rem;
+}
+
+.partner-lab--topic.is-sheet .partner-holo-sheet.is-open {
+  bottom: 9rem;
+  max-height: min(42dvh, calc(100dvh - 18rem));
+  padding-bottom: 0.85rem;
+}
+
+.partner-holo-sheet .partner-path {
+  gap: 0.35rem;
+}
+
+.partner-holo-sheet .partner-path-plate p,
+.partner-holo-sheet .partner-map-copy p {
+  margin: 0;
+}
+
+.partner-holo-sheet .partner-path-score-num {
+  font-size: 1.7rem;
+}
+
+.partner-holo-sheet .partner-path-blurb,
+.partner-holo-sheet .partner-path-disclaimer,
+.partner-holo-sheet .partner-map-tale,
+.partner-holo-sheet .partner-map-hint {
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.partner-holo-sheet .partner-map {
+  gap: 0.3rem;
+}
+
+.partner-holo-sheet .partner-map-hud {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.partner-holo-sheet .partner-map-frame {
+  height: 8rem;
+}
+
+.partner-lab--companion .partner-companion-readout.is-sitting {
+  left: max(0.75rem, env(safe-area-inset-left));
+  top: max(4.5rem, calc(env(safe-area-inset-top) + 3.4rem));
+  width: max-content;
+  max-width: min(46vw, 12.5rem);
+  transform: none;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, #050816 86%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, #00e5ff 18%, transparent);
+  z-index: 5;
+}
+
+.partner-lab--companion .partner-lab-caption-well {
+  position: absolute;
+  left: 50%;
+  bottom: 8.8rem;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+  width: min(92vw, 36rem);
+  max-height: min(38dvh, calc(100dvh - 17.5rem));
+  padding: 0.7rem 0.85rem 0.8rem;
+  overflow: auto;
+  transform: translateX(-50%);
+  border-radius: 1.15rem;
+  background: color-mix(in srgb, #050816 82%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, #00e5ff 16%, transparent);
+  pointer-events: auto;
+}
+
+.partner-lab--companion:has(.partner-lab-fs-type) .partner-lab-caption-well {
+  bottom: 13.2rem;
+}
+
+.partner-lab--companion .partner-lab-caption-well .partner-lab-drill,
+.partner-lab--companion.is-hub .partner-lab-caption-well .partner-lab-subtitles,
+.partner-lab--companion.is-fullscreen .partner-lab-caption-well .partner-lab-subtitles,
+.partner-lab--companion .partner-lab-caption-well .partner-lab-subtitles {
+  position: relative;
+  inset: auto;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  width: 100%;
+  max-width: none;
+  transform: none;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.partner-lab--companion .partner-lab-drill-zh,
+.partner-lab--companion.is-fullscreen .partner-lab-drill-zh,
+.partner-lab--companion.is-fullscreen .partner-lab-drill-en.is-primary {
+  display: flex;
+  max-width: 100%;
+  font-size: clamp(1.12rem, 4.4vw, 1.48rem);
+  line-height: 1.4;
+}
+
+.partner-lab--companion .partner-lab-drill-zh-chars {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.partner-lab--companion .partner-lab-drill:not(.is-empty) ~ .partner-lab-subtitles .partner-lab-subtitles-text,
+.partner-lab--companion .partner-lab-drill:not(.is-empty) ~ .partner-lab-subtitles .partner-lab-subtitles-held,
+.partner-lab--companion .partner-lab-drill:not(.is-empty) ~ .partner-lab-subtitles .is-partner-aside {
+  display: none;
+}
+
+.partner-lab--companion .partner-lab-subtitles-speaker {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.partner-lab--companion .partner-lab-subtitles-coach {
+  max-width: 100%;
+  margin: 0.15rem 0 0;
+  font-size: clamp(0.82rem, 3.1vw, 0.98rem);
+  line-height: 1.4;
+}
+
+.partner-lab--companion .partner-lab-caption-well .partner-lab-replay {
+  width: 2.15rem;
+  height: 2.15rem;
+  margin: 0.15rem auto 0;
+}
+
+.partner-lab--companion .partner-lab-subtitles.is-you-live .partner-lab-subtitles-youline-text {
+  font-size: clamp(1.15rem, 4.2vw, 1.6rem);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.partner-lab--companion .partner-lab-caption-well .partner-lab-drill-zh,
+.partner-lab--companion .partner-lab-caption-well .partner-lab-char,
+.partner-lab--companion .partner-lab-caption-well .partner-lab-replay,
+.partner-lab--companion .partner-lab-caption-well .jyut-syl-ui,
+.partner-lab--companion .partner-lab-caption-well button {
+  pointer-events: auto;
 }
