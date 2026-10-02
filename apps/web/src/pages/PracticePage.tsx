@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { AdminPracticePartnerLab } from '../components/AdminPracticePartnerLab'
 import { BiText } from '../components/BiText'
 import { openApp } from '../lib/siteLinks'
+import { usePartnerLook } from '../lib/partnerLook'
 import { useAppViewportLock } from '../lib/useAppViewportLock'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { ui } from '../lib/uiCopy'
@@ -41,6 +42,7 @@ export function PracticePage() {
     path: '/#/practice',
   })
 
+  const look = usePartnerLook()
   const [hubPlace, setHubPlace] = useState<HubPlace | null>(null)
   const onHubPlace = useCallback((place: HubPlace) => {
     setHubPlace(place)
@@ -48,7 +50,7 @@ export function PracticePage() {
   const atOrb = hubPlace?.atOrb !== false
 
   return (
-    <div className="practice-page">
+    <div className={`practice-page${look === 'presence' ? ' is-presence' : ''}`}>
       <header className="practice-page-bar">
         <button
           type="button"
@@ -71,7 +73,7 @@ export function PracticePage() {
         </h1>
       </header>
       <div className="practice-page-lab">
-        <AdminPracticePartnerLab entry="hub" onHubPlace={onHubPlace} />
+        <AdminPracticePartnerLab entry="hub" look={look} onHubPlace={onHubPlace} />
       </div>
     </div>
   )

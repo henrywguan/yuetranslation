@@ -14,6 +14,8 @@ import {
   ORBITAL_SPHERE_DEFAULTS,
   type OrbitalSphereOptions,
 } from './ui/orbital-sphere'
+import { PartnerPresence, type PresenceWhisper } from './PartnerPresence'
+import { usePartnerLook, writePartnerLook, type PartnerLook } from '../lib/partnerLook'
 import {
   DEFAULT_PRACTICE_PARTNER_CATEGORY,
   DEFAULT_PRACTICE_PARTNER_DIFFICULTY,
@@ -138,6 +140,7 @@ import {
   type PracticePartnerMove,
 } from '../lib/practicePartnerLadder'
 import './AdminPracticePartnerLab.css'
+import './PartnerPresence.css'
 
 const PARTNER_VOICE_KEY = 'yue-practice-partner-voice'
 const PARTNER_CATEGORY_KEY = 'yue-practice-partner-category'
@@ -260,6 +263,15 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
     haloOpacity: 0.5,
     hue: 0,
   },
+}
+
+/** CSS hue-rotate from the harbor teal core. Subtle, not a game flash. */
+const PRESENCE_HUE: Record<PartnerMood, number> = {
+  idle: 38,
+  listening: 14,
+  thinking: 92,
+  reacting: -118,
+  speaking: 22,
 }
 
 const SILENCE_MS = 1600
@@ -630,11 +642,22 @@ function PartnerStatusCard({
 export function AdminPracticePartnerLab({
   entry = 'admin',
   onHubPlace,
+  look: lookProp,
 }: {
   entry?: 'admin' | 'hub'
   /** Hub only. The page back arrow uses this to return to the orb. */
   onHubPlace?: (place: { atOrb: boolean; backToOrb: () => void }) => void
+  /** Saved in the admin panel. Defaults to the living companion. */
+  look?: PartnerLook
 }) {
+  const storedLook = usePartnerLook()
+  const look = lookProp ?? storedLook
+  const presence = look === 'presence'
+  const presenceRef = useRef(presence)
+  presenceRef.current = presence
+  const chooseLook = (next: PartnerLook) => {
+    writePartnerLook(next)
+  }
   const [mood, setMood] = useState<PartnerMood>('idle')
   const moodRef = useRef(mood)
   moodRef.current = mood
@@ -1648,7 +1671,7 @@ export function AdminPracticePartnerLab({
     if (!activeDrill) {
       unlockTtsPlayback({ force: true })
       setFullscreen(true)
-      if (!prefersReducedMotion()) setVhsCue((n) => n + 1)
+      if (!prefersReducedMotion() && !presenceRef.current) setVhsCue((n) => n + 1)
       void startDrill()
       return
     }
@@ -2030,9 +2053,17 @@ export function AdminPracticePartnerLab({
       ...base,
       ...cast,
       placement: 'stage',
-      hue: 0,
+      ...(presence
+        ? {
+            hue: verdictFlash === 'pass' ? -108 : PRESENCE_HUE[mood],
+            orbitOpacity: 0.08,
+            scale:
+              ((cast.scale as number | undefined) ?? base.scale ?? 1) *
+              (mood === 'listening' || mood === 'speaking' ? 1.12 : 1),
+          }
+        : { hue: 0 }),
     }
-  }, [mood, personality])
+  }, [mood, personality, presence, verdictFlash])
 
   const moodMeta = MOODS.find((m) => m.id === mood)!
 
@@ -2141,14 +2172,89 @@ export function AdminPracticePartnerLab({
     setOrbitSheet((current) => (current === id ? null : id))
   }
 
+  const lookToggle =
+    entry === 'admin' ? (
+      <div className="partner-look-toggle" role="group" aria-label="Practice Partner look">
+        <button type="button" aria-pressed={look === 'presence'} onClick={() => chooseLook('presence')}>
+          Presence
+        </button>
+        <button type="button" aria-pressed={look === 'orbital'} onClick={() => chooseLook('orbital')}>
+          Orbital
+        </button>
+      </div>
+    ) : null
+
+  const presenceWhispers: PresenceWhisper[] = topicReady
+    ? [
+        {
+          id: 'topic',
+          label: 'Topic',
+          zh: '題',
+          disabled: busy || listening,
+          onClick: changeTopic,
+        },
+        {
+          id: 'line',
+          label: 'A line',
+          zh: '一句',
+          disabled: busy || listening || sceneDone || mood === 'speaking' || mood === 'reacting',
+          onClick: askForLine,
+        },
+        {
+          id: 'type',
+          label: 'Type',
+          zh: '打字',
+          disabled: busy || listening || !activeDrill || sceneDone,
+          onClick: openFsKeyboard,
+        },
+        ...(partnerHold
+          ? [
+              {
+                id: 'hear',
+                label: 'Hear',
+                zh: '再聽',
+                disabled: mood === 'speaking' || mood === 'reacting' || listening,
+                onClick: replayPartnerVoice,
+              },
+            ]
+          : []),
+      ]
+    : [
+        { id: 'level', label: 'Level', zh: '程度', onClick: () => openSheet('level') },
+        { id: 'path', label: 'Path', zh: '路', onClick: () => openSheet('path') },
+        { id: 'scenes', label: 'Scenarios', zh: '情境', onClick: () => openSheet('scenes') },
+        { id: 'saved', label: 'Saved', zh: '記住', onClick: () => openSheet('saved') },
+        { id: 'chat', label: 'Chat', zh: '自由講', onClick: beginOpenChat },
+      ]
+
+  const presenceLayer = presence ? (
+    <PartnerPresence
+      place={topicReady ? 'sitting' : 'home'}
+      mood={mood}
+      celebrate={verdictFlash === 'pass'}
+      listening={listening}
+      phrase={phraseZh}
+      invite={!listening && mood !== 'thinking' && mood !== 'speaking' && mood !== 'reacting'}
+      speakLabel={topicReady ? talkLabel : 'Tap to speak'}
+      speakDisabled={topicReady ? (busy && !listening) || sceneDone : false}
+      onSpeak={topicReady ? toggleTalk : speakWithHarbor}
+      whispers={presenceWhispers}
+      quiet={fsTypeOpen}
+    />
+  ) : null
+
   if (!topicReady) {
     return (
       <section
         className={`partner-lab partner-lab--companion partner-lab--topic${entry === 'hub' ? ' is-hub' : ''}${
           orbitSheet ? ' is-sheet' : ''
-        }`}
+        }${presence ? ' is-presence' : ''}`}
+        data-mood={mood}
+        data-verdict={verdictFlash || 'none'}
         aria-label="Choose Practice Partner topic"
       >
+        {lookToggle}
+        {presenceLayer}
         <div className="partner-universe" aria-hidden="true" />
         <div className="partner-lab-stars" aria-hidden="true" />
         <OrbitalSphereBackground className="partner-lab-orb" {...orbitProps} />
@@ -2529,11 +2635,15 @@ export function AdminPracticePartnerLab({
     <section
       className={`partner-lab partner-lab--companion${entry === 'hub' ? ' is-hub' : ''}${fullscreen ? ' is-fullscreen' : ''}${
         verdictFlash === 'fail' ? ' is-fail-flash' : ''
-      }`}
+      }${presence ? ' is-presence' : ''}`}
+      data-mood={mood}
+      data-verdict={verdictFlash || 'none'}
       data-wash={sessionKind === 'situation' ? situationMeta?.group : undefined}
       data-cast={sessionKind === 'situation' ? personality : undefined}
       aria-label="Practice Partner lab"
     >
+      {lookToggle}
+      {presenceLayer}
       <header className="partner-lab-head">
         <div>
           <p className="partner-lab-kicker">
@@ -3048,7 +3158,13 @@ export function AdminPracticePartnerLab({
               ) : null}
             </>
           ) : (
-            <p className="partner-lab-subtitles-text partner-lab-subtitles-held">{displayPrimary.text}</p>
+            <p
+              className={`partner-lab-subtitles-text partner-lab-subtitles-held${
+                displayPrimary.text === EMPTY_CAPTION ? ' is-quiet' : ''
+              }`}
+            >
+              {displayPrimary.text}
+            </p>
           )}
         </div>
         </div>
@@ -3244,7 +3360,7 @@ export function AdminPracticePartnerLab({
         )}
       </div>
 
-      {vhsCue > 0 ? (
+      {vhsCue > 0 && !presence ? (
         <PartnerVhsTransition
           key={vhsCue}
           title={categoryMeta.labelEn}
