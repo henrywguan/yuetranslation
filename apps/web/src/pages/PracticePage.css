@@ -141,6 +141,16 @@
   }
 }
 
+.practice-page.is-presence .practice-back {
+  opacity: 0.42;
+  transition: opacity 0.6s ease;
+}
+
+.practice-page.is-presence .practice-back:hover,
+.practice-page.is-presence .practice-back:focus-visible {
+  opacity: 0.9;
+}
+
 .practice-page-title {
   display: none;
 }
