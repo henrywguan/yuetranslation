@@ -37,6 +37,7 @@ export function createWebSpeechSession(
   let viLocaleIndex = 0
   let thLocaleIndex = 0
   let loLocaleIndex = 0
+  let koLocaleIndex = 0
   const bilingualYueEn = Boolean(opts?.bilingualYueEn)
   const echo = createEchoGuard()
   const apple = isAppleTouchDevice()
@@ -52,6 +53,7 @@ export function createWebSpeechSession(
   const viLocales = ['vi-VN', 'vi']
   const thLocales = ['th-TH', 'th']
   const loLocales = ['lo-LA', 'lo']
+  const koLocales = ['ko-KR', 'ko']
 
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
   const cmnLocale = () => cmnLocales[cmnLocaleIndex % cmnLocales.length]
@@ -63,6 +65,7 @@ export function createWebSpeechSession(
   const viLocale = () => viLocales[viLocaleIndex % viLocales.length]
   const thLocale = () => thLocales[thLocaleIndex % thLocales.length]
   const loLocale = () => loLocales[loLocaleIndex % loLocales.length]
+  const koLocale = () => koLocales[koLocaleIndex % koLocales.length]
 
   const resolveRecLang = (): string => {
     if (bilingualYueEn && activeLang === 'en') return 'en-US'
@@ -76,6 +79,7 @@ export function createWebSpeechSession(
     if (activeLang === 'vi') return viLocale()
     if (activeLang === 'th') return thLocale()
     if (activeLang === 'lo') return loLocale()
+    if (activeLang === 'ko') return koLocale()
     return 'en-US'
   }
 
@@ -175,6 +179,11 @@ export function createWebSpeechSession(
       }
       if (localeRejected && activeLang === 'lo' && loLocaleIndex < loLocales.length - 1) {
         loLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'ko' && koLocaleIndex < koLocales.length - 1) {
+        koLocaleIndex += 1
         queueMicrotask(() => startOne())
         return
       }

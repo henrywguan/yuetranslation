@@ -4,7 +4,7 @@ import { hasHan } from './canto/han.js'
 import { scrubYueToCmn } from './canto/scrubCmn.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -125,6 +125,10 @@ function isThaiTarget(to: CameraLang): boolean {
 
 function isLaoTarget(to: CameraLang): boolean {
   return to === 'lo'
+}
+
+function isKoreanTarget(to: CameraLang): boolean {
+  return to === 'ko'
 }
 
 function isCebuanoTarget(to: CameraLang): boolean {
@@ -312,6 +316,26 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .filter(Boolean)
       .join('\n')
   }
+  if (to === 'ko') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Korean (한국어).',
+      'Write for Korean travelers/readers: everyday spoken Seoul Korean (해요체), not stiff formal writing.',
+      'Use native Hangul only. Never use Chinese characters, RR romanization, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → 체크인; Luggage → 짐.',
+      '- Safety: Wet floor → 미끄러운 바닥; Caution → 주의.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Korean output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Korean>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
   if (to === 'lo') {
     return [
       'You translate signs, menus, forms, and short labels into natural colloquial Vientiane Lao (ພາສາລາວ).',
@@ -446,6 +470,9 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isLaoTarget(to)) {
     return hasHan(source) ? `(demo LO) ${source}` : `(demo) ${source}`
   }
+  if (isKoreanTarget(to)) {
+    return hasHan(source) ? `(demo KO) ${source}` : `(demo) ${source}`
+  }
   if (isCebuanoTarget(to)) {
     return hasHan(source) ? `(demo CEB) ${source}` : `(demo) ${source}`
   }
@@ -519,6 +546,8 @@ export async function translateCameraText(
             ? `(tr TH) ${source}`
             : isLaoTarget(to)
               ? `(tr LO) ${source}`
+              : isKoreanTarget(to)
+                ? `(tr KO) ${source}`
               : isCebuanoTarget(to)
             ? `(tr CEB) ${source}`
             : isIlocanoTarget(to)
@@ -548,6 +577,7 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'vi') return 'Vietnamese (Latin script / Quốc ngữ, vi-VN)'
   if (lang === 'th') return 'Central Thai (Thai script, th-TH)'
   if (lang === 'lo') return 'Vientiane Lao (Lao script, lo-LA)'
+  if (lang === 'ko') return 'Korean (Hangul, ko-KR)'
   if (lang === 'ceb') return 'Cebuano / Binisaya (Latin script)'
   if (lang === 'ilo') return 'Ilocano / Ilokano (Latin script)'
   if (lang === 'bcl') return 'Central Bikol / Bikol Naga (Latin script)'
@@ -607,6 +637,8 @@ export async function translateCameraBatch(
                 ? `(tr TH) ${s}`
                 : isLaoTarget(to)
                   ? `(tr LO) ${s}`
+                  : isKoreanTarget(to)
+                    ? `(tr KO) ${s}`
                   : isCebuanoTarget(to)
                 ? `(tr CEB) ${s}`
                 : isIlocanoTarget(to)
@@ -627,6 +659,7 @@ export async function translateCameraBatch(
       else if (isVietnameseTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isThaiTarget(to) && t && (hasHan(t) || !/[\u0E00-\u0E7F]/.test(t))) out[start + i] = src
       else if (isLaoTarget(to) && t && (hasHan(t) || !/[\u0E80-\u0EFF]/.test(t))) out[start + i] = src
+      else if (isKoreanTarget(to) && t && (hasHan(t) || !/[\uAC00-\uD7A3]/.test(t))) out[start + i] = src
       else if (isLatinPhilippineRegionalTarget(to) && t && hasHan(t)) out[start + i] = src
       else {
         if (to === 'cmn' && t) t = scrubYueToCmn(t).text
@@ -652,6 +685,7 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn') return 'vi'
   if (lang === 'th' || lang === 'th-TH' || lang === 'th-th') return 'th'
   if (lang === 'lo' || lang === 'lo-LA' || lang === 'lo-la') return 'lo'
+  if (lang === 'ko' || lang === 'ko-KR' || lang === 'ko-kr') return 'ko'
   if (lang === 'ceb' || lang === 'ceb-PH' || lang === 'ceb-ph') return 'ceb'
   if (lang === 'ilo' || lang === 'ilo-PH' || lang === 'ilo-ph') return 'ilo'
   if (lang === 'bcl' || lang === 'bcl-PH' || lang === 'bcl-ph') return 'bcl'

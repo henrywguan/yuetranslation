@@ -14,6 +14,7 @@ export const DEFAULT_ESES_VOICE = 'es-ES-ElviraNeural';
 export const DEFAULT_VI_VOICE = 'vi-VN-HoaiMyNeural';
 export const DEFAULT_TH_VOICE = 'th-TH-PremwadeeNeural';
 export const DEFAULT_LO_VOICE = 'lo-LA-KeomanyNeural';
+export const DEFAULT_KO_VOICE = 'ko-KR-SunHiNeural';
 export const YUE_VOICES = [
     {
         id: 'zh-HK-HiuMaanNeural',
@@ -198,6 +199,24 @@ export const LO_VOICES = [
         gender: 'male',
     },
 ];
+export const KO_VOICES = [
+    {
+        id: 'ko-KR-SunHiNeural',
+        lang: 'ko',
+        xmlLang: 'ko-KR',
+        labelEn: 'Sun-Hi · Female',
+        labelZh: 'Sun-Hi · 女聲',
+        gender: 'female',
+    },
+    {
+        id: 'ko-KR-InJoonNeural',
+        lang: 'ko',
+        xmlLang: 'ko-KR',
+        labelEn: 'InJoon · Male',
+        labelZh: 'InJoon · 男聲',
+        gender: 'male',
+    },
+];
 export const CMN_VOICES = [
     {
         id: 'zh-CN-XiaoxiaoNeural',
@@ -255,6 +274,7 @@ const ES_ES_SET = new Set(ES_ES_VOICES.map((v) => v.id));
 const VI_SET = new Set(VI_VOICES.map((v) => v.id));
 const TH_SET = new Set(TH_VOICES.map((v) => v.id));
 const LO_SET = new Set(LO_VOICES.map((v) => v.id));
+const KO_SET = new Set(KO_VOICES.map((v) => v.id));
 const ALL = new Map([
     ...YUE_VOICES,
     ...EN_VOICES,
@@ -267,6 +287,7 @@ const ALL = new Map([
     ...VI_VOICES,
     ...TH_VOICES,
     ...LO_VOICES,
+    ...KO_VOICES,
 ].map((v) => [v.id, v]));
 export function isYueVoice(id) {
     return YUE_SET.has(id);
@@ -301,6 +322,9 @@ export function isThVoice(id) {
 export function isLoVoice(id) {
     return LO_SET.has(id);
 }
+export function isKoVoice(id) {
+    return KO_SET.has(id);
+}
 export function resolveYueVoice(id) {
     return id && isYueVoice(id) ? id : DEFAULT_YUE_VOICE;
 }
@@ -334,11 +358,14 @@ export function resolveThVoice(id) {
 export function resolveLoVoice(id) {
     return id && isLoVoice(id) ? id : DEFAULT_LO_VOICE;
 }
+export function resolveKoVoice(id) {
+    return id && isKoVoice(id) ? id : DEFAULT_KO_VOICE;
+}
 export function voiceMeta(id) {
     return ALL.get(id);
 }
 /** Pick Azure voice + xml:lang for a speak request. */
-export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, preferredWuu, preferredSichuan, preferredTl, preferredEs, override, preferredVi, preferredEses, preferredTh, preferredLo) {
+export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, preferredWuu, preferredSichuan, preferredTl, preferredEs, override, preferredVi, preferredEses, preferredTh, preferredLo, preferredKo) {
     const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU';
     const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans';
     const isWuu = lang === 'wuu' || lang === 'wuu-CN';
@@ -351,6 +378,7 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
     const isVi = lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn';
     const isTh = lang === 'th' || lang === 'th-TH' || lang === 'th-th';
     const isLo = lang === 'lo' || lang === 'lo-LA' || lang === 'lo-la';
+    const isKo = lang === 'ko' || lang === 'ko-KR' || lang === 'ko-kr';
     if (override) {
         const meta = voiceMeta(override);
         if (meta) {
@@ -374,6 +402,8 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
                 return { voice: meta.id, xmlLang: meta.xmlLang };
             if (isLo && meta.lang === 'lo')
                 return { voice: meta.id, xmlLang: meta.xmlLang };
+            if (isKo && meta.lang === 'ko')
+                return { voice: meta.id, xmlLang: meta.xmlLang };
             if (!isEn &&
                 !isCmn &&
                 !isWuu &&
@@ -384,6 +414,7 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
                 !isVi &&
                 !isTh &&
                 !isLo &&
+                !isKo &&
                 meta.lang === 'yue') {
                 return { voice: meta.id, xmlLang: meta.xmlLang };
             }
@@ -429,6 +460,10 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
         const id = resolveLoVoice(preferredLo);
         return { voice: id, xmlLang: voiceMeta(id).xmlLang };
     }
+    if (isKo) {
+        const id = resolveKoVoice(preferredKo);
+        return { voice: id, xmlLang: voiceMeta(id).xmlLang };
+    }
     const id = resolveYueVoice(preferredYue);
     return { voice: id, xmlLang: voiceMeta(id).xmlLang };
 }
@@ -443,3 +478,4 @@ export const PREVIEW_ESES = 'Hola, tío — esta es tu voz en español de Españ
 export const PREVIEW_VI = 'Xin chào — đây là giọng tiếng Việt của bạn.';
 export const PREVIEW_TH = 'สวัสดี — นี่คือเสียงไทย';
 export const PREVIEW_LO = 'ສະບາຍດີ — ນີ້ແມ່ນສຽງລາວ';
+export const PREVIEW_KO = '안녕하세요 — 한국어 음성입니다.';

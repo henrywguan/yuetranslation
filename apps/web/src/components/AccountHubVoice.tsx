@@ -11,6 +11,7 @@ import {
   VI_VOICES,
   TH_VOICES,
   LO_VOICES,
+  KO_VOICES,
   WUU_VOICES,
   YUE_VOICES,
   resolveCmnVoice,
@@ -22,6 +23,7 @@ import {
   resolveViVoice,
   resolveThVoice,
   resolveLoVoice,
+  resolveKoVoice,
   resolveWuuVoice,
   resolveYueVoice,
   voiceShortLabel,
@@ -34,6 +36,7 @@ import {
   type ViVoiceId,
   type ThVoiceId,
   type LoVoiceId,
+  type KoVoiceId,
   type WuuVoiceId,
   type YueVoiceId,
 } from '../lib/ttsVoices'
@@ -53,10 +56,11 @@ type Props = {
   viVoice: ViVoiceId
   thVoice: ThVoiceId
   loVoice: LoVoiceId
+  koVoice: KoVoiceId
   wuuVoice: WuuVoiceId
   sichuanVoice: SichuanVoiceId
   voiceBusy: boolean
-  previewBusy: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'wuu' | 'sichuan' | null
+  previewBusy: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'wuu' | 'sichuan' | null
   persistVoices: (next: {
     yue?: YueVoiceId
     en?: EnVoiceId
@@ -67,11 +71,12 @@ type Props = {
     vi?: ViVoiceId
     th?: ThVoiceId
     lo?: LoVoiceId
+    ko?: KoVoiceId
     wuu?: WuuVoiceId
     sichuan?: SichuanVoiceId
   }) => Promise<void>
   onPreview: (
-    kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'wuu' | 'sichuan',
+    kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'wuu' | 'sichuan',
   ) => Promise<void>
 }
 
@@ -88,6 +93,7 @@ export function AccountHubVoice({
   viVoice,
   thVoice,
   loVoice,
+  koVoice,
   wuuVoice,
   sichuanVoice,
   voiceBusy,
@@ -172,6 +178,10 @@ export function AccountHubVoice({
           <span className="account-hub-voice-chip">
             <span className="account-hub-voice-chip-lang">Lo</span>
             <span className="account-hub-voice-chip-name">{voiceShortLabel(loVoice)}</span>
+          </span>
+          <span className="account-hub-voice-chip">
+            <span className="account-hub-voice-chip-lang">Ko</span>
+            <span className="account-hub-voice-chip-name">{voiceShortLabel(koVoice)}</span>
           </span>
           <span className="account-hub-voice-chip">
             <span className="account-hub-voice-chip-lang">沪</span>
@@ -524,6 +534,40 @@ export function AccountHubVoice({
                     className="account-hub-voice-preview"
                     disabled={previewBusy !== null || !ttsOk}
                     onClick={() => void onPreview('lo')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsKo} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={koVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ ko: resolveKoVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsKo)}
+                    >
+                      {KO_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('ko')}
                   >
                     <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
                   </button>

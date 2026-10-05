@@ -83,6 +83,15 @@ export function sanitizeLoTranslation(text: string | null | undefined): string |
   return t
 }
 
+/** Reject EN→Korean payloads that are empty, glossy, Han, or missing Hangul. */
+export function sanitizeKoTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\uAC00-\uD7A3]/.test(t)) return null
+  return t
+}
+
 /** Reject EN→Cebuano / Ilocano / Central Bikol Latin payloads that are empty, glossy, or still Chinese. */
 export function sanitizeCebTranslation(text: string | null | undefined): string | null {
   return sanitizeViTranslation(text)

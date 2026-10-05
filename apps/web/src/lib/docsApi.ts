@@ -15,6 +15,7 @@ export type DocLang =
   | 'vi'
   | 'th'
   | 'lo'
+  | 'ko'
   | 'ceb'
   | 'ilo'
   | 'bcl'

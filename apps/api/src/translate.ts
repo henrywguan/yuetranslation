@@ -19,6 +19,7 @@ import { inferPeninsularSpanishRegister } from './peninsularSpanishRegister.js'
 import { inferVietnameseRegister } from './vietnameseRegister.js'
 import { inferThaiRegister } from './thaiRegister.js'
 import { inferLaoRegister } from './laoRegister.js'
+import { inferKoreanRegister } from './koreanRegister.js'
 import { translateCebuano, translateIlocano, translateBikol } from './translatePhilippineRegional.js'
 
 /** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
@@ -41,7 +42,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ceb', 'ilo', 'bcl'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ceb', 'ilo', 'bcl'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -81,7 +82,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl'
 
 type TranslateResult = {
   text: string
@@ -2673,6 +2674,221 @@ async function translateLao(opts: {
   )
 }
 
+async function translateKorean(opts: {
+  from: TranslateLang
+  to: TranslateLang
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+  fallbackDefinition: string
+}): Promise<TranslateResult> {
+  const { from, to, text, stage, wantAlts, fallbackDefinition } = opts
+
+  const dictHit = dictionaryTranslate({
+    sourceLang: from,
+    targetLang: to,
+    source: text,
+    wantAlternatives: wantAlts,
+  })
+  if (dictHit) {
+    return withLearnerDefinitions(
+      {
+        text: dictHit.text,
+        definition: to === 'ko' ? fallbackDefinition : '',
+        alternatives: wantAlts ? dictHit.alternatives : [],
+        engine: 'dictionary',
+        from,
+        to,
+        stage,
+        meta: {
+          dictionaryHit: true,
+          scrubbed: false,
+          colloquialScore: 8,
+          rewritten: false,
+          notes: [`dict:${dictHit.entry.id}`, 'ko-colloquial'],
+        },
+      },
+      text,
+    )
+  }
+
+  const client = openaiClient()
+  if (!client) {
+    const demoPrimary = to === 'ko' ? `(demo KO) ${text}` : `(demo) ${text}`
+    return withLearnerDefinitions(
+      {
+        text: demoPrimary,
+        definition: to === 'ko' ? fallbackDefinition : '',
+        alternatives: [],
+        engine: 'demo',
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['demo', 'ko-colloquial']),
+      },
+      text,
+    )
+  }
+
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+  const toKo = to === 'ko'
+  const register = toKo ? inferKoreanRegister(text) : 'colloquial'
+  const registerNote = register === 'formal' ? 'ko-formal' : 'ko-colloquial'
+  let primary = text
+  let alternatives: string[] = []
+  let definition = fallbackDefinition
+
+  if (wantAlts && toKo) {
+    const system =
+      register === 'formal'
+        ? [
+            'You are a Seoul Korean interpreter for formal written and spoken situations.',
+            'Translate English into POLITE formal Seoul Korean (complete sentences, respectful particles).',
+            'Avoid slang; keep wording clear and respectful.',
+            'Write ONLY in native Hangul (Hangul syllables). Never Chinese characters, never a Revised Romanization (RR), never invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best formal Korean>","alternatives":["<other polite variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural formal variants. No markdown.',
+          ].join('\n')
+        : [
+            'You are a Seoul Korean interpreter for face-to-face conversation.',
+            'Translate English into COLLOQUIAL spoken Seoul Korean (everyday 해요체 is fine).',
+            'Do NOT use stiff textbook / formal written Korean (합니다체) unless the source is formal.',
+            'Write ONLY in native Hangul (Hangul syllables). Never Chinese characters, never a Revised Romanization (RR), never invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best colloquial Korean>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural spoken variants. No markdown.',
+          ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: register === 'formal' ? 0.3 : 0.4,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedKo = parseYuePayload(raw, text, false)
+    primary = parsedKo.text
+    alternatives = parsedKo.alternatives
+    if (parsedKo.definition) definition = parsedKo.definition
+  } else if (wantAlts && !toKo) {
+    const system = [
+      'You are a Seoul Korean interpreter helping Korean speakers learn English.',
+      'Translate colloquial Korean into natural conversational English.',
+      'Return ONLY valid JSON:',
+      '{"primary":"<best English>","alternatives":["<other natural English phrasing>", "..."],"definition":"<short Korean gloss of what the English means>"}',
+      'Prefer 2–3 natural English variants. No markdown.',
+    ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEn = parseYuePayload(raw, '', false)
+    primary = parsedEn.text
+    alternatives = parsedEn.alternatives.filter((a) => a && !hasHan(a))
+    if (parsedEn.definition) definition = parsedEn.definition
+  } else {
+    const system = toKo
+      ? register === 'formal'
+        ? [
+            'You are a Seoul Korean interpreter for formal situations.',
+            'Translate into POLITE formal Seoul Korean (complete sentences, respectful particles).',
+            'Write ONLY in native Hangul. Never Chinese characters, never a Revised Romanization (RR), never invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<formal Korean>","definition":"<short English gloss>"}',
+          ].join('\n')
+        : [
+            'You are a Seoul Korean interpreter for face-to-face conversation.',
+            'Translate into COLLOQUIAL spoken Seoul Korean (everyday conversational, particles OK).',
+            'Write ONLY in native Hangul. Never Chinese characters, never a Revised Romanization (RR), never invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<colloquial Korean>","definition":"<short English gloss>"}',
+          ].join('\n')
+      : [
+          'You are a Seoul Korean interpreter.',
+          'Translate colloquial Korean into natural English for conversation.',
+          'Return ONLY valid JSON:',
+          '{"translation":"<English>","definition":"<optional short sense note, or empty string>"}',
+        ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: toKo && register === 'formal' ? 0.2 : 0.25,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const payload = parsePayload(raw, toKo ? text : '', fallbackDefinition, false)
+    primary = payload.text
+    definition = toKo ? payload.definition || fallbackDefinition : payload.definition
+  }
+
+  if (toKo) {
+    const hasHangul = /[\uAC00-\uD7A3]/.test(primary)
+    const outText = primary && !hasHan(primary) && hasHangul ? primary.trim() : ''
+    return withLearnerDefinitions(
+      {
+        text: outText,
+        definition,
+        alternatives: wantAlts
+          ? alternatives.filter((a) => a && !hasHan(a) && a !== outText)
+          : [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(outText ? [registerNote] : [registerNote, 'no-ko-output']),
+      },
+      text,
+    )
+  }
+
+  if (looksLikeGlossDump(primary) || hasHan(primary)) {
+    return withLearnerDefinitions(
+      {
+        text: '',
+        definition: '',
+        alternatives: [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['ko-echo-blocked']),
+      },
+      text,
+    )
+  }
+
+  return withLearnerDefinitions(
+    {
+      text: primary,
+      definition,
+      alternatives: wantAlts ? alternatives.filter((a) => a && !hasHan(a) && a !== primary) : [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta([registerNote]),
+    },
+    text,
+  )
+}
+
 export async function translate(input: unknown) {
   const parsed = Body.parse(input)
   const from = parsed.from
@@ -2765,6 +2981,10 @@ export async function translate(input: unknown) {
 
   if (to === 'lo' || (from === 'lo' && to === 'en')) {
     return translateLao({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
+  if (to === 'ko' || (from === 'ko' && to === 'en')) {
+    return translateKorean({ from, to, text, stage, wantAlts, fallbackDefinition })
   }
 
   if (to === 'ceb' || (from === 'ceb' && to === 'en')) {

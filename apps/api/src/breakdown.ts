@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ceb', 'ilo', 'bcl']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ceb', 'ilo', 'bcl']).optional(),
 })
 
 export type BreakdownChar = {
@@ -202,8 +202,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl',
-): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -1081,6 +1081,100 @@ async function loBreakdown(text: string) {
   }
 }
 
+function tokenizeKorean(text: string): string[] {
+  const matches = text.match(/[\uAC00-\uD7A3]+|[0-9]+|[^\s\uAC00-\uD7A30-9]+/g)
+  return (matches || []).filter((t) => t.trim())
+}
+
+function localKoBreakdown(text: string): BreakdownChar[] {
+  return tokenizeKorean(text).map((tok) => {
+    if (/^[^\uAC00-\uD7A30-9]+$/.test(tok)) {
+      return {
+        char: tok,
+        jyutping: null,
+        meaning:
+          tok === '?' || tok === '？'
+            ? 'question mark'
+            : tok === '!' || tok === '！'
+              ? 'exclamation mark'
+              : tok === '.' || tok === '。'
+                ? 'full stop'
+                : tok === ',' || tok === '，'
+                  ? 'comma'
+                  : 'punctuation',
+        glossSource: 'seed',
+      }
+    }
+    return {
+      char: tok,
+      jyutping: null,
+      meaning: '',
+    }
+  })
+}
+
+async function koBreakdown(text: string) {
+  const fallback = localKoBreakdown(text)
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'ko' as const }
+  }
+
+  const client = openaiClientWithKey()
+  const system = [
+    'You explain Korean word-by-word for English-speaking learners.',
+    'Given a Korean phrase, return ONLY valid JSON:',
+    '{"words":[{"word":"<token>","accented":null,"meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every token in order (words and punctuation; skip spaces).',
+    '- accented is always null — the client derives Revised Romanization from Hangul.',
+    '- Do NOT use Chinese characters, RR romanization in the JSON, Chao tone letters, IPA, or invented ASCII tone digits.',
+    '- Meanings must be concise English that fit THIS phrase.',
+    '- For function words / particles, still give a brief gloss.',
+    '- No markdown.',
+  ].join('\n')
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 700,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const merged = parseTlBreakdownPayload(raw, fallback).map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char !== row.char) {
+        const byText = fallback.find((f) => f.char === row.char)
+        return {
+          ...row,
+          meaning: pickMeaning(row.meaning, byText?.meaning),
+          glossSource:
+            row.meaning && !isGenericCharGloss(row.meaning)
+              ? row.glossSource || 'model'
+              : byText?.glossSource,
+        }
+      }
+      return {
+        ...row,
+        jyutping: null,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return { characters: merged, engine: 'openai' as const, lang: 'ko' as const }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'ko' as const }
+  }
+}
+
 async function cmnBreakdown(text: string) {
   // Preserve Mandarin — never scrub into Cantonese. Client supplies pinyin locally;
   // API returns gloss rows with jyutping left null for client merge.
@@ -1307,6 +1401,7 @@ export async function breakdown(input: unknown) {
   if (lang === 'vi') return viBreakdown(text)
   if (lang === 'th') return thBreakdown(text)
   if (lang === 'lo') return loBreakdown(text)
+  if (lang === 'ko') return koBreakdown(text)
   // Soft: Cebuano / Ilocano / Central Bikol — English glosses (not Cantonese englishBreakdown).
   if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') {
     return philippineRegionalBreakdown(text, lang)

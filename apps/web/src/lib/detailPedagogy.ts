@@ -120,6 +120,14 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     localOffline: true,
     extraPanels: [],
   },
+  ko: {
+    htmlLang: 'ko',
+    pronField: 'accented',
+    defaultGlossLang: 'ko',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
   ceb: {
     htmlLang: 'ceb',
     pronField: 'accented',

@@ -8,6 +8,7 @@ import { PeninsularSpanishText } from './PeninsularSpanishText'
 import { VietnameseText } from './VietnameseText'
 import { ThaiText } from './ThaiText'
 import { LaoText } from './LaoText'
+import { KoreanText } from './KoreanText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -123,6 +124,12 @@ export function ResultWithDefinition({
               />
             ) : chineseLang === 'lo' ? (
               <LaoText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'ko' ? (
+              <KoreanText
                 text={trimmed}
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}

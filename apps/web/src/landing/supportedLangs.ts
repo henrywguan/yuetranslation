@@ -23,6 +23,7 @@ export const SUPPORTED_LANG_CARDS: SupportedLangCard[] = [
   { id: 'vi', mark: 'Vi', en: 'Vietnamese', native: 'Tiếng Việt', voice: true, flag: '🇻🇳' },
   { id: 'th', mark: 'Th', en: 'Thai', native: 'ไทย', voice: true, flag: '🇹🇭' },
   { id: 'lo', mark: 'Lo', en: 'Lao', native: 'ລາວ', voice: true, flag: '🇱🇦' },
+  { id: 'ko', mark: 'Ko', en: 'Korean', native: '한국어', voice: true, flag: '🇰🇷' },
   { id: 'ceb', mark: 'Ceb', en: 'Cebuano', native: 'Binisaya', voice: false, flag: '🇵🇭' },
   { id: 'ilo', mark: 'Ilo', en: 'Ilocano', native: 'Ilokano', voice: false, flag: '🇵🇭' },
   { id: 'bcl', mark: 'Bcl', en: 'Bikol (Central)', native: 'Bikol Sentral', voice: false, flag: '🇵🇭' },

@@ -10,6 +10,7 @@ import { MexicanSpanishRegisterPanel } from './MexicanSpanishRegisterPanel'
 import { VietnameseText } from './VietnameseText'
 import { ThaiText } from './ThaiText'
 import { LaoText } from './LaoText'
+import { KoreanText } from './KoreanText'
 import { BiText } from './BiText'
 import type { ConversationTurn, Lang } from '../lib/types'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -25,6 +26,7 @@ function langShort(lang: Lang): string {
   if (lang === 'vi') return 'Vi'
   if (lang === 'th') return 'Th'
   if (lang === 'lo') return 'Lo'
+  if (lang === 'ko') return 'Ko'
   if (lang === 'ceb') return 'Cb'
   if (lang === 'ilo') return 'Il'
   if (lang === 'bcl') return 'Bc'
@@ -138,6 +140,9 @@ function LangLine({
   if (lang === 'lo') {
     return <LaoText text={text} className="history-card-line" onActivate={onBreakdown} />
   }
+  if (lang === 'ko') {
+    return <KoreanText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
   if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') {
     if (onBreakdown) {
       return (
@@ -184,6 +189,7 @@ function langLabel(lang: Lang) {
   if (lang === 'vi') return <BiText copy={ui.dirVietnamese} size="sm" />
   if (lang === 'th') return <BiText copy={ui.dirThai} size="sm" />
   if (lang === 'lo') return <BiText copy={ui.dirLao} size="sm" />
+  if (lang === 'ko') return <BiText copy={ui.dirKorean} size="sm" />
   if (lang === 'ceb') return <BiText copy={ui.dirCebuano} size="sm" />
   if (lang === 'ilo') return <BiText copy={ui.dirIlocano} size="sm" />
   if (lang === 'bcl') return <BiText copy={ui.dirBikol} size="sm" />
@@ -416,6 +422,8 @@ export function HistoryCard({
                       <ThaiText text={alt} className="history-card-line" onActivate={onBreakdown} />
                     ) : turn.to === 'lo' ? (
                       <LaoText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'ko' ? (
+                      <KoreanText text={alt} className="history-card-line" onActivate={onBreakdown} />
                     ) : (
                       alt
                     )}
