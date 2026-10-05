@@ -181,7 +181,7 @@ type State = {
   openBreakdown: (
     phrase: string,
     opts?: {
-      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl'
+      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl'
       translation?: string
       definition?: string
       definitions?: string[]
@@ -411,7 +411,8 @@ function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'eses') return 'eses'
   if (direction === 'vi') return 'vi'
   if (direction === 'th') return 'th'
-  if (direction === 'lo') return 'lo'
+  if (direction === 'lo' || direction === 'ko') return 'lo'
+  if (direction === 'ko') return 'ko'
   return detected
 }
 
@@ -679,7 +680,7 @@ export const useYueStore = create<State>((set, get) => {
       speakDirection === 'eses' ||
       speakDirection === 'vi' ||
       speakDirection === 'th' ||
-      speakDirection === 'lo'
+      speakDirection === 'lo' || speakDirection === 'ko'
         ? { speakDirection, chineseLang: speakDirection }
         : { speakDirection },
     ),
@@ -780,7 +781,7 @@ export const useYueStore = create<State>((set, get) => {
       nextLower = lang
     }
     const chinesePatch =
-      lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'eses' || lang === 'vi' || lang === 'th' || lang === 'lo'
+      lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'eses' || lang === 'vi' || lang === 'th' || lang === 'lo' || lang === 'ko'
         ? { chineseLang: lang }
         : {}
     const nextSpeak = resolveSpeakDirectionForSolo({
@@ -1028,12 +1029,20 @@ export const useYueStore = create<State>((set, get) => {
           writeLocalEsVoice,
           writeLocalEsesVoice,
           writeLocalYueVoice,
+          writeLocalViVoice,
+          writeLocalThVoice,
+          writeLocalLoVoice,
+          writeLocalKoVoice,
           resolveCmnVoice,
           resolveEnVoice,
           resolveTlVoice,
           resolveEsVoice,
           resolveEsesVoice,
           resolveYueVoice,
+          resolveViVoice,
+          resolveThVoice,
+          resolveLoVoice,
+          resolveKoVoice,
         } = await import('./ttsVoices')
         if (ent.prefs?.ttsVoiceYue) writeLocalYueVoice(resolveYueVoice(ent.prefs.ttsVoiceYue))
         if (ent.prefs?.ttsVoiceEn) writeLocalEnVoice(resolveEnVoice(ent.prefs.ttsVoiceEn))
@@ -1041,6 +1050,10 @@ export const useYueStore = create<State>((set, get) => {
         if (ent.prefs?.ttsVoiceTl) writeLocalTlVoice(resolveTlVoice(ent.prefs.ttsVoiceTl))
         if (ent.prefs?.ttsVoiceEs) writeLocalEsVoice(resolveEsVoice(ent.prefs.ttsVoiceEs))
         if (ent.prefs?.ttsVoiceEses) writeLocalEsesVoice(resolveEsesVoice(ent.prefs.ttsVoiceEses))
+        if (ent.prefs?.ttsVoiceVi) writeLocalViVoice(resolveViVoice(ent.prefs.ttsVoiceVi))
+        if (ent.prefs?.ttsVoiceTh) writeLocalThVoice(resolveThVoice(ent.prefs.ttsVoiceTh))
+        if (ent.prefs?.ttsVoiceLo) writeLocalLoVoice(resolveLoVoice(ent.prefs.ttsVoiceLo))
+        if (ent.prefs?.ttsVoiceKo) writeLocalKoVoice(resolveKoVoice(ent.prefs.ttsVoiceKo))
       } catch {
         /* ignore */
       }
@@ -1115,7 +1128,7 @@ export const useYueStore = create<State>((set, get) => {
       direction === 'eses' ||
       direction === 'vi' ||
       direction === 'th' ||
-      direction === 'lo'
+      direction === 'lo' || direction === 'ko'
         ? direction
         : undefined)
     // Yue/En/… stay on Web Speech. tl/wuu/sichuan use Azure fixed locale (never LID).
@@ -1292,7 +1305,7 @@ export const useYueStore = create<State>((set, get) => {
       const d = get().speakDirection
       return (
         lock ||
-        (d === 'en' || d === 'yue' || d === 'cmn' || d === 'wuu' || d === 'sichuan' || d === 'tl' || d === 'es' || d === 'eses' || d === 'vi' || d === 'th' || d === 'lo'
+        (d === 'en' || d === 'yue' || d === 'cmn' || d === 'wuu' || d === 'sichuan' || d === 'tl' || d === 'es' || d === 'eses' || d === 'vi' || d === 'th' || d === 'lo' || d === 'ko'
           ? d
           : undefined)
       )
@@ -1662,7 +1675,7 @@ export const useYueStore = create<State>((set, get) => {
     const nextAltRoms = nextAlts.map((a) => romByPhrase.get(a) || '')
 
     const history = get().history
-    const zhTargets = latest && (latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu' || latest.to === 'sichuan' || latest.to === 'tl' || latest.to === 'es' || latest.to === 'eses' || latest.to === 'vi' || latest.to === 'th' || latest.to === 'lo')
+    const zhTargets = latest && (latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu' || latest.to === 'sichuan' || latest.to === 'tl' || latest.to === 'es' || latest.to === 'eses' || latest.to === 'vi' || latest.to === 'th' || latest.to === 'lo' || latest.to === 'ko')
     const nextHistory =
       zhTargets
         ? [

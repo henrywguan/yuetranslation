@@ -67,6 +67,7 @@ import {
   isViVoice,
   isThVoice,
   isLoVoice,
+  isKoVoice,
   isYueVoice,
 } from './ttsVoices.js'
 import {
@@ -418,6 +419,8 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
                         ? 'th-TH'
                         : lang === 'lo' || lang === 'lo-LA' || lang === 'lo-la'
                           ? 'lo-LA'
+                          : lang === 'ko' || lang === 'ko-KR' || lang === 'ko-kr'
+                            ? 'ko-KR'
                           : 'zh-HK'
     const audio = await synthesize(text, azureLang, {
       voice: voiceOverride,
@@ -432,6 +435,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredVi: ent.prefs?.ttsVoiceVi,
       preferredTh: ent.prefs?.ttsVoiceTh,
       preferredLo: ent.prefs?.ttsVoiceLo,
+      preferredKo: ent.prefs?.ttsVoiceKo,
       loud,
       performance,
     })
@@ -467,6 +471,7 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     tts_voice_vi?: string
     tts_voice_th?: string
     tts_voice_lo?: string
+    tts_voice_ko?: string
   } = {}
   if (body.ttsVoiceYue != null) {
     const v = String(body.ttsVoiceYue).trim()
@@ -540,6 +545,14 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     }
     patch.tts_voice_lo = v
   }
+  if (body.ttsVoiceKo != null) {
+    const v = String(body.ttsVoiceKo).trim()
+    if (!isKoVoice(v)) {
+      res.status(400).json({ message: 'Invalid Korean voice.' })
+      return
+    }
+    patch.tts_voice_ko = v
+  }
   if (!Object.keys(patch).length) {
     res.status(400).json({ message: 'No voice preferences provided.' })
     return
@@ -562,6 +575,7 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
         ttsVoiceVi: patch.tts_voice_vi || ent.prefs.ttsVoiceVi,
         ttsVoiceTh: patch.tts_voice_th || ent.prefs.ttsVoiceTh,
         ttsVoiceLo: patch.tts_voice_lo || ent.prefs.ttsVoiceLo,
+        ttsVoiceKo: patch.tts_voice_ko || ent.prefs.ttsVoiceKo,
         autoSpeak: ent.prefs.autoSpeak,
         primaryLang: ent.prefs.primaryLang,
         username: ent.prefs.username,

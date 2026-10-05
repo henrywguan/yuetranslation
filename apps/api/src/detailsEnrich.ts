@@ -20,6 +20,7 @@ export const DetailLangSchema = z.enum([
   'vi',
   'th',
   'lo',
+  'ko',
   'ceb',
   'ilo',
   'bcl',
@@ -132,6 +133,11 @@ const ENRICH_META: Record<
     label: 'Vientiane Lao (ພາສາລາວ)',
     glossLangHint: 'Vientiane Lao (ພາສາລາວ) — native Lao script only',
     exampleIn: 'natural Vientiane Lao (Lao script)',
+  },
+  ko: {
+    label: 'Korean (한국어)',
+    glossLangHint: 'Korean (한국어) — Hangul only; Revised Romanization is added by the client',
+    exampleIn: 'natural Korean (Hangul)',
   },
   ceb: {
     label: 'Cebuano / Bisaya',

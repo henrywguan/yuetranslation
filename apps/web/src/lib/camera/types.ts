@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl'
 
 export type EditableBox = {
   id: string
@@ -21,7 +21,7 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl'
 
 /** Map API/legacy region langs (`zh`) onto CameraLang. */
 export function normalizeRegionLang(lang: string | undefined): CameraLang {
@@ -38,6 +38,7 @@ export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn') return 'vi'
   if (lang === 'th' || lang === 'th-TH' || lang === 'th-th') return 'th'
   if (lang === 'lo' || lang === 'lo-LA' || lang === 'lo-la') return 'lo'
+  if (lang === 'ko' || lang === 'ko-KR' || lang === 'ko-kr') return 'ko'
   // Legacy `zh` and explicit yue → Cantonese
   return 'yue'
 }
@@ -94,7 +95,7 @@ function isLatinDetailCam(lang: CameraLang): lang is LatinDetailCamLang {
 }
 
 /** Thai / Lao Cam targets: own script (not Latin, not Han) — same detail dispatch shape. */
-const SCRIPT_DETAIL_CAM_LANGS = ['th', 'lo'] as const
+const SCRIPT_DETAIL_CAM_LANGS = ['th', 'lo', 'ko'] as const
 type ScriptDetailCamLang = (typeof SCRIPT_DETAIL_CAM_LANGS)[number]
 
 function isScriptDetailCam(lang: CameraLang): lang is ScriptDetailCamLang {
@@ -171,6 +172,7 @@ export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'vi') return 'vi'
   if (box.to === 'th') return 'th'
   if (box.to === 'lo') return 'lo'
+  if (box.to === 'ko') return 'ko'
   if (box.to === 'ceb') return 'ceb'
   if (box.to === 'ilo') return 'ilo'
   if (box.to === 'bcl') return 'bcl'

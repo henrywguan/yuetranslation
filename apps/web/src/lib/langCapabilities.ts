@@ -16,7 +16,8 @@ export function isVoiceLang(lang: string | null | undefined): lang is VoiceLang 
     lang === 'eses' ||
     lang === 'vi' ||
     lang === 'th' ||
-    lang === 'lo'
+    lang === 'lo' ||
+    lang === 'ko'
   )
 }
 

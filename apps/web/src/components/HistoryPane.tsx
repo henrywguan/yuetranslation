@@ -43,6 +43,8 @@ export function HistoryPane({
                       ? 'th'
                       : turn.to === 'lo' || turn.from === 'lo'
                         ? 'lo'
+                        : turn.to === 'ko' || turn.from === 'ko'
+                          ? 'ko'
                         : 'yue'
     const canto =
       turn.to === 'yue' ||
@@ -54,7 +56,8 @@ export function HistoryPane({
       turn.to === 'eses' ||
       turn.to === 'vi' ||
       turn.to === 'th' ||
-      turn.to === 'lo'
+      turn.to === 'lo' ||
+      turn.to === 'ko'
         ? turn.translation
         : turn.from === 'yue' ||
             turn.from === 'cmn' ||
@@ -65,7 +68,8 @@ export function HistoryPane({
             turn.from === 'eses' ||
             turn.from === 'vi' ||
             turn.from === 'th' ||
-            turn.from === 'lo'
+            turn.from === 'lo' ||
+            turn.from === 'ko'
           ? turn.source
           : phrase
     const english =

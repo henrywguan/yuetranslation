@@ -58,6 +58,7 @@ export type SynthesizeOpts = {
   preferredVi?: string | null
   preferredTh?: string | null
   preferredLo?: string | null
+  preferredKo?: string | null
   /**
    * Azure SSML `volume="x-loud"` — Practice Partner and other “fill the room”
    * surfaces. Cached separately from normal clips.
@@ -124,6 +125,7 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
     opts.preferredEses,
     opts.preferredTh,
     opts.preferredLo,
+    opts.preferredKo,
   )
   const loud = Boolean(opts.loud) || pick.xmlLang === 'fil-PH'
   const performance = opts.performance?.phrase ? opts.performance : null

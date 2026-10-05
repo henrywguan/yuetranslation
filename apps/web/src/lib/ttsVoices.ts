@@ -14,6 +14,7 @@ export {
   DEFAULT_VI_VOICE,
   DEFAULT_TH_VOICE,
   DEFAULT_LO_VOICE,
+  DEFAULT_KO_VOICE,
   YUE_VOICES,
   EN_VOICES,
   CMN_VOICES,
@@ -25,6 +26,7 @@ export {
   VI_VOICES,
   TH_VOICES,
   LO_VOICES,
+  KO_VOICES,
   PREVIEW_YUE,
   PREVIEW_EN,
   PREVIEW_CMN,
@@ -36,6 +38,7 @@ export {
   PREVIEW_VI,
   PREVIEW_TH,
   PREVIEW_LO,
+  PREVIEW_KO,
   resolveYueVoice,
   resolveEnVoice,
   resolveCmnVoice,
@@ -47,6 +50,7 @@ export {
   resolveViVoice,
   resolveThVoice,
   resolveLoVoice,
+  resolveKoVoice,
   isYueVoice,
   isEnVoice,
   isCmnVoice,
@@ -58,6 +62,7 @@ export {
   isViVoice,
   isThVoice,
   isLoVoice,
+  isKoVoice,
   voiceMeta,
   type YueVoiceId,
   type EnVoiceId,
@@ -70,6 +75,7 @@ export {
   type ViVoiceId,
   type ThVoiceId,
   type LoVoiceId,
+  type KoVoiceId,
   type TtsVoiceId,
   type TtsVoiceOption,
 } from '@jyut/shared/ttsVoices'
@@ -82,6 +88,7 @@ import {
   DEFAULT_VI_VOICE,
   DEFAULT_TH_VOICE,
   DEFAULT_LO_VOICE,
+  DEFAULT_KO_VOICE,
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
   DEFAULT_WUU_VOICE,
@@ -93,6 +100,7 @@ import {
   resolveViVoice,
   resolveThVoice,
   resolveLoVoice,
+  resolveKoVoice,
   resolveEnVoice,
   resolveYueVoice,
   resolveWuuVoice,
@@ -105,6 +113,7 @@ import {
   type ViVoiceId,
   type ThVoiceId,
   type LoVoiceId,
+  type KoVoiceId,
   type EnVoiceId,
   type YueVoiceId,
   type WuuVoiceId,
@@ -122,6 +131,7 @@ const STORAGE_ESES = 'yue-tts-voice-eses'
 const STORAGE_VI = 'yue-tts-voice-vi'
 const STORAGE_TH = 'yue-tts-voice-th'
 const STORAGE_LO = 'yue-tts-voice-lo'
+const STORAGE_KO = 'yue-tts-voice-ko'
 
 export function readLocalYueVoice(): YueVoiceId {
   if (typeof window === 'undefined') return DEFAULT_YUE_VOICE
@@ -274,6 +284,23 @@ export function readLocalLoVoice(): LoVoiceId {
 export function writeLocalLoVoice(id: LoVoiceId) {
   try {
     localStorage.setItem(STORAGE_LO, resolveLoVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalKoVoice(): KoVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_KO_VOICE
+  try {
+    return resolveKoVoice(localStorage.getItem(STORAGE_KO))
+  } catch {
+    return DEFAULT_KO_VOICE
+  }
+}
+
+export function writeLocalKoVoice(id: KoVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_KO, resolveKoVoice(id))
   } catch {
     /* ignore */
   }

@@ -8,6 +8,7 @@ import { PeninsularSpanishText } from './PeninsularSpanishText'
 import { VietnameseText } from './VietnameseText'
 import { ThaiText } from './ThaiText'
 import { LaoText } from './LaoText'
+import { KoreanText } from './KoreanText'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
 import { BiText } from './BiText'
@@ -110,6 +111,12 @@ export function TranslationAlternatives({
                 />
               ) : lang === 'lo' ? (
                 <LaoText
+                  text={alt}
+                  onActivate={onSelect}
+                  activateLabel={`Use variation ${alt} and open details`}
+                />
+              ) : lang === 'ko' ? (
+                <KoreanText
                   text={alt}
                   onActivate={onSelect}
                   activateLabel={`Use variation ${alt} and open details`}

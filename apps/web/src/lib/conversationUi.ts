@@ -150,6 +150,18 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     friendLooksHere: 'ເພື່ອນມອງທາງນີ້',
     holdFacingYou: 'ຫັນໂທລະສັບເຂົ້າຫາຕົວເອງ',
   },
+  ko: {
+    htmlLang: 'ko-KR',
+    mic: {
+      holdOrTapToSpeak: '누르거나 길게 눌러 말하기',
+      releaseWhenDone: '듣는 중 — 끝나면 손을 떼세요',
+      tapListening: '듣는 중 — 멈추거나 다시 누르세요',
+      speaking: '말하는 중…',
+      translating: '번역 중',
+    },
+    friendLooksHere: '친구는 이쪽을 보세요',
+    holdFacingYou: '화면이 자신을 향하게 드세요',
+  },
 }
 
 

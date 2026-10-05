@@ -34,6 +34,7 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'vi') return 'Nhập tiếng Việt…'
   if (lang === 'th') return 'พิมพ์หรือพูดภาษาไทย'
   if (lang === 'lo') return 'ພິມ ຫຼື ເວົ້າພາສາລາວ'
+  if (lang === 'ko') return '한국어로 입력하거나 말하기'
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
   if (lang === 'bcl') return 'I-type nin Bikol…'
@@ -53,6 +54,7 @@ function isRubyDisplayLang(lang: Lang): boolean {
     lang === 'vi' ||
     lang === 'th' ||
     lang === 'lo' ||
+    lang === 'ko' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'
@@ -77,6 +79,7 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'vi') return 'Speak Vietnamese with the mic'
   if (lang === 'th') return 'Speak Thai with the mic'
   if (lang === 'lo') return 'Speak Lao with the mic'
+  if (lang === 'ko') return 'Speak Korean with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
   if (lang === 'sichuan') return 'Speak Sichuanese with the mic'

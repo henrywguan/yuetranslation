@@ -22,7 +22,8 @@ function isLang(v: unknown): v is Lang {
     v === 'eses' ||
     v === 'vi' ||
     v === 'th' ||
-    v === 'lo'
+    v === 'lo' ||
+    v === 'ko'
   )
 }
 

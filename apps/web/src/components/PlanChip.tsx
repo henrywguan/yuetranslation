@@ -42,6 +42,7 @@ import {
   PREVIEW_VI,
   PREVIEW_TH,
   PREVIEW_LO,
+  PREVIEW_KO,
   PREVIEW_WUU,
   PREVIEW_SICHUAN,
   PREVIEW_YUE,
@@ -53,6 +54,7 @@ import {
   readLocalViVoice,
   readLocalThVoice,
   readLocalLoVoice,
+  readLocalKoVoice,
   readLocalWuuVoice,
   readLocalSichuanVoice,
   readLocalYueVoice,
@@ -64,6 +66,7 @@ import {
   resolveViVoice,
   resolveThVoice,
   resolveLoVoice,
+  resolveKoVoice,
   resolveYueVoice,
   writeLocalCmnVoice,
   writeLocalEnVoice,
@@ -73,6 +76,7 @@ import {
   writeLocalViVoice,
   writeLocalThVoice,
   writeLocalLoVoice,
+  writeLocalKoVoice,
   writeLocalWuuVoice,
   writeLocalSichuanVoice,
   writeLocalYueVoice,
@@ -84,6 +88,7 @@ import {
   type ViVoiceId,
   type ThVoiceId,
   type LoVoiceId,
+  type KoVoiceId,
   type WuuVoiceId,
   type SichuanVoiceId,
   type YueVoiceId,
@@ -132,11 +137,12 @@ export function PlanChip() {
   const [viVoice, setViVoice] = useState<ViVoiceId>(() => readLocalViVoice())
   const [thVoice, setThVoice] = useState<ThVoiceId>(() => readLocalThVoice())
   const [loVoice, setLoVoice] = useState<LoVoiceId>(() => readLocalLoVoice())
+  const [koVoice, setKoVoice] = useState<KoVoiceId>(() => readLocalKoVoice())
   const [wuuVoice, setWuuVoice] = useState<WuuVoiceId>(() => readLocalWuuVoice())
   const [sichuanVoice, setSichuanVoice] = useState<SichuanVoiceId>(() => readLocalSichuanVoice())
   const [voiceBusy, setVoiceBusy] = useState(false)
   const [previewBusy, setPreviewBusy] = useState<
-    'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'wuu' | 'sichuan' | null
+    'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'wuu' | 'sichuan' | null
   >(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteBusy, setInviteBusy] = useState(false)
@@ -211,6 +217,11 @@ export function PlanChip() {
       setLoVoice(v)
       writeLocalLoVoice(v)
     }
+    if (prefs?.ttsVoiceKo) {
+      const v = resolveKoVoice(prefs.ttsVoiceKo)
+      setKoVoice(v)
+      writeLocalKoVoice(v)
+    }
     if (prefs?.username) {
       setUsername(prefs.username)
       setUsernameDraft(prefs.username)
@@ -227,6 +238,7 @@ export function PlanChip() {
     entitlement?.prefs?.ttsVoiceVi,
     entitlement?.prefs?.ttsVoiceTh,
     entitlement?.prefs?.ttsVoiceLo,
+    entitlement?.prefs?.ttsVoiceKo,
     entitlement?.prefs?.username,
     entitlement?.loggedIn,
   ])
@@ -361,6 +373,7 @@ export function PlanChip() {
     vi?: ViVoiceId
     th?: ThVoiceId
     lo?: LoVoiceId
+    ko?: KoVoiceId
     wuu?: WuuVoiceId
     sichuan?: SichuanVoiceId
   }) => {
@@ -373,6 +386,7 @@ export function PlanChip() {
     const vi = next.vi ?? viVoice
     const th = next.th ?? thVoice
     const lo = next.lo ?? loVoice
+    const ko = next.ko ?? koVoice
     const wuu = next.wuu ?? wuuVoice
     const sichuan = next.sichuan ?? sichuanVoice
     writeLocalYueVoice(yue)
@@ -384,6 +398,7 @@ export function PlanChip() {
     writeLocalViVoice(vi)
     writeLocalThVoice(th)
     writeLocalLoVoice(lo)
+    writeLocalKoVoice(ko)
     writeLocalWuuVoice(wuu)
     writeLocalSichuanVoice(sichuan)
     setYueVoice(yue)
@@ -395,6 +410,7 @@ export function PlanChip() {
     setViVoice(vi)
     setThVoice(th)
     setLoVoice(lo)
+    setKoVoice(ko)
     setWuuVoice(wuu)
     setSichuanVoice(sichuan)
     if (!entitlement.loggedIn) return
@@ -410,6 +426,7 @@ export function PlanChip() {
         ttsVoiceVi: vi,
         ttsVoiceTh: th,
         ttsVoiceLo: lo,
+        ttsVoiceKo: ko,
       })
       if (data.entitlement) {
         useYueStore.setState({ entitlement: data.entitlement })
@@ -430,7 +447,7 @@ export function PlanChip() {
   }
 
   const onPreview = async (
-    kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'wuu' | 'sichuan',
+    kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'wuu' | 'sichuan',
   ) => {
     unlockTtsPlayback()
     setPreviewBusy(kind)
@@ -444,6 +461,7 @@ export function PlanChip() {
       else if (kind === 'vi') await speakText(PREVIEW_VI, 'vi', viVoice)
       else if (kind === 'th') await speakText(PREVIEW_TH, 'th', thVoice)
       else if (kind === 'lo') await speakText(PREVIEW_LO, 'lo', loVoice)
+      else if (kind === 'ko') await speakText(PREVIEW_KO, 'ko', koVoice)
       else if (kind === 'sichuan') await speakText(PREVIEW_SICHUAN, 'sichuan', sichuanVoice)
       else await speakText(PREVIEW_WUU, 'wuu', wuuVoice)
     } catch (err) {
@@ -501,6 +519,7 @@ export function PlanChip() {
               ttsVoiceVi: entitlement.prefs?.ttsVoiceVi || viVoice,
               ttsVoiceTh: entitlement.prefs?.ttsVoiceTh || thVoice,
               ttsVoiceLo: entitlement.prefs?.ttsVoiceLo || loVoice,
+              ttsVoiceKo: entitlement.prefs?.ttsVoiceKo || koVoice,
               ...data.prefs,
             },
           },
@@ -866,6 +885,7 @@ export function PlanChip() {
           viVoice={viVoice}
           thVoice={thVoice}
           loVoice={loVoice}
+          koVoice={koVoice}
           wuuVoice={wuuVoice}
           sichuanVoice={sichuanVoice}
           voiceBusy={voiceBusy}

@@ -7746,6 +7746,294 @@
         "greeting",
         "lao"
       ]
+    },
+    {
+      "id": "en-hello-ko",
+      "sourceLang": "en",
+      "targetLang": "ko",
+      "source": "hello",
+      "text": "안녕하세요",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "korean"
+      ]
+    },
+    {
+      "id": "ko-안녕하세요-en",
+      "sourceLang": "ko",
+      "targetLang": "en",
+      "source": "안녕하세요",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "korean"
+      ]
+    },
+    {
+      "id": "en-thank-you-ko",
+      "sourceLang": "en",
+      "targetLang": "ko",
+      "source": "thank you",
+      "text": "감사합니다",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "korean"
+      ]
+    },
+    {
+      "id": "ko-감사합니다-en",
+      "sourceLang": "ko",
+      "targetLang": "en",
+      "source": "감사합니다",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "korean"
+      ]
+    },
+    {
+      "id": "en-sorry-ko",
+      "sourceLang": "en",
+      "targetLang": "ko",
+      "source": "sorry",
+      "text": "미안해요",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "korean"
+      ]
+    },
+    {
+      "id": "ko-미안해요-en",
+      "sourceLang": "ko",
+      "targetLang": "en",
+      "source": "미안해요",
+      "text": "Sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "korean"
+      ]
+    },
+    {
+      "id": "en-water-ko",
+      "sourceLang": "en",
+      "targetLang": "ko",
+      "source": "water",
+      "text": "물",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "korean"
+      ]
+    },
+    {
+      "id": "ko-물-en",
+      "sourceLang": "ko",
+      "targetLang": "en",
+      "source": "물",
+      "text": "Water",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "korean"
+      ]
+    },
+    {
+      "id": "en-i-love-you-ko",
+      "sourceLang": "en",
+      "targetLang": "ko",
+      "source": "I love you",
+      "text": "사랑해요",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "korean"
+      ]
+    },
+    {
+      "id": "ko-사랑해요-en",
+      "sourceLang": "ko",
+      "targetLang": "en",
+      "source": "사랑해요",
+      "text": "I love you",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "korean"
+      ]
+    },
+    {
+      "id": "en-where-is-it-ko",
+      "sourceLang": "en",
+      "targetLang": "ko",
+      "source": "where is it",
+      "text": "어디예요?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "korean"
+      ]
+    },
+    {
+      "id": "ko-어디예요-en",
+      "sourceLang": "ko",
+      "targetLang": "en",
+      "source": "어디예요?",
+      "text": "Where is it",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "korean"
+      ]
+    },
+    {
+      "id": "en-how-much-ko",
+      "sourceLang": "en",
+      "targetLang": "ko",
+      "source": "how much",
+      "text": "얼마예요?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "korean"
+      ]
+    },
+    {
+      "id": "ko-얼마예요-en",
+      "sourceLang": "ko",
+      "targetLang": "en",
+      "source": "얼마예요?",
+      "text": "How much",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "korean"
+      ]
+    },
+    {
+      "id": "en-delicious-ko",
+      "sourceLang": "en",
+      "targetLang": "ko",
+      "source": "delicious",
+      "text": "맛있어요",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "korean"
+      ]
+    },
+    {
+      "id": "ko-맛있어요-en",
+      "sourceLang": "ko",
+      "targetLang": "en",
+      "source": "맛있어요",
+      "text": "Delicious",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "korean"
+      ]
+    },
+    {
+      "id": "en-friend-ko",
+      "sourceLang": "en",
+      "targetLang": "ko",
+      "source": "friend",
+      "text": "친구",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "korean"
+      ]
+    },
+    {
+      "id": "ko-친구-en",
+      "sourceLang": "ko",
+      "targetLang": "en",
+      "source": "친구",
+      "text": "Friend",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "korean"
+      ]
+    },
+    {
+      "id": "en-goodbye-ko",
+      "sourceLang": "en",
+      "targetLang": "ko",
+      "source": "goodbye",
+      "text": "안녕히 가세요",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "korean"
+      ]
+    },
+    {
+      "id": "ko-안녕히가세요-en",
+      "sourceLang": "ko",
+      "targetLang": "en",
+      "source": "안녕히 가세요",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "korean"
+      ]
+    },
+    {
+      "id": "en-yes-ko",
+      "sourceLang": "en",
+      "targetLang": "ko",
+      "source": "yes",
+      "text": "네",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "korean"
+      ]
+    },
+    {
+      "id": "ko-네-en",
+      "sourceLang": "ko",
+      "targetLang": "en",
+      "source": "네",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "korean"
+      ]
+    },
+    {
+      "id": "en-no-ko",
+      "sourceLang": "en",
+      "targetLang": "ko",
+      "source": "no",
+      "text": "아니요",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "korean"
+      ]
+    },
+    {
+      "id": "ko-아니요-en",
+      "sourceLang": "ko",
+      "targetLang": "en",
+      "source": "아니요",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "korean"
+      ]
     }
   ]
 }

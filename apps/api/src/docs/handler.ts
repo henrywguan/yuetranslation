@@ -25,6 +25,7 @@ const Lang = z.enum([
   'vi',
   'th',
   'lo',
+  'ko',
   'ceb',
   'ilo',
   'bcl',

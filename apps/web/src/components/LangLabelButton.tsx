@@ -21,6 +21,7 @@ const OPTIONS: LangOption[] = [
   { id: 'vi', copy: ui.dirVietnamese, mark: 'Vi' },
   { id: 'th', copy: ui.dirThai, mark: 'Th' },
   { id: 'lo', copy: ui.dirLao, mark: 'Lo' },
+  { id: 'ko', copy: ui.dirKorean, mark: 'Ko' },
   { id: 'ceb', copy: ui.dirCebuano, mark: 'Cb' },
   { id: 'ilo', copy: ui.dirIlocano, mark: 'Il' },
   { id: 'bcl', copy: ui.dirBikol, mark: 'Bc' },
