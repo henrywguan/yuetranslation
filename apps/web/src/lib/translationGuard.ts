@@ -104,3 +104,40 @@ export function sanitizeIloTranslation(text: string | null | undefined): string 
 export function sanitizeBclTranslation(text: string | null | undefined): string | null {
   return sanitizeViTranslation(text)
 }
+
+/** Scaffold VoiceLang sanitizers — reject empty/glossy; script checks are light until polish. */
+export function sanitizeJaTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  // Japanese may include kanji (Han) — allow kana/kanji/Latin.
+  if (!/[\u3040-\u30FF\u3400-\u9FFF\uFF66-\uFF9D]/.test(t) && !/[\p{L}]/u.test(t)) return null
+  return t
+}
+
+export function sanitizeHiTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\u0900-\u097F]/.test(t)) return null
+  return t
+}
+
+export function sanitizeKmTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\u1780-\u17FF]/.test(t)) return null
+  return t
+}
+
+export function sanitizeMyTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\u1000-\u109F]/.test(t)) return null
+  return t
+}
+
+export function sanitizeScaffoldLatinTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}

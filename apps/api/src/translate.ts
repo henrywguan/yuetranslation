@@ -1,3 +1,4 @@
+import { isScaffoldLang, translateScaffoldLang, type ScaffoldLang } from './translateScaffold.js'
 import { z } from 'zod'
 import { env, llmChatExtras } from './env.js'
 import { openaiClient } from './openaiClient.js'
@@ -42,7 +43,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ceb', 'ilo', 'bcl'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ceb', 'ilo', 'bcl'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -82,7 +83,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl'
 
 type TranslateResult = {
   text: string
@@ -2985,6 +2986,10 @@ export async function translate(input: unknown) {
 
   if (to === 'ko' || (from === 'ko' && to === 'en')) {
     return translateKorean({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
+  if (isScaffoldLang(to) || (isScaffoldLang(from) && to === 'en')) {
+    return translateScaffoldLang({ from: from as ScaffoldLang | 'en', to: to as ScaffoldLang | 'en', text, stage, wantAlts, fallbackDefinition })
   }
 
   if (to === 'ceb' || (from === 'ceb' && to === 'en')) {

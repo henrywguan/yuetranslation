@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ceb', 'ilo', 'bcl']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ceb', 'ilo', 'bcl']).optional(),
 })
 
 export type BreakdownChar = {
@@ -202,8 +202,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl',
-): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }

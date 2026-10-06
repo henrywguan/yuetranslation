@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl'
 
 export type EditableBox = {
   id: string
@@ -21,7 +21,7 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl'
 
 /** Map API/legacy region langs (`zh`) onto CameraLang. */
 export function normalizeRegionLang(lang: string | undefined): CameraLang {
@@ -87,15 +87,31 @@ function isChineseCam(lang: CameraLang): boolean {
 }
 
 /** Latin non-Chinese Cam targets: translation is the Details subject; English is the hint. */
-const LATIN_DETAIL_CAM_LANGS = ['tl', 'es', 'eses', 'vi', 'ceb', 'ilo', 'bcl'] as const
+const LATIN_DETAIL_CAM_LANGS = [
+  'tl',
+  'es',
+  'eses',
+  'vi',
+  'id',
+  'ms',
+  'pt',
+  'fr',
+  'jv',
+  'it',
+  'de',
+  'nl',
+  'ceb',
+  'ilo',
+  'bcl',
+] as const
 type LatinDetailCamLang = (typeof LATIN_DETAIL_CAM_LANGS)[number]
 
 function isLatinDetailCam(lang: CameraLang): lang is LatinDetailCamLang {
   return (LATIN_DETAIL_CAM_LANGS as readonly string[]).includes(lang)
 }
 
-/** Thai / Lao Cam targets: own script (not Latin, not Han) — same detail dispatch shape. */
-const SCRIPT_DETAIL_CAM_LANGS = ['th', 'lo', 'ko'] as const
+/** Own-script Cam targets (not Latin, not Han primary) — same detail dispatch shape. */
+const SCRIPT_DETAIL_CAM_LANGS = ['th', 'lo', 'ko', 'ja', 'hi', 'km', 'my'] as const
 type ScriptDetailCamLang = (typeof SCRIPT_DETAIL_CAM_LANGS)[number]
 
 function isScriptDetailCam(lang: CameraLang): lang is ScriptDetailCamLang {
@@ -173,6 +189,18 @@ export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'th') return 'th'
   if (box.to === 'lo') return 'lo'
   if (box.to === 'ko') return 'ko'
+  if (box.to === 'ja') return 'ja'
+  if (box.to === 'id') return 'id'
+  if (box.to === 'ms') return 'ms'
+  if (box.to === 'pt') return 'pt'
+  if (box.to === 'fr') return 'fr'
+  if (box.to === 'hi') return 'hi'
+  if (box.to === 'km') return 'km'
+  if (box.to === 'my') return 'my'
+  if (box.to === 'jv') return 'jv'
+  if (box.to === 'it') return 'it'
+  if (box.to === 'de') return 'de'
+  if (box.to === 'nl') return 'nl'
   if (box.to === 'ceb') return 'ceb'
   if (box.to === 'ilo') return 'ilo'
   if (box.to === 'bcl') return 'bcl'

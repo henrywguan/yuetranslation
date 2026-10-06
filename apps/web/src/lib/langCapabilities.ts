@@ -17,7 +17,19 @@ export function isVoiceLang(lang: string | null | undefined): lang is VoiceLang 
     lang === 'vi' ||
     lang === 'th' ||
     lang === 'lo' ||
-    lang === 'ko'
+    lang === 'ko' ||
+    lang === 'ja' ||
+    lang === 'id' ||
+    lang === 'ms' ||
+    lang === 'pt' ||
+    lang === 'fr' ||
+    lang === 'hi' ||
+    lang === 'km' ||
+    lang === 'my' ||
+    lang === 'jv' ||
+    lang === 'it' ||
+    lang === 'de' ||
+    lang === 'nl'
   )
 }
 

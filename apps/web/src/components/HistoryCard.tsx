@@ -11,6 +11,18 @@ import { VietnameseText } from './VietnameseText'
 import { ThaiText } from './ThaiText'
 import { LaoText } from './LaoText'
 import { KoreanText } from './KoreanText'
+import { JaText } from './JaText'
+import { IdText } from './IdText'
+import { MsText } from './MsText'
+import { PtText } from './PtText'
+import { FrText } from './FrText'
+import { HiText } from './HiText'
+import { KmText } from './KmText'
+import { MyText } from './MyText'
+import { JvText } from './JvText'
+import { ItText } from './ItText'
+import { DeText } from './DeText'
+import { NlText } from './NlText'
 import { BiText } from './BiText'
 import type { ConversationTurn, Lang } from '../lib/types'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -27,6 +39,18 @@ function langShort(lang: Lang): string {
   if (lang === 'th') return 'Th'
   if (lang === 'lo') return 'Lo'
   if (lang === 'ko') return 'Ko'
+  if (lang === 'ja') return 'Ja'
+  if (lang === 'id') return 'Id'
+  if (lang === 'ms') return 'Ms'
+  if (lang === 'pt') return 'Pt'
+  if (lang === 'fr') return 'Fr'
+  if (lang === 'hi') return 'Hi'
+  if (lang === 'km') return 'Km'
+  if (lang === 'my') return 'My'
+  if (lang === 'jv') return 'Jv'
+  if (lang === 'it') return 'It'
+  if (lang === 'de') return 'De'
+  if (lang === 'nl') return 'Nl'
   if (lang === 'ceb') return 'Cb'
   if (lang === 'ilo') return 'Il'
   if (lang === 'bcl') return 'Bc'
@@ -143,6 +167,42 @@ function LangLine({
   if (lang === 'ko') {
     return <KoreanText text={text} className="history-card-line" onActivate={onBreakdown} />
   }
+  if (lang === 'ja') {
+    return <JaText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'id') {
+    return <IdText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'ms') {
+    return <MsText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'pt') {
+    return <PtText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'fr') {
+    return <FrText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'hi') {
+    return <HiText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'km') {
+    return <KmText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'my') {
+    return <MyText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'jv') {
+    return <JvText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'it') {
+    return <ItText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'de') {
+    return <DeText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'nl') {
+    return <NlText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
   if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') {
     if (onBreakdown) {
       return (
@@ -190,6 +250,18 @@ function langLabel(lang: Lang) {
   if (lang === 'th') return <BiText copy={ui.dirThai} size="sm" />
   if (lang === 'lo') return <BiText copy={ui.dirLao} size="sm" />
   if (lang === 'ko') return <BiText copy={ui.dirKorean} size="sm" />
+  if (lang === 'ja') return <BiText copy={ui.dirJapanese} size="sm" />
+  if (lang === 'id') return <BiText copy={ui.dirIndonesian} size="sm" />
+  if (lang === 'ms') return <BiText copy={ui.dirMalay} size="sm" />
+  if (lang === 'pt') return <BiText copy={ui.dirPortuguese} size="sm" />
+  if (lang === 'fr') return <BiText copy={ui.dirFrench} size="sm" />
+  if (lang === 'hi') return <BiText copy={ui.dirHindi} size="sm" />
+  if (lang === 'km') return <BiText copy={ui.dirKhmer} size="sm" />
+  if (lang === 'my') return <BiText copy={ui.dirBurmese} size="sm" />
+  if (lang === 'jv') return <BiText copy={ui.dirJavanese} size="sm" />
+  if (lang === 'it') return <BiText copy={ui.dirItalian} size="sm" />
+  if (lang === 'de') return <BiText copy={ui.dirGerman} size="sm" />
+  if (lang === 'nl') return <BiText copy={ui.dirDutch} size="sm" />
   if (lang === 'ceb') return <BiText copy={ui.dirCebuano} size="sm" />
   if (lang === 'ilo') return <BiText copy={ui.dirIlocano} size="sm" />
   if (lang === 'bcl') return <BiText copy={ui.dirBikol} size="sm" />
@@ -424,6 +496,30 @@ export function HistoryCard({
                       <LaoText text={alt} className="history-card-line" onActivate={onBreakdown} />
                     ) : turn.to === 'ko' ? (
                       <KoreanText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'ja' ? (
+                      <JaText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'id' ? (
+                      <IdText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'ms' ? (
+                      <MsText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'pt' ? (
+                      <PtText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'fr' ? (
+                      <FrText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'hi' ? (
+                      <HiText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'km' ? (
+                      <KmText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'my' ? (
+                      <MyText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'jv' ? (
+                      <JvText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'it' ? (
+                      <ItText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'de' ? (
+                      <DeText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'nl' ? (
+                      <NlText text={alt} className="history-card-line" onActivate={onBreakdown} />
                     ) : (
                       alt
                     )}

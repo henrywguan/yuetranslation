@@ -26,7 +26,7 @@ const Body = z.object({
   boxes: z.array(BoxSchema).max(64).optional(),
   /** Preferred output language. Auto flips per-region from script when omitted. */
   target: z
-    .enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ceb', 'ilo', 'bcl'])
+    .enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ceb', 'ilo', 'bcl'])
     .optional(),
   /** When true, skip translation and only return OCR regions. */
   ocrOnly: z.boolean().optional().default(false),
@@ -98,6 +98,42 @@ function pickTarget(
   }
   if (preferred === 'ko') {
     return looksChinese ? { from: 'yue', to: 'ko' } : { from: 'en', to: 'ko' }
+  }
+  if (preferred === 'ja') {
+    return looksChinese ? { from: 'yue', to: 'ja' } : { from: 'en', to: 'ja' }
+  }
+  if (preferred === 'id') {
+    return looksChinese ? { from: 'yue', to: 'id' } : { from: 'en', to: 'id' }
+  }
+  if (preferred === 'ms') {
+    return looksChinese ? { from: 'yue', to: 'ms' } : { from: 'en', to: 'ms' }
+  }
+  if (preferred === 'pt') {
+    return looksChinese ? { from: 'yue', to: 'pt' } : { from: 'en', to: 'pt' }
+  }
+  if (preferred === 'fr') {
+    return looksChinese ? { from: 'yue', to: 'fr' } : { from: 'en', to: 'fr' }
+  }
+  if (preferred === 'hi') {
+    return looksChinese ? { from: 'yue', to: 'hi' } : { from: 'en', to: 'hi' }
+  }
+  if (preferred === 'km') {
+    return looksChinese ? { from: 'yue', to: 'km' } : { from: 'en', to: 'km' }
+  }
+  if (preferred === 'my') {
+    return looksChinese ? { from: 'yue', to: 'my' } : { from: 'en', to: 'my' }
+  }
+  if (preferred === 'jv') {
+    return looksChinese ? { from: 'yue', to: 'jv' } : { from: 'en', to: 'jv' }
+  }
+  if (preferred === 'it') {
+    return looksChinese ? { from: 'yue', to: 'it' } : { from: 'en', to: 'it' }
+  }
+  if (preferred === 'de') {
+    return looksChinese ? { from: 'yue', to: 'de' } : { from: 'en', to: 'de' }
+  }
+  if (preferred === 'nl') {
+    return looksChinese ? { from: 'yue', to: 'nl' } : { from: 'en', to: 'nl' }
   }
   if (preferred === 'ceb') {
     return looksChinese ? { from: 'yue', to: 'ceb' } : { from: 'en', to: 'ceb' }
