@@ -8034,6 +8034,495 @@
         "basic",
         "korean"
       ]
+    },
+    {
+      "id": "en-hello-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "hello",
+      "text": "Olá",
+      "alternatives": [
+        "Oi",
+        "E aí"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-thank-you-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "thank you",
+      "text": "Obrigado",
+      "alternatives": [
+        "Valeu",
+        "Obrigada"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-thank-you-so-much-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "thank you so much",
+      "text": "Muito obrigado",
+      "alternatives": [
+        "Muito obrigada"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-im-sorry-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "i'm sorry",
+      "text": "Desculpa",
+      "alternatives": [
+        "Desculpe",
+        "Foi mal"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-yes-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "yes",
+      "text": "Sim",
+      "alternatives": [
+        "É",
+        "Pode crer"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-no-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "no",
+      "text": "Não",
+      "alternatives": [
+        "Nem"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-please-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "please",
+      "text": "Por favor",
+      "alternatives": [
+        "Porfa"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-excuse-me-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "excuse me",
+      "text": "Com licença",
+      "alternatives": [
+        "Desculpa",
+        "Perdão"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-how-much-is-this-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "how much is this",
+      "text": "Quanto custa isso",
+      "alternatives": [
+        "Quanto é?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "where is the bathroom",
+      "text": "Onde fica o banheiro",
+      "alternatives": [
+        "Cadê o banheiro?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-i-dont-speak-portuguese-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "i don't speak portuguese",
+      "text": "Eu não falo português",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-do-you-speak-english-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "do you speak english",
+      "text": "Você fala inglês",
+      "alternatives": [
+        "Fala inglês?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-whats-up-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "what's up",
+      "text": "E aí",
+      "alternatives": [
+        "Beleza?",
+        "Tudo bem?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-lets-go-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "let's go",
+      "text": "Vamos",
+      "alternatives": [
+        "Bora",
+        "Partiu"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-the-check-please-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "the check please",
+      "text": "A conta, por favor",
+      "alternatives": [
+        "Pode trazer a conta?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-see-you-later-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "see you later",
+      "text": "Até mais",
+      "alternatives": [
+        "Tchau",
+        "Até logo"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-ola-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "olá",
+      "text": "Hello",
+      "alternatives": [
+        "Hi"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-oi-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "oi",
+      "text": "Hi",
+      "alternatives": [
+        "Hello"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-obrigado-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "obrigado",
+      "text": "Thank you",
+      "alternatives": [
+        "Thanks"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-obrigada-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "obrigada",
+      "text": "Thank you",
+      "alternatives": [
+        "Thanks"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-valeu-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "valeu",
+      "text": "Thanks",
+      "alternatives": [
+        "Thank you",
+        "Cheers"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-desculpa-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "desculpa",
+      "text": "I'm sorry",
+      "alternatives": [
+        "Excuse me",
+        "Sorry"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-sim-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "sim",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-nao-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "não",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-por-favor-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "por favor",
+      "text": "Please",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-com-licenca-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "com licença",
+      "text": "Excuse me",
+      "alternatives": [
+        "Pardon me"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-quanto-custa-isso-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "quanto custa isso",
+      "text": "How much is this",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-onde-fica-o-banheiro-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "onde fica o banheiro",
+      "text": "Where is the bathroom",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-e-ai-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "e aí",
+      "text": "What's up",
+      "alternatives": [
+        "Hey"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-beleza-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "beleza",
+      "text": "Cool",
+      "alternatives": [
+        "Alright",
+        "Sounds good"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "slang",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-bora-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "bora",
+      "text": "Let's go",
+      "alternatives": [
+        "Come on"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-a-conta-por-favor-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "a conta, por favor",
+      "text": "The check please",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-ate-mais-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "até mais",
+      "text": "See you later",
+      "alternatives": [
+        "Bye"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
     }
   ]
 }

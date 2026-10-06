@@ -167,9 +167,10 @@ const ENRICH_META: Record<
     exampleIn: 'natural Malay',
   },
   pt: {
-    label: 'Portuguese (BR)',
-    glossLangHint: 'Portuguese (BR)',
-    exampleIn: 'natural Portuguese (BR)',
+    label: 'Brazilian Portuguese (português do Brasil)',
+    glossLangHint:
+      'Brazilian Portuguese (pt-BR) — Latin orthography with correct accents; not European Portuguese',
+    exampleIn: 'natural Brazilian Portuguese (pt-BR)',
   },
   fr: {
     label: 'French',

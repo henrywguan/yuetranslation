@@ -131,12 +131,15 @@ function isKoreanTarget(to: CameraLang): boolean {
   return to === 'ko'
 }
 
+function isBrazilianPortugueseTarget(to: CameraLang): boolean {
+  return to === 'pt'
+}
+
 function isScaffoldCameraTarget(to: CameraLang): boolean {
   return (
     to === 'ja' ||
     to === 'id' ||
     to === 'ms' ||
-    to === 'pt' ||
     to === 'fr' ||
     to === 'hi' ||
     to === 'km' ||
@@ -334,12 +337,33 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .join('\n')
   }
 
+  if (to === 'pt') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Brazilian Portuguese (português do Brasil).',
+      'Write for Brazilian travelers/readers: everyday spoken Brazilian Portuguese (pt-BR), not European Portuguese (pt-PT).',
+      'Prefer Brazil vocabulary (ônibus, celular, legal, banheiro) over Portugal-only wording (autocarro, telemóvel, fixe, casa de banho) when they differ.',
+      'Use Latin script only. Include written accents (á à â ã é ê í ó ô õ ú ç) when standard orthography requires them.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Check-in / Registro; Luggage → Bagagem.',
+      '- Safety: Wet floor → Piso molhado / Piso escorregadio; Caution → Cuidado.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Portuguese output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Brazilian Portuguese>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
   if (isScaffoldCameraTarget(to)) {
     const label =
       to === 'ja' ? 'Japanese' :
       to === 'id' ? 'Indonesian' :
       to === 'ms' ? 'Malay' :
-      to === 'pt' ? 'Portuguese (BR)' :
       to === 'fr' ? 'French' :
       to === 'hi' ? 'Hindi' :
       to === 'km' ? 'Khmer' :
@@ -468,8 +492,8 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
   }
   return [
     'You translate signs, menus, forms, and short labels into clear traveler English.',
-    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing), Tagalog / Filipino, Mexican Spanish, Vietnamese, Thai, Lao, Cebuano, Ilocano, or Central Bikol (Latin script).',
-    'When the source is Tagalog/Filipino, Mexican Spanish, Vietnamese, Thai, Lao, Cebuano, Ilocano, or Central Bikol text, translate it into concise English.',
+    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing), Tagalog / Filipino, Mexican Spanish, Brazilian Portuguese, Vietnamese, Thai, Lao, Cebuano, Ilocano, or Central Bikol (Latin script).',
+    'When the source is Tagalog/Filipino, Mexican Spanish, Brazilian Portuguese, Vietnamese, Thai, Lao, Cebuano, Ilocano, or Central Bikol text, translate it into concise English.',
     docHint,
     "Use concise sign English: 不准進入 → No entry; 今日特餐 → Today's special; 乾炒牛河 → Dry-fried beef chow fun.",
     'Dim sum: 蝦餃 → har gow / shrimp dumplings; 燒賣 → siu mai; 叉燒包 → BBQ pork bun; 流沙包 → lava custard bun.',
@@ -504,6 +528,9 @@ function demoTranslation(source: string, to: CameraLang): string {
   }
   if (isMexicanTarget(to)) {
     return hasHan(source) ? `(demo Mx) ${source}` : `(demo) ${source}`
+  }
+  if (isBrazilianPortugueseTarget(to)) {
+    return hasHan(source) ? `(demo PT-BR) ${source}` : `(demo) ${source}`
   }
   if (isPeninsularTarget(to)) {
     return hasHan(source) ? `(demo ES) ${source}` : `(demo) ${source}`
@@ -585,6 +612,8 @@ export async function translateCameraText(
       ? `(tr TL) ${source}`
       : isMexicanTarget(to)
         ? `(tr Mx) ${source}`
+        : isBrazilianPortugueseTarget(to)
+          ? `(tr PT-BR) ${source}`
         : isPeninsularTarget(to)
           ? `(tr ES) ${source}`
           : isVietnameseTarget(to)
@@ -630,7 +659,7 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'ja') return 'Japanese (ja-JP)'
   if (lang === 'id') return 'Indonesian (id-ID)'
   if (lang === 'ms') return 'Malay (ms-MY)'
-  if (lang === 'pt') return 'Portuguese (BR) (pt-BR)'
+  if (lang === 'pt') return 'Brazilian Portuguese (Latin script, pt-BR)'
   if (lang === 'fr') return 'French (fr-FR)'
   if (lang === 'hi') return 'Hindi (hi-IN)'
   if (lang === 'km') return 'Khmer (km-KH)'
@@ -690,6 +719,8 @@ export async function translateCameraBatch(
           ? `(tr TL) ${s}`
           : isMexicanTarget(to)
             ? `(tr Mx) ${s}`
+            : isBrazilianPortugueseTarget(to)
+              ? `(tr PT-BR) ${s}`
             : isPeninsularTarget(to)
               ? `(tr ES) ${s}`
               : isVietnameseTarget(to)
@@ -718,6 +749,7 @@ export async function translateCameraBatch(
       else if (isChineseTarget(to) && t && !hasHan(t) && /[A-Za-z]/.test(src)) out[start + i] = src
       else if (isTagalogTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isMexicanTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isBrazilianPortugueseTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isPeninsularTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isVietnameseTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isThaiTarget(to) && t && (hasHan(t) || !/[\u0E00-\u0E7F]/.test(t))) out[start + i] = src

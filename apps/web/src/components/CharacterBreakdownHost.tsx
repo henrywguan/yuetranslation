@@ -17,6 +17,10 @@ import {
   mexicanStressClass,
   mexicanStressLabel,
 } from '../lib/mexicanSpanishStress'
+import {
+  brazilianStressClass,
+  brazilianStressLabel,
+} from '../lib/brazilianPortugueseStress'
 import { buildLocalPinyinBreakdown, type PinyinSeg } from '../lib/pinyin'
 import { vietnameseToneClass, vietnameseToneChipShort, vietnameseToneLabel } from '../lib/vietnameseTones'
 import { VietnameseText } from './VietnameseText'
@@ -438,6 +442,7 @@ export function CharacterBreakdownHost() {
   const isTlDetail = detailLang === 'tl'
   const isEsDetail = detailLang === 'es'
   const isEsesDetail = detailLang === 'eses'
+  const isPtDetail = detailLang === 'pt'
   const isViDetail = detailLang === 'vi'
   const isThDetail = detailLang === 'th'
   const isLoDetail = detailLang === 'lo'
@@ -446,7 +451,6 @@ export function CharacterBreakdownHost() {
     detailLang === 'ja' ||
     detailLang === 'id' ||
     detailLang === 'ms' ||
-    detailLang === 'pt' ||
     detailLang === 'fr' ||
     detailLang === 'hi' ||
     detailLang === 'km' ||
@@ -458,7 +462,12 @@ export function CharacterBreakdownHost() {
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
   const isLatinDetail =
-    isTlDetail || isEsDetail || isEsesDetail || isViDetail || isPhilippineRegionalDetail
+    isTlDetail ||
+    isEsDetail ||
+    isEsesDetail ||
+    isPtDetail ||
+    isViDetail ||
+    isPhilippineRegionalDetail
   const phraseWugniu =
     top.kind === 'phrase'
       ? top.romanization?.trim() || ''
@@ -577,6 +586,8 @@ export function CharacterBreakdownHost() {
                     ? 'es-MX'
                       : isEsesDetail
                         ? 'es-ES'
+                        : isPtDetail
+                          ? 'pt-BR'
                         : isViDetail
                         ? 'vi'
                         : isThDetail
@@ -670,6 +681,8 @@ export function CharacterBreakdownHost() {
             <LaoText text={topLabel} showDetail />
           ) : isKoDetail ? (
             <KoreanText text={topLabel} showDetail />
+          ) : isPtDetail ? (
+            <PtText text={topLabel} showStress />
           ) : isScaffoldDetail ? (
             detailLang === 'ja' ? (
               <JaText text={topLabel} showDetail />
@@ -677,8 +690,6 @@ export function CharacterBreakdownHost() {
               <IdText text={topLabel} showDetail />
             ) : detailLang === 'ms' ? (
               <MsText text={topLabel} showDetail />
-            ) : detailLang === 'pt' ? (
-              <PtText text={topLabel} showDetail />
             ) : detailLang === 'fr' ? (
               <FrText text={topLabel} showDetail />
             ) : detailLang === 'hi' ? (
@@ -726,6 +737,21 @@ export function CharacterBreakdownHost() {
                 ) : null
               })()}
             </p>
+          ) : ipa && isPtDetail ? (
+            <p className="detail-panel-ipa-line detail-panel-tl-pron" lang="pt-BR">
+              <span title="Accented / stress form">{ipa}</span>
+              {(() => {
+                const kind = brazilianStressClass(ipa || topLabel)
+                return kind ? (
+                  <span
+                    className={`brazilian-portuguese-stress-chip brazilian-portuguese-stress-chip--${kind}`}
+                    title={brazilianStressLabel(kind)}
+                  >
+                    {brazilianStressLabel(kind)}
+                  </span>
+                ) : null
+              })()}
+            </p>
           ) : ipa ? (
             <p className="detail-panel-ipa-line" lang="en">
               /{ipa}/
@@ -760,6 +786,25 @@ export function CharacterBreakdownHost() {
                     title={mexicanStressLabel(kind)}
                   >
                     {mexicanStressLabel(kind)}
+                  </span>
+                ) : null
+              })()}
+            </p>
+          ) : phraseAccented && isPtDetail ? (
+            <p
+              className="detail-panel-ipa-line detail-panel-tl-pron"
+              lang="pt-BR"
+              title="Accented / stress forms"
+            >
+              <span>{phraseAccented}</span>
+              {(() => {
+                const kind = brazilianStressClass(phraseAccented.split(/\s+/)[0] || topLabel)
+                return kind ? (
+                  <span
+                    className={`brazilian-portuguese-stress-chip brazilian-portuguese-stress-chip--${kind}`}
+                    title={brazilianStressLabel(kind)}
+                  >
+                    {brazilianStressLabel(kind)}
                   </span>
                 ) : null
               })()}
@@ -856,6 +901,8 @@ export function CharacterBreakdownHost() {
                             ? 'es'
                             : isEsesDetail
                               ? 'eses'
+                              : isPtDetail
+                                ? 'pt'
                               : isViDetail
                               ? 'vi'
                               : isThDetail
@@ -937,6 +984,8 @@ export function CharacterBreakdownHost() {
                         ? 'es'
                         : isEsesDetail
                           ? 'eses'
+                          : isPtDetail
+                            ? 'pt'
                           : isViDetail
                           ? 'vi'
                           : isThDetail
@@ -974,6 +1023,8 @@ export function CharacterBreakdownHost() {
                                 ? 'es-MX'
                                 : isEsesDetail
                                   ? 'es-ES'
+                                  : isPtDetail
+                                    ? 'pt-BR'
                                   : isViDetail
                                   ? 'vi'
                                   : isThDetail
@@ -1042,6 +1093,34 @@ export function CharacterBreakdownHost() {
                                       title={mexicanStressLabel(kind)}
                                     >
                                       {mexicanStressLabel(kind)}
+                                    </span>
+                                  ) : (
+                                    <span className="detail-panel-ipa muted">—</span>
+                                  )
+                                })()}
+                              </span>
+                            ) : isPtDetail ? (
+                              <span className="detail-panel-tl-pron" lang="pt-BR">
+                                {row.jyutping ? (
+                                  <span
+                                    className="detail-panel-ipa"
+                                    title="Accented / stress form"
+                                  >
+                                    {row.jyutping}
+                                  </span>
+                                ) : (
+                                  <span className="detail-panel-ipa muted" title="Unmarked form">
+                                    {row.char}
+                                  </span>
+                                )}
+                                {(() => {
+                                  const kind = brazilianStressClass(row.jyutping || row.char)
+                                  return kind ? (
+                                    <span
+                                      className={`brazilian-portuguese-stress-chip brazilian-portuguese-stress-chip--${kind}`}
+                                      title={brazilianStressLabel(kind)}
+                                    >
+                                      {brazilianStressLabel(kind)}
                                     </span>
                                   ) : (
                                     <span className="detail-panel-ipa muted">—</span>

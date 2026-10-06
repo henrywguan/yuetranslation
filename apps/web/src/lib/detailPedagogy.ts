@@ -154,6 +154,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   },
   pt: {
     htmlLang: 'pt-BR',
+    /** Orthographic stress (oxítona / paroxítona / proparoxítona) — not tones. */
     pronField: 'accented',
     defaultGlossLang: 'pt',
     rubyTitle: false,

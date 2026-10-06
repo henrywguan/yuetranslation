@@ -184,6 +184,92 @@
   background: color-mix(in srgb, var(--mint) 20%, transparent);
 }
 
+.brazilian-portuguese-block {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.brazilian-portuguese-activate {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.brazilian-portuguese-stress-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  max-width: 100%;
+}
+
+.brazilian-portuguese-stress-scheme {
+  flex: 0 0 auto;
+  font-family: var(--font-body);
+  font-size: clamp(0.58rem, 1.9vw, 0.68rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--mint) 72%, white);
+}
+
+.brazilian-portuguese-stress-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.brazilian-portuguese-stress-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.28em;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.18em 0.62em;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mint) 34%, transparent);
+  background: color-mix(in srgb, var(--mint) 14%, transparent);
+  color: color-mix(in srgb, var(--mint) 88%, white);
+  font-family: var(--font-body);
+  font-size: clamp(0.64rem, 2.15vw, 0.76rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
+.brazilian-portuguese-stress-chip-word {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.brazilian-portuguese-stress-chip-sep {
+  opacity: 0.55;
+  font-weight: 500;
+}
+
+.brazilian-portuguese-stress-chip-kind {
+  font-weight: 600;
+  opacity: 0.92;
+}
+
+.brazilian-portuguese-stress-chip--oxitona,
+.brazilian-portuguese-stress-chip--proparoxitona {
+  border-color: color-mix(in srgb, var(--mint) 48%, transparent);
+  background: color-mix(in srgb, var(--mint) 20%, transparent);
+}
+
 .vietnamese-block {
   position: relative;
   display: inline-flex;

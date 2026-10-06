@@ -177,7 +177,7 @@ export type SpeechEventHandlers = {
   await esesSession!.stop()
 
   if (apple) {
-    for (const lang of ['yue', 'en', 'es', 'eses'] as const) {
+    for (const lang of ['yue', 'en', 'es', 'eses', 'pt'] as const) {
       const errors: string[] = []
       const sticky = createWebSpeechSession(
         {

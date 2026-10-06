@@ -202,12 +202,12 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     htmlLang: 'pt-BR',
     mic: {
       holdOrTapToSpeak: 'Segure ou toque para falar',
-      releaseWhenDone: 'Ouvindo — solte ao terminar',
+      releaseWhenDone: 'Ouvindo — solte quando terminar',
       tapListening: 'Ouvindo — pause ou toque para parar',
       speaking: 'Falando…',
       translating: 'Traduzindo',
     },
-    friendLooksHere: 'O amigo olha para este lado',
+    friendLooksHere: 'Seu amigo olha para este lado',
     holdFacingYou: 'Segure o telefone virado para você',
   },
   fr: {

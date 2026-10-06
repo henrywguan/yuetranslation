@@ -22,6 +22,7 @@ import { inferThaiRegister } from './thaiRegister.js'
 import { inferLaoRegister } from './laoRegister.js'
 import { inferKoreanRegister } from './koreanRegister.js'
 import { translateCebuano, translateIlocano, translateBikol } from './translatePhilippineRegional.js'
+import { translateBrazilianPortuguese } from './translateBrazilianPortuguese.js'
 
 /** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
 function applyCmnScrub(
@@ -2986,6 +2987,20 @@ export async function translate(input: unknown) {
 
   if (to === 'ko' || (from === 'ko' && to === 'en')) {
     return translateKorean({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
+  if (to === 'pt' || (from === 'pt' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateBrazilianPortuguese({
+        from: from as 'en' | 'pt',
+        to: to as 'en' | 'pt',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
   }
 
   if (isScaffoldLang(to) || (isScaffoldLang(from) && to === 'en')) {
