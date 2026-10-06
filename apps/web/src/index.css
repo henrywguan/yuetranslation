@@ -602,7 +602,7 @@ button.thai-lao-activate {
   cursor: pointer;
 }
 
-/* Korean — Hangul compact; Details adds RR + speech level. */
+/* Korean — Hangul + RR on compact; Details adds speech level + honesty. */
 .korean-block {
   display: inline-flex;
   flex-direction: column;
