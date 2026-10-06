@@ -105,13 +105,16 @@ export function sanitizeBclTranslation(text: string | null | undefined): string 
   return sanitizeViTranslation(text)
 }
 
-/** Scaffold VoiceLang sanitizers — reject empty/glossy; script checks are light until polish. */
+/** Reject EN→Japanese payloads that are empty, glossy, romaji-only, or long Chinese-only. */
 export function sanitizeJaTranslation(text: string | null | undefined): string | null {
   const t = sanitizeTranslationText(text)
   if (!t) return null
-  // Japanese may include kanji (Han) — allow kana/kanji/Latin.
-  if (!/[\u3040-\u30FF\u3400-\u9FFF\uFF66-\uFF9D]/.test(t) && !/[\p{L}]/u.test(t)) return null
-  return t
+  const hasKana = /[\u3040-\u309F\u30A0-\u30FF\uFF66-\uFF9D]/.test(t)
+  if (hasKana) return t
+  const kanji = t.replace(/[^\u3400-\u9FFF\uF900-\uFAFF]/g, '')
+  // Short kanji compounds (出口, 東京) OK; long Han-only lines are usually Chinese.
+  if (kanji.length > 0 && kanji.length <= 12) return t
+  return null
 }
 
 export function sanitizeHiTranslation(text: string | null | undefined): string | null {

@@ -163,15 +163,15 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     holdFacingYou: '화면이 자신을 향하게 드세요',
   },
   ja: {
-    htmlLang: 'ja',
+    htmlLang: 'ja-JP',
     mic: {
-      holdOrTapToSpeak: '押すか長押しで話す',
-      releaseWhenDone: '聞いています — 終わったら離す',
-      tapListening: '聞いています — 停止するかもう一度タップ',
+      holdOrTapToSpeak: 'タップまたは長押しで話す',
+      releaseWhenDone: '聞いています — 話したら離してください',
+      tapListening: '聞いています — もう一度タップで停止',
       speaking: '話しています…',
-      translating: '翻訳中',
+      translating: '翻訳中…',
     },
-    friendLooksHere: '友だちはこの側を見てください',
+    friendLooksHere: 'お友達はこちらを見てください',
     holdFacingYou: '画面を自分に向けて持ってください',
   },
   id: {

@@ -129,7 +129,8 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     extraPanels: [],
   },
   ja: {
-    htmlLang: 'ja',
+    htmlLang: 'ja-JP',
+    /** Compact stays orthography-only; Details reading/politeness live in JaText. */
     pronField: 'accented',
     defaultGlossLang: 'ja',
     rubyTitle: false,
