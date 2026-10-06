@@ -249,11 +249,11 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
   my: {
     htmlLang: 'my',
     mic: {
-      holdOrTapToSpeak: 'ပြောရန် နှိပ်ပါ သို့မဟုတ် ဖိထားပါ',
-      releaseWhenDone: 'နားထောင်နေသည် — ပြီးရင် လွှတ်ပါ',
-      tapListening: 'နားထောင်နေသည် — ရပ်ပါ သို့မဟုတ် ထပ်နှိပ်ပါ',
-      speaking: 'ပြောနေသည်…',
-      translating: 'ဘာသာပြန်နေသည်',
+      holdOrTapToSpeak: 'ပြောဖို့ နှိပ်ပါ သို့မဟုတ် ဖိထားပါ',
+      releaseWhenDone: 'နားထောင်နေတယ် — ပြီးရင် လွှတ်လိုက်ပါ',
+      tapListening: 'နားထောင်နေတယ် — ရပ်ပါ သို့မဟုတ် ထပ်နှိပ်ပါ',
+      speaking: 'ပြောနေတယ်…',
+      translating: 'ဘာသာပြန်နေတယ်',
     },
     friendLooksHere: 'သူငယ်ချင်း ဒီဘက်ကို ကြည့်ပါ',
     holdFacingYou: 'ဖုန်းကို ကိုယ့်ဘက်လှည့်ထားပါ',

@@ -8034,6 +8034,294 @@
         "basic",
         "korean"
       ]
+    },
+    {
+      "id": "en-hello-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "hello",
+      "text": "မင်္ဂလာပါ",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-မင်္ဂလာပါ-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "မင်္ဂလာပါ",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-thank-you-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "thank you",
+      "text": "ကျေးဇူးတင်ပါတယ်",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-ကျေးဇူးတင်ပါတယ်-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "ကျေးဇူးတင်ပါတယ်",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-yes-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "yes",
+      "text": "ဟုတ်ကဲ့",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-ဟုတ်ကဲ့-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "ဟုတ်ကဲ့",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-no-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "no",
+      "text": "မဟုတ်ဘူး",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-မဟုတ်ဘူး-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "မဟုတ်ဘူး",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-water-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "water",
+      "text": "ရေ",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-ရေ-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "ရေ",
+      "text": "Water",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-delicious-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "delicious",
+      "text": "အရသာရှိတယ်",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-အရသာရှိတယ်-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "အရသာရှိတယ်",
+      "text": "Delicious",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-excuse-me-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "excuse me",
+      "text": "တောင်းပန်ပါတယ်",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-တောင်းပန်ပါတယ်-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "တောင်းပန်ပါတယ်",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-goodbye-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "goodbye",
+      "text": "နောက်မှတွေ့မယ်",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-နောက်မှတွေ့မယ်-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "နောက်မှတွေ့မယ်",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-how-much-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "how much",
+      "text": "ဘယ်လောက်လဲ",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-ဘယ်လောက်လဲ-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "ဘယ်လောက်လဲ",
+      "text": "How much",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-help-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "help",
+      "text": "ကူညီပါ",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-ကူညီပါ-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "ကူညီပါ",
+      "text": "Help",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "where is the bathroom",
+      "text": "အိမ်သာ ဘယ်မှာလဲ",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-အိမ်သာ ဘယ်မှာလဲ-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "အိမ်သာ ဘယ်မှာလဲ",
+      "text": "Where is the bathroom",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-nice-to-meet-you-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "nice to meet you",
+      "text": "တွေ့ရတာဝမ်းသာပါတယ်",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-တွေ့ရတာဝမ်းသာပါတယ်-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "တွေ့ရတာဝမ်းသာပါတယ်",
+      "text": "Nice to meet you",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "burmese"
+      ]
     }
   ]
 }

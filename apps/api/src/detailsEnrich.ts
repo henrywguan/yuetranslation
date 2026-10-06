@@ -187,9 +187,10 @@ const ENRICH_META: Record<
     exampleIn: 'natural Khmer',
   },
   my: {
-    label: 'Burmese',
-    glossLangHint: 'Burmese',
-    exampleIn: 'natural Burmese',
+    label: 'Standard Burmese (မြန်မာ)',
+    glossLangHint:
+      'Standard Burmese (မြန်မာ) — native Myanmar script only; MLCTS is added by the client — never invent ASCII tone digits',
+    exampleIn: 'natural colloquial Burmese (Myanmar script)',
   },
   jv: {
     label: 'Javanese',
