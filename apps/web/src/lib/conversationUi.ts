@@ -223,15 +223,15 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     holdFacingYou: 'Tenez le téléphone face à vous',
   },
   hi: {
-    htmlLang: 'hi',
+    htmlLang: 'hi-IN',
     mic: {
-      holdOrTapToSpeak: 'बोलने के लिए दबाएँ या होल्ड करें',
-      releaseWhenDone: 'सुन रहा है — खत्म होने पर छोड़ें',
-      tapListening: 'सुन रहा है — रोकें या फिर टैप करें',
-      speaking: 'बोल रहा है…',
+      holdOrTapToSpeak: 'बोलने के लिए टैप या होल्ड करें',
+      releaseWhenDone: 'सुन रहा हूँ — पूरा होने पर छोड़ें',
+      tapListening: 'सुन रहा हूँ — रोकने के लिए फिर टैप करें',
+      speaking: 'बोल रहा हूँ…',
       translating: 'अनुवाद हो रहा है',
     },
-    friendLooksHere: 'मित्र इस ओर देखें',
+    friendLooksHere: 'दोस्त इस तरफ़ देखें',
     holdFacingYou: 'फ़ोन अपनी ओर रखें',
   },
   km: {

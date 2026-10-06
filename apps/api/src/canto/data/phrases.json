@@ -8034,6 +8034,246 @@
         "basic",
         "korean"
       ]
+    },
+    {
+      "id": "en-hello-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "hello",
+      "text": "नमस्ते",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-नमस्ते-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "नमस्ते",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-thank-you-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "thank you",
+      "text": "धन्यवाद",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-धन्यवाद-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "धन्यवाद",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-sorry-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "sorry",
+      "text": "माफ़ कीजिए",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-माफ़-कीजिए-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "माफ़ कीजिए",
+      "text": "Sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-water-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "water",
+      "text": "पानी",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-पानी-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "पानी",
+      "text": "Water",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-where-is-it-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "where is it",
+      "text": "यह कहाँ है?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-यह-कहाँ-है-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "यह कहाँ है?",
+      "text": "Where is it?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-how-much-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "how much",
+      "text": "कितने का है?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-कितने-का-है-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "कितने का है?",
+      "text": "How much is it?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-yes-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "yes",
+      "text": "हाँ",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-हाँ-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "हाँ",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-no-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "no",
+      "text": "नहीं",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-नहीं-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "नहीं",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-goodbye-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "goodbye",
+      "text": "अलविदा",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-अलविदा-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "अलविदा",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-nice-to-meet-you-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "nice to meet you",
+      "text": "आपसे मिलकर खुशी हुई",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-आपसे-मिलकर-खुशी-हुई-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "आपसे मिलकर खुशी हुई",
+      "text": "Nice to meet you",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "hindi"
+      ]
     }
   ]
 }

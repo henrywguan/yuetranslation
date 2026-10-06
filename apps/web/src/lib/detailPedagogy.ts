@@ -169,7 +169,8 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     extraPanels: [],
   },
   hi: {
-    htmlLang: 'hi',
+    // Devanagari title via HiText; optional IAST + address formality in Details only.
+    htmlLang: 'hi-IN',
     pronField: 'accented',
     defaultGlossLang: 'hi',
     rubyTitle: false,

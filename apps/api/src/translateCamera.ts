@@ -131,6 +131,10 @@ function isKoreanTarget(to: CameraLang): boolean {
   return to === 'ko'
 }
 
+function isHindiTarget(to: CameraLang): boolean {
+  return to === 'hi'
+}
+
 function isScaffoldCameraTarget(to: CameraLang): boolean {
   return (
     to === 'ja' ||
@@ -138,7 +142,6 @@ function isScaffoldCameraTarget(to: CameraLang): boolean {
     to === 'ms' ||
     to === 'pt' ||
     to === 'fr' ||
-    to === 'hi' ||
     to === 'km' ||
     to === 'my' ||
     to === 'jv' ||
@@ -341,7 +344,6 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       to === 'ms' ? 'Malay' :
       to === 'pt' ? 'Portuguese (BR)' :
       to === 'fr' ? 'French' :
-      to === 'hi' ? 'Hindi' :
       to === 'km' ? 'Khmer' :
       to === 'my' ? 'Burmese' :
       to === 'jv' ? 'Javanese' :
@@ -357,6 +359,27 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       docBatch
         ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
         : 'Return ONLY valid JSON: {"translation":"<target>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'hi') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Modern Standard Hindi (हिन्दी).',
+      'Write for Hindi travelers/readers in India: everyday spoken Hindi, not stiff Sanskritized formal writing.',
+      'Use Devanagari only. Never Chinese characters (Han), never IAST/ISO romanization, never Hinglish Latin as the main line, never Urdu Nastaliq, never invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → चेक-इन; Luggage → सामान.',
+      '- Safety: Wet floor → फर्श गीला है; Caution → सावधान.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Hindi output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Hindi>"}',
       'No markdown, no explanation.',
     ]
       .filter(Boolean)
@@ -520,6 +543,9 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isKoreanTarget(to)) {
     return hasHan(source) ? `(demo KO) ${source}` : `(demo) ${source}`
   }
+  if (isHindiTarget(to)) {
+    return hasHan(source) ? `(demo HI) ${source}` : `(demo) ${source}`
+  }
   if (isCebuanoTarget(to)) {
     return hasHan(source) ? `(demo CEB) ${source}` : `(demo) ${source}`
   }
@@ -597,6 +623,8 @@ export async function translateCameraText(
                 ? `(tr ${to.toUpperCase()}) ${source}`
               : isKoreanTarget(to)
                 ? `(tr KO) ${source}`
+              : isHindiTarget(to)
+                ? `(tr HI) ${source}`
               : isCebuanoTarget(to)
             ? `(tr CEB) ${source}`
             : isIlocanoTarget(to)
@@ -632,7 +660,7 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'ms') return 'Malay (ms-MY)'
   if (lang === 'pt') return 'Portuguese (BR) (pt-BR)'
   if (lang === 'fr') return 'French (fr-FR)'
-  if (lang === 'hi') return 'Hindi (hi-IN)'
+  if (lang === 'hi') return 'Hindi (Devanagari, hi-IN)'
   if (lang === 'km') return 'Khmer (km-KH)'
   if (lang === 'my') return 'Burmese (my-MM)'
   if (lang === 'jv') return 'Javanese (jv-ID)'
@@ -702,6 +730,8 @@ export async function translateCameraBatch(
                     ? `(tr ${to.toUpperCase()}) ${s}`
                   : isKoreanTarget(to)
                     ? `(tr KO) ${s}`
+                  : isHindiTarget(to)
+                    ? `(tr HI) ${s}`
                   : isCebuanoTarget(to)
                 ? `(tr CEB) ${s}`
                 : isIlocanoTarget(to)
@@ -723,6 +753,7 @@ export async function translateCameraBatch(
       else if (isThaiTarget(to) && t && (hasHan(t) || !/[\u0E00-\u0E7F]/.test(t))) out[start + i] = src
       else if (isLaoTarget(to) && t && (hasHan(t) || !/[\u0E80-\u0EFF]/.test(t))) out[start + i] = src
       else if (isKoreanTarget(to) && t && (hasHan(t) || !/[\uAC00-\uD7A3]/.test(t))) out[start + i] = src
+      else if (isHindiTarget(to) && t && (hasHan(t) || !/[\u0900-\u097F]/.test(t))) out[start + i] = src
       else if (isLatinPhilippineRegionalTarget(to) && t && hasHan(t)) out[start + i] = src
       else {
         if (to === 'cmn' && t) t = scrubYueToCmn(t).text

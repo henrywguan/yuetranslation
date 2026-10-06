@@ -602,6 +602,61 @@ button.thai-lao-activate {
   cursor: pointer;
 }
 
+/* Hindi — Devanagari on compact; Details adds optional IAST + formality + honesty. */
+.hindi-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.hindi-block--detail {
+  gap: 0.35em;
+}
+.hindi-reading-row,
+.hindi-level-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.hindi-reading {
+  font-size: 0.72em;
+  line-height: 1.2;
+  opacity: 0.78;
+  font-weight: 500;
+}
+.hindi-reading-label,
+.hindi-level-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.hindi-level-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.hindi-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.hindi-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
 /* Korean — Hangul + RR on compact; Details adds speech level + honesty. */
 .korean-block {
   display: inline-flex;

@@ -26,11 +26,15 @@ assert.equal(azureUsesFixedLocale(undefined), false)
 assert.equal(appleNeedsAzureStt('tl'), true, 'Safari rejects fil-PH Web Speech')
 assert.equal(appleNeedsAzureStt('wuu'), true)
 assert.equal(appleNeedsAzureStt('sichuan'), true)
+assert.equal(appleNeedsAzureStt('hi'), false, 'Hindi stays on Web Speech on iPhone')
+assert.equal(appleLiveUsesWebSpeech('hi'), true)
+assert.equal(appleLiveUsesWebSpeech('ko'), true)
 assert.equal(appleLiveUsesWebSpeech('tl'), false, 'Tagalog mic on iPhone uses Azure fixed locale')
 assert.equal(appleLiveUsesWebSpeech('sichuan'), false, 'Sichuanese mic on iPhone uses Azure fixed locale')
 assert.equal(appleFallsBackToAzure('tl'), true)
 assert.equal(applePrefetchesSpeechToken('tl'), true, 'Tagalog may warm speech-token on Apple')
 assert.equal(applePrefetchesSpeechToken('sichuan'), true)
+assert.equal(applePrefetchesSpeechToken('hi'), false, 'Hindi must not mint speech-token on Apple')
 
 assert.equal(
   shouldDeferTtsStopUntilSttStarts({ apple: true, webSpeechFirst: true, ttsPlaying: true }),

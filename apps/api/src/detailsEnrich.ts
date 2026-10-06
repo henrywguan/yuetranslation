@@ -177,9 +177,10 @@ const ENRICH_META: Record<
     exampleIn: 'natural French',
   },
   hi: {
-    label: 'Hindi',
-    glossLangHint: 'Hindi',
-    exampleIn: 'natural Hindi',
+    label: 'Hindi (हिन्दी)',
+    glossLangHint:
+      'Modern Standard Hindi (हिन्दी) — Devanagari only; IAST romanization is added by the client in Details',
+    exampleIn: 'natural Modern Standard Hindi (Devanagari)',
   },
   km: {
     label: 'Khmer',
