@@ -102,6 +102,7 @@ export function dictionaryTranslate(opts: {
       entry.targetLang === 'th' ||
       entry.targetLang === 'lo' ||
       entry.targetLang === 'ko' ||
+      entry.targetLang === 'fr' ||
       entry.targetLang === 'ceb' ||
       entry.targetLang === 'ilo' ||
       entry.targetLang === 'bcl')
