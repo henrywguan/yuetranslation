@@ -157,9 +157,10 @@ const ENRICH_META: Record<
     exampleIn: 'natural Japanese',
   },
   id: {
-    label: 'Indonesian',
-    glossLangHint: 'Indonesian',
-    exampleIn: 'natural Indonesian',
+    label: 'Indonesian (Bahasa Indonesia)',
+    glossLangHint:
+      'colloquial Bahasa Indonesia (Jakarta/media everyday) — Latin orthography; note informal vs formal pronouns (kamu/Anda, aku/saya) and casual particles (dong/deh/sih) when relevant; never Chao/IPA/tone digits',
+    exampleIn: 'natural colloquial Indonesian (Latin script)',
   },
   ms: {
     label: 'Malay',
