@@ -8034,6 +8034,159 @@
         "basic",
         "korean"
       ]
+    },
+    {
+      "id": "en-hello-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "hello",
+      "text": "Halo",
+      "register": "colloquial",
+      "tags": ["greeting", "indonesian"],
+      "alternatives": ["Hai", "Halo semuanya"]
+    },
+    {
+      "id": "id-halo-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "halo",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": ["greeting", "indonesian"]
+    },
+    {
+      "id": "en-thank-you-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "thank you",
+      "text": "Makasih",
+      "register": "colloquial",
+      "tags": ["courtesy", "indonesian"],
+      "alternatives": ["Terima kasih", "Thanks"]
+    },
+    {
+      "id": "id-makasih-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "makasih",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": ["courtesy", "indonesian"]
+    },
+    {
+      "id": "en-how-are-you-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "how are you",
+      "text": "Apa kabar?",
+      "register": "colloquial",
+      "tags": ["greeting", "indonesian"],
+      "alternatives": ["Gimana kabarnya?", "Baik-baik aja?"]
+    },
+    {
+      "id": "id-apa-kabar-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "apa kabar",
+      "text": "How are you?",
+      "register": "colloquial",
+      "tags": ["greeting", "indonesian"]
+    },
+    {
+      "id": "en-yes-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "yes",
+      "text": "Iya",
+      "register": "colloquial",
+      "tags": ["basic", "indonesian"],
+      "alternatives": ["Ya", "Betul"]
+    },
+    {
+      "id": "id-iya-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "iya",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": ["basic", "indonesian"]
+    },
+    {
+      "id": "en-no-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "no",
+      "text": "Nggak",
+      "register": "colloquial",
+      "tags": ["basic", "indonesian"],
+      "alternatives": ["Tidak", "Enggak"]
+    },
+    {
+      "id": "id-nggak-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "nggak",
+      "text": "No",
+      "register": "colloquial",
+      "tags": ["basic", "indonesian"]
+    },
+    {
+      "id": "en-excuse-me-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "excuse me",
+      "text": "Permisi",
+      "register": "colloquial",
+      "tags": ["courtesy", "indonesian"],
+      "alternatives": ["Maaf"]
+    },
+    {
+      "id": "id-permisi-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "permisi",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": ["courtesy", "indonesian"]
+    },
+    {
+      "id": "en-how-much-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "how much is this",
+      "text": "Ini berapa?",
+      "register": "colloquial",
+      "tags": ["shopping", "indonesian"],
+      "alternatives": ["Berapa harganya?"]
+    },
+    {
+      "id": "id-ini-berapa-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "ini berapa",
+      "text": "How much is this?",
+      "register": "colloquial",
+      "tags": ["shopping", "indonesian"]
+    },
+    {
+      "id": "en-where-is-the-bathroom-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "where is the bathroom",
+      "text": "Toiletnya di mana?",
+      "register": "colloquial",
+      "tags": ["travel", "indonesian"],
+      "alternatives": ["Kamar mandinya di mana?"]
+    },
+    {
+      "id": "id-toiletnya-di-mana-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "toiletnya di mana",
+      "text": "Where is the bathroom?",
+      "register": "colloquial",
+      "tags": ["travel", "indonesian"]
     }
+
   ]
 }
