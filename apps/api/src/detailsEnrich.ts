@@ -197,9 +197,10 @@ const ENRICH_META: Record<
     exampleIn: 'natural Javanese',
   },
   it: {
-    label: 'Italian',
-    glossLangHint: 'Italian',
-    exampleIn: 'natural Italian',
+    label: 'Standard Italian (Italia)',
+    glossLangHint:
+      'Standard Italian (Italia / it-IT) — correct orthography with accents; colloquial everyday, not regional dialect by default',
+    exampleIn: 'natural standard Italian (Italia)',
   },
   de: {
     label: 'German',

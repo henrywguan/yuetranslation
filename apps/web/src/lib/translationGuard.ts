@@ -65,6 +65,11 @@ export function sanitizeViTranslation(text: string | null | undefined): string |
   return t
 }
 
+/** Reject EN→Italian payloads that are empty, glossy, or still Chinese. */
+export function sanitizeItTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
 /** Reject EN→Thai payloads that are empty, glossy, Han, or missing Thai script. */
 export function sanitizeThTranslation(text: string | null | undefined): string | null {
   const t = sanitizeTranslationText(text)

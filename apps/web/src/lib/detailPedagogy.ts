@@ -200,6 +200,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     localOffline: true,
     extraPanels: [],
   },
+  // Compact: accented Italian only. Details: tu/Lei chip + honesty via ItText / italianPedagogy.
   it: {
     htmlLang: 'it-IT',
     pronField: 'accented',

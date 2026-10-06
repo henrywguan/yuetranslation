@@ -8034,6 +8034,283 @@
         "basic",
         "korean"
       ]
+    },
+    {
+      "id": "en-hello-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "hello",
+      "text": "Ciao",
+      "alternatives": [
+        "Salve",
+        "Buongiorno"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-ciao-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "ciao",
+      "text": "Hi",
+      "alternatives": [
+        "Hello"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-buongiorno-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "buongiorno",
+      "text": "Good morning",
+      "alternatives": [
+        "Hello"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-thank-you-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "thank you",
+      "text": "Grazie",
+      "alternatives": [
+        "Grazie mille"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-grazie-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "grazie",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-thank-you-so-much-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "thank you so much",
+      "text": "Grazie mille",
+      "alternatives": [
+        "Grazie di cuore"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-im-sorry-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "i'm sorry",
+      "text": "Scusa",
+      "alternatives": [
+        "Mi dispiace"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-scusa-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "scusa",
+      "text": "Sorry",
+      "alternatives": [
+        "I'm sorry"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-yes-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "yes",
+      "text": "Sì",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-si-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "sì",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-no-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "no",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-no-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "no",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-please-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "please",
+      "text": "Per favore",
+      "alternatives": [
+        "Per piacere"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-per-favore-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "per favore",
+      "text": "Please",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-excuse-me-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "excuse me",
+      "text": "Scusa",
+      "alternatives": [
+        "Permesso"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-goodbye-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "goodbye",
+      "text": "Arrivederci",
+      "alternatives": [
+        "Ciao"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-arrivederci-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "arrivederci",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-how-are-you-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "how are you",
+      "text": "Come stai?",
+      "alternatives": [
+        "Come va?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-come-stai-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "come stai",
+      "text": "How are you",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-see-you-later-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "see you later",
+      "text": "A dopo",
+      "alternatives": [
+        "Ci vediamo"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
     }
   ]
 }
