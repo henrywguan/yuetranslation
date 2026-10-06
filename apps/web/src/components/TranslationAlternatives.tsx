@@ -9,6 +9,18 @@ import { VietnameseText } from './VietnameseText'
 import { ThaiText } from './ThaiText'
 import { LaoText } from './LaoText'
 import { KoreanText } from './KoreanText'
+import { JaText } from './JaText'
+import { IdText } from './IdText'
+import { MsText } from './MsText'
+import { PtText } from './PtText'
+import { FrText } from './FrText'
+import { HiText } from './HiText'
+import { KmText } from './KmText'
+import { MyText } from './MyText'
+import { JvText } from './JvText'
+import { ItText } from './ItText'
+import { DeText } from './DeText'
+import { NlText } from './NlText'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
 import { BiText } from './BiText'
@@ -121,6 +133,79 @@ export function TranslationAlternatives({
                   onActivate={onSelect}
                   activateLabel={`Use variation ${alt} and open details`}
                 />
+              ) : lang === 'ja' ? (
+                <JaText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'id' ? (
+                <IdText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'ms' ? (
+                <MsText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'pt' ? (
+                <PtText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'fr' ? (
+                <FrText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'hi' ? (
+                <HiText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'km' ? (
+                <KmText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'my' ? (
+                <MyText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'jv' ? (
+                <JvText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'it' ? (
+                <ItText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'de' ? (
+                <DeText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'nl' ? (
+                <NlText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+
               ) : (
                 <button
                   type="button"

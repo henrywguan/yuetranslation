@@ -11,6 +11,18 @@ import { VietnameseText } from './VietnameseText'
 import { ThaiText } from './ThaiText'
 import { LaoText } from './LaoText'
 import { KoreanText } from './KoreanText'
+import { JaText } from './JaText'
+import { IdText } from './IdText'
+import { MsText } from './MsText'
+import { PtText } from './PtText'
+import { FrText } from './FrText'
+import { HiText } from './HiText'
+import { KmText } from './KmText'
+import { MyText } from './MyText'
+import { JvText } from './JvText'
+import { ItText } from './ItText'
+import { DeText } from './DeText'
+import { NlText } from './NlText'
 import { InkSettle } from './InkSettle'
 import { LangLabelButton } from './LangLabelButton'
 import { LiveHoldButton } from './LiveHoldButton'
@@ -30,6 +42,18 @@ function langPlaceholder(lang: Lang): string {
   if (lang === 'th') return ui.dirThai.en
   if (lang === 'lo') return ui.dirLao.en
   if (lang === 'ko') return ui.dirKorean.en
+  if (lang === 'ja') return ui.dirJapanese.en
+  if (lang === 'id') return ui.dirIndonesian.en
+  if (lang === 'ms') return ui.dirMalay.en
+  if (lang === 'pt') return ui.dirPortuguese.en
+  if (lang === 'fr') return ui.dirFrench.en
+  if (lang === 'hi') return ui.dirHindi.en
+  if (lang === 'km') return ui.dirKhmer.en
+  if (lang === 'my') return ui.dirBurmese.en
+  if (lang === 'jv') return ui.dirJavanese.en
+  if (lang === 'it') return ui.dirItalian.en
+  if (lang === 'de') return ui.dirGerman.en
+  if (lang === 'nl') return ui.dirDutch.en
   if (lang === 'cmn') return ui.dirMandarin.zh
   if (lang === 'wuu') return ui.dirShanghainese.zh
   if (lang === 'sichuan') return ui.dirSichuanese.zh
@@ -173,6 +197,42 @@ export function ConversationView() {
     }
     if (lang === 'ko') {
       return <KoreanText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'ja') {
+      return <JaText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'id') {
+      return <IdText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'ms') {
+      return <MsText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'pt') {
+      return <PtText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'fr') {
+      return <FrText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'hi') {
+      return <HiText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'km') {
+      return <KmText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'my') {
+      return <MyText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'jv') {
+      return <JvText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'it') {
+      return <ItText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'de') {
+      return <DeText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'nl') {
+      return <NlText text={text} className={className} onActivate={onActivate} />
     }
     if (lang === 'cmn') {
       return (

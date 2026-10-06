@@ -9,6 +9,18 @@ import { VietnameseText } from './VietnameseText'
 import { ThaiText } from './ThaiText'
 import { LaoText } from './LaoText'
 import { KoreanText } from './KoreanText'
+import { JaText } from './JaText'
+import { IdText } from './IdText'
+import { MsText } from './MsText'
+import { PtText } from './PtText'
+import { FrText } from './FrText'
+import { HiText } from './HiText'
+import { KmText } from './KmText'
+import { MyText } from './MyText'
+import { JvText } from './JvText'
+import { ItText } from './ItText'
+import { DeText } from './DeText'
+import { NlText } from './NlText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -130,6 +142,78 @@ export function ResultWithDefinition({
               />
             ) : chineseLang === 'ko' ? (
               <KoreanText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'ja' ? (
+              <JaText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'id' ? (
+              <IdText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'ms' ? (
+              <MsText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'pt' ? (
+              <PtText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'fr' ? (
+              <FrText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'hi' ? (
+              <HiText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'km' ? (
+              <KmText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'my' ? (
+              <MyText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'jv' ? (
+              <JvText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'it' ? (
+              <ItText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'de' ? (
+              <DeText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'nl' ? (
+              <NlText
                 text={trimmed}
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}

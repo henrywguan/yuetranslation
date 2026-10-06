@@ -17,13 +17,29 @@ function isLang(v: unknown): v is Lang {
     v === 'yue' ||
     v === 'cmn' ||
     v === 'wuu' ||
+    v === 'sichuan' ||
     v === 'tl' ||
     v === 'es' ||
     v === 'eses' ||
     v === 'vi' ||
     v === 'th' ||
     v === 'lo' ||
-    v === 'ko'
+    v === 'ko' ||
+    v === 'ja' ||
+    v === 'id' ||
+    v === 'ms' ||
+    v === 'pt' ||
+    v === 'fr' ||
+    v === 'hi' ||
+    v === 'km' ||
+    v === 'my' ||
+    v === 'jv' ||
+    v === 'it' ||
+    v === 'de' ||
+    v === 'nl' ||
+    v === 'ceb' ||
+    v === 'ilo' ||
+    v === 'bcl'
   )
 }
 

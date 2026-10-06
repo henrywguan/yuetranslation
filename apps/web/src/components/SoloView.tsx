@@ -35,6 +35,18 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'th') return 'พิมพ์หรือพูดภาษาไทย'
   if (lang === 'lo') return 'ພິມ ຫຼື ເວົ້າພາສາລາວ'
   if (lang === 'ko') return '한국어로 입력하거나 말하기'
+  if (lang === 'ja') return '日本語で入力するか話す'
+  if (lang === 'id') return 'Ketik atau bicara Bahasa Indonesia…'
+  if (lang === 'ms') return 'Taip atau bercakap Bahasa Melayu…'
+  if (lang === 'pt') return 'Digite ou fale em português (BR)…'
+  if (lang === 'fr') return 'Tapez ou parlez en français…'
+  if (lang === 'hi') return 'हिन्दी में टाइप करें या बोलें…'
+  if (lang === 'km') return 'វាយ ឬនិយាយភាសាខ្មែរ…'
+  if (lang === 'my') return 'မြန်မာလို ရိုက်ပါ သို့မဟုတ် ပြောပါ…'
+  if (lang === 'jv') return 'Ketik utawa ngomong Basa Jawa…'
+  if (lang === 'it') return 'Digita o parla in italiano…'
+  if (lang === 'de') return 'Auf Deutsch tippen oder sprechen…'
+  if (lang === 'nl') return 'Typ of spreek Nederlands…'
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
   if (lang === 'bcl') return 'I-type nin Bikol…'
@@ -55,6 +67,18 @@ function isRubyDisplayLang(lang: Lang): boolean {
     lang === 'th' ||
     lang === 'lo' ||
     lang === 'ko' ||
+    lang === 'ja' ||
+    lang === 'id' ||
+    lang === 'ms' ||
+    lang === 'pt' ||
+    lang === 'fr' ||
+    lang === 'hi' ||
+    lang === 'km' ||
+    lang === 'my' ||
+    lang === 'jv' ||
+    lang === 'it' ||
+    lang === 'de' ||
+    lang === 'nl' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'
@@ -80,6 +104,18 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'th') return 'Speak Thai with the mic'
   if (lang === 'lo') return 'Speak Lao with the mic'
   if (lang === 'ko') return 'Speak Korean with the mic'
+  if (lang === 'ja') return 'Speak Japanese with the mic'
+  if (lang === 'id') return 'Speak Indonesian with the mic'
+  if (lang === 'ms') return 'Speak Malay with the mic'
+  if (lang === 'pt') return 'Speak Portuguese (BR) with the mic'
+  if (lang === 'fr') return 'Speak French with the mic'
+  if (lang === 'hi') return 'Speak Hindi with the mic'
+  if (lang === 'km') return 'Speak Khmer with the mic'
+  if (lang === 'my') return 'Speak Burmese with the mic'
+  if (lang === 'jv') return 'Speak Javanese with the mic'
+  if (lang === 'it') return 'Speak Italian with the mic'
+  if (lang === 'de') return 'Speak German with the mic'
+  if (lang === 'nl') return 'Speak Dutch with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
   if (lang === 'sichuan') return 'Speak Sichuanese with the mic'

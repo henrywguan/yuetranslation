@@ -67,7 +67,7 @@ import {
   isViVoice,
   isThVoice,
   isLoVoice,
-  isKoVoice,
+  isKoVoice, isJaVoice, isIdVoice, isMsVoice, isPtVoice, isFrVoice, isHiVoice, isKmVoice, isMyVoice, isJvVoice, isItVoice, isDeVoice, isNlVoice,
   isYueVoice,
 } from './ttsVoices.js'
 import {
@@ -421,6 +421,30 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
                           ? 'lo-LA'
                           : lang === 'ko' || lang === 'ko-KR' || lang === 'ko-kr'
                             ? 'ko-KR'
+                          : lang === 'ja' || lang === 'ja-JP' || lang === 'ja-jp'
+                            ? 'ja-JP'
+                          : lang === 'id' || lang === 'id-ID' || lang === 'id-id'
+                            ? 'id-ID'
+                          : lang === 'ms' || lang === 'ms-MY' || lang === 'ms-my'
+                            ? 'ms-MY'
+                          : lang === 'pt' || lang === 'pt-BR' || lang === 'pt-br'
+                            ? 'pt-BR'
+                          : lang === 'fr' || lang === 'fr-FR' || lang === 'fr-fr'
+                            ? 'fr-FR'
+                          : lang === 'hi' || lang === 'hi-IN' || lang === 'hi-in'
+                            ? 'hi-IN'
+                          : lang === 'km' || lang === 'km-KH' || lang === 'km-kh'
+                            ? 'km-KH'
+                          : lang === 'my' || lang === 'my-MM' || lang === 'my-mm'
+                            ? 'my-MM'
+                          : lang === 'jv' || lang === 'jv-ID' || lang === 'jv-id'
+                            ? 'jv-ID'
+                          : lang === 'it' || lang === 'it-IT' || lang === 'it-it'
+                            ? 'it-IT'
+                          : lang === 'de' || lang === 'de-DE' || lang === 'de-de'
+                            ? 'de-DE'
+                          : lang === 'nl' || lang === 'nl-NL' || lang === 'nl-nl'
+                            ? 'nl-NL'
                           : 'zh-HK'
     const audio = await synthesize(text, azureLang, {
       voice: voiceOverride,
@@ -436,6 +460,18 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredTh: ent.prefs?.ttsVoiceTh,
       preferredLo: ent.prefs?.ttsVoiceLo,
       preferredKo: ent.prefs?.ttsVoiceKo,
+      preferredJa: ent.prefs?.ttsVoiceJa,
+      preferredId: ent.prefs?.ttsVoiceId,
+      preferredMs: ent.prefs?.ttsVoiceMs,
+      preferredPt: ent.prefs?.ttsVoicePt,
+      preferredFr: ent.prefs?.ttsVoiceFr,
+      preferredHi: ent.prefs?.ttsVoiceHi,
+      preferredKm: ent.prefs?.ttsVoiceKm,
+      preferredMy: ent.prefs?.ttsVoiceMy,
+      preferredJv: ent.prefs?.ttsVoiceJv,
+      preferredIt: ent.prefs?.ttsVoiceIt,
+      preferredDe: ent.prefs?.ttsVoiceDe,
+      preferredNl: ent.prefs?.ttsVoiceNl,
       loud,
       performance,
     })
@@ -472,6 +508,18 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     tts_voice_th?: string
     tts_voice_lo?: string
     tts_voice_ko?: string
+    tts_voice_ja?: string
+    tts_voice_id?: string
+    tts_voice_ms?: string
+    tts_voice_pt?: string
+    tts_voice_fr?: string
+    tts_voice_hi?: string
+    tts_voice_km?: string
+    tts_voice_my?: string
+    tts_voice_jv?: string
+    tts_voice_it?: string
+    tts_voice_de?: string
+    tts_voice_nl?: string
   } = {}
   if (body.ttsVoiceYue != null) {
     const v = String(body.ttsVoiceYue).trim()
@@ -553,6 +601,102 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     }
     patch.tts_voice_ko = v
   }
+  if (body.ttsVoiceJa != null) {
+    const v = String(body.ttsVoiceJa).trim()
+    if (!isJaVoice(v)) {
+      res.status(400).json({ message: 'Invalid Japanese voice.' })
+      return
+    }
+    patch.tts_voice_ja = v
+  }
+  if (body.ttsVoiceId != null) {
+    const v = String(body.ttsVoiceId).trim()
+    if (!isIdVoice(v)) {
+      res.status(400).json({ message: 'Invalid Indonesian voice.' })
+      return
+    }
+    patch.tts_voice_id = v
+  }
+  if (body.ttsVoiceMs != null) {
+    const v = String(body.ttsVoiceMs).trim()
+    if (!isMsVoice(v)) {
+      res.status(400).json({ message: 'Invalid Malay voice.' })
+      return
+    }
+    patch.tts_voice_ms = v
+  }
+  if (body.ttsVoicePt != null) {
+    const v = String(body.ttsVoicePt).trim()
+    if (!isPtVoice(v)) {
+      res.status(400).json({ message: 'Invalid Portuguese (BR) voice.' })
+      return
+    }
+    patch.tts_voice_pt = v
+  }
+  if (body.ttsVoiceFr != null) {
+    const v = String(body.ttsVoiceFr).trim()
+    if (!isFrVoice(v)) {
+      res.status(400).json({ message: 'Invalid French voice.' })
+      return
+    }
+    patch.tts_voice_fr = v
+  }
+  if (body.ttsVoiceHi != null) {
+    const v = String(body.ttsVoiceHi).trim()
+    if (!isHiVoice(v)) {
+      res.status(400).json({ message: 'Invalid Hindi voice.' })
+      return
+    }
+    patch.tts_voice_hi = v
+  }
+  if (body.ttsVoiceKm != null) {
+    const v = String(body.ttsVoiceKm).trim()
+    if (!isKmVoice(v)) {
+      res.status(400).json({ message: 'Invalid Khmer voice.' })
+      return
+    }
+    patch.tts_voice_km = v
+  }
+  if (body.ttsVoiceMy != null) {
+    const v = String(body.ttsVoiceMy).trim()
+    if (!isMyVoice(v)) {
+      res.status(400).json({ message: 'Invalid Burmese voice.' })
+      return
+    }
+    patch.tts_voice_my = v
+  }
+  if (body.ttsVoiceJv != null) {
+    const v = String(body.ttsVoiceJv).trim()
+    if (!isJvVoice(v)) {
+      res.status(400).json({ message: 'Invalid Javanese voice.' })
+      return
+    }
+    patch.tts_voice_jv = v
+  }
+  if (body.ttsVoiceIt != null) {
+    const v = String(body.ttsVoiceIt).trim()
+    if (!isItVoice(v)) {
+      res.status(400).json({ message: 'Invalid Italian voice.' })
+      return
+    }
+    patch.tts_voice_it = v
+  }
+  if (body.ttsVoiceDe != null) {
+    const v = String(body.ttsVoiceDe).trim()
+    if (!isDeVoice(v)) {
+      res.status(400).json({ message: 'Invalid German voice.' })
+      return
+    }
+    patch.tts_voice_de = v
+  }
+  if (body.ttsVoiceNl != null) {
+    const v = String(body.ttsVoiceNl).trim()
+    if (!isNlVoice(v)) {
+      res.status(400).json({ message: 'Invalid Dutch voice.' })
+      return
+    }
+    patch.tts_voice_nl = v
+  }
   if (!Object.keys(patch).length) {
     res.status(400).json({ message: 'No voice preferences provided.' })
     return
@@ -576,6 +720,18 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
         ttsVoiceTh: patch.tts_voice_th || ent.prefs.ttsVoiceTh,
         ttsVoiceLo: patch.tts_voice_lo || ent.prefs.ttsVoiceLo,
         ttsVoiceKo: patch.tts_voice_ko || ent.prefs.ttsVoiceKo,
+        ttsVoiceJa: patch.tts_voice_ja || ent.prefs.ttsVoiceJa,
+        ttsVoiceId: patch.tts_voice_id || ent.prefs.ttsVoiceId,
+        ttsVoiceMs: patch.tts_voice_ms || ent.prefs.ttsVoiceMs,
+        ttsVoicePt: patch.tts_voice_pt || ent.prefs.ttsVoicePt,
+        ttsVoiceFr: patch.tts_voice_fr || ent.prefs.ttsVoiceFr,
+        ttsVoiceHi: patch.tts_voice_hi || ent.prefs.ttsVoiceHi,
+        ttsVoiceKm: patch.tts_voice_km || ent.prefs.ttsVoiceKm,
+        ttsVoiceMy: patch.tts_voice_my || ent.prefs.ttsVoiceMy,
+        ttsVoiceJv: patch.tts_voice_jv || ent.prefs.ttsVoiceJv,
+        ttsVoiceIt: patch.tts_voice_it || ent.prefs.ttsVoiceIt,
+        ttsVoiceDe: patch.tts_voice_de || ent.prefs.ttsVoiceDe,
+        ttsVoiceNl: patch.tts_voice_nl || ent.prefs.ttsVoiceNl,
         autoSpeak: ent.prefs.autoSpeak,
         primaryLang: ent.prefs.primaryLang,
         username: ent.prefs.username,
