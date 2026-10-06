@@ -131,9 +131,12 @@ function isKoreanTarget(to: CameraLang): boolean {
   return to === 'ko'
 }
 
+function isJapaneseTarget(to: CameraLang): boolean {
+  return to === 'ja'
+}
+
 function isScaffoldCameraTarget(to: CameraLang): boolean {
   return (
-    to === 'ja' ||
     to === 'id' ||
     to === 'ms' ||
     to === 'pt' ||
@@ -146,6 +149,13 @@ function isScaffoldCameraTarget(to: CameraLang): boolean {
     to === 'de' ||
     to === 'nl'
   )
+}
+
+/** Camera Japanese: kana, or short kanji compounds (not long Chinese-only lines). */
+function looksLikeCameraJapanese(t: string): boolean {
+  if (/[\u3040-\u309F\u30A0-\u30FF\uFF66-\uFF9D]/.test(t)) return true
+  const kanji = t.replace(/[^\u3400-\u9FFF\uF900-\uFAFF]/g, '')
+  return kanji.length > 0 && kanji.length <= 12
 }
 
 function isCebuanoTarget(to: CameraLang): boolean {
@@ -334,9 +344,31 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .join('\n')
   }
 
+  if (isJapaneseTarget(to)) {
+    return [
+      'You translate signs, menus, forms, and short labels into natural modern standard Japanese (共通語 / Tokyo media).',
+      'Write for Japanese travelers/readers: everyday colloquial register, not stiff legal Japanese.',
+      'Use natural Japanese orthography (kanji + kana). Never dump romaji as the primary translation.',
+      'Never invent Chao tone letters, Cantonese ASCII tone digits, or IPA.',
+      'Kanji is fine when natural Japanese would use it — do not output Mandarin/Cantonese Chinese sentences.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → チェックイン; Luggage → 荷物.',
+      '- Safety: Wet floor → 床が滑ります / 足元注意; Caution → 注意.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Japanese>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
   if (isScaffoldCameraTarget(to)) {
     const label =
-      to === 'ja' ? 'Japanese' :
       to === 'id' ? 'Indonesian' :
       to === 'ms' ? 'Malay' :
       to === 'pt' ? 'Portuguese (BR)' :
@@ -352,7 +384,7 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
     return [
       `You translate signs, menus, forms, and short labels into natural colloquial ${label}.`,
       'Write for travelers/readers: everyday spoken register, not stiff formal writing.',
-      'Never leave the translation empty. Never copy Chinese characters unless the target is Japanese.',
+      'Never leave the translation empty. Never copy Chinese characters into the output.',
       docHint,
       docBatch
         ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
@@ -520,6 +552,9 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isKoreanTarget(to)) {
     return hasHan(source) ? `(demo KO) ${source}` : `(demo) ${source}`
   }
+  if (isJapaneseTarget(to)) {
+    return `(demo JA) ${source}`
+  }
   if (isCebuanoTarget(to)) {
     return hasHan(source) ? `(demo CEB) ${source}` : `(demo) ${source}`
   }
@@ -593,6 +628,8 @@ export async function translateCameraText(
             ? `(tr TH) ${source}`
             : isLaoTarget(to)
               ? `(tr LO) ${source}`
+              : isJapaneseTarget(to)
+                ? `(tr JA) ${source}`
               : isScaffoldCameraTarget(to)
                 ? `(tr ${to.toUpperCase()}) ${source}`
               : isKoreanTarget(to)
@@ -627,7 +664,7 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'th') return 'Central Thai (Thai script, th-TH)'
   if (lang === 'lo') return 'Vientiane Lao (Lao script, lo-LA)'
   if (lang === 'ko') return 'Korean (Hangul, ko-KR)'
-  if (lang === 'ja') return 'Japanese (ja-JP)'
+  if (lang === 'ja') return 'Japanese (kanji + kana, ja-JP)'
   if (lang === 'id') return 'Indonesian (id-ID)'
   if (lang === 'ms') return 'Malay (ms-MY)'
   if (lang === 'pt') return 'Portuguese (BR) (pt-BR)'
@@ -698,6 +735,8 @@ export async function translateCameraBatch(
                 ? `(tr TH) ${s}`
                 : isLaoTarget(to)
                   ? `(tr LO) ${s}`
+                  : isJapaneseTarget(to)
+                    ? `(tr JA) ${s}`
                   : isScaffoldCameraTarget(to)
                     ? `(tr ${to.toUpperCase()}) ${s}`
                   : isKoreanTarget(to)
@@ -723,6 +762,7 @@ export async function translateCameraBatch(
       else if (isThaiTarget(to) && t && (hasHan(t) || !/[\u0E00-\u0E7F]/.test(t))) out[start + i] = src
       else if (isLaoTarget(to) && t && (hasHan(t) || !/[\u0E80-\u0EFF]/.test(t))) out[start + i] = src
       else if (isKoreanTarget(to) && t && (hasHan(t) || !/[\uAC00-\uD7A3]/.test(t))) out[start + i] = src
+      else if (isJapaneseTarget(to) && t && !looksLikeCameraJapanese(t)) out[start + i] = src
       else if (isLatinPhilippineRegionalTarget(to) && t && hasHan(t)) out[start + i] = src
       else {
         if (to === 'cmn' && t) t = scrubYueToCmn(t).text

@@ -8034,6 +8034,174 @@
         "basic",
         "korean"
       ]
+    },
+    {
+      "id": "en-hello-ja",
+      "sourceLang": "en",
+      "targetLang": "ja",
+      "source": "hello",
+      "text": "こんにちは",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "japanese"
+      ]
+    },
+    {
+      "id": "ja-こんにちは-en",
+      "sourceLang": "ja",
+      "targetLang": "en",
+      "source": "こんにちは",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "japanese"
+      ]
+    },
+    {
+      "id": "en-thank-you-ja",
+      "sourceLang": "en",
+      "targetLang": "ja",
+      "source": "thank you",
+      "text": "ありがとう",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "japanese"
+      ]
+    },
+    {
+      "id": "ja-ありがとう-en",
+      "sourceLang": "ja",
+      "targetLang": "en",
+      "source": "ありがとう",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "japanese"
+      ]
+    },
+    {
+      "id": "en-thank-you-formal-ja",
+      "sourceLang": "en",
+      "targetLang": "ja",
+      "source": "thank you very much",
+      "text": "ありがとうございます",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "japanese"
+      ]
+    },
+    {
+      "id": "ja-ありがとうございます-en",
+      "sourceLang": "ja",
+      "targetLang": "en",
+      "source": "ありがとうございます",
+      "text": "Thank you very much",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "japanese"
+      ]
+    },
+    {
+      "id": "en-sorry-ja",
+      "sourceLang": "en",
+      "targetLang": "ja",
+      "source": "sorry",
+      "text": "すみません",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "japanese"
+      ]
+    },
+    {
+      "id": "ja-すみません-en",
+      "sourceLang": "ja",
+      "targetLang": "en",
+      "source": "すみません",
+      "text": "Sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "japanese"
+      ]
+    },
+    {
+      "id": "en-yes-ja",
+      "sourceLang": "en",
+      "targetLang": "ja",
+      "source": "yes",
+      "text": "はい",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "japanese"
+      ]
+    },
+    {
+      "id": "ja-はい-en",
+      "sourceLang": "ja",
+      "targetLang": "en",
+      "source": "はい",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "japanese"
+      ]
+    },
+    {
+      "id": "en-no-ja",
+      "sourceLang": "en",
+      "targetLang": "ja",
+      "source": "no",
+      "text": "いいえ",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "japanese"
+      ]
+    },
+    {
+      "id": "ja-いいえ-en",
+      "sourceLang": "ja",
+      "targetLang": "en",
+      "source": "いいえ",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "japanese"
+      ]
+    },
+    {
+      "id": "en-goodbye-ja",
+      "sourceLang": "en",
+      "targetLang": "ja",
+      "source": "goodbye",
+      "text": "さようなら",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "japanese"
+      ]
+    },
+    {
+      "id": "ja-さようなら-en",
+      "sourceLang": "ja",
+      "targetLang": "en",
+      "source": "さようなら",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "japanese"
+      ]
     }
   ]
 }

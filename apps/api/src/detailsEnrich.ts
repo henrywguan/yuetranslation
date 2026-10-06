@@ -152,9 +152,10 @@ const ENRICH_META: Record<
     exampleIn: 'natural Korean (Hangul)',
   },
   ja: {
-    label: 'Japanese',
-    glossLangHint: 'Japanese',
-    exampleIn: 'natural Japanese',
+    label: 'Japanese (日本語 / 共通語)',
+    glossLangHint:
+      'Japanese (日本語) — natural kanji + kana; optional kana/romaji readings for lemmas; note です・ます vs plain when relevant',
+    exampleIn: 'natural modern Japanese (kanji + kana, colloquial unless formal)',
   },
   id: {
     label: 'Indonesian',
