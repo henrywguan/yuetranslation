@@ -237,9 +237,9 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
   km: {
     htmlLang: 'km',
     mic: {
-      holdOrTapToSpeak: 'ចុចឬសង្កត់ដើម្បីនិយាយ',
-      releaseWhenDone: 'កំពុងស្តាប់ — រួចហើយសូមលែង',
-      tapListening: 'កំពុងស្តាប់ — ផ្អាក ឬចុចម្ដងទៀត',
+      holdOrTapToSpeak: 'ចុច ឬសង្កត់ដើម្បីនិយាយ',
+      releaseWhenDone: 'កំពុងស្តាប់ — លែងពេលនិយាយរួច',
+      tapListening: 'កំពុងស្តាប់ — ផ្អាក ឬចុចម្ដងទៀតដើម្បីឈប់',
       speaking: 'កំពុងនិយាយ…',
       translating: 'កំពុងបកប្រែ',
     },

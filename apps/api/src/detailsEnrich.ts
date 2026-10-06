@@ -182,9 +182,9 @@ const ENRICH_META: Record<
     exampleIn: 'natural Hindi',
   },
   km: {
-    label: 'Khmer',
-    glossLangHint: 'Khmer',
-    exampleIn: 'natural Khmer',
+    label: 'Cambodian Khmer (ភាសាខ្មែរ)',
+    glossLangHint: 'Cambodian Khmer (ភាសាខ្មែរ) — native Khmer script only; never Latin romanization or tone digits',
+    exampleIn: 'natural Cambodian Khmer (Khmer script)',
   },
   my: {
     label: 'Burmese',

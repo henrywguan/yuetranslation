@@ -656,3 +656,51 @@ button.korean-activate {
   text-align: inherit;
   cursor: pointer;
 }
+
+/* Khmer — script plus UNGEGN-style reading (not a tone language). */
+.khmer-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.khmer-block--detail {
+  gap: 0.35em;
+}
+.khmer-reading-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.khmer-reading {
+  font-size: 0.72em;
+  line-height: 1.2;
+  opacity: 0.78;
+  font-weight: 500;
+}
+.khmer-reading-label {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.khmer-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.khmer-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}

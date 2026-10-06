@@ -8034,6 +8034,294 @@
         "basic",
         "korean"
       ]
+    },
+    {
+      "id": "en-hello-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "hello",
+      "text": "សួស្តី",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-សួស្តី-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "សួស្តី",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-thank-you-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "thank you",
+      "text": "អរគុណ",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-អរគុណ-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "អរគុណ",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-yes-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "yes",
+      "text": "បាទ",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-បាទ-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "បាទ",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-no-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "no",
+      "text": "ទេ",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-ទេ-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "ទេ",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-water-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "water",
+      "text": "ទឹក",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-ទឹក-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "ទឹក",
+      "text": "Water",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-delicious-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "delicious",
+      "text": "ឆ្ងាញ់",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-ឆ្ងាញ់-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "ឆ្ងាញ់",
+      "text": "Delicious",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-excuse-me-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "excuse me",
+      "text": "សុំទោស",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-សុំទោស-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "សុំទោស",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-goodbye-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "goodbye",
+      "text": "លាហើយ",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-លាហើយ-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "លាហើយ",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-how-much-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "how much",
+      "text": "ថ្លៃប៉ុន្មាន",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-ថ្លៃប៉ុន្មាន-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "ថ្លៃប៉ុន្មាន",
+      "text": "How much",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-help-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "help",
+      "text": "ជួយផង",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-ជួយផង-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "ជួយផង",
+      "text": "Help",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "where is the bathroom",
+      "text": "បន្ទប់ទឹកនៅឯណា",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-បន្ទប់ទឹកនៅឯណា-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "បន្ទប់ទឹកនៅឯណា",
+      "text": "Where is the bathroom",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-nice-to-meet-you-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "nice to meet you",
+      "text": "រីករាយដែលបានជួប",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-រីករាយដែលបានជួប-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "រីករាយដែលបានជួប",
+      "text": "Nice to meet you",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "khmer"
+      ]
     }
   ]
 }

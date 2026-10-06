@@ -131,6 +131,10 @@ function isKoreanTarget(to: CameraLang): boolean {
   return to === 'ko'
 }
 
+function isKhmerTarget(to: CameraLang): boolean {
+  return to === 'km'
+}
+
 function isScaffoldCameraTarget(to: CameraLang): boolean {
   return (
     to === 'ja' ||
@@ -139,7 +143,6 @@ function isScaffoldCameraTarget(to: CameraLang): boolean {
     to === 'pt' ||
     to === 'fr' ||
     to === 'hi' ||
-    to === 'km' ||
     to === 'my' ||
     to === 'jv' ||
     to === 'it' ||
@@ -334,6 +337,26 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .join('\n')
   }
 
+  if (to === 'km') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Cambodian Khmer (ភាសាខ្មែរ).',
+      'Write for Khmer travelers/readers: everyday spoken Cambodia Khmer, not stiff formal writing.',
+      'Use native Khmer script (Unicode Khmer block) only. Never use Latin romanization, Chao tone letters, IPA, or invented ASCII tone digits.',
+      'Prefer short sign-ready wording. Examples:',
+      '- Hotel / lobby: Check-in → ចុះឈ្មោះ; Concierge → អ្នកបម្រើភ្ញៀវ; Luggage storage → រក្សាទុកឥវ៉ាន់.',
+      '- Safety: Wet floor → ជាន់រអិល ប្រុងប្រយ័ត្ន; Caution → ប្រុងប្រយ័ត្ន.',
+      '- Food: Delicious → ឆ្ងាញ់; Water → ទឹក.',
+      'Never leave the translation empty. Never copy Chinese characters into the Khmer output.',
+      docHint,
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Khmer>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
   if (isScaffoldCameraTarget(to)) {
     const label =
       to === 'ja' ? 'Japanese' :
@@ -342,7 +365,6 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       to === 'pt' ? 'Portuguese (BR)' :
       to === 'fr' ? 'French' :
       to === 'hi' ? 'Hindi' :
-      to === 'km' ? 'Khmer' :
       to === 'my' ? 'Burmese' :
       to === 'jv' ? 'Javanese' :
       to === 'it' ? 'Italian' :
@@ -520,6 +542,9 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isKoreanTarget(to)) {
     return hasHan(source) ? `(demo KO) ${source}` : `(demo) ${source}`
   }
+  if (isKhmerTarget(to)) {
+    return hasHan(source) ? `(demo KM) ${source}` : `(demo) ${source}`
+  }
   if (isCebuanoTarget(to)) {
     return hasHan(source) ? `(demo CEB) ${source}` : `(demo) ${source}`
   }
@@ -593,6 +618,8 @@ export async function translateCameraText(
             ? `(tr TH) ${source}`
             : isLaoTarget(to)
               ? `(tr LO) ${source}`
+              : isKhmerTarget(to)
+                ? `(tr KM) ${source}`
               : isScaffoldCameraTarget(to)
                 ? `(tr ${to.toUpperCase()}) ${source}`
               : isKoreanTarget(to)
@@ -698,6 +725,8 @@ export async function translateCameraBatch(
                 ? `(tr TH) ${s}`
                 : isLaoTarget(to)
                   ? `(tr LO) ${s}`
+                  : isKhmerTarget(to)
+                    ? `(tr KM) ${s}`
                   : isScaffoldCameraTarget(to)
                     ? `(tr ${to.toUpperCase()}) ${s}`
                   : isKoreanTarget(to)
@@ -722,6 +751,7 @@ export async function translateCameraBatch(
       else if (isVietnameseTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isThaiTarget(to) && t && (hasHan(t) || !/[\u0E00-\u0E7F]/.test(t))) out[start + i] = src
       else if (isLaoTarget(to) && t && (hasHan(t) || !/[\u0E80-\u0EFF]/.test(t))) out[start + i] = src
+      else if (isKhmerTarget(to) && t && (hasHan(t) || !/[\u1780-\u17FF]/.test(t))) out[start + i] = src
       else if (isKoreanTarget(to) && t && (hasHan(t) || !/[\uAC00-\uD7A3]/.test(t))) out[start + i] = src
       else if (isLatinPhilippineRegionalTarget(to) && t && hasHan(t)) out[start + i] = src
       else {

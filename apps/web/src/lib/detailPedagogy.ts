@@ -182,6 +182,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     defaultGlossLang: 'km',
     rubyTitle: false,
     localOffline: true,
+    /** Compact shows UNGEGN-style reading; Details honesty note via KmText. */
     extraPanels: [],
   },
   my: {
