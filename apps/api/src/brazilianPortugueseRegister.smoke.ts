@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { inferBrazilianPortugueseRegister } from './brazilianPortugueseRegister.ts'
+import { inferBrazilianPortugueseRegister } from './brazilianPortugueseRegister.js'
 
 assert.equal(inferBrazilianPortugueseRegister('Hey, how are you?'), 'colloquial')
 assert.equal(inferBrazilianPortugueseRegister('Where is the bathroom?'), 'colloquial')
