@@ -286,12 +286,12 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     htmlLang: 'de-DE',
     mic: {
       holdOrTapToSpeak: 'Gedrückt halten oder tippen zum Sprechen',
-      releaseWhenDone: 'Hört zu — loslassen wenn fertig',
+      releaseWhenDone: 'Hört zu — loslassen, wenn fertig',
       tapListening: 'Hört zu — Pause oder tippen zum Stoppen',
-      speaking: 'Spricht…',
-      translating: 'Übersetzt',
+      speaking: 'Am Sprechen…',
+      translating: 'Übersetzung…',
     },
-    friendLooksHere: 'Freund schaut auf diese Seite',
+    friendLooksHere: 'Dein Freund schaut auf diese Seite',
     holdFacingYou: 'Handy zu dir zeigen',
   },
   nl: {

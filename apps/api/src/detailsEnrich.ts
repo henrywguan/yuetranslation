@@ -202,9 +202,10 @@ const ENRICH_META: Record<
     exampleIn: 'natural Italian',
   },
   de: {
-    label: 'German',
-    glossLangHint: 'German',
-    exampleIn: 'natural German',
+    label: 'Standard German (Deutschland)',
+    glossLangHint:
+      'Standard German (Deutschland / de-DE) — correct orthography with umlauts and ß; colloquial everyday, not Swiss- or Austrian-primary',
+    exampleIn: 'natural standard German (Deutschland)',
   },
   nl: {
     label: 'Dutch',

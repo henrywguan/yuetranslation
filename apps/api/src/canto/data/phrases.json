@@ -8034,6 +8034,299 @@
         "basic",
         "korean"
       ]
+    },
+    {
+      "id": "en-hello-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "hello",
+      "text": "Hallo",
+      "alternatives": [
+        "Hi",
+        "Moin"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-hallo-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "hallo",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-hi-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "hi",
+      "text": "Hi",
+      "alternatives": [
+        "Hello"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-thank-you-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "thank you",
+      "text": "Danke",
+      "alternatives": [
+        "Vielen Dank",
+        "Dankeschön"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-danke-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "danke",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-thank-you-so-much-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "thank you so much",
+      "text": "Vielen Dank",
+      "alternatives": [
+        "Tausend Dank"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-im-sorry-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "i'm sorry",
+      "text": "Tut mir leid",
+      "alternatives": [
+        "Entschuldigung",
+        "Sorry"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-tut-mir-leid-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "tut mir leid",
+      "text": "I'm sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-yes-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "yes",
+      "text": "Ja",
+      "alternatives": [
+        "Klar",
+        "Genau"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-ja-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "ja",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-no-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "no",
+      "text": "Nein",
+      "alternatives": [
+        "Nee"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-nein-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "nein",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-please-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "please",
+      "text": "Bitte",
+      "alternatives": [
+        "Bitte schön"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-bitte-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "bitte",
+      "text": "Please",
+      "alternatives": [
+        "You're welcome"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-excuse-me-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "excuse me",
+      "text": "Entschuldigung",
+      "alternatives": [
+        "Verzeihung",
+        "Sorry"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-goodbye-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "goodbye",
+      "text": "Tschüss",
+      "alternatives": [
+        "Auf Wiedersehen",
+        "Bis bald"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-tschuss-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "tschüss",
+      "text": "Bye",
+      "alternatives": [
+        "Goodbye"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-how-are-you-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "how are you",
+      "text": "Wie geht’s?",
+      "alternatives": [
+        "Wie geht es dir?",
+        "Alles klar?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-wie-gehts-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "wie geht’s",
+      "text": "How are you",
+      "alternatives": [
+        "How's it going"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-see-you-later-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "see you later",
+      "text": "Bis später",
+      "alternatives": [
+        "Bis gleich",
+        "Bis bald"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
     }
   ]
 }

@@ -1,8 +1,15 @@
 import type { ReactNode } from 'react'
+import {
+  GERMAN_HONESTY_NOTE,
+  detectGermanAddress,
+  germanAddressChip,
+  germanAddressLabel,
+} from '../lib/germanPedagogy'
 
 /**
- * Scaffold compact line for German (`de`).
- * Cloud agent: replace with real pedagogy (readings / chips / honesty notes).
+ * Standard German (Deutschland / de-DE) line for Solo / Conversation / Cam.
+ * Compact: German orthography only (`lang="de-DE"`) — no IPA, Chao, or register chips.
+ * Details (`showDetail`) add a du/Sie chip when detectable plus a short honesty note.
  */
 export function DeText({
   text,
@@ -13,19 +20,40 @@ export function DeText({
   showDetail = false,
 }: {
   text: string
+  definition?: string
+  definitions?: string[]
   className?: string
   placeholder?: ReactNode
   onActivate?: (text: string) => void
   activateLabel?: string
+  /** Compact panes: false. Details can opt in. */
   showDetail?: boolean
 }) {
   const trimmed = text.trim()
   if (!trimmed) return placeholder ? <>{placeholder}</> : null
 
+  const address = showDetail ? detectGermanAddress(trimmed) : null
+
   const body = (
-    <span className={className || undefined} lang="de-DE" data-scaffold-lang="de">
-      {trimmed}
-      {showDetail ? null : null}
+    <span className={`german-block${showDetail ? ' german-block--detail' : ''}`}>
+      <span className={className || undefined} lang="de-DE">
+        {trimmed}
+      </span>
+      {address ? (
+        <span className="german-address-row" aria-label="Address form">
+          <span className="german-address-scheme" aria-hidden="true">
+            Address
+          </span>
+          <span
+            className={`german-address-chip german-address-chip--${address}`}
+            title={germanAddressLabel(address)}
+            aria-label={germanAddressLabel(address)}
+          >
+            {germanAddressChip(address)}
+          </span>
+        </span>
+      ) : null}
+      {showDetail ? <span className="german-honesty">{GERMAN_HONESTY_NOTE}</span> : null}
     </span>
   )
 
@@ -34,7 +62,7 @@ export function DeText({
   return (
     <button
       type="button"
-      className="scaffold-lang-activate"
+      className="german-activate"
       onClick={() => onActivate(trimmed)}
       aria-label={activateLabel || `${trimmed}. Open details.`}
     >

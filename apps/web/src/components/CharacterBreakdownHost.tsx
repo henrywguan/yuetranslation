@@ -442,6 +442,7 @@ export function CharacterBreakdownHost() {
   const isThDetail = detailLang === 'th'
   const isLoDetail = detailLang === 'lo'
   const isKoDetail = detailLang === 'ko'
+  const isDeDetail = detailLang === 'de'
   const isScaffoldDetail =
     detailLang === 'ja' ||
     detailLang === 'id' ||
@@ -453,12 +454,16 @@ export function CharacterBreakdownHost() {
     detailLang === 'my' ||
     detailLang === 'jv' ||
     detailLang === 'it' ||
-    detailLang === 'de' ||
     detailLang === 'nl'
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
   const isLatinDetail =
-    isTlDetail || isEsDetail || isEsesDetail || isViDetail || isPhilippineRegionalDetail
+    isTlDetail ||
+    isEsDetail ||
+    isEsesDetail ||
+    isViDetail ||
+    isDeDetail ||
+    isPhilippineRegionalDetail
   const phraseWugniu =
     top.kind === 'phrase'
       ? top.romanization?.trim() || ''
@@ -579,6 +584,8 @@ export function CharacterBreakdownHost() {
                         ? 'es-ES'
                         : isViDetail
                         ? 'vi'
+                        : isDeDetail
+                          ? 'de-DE'
                         : isThDetail
                         ? 'th'
                         : isLoDetail
@@ -670,6 +677,8 @@ export function CharacterBreakdownHost() {
             <LaoText text={topLabel} showDetail />
           ) : isKoDetail ? (
             <KoreanText text={topLabel} showDetail />
+          ) : isDeDetail ? (
+            <DeText text={topLabel} showDetail />
           ) : isScaffoldDetail ? (
             detailLang === 'ja' ? (
               <JaText text={topLabel} showDetail />
@@ -691,8 +700,6 @@ export function CharacterBreakdownHost() {
               <JvText text={topLabel} showDetail />
             ) : detailLang === 'it' ? (
               <ItText text={topLabel} showDetail />
-            ) : detailLang === 'de' ? (
-              <DeText text={topLabel} showDetail />
             ) : (
               <NlText text={topLabel} showDetail />
             )
@@ -858,6 +865,8 @@ export function CharacterBreakdownHost() {
                               ? 'eses'
                               : isViDetail
                               ? 'vi'
+                              : isDeDetail
+                                ? 'de'
                               : isThDetail
                               ? 'th'
                               : isLoDetail
@@ -939,6 +948,8 @@ export function CharacterBreakdownHost() {
                           ? 'eses'
                           : isViDetail
                           ? 'vi'
+                          : isDeDetail
+                            ? 'de'
                           : isThDetail
                           ? 'th'
                           : isLoDetail
@@ -976,6 +987,8 @@ export function CharacterBreakdownHost() {
                                   ? 'es-ES'
                                   : isViDetail
                                   ? 'vi'
+                                  : isDeDetail
+                                    ? 'de-DE'
                                   : isThDetail
                                   ? 'th'
                                   : isLoDetail
@@ -1069,6 +1082,15 @@ export function CharacterBreakdownHost() {
                                     <span className="detail-panel-ipa muted">—</span>
                                   )
                                 })()}
+                              </span>
+                            ) : isDeDetail ? (
+                              <span className="detail-panel-tl-pron" lang="de-DE">
+                                <span
+                                  className="detail-panel-ipa"
+                                  title="German form"
+                                >
+                                  {row.jyutping || row.char}
+                                </span>
                               </span>
                             ) : isWuuDetail ? (
                               row.jyutping ? (
