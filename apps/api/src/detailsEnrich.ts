@@ -192,9 +192,10 @@ const ENRICH_META: Record<
     exampleIn: 'natural Burmese',
   },
   jv: {
-    label: 'Javanese',
-    glossLangHint: 'Javanese',
-    exampleIn: 'natural Javanese',
+    label: 'Javanese (Basa Jawa)',
+    glossLangHint:
+      'colloquial Latin Javanese (Central/East Java media, ngoko by default) — note undha-usuk speech level (ngoko / madya / krama) when detectable; never Indonesian wording by default; never Chao/IPA/tone digits or Hanacaraka',
+    exampleIn: 'natural colloquial Latin Javanese',
   },
   it: {
     label: 'Italian',

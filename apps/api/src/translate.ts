@@ -1,4 +1,5 @@
 import { isScaffoldLang, translateScaffoldLang, type ScaffoldLang } from './translateScaffold.js'
+import { translateJavanese } from './translateJavanese.js'
 import { z } from 'zod'
 import { env, llmChatExtras } from './env.js'
 import { openaiClient } from './openaiClient.js'
@@ -2986,6 +2987,20 @@ export async function translate(input: unknown) {
 
   if (to === 'ko' || (from === 'ko' && to === 'en')) {
     return translateKorean({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
+  if (to === 'jv' || (from === 'jv' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateJavanese({
+        from: from as 'en' | 'jv',
+        to: to as 'en' | 'jv',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
   }
 
   if (isScaffoldLang(to) || (isScaffoldLang(from) && to === 'en')) {

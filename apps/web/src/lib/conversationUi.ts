@@ -259,16 +259,16 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     holdFacingYou: 'ဖုန်းကို ကိုယ့်ဘက်လှည့်ထားပါ',
   },
   jv: {
-    htmlLang: 'jv',
+    htmlLang: 'jv-ID',
     mic: {
-      holdOrTapToSpeak: 'Pencet utawa tahan kanggo ngomong',
+      holdOrTapToSpeak: 'Tahan utawa pencet kanggo ngomong',
       releaseWhenDone: 'Ngrungokake — lepaske yen wis rampung',
-      tapListening: 'Ngrungokake — mandheg utawa pencet maneh',
-      speaking: 'Ngomong…',
-      translating: 'Nerjemahake',
+      tapListening: 'Ngrungokake — jeda utawa pencet maneh',
+      speaking: 'Lagi ngomong…',
+      translating: 'Nerjemahake…',
     },
     friendLooksHere: 'Kanca madhep sisih iki',
-    holdFacingYou: 'Arahake HP menyang sampeyan',
+    holdFacingYou: 'Arahake HP menyang kowe',
   },
   it: {
     htmlLang: 'it-IT',

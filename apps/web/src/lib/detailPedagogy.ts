@@ -193,7 +193,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     extraPanels: [],
   },
   jv: {
-    htmlLang: 'jv',
+    htmlLang: 'jv-ID',
     pronField: 'accented',
     defaultGlossLang: 'jv',
     rubyTitle: false,

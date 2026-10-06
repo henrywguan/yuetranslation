@@ -8034,6 +8034,158 @@
         "basic",
         "korean"
       ]
+    },
+    {
+      "id": "en-hello-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "hello",
+      "text": "Halo",
+      "register": "colloquial",
+      "tags": ["greeting", "javanese"],
+      "alternatives": ["Piye kabare?", "Sugeng rawuh"]
+    },
+    {
+      "id": "jv-halo-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "halo",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": ["greeting", "javanese"]
+    },
+    {
+      "id": "en-thank-you-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "thank you",
+      "text": "Suwun",
+      "register": "colloquial",
+      "tags": ["courtesy", "javanese"],
+      "alternatives": ["Matur suwun", "Matur nuwun"]
+    },
+    {
+      "id": "jv-suwun-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "suwun",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": ["courtesy", "javanese"]
+    },
+    {
+      "id": "en-how-are-you-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "how are you",
+      "text": "Piye kabare?",
+      "register": "colloquial",
+      "tags": ["greeting", "javanese"],
+      "alternatives": ["Kepriye kabare?", "Slamet?"]
+    },
+    {
+      "id": "jv-piye-kabare-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "piye kabare",
+      "text": "How are you?",
+      "register": "colloquial",
+      "tags": ["greeting", "javanese"]
+    },
+    {
+      "id": "en-yes-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "yes",
+      "text": "Iya",
+      "register": "colloquial",
+      "tags": ["basic", "javanese"],
+      "alternatives": ["Ya", "Inggih"]
+    },
+    {
+      "id": "jv-iya-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "iya",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": ["basic", "javanese"]
+    },
+    {
+      "id": "en-no-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "no",
+      "text": "Ora",
+      "register": "colloquial",
+      "tags": ["basic", "javanese"],
+      "alternatives": ["Mboten"]
+    },
+    {
+      "id": "jv-ora-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "ora",
+      "text": "No",
+      "register": "colloquial",
+      "tags": ["basic", "javanese"]
+    },
+    {
+      "id": "en-excuse-me-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "excuse me",
+      "text": "Nuwan sewu",
+      "register": "colloquial",
+      "tags": ["courtesy", "javanese"],
+      "alternatives": ["Sepura", "Nyuwun sewu"]
+    },
+    {
+      "id": "jv-nuwan-sewu-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "nuwan sewu",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": ["courtesy", "javanese"]
+    },
+    {
+      "id": "en-how-much-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "how much is this",
+      "text": "Iki piro?",
+      "register": "colloquial",
+      "tags": ["shopping", "javanese"],
+      "alternatives": ["Regane piro?"]
+    },
+    {
+      "id": "jv-iki-piro-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "iki piro",
+      "text": "How much is this?",
+      "register": "colloquial",
+      "tags": ["shopping", "javanese"]
+    },
+    {
+      "id": "en-where-is-the-bathroom-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "where is the bathroom",
+      "text": "Toilet nang endi?",
+      "register": "colloquial",
+      "tags": ["travel", "javanese"],
+      "alternatives": ["Kamar mandi nang endi?"]
+    },
+    {
+      "id": "jv-toilet-nang-endi-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "toilet nang endi",
+      "text": "Where is the bathroom?",
+      "register": "colloquial",
+      "tags": ["travel", "javanese"]
     }
   ]
 }

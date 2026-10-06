@@ -442,6 +442,7 @@ export function CharacterBreakdownHost() {
   const isThDetail = detailLang === 'th'
   const isLoDetail = detailLang === 'lo'
   const isKoDetail = detailLang === 'ko'
+  const isJvDetail = detailLang === 'jv'
   const isScaffoldDetail =
     detailLang === 'ja' ||
     detailLang === 'id' ||
@@ -451,14 +452,18 @@ export function CharacterBreakdownHost() {
     detailLang === 'hi' ||
     detailLang === 'km' ||
     detailLang === 'my' ||
-    detailLang === 'jv' ||
     detailLang === 'it' ||
     detailLang === 'de' ||
     detailLang === 'nl'
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
   const isLatinDetail =
-    isTlDetail || isEsDetail || isEsesDetail || isViDetail || isPhilippineRegionalDetail
+    isTlDetail ||
+    isEsDetail ||
+    isEsesDetail ||
+    isViDetail ||
+    isJvDetail ||
+    isPhilippineRegionalDetail
   const phraseWugniu =
     top.kind === 'phrase'
       ? top.romanization?.trim() || ''
@@ -670,6 +675,8 @@ export function CharacterBreakdownHost() {
             <LaoText text={topLabel} showDetail />
           ) : isKoDetail ? (
             <KoreanText text={topLabel} showDetail />
+          ) : isJvDetail ? (
+            <JvText text={topLabel} showDetail />
           ) : isScaffoldDetail ? (
             detailLang === 'ja' ? (
               <JaText text={topLabel} showDetail />
@@ -687,8 +694,6 @@ export function CharacterBreakdownHost() {
               <KmText text={topLabel} showDetail />
             ) : detailLang === 'my' ? (
               <MyText text={topLabel} showDetail />
-            ) : detailLang === 'jv' ? (
-              <JvText text={topLabel} showDetail />
             ) : detailLang === 'it' ? (
               <ItText text={topLabel} showDetail />
             ) : detailLang === 'de' ? (

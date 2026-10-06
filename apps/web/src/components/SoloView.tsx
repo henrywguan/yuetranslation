@@ -43,7 +43,7 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'hi') return 'हिन्दी में टाइप करें या बोलें…'
   if (lang === 'km') return 'វាយ ឬនិយាយភាសាខ្មែរ…'
   if (lang === 'my') return 'မြန်မာလို ရိုက်ပါ သို့မဟုတ် ပြောပါ…'
-  if (lang === 'jv') return 'Ketik utawa ngomong Basa Jawa…'
+  if (lang === 'jv') return 'Ketik utawa ngomong basa Jawa…'
   if (lang === 'it') return 'Digita o parla in italiano…'
   if (lang === 'de') return 'Auf Deutsch tippen oder sprechen…'
   if (lang === 'nl') return 'Typ of spreek Nederlands…'

@@ -105,6 +105,11 @@ export function sanitizeBclTranslation(text: string | null | undefined): string 
   return sanitizeViTranslation(text)
 }
 
+/** Reject EN→Javanese payloads that are empty, glossy, or still Chinese. */
+export function sanitizeJvTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
 /** Scaffold VoiceLang sanitizers — reject empty/glossy; script checks are light until polish. */
 export function sanitizeJaTranslation(text: string | null | undefined): string | null {
   const t = sanitizeTranslationText(text)
