@@ -10,7 +10,7 @@ import { dictionaryTranslate } from './canto/dictionary.js'
 import { looksLikeGlossDump } from '@jyut/shared/glossDump'
 import { emptyMeta, parsePayload, parseYuePayload, type TranslateResult, type TranslateStage } from './translateShared.js'
 
-export const ScaffoldLangZ = z.enum(['ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl'])
+export const ScaffoldLangZ = z.enum(['ja', 'id', 'ms', 'pt', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl'])
 export type ScaffoldLang = z.infer<typeof ScaffoldLangZ>
 
 const META: Record<
@@ -35,11 +35,6 @@ const META: Record<
   pt: {
     label: 'Brazilian Portuguese',
     locale: 'pt-BR',
-    scriptNote: 'Latin orthography',
-  },
-  fr: {
-    label: 'French',
-    locale: 'fr-FR',
     scriptNote: 'Latin orthography',
   },
   hi: {

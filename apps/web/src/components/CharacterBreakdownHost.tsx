@@ -442,12 +442,12 @@ export function CharacterBreakdownHost() {
   const isThDetail = detailLang === 'th'
   const isLoDetail = detailLang === 'lo'
   const isKoDetail = detailLang === 'ko'
+  const isFrDetail = detailLang === 'fr'
   const isScaffoldDetail =
     detailLang === 'ja' ||
     detailLang === 'id' ||
     detailLang === 'ms' ||
     detailLang === 'pt' ||
-    detailLang === 'fr' ||
     detailLang === 'hi' ||
     detailLang === 'km' ||
     detailLang === 'my' ||
@@ -458,7 +458,12 @@ export function CharacterBreakdownHost() {
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
   const isLatinDetail =
-    isTlDetail || isEsDetail || isEsesDetail || isViDetail || isPhilippineRegionalDetail
+    isTlDetail ||
+    isEsDetail ||
+    isEsesDetail ||
+    isViDetail ||
+    isFrDetail ||
+    isPhilippineRegionalDetail
   const phraseWugniu =
     top.kind === 'phrase'
       ? top.romanization?.trim() || ''
@@ -579,6 +584,8 @@ export function CharacterBreakdownHost() {
                         ? 'es-ES'
                         : isViDetail
                         ? 'vi'
+                        : isFrDetail
+                          ? 'fr-FR'
                         : isThDetail
                         ? 'th'
                         : isLoDetail
@@ -670,6 +677,8 @@ export function CharacterBreakdownHost() {
             <LaoText text={topLabel} showDetail />
           ) : isKoDetail ? (
             <KoreanText text={topLabel} showDetail />
+          ) : isFrDetail ? (
+            <FrText text={topLabel} showDetail />
           ) : isScaffoldDetail ? (
             detailLang === 'ja' ? (
               <JaText text={topLabel} showDetail />
@@ -679,8 +688,6 @@ export function CharacterBreakdownHost() {
               <MsText text={topLabel} showDetail />
             ) : detailLang === 'pt' ? (
               <PtText text={topLabel} showDetail />
-            ) : detailLang === 'fr' ? (
-              <FrText text={topLabel} showDetail />
             ) : detailLang === 'hi' ? (
               <HiText text={topLabel} showDetail />
             ) : detailLang === 'km' ? (
@@ -858,6 +865,8 @@ export function CharacterBreakdownHost() {
                               ? 'eses'
                               : isViDetail
                               ? 'vi'
+                              : isFrDetail
+                                ? 'fr'
                               : isThDetail
                               ? 'th'
                               : isLoDetail
@@ -939,6 +948,8 @@ export function CharacterBreakdownHost() {
                           ? 'eses'
                           : isViDetail
                           ? 'vi'
+                          : isFrDetail
+                            ? 'fr'
                           : isThDetail
                           ? 'th'
                           : isLoDetail
@@ -976,6 +987,8 @@ export function CharacterBreakdownHost() {
                                   ? 'es-ES'
                                   : isViDetail
                                   ? 'vi'
+                                  : isFrDetail
+                                    ? 'fr-FR'
                                   : isThDetail
                                   ? 'th'
                                   : isLoDetail
@@ -1069,6 +1082,15 @@ export function CharacterBreakdownHost() {
                                     <span className="detail-panel-ipa muted">—</span>
                                   )
                                 })()}
+                              </span>
+                            ) : isFrDetail ? (
+                              <span className="detail-panel-tl-pron" lang="fr-FR">
+                                <span
+                                  className="detail-panel-ipa"
+                                  title="French form"
+                                >
+                                  {row.jyutping || row.char}
+                                </span>
                               </span>
                             ) : isWuuDetail ? (
                               row.jyutping ? (

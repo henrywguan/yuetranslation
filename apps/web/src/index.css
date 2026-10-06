@@ -656,3 +656,54 @@ button.korean-activate {
   text-align: inherit;
   cursor: pointer;
 }
+
+/* French — accented fr-FR on compact; Details adds tu/vous + honesty. */
+.french-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.french-block--detail {
+  gap: 0.35em;
+}
+.french-address-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.french-address-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.french-address-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.french-address-chip--vous,
+.french-address-chip--mixed {
+  opacity: 0.9;
+}
+.french-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.french-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}

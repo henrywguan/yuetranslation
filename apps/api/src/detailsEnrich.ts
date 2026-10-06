@@ -172,9 +172,10 @@ const ENRICH_META: Record<
     exampleIn: 'natural Portuguese (BR)',
   },
   fr: {
-    label: 'French',
-    glossLangHint: 'French',
-    exampleIn: 'natural French',
+    label: 'Metropolitan French (France)',
+    glossLangHint:
+      'Metropolitan French (France / fr-FR) — correct orthography with accents; colloquial everyday, not Quebec-primary',
+    exampleIn: 'natural Metropolitan French (France)',
   },
   hi: {
     label: 'Hindi',

@@ -8034,6 +8034,293 @@
         "basic",
         "korean"
       ]
+    },
+    {
+      "id": "en-hello-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "hello",
+      "text": "Bonjour",
+      "alternatives": [
+        "Salut",
+        "Coucou"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-bonjour-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "bonjour",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-salut-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "salut",
+      "text": "Hi",
+      "alternatives": [
+        "Hello"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-thank-you-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "thank you",
+      "text": "Merci",
+      "alternatives": [
+        "Merci beaucoup"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-merci-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "merci",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-thank-you-so-much-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "thank you so much",
+      "text": "Merci beaucoup",
+      "alternatives": [
+        "Un grand merci"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-im-sorry-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "i'm sorry",
+      "text": "Désolé",
+      "alternatives": [
+        "Pardon",
+        "Excuse-moi"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-desole-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "désolé",
+      "text": "I'm sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-yes-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "yes",
+      "text": "Oui",
+      "alternatives": [
+        "Ouais",
+        "Bien sûr"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-oui-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "oui",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-no-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "no",
+      "text": "Non",
+      "alternatives": [
+        "Nan"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-non-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "non",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-please-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "please",
+      "text": "S'il te plaît",
+      "alternatives": [
+        "S'il vous plaît",
+        "Je t'en prie"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-sil-te-plait-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "s'il te plaît",
+      "text": "Please",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-excuse-me-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "excuse me",
+      "text": "Excuse-moi",
+      "alternatives": [
+        "Pardon",
+        "Excusez-moi"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-goodbye-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "goodbye",
+      "text": "Au revoir",
+      "alternatives": [
+        "Salut",
+        "À plus"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-au-revoir-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "au revoir",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-how-are-you-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "how are you",
+      "text": "Ça va ?",
+      "alternatives": [
+        "Comment ça va ?",
+        "Tu vas bien ?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-ca-va-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "ça va",
+      "text": "How are you",
+      "alternatives": [
+        "I'm fine"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-see-you-later-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "see you later",
+      "text": "À plus tard",
+      "alternatives": [
+        "À tout à l'heure",
+        "À plus"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
     }
   ]
 }
