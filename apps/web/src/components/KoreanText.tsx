@@ -9,8 +9,10 @@ import {
 
 /**
  * Korean line for Solo / Conversation / Cam.
- * Compact: Hangul only — no RR, IPA, or Chao.
- * Details (`showDetail`): RR reading + speech-level chip + honesty note.
+ * Compact always shows Hangul plus pronunciation-based Revised Romanization
+ * when the phrase parses — learners should not need Details just to see RR.
+ * Details (`showDetail`) add speech-level chips and the honesty note.
+ * No IPA, Chao, or tone digits.
  */
 export function KoreanText({
   text,
@@ -25,13 +27,13 @@ export function KoreanText({
   placeholder?: ReactNode
   onActivate?: (text: string) => void
   activateLabel?: string
-  /** Details pane: RR + speech level + honesty. */
+  /** Details pane: speech level + honesty (RR already shows on compact). */
   showDetail?: boolean
 }) {
   const trimmed = text.trim()
   if (!trimmed) return placeholder ? <>{placeholder}</> : null
 
-  const reading = showDetail ? romanizeKorean(trimmed) : null
+  const reading = romanizeKorean(trimmed)
   const level = showDetail ? detectKoreanSpeechLevel(trimmed) : null
 
   const body = (
