@@ -137,7 +137,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     extraPanels: [],
   },
   id: {
-    htmlLang: 'id',
+    htmlLang: 'id-ID',
     pronField: 'accented',
     defaultGlossLang: 'id',
     rubyTitle: false,
