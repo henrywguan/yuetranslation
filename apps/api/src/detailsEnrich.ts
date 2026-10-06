@@ -162,9 +162,10 @@ const ENRICH_META: Record<
     exampleIn: 'natural Indonesian',
   },
   ms: {
-    label: 'Malay',
-    glossLangHint: 'Malay',
-    exampleIn: 'natural Malay',
+    label: 'Malay (Bahasa Melayu / Malaysia)',
+    glossLangHint:
+      'colloquial Bahasa Melayu (Malaysia / ms-MY everyday) — Latin orthography; note informal vs formal pronouns (kau/anda, aku/saya) and casual particles (lah/je/kan) when relevant; never Chao/IPA/tone digits; not Indonesian',
+    exampleIn: 'natural colloquial Malay (Latin script, Malaysia)',
   },
   pt: {
     label: 'Portuguese (BR)',

@@ -8034,6 +8034,230 @@
         "basic",
         "korean"
       ]
+    },
+    {
+      "id": "en-hello-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "hello",
+      "text": "Hai",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "malay"
+      ],
+      "alternatives": [
+        "Halo",
+        "Apa khabar"
+      ]
+    },
+    {
+      "id": "ms-hai-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "hai",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-thank-you-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "thank you",
+      "text": "Terima kasih",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "malay"
+      ],
+      "alternatives": [
+        "Thanks",
+        "Trima kasih"
+      ]
+    },
+    {
+      "id": "ms-terima-kasih-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "terima kasih",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-how-are-you-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "how are you",
+      "text": "Apa khabar?",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "malay"
+      ],
+      "alternatives": [
+        "Macam mana?",
+        "Baik-baik je?"
+      ]
+    },
+    {
+      "id": "ms-apa-khabar-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "apa khabar",
+      "text": "How are you?",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-yes-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "yes",
+      "text": "Ya",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "malay"
+      ],
+      "alternatives": [
+        "Ye",
+        "Betul"
+      ]
+    },
+    {
+      "id": "ms-ya-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "ya",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-no-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "no",
+      "text": "Tidak",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "malay"
+      ],
+      "alternatives": [
+        "Tak",
+        "Bukan"
+      ]
+    },
+    {
+      "id": "ms-tidak-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "tidak",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-excuse-me-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "excuse me",
+      "text": "Maaf",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "malay"
+      ],
+      "alternatives": [
+        "Tumpang lalu",
+        "Excuse me"
+      ]
+    },
+    {
+      "id": "ms-maaf-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "maaf",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-how-much-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "how much",
+      "text": "Berapa?",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "malay"
+      ],
+      "alternatives": [
+        "Berapa harga?",
+        "Berapa ni?"
+      ]
+    },
+    {
+      "id": "ms-berapa-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "berapa",
+      "text": "How much?",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "where is the bathroom",
+      "text": "Di mana tandas?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "malay"
+      ],
+      "alternatives": [
+        "Tandas kat mana?",
+        "Di mana bilik air?"
+      ]
+    },
+    {
+      "id": "ms-di-mana-tandas-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "di mana tandas",
+      "text": "Where is the bathroom?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "malay"
+      ]
     }
   ]
 }

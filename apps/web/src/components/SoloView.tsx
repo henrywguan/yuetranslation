@@ -37,7 +37,7 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'ko') return '한국어로 입력하거나 말하기'
   if (lang === 'ja') return '日本語で入力するか話す'
   if (lang === 'id') return 'Ketik atau bicara Bahasa Indonesia…'
-  if (lang === 'ms') return 'Taip atau bercakap Bahasa Melayu…'
+  if (lang === 'ms') return 'Taip atau cakap Bahasa Melayu…'
   if (lang === 'pt') return 'Digite ou fale em português (BR)…'
   if (lang === 'fr') return 'Tapez ou parlez en français…'
   if (lang === 'hi') return 'हिन्दी में टाइप करें या बोलें…'

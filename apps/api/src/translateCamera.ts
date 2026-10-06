@@ -131,11 +131,14 @@ function isKoreanTarget(to: CameraLang): boolean {
   return to === 'ko'
 }
 
+function isMalayTarget(to: CameraLang): boolean {
+  return to === 'ms'
+}
+
 function isScaffoldCameraTarget(to: CameraLang): boolean {
   return (
     to === 'ja' ||
     to === 'id' ||
-    to === 'ms' ||
     to === 'pt' ||
     to === 'fr' ||
     to === 'hi' ||
@@ -334,11 +337,31 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .join('\n')
   }
 
+  if (to === 'ms') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Bahasa Melayu (Malay / Malaysia).',
+      'Write for Malaysian travelers/readers: Malaysia (ms-MY) everyday Malay, not stiff bureaucratic Malay, not Indonesian (Bahasa Indonesia).',
+      'Use Latin script only (correct Malay orthography). Never Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Daftar masuk / Check-in; Luggage → Bagasi.',
+      '- Safety: Wet floor → Lantai licin / Awas; Caution → Awas / Berhati-hati.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Malay output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Malay>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
   if (isScaffoldCameraTarget(to)) {
     const label =
       to === 'ja' ? 'Japanese' :
       to === 'id' ? 'Indonesian' :
-      to === 'ms' ? 'Malay' :
       to === 'pt' ? 'Portuguese (BR)' :
       to === 'fr' ? 'French' :
       to === 'hi' ? 'Hindi' :
@@ -511,6 +534,9 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isVietnameseTarget(to)) {
     return hasHan(source) ? `(demo VI) ${source}` : `(demo) ${source}`
   }
+  if (isMalayTarget(to)) {
+    return hasHan(source) ? `(demo MS) ${source}` : `(demo) ${source}`
+  }
   if (isThaiTarget(to)) {
     return hasHan(source) ? `(demo TH) ${source}` : `(demo) ${source}`
   }
@@ -589,6 +615,8 @@ export async function translateCameraText(
           ? `(tr ES) ${source}`
           : isVietnameseTarget(to)
           ? `(tr VI) ${source}`
+          : isMalayTarget(to)
+          ? `(tr MS) ${source}`
           : isThaiTarget(to)
             ? `(tr TH) ${source}`
             : isLaoTarget(to)
@@ -629,7 +657,7 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'ko') return 'Korean (Hangul, ko-KR)'
   if (lang === 'ja') return 'Japanese (ja-JP)'
   if (lang === 'id') return 'Indonesian (id-ID)'
-  if (lang === 'ms') return 'Malay (ms-MY)'
+  if (lang === 'ms') return 'Malay (Latin script, ms-MY / Malaysia)'
   if (lang === 'pt') return 'Portuguese (BR) (pt-BR)'
   if (lang === 'fr') return 'French (fr-FR)'
   if (lang === 'hi') return 'Hindi (hi-IN)'
@@ -694,6 +722,8 @@ export async function translateCameraBatch(
               ? `(tr ES) ${s}`
               : isVietnameseTarget(to)
               ? `(tr VI) ${s}`
+              : isMalayTarget(to)
+              ? `(tr MS) ${s}`
               : isThaiTarget(to)
                 ? `(tr TH) ${s}`
                 : isLaoTarget(to)
@@ -720,6 +750,7 @@ export async function translateCameraBatch(
       else if (isMexicanTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isPeninsularTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isVietnameseTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isMalayTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isThaiTarget(to) && t && (hasHan(t) || !/[\u0E00-\u0E7F]/.test(t))) out[start + i] = src
       else if (isLaoTarget(to) && t && (hasHan(t) || !/[\u0E80-\u0EFF]/.test(t))) out[start + i] = src
       else if (isKoreanTarget(to) && t && (hasHan(t) || !/[\uAC00-\uD7A3]/.test(t))) out[start + i] = src

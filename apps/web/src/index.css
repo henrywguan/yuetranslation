@@ -602,6 +602,72 @@ button.thai-lao-activate {
   cursor: pointer;
 }
 
+/* Malay — Latin compact; Details adds register/particle honesty. */
+.malay-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+  max-width: 100%;
+}
+.malay-block--detail {
+  gap: 0.35em;
+}
+.malay-register-row,
+.malay-particle-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  max-width: 100%;
+}
+.malay-register-scheme,
+.malay-particle-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.malay-register-chip,
+.malay-particle-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+  font-weight: 600;
+}
+.malay-particle-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+}
+.malay-particle-chip {
+  padding: 0.1em 0.45em;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mint) 34%, transparent);
+  background: color-mix(in srgb, var(--mint) 14%, transparent);
+  color: color-mix(in srgb, var(--mint) 88%, white);
+}
+.malay-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.malay-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  max-width: 100%;
+}
+
 /* Korean — Hangul + RR on compact; Details adds speech level + honesty. */
 .korean-block {
   display: inline-flex;

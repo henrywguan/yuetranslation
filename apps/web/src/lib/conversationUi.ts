@@ -187,16 +187,16 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     holdFacingYou: 'Arahkan ponsel ke arah Anda',
   },
   ms: {
-    htmlLang: 'ms',
+    htmlLang: 'ms-MY',
     mic: {
-      holdOrTapToSpeak: 'Tahan atau ketik untuk bercakap',
+      holdOrTapToSpeak: 'Tahan atau ketuk untuk bercakap',
       releaseWhenDone: 'Mendengar — lepaskan bila selesai',
-      tapListening: 'Mendengar — jeda atau ketik untuk berhenti',
-      speaking: 'Bercakap…',
-      translating: 'Menterjemah',
+      tapListening: 'Mendengar — jeda atau ketuk lagi untuk berhenti',
+      speaking: 'Sedang bercakap…',
+      translating: 'Menterjemah…',
     },
-    friendLooksHere: 'Rakan menghadap sisi ini',
-    holdFacingYou: 'Halakan telefon ke arah anda',
+    friendLooksHere: 'Kawan tengok sebelah ni',
+    holdFacingYou: 'Halakan telefon ke arah awak',
   },
   pt: {
     htmlLang: 'pt-BR',
