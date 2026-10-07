@@ -3,7 +3,7 @@ import type { PartnerPerformance } from './practicePartnerPerformance'
 import { ensureSharedAudioContext } from './audioReactive'
 import { isAppleTouchDevice } from './mediaAccess'
 import type { Lang } from './types'
-import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalEsesVoice, readLocalViVoice, readLocalThVoice, readLocalLoVoice, readLocalKoVoice, readLocalYueVoice } from './ttsVoices'
+import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalEsesVoice, readLocalViVoice, readLocalThVoice, readLocalLoVoice, readLocalKoVoice, readLocalJaVoice, readLocalIdVoice, readLocalMsVoice, readLocalPtVoice, readLocalFrVoice, readLocalHiVoice, readLocalKmVoice, readLocalMyVoice, readLocalJvVoice, readLocalItVoice, readLocalDeVoice, readLocalNlVoice, readLocalYueVoice } from './ttsVoices'
 
 /** Practice Partner / fill-the-room — HTML volume caps at 1; Web Audio can go higher. */
 const LOUD_PLAYBACK_GAIN = 1.85
@@ -401,6 +401,18 @@ function browserLangTag(lang: Lang): string {
   if (lang === 'th') return 'th-TH'
   if (lang === 'lo') return 'lo-LA'
   if (lang === 'ko') return 'ko-KR'
+  if (lang === 'ja') return 'ja-JP'
+  if (lang === 'id') return 'id-ID'
+  if (lang === 'ms') return 'ms-MY'
+  if (lang === 'pt') return 'pt-BR'
+  if (lang === 'fr') return 'fr-FR'
+  if (lang === 'hi') return 'hi-IN'
+  if (lang === 'km') return 'km-KH'
+  if (lang === 'my') return 'my-MM'
+  if (lang === 'jv') return 'jv-ID'
+  if (lang === 'it') return 'it-IT'
+  if (lang === 'de') return 'de-DE'
+  if (lang === 'nl') return 'nl-NL'
   return 'en-US'
 }
 
@@ -487,6 +499,18 @@ function preferredVoiceFor(lang: Lang, override?: string | null): string | null 
   if (lang === 'th') return readLocalThVoice()
   if (lang === 'lo') return readLocalLoVoice()
   if (lang === 'ko') return readLocalKoVoice()
+  if (lang === 'ja') return readLocalJaVoice()
+  if (lang === 'id') return readLocalIdVoice()
+  if (lang === 'ms') return readLocalMsVoice()
+  if (lang === 'pt') return readLocalPtVoice()
+  if (lang === 'fr') return readLocalFrVoice()
+  if (lang === 'hi') return readLocalHiVoice()
+  if (lang === 'km') return readLocalKmVoice()
+  if (lang === 'my') return readLocalMyVoice()
+  if (lang === 'jv') return readLocalJvVoice()
+  if (lang === 'it') return readLocalItVoice()
+  if (lang === 'de') return readLocalDeVoice()
+  if (lang === 'nl') return readLocalNlVoice()
   return readLocalYueVoice()
 }
 

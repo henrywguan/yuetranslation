@@ -20,6 +20,18 @@ import { inferVietnameseRegister } from './vietnameseRegister.js'
 import { inferThaiRegister } from './thaiRegister.js'
 import { inferLaoRegister } from './laoRegister.js'
 import { inferKoreanRegister } from './koreanRegister.js'
+import { inferJapaneseRegister, looksLikeJapaneseOutput } from './japaneseRegister.js'
+import { translateIndonesian } from './translateIndonesian.js'
+import { translateMalay } from './translateMalay.js'
+import { translateBrazilianPortuguese } from './translateBrazilianPortuguese.js'
+import { translateFrench } from './translateFrench.js'
+import { translateHindi } from './translateHindi.js'
+import { translateKhmer } from './translateKhmer.js'
+import { translateBurmese } from './translateBurmese.js'
+import { translateJavanese } from './translateJavanese.js'
+import { translateItalian } from './translateItalian.js'
+import { translateGerman } from './translateGerman.js'
+import { translateDutch } from './translateDutch.js'
 import { translateCebuano, translateIlocano, translateBikol } from './translatePhilippineRegional.js'
 
 /** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
@@ -42,7 +54,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ceb', 'ilo', 'bcl'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ceb', 'ilo', 'bcl'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -82,7 +94,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl'
 
 type TranslateResult = {
   text: string
@@ -2889,6 +2901,224 @@ async function translateKorean(opts: {
   )
 }
 
+async function translateJapanese(opts: {
+  from: TranslateLang
+  to: TranslateLang
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+  fallbackDefinition: string
+}): Promise<TranslateResult> {
+  const { from, to, text, stage, wantAlts, fallbackDefinition } = opts
+
+  const dictHit = dictionaryTranslate({
+    sourceLang: from,
+    targetLang: to,
+    source: text,
+    wantAlternatives: wantAlts,
+  })
+  if (dictHit) {
+    return withLearnerDefinitions(
+      {
+        text: dictHit.text,
+        definition: to === 'ja' ? fallbackDefinition : '',
+        alternatives: wantAlts ? dictHit.alternatives : [],
+        engine: 'dictionary',
+        from,
+        to,
+        stage,
+        meta: {
+          dictionaryHit: true,
+          scrubbed: false,
+          colloquialScore: 8,
+          rewritten: false,
+          notes: [`dict:${dictHit.entry.id}`, 'ja-colloquial'],
+        },
+      },
+      text,
+    )
+  }
+
+  const client = openaiClient()
+  if (!client) {
+    const demoPrimary = to === 'ja' ? `(demo JA) ${text}` : `(demo) ${text}`
+    return withLearnerDefinitions(
+      {
+        text: demoPrimary,
+        definition: to === 'ja' ? fallbackDefinition : '',
+        alternatives: [],
+        engine: 'demo',
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['demo', 'ja-colloquial']),
+      },
+      text,
+    )
+  }
+
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+  const toJa = to === 'ja'
+  const register = toJa ? inferJapaneseRegister(text) : 'colloquial'
+  const registerNote = register === 'formal' ? 'ja-formal' : 'ja-colloquial'
+  let primary = text
+  let alternatives: string[] = []
+  let definition = fallbackDefinition
+
+  if (wantAlts && toJa) {
+    const system =
+      register === 'formal'
+        ? [
+            'You are a Tokyo / standard Japanese (共通語) interpreter for formal written and spoken situations.',
+            'Translate English into POLITE formal modern Japanese (です・ます / appropriate keigo when natural).',
+            'Avoid slang; keep wording clear and respectful.',
+            'Write natural Japanese orthography (kanji + kana). Never dump romaji as the primary line.',
+            'Never output Mandarin or Cantonese Chinese sentences. Never invent Chao tone letters or Cantonese ASCII tone digits. Never IPA.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best formal Japanese>","alternatives":["<other polite variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural formal variants. No markdown.',
+          ].join('\n')
+        : [
+            'You are a Tokyo / standard Japanese (共通語) interpreter for face-to-face conversation.',
+            'Translate English into COLLOQUIAL spoken modern Japanese (natural everyday register; polite です・ます is fine for strangers).',
+            'Do NOT use stiff legal/textbook Japanese unless the source is formal.',
+            'Write natural Japanese orthography (kanji + kana). Never dump romaji as the primary line.',
+            'Never output Mandarin or Cantonese Chinese sentences. Never invent Chao tone letters or Cantonese ASCII tone digits. Never IPA.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best colloquial Japanese>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural spoken variants. No markdown.',
+          ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: register === 'formal' ? 0.3 : 0.4,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedJa = parseYuePayload(raw, text, false)
+    primary = parsedJa.text
+    alternatives = parsedJa.alternatives
+    if (parsedJa.definition) definition = parsedJa.definition
+  } else if (wantAlts && !toJa) {
+    const system = [
+      'You are a Japanese interpreter helping Japanese speakers learn English.',
+      'Translate colloquial modern Japanese into natural conversational English.',
+      'Return ONLY valid JSON:',
+      '{"primary":"<best English>","alternatives":["<other natural English phrasing>", "..."],"definition":"<short Japanese gloss of what the English means>"}',
+      'Prefer 2–3 natural English variants. No markdown.',
+    ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEn = parseYuePayload(raw, '', false)
+    primary = parsedEn.text
+    alternatives = parsedEn.alternatives.filter((a) => a && !hasHan(a))
+    if (parsedEn.definition) definition = parsedEn.definition
+  } else {
+    const system = toJa
+      ? register === 'formal'
+        ? [
+            'You are a Tokyo / standard Japanese (共通語) interpreter for formal situations.',
+            'Translate into POLITE formal modern Japanese (です・ます / appropriate keigo when natural).',
+            'Write natural Japanese orthography (kanji + kana). Never dump romaji as the primary line.',
+            'Never output Mandarin or Cantonese Chinese sentences. Never Chao tone letters, Cantonese ASCII tone digits, or IPA.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<formal Japanese>","definition":"<short English gloss>"}',
+          ].join('\n')
+        : [
+            'You are a Tokyo / standard Japanese (共通語) interpreter for face-to-face conversation.',
+            'Translate into COLLOQUIAL spoken modern Japanese (everyday conversational; polite です・ます OK).',
+            'Write natural Japanese orthography (kanji + kana). Never dump romaji as the primary line.',
+            'Never output Mandarin or Cantonese Chinese sentences. Never Chao tone letters, Cantonese ASCII tone digits, or IPA.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<colloquial Japanese>","definition":"<short English gloss>"}',
+          ].join('\n')
+      : [
+          'You are a Japanese interpreter.',
+          'Translate colloquial modern Japanese into natural English for conversation.',
+          'Return ONLY valid JSON:',
+          '{"translation":"<English>","definition":"<optional short sense note, or empty string>"}',
+        ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: toJa && register === 'formal' ? 0.2 : 0.25,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const payload = parsePayload(raw, toJa ? text : '', fallbackDefinition, false)
+    primary = payload.text
+    definition = toJa ? payload.definition || fallbackDefinition : payload.definition
+  }
+
+  if (toJa) {
+    const outText = primary && looksLikeJapaneseOutput(primary) ? primary.trim() : ''
+    return withLearnerDefinitions(
+      {
+        text: outText,
+        definition,
+        alternatives: wantAlts
+          ? alternatives.filter((a) => a && looksLikeJapaneseOutput(a) && a !== outText)
+          : [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(outText ? [registerNote] : [registerNote, 'no-ja-output']),
+      },
+      text,
+    )
+  }
+
+  if (looksLikeGlossDump(primary) || hasHan(primary)) {
+    return withLearnerDefinitions(
+      {
+        text: '',
+        definition: '',
+        alternatives: [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['ja-echo-blocked']),
+      },
+      text,
+    )
+  }
+
+  return withLearnerDefinitions(
+    {
+      text: primary,
+      definition,
+      alternatives: wantAlts ? alternatives.filter((a) => a && !hasHan(a) && a !== primary) : [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta([registerNote]),
+    },
+    text,
+  )
+}
+
 export async function translate(input: unknown) {
   const parsed = Body.parse(input)
   const from = parsed.from
@@ -2985,6 +3215,165 @@ export async function translate(input: unknown) {
 
   if (to === 'ko' || (from === 'ko' && to === 'en')) {
     return translateKorean({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
+  if (to === 'ja' || (from === 'ja' && to === 'en')) {
+    return translateJapanese({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
+
+  if (to === 'id' || (from === 'id' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateIndonesian({
+        from: from as 'en' | 'id',
+        to: to as 'en' | 'id',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'ms' || (from === 'ms' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateMalay({
+        from: from as 'en' | 'ms',
+        to: to as 'en' | 'ms',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'pt' || (from === 'pt' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateBrazilianPortuguese({
+        from: from as 'en' | 'pt',
+        to: to as 'en' | 'pt',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'fr' || (from === 'fr' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateFrench({
+        from: from as 'en' | 'fr',
+        to: to as 'en' | 'fr',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'hi' || (from === 'hi' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateHindi({
+        from: from as 'en' | 'hi',
+        to: to as 'en' | 'hi',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'km' || (from === 'km' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateKhmer({
+        from: from as 'en' | 'km',
+        to: to as 'en' | 'km',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'my' || (from === 'my' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateBurmese({
+        from: from as 'en' | 'my',
+        to: to as 'en' | 'my',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'jv' || (from === 'jv' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateJavanese({
+        from: from as 'en' | 'jv',
+        to: to as 'en' | 'jv',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'it' || (from === 'it' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateItalian({
+        from: from as 'en' | 'it',
+        to: to as 'en' | 'it',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'de' || (from === 'de' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateGerman({
+        from: from as 'en' | 'de',
+        to: to as 'en' | 'de',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'nl' || (from === 'nl' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateDutch({
+        from: from as 'en' | 'nl',
+        to: to as 'en' | 'nl',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
   }
 
   if (to === 'ceb' || (from === 'ceb' && to === 'en')) {

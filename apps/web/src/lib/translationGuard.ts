@@ -104,3 +104,88 @@ export function sanitizeIloTranslation(text: string | null | undefined): string 
 export function sanitizeBclTranslation(text: string | null | undefined): string | null {
   return sanitizeViTranslation(text)
 }
+
+/** Reject EN→Japanese payloads that are empty, glossy, romaji-only, or long Chinese-only. */
+export function sanitizeJaTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  const hasKana = /[\u3040-\u309F\u30A0-\u30FF\uFF66-\uFF9D]/.test(t)
+  if (hasKana) return t
+  const kanji = t.replace(/[^\u3400-\u9FFF\uF900-\uFAFF]/g, '')
+  // Short kanji compounds (出口, 東京) OK; long Han-only lines are usually Chinese.
+  if (kanji.length > 0 && kanji.length <= 12) return t
+  return null
+}
+
+export function sanitizeHiTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\u0900-\u097F]/.test(t)) return null
+  return t
+}
+
+export function sanitizeKmTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\u1780-\u17FF]/.test(t)) return null
+  return t
+}
+
+export function sanitizeMyTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\u1000-\u109F]/.test(t)) return null
+  return t
+}
+
+
+/** Reject EN→id Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeIdTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→ms Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeMsTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→Brazilian Portuguese payloads that are empty, glossy, or still Chinese. */
+export function sanitizePtTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\p{L}]/u.test(t)) return null
+  return t
+}
+
+/** Reject EN→fr Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeFrTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→jv Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeJvTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→it Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeItTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→de Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeDeTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→nl Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeNlTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+export function sanitizeScaffoldLatinTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}

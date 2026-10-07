@@ -656,3 +656,650 @@ button.korean-activate {
   text-align: inherit;
   cursor: pointer;
 }
+
+/* Japanese — compact orthography only; Details adds romaji (when known), politeness, honesty. */
+.japanese-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.japanese-block--detail {
+  gap: 0.35em;
+}
+.japanese-reading-row,
+.japanese-level-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.japanese-reading {
+  font-size: 0.72em;
+  line-height: 1.2;
+  opacity: 0.78;
+  font-weight: 500;
+}
+.japanese-reading-label,
+.japanese-level-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.japanese-level-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.japanese-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.japanese-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* Indonesian — Latin compact; Details adds register/particle honesty. */
+.indonesian-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+  max-width: 100%;
+}
+.indonesian-block--detail {
+  gap: 0.35em;
+}
+.indonesian-register-row,
+.indonesian-particle-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  max-width: 100%;
+}
+.indonesian-register-scheme,
+.indonesian-particle-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.indonesian-register-chip,
+.indonesian-particle-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+  font-weight: 600;
+}
+.indonesian-particle-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+}
+.indonesian-particle-chip {
+  padding: 0.1em 0.45em;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mint) 34%, transparent);
+  background: color-mix(in srgb, var(--mint) 14%, transparent);
+  color: color-mix(in srgb, var(--mint) 88%, white);
+}
+.indonesian-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.indonesian-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+/* Malay — Latin compact; Details adds register/particle honesty. */
+.malay-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+  max-width: 100%;
+}
+.malay-block--detail {
+  gap: 0.35em;
+}
+.malay-register-row,
+.malay-particle-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  max-width: 100%;
+}
+.malay-register-scheme,
+.malay-particle-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.malay-register-chip,
+.malay-particle-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+  font-weight: 600;
+}
+.malay-particle-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+}
+.malay-particle-chip {
+  padding: 0.1em 0.45em;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mint) 34%, transparent);
+  background: color-mix(in srgb, var(--mint) 14%, transparent);
+  color: color-mix(in srgb, var(--mint) 88%, white);
+}
+.malay-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.malay-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+/* French — accented fr-FR on compact; Details adds tu/vous + honesty. */
+.french-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.french-block--detail {
+  gap: 0.35em;
+}
+.french-address-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.french-address-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.french-address-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.french-address-chip--vous,
+.french-address-chip--mixed {
+  opacity: 0.9;
+}
+.french-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.french-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* Hindi — Devanagari on compact; Details adds optional IAST + formality + honesty. */
+.hindi-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.hindi-block--detail {
+  gap: 0.35em;
+}
+.hindi-reading-row,
+.hindi-level-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.hindi-reading {
+  font-size: 0.72em;
+  line-height: 1.2;
+  opacity: 0.78;
+  font-weight: 500;
+}
+.hindi-reading-label,
+.hindi-level-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.hindi-level-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.hindi-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.hindi-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* Khmer — script plus UNGEGN-style reading (not a tone language). */
+.khmer-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.khmer-block--detail {
+  gap: 0.35em;
+}
+.khmer-reading-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.khmer-reading {
+  font-size: 0.72em;
+  line-height: 1.2;
+  opacity: 0.78;
+  font-weight: 500;
+}
+.khmer-reading-label {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.khmer-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.khmer-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* Burmese — Myanmar script + MLCTS reading; Details adds tone chips + honesty. */
+.burmese-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.burmese-reading-row,
+.burmese-tone-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.burmese-reading {
+  font-size: 0.72em;
+  line-height: 1.2;
+  opacity: 0.78;
+  font-weight: 500;
+}
+.burmese-reading-label,
+.burmese-tone-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.burmese-tone-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.burmese-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.burmese-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* Javanese — Latin only on compact; Details adds undha-usuk speech level + honesty. */
+.javanese-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.javanese-block--detail {
+  gap: 0.35em;
+}
+.javanese-level-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.javanese-level-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.javanese-level-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.javanese-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.javanese-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* Italian — accented it-IT on compact; Details adds tu/Lei + honesty. */
+.italian-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.italian-block--detail {
+  gap: 0.35em;
+}
+.italian-address-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.italian-address-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.italian-address-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.italian-address-chip--lei,
+.italian-address-chip--mixed {
+  opacity: 0.9;
+}
+.italian-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.italian-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* Korean — Hangul + RR on compact; Details adds speech level + honesty. */
+.korean-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.korean-block--detail {
+  gap: 0.35em;
+}
+.korean-reading-row,
+.korean-level-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.korean-reading {
+  font-size: 0.72em;
+  line-height: 1.2;
+  opacity: 0.78;
+  font-weight: 500;
+}
+.korean-reading-label,
+.korean-level-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.korean-level-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.korean-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.korean-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.german-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.german-block--detail {
+  gap: 0.35em;
+}
+.german-address-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.german-address-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.german-address-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.german-address-chip--sie,
+.german-address-chip--mixed {
+  opacity: 0.9;
+}
+.german-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.german-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* Dutch — nl-NL orthography on compact; Details adds je/u + honesty. */
+.dutch-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.dutch-block--detail {
+  gap: 0.35em;
+}
+.dutch-address-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.dutch-address-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.dutch-address-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.dutch-address-chip--u,
+.dutch-address-chip--mixed {
+  opacity: 0.9;
+}
+.dutch-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.dutch-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+

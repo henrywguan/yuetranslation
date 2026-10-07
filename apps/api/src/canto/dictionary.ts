@@ -21,7 +21,7 @@ for (const entry of raw.entries) {
 }
 
 function lookupPhrase(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl'
   targetLang: TargetLang
   source: string
 }): PhraseEntry | null {
@@ -74,7 +74,7 @@ function alternativeRomanizationsFor(
 }
 
 export function dictionaryTranslate(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ceb' | 'ilo' | 'bcl'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl'
   targetLang: TargetLang
   source: string
   wantAlternatives?: boolean
@@ -102,6 +102,18 @@ export function dictionaryTranslate(opts: {
       entry.targetLang === 'th' ||
       entry.targetLang === 'lo' ||
       entry.targetLang === 'ko' ||
+      entry.targetLang === 'nl' ||
+      entry.targetLang === 'de' ||
+      entry.targetLang === 'it' ||
+      entry.targetLang === 'jv' ||
+      entry.targetLang === 'my' ||
+      entry.targetLang === 'km' ||
+      entry.targetLang === 'hi' ||
+      entry.targetLang === 'fr' ||
+      entry.targetLang === 'pt' ||
+      entry.targetLang === 'ms' ||
+      entry.targetLang === 'id' ||
+      entry.targetLang === 'ja' ||
       entry.targetLang === 'ceb' ||
       entry.targetLang === 'ilo' ||
       entry.targetLang === 'bcl')

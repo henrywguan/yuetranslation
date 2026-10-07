@@ -19,6 +19,18 @@ import {
   DEFAULT_TH_VOICE,
   DEFAULT_LO_VOICE,
   DEFAULT_KO_VOICE,
+  DEFAULT_JA_VOICE,
+  DEFAULT_ID_VOICE,
+  DEFAULT_MS_VOICE,
+  DEFAULT_PT_VOICE,
+  DEFAULT_FR_VOICE,
+  DEFAULT_HI_VOICE,
+  DEFAULT_KM_VOICE,
+  DEFAULT_MY_VOICE,
+  DEFAULT_JV_VOICE,
+  DEFAULT_IT_VOICE,
+  DEFAULT_DE_VOICE,
+  DEFAULT_NL_VOICE,
   DEFAULT_YUE_VOICE,
   resolveCmnVoice,
   resolveEnVoice,
@@ -29,6 +41,18 @@ import {
   resolveThVoice,
   resolveLoVoice,
   resolveKoVoice,
+  resolveJaVoice,
+  resolveIdVoice,
+  resolveMsVoice,
+  resolvePtVoice,
+  resolveFrVoice,
+  resolveHiVoice,
+  resolveKmVoice,
+  resolveMyVoice,
+  resolveJvVoice,
+  resolveItVoice,
+  resolveDeVoice,
+  resolveNlVoice,
   resolveYueVoice,
 } from './ttsVoices.js'
 
@@ -154,6 +178,18 @@ export type Entitlement = {
     ttsVoiceTh: string
     ttsVoiceLo: string
     ttsVoiceKo: string
+    ttsVoiceJa: string
+    ttsVoiceId: string
+    ttsVoiceMs: string
+    ttsVoicePt: string
+    ttsVoiceFr: string
+    ttsVoiceHi: string
+    ttsVoiceKm: string
+    ttsVoiceMy: string
+    ttsVoiceJv: string
+    ttsVoiceIt: string
+    ttsVoiceDe: string
+    ttsVoiceNl: string
     /** Cross-device Auto-speak preference (playback still gated by plan). */
     autoSpeak: boolean
     /** Primary non-English language for Solo / Conversation / Cam / brand. */
@@ -314,6 +350,18 @@ function buildSnapshot(
     ttsVoiceTh?: string | null
     ttsVoiceLo?: string | null
     ttsVoiceKo?: string | null
+    ttsVoiceJa?: string | null
+    ttsVoiceId?: string | null
+    ttsVoiceMs?: string | null
+    ttsVoicePt?: string | null
+    ttsVoiceFr?: string | null
+    ttsVoiceHi?: string | null
+    ttsVoiceKm?: string | null
+    ttsVoiceMy?: string | null
+    ttsVoiceJv?: string | null
+    ttsVoiceIt?: string | null
+    ttsVoiceDe?: string | null
+    ttsVoiceNl?: string | null
     autoSpeak?: boolean | null
     primaryLang?: string | null
     household?: HouseholdSummary | null
@@ -338,6 +386,18 @@ function buildSnapshot(
     ttsVoiceTh: resolveThVoice(opts.ttsVoiceTh),
     ttsVoiceLo: resolveLoVoice(opts.ttsVoiceLo),
     ttsVoiceKo: resolveKoVoice(opts.ttsVoiceKo),
+    ttsVoiceJa: resolveJaVoice(opts.ttsVoiceJa),
+    ttsVoiceId: resolveIdVoice(opts.ttsVoiceId),
+    ttsVoiceMs: resolveMsVoice(opts.ttsVoiceMs),
+    ttsVoicePt: resolvePtVoice(opts.ttsVoicePt),
+    ttsVoiceFr: resolveFrVoice(opts.ttsVoiceFr),
+    ttsVoiceHi: resolveHiVoice(opts.ttsVoiceHi),
+    ttsVoiceKm: resolveKmVoice(opts.ttsVoiceKm),
+    ttsVoiceMy: resolveMyVoice(opts.ttsVoiceMy),
+    ttsVoiceJv: resolveJvVoice(opts.ttsVoiceJv),
+    ttsVoiceIt: resolveItVoice(opts.ttsVoiceIt),
+    ttsVoiceDe: resolveDeVoice(opts.ttsVoiceDe),
+    ttsVoiceNl: resolveNlVoice(opts.ttsVoiceNl),
     autoSpeak: Boolean(opts.autoSpeak),
     primaryLang: normalizePrimaryLang(opts.primaryLang),
     username: opts.username?.trim() || null,
@@ -454,6 +514,18 @@ function buildSnapshot(
         ttsVoiceTh: DEFAULT_TH_VOICE,
         ttsVoiceLo: DEFAULT_LO_VOICE,
         ttsVoiceKo: DEFAULT_KO_VOICE,
+        ttsVoiceJa: DEFAULT_JA_VOICE,
+        ttsVoiceId: DEFAULT_ID_VOICE,
+        ttsVoiceMs: DEFAULT_MS_VOICE,
+        ttsVoicePt: DEFAULT_PT_VOICE,
+        ttsVoiceFr: DEFAULT_FR_VOICE,
+        ttsVoiceHi: DEFAULT_HI_VOICE,
+        ttsVoiceKm: DEFAULT_KM_VOICE,
+        ttsVoiceMy: DEFAULT_MY_VOICE,
+        ttsVoiceJv: DEFAULT_JV_VOICE,
+        ttsVoiceIt: DEFAULT_IT_VOICE,
+        ttsVoiceDe: DEFAULT_DE_VOICE,
+        ttsVoiceNl: DEFAULT_NL_VOICE,
         autoSpeak: false,
         primaryLang: 'yue',
         username: null,
@@ -596,6 +668,18 @@ function localEntitlement(): Entitlement {
         ttsVoiceTh: DEFAULT_TH_VOICE,
         ttsVoiceLo: DEFAULT_LO_VOICE,
         ttsVoiceKo: DEFAULT_KO_VOICE,
+        ttsVoiceJa: DEFAULT_JA_VOICE,
+        ttsVoiceId: DEFAULT_ID_VOICE,
+        ttsVoiceMs: DEFAULT_MS_VOICE,
+        ttsVoicePt: DEFAULT_PT_VOICE,
+        ttsVoiceFr: DEFAULT_FR_VOICE,
+        ttsVoiceHi: DEFAULT_HI_VOICE,
+        ttsVoiceKm: DEFAULT_KM_VOICE,
+        ttsVoiceMy: DEFAULT_MY_VOICE,
+        ttsVoiceJv: DEFAULT_JV_VOICE,
+        ttsVoiceIt: DEFAULT_IT_VOICE,
+        ttsVoiceDe: DEFAULT_DE_VOICE,
+        ttsVoiceNl: DEFAULT_NL_VOICE,
         autoSpeak: false,
         primaryLang: 'yue',
         username: null,
@@ -680,6 +764,18 @@ export async function resolveEntitlement(
     ttsVoiceTh: profile?.tts_voice_th,
     ttsVoiceLo: profile?.tts_voice_lo,
     ttsVoiceKo: profile?.tts_voice_ko,
+    ttsVoiceJa: profile?.tts_voice_ja,
+    ttsVoiceId: profile?.tts_voice_id,
+    ttsVoiceMs: profile?.tts_voice_ms,
+    ttsVoicePt: profile?.tts_voice_pt,
+    ttsVoiceFr: profile?.tts_voice_fr,
+    ttsVoiceHi: profile?.tts_voice_hi,
+    ttsVoiceKm: profile?.tts_voice_km,
+    ttsVoiceMy: profile?.tts_voice_my,
+    ttsVoiceJv: profile?.tts_voice_jv,
+    ttsVoiceIt: profile?.tts_voice_it,
+    ttsVoiceDe: profile?.tts_voice_de,
+    ttsVoiceNl: profile?.tts_voice_nl,
     autoSpeak: profile?.auto_speak,
     primaryLang: profile?.primary_lang,
     household,

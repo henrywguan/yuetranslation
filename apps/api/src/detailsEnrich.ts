@@ -21,6 +21,18 @@ export const DetailLangSchema = z.enum([
   'th',
   'lo',
   'ko',
+  'ja',
+  'id',
+  'ms',
+  'pt',
+  'fr',
+  'hi',
+  'km',
+  'my',
+  'jv',
+  'it',
+  'de',
+  'nl',
   'ceb',
   'ilo',
   'bcl',
@@ -138,6 +150,77 @@ const ENRICH_META: Record<
     label: 'Korean (한국어)',
     glossLangHint: 'Korean (한국어) — Hangul only; Revised Romanization is added by the client',
     exampleIn: 'natural Korean (Hangul)',
+  },
+  ja: {
+    label: 'Japanese (日本語 / 共通語)',
+    glossLangHint:
+      'Japanese (日本語) — natural kanji + kana; optional kana/romaji readings for lemmas; note です・ます vs plain when relevant',
+    exampleIn: 'natural modern Japanese (kanji + kana, colloquial unless formal)',
+  },
+  id: {
+    label: 'Indonesian (Bahasa Indonesia)',
+    glossLangHint:
+      'colloquial Bahasa Indonesia (Jakarta/media everyday) — Latin orthography; note informal vs formal pronouns (kamu/Anda, aku/saya) and casual particles (dong/deh/sih) when relevant; never Chao/IPA/tone digits',
+    exampleIn: 'natural colloquial Indonesian (Latin script)',
+  },
+  ms: {
+    label: 'Malay (Bahasa Melayu / Malaysia)',
+    glossLangHint:
+      'colloquial Bahasa Melayu (Malaysia / ms-MY everyday) — Latin orthography; note informal vs formal pronouns (kau/anda, aku/saya) and casual particles (lah/je/kan) when relevant; never Chao/IPA/tone digits; not Indonesian',
+    exampleIn: 'natural colloquial Malay (Latin script, Malaysia)',
+  },
+  pt: {
+    label: 'Brazilian Portuguese (português do Brasil)',
+    glossLangHint:
+      'Brazilian Portuguese (pt-BR) — Latin orthography with correct accents; not European Portuguese',
+    exampleIn: 'natural Brazilian Portuguese (pt-BR)',
+  },
+  fr: {
+    label: 'Metropolitan French (France)',
+    glossLangHint:
+      'Metropolitan French (France / fr-FR) — correct orthography with accents; colloquial everyday, not Quebec-primary',
+    exampleIn: 'natural Metropolitan French (France)',
+  },
+  hi: {
+    label: 'Hindi (हिन्दी)',
+    glossLangHint:
+      'Modern Standard Hindi (हिन्दी) — Devanagari only; IAST romanization is added by the client in Details',
+    exampleIn: 'natural Modern Standard Hindi (Devanagari)',
+  },
+  km: {
+    label: 'Cambodian Khmer (ភាសាខ្មែរ)',
+    glossLangHint: 'Cambodian Khmer (ភាសាខ្មែរ) — native Khmer script only; never Latin romanization or tone digits',
+    exampleIn: 'natural Cambodian Khmer (Khmer script)',
+  },
+  my: {
+    label: 'Standard Burmese (မြန်မာ)',
+    glossLangHint:
+      'Standard Burmese (မြန်မာ) — native Myanmar script only; MLCTS is added by the client — never invent ASCII tone digits',
+    exampleIn: 'natural colloquial Burmese (Myanmar script)',
+  },
+  jv: {
+    label: 'Javanese (Basa Jawa)',
+    glossLangHint:
+      'colloquial Latin Javanese (Central/East Java media, ngoko by default) — note undha-usuk speech level (ngoko / madya / krama) when detectable; never Indonesian wording by default; never Chao/IPA/tone digits or Hanacaraka',
+    exampleIn: 'natural colloquial Latin Javanese',
+  },
+  it: {
+    label: 'Standard Italian (Italia)',
+    glossLangHint:
+      'Standard Italian (Italia / it-IT) — correct orthography with accents; colloquial everyday, not regional dialect by default',
+    exampleIn: 'natural standard Italian (Italia)',
+  },
+  de: {
+    label: 'Standard German (Deutschland)',
+    glossLangHint:
+      'Standard German (Deutschland / de-DE) — correct orthography with umlauts and ß; colloquial everyday, not Swiss- or Austrian-primary',
+    exampleIn: 'natural standard German (Deutschland)',
+  },
+  nl: {
+    label: 'Standard Dutch (Netherlands)',
+    glossLangHint:
+      'Standard Dutch (Netherlands / nl-NL) — correct orthography; colloquial everyday, not Flemish-primary',
+    exampleIn: 'natural Netherlands Dutch',
   },
   ceb: {
     label: 'Cebuano / Bisaya',

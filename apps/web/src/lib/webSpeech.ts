@@ -38,6 +38,18 @@ export function createWebSpeechSession(
   let thLocaleIndex = 0
   let loLocaleIndex = 0
   let koLocaleIndex = 0
+  let jaLocaleIndex = 0
+  let idLocaleIndex = 0
+  let msLocaleIndex = 0
+  let ptLocaleIndex = 0
+  let frLocaleIndex = 0
+  let hiLocaleIndex = 0
+  let kmLocaleIndex = 0
+  let myLocaleIndex = 0
+  let jvLocaleIndex = 0
+  let itLocaleIndex = 0
+  let deLocaleIndex = 0
+  let nlLocaleIndex = 0
   const bilingualYueEn = Boolean(opts?.bilingualYueEn)
   const echo = createEchoGuard()
   const apple = isAppleTouchDevice()
@@ -54,6 +66,18 @@ export function createWebSpeechSession(
   const thLocales = ['th-TH', 'th']
   const loLocales = ['lo-LA', 'lo']
   const koLocales = ['ko-KR', 'ko']
+  const jaLocales = ['ja-JP', 'ja']
+  const idLocales = ['id-ID', 'id']
+  const msLocales = ['ms-MY', 'ms']
+  const ptLocales = ['pt-BR', 'pt']
+  const frLocales = ['fr-FR', 'fr']
+  const hiLocales = ['hi-IN', 'hi']
+  const kmLocales = ['km-KH', 'km']
+  const myLocales = ['my-MM', 'my']
+  const jvLocales = ['jv-ID', 'jv']
+  const itLocales = ['it-IT', 'it']
+  const deLocales = ['de-DE', 'de']
+  const nlLocales = ['nl-NL', 'nl']
 
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
   const cmnLocale = () => cmnLocales[cmnLocaleIndex % cmnLocales.length]
@@ -66,6 +90,18 @@ export function createWebSpeechSession(
   const thLocale = () => thLocales[thLocaleIndex % thLocales.length]
   const loLocale = () => loLocales[loLocaleIndex % loLocales.length]
   const koLocale = () => koLocales[koLocaleIndex % koLocales.length]
+  const jaLocale = () => jaLocales[jaLocaleIndex % jaLocales.length]
+  const idLocale = () => idLocales[idLocaleIndex % idLocales.length]
+  const msLocale = () => msLocales[msLocaleIndex % msLocales.length]
+  const ptLocale = () => ptLocales[ptLocaleIndex % ptLocales.length]
+  const frLocale = () => frLocales[frLocaleIndex % frLocales.length]
+  const hiLocale = () => hiLocales[hiLocaleIndex % hiLocales.length]
+  const kmLocale = () => kmLocales[kmLocaleIndex % kmLocales.length]
+  const myLocale = () => myLocales[myLocaleIndex % myLocales.length]
+  const jvLocale = () => jvLocales[jvLocaleIndex % jvLocales.length]
+  const itLocale = () => itLocales[itLocaleIndex % itLocales.length]
+  const deLocale = () => deLocales[deLocaleIndex % deLocales.length]
+  const nlLocale = () => nlLocales[nlLocaleIndex % nlLocales.length]
 
   const resolveRecLang = (): string => {
     if (bilingualYueEn && activeLang === 'en') return 'en-US'
@@ -80,6 +116,18 @@ export function createWebSpeechSession(
     if (activeLang === 'th') return thLocale()
     if (activeLang === 'lo') return loLocale()
     if (activeLang === 'ko') return koLocale()
+    if (activeLang === 'ja') return jaLocale()
+    if (activeLang === 'id') return idLocale()
+    if (activeLang === 'ms') return msLocale()
+    if (activeLang === 'pt') return ptLocale()
+    if (activeLang === 'fr') return frLocale()
+    if (activeLang === 'hi') return hiLocale()
+    if (activeLang === 'km') return kmLocale()
+    if (activeLang === 'my') return myLocale()
+    if (activeLang === 'jv') return jvLocale()
+    if (activeLang === 'it') return itLocale()
+    if (activeLang === 'de') return deLocale()
+    if (activeLang === 'nl') return nlLocale()
     return 'en-US'
   }
 
@@ -187,6 +235,66 @@ export function createWebSpeechSession(
         queueMicrotask(() => startOne())
         return
       }
+      if (localeRejected && activeLang === 'ja' && jaLocaleIndex < jaLocales.length - 1) {
+        jaLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'id' && idLocaleIndex < idLocales.length - 1) {
+        idLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'ms' && msLocaleIndex < msLocales.length - 1) {
+        msLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'pt' && ptLocaleIndex < ptLocales.length - 1) {
+        ptLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'fr' && frLocaleIndex < frLocales.length - 1) {
+        frLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'hi' && hiLocaleIndex < hiLocales.length - 1) {
+        hiLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'km' && kmLocaleIndex < kmLocales.length - 1) {
+        kmLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'my' && myLocaleIndex < myLocales.length - 1) {
+        myLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'jv' && jvLocaleIndex < jvLocales.length - 1) {
+        jvLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'it' && itLocaleIndex < itLocales.length - 1) {
+        itLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'de' && deLocaleIndex < deLocales.length - 1) {
+        deLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'nl' && nlLocaleIndex < nlLocales.length - 1) {
+        nlLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
       if (e.error === 'not-allowed') {
         stopped = true
         handlers.onError('Microphone permission denied. Allow mic access and try again.')
@@ -271,6 +379,19 @@ export function createWebSpeechSession(
       viLocaleIndex = 0
       thLocaleIndex = 0
       loLocaleIndex = 0
+      koLocaleIndex = 0
+      jaLocaleIndex = 0
+      idLocaleIndex = 0
+      msLocaleIndex = 0
+      ptLocaleIndex = 0
+      frLocaleIndex = 0
+      hiLocaleIndex = 0
+      kmLocaleIndex = 0
+      myLocaleIndex = 0
+      jvLocaleIndex = 0
+      itLocaleIndex = 0
+      deLocaleIndex = 0
+      nlLocaleIndex = 0
       startOne()
     },
     async stop() {

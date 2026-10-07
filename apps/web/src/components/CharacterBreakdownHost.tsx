@@ -23,6 +23,18 @@ import { VietnameseText } from './VietnameseText'
 import { ThaiText } from './ThaiText'
 import { LaoText } from './LaoText'
 import { KoreanText } from './KoreanText'
+import { JaText } from './JaText'
+import { IdText } from './IdText'
+import { MsText } from './MsText'
+import { PtText } from './PtText'
+import { FrText } from './FrText'
+import { HiText } from './HiText'
+import { KmText } from './KmText'
+import { MyText } from './MyText'
+import { JvText } from './JvText'
+import { ItText } from './ItText'
+import { DeText } from './DeText'
+import { NlText } from './NlText'
 import { JyutRuby, JyutSyllable } from './JyutRuby'
 import { PinyinRuby, PinyinSyllable } from './PinyinRuby'
 import { JpPop } from './JpPop'
@@ -97,6 +109,19 @@ function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'vi') return 'vi'
   if (detailLang === 'th') return 'th'
   if (detailLang === 'lo') return 'lo'
+  if (detailLang === 'ko') return 'ko'
+  if (detailLang === 'ja') return 'ja'
+  if (detailLang === 'id') return 'id'
+  if (detailLang === 'ms') return 'ms'
+  if (detailLang === 'pt') return 'pt'
+  if (detailLang === 'fr') return 'fr'
+  if (detailLang === 'hi') return 'hi'
+  if (detailLang === 'km') return 'km'
+  if (detailLang === 'my') return 'my'
+  if (detailLang === 'jv') return 'jv'
+  if (detailLang === 'it') return 'it'
+  if (detailLang === 'de') return 'de'
+  if (detailLang === 'nl') return 'nl'
   if (detailLang === 'ceb') return 'ceb'
   if (detailLang === 'ilo') return 'ilo'
   if (detailLang === 'bcl') return 'bcl'
@@ -417,6 +442,19 @@ export function CharacterBreakdownHost() {
   const isThDetail = detailLang === 'th'
   const isLoDetail = detailLang === 'lo'
   const isKoDetail = detailLang === 'ko'
+  const isScaffoldDetail =
+    detailLang === 'ja' ||
+    detailLang === 'id' ||
+    detailLang === 'ms' ||
+    detailLang === 'pt' ||
+    detailLang === 'fr' ||
+    detailLang === 'hi' ||
+    detailLang === 'km' ||
+    detailLang === 'my' ||
+    detailLang === 'jv' ||
+    detailLang === 'it' ||
+    detailLang === 'de' ||
+    detailLang === 'nl'
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
   const isLatinDetail =
@@ -482,7 +520,7 @@ export function CharacterBreakdownHost() {
       if (paired && t.toLowerCase() === paired) return
       if (t.toLowerCase() === topLabel.toLowerCase()) return
       const han = hasHan(t)
-      const isScriptDetail = isThDetail || isLoDetail || isKoDetail
+      const isScriptDetail = isThDetail || isLoDetail || isKoDetail || isScaffoldDetail
       // Drop cross-script learner defs (e.g. English source on a Sichuanese pane).
       if ((isEnglishDetail || isLatinDetail) && han && !/[A-Za-z]/.test(t)) return
       if (isScriptDetail && han) return
@@ -507,7 +545,7 @@ export function CharacterBreakdownHost() {
     )
   const contentRows = rows.filter((r) => /[\p{L}\p{N}]/u.test(r.char))
   const redundantSingleLatin =
-    (isEnglishDetail || isLatinDetail || isThDetail || isLoDetail || isKoDetail) &&
+    (isEnglishDetail || isLatinDetail || isThDetail || isLoDetail || isKoDetail || isScaffoldDetail) &&
     contentRows.length === 1 &&
     contentRows[0]!.char.toLowerCase() === topLabel.toLowerCase() &&
     Boolean(
@@ -632,6 +670,32 @@ export function CharacterBreakdownHost() {
             <LaoText text={topLabel} showDetail />
           ) : isKoDetail ? (
             <KoreanText text={topLabel} showDetail />
+          ) : isScaffoldDetail ? (
+            detailLang === 'ja' ? (
+              <JaText text={topLabel} showDetail />
+            ) : detailLang === 'id' ? (
+              <IdText text={topLabel} showDetail />
+            ) : detailLang === 'ms' ? (
+              <MsText text={topLabel} showDetail />
+            ) : detailLang === 'pt' ? (
+              <PtText text={topLabel} showDetail />
+            ) : detailLang === 'fr' ? (
+              <FrText text={topLabel} showDetail />
+            ) : detailLang === 'hi' ? (
+              <HiText text={topLabel} showDetail />
+            ) : detailLang === 'km' ? (
+              <KmText text={topLabel} showDetail />
+            ) : detailLang === 'my' ? (
+              <MyText text={topLabel} showDetail />
+            ) : detailLang === 'jv' ? (
+              <JvText text={topLabel} showDetail />
+            ) : detailLang === 'it' ? (
+              <ItText text={topLabel} showDetail />
+            ) : detailLang === 'de' ? (
+              <DeText text={topLabel} showDetail />
+            ) : (
+              <NlText text={topLabel} showDetail />
+            )
           ) : ipa && isTlDetail ? (
             <p className="detail-panel-ipa-line detail-panel-tl-pron" lang="tl">
               <span title="Accented / stress form">{ipa}</span>
@@ -864,7 +928,7 @@ export function CharacterBreakdownHost() {
                   const meaning = pickCharGloss(row.meaning)
                   const canDrill = Boolean(meaning || glossForChar(row.char) || row.jyutping)
                   const canSpeak =
-                    isEnglishDetail || isLatinDetail || isThDetail || isLoDetail || isKoDetail || isHanChar(row.char)
+                    isEnglishDetail || isLatinDetail || isThDetail || isLoDetail || isKoDetail || isScaffoldDetail || isHanChar(row.char)
                   const rowSpeakLang: Lang = isEnglishDetail
                     ? 'en'
                     : isTlDetail
@@ -1074,7 +1138,7 @@ export function CharacterBreakdownHost() {
             {top.sense ? (
               <section>
                 <h3>
-                  {isEnglishDetail || isLatinDetail || isThDetail || isLoDetail || isKoDetail
+                  {isEnglishDetail || isLatinDetail || isThDetail || isLoDetail || isKoDetail || isScaffoldDetail
                     ? 'This word'
                     : 'This character'}
                 </h3>
