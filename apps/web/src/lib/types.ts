@@ -123,8 +123,8 @@ export type Entitlement = {
     ttsVoiceNl?: string
     /** Cross-device Auto-speak preference. */
     autoSpeak?: boolean
-    /** Primary non-English language (Solo / Conversation / Cam / brand). */
-    primaryLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi'
+    /** Primary language (Solo / Conversation / Cam / brand) — voice langs only. */
+    primaryLang?: VoiceLang
     username?: string | null
     usernameChangedAt?: string | null
   }

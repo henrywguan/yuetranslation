@@ -8,8 +8,15 @@ function main() {
   assert.equal(primaryReplacesChinese('es'), true)
   // eses (Peninsular Spanish) replaces Chinese with a Spain gloss like es/vi/tl.
   assert.equal(primaryReplacesChinese('eses'), true)
+  assert.equal(primaryReplacesChinese('ja'), true)
+  assert.equal(primaryReplacesChinese('de'), true)
   assert.equal(primaryReplacesChinese('cmn'), false)
   assert.equal(primaryReplacesChinese('yue'), false)
+  assert.equal(primaryReplacesChinese('en'), false)
+
+  // Newer primaries: no catalog gloss yet → undefined (BiText falls back to English-only).
+  assert.equal(resolvePrimaryUiGloss(ui.modeSolo, 'ja'), undefined)
+  assert.equal(resolvePrimaryUiGloss(ui.modeSolo, 'nl'), undefined)
 
   const solo = ui.modeSolo
   assert.equal(resolvePrimaryUiGloss(solo, 'yue'), undefined)

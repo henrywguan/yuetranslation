@@ -48,11 +48,12 @@ export function BrandTag() {
       ? cmnPinyin.trim() || undefined
       : tag.gloss
 
-  const replaceZh = Boolean(gloss) && primaryReplacesChinese(primaryLanguage)
+  const wantsReplace = primaryReplacesChinese(primaryLanguage)
+  const replaceZh = Boolean(gloss) && wantsReplace
 
   return (
     <p className="brand-tag">
-      <span className="brand-tag-inner" {...(replaceZh ? {} : bind)}>
+      <span className="brand-tag-inner" {...(wantsReplace ? {} : bind)}>
         <span className="brand-tag-stack">
           <span className="brand-tag-en">{tag.en}</span>
           {replaceZh && gloss ? (
@@ -62,16 +63,16 @@ export function BrandTag() {
             >
               {gloss}
             </span>
-          ) : (
+          ) : wantsReplace ? null : (
             <span className="brand-tag-zh">{tag.zh}</span>
           )}
-          {!replaceZh && gloss ? (
+          {!wantsReplace && gloss ? (
             <span className="brand-tag-primary" lang={primaryGlossHtmlLang(primaryLanguage)}>
               {gloss}
             </span>
           ) : null}
         </span>
-        {!replaceZh && canJp ? (
+        {!wantsReplace && canJp ? (
           <JpPop show={show} id={tipId} han={tag.zh} anchorRef={wrapRef} />
         ) : null}
       </span>

@@ -79,11 +79,13 @@ export function BiText({
     catalogGloss ||
     (primaryLanguage === 'cmn' && wantPrimaryGloss ? cmnPinyin.trim() || undefined : undefined)
 
-  const replaceZh =
-    wantPrimaryGloss && Boolean(gloss) && primaryReplacesChinese(primaryLanguage)
+  const wantsReplace = wantPrimaryGloss && primaryReplacesChinese(primaryLanguage)
+  const replaceZh = wantsReplace && Boolean(gloss)
+  /** Newer primaries without a gloss pass: hide Cantonese 漢字 rather than show it. */
+  const hideZhFallback = wantsReplace && !gloss
 
   const canJp =
-    !replaceZh &&
+    !wantsReplace &&
     (primaryLanguage === 'yue' || primaryLanguage === 'en') &&
     !hideJp &&
     only !== 'en' &&
@@ -112,11 +114,11 @@ export function BiText({
       </span>
     ) : null
 
-  const secondary = primaryAsSecondary || zhLine
+  const secondary = primaryAsSecondary || (hideZhFallback ? null : zhLine)
 
   // Mandarin: keep Chinese characters; pinyin stays a quieter tertiary line.
   const tertiary =
-    !replaceZh && gloss && wantPrimaryGloss ? (
+    !wantsReplace && gloss && wantPrimaryGloss ? (
       <span className="bi-primary" lang={primaryGlossHtmlLang(primaryLanguage)}>
         {withChaoFace(gloss)}
       </span>
@@ -131,7 +133,7 @@ export function BiText({
       className={`bi bi--${size}${only ? ` bi--${only}` : ''}${inline ? ' bi--inline' : ''}${zhFirst ? ' bi--zh-first' : ''} ${className}`.trim()}
     >
       {only === 'zh' ? (
-        secondary
+        secondary || (hideZhFallback ? enLine : null)
       ) : only === 'en' ? (
         enLine
       ) : zhFirst ? (

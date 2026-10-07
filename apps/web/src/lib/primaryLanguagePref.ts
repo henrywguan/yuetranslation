@@ -1,11 +1,39 @@
-import type { ConversationLang, Lang, SpeakDirection } from './types'
+import type { ConversationLang, Lang, SpeakDirection, VoiceLang } from './types'
 
 const STORAGE_KEY = 'yue-primary-lang'
 /** Last value confirmed saved to the signed-in profile (or hydrated from it). */
 const SYNCED_KEY = 'yue-primary-lang-synced'
 
-/** Languages that can be the app “primary” (your side of Solo / Conversation). */
-export const PRIMARY_LANGS = ['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi'] as const
+/**
+ * Languages that can be the app “primary” (your side of Solo / Conversation).
+ * Every voice-capable lang — text-only (ceb / ilo / bcl) stay out.
+ */
+export const PRIMARY_LANGS = [
+  'en',
+  'yue',
+  'cmn',
+  'wuu',
+  'sichuan',
+  'tl',
+  'es',
+  'eses',
+  'vi',
+  'th',
+  'lo',
+  'ko',
+  'ja',
+  'id',
+  'ms',
+  'pt',
+  'fr',
+  'hi',
+  'km',
+  'my',
+  'jv',
+  'it',
+  'de',
+  'nl',
+] as const satisfies readonly VoiceLang[]
 export type PrimaryLang = (typeof PRIMARY_LANGS)[number]
 
 export function isPrimaryLang(value: unknown): value is PrimaryLang {
@@ -181,6 +209,96 @@ export function primaryLangLabel(lang: PrimaryLang): {
         zh: '越南語語言工具',
         gloss: 'Công cụ tiếng Việt',
       }
+    case 'th':
+      return {
+        en: 'Thai Language Tool',
+        zh: '泰文語言工具',
+        gloss: 'เครื่องมือภาษาไทย',
+      }
+    case 'lo':
+      return {
+        en: 'Lao Language Tool',
+        zh: '老撾話語言工具',
+        gloss: 'ເຄື່ອງມືພາສາລາວ',
+      }
+    case 'ko':
+      return {
+        en: 'Korean Language Tool',
+        zh: '韓文語言工具',
+        gloss: '한국어 언어 도구',
+      }
+    case 'ja':
+      return {
+        en: 'Japanese Language Tool',
+        zh: '日文語言工具',
+        gloss: '日本語言語ツール',
+      }
+    case 'id':
+      return {
+        en: 'Indonesian Language Tool',
+        zh: '印尼話語言工具',
+        gloss: 'Alat Bahasa Indonesia',
+      }
+    case 'ms':
+      return {
+        en: 'Malay Language Tool',
+        zh: '馬來話語言工具',
+        gloss: 'Alat Bahasa Melayu',
+      }
+    case 'pt':
+      return {
+        en: 'Portuguese (BR) Language Tool',
+        zh: '巴西葡文語言工具',
+        gloss: 'Ferramenta de português (BR)',
+      }
+    case 'fr':
+      return {
+        en: 'French Language Tool',
+        zh: '法文語言工具',
+        gloss: 'Outil de langue française',
+      }
+    case 'hi':
+      return {
+        en: 'Hindi Language Tool',
+        zh: '印地話語言工具',
+        gloss: 'हिन्दी भाषा उपकरण',
+      }
+    case 'km':
+      return {
+        en: 'Khmer Language Tool',
+        zh: '高棉話語言工具',
+        gloss: 'ឧបករណ៍ភាសាខ្មែរ',
+      }
+    case 'my':
+      return {
+        en: 'Burmese Language Tool',
+        zh: '緬甸話語言工具',
+        gloss: 'မြန်မာဘာသာ ကိရိယာ',
+      }
+    case 'jv':
+      return {
+        en: 'Javanese Language Tool',
+        zh: '爪哇話語言工具',
+        gloss: 'Piranti Basa Jawa',
+      }
+    case 'it':
+      return {
+        en: 'Italian Language Tool',
+        zh: '意大利文語言工具',
+        gloss: 'Strumento per la lingua italiana',
+      }
+    case 'de':
+      return {
+        en: 'German Language Tool',
+        zh: '德文語言工具',
+        gloss: 'Deutsch-Sprachwerkzeug',
+      }
+    case 'nl':
+      return {
+        en: 'Dutch Language Tool',
+        zh: '荷蘭文語言工具',
+        gloss: 'Nederlandse taalhulpmiddel',
+      }
     case 'yue':
     default:
       return {
@@ -209,9 +327,38 @@ export function primaryLangShortCopy(lang: PrimaryLang): { en: string; zh: strin
       return { en: 'Spanish(ES)', zh: '西班牙語（ES）' }
     case 'vi':
       return { en: 'Vietnamese', zh: '越南語' }
+    case 'th':
+      return { en: 'Thai', zh: '泰文' }
+    case 'lo':
+      return { en: 'Lao', zh: '老撾話' }
+    case 'ko':
+      return { en: 'Korean', zh: '韓文' }
+    case 'ja':
+      return { en: 'Japanese', zh: '日文' }
+    case 'id':
+      return { en: 'Indonesian', zh: '印尼話' }
+    case 'ms':
+      return { en: 'Malay', zh: '馬來話' }
+    case 'pt':
+      return { en: 'Portuguese (BR)', zh: '巴西葡文' }
+    case 'fr':
+      return { en: 'French', zh: '法文' }
+    case 'hi':
+      return { en: 'Hindi', zh: '印地話' }
+    case 'km':
+      return { en: 'Khmer', zh: '高棉話' }
+    case 'my':
+      return { en: 'Burmese', zh: '緬甸話' }
+    case 'jv':
+      return { en: 'Javanese', zh: '爪哇話' }
+    case 'it':
+      return { en: 'Italian', zh: '意大利文' }
+    case 'de':
+      return { en: 'German', zh: '德文' }
+    case 'nl':
+      return { en: 'Dutch', zh: '荷蘭文' }
     case 'yue':
     default:
       return { en: 'Cantonese', zh: '粵語' }
   }
 }
-

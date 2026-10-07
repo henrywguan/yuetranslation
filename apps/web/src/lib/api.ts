@@ -5,6 +5,7 @@ import type {
   IncidentBannerSettings,
   Lang,
 } from './types'
+import type { PrimaryLang } from './primaryLanguagePref'
 import { getAccessToken } from './auth'
 import { captureDiagnostic } from './diagnostics'
 import { guestDeviceHeaders } from './guestDevice'
@@ -375,7 +376,7 @@ export async function saveAutoSpeakPref(
 }
 
 export async function savePrimaryLangPref(
-  primaryLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi',
+  primaryLang: PrimaryLang,
 ): Promise<{ prefs: Entitlement['prefs']; entitlement?: Entitlement }> {
   // keepalive so a quick app switch / kill mid-translate still finishes the PATCH.
   const res = await apiFetch('/prefs/primary-lang', {

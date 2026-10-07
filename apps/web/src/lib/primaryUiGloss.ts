@@ -11,19 +11,15 @@ export function isPrimaryGlossLang(lang: PrimaryLang): lang is PrimaryGlossLang 
 }
 
 /**
- * Latin-script + Shanghainese / Sichuanese primaries: the gloss becomes the
+ * Non-Cantonese / non-English / non-Mandarin primaries: the gloss becomes the
  * secondary UI line and Chinese is hidden. Mandarin keeps Chinese characters as
  * secondary (pinyin stays tertiary).
+ *
+ * Until a full BiText gloss pass lands for newer primaries, missing glosses fall
+ * back to English-only chrome (see BiText / biPlain) instead of Cantonese 漢字.
  */
 export function primaryReplacesChinese(lang: PrimaryLang): boolean {
-  return (
-    lang === 'tl' ||
-    lang === 'es' ||
-    lang === 'eses' ||
-    lang === 'vi' ||
-    lang === 'wuu' ||
-    lang === 'sichuan'
-  )
+  return lang !== 'yue' && lang !== 'en' && lang !== 'cmn'
 }
 
 /** BCP 47 / HTML lang for the primary gloss line. */
@@ -37,6 +33,36 @@ export function primaryGlossHtmlLang(lang: PrimaryLang): string {
       return 'es-ES'
     case 'vi':
       return 'vi'
+    case 'th':
+      return 'th'
+    case 'lo':
+      return 'lo'
+    case 'ko':
+      return 'ko'
+    case 'ja':
+      return 'ja'
+    case 'id':
+      return 'id'
+    case 'ms':
+      return 'ms'
+    case 'pt':
+      return 'pt-BR'
+    case 'fr':
+      return 'fr'
+    case 'hi':
+      return 'hi'
+    case 'km':
+      return 'km'
+    case 'my':
+      return 'my'
+    case 'jv':
+      return 'jv'
+    case 'it':
+      return 'it'
+    case 'de':
+      return 'de'
+    case 'nl':
+      return 'nl'
     case 'cmn':
       return 'zh-Latn'
     case 'wuu':
@@ -66,7 +92,7 @@ export function resolvePrimaryUiGloss(
   if (typeof fromBi === 'string' && fromBi.trim()) return fromBi.trim()
 
   const row = PRIMARY_UI_GLOSS[copy.en]
-  const fromMap = row?.[primary as PrimaryGlossLang]
+  const fromMap = row?.[primary as keyof typeof row]
   if (typeof fromMap === 'string' && fromMap.trim()) return fromMap.trim()
 
   if (primary === 'cmn' && copy.zh.trim()) {
