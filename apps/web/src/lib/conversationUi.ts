@@ -298,12 +298,12 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     htmlLang: 'nl-NL',
     mic: {
       holdOrTapToSpeak: 'Vasthouden of tikken om te spreken',
-      releaseWhenDone: 'Luisteren — loslaten als je klaar bent',
+      releaseWhenDone: 'Luisteren — laat los als je klaar bent',
       tapListening: 'Luisteren — pauzeer of tik om te stoppen',
-      speaking: 'Spreken…',
-      translating: 'Vertalen',
+      speaking: 'Aan het spreken…',
+      translating: 'Vertalen…',
     },
-    friendLooksHere: 'Vriend kijkt naar deze kant',
+    friendLooksHere: 'Je vriend kijkt naar deze kant',
     holdFacingYou: 'Houd de telefoon naar jezelf gericht',
   },
 }

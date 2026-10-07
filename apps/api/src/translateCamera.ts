@@ -131,6 +131,10 @@ function isKoreanTarget(to: CameraLang): boolean {
   return to === 'ko'
 }
 
+function isDutchTarget(to: CameraLang): boolean {
+  return to === 'nl'
+}
+
 function isScaffoldCameraTarget(to: CameraLang): boolean {
   return (
     to === 'ja' ||
@@ -143,8 +147,7 @@ function isScaffoldCameraTarget(to: CameraLang): boolean {
     to === 'my' ||
     to === 'jv' ||
     to === 'it' ||
-    to === 'de' ||
-    to === 'nl'
+    to === 'de'
   )
 }
 
@@ -334,6 +337,28 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .join('\n')
   }
 
+  if (to === 'nl') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Netherlands Dutch (Nederlands).',
+      'Write for Dutch travelers/readers: everyday spoken Netherlands Dutch, not stiff formal writing, not Belgian Dutch / Flemish as the primary default.',
+      'Use Latin script only. ALWAYS use correct Dutch orthography (ij, oe, ui, aa/ee/oo, diaeresis where required).',
+      'Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Inchecken / Check-in; Luggage → Bagage.',
+      '- Safety: Wet floor → Gladde vloer; Caution → Let op.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Dutch output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Dutch>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
   if (isScaffoldCameraTarget(to)) {
     const label =
       to === 'ja' ? 'Japanese' :
@@ -347,7 +372,6 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       to === 'jv' ? 'Javanese' :
       to === 'it' ? 'Italian' :
       to === 'de' ? 'German' :
-      to === 'nl' ? 'Dutch' :
       'the target language'
     return [
       `You translate signs, menus, forms, and short labels into natural colloquial ${label}.`,
@@ -520,6 +544,9 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isKoreanTarget(to)) {
     return hasHan(source) ? `(demo KO) ${source}` : `(demo) ${source}`
   }
+  if (isDutchTarget(to)) {
+    return hasHan(source) ? `(demo NL) ${source}` : `(demo) ${source}`
+  }
   if (isCebuanoTarget(to)) {
     return hasHan(source) ? `(demo CEB) ${source}` : `(demo) ${source}`
   }
@@ -597,6 +624,8 @@ export async function translateCameraText(
                 ? `(tr ${to.toUpperCase()}) ${source}`
               : isKoreanTarget(to)
                 ? `(tr KO) ${source}`
+              : isDutchTarget(to)
+                ? `(tr NL) ${source}`
               : isCebuanoTarget(to)
             ? `(tr CEB) ${source}`
             : isIlocanoTarget(to)
@@ -627,6 +656,7 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'th') return 'Central Thai (Thai script, th-TH)'
   if (lang === 'lo') return 'Vientiane Lao (Lao script, lo-LA)'
   if (lang === 'ko') return 'Korean (Hangul, ko-KR)'
+  if (lang === 'nl') return 'Standard Dutch (Latin script, nl-NL)'
   if (lang === 'ja') return 'Japanese (ja-JP)'
   if (lang === 'id') return 'Indonesian (id-ID)'
   if (lang === 'ms') return 'Malay (ms-MY)'
@@ -638,7 +668,6 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'jv') return 'Javanese (jv-ID)'
   if (lang === 'it') return 'Italian (it-IT)'
   if (lang === 'de') return 'German (de-DE)'
-  if (lang === 'nl') return 'Dutch (nl-NL)'
   if (lang === 'ceb') return 'Cebuano / Binisaya (Latin script)'
   if (lang === 'ilo') return 'Ilocano / Ilokano (Latin script)'
   if (lang === 'bcl') return 'Central Bikol / Bikol Naga (Latin script)'
@@ -702,6 +731,8 @@ export async function translateCameraBatch(
                     ? `(tr ${to.toUpperCase()}) ${s}`
                   : isKoreanTarget(to)
                     ? `(tr KO) ${s}`
+                  : isDutchTarget(to)
+                    ? `(tr NL) ${s}`
                   : isCebuanoTarget(to)
                 ? `(tr CEB) ${s}`
                 : isIlocanoTarget(to)
@@ -723,6 +754,7 @@ export async function translateCameraBatch(
       else if (isThaiTarget(to) && t && (hasHan(t) || !/[\u0E00-\u0E7F]/.test(t))) out[start + i] = src
       else if (isLaoTarget(to) && t && (hasHan(t) || !/[\u0E80-\u0EFF]/.test(t))) out[start + i] = src
       else if (isKoreanTarget(to) && t && (hasHan(t) || !/[\uAC00-\uD7A3]/.test(t))) out[start + i] = src
+      else if (isDutchTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isLatinPhilippineRegionalTarget(to) && t && hasHan(t)) out[start + i] = src
       else {
         if (to === 'cmn' && t) t = scrubYueToCmn(t).text

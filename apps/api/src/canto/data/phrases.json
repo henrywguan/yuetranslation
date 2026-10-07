@@ -8034,6 +8034,294 @@
         "basic",
         "korean"
       ]
+    },
+    {
+      "id": "en-hello-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "hello",
+      "text": "Hallo",
+      "alternatives": [
+        "Hoi",
+        "Goedendag"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-hallo-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "hallo",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-hoi-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "hoi",
+      "text": "Hi",
+      "alternatives": [
+        "Hello"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-thank-you-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "thank you",
+      "text": "Dank je",
+      "alternatives": [
+        "Dankjewel",
+        "Bedankt"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-dank-je-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "dank je",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-thank-you-so-much-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "thank you so much",
+      "text": "Heel erg bedankt",
+      "alternatives": [
+        "Dank je wel"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-im-sorry-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "i'm sorry",
+      "text": "Sorry",
+      "alternatives": [
+        "Het spijt me",
+        "Excuseer"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-sorry-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "sorry",
+      "text": "I'm sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-yes-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "yes",
+      "text": "Ja",
+      "alternatives": [
+        "Jawel",
+        "Natuurlijk"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-ja-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "ja",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-no-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "no",
+      "text": "Nee",
+      "alternatives": [
+        "Nou nee"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-nee-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "nee",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-please-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "please",
+      "text": "Alsjeblieft",
+      "alternatives": [
+        "Alstublieft",
+        "Graag"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-alsjeblieft-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "alsjeblieft",
+      "text": "Please",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-excuse-me-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "excuse me",
+      "text": "Pardon",
+      "alternatives": [
+        "Excuseer",
+        "Mag ik even?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-goodbye-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "goodbye",
+      "text": "Doei",
+      "alternatives": [
+        "Tot ziens",
+        "Dag"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-tot-ziens-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "tot ziens",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-how-are-you-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "how are you",
+      "text": "Hoe gaat het?",
+      "alternatives": [
+        "Alles goed?",
+        "Hoe is het?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-hoe-gaat-het-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "hoe gaat het",
+      "text": "How are you",
+      "alternatives": [
+        "I'm fine"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-see-you-later-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "see you later",
+      "text": "Tot later",
+      "alternatives": [
+        "Tot zo",
+        "Tot straks"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
     }
   ]
 }

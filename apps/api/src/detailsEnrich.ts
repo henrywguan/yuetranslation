@@ -207,9 +207,10 @@ const ENRICH_META: Record<
     exampleIn: 'natural German',
   },
   nl: {
-    label: 'Dutch',
-    glossLangHint: 'Dutch',
-    exampleIn: 'natural Dutch',
+    label: 'Standard Dutch (Netherlands)',
+    glossLangHint:
+      'Standard Dutch (Netherlands / nl-NL) — correct orthography; colloquial everyday, not Flemish-primary',
+    exampleIn: 'natural Netherlands Dutch',
   },
   ceb: {
     label: 'Cebuano / Bisaya',
