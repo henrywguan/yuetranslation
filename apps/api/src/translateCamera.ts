@@ -202,6 +202,38 @@ function isLatinPhilippineRegionalTarget(to: CameraLang): boolean {
   return isCebuanoTarget(to) || isIlocanoTarget(to) || isBikolTarget(to)
 }
 
+/**
+ * Reject clearly wrong-script camera translations (same rules for AR line + docs batch).
+ * Returns null when the candidate should be discarded in favor of the source line.
+ */
+function sanitizeCameraTranslation(to: CameraLang, translated: string, source: string): string | null {
+  const t = translated.trim()
+  if (!t) return null
+  if (to === 'en' && hasHan(t)) return null
+  if (isChineseTarget(to) && !hasHan(t) && /[A-Za-z]/.test(source)) return null
+  if (isTagalogTarget(to) && hasHan(t)) return null
+  if (isMexicanTarget(to) && hasHan(t)) return null
+  if (isPeninsularTarget(to) && hasHan(t)) return null
+  if (isVietnameseTarget(to) && hasHan(t)) return null
+  if (isThaiTarget(to) && (hasHan(t) || !/[\u0E00-\u0E7F]/.test(t))) return null
+  if (isLaoTarget(to) && (hasHan(t) || !/[\u0E80-\u0EFF]/.test(t))) return null
+  if (isKoreanTarget(to) && (hasHan(t) || !/[\uAC00-\uD7A3]/.test(t))) return null
+  if (isJapaneseTarget(to) && !looksLikeCameraJapanese(t)) return null
+  if (isIndonesianTarget(to) && hasHan(t)) return null
+  if (isMalayTarget(to) && hasHan(t)) return null
+  if (isBrazilianPortugueseTarget(to) && hasHan(t)) return null
+  if (isFrenchTarget(to) && hasHan(t)) return null
+  if (isHindiTarget(to) && (hasHan(t) || !/[\u0900-\u097F]/.test(t))) return null
+  if (isKhmerTarget(to) && (hasHan(t) || !/[\u1780-\u17FF]/.test(t))) return null
+  if (isBurmeseTarget(to) && (hasHan(t) || !/[\u1000-\u109F]/.test(t))) return null
+  if (isJavaneseTarget(to) && hasHan(t)) return null
+  if (isItalianTarget(to) && hasHan(t)) return null
+  if (isGermanTarget(to) && hasHan(t)) return null
+  if (isDutchTarget(to) && hasHan(t)) return null
+  if (isLatinPhilippineRegionalTarget(to) && hasHan(t)) return null
+  return t
+}
+
 function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
   const docHint = docBatch
     ? 'These lines come from one document — keep terminology, names, and tone consistent across all lines.'
@@ -932,9 +964,11 @@ export async function translateCameraText(
                 : `(tr) ${source}`
   let translated = parseTranslation(raw, fallback)
   if (to === 'cmn') translated = scrubYueToCmn(translated).text
-  remember(key, translated)
+  const guarded = sanitizeCameraTranslation(to, translated, source)
+  const outText = guarded ?? source
+  remember(key, outText)
   return {
-    text: translated,
+    text: outText,
     engine: env.openaiBaseUrl ? 'openai-compatible' : 'openai',
     cacheHit: false,
   }
@@ -1062,32 +1096,9 @@ export async function translateCameraBatch(
     for (let i = 0; i < chunk.length; i++) {
       let t = stripLeadingListNumber((translated[i] || '').trim())
       const src = chunk[i] || ''
-      if (to === 'en' && hasHan(t)) out[start + i] = src
-      else if (isChineseTarget(to) && t && !hasHan(t) && /[A-Za-z]/.test(src)) out[start + i] = src
-      else if (isTagalogTarget(to) && t && hasHan(t)) out[start + i] = src
-      else if (isMexicanTarget(to) && t && hasHan(t)) out[start + i] = src
-      else if (isPeninsularTarget(to) && t && hasHan(t)) out[start + i] = src
-      else if (isVietnameseTarget(to) && t && hasHan(t)) out[start + i] = src
-      else if (isThaiTarget(to) && t && (hasHan(t) || !/[\u0E00-\u0E7F]/.test(t))) out[start + i] = src
-      else if (isLaoTarget(to) && t && (hasHan(t) || !/[\u0E80-\u0EFF]/.test(t))) out[start + i] = src
-      else if (isKoreanTarget(to) && t && (hasHan(t) || !/[\uAC00-\uD7A3]/.test(t))) out[start + i] = src
-      else if (isJapaneseTarget(to) && t && !looksLikeCameraJapanese(t)) out[start + i] = src
-      else if (isIndonesianTarget(to) && t && hasHan(t)) out[start + i] = src
-      else if (isMalayTarget(to) && t && hasHan(t)) out[start + i] = src
-      else if (isBrazilianPortugueseTarget(to) && t && hasHan(t)) out[start + i] = src
-      else if (isFrenchTarget(to) && t && hasHan(t)) out[start + i] = src
-      else if (isHindiTarget(to) && t && (hasHan(t) || !/[\u0900-\u097F]/.test(t))) out[start + i] = src
-      else if (isKhmerTarget(to) && t && (hasHan(t) || !/[\u1780-\u17FF]/.test(t))) out[start + i] = src
-      else if (isBurmeseTarget(to) && t && (hasHan(t) || !/[\u1000-\u109F]/.test(t))) out[start + i] = src
-      else if (isJavaneseTarget(to) && t && hasHan(t)) out[start + i] = src
-      else if (isItalianTarget(to) && t && hasHan(t)) out[start + i] = src
-      else if (isGermanTarget(to) && t && hasHan(t)) out[start + i] = src
-      else if (isDutchTarget(to) && t && hasHan(t)) out[start + i] = src
-      else if (isLatinPhilippineRegionalTarget(to) && t && hasHan(t)) out[start + i] = src
-      else {
-        if (to === 'cmn' && t) t = scrubYueToCmn(t).text
-        out[start + i] = t || src
-      }
+      if (to === 'cmn' && t) t = scrubYueToCmn(t).text
+      const guarded = sanitizeCameraTranslation(to, t, src)
+      out[start + i] = guarded ?? src
       remember(`${from}|${to}|${src}`, out[start + i]!)
     }
   }

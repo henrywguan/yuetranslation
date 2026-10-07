@@ -1485,6 +1485,293 @@ async function sichuanBreakdown(text: string) {
   }
 }
 
+type LatinVoiceBreakdownLang = 'id' | 'ms' | 'pt' | 'fr' | 'jv' | 'it' | 'de' | 'nl'
+
+const LATIN_VOICE_BREAKDOWN_LABEL: Record<LatinVoiceBreakdownLang, string> = {
+  id: 'Indonesian',
+  ms: 'Malay (Malaysia)',
+  pt: 'Brazilian Portuguese',
+  fr: 'Metropolitan French',
+  jv: 'Javanese (Latin)',
+  it: 'Italian',
+  de: 'German',
+  nl: 'Dutch',
+}
+
+function tokenizeLatinVoice(text: string): string[] {
+  const matches = text.match(
+    /[A-Za-zÀ-ÖØ-öø-ÿĀ-ſḀ-ỿ]+(?:['\u2019][A-Za-zÀ-ÖØ-öø-ÿĀ-ſḀ-ỿ]+)?|[0-9]+|[^\sA-Za-zÀ-ÖØ-öø-ÿĀ-ſḀ-ỿ0-9]+/g,
+  )
+  return (matches || []).filter((t) => t.trim())
+}
+
+function localLatinVoiceBreakdown(text: string): BreakdownChar[] {
+  return tokenizeLatinVoice(text).map((tok) => {
+    if (/^[^\p{L}\p{N}\u2019']+$/u.test(tok)) {
+      return {
+        char: tok,
+        jyutping: null,
+        meaning:
+          tok === '?' || tok === '？'
+            ? 'question mark'
+            : tok === '!' || tok === '！'
+              ? 'exclamation mark'
+              : tok === '.' || tok === '。'
+                ? 'full stop'
+                : tok === ',' || tok === '，'
+                  ? 'comma'
+                  : 'punctuation',
+        glossSource: 'seed',
+      }
+    }
+    return { char: tok, jyutping: null, meaning: '' }
+  })
+}
+
+async function latinVoiceBreakdown(text: string, lang: LatinVoiceBreakdownLang) {
+  const fallback = localLatinVoiceBreakdown(text)
+  const label = LATIN_VOICE_BREAKDOWN_LABEL[lang]
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang }
+  }
+  const client = openaiClientWithKey()
+  const system = [
+    `You explain ${label} word-by-word for English-speaking learners.`,
+    `Given a ${label} phrase, return ONLY valid JSON:`,
+    '{"words":[{"word":"<token>","accented":null,"meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every token in order (words and punctuation; skip spaces).',
+    '- accented is always null for this language path.',
+    '- Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+    '- Meanings must be concise English that fit THIS phrase.',
+    '- No markdown.',
+  ].join('\n')
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 700,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const merged = parseTlBreakdownPayload(raw, fallback).map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char.toLowerCase() !== row.char.toLowerCase()) {
+        const byText = fallback.find((f) => f.char.toLowerCase() === row.char.toLowerCase())
+        return {
+          ...row,
+          jyutping: null,
+          meaning: pickMeaning(row.meaning, byText?.meaning),
+          glossSource:
+            row.meaning && !isGenericCharGloss(row.meaning)
+              ? row.glossSource || 'model'
+              : byText?.glossSource,
+        }
+      }
+      return {
+        ...row,
+        jyutping: null,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return { characters: merged, engine: 'openai' as const, lang }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang }
+  }
+}
+
+function tokenizeJapanese(text: string): string[] {
+  const matches = text.match(
+    /[\u3040-\u309F\u30A0-\u30FF\uFF66-\uFF9D]+|[\u3400-\u9FFF\uF900-\uFAFF]+|[A-Za-z0-9]+|[^\s\u3040-\u30FF\uFF66-\uFF9D\u3400-\u9FFF\uF900-\uFAFFA-Za-z0-9]+/g,
+  )
+  return (matches || []).filter((t) => t.trim())
+}
+
+function localJaBreakdown(text: string): BreakdownChar[] {
+  return tokenizeJapanese(text).map((tok) => {
+    if (/^[^\p{L}\p{N}\u3040-\u30FF\uFF66-\uFF9D\u3400-\u9FFF\uF900-\uFAFF]+$/u.test(tok)) {
+      return {
+        char: tok,
+        jyutping: null,
+        meaning:
+          tok === '?' || tok === '？'
+            ? 'question mark'
+            : tok === '!' || tok === '！'
+              ? 'exclamation mark'
+              : tok === '.' || tok === '。'
+                ? 'full stop'
+                : tok === ',' || tok === '，' || tok === '、'
+                  ? 'comma'
+                  : 'punctuation',
+        glossSource: 'seed',
+      }
+    }
+    return { char: tok, jyutping: null, meaning: '' }
+  })
+}
+
+async function jaBreakdown(text: string) {
+  const fallback = localJaBreakdown(text)
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'ja' as const }
+  }
+  const client = openaiClientWithKey()
+  const system = [
+    'You explain modern standard Japanese word-by-word for English-speaking learners.',
+    'Given a Japanese phrase (kanji + kana), return ONLY valid JSON:',
+    '{"words":[{"word":"<token>","accented":null,"meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every token in order (words and punctuation; skip spaces).',
+    '- accented is always null — the client may show optional readings in Details.',
+    '- Do NOT use Chao tone letters, IPA, or invented ASCII tone digits.',
+    '- Meanings must be concise English that fit THIS phrase.',
+    '- No markdown.',
+  ].join('\n')
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 700,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const merged = parseTlBreakdownPayload(raw, fallback).map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char !== row.char) {
+        const byText = fallback.find((f) => f.char === row.char)
+        return {
+          ...row,
+          jyutping: null,
+          meaning: pickMeaning(row.meaning, byText?.meaning),
+          glossSource:
+            row.meaning && !isGenericCharGloss(row.meaning)
+              ? row.glossSource || 'model'
+              : byText?.glossSource,
+        }
+      }
+      return {
+        ...row,
+        jyutping: null,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return { characters: merged, engine: 'openai' as const, lang: 'ja' as const }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'ja' as const }
+  }
+}
+
+function tokenizeScriptRange(text: string, re: RegExp): string[] {
+  const matches = text.match(re)
+  return (matches || []).filter((t) => t.trim())
+}
+
+function localScriptBreakdown(text: string, letterRe: RegExp): BreakdownChar[] {
+  return tokenizeScriptRange(text, letterRe).map((tok) => {
+    if (/^[^\p{L}\p{N}]+$/u.test(tok) && !letterRe.test(tok)) {
+      return {
+        char: tok,
+        jyutping: null,
+        meaning:
+          tok === '?' || tok === '？'
+            ? 'question mark'
+            : tok === '!' || tok === '！'
+              ? 'exclamation mark'
+              : tok === '.' || tok === '。'
+                ? 'full stop'
+                : tok === ',' || tok === '，'
+                  ? 'comma'
+                  : 'punctuation',
+        glossSource: 'seed',
+      }
+    }
+    return { char: tok, jyutping: null, meaning: '' }
+  })
+}
+
+async function scriptVoiceBreakdown(
+  text: string,
+  lang: 'km' | 'my',
+  label: string,
+  tokenRe: RegExp,
+) {
+  const fallback = localScriptBreakdown(text, tokenRe)
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang }
+  }
+  const client = openaiClientWithKey()
+  const system = [
+    `You explain ${label} word-by-word for English-speaking learners.`,
+    `Given a ${label} phrase, return ONLY valid JSON:`,
+    '{"words":[{"word":"<token>","accented":null,"meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every token in order (words and punctuation; skip spaces).',
+    '- accented is always null — the client may show optional readings in Details.',
+    '- Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+    '- Meanings must be concise English that fit THIS phrase.',
+    '- No markdown.',
+  ].join('\n')
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 700,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const merged = parseTlBreakdownPayload(raw, fallback).map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char !== row.char) {
+        const byText = fallback.find((f) => f.char === row.char)
+        return {
+          ...row,
+          jyutping: null,
+          meaning: pickMeaning(row.meaning, byText?.meaning),
+          glossSource:
+            row.meaning && !isGenericCharGloss(row.meaning)
+              ? row.glossSource || 'model'
+              : byText?.glossSource,
+        }
+      }
+      return {
+        ...row,
+        jyutping: null,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return { characters: merged, engine: 'openai' as const, lang }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang }
+  }
+}
+
 export async function breakdown(input: unknown) {
   const parsed = Body.parse(input)
   const text = parsed.text.trim()
@@ -1498,6 +1785,35 @@ export async function breakdown(input: unknown) {
   if (lang === 'lo') return loBreakdown(text)
   if (lang === 'ko') return koBreakdown(text)
   if (lang === 'hi') return hiBreakdown(text)
+  if (lang === 'ja') return jaBreakdown(text)
+  if (lang === 'km') {
+    return scriptVoiceBreakdown(
+      text,
+      'km',
+      'Khmer',
+      /[\u1780-\u17FF]+|[0-9]+|[^\s\u1780-\u17FF0-9]+/g,
+    )
+  }
+  if (lang === 'my') {
+    return scriptVoiceBreakdown(
+      text,
+      'my',
+      'Burmese',
+      /[\u1000-\u109F]+|[0-9]+|[^\s\u1000-\u109F0-9]+/g,
+    )
+  }
+  if (
+    lang === 'id' ||
+    lang === 'ms' ||
+    lang === 'pt' ||
+    lang === 'fr' ||
+    lang === 'jv' ||
+    lang === 'it' ||
+    lang === 'de' ||
+    lang === 'nl'
+  ) {
+    return latinVoiceBreakdown(text, lang)
+  }
   // Soft: Cebuano / Ilocano / Central Bikol — English glosses (not Cantonese englishBreakdown).
   if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') {
     return philippineRegionalBreakdown(text, lang)
