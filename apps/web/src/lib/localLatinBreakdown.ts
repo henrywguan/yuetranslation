@@ -1,5 +1,5 @@
 /**
- * Offline token breakdown for Latin-script langs (en / tl / es / vi / ceb / ilo / bcl).
+ * Offline token breakdown for Latin-script langs (en / tl / es / vi / id / ms / pt / fr / jv / it / de / nl / ceb / ilo / bcl).
  * Used when /api/breakdown is slow, metered, or offline — prevents an empty details panel.
  */
 import type { CharBreakdown } from './jyutping'
@@ -51,6 +51,14 @@ export function isLatinDetailLang(lang: Lang): boolean {
     lang === 'es' ||
     lang === 'eses' ||
     lang === 'vi' ||
+    lang === 'id' ||
+    lang === 'ms' ||
+    lang === 'pt' ||
+    lang === 'fr' ||
+    lang === 'jv' ||
+    lang === 'it' ||
+    lang === 'de' ||
+    lang === 'nl' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'

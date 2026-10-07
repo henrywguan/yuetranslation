@@ -135,20 +135,48 @@ function isJapaneseTarget(to: CameraLang): boolean {
   return to === 'ja'
 }
 
-function isScaffoldCameraTarget(to: CameraLang): boolean {
-  return (
-    to === 'id' ||
-    to === 'ms' ||
-    to === 'pt' ||
-    to === 'fr' ||
-    to === 'hi' ||
-    to === 'km' ||
-    to === 'my' ||
-    to === 'jv' ||
-    to === 'it' ||
-    to === 'de' ||
-    to === 'nl'
-  )
+function isIndonesianTarget(to: CameraLang): boolean {
+  return to === 'id'
+}
+
+function isMalayTarget(to: CameraLang): boolean {
+  return to === 'ms'
+}
+
+function isBrazilianPortugueseTarget(to: CameraLang): boolean {
+  return to === 'pt'
+}
+
+function isFrenchTarget(to: CameraLang): boolean {
+  return to === 'fr'
+}
+
+function isHindiTarget(to: CameraLang): boolean {
+  return to === 'hi'
+}
+
+function isKhmerTarget(to: CameraLang): boolean {
+  return to === 'km'
+}
+
+function isBurmeseTarget(to: CameraLang): boolean {
+  return to === 'my'
+}
+
+function isJavaneseTarget(to: CameraLang): boolean {
+  return to === 'jv'
+}
+
+function isItalianTarget(to: CameraLang): boolean {
+  return to === 'it'
+}
+
+function isGermanTarget(to: CameraLang): boolean {
+  return to === 'de'
+}
+
+function isDutchTarget(to: CameraLang): boolean {
+  return to === 'nl'
 }
 
 /** Camera Japanese: kana, or short kanji compounds (not long Chinese-only lines). */
@@ -367,28 +395,236 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .join('\n')
   }
 
-  if (isScaffoldCameraTarget(to)) {
-    const label =
-      to === 'id' ? 'Indonesian' :
-      to === 'ms' ? 'Malay' :
-      to === 'pt' ? 'Portuguese (BR)' :
-      to === 'fr' ? 'French' :
-      to === 'hi' ? 'Hindi' :
-      to === 'km' ? 'Khmer' :
-      to === 'my' ? 'Burmese' :
-      to === 'jv' ? 'Javanese' :
-      to === 'it' ? 'Italian' :
-      to === 'de' ? 'German' :
-      to === 'nl' ? 'Dutch' :
-      'the target language'
+  if (to === 'id') {
     return [
-      `You translate signs, menus, forms, and short labels into natural colloquial ${label}.`,
-      'Write for travelers/readers: everyday spoken register, not stiff formal writing.',
-      'Never leave the translation empty. Never copy Chinese characters into the output.',
+      'You translate signs, menus, forms, and short labels into natural colloquial Bahasa Indonesia.',
+      'Write for Indonesian travelers/readers: Jakarta/media everyday Indonesian, not stiff bureaucratic Indonesian, not Malay (Malaysia).',
+      'Use Latin script only (correct Indonesian orthography). Never Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Check-in / Pendaftaran; Luggage → Bagasi.',
+      '- Safety: Wet floor → Lantai licin / Hati-hati; Caution → Hati-hati.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Indonesian output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Indonesian>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'ms') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Bahasa Melayu (Malay / Malaysia).',
+      'Write for Malaysian travelers/readers: Malaysia (ms-MY) everyday Malay, not stiff bureaucratic Malay, not Indonesian (Bahasa Indonesia).',
+      'Use Latin script only (correct Malay orthography). Never Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Daftar masuk / Check-in; Luggage → Bagasi.',
+      '- Safety: Wet floor → Lantai licin / Awas; Caution → Awas / Berhati-hati.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Malay output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Malay>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'pt') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Brazilian Portuguese (português do Brasil).',
+      'Write for Brazilian travelers/readers: everyday spoken Brazilian Portuguese (pt-BR), not European Portuguese (pt-PT).',
+      'Prefer Brazil vocabulary (ônibus, celular, legal, banheiro) over Portugal-only wording (autocarro, telemóvel, fixe, casa de banho) when they differ.',
+      'Use Latin script only. Include written accents (á à â ã é ê í ó ô õ ú ç) when standard orthography requires them.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Check-in / Registro; Luggage → Bagagem.',
+      '- Safety: Wet floor → Piso molhado / Piso escorregadio; Caution → Cuidado.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Portuguese output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Brazilian Portuguese>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'fr') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Metropolitan French (français de France).',
+      'Write for French travelers/readers: everyday spoken France French, not stiff formal writing, not Quebec-primary Canadian French.',
+      'Use Latin script only. ALWAYS include correct French accents (é, è, ê, ç, à, ù, …) when orthography requires them.',
+      'Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Enregistrement / Check-in; Luggage → Bagages.',
+      '- Safety: Wet floor → Sol glissant; Caution → Attention.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the French output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<French>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'hi') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Modern Standard Hindi (हिन्दी).',
+      'Write for Hindi travelers/readers in India: everyday spoken Hindi, not stiff Sanskritized formal writing.',
+      'Use Devanagari only. Never Chinese characters (Han), never IAST/ISO romanization, never Hinglish Latin as the main line, never Urdu Nastaliq, never invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → चेक-इन; Luggage → सामान.',
+      '- Safety: Wet floor → फर्श गीला है; Caution → सावधान.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Hindi output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Hindi>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'km') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Cambodian Khmer (ភាសាខ្មែរ).',
+      'Write for Khmer travelers/readers: everyday spoken Cambodia Khmer, not stiff formal writing.',
+      'Use native Khmer script (Unicode Khmer block) only. Never use Latin romanization, Chao tone letters, IPA, or invented ASCII tone digits.',
+      'Prefer short sign-ready wording. Examples:',
+      '- Hotel / lobby: Check-in → ចុះឈ្មោះ; Concierge → អ្នកបម្រើភ្ញៀវ; Luggage storage → រក្សាទុកឥវ៉ាន់.',
+      '- Safety: Wet floor → ជាន់រអិល ប្រុងប្រយ័ត្ន; Caution → ប្រុងប្រយ័ត្ន.',
+      '- Food: Delicious → ឆ្ងាញ់; Water → ទឹក.',
+      'Never leave the translation empty. Never copy Chinese characters into the Khmer output.',
       docHint,
       docBatch
         ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
-        : 'Return ONLY valid JSON: {"translation":"<target>"}',
+        : 'Return ONLY valid JSON: {"translation":"<Khmer>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'my') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial standard Burmese (မြန်မာ).',
+      'Write for Myanmar travelers/readers: everyday spoken Yangon / media Burmese, not stiff formal literary Burmese.',
+      'Use native Myanmar script (Unicode Myanmar block) only. Never use MLCTS/romanization, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → ချက်အင်; Luggage → ခရီးဆောင်အိတ်.',
+      '- Safety: Wet floor → ကြမ်းပြင်စိုနေသည် သတိထားပါ; Caution → သတိ။',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Burmese output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Burmese>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'jv') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Javanese (Basa Jawa).',
+      'Write for Javanese travelers/readers: Central/East Java media ngoko by default, Latin script only (not Hanacaraka).',
+      'Do NOT use Indonesian (Bahasa Indonesia) wording when Javanese differs (e.g. prefer matur nuwun / suwun not terima kasih; ora/mboten not tidak).',
+      'Use Latin Javanese orthography. Never Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Check-in / Daftar; Luggage → Koper / Bagasi.',
+      '- Safety: Wet floor → Lantai teles / Ati-ati; Caution → Ati-ati.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases into Javanese.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Javanese output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Javanese>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'it') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial standard Italian (italiano standard).',
+      'Write for Italian travelers/readers: everyday spoken Italy Italian, not stiff formal writing, not regional dialect by default.',
+      'Use Latin script only. ALWAYS include correct Italian accents (è, é, à, ì, ò, ù, …) when orthography requires them.',
+      'Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Check-in / Registrazione; Luggage → Bagagli.',
+      '- Safety: Wet floor → Pavimento bagnato; Caution → Attenzione.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Italian output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Italian>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'de') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial standard German (Deutsch, Deutschland).',
+      'Write for German travelers/readers: everyday spoken Germany German, not stiff formal writing, not Swiss- or Austrian-primary.',
+      'Use Latin script only. ALWAYS include correct German umlauts and ß (ä, ö, ü, ß) when orthography requires them. Capitalize all nouns.',
+      'Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Check-in / Anmeldung; Luggage → Gepäck.',
+      '- Safety: Wet floor → Rutschgefahr; Caution → Achtung.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the German output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<German>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'nl') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Netherlands Dutch (Nederlands).',
+      'Write for Dutch travelers/readers: everyday spoken Netherlands Dutch, not stiff formal writing, not Belgian Dutch / Flemish as the primary default.',
+      'Use Latin script only. ALWAYS use correct Dutch orthography (ij, oe, ui, aa/ee/oo, diaeresis where required).',
+      'Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Inchecken / Check-in; Luggage → Bagage.',
+      '- Safety: Wet floor → Gladde vloer; Caution → Let op.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Dutch output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Dutch>"}',
       'No markdown, no explanation.',
     ]
       .filter(Boolean)
@@ -555,6 +791,39 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isJapaneseTarget(to)) {
     return `(demo JA) ${source}`
   }
+  if (isIndonesianTarget(to)) {
+    return hasHan(source) ? `(demo ID) ${source}` : `(demo) ${source}`
+  }
+  if (isMalayTarget(to)) {
+    return hasHan(source) ? `(demo MS) ${source}` : `(demo) ${source}`
+  }
+  if (isBrazilianPortugueseTarget(to)) {
+    return hasHan(source) ? `(demo PT-BR) ${source}` : `(demo) ${source}`
+  }
+  if (isFrenchTarget(to)) {
+    return hasHan(source) ? `(demo FR) ${source}` : `(demo) ${source}`
+  }
+  if (isHindiTarget(to)) {
+    return hasHan(source) ? `(demo HI) ${source}` : `(demo) ${source}`
+  }
+  if (isKhmerTarget(to)) {
+    return hasHan(source) ? `(demo KM) ${source}` : `(demo) ${source}`
+  }
+  if (isBurmeseTarget(to)) {
+    return hasHan(source) ? `(demo MY) ${source}` : `(demo) ${source}`
+  }
+  if (isJavaneseTarget(to)) {
+    return hasHan(source) ? `(demo JV) ${source}` : `(demo) ${source}`
+  }
+  if (isItalianTarget(to)) {
+    return hasHan(source) ? `(demo IT) ${source}` : `(demo) ${source}`
+  }
+  if (isGermanTarget(to)) {
+    return hasHan(source) ? `(demo DE) ${source}` : `(demo) ${source}`
+  }
+  if (isDutchTarget(to)) {
+    return hasHan(source) ? `(demo NL) ${source}` : `(demo) ${source}`
+  }
   if (isCebuanoTarget(to)) {
     return hasHan(source) ? `(demo CEB) ${source}` : `(demo) ${source}`
   }
@@ -630,8 +899,28 @@ export async function translateCameraText(
               ? `(tr LO) ${source}`
               : isJapaneseTarget(to)
                 ? `(tr JA) ${source}`
-              : isScaffoldCameraTarget(to)
-                ? `(tr ${to.toUpperCase()}) ${source}`
+              : isIndonesianTarget(to)
+                ? `(tr ID) ${source}`
+              : isMalayTarget(to)
+                ? `(tr MS) ${source}`
+              : isBrazilianPortugueseTarget(to)
+                ? `(tr PT) ${source}`
+              : isFrenchTarget(to)
+                ? `(tr FR) ${source}`
+              : isHindiTarget(to)
+                ? `(tr HI) ${source}`
+              : isKhmerTarget(to)
+                ? `(tr KM) ${source}`
+              : isBurmeseTarget(to)
+                ? `(tr MY) ${source}`
+              : isJavaneseTarget(to)
+                ? `(tr JV) ${source}`
+              : isItalianTarget(to)
+                ? `(tr IT) ${source}`
+              : isGermanTarget(to)
+                ? `(tr DE) ${source}`
+              : isDutchTarget(to)
+                ? `(tr NL) ${source}`
               : isKoreanTarget(to)
                 ? `(tr KO) ${source}`
               : isCebuanoTarget(to)
@@ -665,17 +954,17 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'lo') return 'Vientiane Lao (Lao script, lo-LA)'
   if (lang === 'ko') return 'Korean (Hangul, ko-KR)'
   if (lang === 'ja') return 'Japanese (kanji + kana, ja-JP)'
-  if (lang === 'id') return 'Indonesian (id-ID)'
-  if (lang === 'ms') return 'Malay (ms-MY)'
-  if (lang === 'pt') return 'Portuguese (BR) (pt-BR)'
-  if (lang === 'fr') return 'French (fr-FR)'
-  if (lang === 'hi') return 'Hindi (hi-IN)'
+  if (lang === 'id') return 'Indonesian (Latin script, id-ID)'
+  if (lang === 'ms') return 'Malay (Latin script, ms-MY / Malaysia)'
+  if (lang === 'pt') return 'Brazilian Portuguese (Latin script, pt-BR)'
+  if (lang === 'fr') return 'Metropolitan French (Latin script, fr-FR)'
+  if (lang === 'hi') return 'Hindi (Devanagari, hi-IN)'
   if (lang === 'km') return 'Khmer (km-KH)'
-  if (lang === 'my') return 'Burmese (my-MM)'
-  if (lang === 'jv') return 'Javanese (jv-ID)'
-  if (lang === 'it') return 'Italian (it-IT)'
-  if (lang === 'de') return 'German (de-DE)'
-  if (lang === 'nl') return 'Dutch (nl-NL)'
+  if (lang === 'my') return 'Standard Burmese (Myanmar script, my-MM)'
+  if (lang === 'jv') return 'Javanese (Latin script, jv-ID)'
+  if (lang === 'it') return 'Standard Italian (Latin script, it-IT)'
+  if (lang === 'de') return 'Standard German (Latin script, de-DE)'
+  if (lang === 'nl') return 'Standard Dutch (Latin script, nl-NL)'
   if (lang === 'ceb') return 'Cebuano / Binisaya (Latin script)'
   if (lang === 'ilo') return 'Ilocano / Ilokano (Latin script)'
   if (lang === 'bcl') return 'Central Bikol / Bikol Naga (Latin script)'
@@ -737,8 +1026,28 @@ export async function translateCameraBatch(
                   ? `(tr LO) ${s}`
                   : isJapaneseTarget(to)
                     ? `(tr JA) ${s}`
-                  : isScaffoldCameraTarget(to)
-                    ? `(tr ${to.toUpperCase()}) ${s}`
+                  : isIndonesianTarget(to)
+                    ? `(tr ID) ${s}`
+                  : isMalayTarget(to)
+                    ? `(tr MS) ${s}`
+                  : isBrazilianPortugueseTarget(to)
+                    ? `(tr PT) ${s}`
+                  : isFrenchTarget(to)
+                    ? `(tr FR) ${s}`
+                  : isHindiTarget(to)
+                    ? `(tr HI) ${s}`
+                  : isKhmerTarget(to)
+                    ? `(tr KM) ${s}`
+                  : isBurmeseTarget(to)
+                    ? `(tr MY) ${s}`
+                  : isJavaneseTarget(to)
+                    ? `(tr JV) ${s}`
+                  : isItalianTarget(to)
+                    ? `(tr IT) ${s}`
+                  : isGermanTarget(to)
+                    ? `(tr DE) ${s}`
+                  : isDutchTarget(to)
+                    ? `(tr NL) ${s}`
                   : isKoreanTarget(to)
                     ? `(tr KO) ${s}`
                   : isCebuanoTarget(to)
@@ -763,6 +1072,17 @@ export async function translateCameraBatch(
       else if (isLaoTarget(to) && t && (hasHan(t) || !/[\u0E80-\u0EFF]/.test(t))) out[start + i] = src
       else if (isKoreanTarget(to) && t && (hasHan(t) || !/[\uAC00-\uD7A3]/.test(t))) out[start + i] = src
       else if (isJapaneseTarget(to) && t && !looksLikeCameraJapanese(t)) out[start + i] = src
+      else if (isIndonesianTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isMalayTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isBrazilianPortugueseTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isFrenchTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isHindiTarget(to) && t && (hasHan(t) || !/[\u0900-\u097F]/.test(t))) out[start + i] = src
+      else if (isKhmerTarget(to) && t && (hasHan(t) || !/[\u1780-\u17FF]/.test(t))) out[start + i] = src
+      else if (isBurmeseTarget(to) && t && (hasHan(t) || !/[\u1000-\u109F]/.test(t))) out[start + i] = src
+      else if (isJavaneseTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isItalianTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isGermanTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isDutchTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isLatinPhilippineRegionalTarget(to) && t && hasHan(t)) out[start + i] = src
       else {
         if (to === 'cmn' && t) t = scrubYueToCmn(t).text

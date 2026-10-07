@@ -2,10 +2,23 @@ import assert from 'node:assert/strict'
 import { buildLocalLatinBreakdown, isLatinDetailLang } from './localLatinBreakdown'
 
 assert.equal(isLatinDetailLang('en'), true)
+assert.equal(isLatinDetailLang('nl'), true)
+assert.equal(isLatinDetailLang('fr'), true)
+assert.equal(isLatinDetailLang('id'), true)
+assert.equal(isLatinDetailLang('pt'), true)
+assert.equal(isLatinDetailLang('de'), true)
+assert.equal(isLatinDetailLang('it'), true)
+assert.equal(isLatinDetailLang('ms'), true)
+assert.equal(isLatinDetailLang('jv'), true)
+assert.equal(isLatinDetailLang('hi'), false)
 assert.equal(isLatinDetailLang('bcl'), true)
 assert.equal(isLatinDetailLang('ceb'), true)
 assert.equal(isLatinDetailLang('ilo'), true)
 assert.equal(isLatinDetailLang('yue'), false)
+
+const hallo = buildLocalLatinBreakdown('Hallo!', { phraseGloss: 'Hello', lang: 'nl' })
+assert.ok(hallo.some((r) => r.char === 'Hallo'))
+assert.equal(hallo.find((r) => r.char === '!')?.meaning, 'exclamation mark')
 
 const apple = buildLocalLatinBreakdown('Apple', { phraseGloss: '蘋果', lang: 'en' })
 assert.equal(apple.length, 1)

@@ -141,6 +141,51 @@ export function sanitizeMyTranslation(text: string | null | undefined): string |
   return t
 }
 
+
+/** Reject EN→id Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeIdTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→ms Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeMsTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→Brazilian Portuguese payloads that are empty, glossy, or still Chinese. */
+export function sanitizePtTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\p{L}]/u.test(t)) return null
+  return t
+}
+
+/** Reject EN→fr Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeFrTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→jv Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeJvTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→it Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeItTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→de Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeDeTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→nl Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeNlTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
 export function sanitizeScaffoldLatinTranslation(text: string | null | undefined): string | null {
   return sanitizeViTranslation(text)
 }

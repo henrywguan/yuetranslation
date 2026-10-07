@@ -4,7 +4,7 @@ import { translateText } from './api'
 import { humanizeThrownError } from './apiError'
 import { expireHistoryTurns, MAX_TURNS } from './historyMerge'
 import { newId } from './id'
-import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation, sanitizeThTranslation, sanitizeLoTranslation, sanitizeKoTranslation, sanitizeJaTranslation, sanitizeHiTranslation, sanitizeKmTranslation, sanitizeMyTranslation, sanitizeScaffoldLatinTranslation, sanitizeCebTranslation, sanitizeIloTranslation, sanitizeBclTranslation } from './translationGuard'
+import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation, sanitizeThTranslation, sanitizeLoTranslation, sanitizeKoTranslation, sanitizeJaTranslation, sanitizeIdTranslation, sanitizeMsTranslation, sanitizePtTranslation, sanitizeFrTranslation, sanitizeHiTranslation, sanitizeKmTranslation, sanitizeMyTranslation, sanitizeJvTranslation, sanitizeItTranslation, sanitizeDeTranslation, sanitizeNlTranslation, sanitizeCebTranslation, sanitizeIloTranslation, sanitizeBclTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
 import type { ConversationLang, ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './types'
 
@@ -124,12 +124,17 @@ function sanitizeTranslation(to: Lang, text: string, source?: string): string | 
   if (to === 'lo') return sanitizeLoTranslation(text)
   if (to === 'ko') return sanitizeKoTranslation(text)
   if (to === 'ja') return sanitizeJaTranslation(text)
+  if (to === 'id') return sanitizeIdTranslation(text)
+  if (to === 'ms') return sanitizeMsTranslation(text)
+  if (to === 'pt') return sanitizePtTranslation(text)
+  if (to === 'fr') return sanitizeFrTranslation(text)
   if (to === 'hi') return sanitizeHiTranslation(text)
   if (to === 'km') return sanitizeKmTranslation(text)
   if (to === 'my') return sanitizeMyTranslation(text)
-  if (to === 'id' || to === 'ms' || to === 'pt' || to === 'fr' || to === 'jv' || to === 'it' || to === 'de' || to === 'nl') {
-    return sanitizeScaffoldLatinTranslation(text)
-  }
+  if (to === 'jv') return sanitizeJvTranslation(text)
+  if (to === 'it') return sanitizeItTranslation(text)
+  if (to === 'de') return sanitizeDeTranslation(text)
+  if (to === 'nl') return sanitizeNlTranslation(text)
   if (to === 'ceb') return sanitizeCebTranslation(text)
   if (to === 'ilo') return sanitizeIloTranslation(text)
   if (to === 'bcl') return sanitizeBclTranslation(text)

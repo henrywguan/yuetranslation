@@ -8202,6 +8202,3122 @@
         "greeting",
         "japanese"
       ]
+    },
+    {
+      "id": "en-hello-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "hello",
+      "text": "Halo",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "indonesian"
+      ],
+      "alternatives": [
+        "Hai",
+        "Halo semuanya"
+      ]
+    },
+    {
+      "id": "id-halo-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "halo",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "indonesian"
+      ]
+    },
+    {
+      "id": "en-thank-you-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "thank you",
+      "text": "Makasih",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "indonesian"
+      ],
+      "alternatives": [
+        "Terima kasih",
+        "Thanks"
+      ]
+    },
+    {
+      "id": "id-makasih-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "makasih",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "indonesian"
+      ]
+    },
+    {
+      "id": "en-how-are-you-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "how are you",
+      "text": "Apa kabar?",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "indonesian"
+      ],
+      "alternatives": [
+        "Gimana kabarnya?",
+        "Baik-baik aja?"
+      ]
+    },
+    {
+      "id": "id-apa-kabar-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "apa kabar",
+      "text": "How are you?",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "indonesian"
+      ]
+    },
+    {
+      "id": "en-yes-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "yes",
+      "text": "Iya",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "indonesian"
+      ],
+      "alternatives": [
+        "Ya",
+        "Betul"
+      ]
+    },
+    {
+      "id": "id-iya-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "iya",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "indonesian"
+      ]
+    },
+    {
+      "id": "en-no-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "no",
+      "text": "Nggak",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "indonesian"
+      ],
+      "alternatives": [
+        "Tidak",
+        "Enggak"
+      ]
+    },
+    {
+      "id": "id-nggak-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "nggak",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "indonesian"
+      ]
+    },
+    {
+      "id": "en-excuse-me-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "excuse me",
+      "text": "Permisi",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "indonesian"
+      ],
+      "alternatives": [
+        "Maaf"
+      ]
+    },
+    {
+      "id": "id-permisi-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "permisi",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "indonesian"
+      ]
+    },
+    {
+      "id": "en-how-much-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "how much is this",
+      "text": "Ini berapa?",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "indonesian"
+      ],
+      "alternatives": [
+        "Berapa harganya?"
+      ]
+    },
+    {
+      "id": "id-ini-berapa-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "ini berapa",
+      "text": "How much is this?",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "indonesian"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-id",
+      "sourceLang": "en",
+      "targetLang": "id",
+      "source": "where is the bathroom",
+      "text": "Toiletnya di mana?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "indonesian"
+      ],
+      "alternatives": [
+        "Kamar mandinya di mana?"
+      ]
+    },
+    {
+      "id": "id-toiletnya-di-mana-en",
+      "sourceLang": "id",
+      "targetLang": "en",
+      "source": "toiletnya di mana",
+      "text": "Where is the bathroom?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "indonesian"
+      ]
+    },
+    {
+      "id": "en-hello-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "hello",
+      "text": "Hai",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "malay"
+      ],
+      "alternatives": [
+        "Halo",
+        "Apa khabar"
+      ]
+    },
+    {
+      "id": "ms-hai-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "hai",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-thank-you-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "thank you",
+      "text": "Terima kasih",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "malay"
+      ],
+      "alternatives": [
+        "Thanks",
+        "Trima kasih"
+      ]
+    },
+    {
+      "id": "ms-terima-kasih-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "terima kasih",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-how-are-you-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "how are you",
+      "text": "Apa khabar?",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "malay"
+      ],
+      "alternatives": [
+        "Macam mana?",
+        "Baik-baik je?"
+      ]
+    },
+    {
+      "id": "ms-apa-khabar-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "apa khabar",
+      "text": "How are you?",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-yes-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "yes",
+      "text": "Ya",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "malay"
+      ],
+      "alternatives": [
+        "Ye",
+        "Betul"
+      ]
+    },
+    {
+      "id": "ms-ya-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "ya",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-no-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "no",
+      "text": "Tidak",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "malay"
+      ],
+      "alternatives": [
+        "Tak",
+        "Bukan"
+      ]
+    },
+    {
+      "id": "ms-tidak-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "tidak",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-excuse-me-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "excuse me",
+      "text": "Maaf",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "malay"
+      ],
+      "alternatives": [
+        "Tumpang lalu",
+        "Excuse me"
+      ]
+    },
+    {
+      "id": "ms-maaf-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "maaf",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-how-much-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "how much",
+      "text": "Berapa?",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "malay"
+      ],
+      "alternatives": [
+        "Berapa harga?",
+        "Berapa ni?"
+      ]
+    },
+    {
+      "id": "ms-berapa-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "berapa",
+      "text": "How much?",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-ms",
+      "sourceLang": "en",
+      "targetLang": "ms",
+      "source": "where is the bathroom",
+      "text": "Di mana tandas?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "malay"
+      ],
+      "alternatives": [
+        "Tandas kat mana?",
+        "Di mana bilik air?"
+      ]
+    },
+    {
+      "id": "ms-di-mana-tandas-en",
+      "sourceLang": "ms",
+      "targetLang": "en",
+      "source": "di mana tandas",
+      "text": "Where is the bathroom?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "malay"
+      ]
+    },
+    {
+      "id": "en-hello-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "hello",
+      "text": "Olá",
+      "alternatives": [
+        "Oi",
+        "E aí"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-thank-you-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "thank you",
+      "text": "Obrigado",
+      "alternatives": [
+        "Valeu",
+        "Obrigada"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-thank-you-so-much-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "thank you so much",
+      "text": "Muito obrigado",
+      "alternatives": [
+        "Muito obrigada"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-im-sorry-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "i'm sorry",
+      "text": "Desculpa",
+      "alternatives": [
+        "Desculpe",
+        "Foi mal"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-yes-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "yes",
+      "text": "Sim",
+      "alternatives": [
+        "É",
+        "Pode crer"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-no-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "no",
+      "text": "Não",
+      "alternatives": [
+        "Nem"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-please-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "please",
+      "text": "Por favor",
+      "alternatives": [
+        "Porfa"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-excuse-me-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "excuse me",
+      "text": "Com licença",
+      "alternatives": [
+        "Desculpa",
+        "Perdão"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-how-much-is-this-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "how much is this",
+      "text": "Quanto custa isso",
+      "alternatives": [
+        "Quanto é?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "where is the bathroom",
+      "text": "Onde fica o banheiro",
+      "alternatives": [
+        "Cadê o banheiro?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-i-dont-speak-portuguese-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "i don't speak portuguese",
+      "text": "Eu não falo português",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-do-you-speak-english-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "do you speak english",
+      "text": "Você fala inglês",
+      "alternatives": [
+        "Fala inglês?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-whats-up-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "what's up",
+      "text": "E aí",
+      "alternatives": [
+        "Beleza?",
+        "Tudo bem?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-lets-go-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "let's go",
+      "text": "Vamos",
+      "alternatives": [
+        "Bora",
+        "Partiu"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-the-check-please-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "the check please",
+      "text": "A conta, por favor",
+      "alternatives": [
+        "Pode trazer a conta?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-see-you-later-pt",
+      "sourceLang": "en",
+      "targetLang": "pt",
+      "source": "see you later",
+      "text": "Até mais",
+      "alternatives": [
+        "Tchau",
+        "Até logo"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-ola-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "olá",
+      "text": "Hello",
+      "alternatives": [
+        "Hi"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-oi-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "oi",
+      "text": "Hi",
+      "alternatives": [
+        "Hello"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-obrigado-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "obrigado",
+      "text": "Thank you",
+      "alternatives": [
+        "Thanks"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-obrigada-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "obrigada",
+      "text": "Thank you",
+      "alternatives": [
+        "Thanks"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-valeu-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "valeu",
+      "text": "Thanks",
+      "alternatives": [
+        "Thank you",
+        "Cheers"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-desculpa-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "desculpa",
+      "text": "I'm sorry",
+      "alternatives": [
+        "Excuse me",
+        "Sorry"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-sim-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "sim",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-nao-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "não",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-por-favor-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "por favor",
+      "text": "Please",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-com-licenca-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "com licença",
+      "text": "Excuse me",
+      "alternatives": [
+        "Pardon me"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-quanto-custa-isso-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "quanto custa isso",
+      "text": "How much is this",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-onde-fica-o-banheiro-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "onde fica o banheiro",
+      "text": "Where is the bathroom",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-e-ai-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "e aí",
+      "text": "What's up",
+      "alternatives": [
+        "Hey"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-beleza-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "beleza",
+      "text": "Cool",
+      "alternatives": [
+        "Alright",
+        "Sounds good"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "slang",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-bora-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "bora",
+      "text": "Let's go",
+      "alternatives": [
+        "Come on"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-a-conta-por-favor-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "a conta, por favor",
+      "text": "The check please",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "travel",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "pt-ate-mais-en",
+      "sourceLang": "pt",
+      "targetLang": "en",
+      "source": "até mais",
+      "text": "See you later",
+      "alternatives": [
+        "Bye"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "brazilian-portuguese"
+      ]
+    },
+    {
+      "id": "en-hello-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "hello",
+      "text": "Bonjour",
+      "alternatives": [
+        "Salut",
+        "Coucou"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-bonjour-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "bonjour",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-salut-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "salut",
+      "text": "Hi",
+      "alternatives": [
+        "Hello"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-thank-you-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "thank you",
+      "text": "Merci",
+      "alternatives": [
+        "Merci beaucoup"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-merci-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "merci",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-thank-you-so-much-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "thank you so much",
+      "text": "Merci beaucoup",
+      "alternatives": [
+        "Un grand merci"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-im-sorry-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "i'm sorry",
+      "text": "Désolé",
+      "alternatives": [
+        "Pardon",
+        "Excuse-moi"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-desole-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "désolé",
+      "text": "I'm sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-yes-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "yes",
+      "text": "Oui",
+      "alternatives": [
+        "Ouais",
+        "Bien sûr"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-oui-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "oui",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-no-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "no",
+      "text": "Non",
+      "alternatives": [
+        "Nan"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-non-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "non",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-please-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "please",
+      "text": "S'il te plaît",
+      "alternatives": [
+        "S'il vous plaît",
+        "Je t'en prie"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-sil-te-plait-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "s'il te plaît",
+      "text": "Please",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-excuse-me-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "excuse me",
+      "text": "Excuse-moi",
+      "alternatives": [
+        "Pardon",
+        "Excusez-moi"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-goodbye-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "goodbye",
+      "text": "Au revoir",
+      "alternatives": [
+        "Salut",
+        "À plus"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-au-revoir-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "au revoir",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-how-are-you-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "how are you",
+      "text": "Ça va ?",
+      "alternatives": [
+        "Comment ça va ?",
+        "Tu vas bien ?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "fr-ca-va-en",
+      "sourceLang": "fr",
+      "targetLang": "en",
+      "source": "ça va",
+      "text": "How are you",
+      "alternatives": [
+        "I'm fine"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-see-you-later-fr",
+      "sourceLang": "en",
+      "targetLang": "fr",
+      "source": "see you later",
+      "text": "À plus tard",
+      "alternatives": [
+        "À tout à l'heure",
+        "À plus"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "metropolitan-french"
+      ]
+    },
+    {
+      "id": "en-hello-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "hello",
+      "text": "नमस्ते",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-नमस्ते-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "नमस्ते",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-thank-you-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "thank you",
+      "text": "धन्यवाद",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-धन्यवाद-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "धन्यवाद",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-sorry-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "sorry",
+      "text": "माफ़ कीजिए",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-माफ़-कीजिए-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "माफ़ कीजिए",
+      "text": "Sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-water-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "water",
+      "text": "पानी",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-पानी-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "पानी",
+      "text": "Water",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-where-is-it-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "where is it",
+      "text": "यह कहाँ है?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-यह-कहाँ-है-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "यह कहाँ है?",
+      "text": "Where is it?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-how-much-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "how much",
+      "text": "कितने का है?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-कितने-का-है-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "कितने का है?",
+      "text": "How much is it?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-yes-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "yes",
+      "text": "हाँ",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-हाँ-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "हाँ",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-no-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "no",
+      "text": "नहीं",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-नहीं-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "नहीं",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-goodbye-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "goodbye",
+      "text": "अलविदा",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-अलविदा-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "अलविदा",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-nice-to-meet-you-hi",
+      "sourceLang": "en",
+      "targetLang": "hi",
+      "source": "nice to meet you",
+      "text": "आपसे मिलकर खुशी हुई",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "hindi"
+      ]
+    },
+    {
+      "id": "hi-आपसे-मिलकर-खुशी-हुई-en",
+      "sourceLang": "hi",
+      "targetLang": "en",
+      "source": "आपसे मिलकर खुशी हुई",
+      "text": "Nice to meet you",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "hindi"
+      ]
+    },
+    {
+      "id": "en-hello-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "hello",
+      "text": "សួស្តី",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-សួស្តី-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "សួស្តី",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-thank-you-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "thank you",
+      "text": "អរគុណ",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-អរគុណ-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "អរគុណ",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-yes-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "yes",
+      "text": "បាទ",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-បាទ-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "បាទ",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-no-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "no",
+      "text": "ទេ",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-ទេ-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "ទេ",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-water-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "water",
+      "text": "ទឹក",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-ទឹក-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "ទឹក",
+      "text": "Water",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-delicious-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "delicious",
+      "text": "ឆ្ងាញ់",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-ឆ្ងាញ់-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "ឆ្ងាញ់",
+      "text": "Delicious",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-excuse-me-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "excuse me",
+      "text": "សុំទោស",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-សុំទោស-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "សុំទោស",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-goodbye-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "goodbye",
+      "text": "លាហើយ",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-លាហើយ-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "លាហើយ",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-how-much-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "how much",
+      "text": "ថ្លៃប៉ុន្មាន",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-ថ្លៃប៉ុន្មាន-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "ថ្លៃប៉ុន្មាន",
+      "text": "How much",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-help-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "help",
+      "text": "ជួយផង",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-ជួយផង-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "ជួយផង",
+      "text": "Help",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "where is the bathroom",
+      "text": "បន្ទប់ទឹកនៅឯណា",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-បន្ទប់ទឹកនៅឯណា-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "បន្ទប់ទឹកនៅឯណា",
+      "text": "Where is the bathroom",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-nice-to-meet-you-km",
+      "sourceLang": "en",
+      "targetLang": "km",
+      "source": "nice to meet you",
+      "text": "រីករាយដែលបានជួប",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "khmer"
+      ]
+    },
+    {
+      "id": "km-រីករាយដែលបានជួប-en",
+      "sourceLang": "km",
+      "targetLang": "en",
+      "source": "រីករាយដែលបានជួប",
+      "text": "Nice to meet you",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "khmer"
+      ]
+    },
+    {
+      "id": "en-hello-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "hello",
+      "text": "မင်္ဂလာပါ",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-မင်္ဂလာပါ-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "မင်္ဂလာပါ",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-thank-you-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "thank you",
+      "text": "ကျေးဇူးတင်ပါတယ်",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-ကျေးဇူးတင်ပါတယ်-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "ကျေးဇူးတင်ပါတယ်",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-yes-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "yes",
+      "text": "ဟုတ်ကဲ့",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-ဟုတ်ကဲ့-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "ဟုတ်ကဲ့",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-no-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "no",
+      "text": "မဟုတ်ဘူး",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-မဟုတ်ဘူး-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "မဟုတ်ဘူး",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-water-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "water",
+      "text": "ရေ",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-ရေ-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "ရေ",
+      "text": "Water",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-delicious-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "delicious",
+      "text": "အရသာရှိတယ်",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-အရသာရှိတယ်-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "အရသာရှိတယ်",
+      "text": "Delicious",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-excuse-me-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "excuse me",
+      "text": "တောင်းပန်ပါတယ်",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-တောင်းပန်ပါတယ်-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "တောင်းပန်ပါတယ်",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-goodbye-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "goodbye",
+      "text": "နောက်မှတွေ့မယ်",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-နောက်မှတွေ့မယ်-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "နောက်မှတွေ့မယ်",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-how-much-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "how much",
+      "text": "ဘယ်လောက်လဲ",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-ဘယ်လောက်လဲ-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "ဘယ်လောက်လဲ",
+      "text": "How much",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-help-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "help",
+      "text": "ကူညီပါ",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-ကူညီပါ-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "ကူညီပါ",
+      "text": "Help",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "where is the bathroom",
+      "text": "အိမ်သာ ဘယ်မှာလဲ",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-အိမ်သာ ဘယ်မှာလဲ-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "အိမ်သာ ဘယ်မှာလဲ",
+      "text": "Where is the bathroom",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-nice-to-meet-you-my",
+      "sourceLang": "en",
+      "targetLang": "my",
+      "source": "nice to meet you",
+      "text": "တွေ့ရတာဝမ်းသာပါတယ်",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "burmese"
+      ]
+    },
+    {
+      "id": "my-တွေ့ရတာဝမ်းသာပါတယ်-en",
+      "sourceLang": "my",
+      "targetLang": "en",
+      "source": "တွေ့ရတာဝမ်းသာပါတယ်",
+      "text": "Nice to meet you",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "burmese"
+      ]
+    },
+    {
+      "id": "en-hello-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "hello",
+      "text": "Halo",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "javanese"
+      ],
+      "alternatives": [
+        "Piye kabare?",
+        "Sugeng rawuh"
+      ]
+    },
+    {
+      "id": "jv-halo-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "halo",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "javanese"
+      ]
+    },
+    {
+      "id": "en-thank-you-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "thank you",
+      "text": "Suwun",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "javanese"
+      ],
+      "alternatives": [
+        "Matur suwun",
+        "Matur nuwun"
+      ]
+    },
+    {
+      "id": "jv-suwun-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "suwun",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "javanese"
+      ]
+    },
+    {
+      "id": "en-how-are-you-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "how are you",
+      "text": "Piye kabare?",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "javanese"
+      ],
+      "alternatives": [
+        "Kepriye kabare?",
+        "Slamet?"
+      ]
+    },
+    {
+      "id": "jv-piye-kabare-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "piye kabare",
+      "text": "How are you?",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "javanese"
+      ]
+    },
+    {
+      "id": "en-yes-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "yes",
+      "text": "Iya",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "javanese"
+      ],
+      "alternatives": [
+        "Ya",
+        "Inggih"
+      ]
+    },
+    {
+      "id": "jv-iya-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "iya",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "javanese"
+      ]
+    },
+    {
+      "id": "en-no-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "no",
+      "text": "Ora",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "javanese"
+      ],
+      "alternatives": [
+        "Mboten"
+      ]
+    },
+    {
+      "id": "jv-ora-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "ora",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "javanese"
+      ]
+    },
+    {
+      "id": "en-excuse-me-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "excuse me",
+      "text": "Nuwan sewu",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "javanese"
+      ],
+      "alternatives": [
+        "Sepura",
+        "Nyuwun sewu"
+      ]
+    },
+    {
+      "id": "jv-nuwan-sewu-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "nuwan sewu",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "javanese"
+      ]
+    },
+    {
+      "id": "en-how-much-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "how much is this",
+      "text": "Iki piro?",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "javanese"
+      ],
+      "alternatives": [
+        "Regane piro?"
+      ]
+    },
+    {
+      "id": "jv-iki-piro-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "iki piro",
+      "text": "How much is this?",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "javanese"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-jv",
+      "sourceLang": "en",
+      "targetLang": "jv",
+      "source": "where is the bathroom",
+      "text": "Toilet nang endi?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "javanese"
+      ],
+      "alternatives": [
+        "Kamar mandi nang endi?"
+      ]
+    },
+    {
+      "id": "jv-toilet-nang-endi-en",
+      "sourceLang": "jv",
+      "targetLang": "en",
+      "source": "toilet nang endi",
+      "text": "Where is the bathroom?",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "javanese"
+      ]
+    },
+    {
+      "id": "en-hello-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "hello",
+      "text": "Ciao",
+      "alternatives": [
+        "Salve",
+        "Buongiorno"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-ciao-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "ciao",
+      "text": "Hi",
+      "alternatives": [
+        "Hello"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-buongiorno-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "buongiorno",
+      "text": "Good morning",
+      "alternatives": [
+        "Hello"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-thank-you-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "thank you",
+      "text": "Grazie",
+      "alternatives": [
+        "Grazie mille"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-grazie-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "grazie",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-thank-you-so-much-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "thank you so much",
+      "text": "Grazie mille",
+      "alternatives": [
+        "Grazie di cuore"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-im-sorry-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "i'm sorry",
+      "text": "Scusa",
+      "alternatives": [
+        "Mi dispiace"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-scusa-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "scusa",
+      "text": "Sorry",
+      "alternatives": [
+        "I'm sorry"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-yes-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "yes",
+      "text": "Sì",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-si-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "sì",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-no-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "no",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-no-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "no",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-please-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "please",
+      "text": "Per favore",
+      "alternatives": [
+        "Per piacere"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-per-favore-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "per favore",
+      "text": "Please",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-excuse-me-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "excuse me",
+      "text": "Scusa",
+      "alternatives": [
+        "Permesso"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-goodbye-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "goodbye",
+      "text": "Arrivederci",
+      "alternatives": [
+        "Ciao"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-arrivederci-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "arrivederci",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-how-are-you-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "how are you",
+      "text": "Come stai?",
+      "alternatives": [
+        "Come va?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "it-come-stai-en",
+      "sourceLang": "it",
+      "targetLang": "en",
+      "source": "come stai",
+      "text": "How are you",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-see-you-later-it",
+      "sourceLang": "en",
+      "targetLang": "it",
+      "source": "see you later",
+      "text": "A dopo",
+      "alternatives": [
+        "Ci vediamo"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-italian"
+      ]
+    },
+    {
+      "id": "en-hello-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "hello",
+      "text": "Hallo",
+      "alternatives": [
+        "Hi",
+        "Moin"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-hallo-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "hallo",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-hi-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "hi",
+      "text": "Hi",
+      "alternatives": [
+        "Hello"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-thank-you-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "thank you",
+      "text": "Danke",
+      "alternatives": [
+        "Vielen Dank",
+        "Dankeschön"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-danke-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "danke",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-thank-you-so-much-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "thank you so much",
+      "text": "Vielen Dank",
+      "alternatives": [
+        "Tausend Dank"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-im-sorry-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "i'm sorry",
+      "text": "Tut mir leid",
+      "alternatives": [
+        "Entschuldigung",
+        "Sorry"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-tut-mir-leid-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "tut mir leid",
+      "text": "I'm sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-yes-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "yes",
+      "text": "Ja",
+      "alternatives": [
+        "Klar",
+        "Genau"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-ja-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "ja",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-no-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "no",
+      "text": "Nein",
+      "alternatives": [
+        "Nee"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-nein-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "nein",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-please-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "please",
+      "text": "Bitte",
+      "alternatives": [
+        "Bitte schön"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-bitte-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "bitte",
+      "text": "Please",
+      "alternatives": [
+        "You're welcome"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-excuse-me-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "excuse me",
+      "text": "Entschuldigung",
+      "alternatives": [
+        "Verzeihung",
+        "Sorry"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-goodbye-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "goodbye",
+      "text": "Tschüss",
+      "alternatives": [
+        "Auf Wiedersehen",
+        "Bis bald"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-tschuss-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "tschüss",
+      "text": "Bye",
+      "alternatives": [
+        "Goodbye"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-how-are-you-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "how are you",
+      "text": "Wie geht’s?",
+      "alternatives": [
+        "Wie geht es dir?",
+        "Alles klar?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "de-wie-gehts-en",
+      "sourceLang": "de",
+      "targetLang": "en",
+      "source": "wie geht’s",
+      "text": "How are you",
+      "alternatives": [
+        "How's it going"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-see-you-later-de",
+      "sourceLang": "en",
+      "targetLang": "de",
+      "source": "see you later",
+      "text": "Bis später",
+      "alternatives": [
+        "Bis gleich",
+        "Bis bald"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "standard-german"
+      ]
+    },
+    {
+      "id": "en-hello-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "hello",
+      "text": "Hallo",
+      "alternatives": [
+        "Hoi",
+        "Goedendag"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-hallo-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "hallo",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-hoi-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "hoi",
+      "text": "Hi",
+      "alternatives": [
+        "Hello"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-thank-you-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "thank you",
+      "text": "Dank je",
+      "alternatives": [
+        "Dankjewel",
+        "Bedankt"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-dank-je-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "dank je",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-thank-you-so-much-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "thank you so much",
+      "text": "Heel erg bedankt",
+      "alternatives": [
+        "Dank je wel"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-im-sorry-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "i'm sorry",
+      "text": "Sorry",
+      "alternatives": [
+        "Het spijt me",
+        "Excuseer"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-sorry-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "sorry",
+      "text": "I'm sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-yes-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "yes",
+      "text": "Ja",
+      "alternatives": [
+        "Jawel",
+        "Natuurlijk"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-ja-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "ja",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-no-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "no",
+      "text": "Nee",
+      "alternatives": [
+        "Nou nee"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-nee-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "nee",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-please-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "please",
+      "text": "Alsjeblieft",
+      "alternatives": [
+        "Alstublieft",
+        "Graag"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-alsjeblieft-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "alsjeblieft",
+      "text": "Please",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-excuse-me-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "excuse me",
+      "text": "Pardon",
+      "alternatives": [
+        "Excuseer",
+        "Mag ik even?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-goodbye-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "goodbye",
+      "text": "Doei",
+      "alternatives": [
+        "Tot ziens",
+        "Dag"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-tot-ziens-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "tot ziens",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-how-are-you-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "how are you",
+      "text": "Hoe gaat het?",
+      "alternatives": [
+        "Alles goed?",
+        "Hoe is het?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "nl-hoe-gaat-het-en",
+      "sourceLang": "nl",
+      "targetLang": "en",
+      "source": "hoe gaat het",
+      "text": "How are you",
+      "alternatives": [
+        "I'm fine"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
+    },
+    {
+      "id": "en-see-you-later-nl",
+      "sourceLang": "en",
+      "targetLang": "nl",
+      "source": "see you later",
+      "text": "Tot later",
+      "alternatives": [
+        "Tot zo",
+        "Tot straks"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "netherlands-dutch"
+      ]
     }
   ]
 }

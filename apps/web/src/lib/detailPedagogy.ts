@@ -138,7 +138,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     extraPanels: [],
   },
   id: {
-    htmlLang: 'id',
+    htmlLang: 'id-ID',
     pronField: 'accented',
     defaultGlossLang: 'id',
     rubyTitle: false,
@@ -146,7 +146,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     extraPanels: [],
   },
   ms: {
-    htmlLang: 'ms',
+    htmlLang: 'ms-MY',
     pronField: 'accented',
     defaultGlossLang: 'ms',
     rubyTitle: false,
@@ -155,6 +155,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   },
   pt: {
     htmlLang: 'pt-BR',
+    /** Orthographic stress (oxítona / paroxítona / proparoxítona) — not tones. */
     pronField: 'accented',
     defaultGlossLang: 'pt',
     rubyTitle: false,
@@ -170,7 +171,8 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     extraPanels: [],
   },
   hi: {
-    htmlLang: 'hi',
+    // Devanagari title via HiText; optional IAST + address formality in Details only.
+    htmlLang: 'hi-IN',
     pronField: 'accented',
     defaultGlossLang: 'hi',
     rubyTitle: false,
@@ -183,6 +185,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     defaultGlossLang: 'km',
     rubyTitle: false,
     localOffline: true,
+    /** Compact shows UNGEGN-style reading; Details honesty note via KmText. */
     extraPanels: [],
   },
   my: {
@@ -194,7 +197,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     extraPanels: [],
   },
   jv: {
-    htmlLang: 'jv',
+    htmlLang: 'jv-ID',
     pronField: 'accented',
     defaultGlossLang: 'jv',
     rubyTitle: false,

@@ -102,6 +102,18 @@ export function dictionaryTranslate(opts: {
       entry.targetLang === 'th' ||
       entry.targetLang === 'lo' ||
       entry.targetLang === 'ko' ||
+      entry.targetLang === 'nl' ||
+      entry.targetLang === 'de' ||
+      entry.targetLang === 'it' ||
+      entry.targetLang === 'jv' ||
+      entry.targetLang === 'my' ||
+      entry.targetLang === 'km' ||
+      entry.targetLang === 'hi' ||
+      entry.targetLang === 'fr' ||
+      entry.targetLang === 'pt' ||
+      entry.targetLang === 'ms' ||
+      entry.targetLang === 'id' ||
+      entry.targetLang === 'ja' ||
       entry.targetLang === 'ceb' ||
       entry.targetLang === 'ilo' ||
       entry.targetLang === 'bcl')

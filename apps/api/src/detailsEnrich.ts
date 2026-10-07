@@ -158,59 +158,69 @@ const ENRICH_META: Record<
     exampleIn: 'natural modern Japanese (kanji + kana, colloquial unless formal)',
   },
   id: {
-    label: 'Indonesian',
-    glossLangHint: 'Indonesian',
-    exampleIn: 'natural Indonesian',
+    label: 'Indonesian (Bahasa Indonesia)',
+    glossLangHint:
+      'colloquial Bahasa Indonesia (Jakarta/media everyday) — Latin orthography; note informal vs formal pronouns (kamu/Anda, aku/saya) and casual particles (dong/deh/sih) when relevant; never Chao/IPA/tone digits',
+    exampleIn: 'natural colloquial Indonesian (Latin script)',
   },
   ms: {
-    label: 'Malay',
-    glossLangHint: 'Malay',
-    exampleIn: 'natural Malay',
+    label: 'Malay (Bahasa Melayu / Malaysia)',
+    glossLangHint:
+      'colloquial Bahasa Melayu (Malaysia / ms-MY everyday) — Latin orthography; note informal vs formal pronouns (kau/anda, aku/saya) and casual particles (lah/je/kan) when relevant; never Chao/IPA/tone digits; not Indonesian',
+    exampleIn: 'natural colloquial Malay (Latin script, Malaysia)',
   },
   pt: {
-    label: 'Portuguese (BR)',
-    glossLangHint: 'Portuguese (BR)',
-    exampleIn: 'natural Portuguese (BR)',
+    label: 'Brazilian Portuguese (português do Brasil)',
+    glossLangHint:
+      'Brazilian Portuguese (pt-BR) — Latin orthography with correct accents; not European Portuguese',
+    exampleIn: 'natural Brazilian Portuguese (pt-BR)',
   },
   fr: {
-    label: 'French',
-    glossLangHint: 'French',
-    exampleIn: 'natural French',
+    label: 'Metropolitan French (France)',
+    glossLangHint:
+      'Metropolitan French (France / fr-FR) — correct orthography with accents; colloquial everyday, not Quebec-primary',
+    exampleIn: 'natural Metropolitan French (France)',
   },
   hi: {
-    label: 'Hindi',
-    glossLangHint: 'Hindi',
-    exampleIn: 'natural Hindi',
+    label: 'Hindi (हिन्दी)',
+    glossLangHint:
+      'Modern Standard Hindi (हिन्दी) — Devanagari only; IAST romanization is added by the client in Details',
+    exampleIn: 'natural Modern Standard Hindi (Devanagari)',
   },
   km: {
-    label: 'Khmer',
-    glossLangHint: 'Khmer',
-    exampleIn: 'natural Khmer',
+    label: 'Cambodian Khmer (ភាសាខ្មែរ)',
+    glossLangHint: 'Cambodian Khmer (ភាសាខ្មែរ) — native Khmer script only; never Latin romanization or tone digits',
+    exampleIn: 'natural Cambodian Khmer (Khmer script)',
   },
   my: {
-    label: 'Burmese',
-    glossLangHint: 'Burmese',
-    exampleIn: 'natural Burmese',
+    label: 'Standard Burmese (မြန်မာ)',
+    glossLangHint:
+      'Standard Burmese (မြန်မာ) — native Myanmar script only; MLCTS is added by the client — never invent ASCII tone digits',
+    exampleIn: 'natural colloquial Burmese (Myanmar script)',
   },
   jv: {
-    label: 'Javanese',
-    glossLangHint: 'Javanese',
-    exampleIn: 'natural Javanese',
+    label: 'Javanese (Basa Jawa)',
+    glossLangHint:
+      'colloquial Latin Javanese (Central/East Java media, ngoko by default) — note undha-usuk speech level (ngoko / madya / krama) when detectable; never Indonesian wording by default; never Chao/IPA/tone digits or Hanacaraka',
+    exampleIn: 'natural colloquial Latin Javanese',
   },
   it: {
-    label: 'Italian',
-    glossLangHint: 'Italian',
-    exampleIn: 'natural Italian',
+    label: 'Standard Italian (Italia)',
+    glossLangHint:
+      'Standard Italian (Italia / it-IT) — correct orthography with accents; colloquial everyday, not regional dialect by default',
+    exampleIn: 'natural standard Italian (Italia)',
   },
   de: {
-    label: 'German',
-    glossLangHint: 'German',
-    exampleIn: 'natural German',
+    label: 'Standard German (Deutschland)',
+    glossLangHint:
+      'Standard German (Deutschland / de-DE) — correct orthography with umlauts and ß; colloquial everyday, not Swiss- or Austrian-primary',
+    exampleIn: 'natural standard German (Deutschland)',
   },
   nl: {
-    label: 'Dutch',
-    glossLangHint: 'Dutch',
-    exampleIn: 'natural Dutch',
+    label: 'Standard Dutch (Netherlands)',
+    glossLangHint:
+      'Standard Dutch (Netherlands / nl-NL) — correct orthography; colloquial everyday, not Flemish-primary',
+    exampleIn: 'natural Netherlands Dutch',
   },
   ceb: {
     label: 'Cebuano / Bisaya',
