@@ -1,5 +1,12 @@
 import assert from 'node:assert/strict'
-import { resolvePrimaryLangOnBootstrap } from './primaryLanguagePref.ts'
+import {
+  PRIMARY_LANGS,
+  isPrimaryLang,
+  layoutForPrimary,
+  normalizePrimaryLang,
+  primaryLangShortCopy,
+  resolvePrimaryLangOnBootstrap,
+} from './primaryLanguagePref.ts'
 
 // Guest / no server pref keeps local.
 assert.deepEqual(
@@ -77,5 +84,32 @@ assert.deepEqual(
   }),
   { primary: 'en', needsServerPush: true, adoptServer: false },
 )
+
+// All voice langs are selectable primaries (migration 039).
+assert.equal(PRIMARY_LANGS.length, 24)
+for (const id of PRIMARY_LANGS) {
+  assert.equal(isPrimaryLang(id), true)
+  assert.equal(normalizePrimaryLang(id), id)
+  const short = primaryLangShortCopy(id)
+  assert.ok(short.en.trim())
+  assert.ok(short.zh.trim())
+}
+assert.equal(isPrimaryLang('ceb'), false)
+assert.equal(normalizePrimaryLang('ceb'), 'yue')
+
+assert.deepEqual(layoutForPrimary('ja'), {
+  soloUpperLang: 'ja',
+  soloLowerLang: 'en',
+  conversationYouLang: 'ja',
+  chineseLang: 'en',
+  speakDirection: 'ja',
+})
+assert.deepEqual(layoutForPrimary('de'), {
+  soloUpperLang: 'de',
+  soloLowerLang: 'en',
+  conversationYouLang: 'de',
+  chineseLang: 'en',
+  speakDirection: 'de',
+})
 
 console.log('primaryLanguagePref.smoke: ok')

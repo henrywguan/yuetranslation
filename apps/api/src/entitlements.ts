@@ -56,23 +56,41 @@ import {
   resolveYueVoice,
 } from './ttsVoices.js'
 
-export type PrimaryLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi'
+/** Voice-capable Account Hub primaries (matches web `PRIMARY_LANGS`). */
+export const PRIMARY_LANGS = [
+  'en',
+  'yue',
+  'cmn',
+  'wuu',
+  'sichuan',
+  'tl',
+  'es',
+  'eses',
+  'vi',
+  'th',
+  'lo',
+  'ko',
+  'ja',
+  'id',
+  'ms',
+  'pt',
+  'fr',
+  'hi',
+  'km',
+  'my',
+  'jv',
+  'it',
+  'de',
+  'nl',
+] as const
+export type PrimaryLang = (typeof PRIMARY_LANGS)[number]
+
+export function isPrimaryLang(value: unknown): value is PrimaryLang {
+  return typeof value === 'string' && (PRIMARY_LANGS as readonly string[]).includes(value)
+}
 
 export function normalizePrimaryLang(value: unknown): PrimaryLang {
-  if (
-    value === 'en' ||
-    value === 'yue' ||
-    value === 'cmn' ||
-    value === 'wuu' ||
-    value === 'sichuan' ||
-    value === 'tl' ||
-    value === 'es' ||
-    value === 'eses' ||
-    value === 'vi'
-  ) {
-    return value
-  }
-  return 'yue'
+  return isPrimaryLang(value) ? value : 'yue'
 }
 
 export type Entitlement = {
@@ -192,8 +210,8 @@ export type Entitlement = {
     ttsVoiceNl: string
     /** Cross-device Auto-speak preference (playback still gated by plan). */
     autoSpeak: boolean
-    /** Primary non-English language for Solo / Conversation / Cam / brand. */
-    primaryLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi'
+    /** Primary language for Solo / Conversation / Cam / brand. */
+    primaryLang: PrimaryLang
     /** Custom display username; null until the user sets one. */
     username: string | null
     /** ISO timestamp of last username change; null if never set. */

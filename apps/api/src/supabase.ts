@@ -115,18 +115,36 @@ function normalizeProfile(data: unknown): ProfileRow {
     username?: string | null
     username_changed_at?: string | null
   }
-  const primary =
-    row.primary_lang === 'en' ||
-    row.primary_lang === 'cmn' ||
-    row.primary_lang === 'wuu' ||
-    row.primary_lang === 'sichuan' ||
-    row.primary_lang === 'tl' ||
-    row.primary_lang === 'es' ||
-    row.primary_lang === 'eses' ||
-    row.primary_lang === 'vi' ||
-    row.primary_lang === 'yue'
-      ? row.primary_lang
-      : 'yue'
+  // Keep in sync with PRIMARY_LANGS in entitlements.ts / web primaryLanguagePref.ts.
+  const primaryLangs = [
+    'en',
+    'yue',
+    'cmn',
+    'wuu',
+    'sichuan',
+    'tl',
+    'es',
+    'eses',
+    'vi',
+    'th',
+    'lo',
+    'ko',
+    'ja',
+    'id',
+    'ms',
+    'pt',
+    'fr',
+    'hi',
+    'km',
+    'my',
+    'jv',
+    'it',
+    'de',
+    'nl',
+  ] as const
+  const primary = (primaryLangs as readonly string[]).includes(row.primary_lang ?? '')
+    ? (row.primary_lang as (typeof primaryLangs)[number])
+    : 'yue'
   return {
     ...row,
     plan: normalizePlan(row.plan),

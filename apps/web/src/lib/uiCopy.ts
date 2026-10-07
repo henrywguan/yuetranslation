@@ -1766,19 +1766,15 @@ export function biPlain(b: Bi, primary?: PrimaryLang): string {
     if (left === right) return left
     return `${left} ${right}`
   }
-  if (
-    lang === 'tl' ||
-    lang === 'es' ||
-    lang === 'eses' ||
-    lang === 'vi' ||
-    lang === 'wuu' ||
-    lang === 'sichuan'
-  ) {
-    const fromBi = b[lang as 'tl' | 'es' | 'eses' | 'vi' | 'wuu' | 'sichuan']
+  // Replace-Chinese primaries (everything except yue / en / cmn): native gloss
+  // when present; otherwise English-only so Cantonese 漢字 does not leak.
+  if (lang !== 'yue' && lang !== 'en' && lang !== 'cmn') {
+    const fromBi = (b as Record<string, string | undefined>)[lang]
     if (typeof fromBi === 'string' && fromBi.trim()) return joinDistinct(b.en, fromBi)
     const row = PRIMARY_UI_GLOSS[b.en]
-    const gloss = row?.[lang as 'tl' | 'es' | 'eses' | 'vi' | 'wuu' | 'sichuan']
+    const gloss = row?.[lang as keyof typeof row]
     if (typeof gloss === 'string' && gloss.trim()) return joinDistinct(b.en, gloss)
+    return b.en
   }
   // Cantonese primary: Chinese leads (matches zh-first chrome).
   if (lang === 'yue') return joinDistinct(b.zh, b.en)

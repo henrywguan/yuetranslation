@@ -1,7 +1,31 @@
 /** Auto-seeded primary-language UI glosses (replaces Jyutping in BiText). */
-// TODO(eses): add a Peninsular Spanish (`eses`) column once the full gloss
-// data pass runs — every row below needs an `eses` translation alongside `es`.
-export type PrimaryUiGlossRow = { tl?: string; es?: string; eses?: string; vi?: string; cmn?: string; wuu?: string; sichuan?: string }
+// TODO(primary-gloss): seed columns for th/lo/ko/ja/id/ms/pt/fr/hi/km/my/jv/it/de/nl
+// (and fill any remaining eses gaps) — until then BiText falls back to English-only
+// chrome for those primaries instead of Cantonese 漢字.
+export type PrimaryUiGlossRow = {
+  tl?: string
+  es?: string
+  eses?: string
+  vi?: string
+  cmn?: string
+  wuu?: string
+  sichuan?: string
+  th?: string
+  lo?: string
+  ko?: string
+  ja?: string
+  id?: string
+  ms?: string
+  pt?: string
+  fr?: string
+  hi?: string
+  km?: string
+  my?: string
+  jv?: string
+  it?: string
+  de?: string
+  nl?: string
+}
 
 export const PRIMARY_UI_GLOSS: Record<string, PrimaryUiGlossRow> = {
   '* Business live hours are a soft fair-use cap (~40 hrs/mo) so speech costs stay sustainable. Family camera is capped at 800 scans/mo; Business camera is unlimited but counted.': { tl: '* Ang Business live hours ay soft fair-use cap (~40 hrs/buwan) para sustainable ang speech costs. Naka-cap ang Family camera sa 800 scans/buwan; unlimited ang Business camera pero binibilang.', es: '* Las horas en vivo Business son un tope blando de uso justo (~40 h/mes) para sostener costos de voz. Family cámara tope 800/mes; Business cámara ilimitada pero contada.', eses: '* Las horas en vivo Business son un tope blando de uso justo (~40 h/mes) para sostener costos de voz. Family cámara tope 800/mes; Business cámara ilimitada pero contada.', vi: '* Giờ live Business là trần dùng hợp lý mềm (~40 giờ/tháng) để chi phí giọng bền. Camera Family tối đa 800/tháng; camera Business không giới hạn nhưng vẫn đếm.', wuu: '* 商务版即时时数是合理使用上限（大约每月四十小时），等语音成本可以持续。家庭版相机每月 800 次扫描；商务版相机无限但仍计量。', sichuan: '* 商务版即时时数是合理使用上限（大约每月四十小时），等语音成本可以持续。家庭版相机每月 800 次扫描；商务版相机无限但仍计量。' },

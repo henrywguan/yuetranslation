@@ -796,13 +796,12 @@ app.patch('/api/prefs/auto-speak', async (req: AuthedRequest, res) => {
 /** Save cross-device primary language preference (signed-in only). */
 app.patch('/api/prefs/primary-lang', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
-  const { normalizePrimaryLang } = await import('./entitlements.js')
+  const { normalizePrimaryLang, PRIMARY_LANGS, isPrimaryLang } = await import('./entitlements.js')
   const raw = req.body?.primaryLang
-  const allowed = ['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi']
-  if (typeof raw !== 'string' || !allowed.includes(raw)) {
+  if (typeof raw !== 'string' || !isPrimaryLang(raw)) {
     res
       .status(400)
-      .json({ message: 'primaryLang must be en, yue, cmn, wuu, sichuan, tl, es, eses, or vi.' })
+      .json({ message: `primaryLang must be one of: ${PRIMARY_LANGS.join(', ')}.` })
     return
   }
   const primaryLang = normalizePrimaryLang(raw)
