@@ -24,10 +24,11 @@ import { ItText } from './ItText'
 import { DeText } from './DeText'
 import { NlText } from './NlText'
 import { BiText } from './BiText'
+import { StarPhraseButton } from './StarPhraseButton'
 import type { ConversationTurn, Lang } from '../lib/types'
 import { biPlain, ui } from '../lib/uiCopy'
 
-function langShort(lang: Lang): string {
+export function langShort(lang: Lang): string {
   if (lang === 'en') return 'EN'
   if (lang === 'cmn') return '普'
   if (lang === 'wuu') return '沪'
@@ -57,7 +58,7 @@ function langShort(lang: Lang): string {
   return '粵'
 }
 
-function LangLine({
+export function LangLine({
   lang,
   text,
   definition,
@@ -328,18 +329,29 @@ export function HistoryCard({
             </span>
           ) : null}
         </div>
-        <button
-          type="button"
-          className="history-card-expand"
-          aria-expanded={expanded}
-          aria-controls={`history-detail-${turn.id}`}
-          onClick={onToggle}
-        >
-          <BiText copy={expanded ? ui.historyCollapse : ui.historyExpand} size="sm" layout="inline" />
-          <span className="history-card-chevron" aria-hidden="true">
-            {expanded ? '▾' : '▸'}
-          </span>
-        </button>
+        <div className="history-card-top-actions">
+          <StarPhraseButton
+            className="history-card-star"
+            source={turn.source}
+            translation={turn.translation}
+            from={turn.from}
+            to={turn.to}
+            romanization={turn.romanization}
+            origin="solo"
+          />
+          <button
+            type="button"
+            className="history-card-expand"
+            aria-expanded={expanded}
+            aria-controls={`history-detail-${turn.id}`}
+            onClick={onToggle}
+          >
+            <BiText copy={expanded ? ui.historyCollapse : ui.historyExpand} size="sm" layout="inline" />
+            <span className="history-card-chevron" aria-hidden="true">
+              {expanded ? '▾' : '▸'}
+            </span>
+          </button>
+        </div>
       </div>
 
       <div

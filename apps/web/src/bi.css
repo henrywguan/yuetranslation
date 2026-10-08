@@ -432,6 +432,18 @@ button.jyutping {
   gap: 0;
 }
 
+.cantonese-yale-line {
+  margin-top: 0.22rem;
+  font-family: var(--font-english);
+  font-size: 0.62em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  color: color-mix(in srgb, var(--muted) 82%, var(--mint));
+  text-align: start;
+  user-select: none;
+}
+
 /* Inline / pane ruby (shared cell geometry with popup tips) */
 .jyut-ruby {
   display: inline-flex;
@@ -522,6 +534,66 @@ button.jyutping {
   line-height: 1.15;
   letter-spacing: 0.02em;
   color: inherit;
+}
+
+/* Soft tone colors (Jyutping roman + Han ruby) — no purple; readable on dark + light */
+.jyut-syl-roman.jyut-tone-1,
+.jyut-ruby-han.jyut-tone-1 {
+  --jyut-tone-c: #f2a9a0;
+}
+.jyut-syl-roman.jyut-tone-2,
+.jyut-ruby-han.jyut-tone-2 {
+  --jyut-tone-c: #f0c987;
+}
+.jyut-syl-roman.jyut-tone-3,
+.jyut-ruby-han.jyut-tone-3 {
+  --jyut-tone-c: #aedf9f;
+}
+.jyut-syl-roman.jyut-tone-4,
+.jyut-ruby-han.jyut-tone-4 {
+  --jyut-tone-c: #93c9f2;
+}
+.jyut-syl-roman.jyut-tone-5,
+.jyut-ruby-han.jyut-tone-5 {
+  --jyut-tone-c: #7fdbd0;
+}
+.jyut-syl-roman.jyut-tone-6,
+.jyut-ruby-han.jyut-tone-6 {
+  --jyut-tone-c: #dcb9a2;
+}
+
+[data-theme='light'] .jyut-syl-roman.jyut-tone-1,
+[data-theme='light'] .jyut-ruby-han.jyut-tone-1 {
+  --jyut-tone-c: #b24b41;
+}
+[data-theme='light'] .jyut-syl-roman.jyut-tone-2,
+[data-theme='light'] .jyut-ruby-han.jyut-tone-2 {
+  --jyut-tone-c: #9c6a14;
+}
+[data-theme='light'] .jyut-syl-roman.jyut-tone-3,
+[data-theme='light'] .jyut-ruby-han.jyut-tone-3 {
+  --jyut-tone-c: #3b8236;
+}
+[data-theme='light'] .jyut-syl-roman.jyut-tone-4,
+[data-theme='light'] .jyut-ruby-han.jyut-tone-4 {
+  --jyut-tone-c: #2a68a0;
+}
+[data-theme='light'] .jyut-syl-roman.jyut-tone-5,
+[data-theme='light'] .jyut-ruby-han.jyut-tone-5 {
+  --jyut-tone-c: #17796f;
+}
+[data-theme='light'] .jyut-syl-roman.jyut-tone-6,
+[data-theme='light'] .jyut-ruby-han.jyut-tone-6 {
+  --jyut-tone-c: #86563a;
+}
+
+.jyut-syl-roman[class*='jyut-tone-'] {
+  color: var(--jyut-tone-c);
+}
+
+/* Han: gentle wash so tone reads without fighting the ink hierarchy */
+.jyut-ruby-han[class*='jyut-tone-'] {
+  color: color-mix(in srgb, var(--jyut-tone-c) 38%, currentColor);
 }
 
 .jyut-ruby--hint {
@@ -1299,3 +1371,395 @@ button.spoken-line-text--action:focus-visible {
   line-height: 1.35;
 }
 
+
+/* ---- Competitor-parity: phrasebook, say-it-back, share, romanization, handwriting ---- */
+
+.result-actions-minor {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.result-actions-minor .copy-btn {
+  width: 1.7rem;
+  height: 1.7rem;
+}
+
+.result-actions-minor .copy-btn-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.star-btn.is-starred {
+  color: #f0c987;
+  border-color: color-mix(in srgb, #f0c987 48%, var(--glass-border));
+  background: color-mix(in srgb, #f0c987 14%, color-mix(in srgb, var(--surface) 68%, transparent));
+}
+
+[data-theme='light'] .star-btn.is-starred {
+  color: #9c6a14;
+  border-color: color-mix(in srgb, #9c6a14 40%, var(--glass-border));
+}
+
+.say-back-btn.is-listening {
+  color: var(--on-jade);
+  background: linear-gradient(145deg, var(--jade), var(--jade-deep));
+  border-color: color-mix(in srgb, var(--jade-bright) 40%, transparent);
+  animation: say-back-pulse 1.2s ease-in-out infinite;
+}
+
+.say-back-btn.is-match {
+  color: var(--on-jade);
+  background: linear-gradient(145deg, var(--jade), var(--jade-deep));
+}
+
+.say-back-btn.is-miss {
+  color: #f2a9a0;
+  border-color: color-mix(in srgb, #f2a9a0 45%, var(--glass-border));
+}
+
+[data-theme='light'] .say-back-btn.is-miss {
+  color: #b24b41;
+}
+
+.say-back-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@keyframes say-back-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--jade) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--jade) 22%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .say-back-btn.is-listening {
+    animation: none;
+  }
+}
+
+.solo-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.solo-paste-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.32rem 0.8rem 0.32rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 26%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface) 68%, transparent);
+  color: color-mix(in srgb, var(--muted) 88%, var(--ink));
+  font: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.solo-paste-btn:hover:not(:disabled),
+.solo-paste-btn:focus-visible {
+  border-color: color-mix(in srgb, var(--jade) 48%, var(--glass-border));
+  color: var(--ink-bright);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.solo-paste-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.solo-paste-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.solo-paste-hint {
+  margin: -0.2rem 0 0;
+  font-size: 0.78rem;
+}
+
+.canto-roman-toggle {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 22%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+}
+
+.canto-roman-toggle-btn {
+  appearance: none;
+  margin: 0;
+  padding: 0.22rem 0.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: color-mix(in srgb, var(--muted) 88%, var(--ink));
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.canto-roman-toggle-btn.is-active {
+  color: var(--on-jade);
+  background: linear-gradient(145deg, var(--jade), var(--jade-deep));
+}
+
+.canto-roman-toggle-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.history-pane-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-tabs {
+  flex: none;
+  display: flex;
+  gap: 0.3rem;
+  margin: 0.55rem 0 0.2rem;
+  padding: 2px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 18%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+
+.history-tab {
+  appearance: none;
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.28rem 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: color-mix(in srgb, var(--muted) 88%, var(--ink));
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.history-tab.is-active {
+  color: var(--ink-bright);
+  background: color-mix(in srgb, var(--jade) 18%, transparent);
+}
+
+.history-tab-count {
+  min-width: 1.15rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  line-height: 1.15rem;
+  text-align: center;
+  background: color-mix(in srgb, var(--jade) 24%, transparent);
+}
+
+.history-card-top-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.history-card-top-actions .copy-btn,
+.history-card-top-actions .speak-btn {
+  width: 1.7rem;
+  height: 1.7rem;
+}
+
+.phrasebook-toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.1rem 0.5rem;
+}
+
+.phrasebook-count {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.phrasebook-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.phrasebook-toolbar-actions .copy-btn {
+  width: 1.7rem;
+  height: 1.7rem;
+}
+
+.phrasebook-copy-btn {
+  appearance: none;
+  margin: 0;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 26%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface) 68%, transparent);
+  color: color-mix(in srgb, var(--muted) 88%, var(--ink));
+  font: inherit;
+  cursor: pointer;
+}
+
+.phrasebook-copy-btn.is-copied {
+  color: var(--on-jade);
+  background: linear-gradient(145deg, var(--jade), var(--jade-deep));
+}
+
+.phrasebook-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem 0.7rem;
+  cursor: default;
+}
+
+.conversation-export {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.conversation-export-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.3rem 0.75rem 0.3rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 26%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  color: color-mix(in srgb, var(--muted) 88%, var(--ink));
+  font: inherit;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.conversation-export-btn:hover,
+.conversation-export-btn:focus-visible {
+  border-color: color-mix(in srgb, var(--jade) 48%, var(--glass-border));
+  color: var(--ink-bright);
+  outline: none;
+}
+
+.conversation-export-btn.is-copied {
+  color: var(--on-jade);
+  background: linear-gradient(145deg, var(--jade), var(--jade-deep));
+}
+
+.conversation-export-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.detail-handwriting-hint,
+.detail-handwriting-note {
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.detail-handwriting-note {
+  margin: 0.6rem 0 0;
+}
+
+.detail-handwriting-pad {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.detail-handwriting-canvas {
+  display: block;
+  flex: none;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--jade) 26%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  touch-action: none;
+  cursor: crosshair;
+}
+
+[data-theme='light'] .detail-handwriting-canvas {
+  background: color-mix(in srgb, var(--surface) 92%, #1f9f8a 4%);
+}
+
+.detail-handwriting-clear,
+.detail-handwriting-search {
+  appearance: none;
+  margin: 0;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 26%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface) 68%, transparent);
+  color: color-mix(in srgb, var(--muted) 88%, var(--ink));
+  font: inherit;
+  cursor: pointer;
+}
+
+.detail-handwriting-search:not(:disabled) {
+  color: var(--on-jade);
+  background: linear-gradient(145deg, var(--jade), var(--jade-deep));
+}
+
+.detail-handwriting-clear:disabled,
+.detail-handwriting-search:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.detail-handwriting-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.detail-handwriting-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.4rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--jade) 22%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface) 66%, transparent);
+  color: var(--ink);
+  font: inherit;
+}
+
+.detail-handwriting-input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 1px;
+}

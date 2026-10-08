@@ -12,6 +12,23 @@ import {
 import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref, translateText } from './api'
 import { hasHan } from './charGloss'
 import { localFormalizeMexicanSpanish } from './mexicanSpanishPedagogy'
+import { localWrittenCantonese } from './cantoneseRegister'
+import { formatConversationTranscript } from './conversationExport'
+import {
+  cardFromTurn,
+  isStarred,
+  readLocalPhrasebook,
+  removePhraseCard,
+  upsertPhraseCard,
+  writeLocalPhrasebook,
+  type PhraseCard,
+} from './phrasebook'
+import {
+  readLocalCantoneseRomanization,
+  writeLocalCantoneseRomanization,
+  type CantoneseRomanization,
+} from './romanizationPref'
+import { newId } from './id'
 import { localFormalizePeninsularSpanish } from './peninsularSpanishPedagogy'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser, ensureSharedAudioContext } from './audioReactive'
@@ -90,6 +107,16 @@ function cleanFormalEs(text: string | null | undefined, prev: string): string | 
   t = t.replace(/^(（示範）|\(demo(?:\s*MX)?\))\s*/i, '').trim()
   if (!t || hasHan(t)) return null
   if (!/[\p{L}]/u.test(t)) return null
+  if (t === prev.trim()) return null
+  return t
+}
+
+/** Written-Cantonese cleaner — must stay Han and differ from the spoken line. */
+function cleanWrittenYue(text: string | null | undefined, prev: string): string | null {
+  let t = (text || '').trim()
+  if (!t) return null
+  t = t.replace(/^(（示範）|\(demo\)|\[demo\])\s*/i, '').trim()
+  if (!t || !hasHan(t)) return null
   if (t === prev.trim()) return null
   return t
 }
@@ -218,6 +245,36 @@ type State = {
     sourceText: string
     sourceLang?: Lang
   }) => Promise<void>
+  /**
+   * Re-write the current spoken (口語) Cantonese line as written Chinese (書面語) and swap it in.
+   * Uses `/api/translate` yue→yue formal — callers should only fire from explicit user taps.
+   */
+  makeWrittenCantonese: (opts: {
+    cantonese: string
+    sourceText: string
+    sourceLang?: Lang
+  }) => Promise<void>
+  /** Starred phrases (local device, newest first). */
+  phrasebook: PhraseCard[]
+  /** Star / unstar a source→translation pair. Returns true when it is now starred. */
+  toggleStarPhrase: (opts: {
+    source: string
+    translation: string
+    from: Lang
+    to: Lang
+    romanization?: string
+    origin?: PhraseCard['origin']
+  }) => boolean
+  removePhrase: (id: string) => void
+  /** Save Cam / AR text pairs into the phrasebook. Returns how many cards were added. */
+  addCameraPhrases: (
+    items: Array<{ source: string; translation: string; from: Lang; to: Lang }>,
+  ) => number
+  /** Plain-text transcript of the current Conversation panes. */
+  exportConversationTranscript: () => string
+  /** Display romanization for Cantonese results (Jyutping default; Yale optional). */
+  cantoneseRomanization: CantoneseRomanization
+  setCantoneseRomanization: (mode: CantoneseRomanization) => void
   /** Clear Solo / Conversation active text only — keeps History. */
   clearCurrent: () => void
   /** Wipe History list (and persist empty to the account when signed in). */
@@ -645,6 +702,8 @@ export const useYueStore = create<State>((set, get) => {
   status: 'idle',
   speakingText: null,
   autoSpeak: readLocalAutoSpeak(),
+  phrasebook: readLocalPhrasebook(),
+  cantoneseRomanization: readLocalCantoneseRomanization(),
   entitlement: null,
   demoMode: false,
   incidentBanner: null,
@@ -1000,6 +1059,7 @@ export const useYueStore = create<State>((set, get) => {
       // on history hydrate (extra round-trip / local work after sign-in).
       clearBootstrapRetry()
       set({
+        phrasebook: readLocalPhrasebook(),
         entitlement: ent,
         demoMode: Boolean(data.engines?.demo),
         incidentBanner: data.incidentBanner ?? null,
@@ -2088,6 +2148,210 @@ export const useYueStore = create<State>((set, get) => {
       translating: false,
       translatingTo: null,
     })
+  },
+
+  makeWrittenCantonese: async ({ cantonese, sourceText, sourceLang = 'en' }) => {
+    const source = sourceText.trim()
+    const prev = cantonese.trim()
+    if (!prev) return
+    set({ translating: true, translatingTo: 'yue', error: null })
+    try {
+      let result = await translateText(prev, 'yue', 'yue', {
+        includeAlternatives: true,
+        register: 'formal',
+      })
+      let written = cleanWrittenYue(result.text, prev)
+
+      if (!written && source) {
+        const from: Lang = sourceLang === 'yue' ? 'en' : sourceLang
+        result = await translateText(source, from, 'yue', {
+          includeAlternatives: true,
+          register: 'formal',
+        })
+        written = cleanWrittenYue(result.text, prev)
+      }
+
+      if (!written) {
+        const local = localWrittenCantonese(prev)
+        written = cleanWrittenYue(local, prev)
+        if (written) {
+          result = {
+            text: written,
+            alternatives: [prev],
+            definition: result.definition,
+            definitions: result.definitions,
+          }
+        }
+      }
+
+      if (!written) {
+        throw new Error(
+          result.text?.trim()
+            ? 'Written Cantonese looked invalid — try again'
+            : 'Written Cantonese returned empty',
+        )
+      }
+
+      const alts = [prev, ...(result.alternatives || [])]
+        .map((a) => (a === prev ? prev : cleanWrittenYue(a, prev)))
+        .filter((a): a is string => Boolean(a && a !== written))
+        .filter((a, i, arr) => arr.indexOf(a) === i)
+        .slice(0, 3)
+      const history = get().history
+      const latest = history[0]
+      let nextHistory = history
+      if (latest?.to === 'yue') {
+        nextHistory = [
+          {
+            ...latest,
+            translation: written,
+            definition: result.definition || latest.definition,
+            definitions: result.definitions?.length
+              ? result.definitions
+              : latest.definitions,
+            alternatives: alts.length ? alts : undefined,
+          },
+          ...history.slice(1),
+        ]
+      } else if (latest?.from === 'yue' && latest.source.trim() === prev) {
+        nextHistory = [{ ...latest, source: written }, ...history.slice(1)]
+      }
+
+      const face = get().face
+      const nextFace =
+        get().mode === 'conversation'
+          ? {
+              ...face,
+              yueTranslation:
+                face.yueTranslation.trim() === prev ? written : face.yueTranslation,
+              enTranslation:
+                face.enTranslation.trim() === prev ? written : face.enTranslation,
+            }
+          : face
+
+      const detailTop = get().detailStack[0]
+      const pairedTranslation =
+        latest?.from === 'yue' && latest.to !== 'yue'
+          ? latest.translation
+          : source ||
+            (latest?.to === 'yue' ? latest.source : undefined) ||
+            (detailTop?.kind === 'phrase' ? detailTop.translation : undefined)
+
+      set({
+        enTranslation: get().enTranslation.trim() === prev ? written : get().enTranslation,
+        enAlternatives:
+          get().soloUpperLang === 'yue' ? alts : get().enAlternatives,
+        yueTranslation: get().yueTranslation.trim() === prev ? written : get().yueTranslation,
+        yueAlternatives:
+          get().soloLowerLang === 'yue' ? alts : get().yueAlternatives,
+        yueDefinition: result.definition || get().yueDefinition,
+        yueDefinitions: result.definitions?.length
+          ? result.definitions
+          : get().yueDefinitions,
+        history: nextHistory,
+        face: nextFace,
+        detailStack: [
+          {
+            kind: 'phrase',
+            phrase: written,
+            lang: 'yue',
+            translation: pairedTranslation || undefined,
+            definition: result.definition || undefined,
+            definitions: result.definitions?.length ? result.definitions : undefined,
+            alternatives: alts.length ? alts : undefined,
+          },
+        ],
+        detailMinimized: false,
+        error: null,
+      })
+    } catch (e) {
+      set({
+        error: humanizeThrownError(e) || 'Could not make written Cantonese',
+      })
+      throw e
+    } finally {
+      set({ translating: false, translatingTo: null })
+    }
+  },
+
+  toggleStarPhrase: ({ source, translation, from, to, romanization, origin = 'solo' }) => {
+    const src = source.trim()
+    const tr = translation.trim()
+    if (!src || !tr) return false
+    const cards = get().phrasebook
+    if (isStarred(cards, src, tr, from, to)) {
+      const next = cards.filter(
+        (c) =>
+          !(
+            c.from === from &&
+            c.to === to &&
+            c.source.trim() === src &&
+            c.translation.trim() === tr
+          ),
+      )
+      writeLocalPhrasebook(next)
+      set({ phrasebook: next })
+      return false
+    }
+    const card: PhraseCard = {
+      ...cardFromTurn(
+        { id: newId(), from, to, source: src, translation: tr, romanization, at: Date.now() },
+        origin,
+      ),
+    }
+    const next = upsertPhraseCard(cards, card)
+    writeLocalPhrasebook(next)
+    set({ phrasebook: next })
+    return true
+  },
+
+  removePhrase: (id) => {
+    const next = removePhraseCard(get().phrasebook, id)
+    writeLocalPhrasebook(next)
+    set({ phrasebook: next })
+  },
+
+  addCameraPhrases: (items) => {
+    let cards = get().phrasebook
+    let added = 0
+    for (const item of items) {
+      const src = item.source.trim()
+      const tr = item.translation.trim()
+      if (!src || !tr) continue
+      if (isStarred(cards, src, tr, item.from, item.to)) continue
+      cards = upsertPhraseCard(
+        cards,
+        cardFromTurn(
+          {
+            id: newId(),
+            from: item.from,
+            to: item.to,
+            source: src,
+            translation: tr,
+            at: Date.now(),
+          },
+          'camera',
+        ),
+      )
+      added += 1
+    }
+    if (added) {
+      writeLocalPhrasebook(cards)
+      set({ phrasebook: cards })
+    }
+    return added
+  },
+
+  exportConversationTranscript: () =>
+    formatConversationTranscript({
+      face: get().face,
+      youLang: get().conversationYouLang,
+      partnerLang: get().chineseLang,
+    }),
+
+  setCantoneseRomanization: (mode) => {
+    writeLocalCantoneseRomanization(mode)
+    set({ cantoneseRomanization: mode })
   },
 
   clearHistory: () => {

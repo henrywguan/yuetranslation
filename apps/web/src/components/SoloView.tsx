@@ -5,6 +5,11 @@ import { ClearIconButton } from './ClearIconButton'
 import { LangLabelButton } from './LangLabelButton'
 import { ResultWithDefinition } from './ResultWithDefinition'
 import { SpeakButton } from './SpeakButton'
+import { SayItBack } from './SayItBack'
+import { ShareButton } from './ShareButton'
+import { StarPhraseButton } from './StarPhraseButton'
+import { CantoneseRomanizationToggle } from './CantoneseRomanizationToggle'
+import { copyableText } from '../lib/copyText'
 import { SoloTextOnlyLangTip } from './TextOnlyLangTip'
 import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
@@ -15,6 +20,8 @@ import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
 const AUTO_TRANSLATE_MS = 2000
+const PASTE_MAX_CHARS = 2000
+const HAN_SOURCE_LANGS: Lang[] = ['yue', 'cmn', 'wuu', 'sichuan', 'ja']
 
 function isWorthAutoTranslate(value: string, from: Lang): boolean {
   const t = value.trim()
@@ -154,6 +161,7 @@ export function SoloView() {
   const [lowerEditing, setLowerEditing] = useState(false)
   const [upperEditing, setUpperEditing] = useState(false)
   const [typedBusy, setTypedBusy] = useState(false)
+  const [pasteHint, setPasteHint] = useState(false)
   /** After Clear, do not rehydrate panes from History until the next live/typed turn. */
   const [soloCleared, setSoloCleared] = useState(false)
   const editingRef = useRef<'upper' | 'lower' | null>(null)
@@ -342,6 +350,40 @@ export function SoloView() {
   }, [soloUpperLang, soloLowerLang])
 
 
+  /** User-tapped paste only — never read the clipboard in the background. */
+  const pasteAndTranslate = async () => {
+    setPasteHint(false)
+    let raw = ''
+    try {
+      raw = await navigator.clipboard.readText()
+    } catch {
+      setPasteHint(true)
+      return
+    }
+    const pasted = raw.trim().slice(0, PASTE_MAX_CHARS)
+    if (!pasted) {
+      setPasteHint(true)
+      return
+    }
+    const upper = upperLangRef.current
+    const lower = lowerLangRef.current
+    const han = /[\u3400-\u9fff]/.test(pasted)
+    const from: Lang = han
+      ? [upper, lower].find((l) => HAN_SOURCE_LANGS.includes(l)) ||
+        (upper !== 'en' ? upper : lower)
+      : upper === 'en' || lower === 'en'
+        ? 'en'
+        : upper
+    if (from === upper) {
+      setUpperDraft(pasted)
+      editingRef.current = 'upper'
+    } else {
+      setLowerDraft(pasted)
+      editingRef.current = 'lower'
+    }
+    runTranslate(pasted, from, 0, true)
+  }
+
   const activatePane = (pane: 'upper' | 'lower') => {
     const lang = pane === 'upper' ? soloUpperLang : soloLowerLang
     const other = pane === 'upper' ? soloLowerLang : soloUpperLang
@@ -520,6 +562,34 @@ export function SoloView() {
     Boolean(enTranslation) ||
     Boolean(yueTranslation)
 
+  /** Say-it-back, phrasebook star, and share for a finished pane line. */
+  const renderPaneExtras = (pane: 'upper' | 'lower') => {
+    const lang = pane === 'upper' ? soloUpperLang : soloLowerLang
+    const draft = (pane === 'upper' ? upperDraft : lowerDraft).trim()
+    if (!draft) return null
+    const isLatestTarget =
+      Boolean(latest) && latest!.to === lang && latest!.translation.trim() === draft
+    const shareText = lang === 'yue' || lang === 'cmn' ? copyableText(draft, lang) || draft : draft
+    return (
+      <>
+        {lang === 'yue' ? <SayItBack text={draft} /> : null}
+        <div className="result-actions-minor">
+          {isLatestTarget && latest ? (
+            <StarPhraseButton
+              source={latest.source}
+              translation={draft}
+              from={latest.from}
+              to={lang}
+              romanization={latest.romanization}
+              origin="solo"
+            />
+          ) : null}
+          <ShareButton text={shareText} />
+        </div>
+      </>
+    )
+  }
+
   const renderPaneBody = (opts: {
     pane: 'upper' | 'lower'
     lang: Lang
@@ -614,6 +684,36 @@ export function SoloView() {
   return (
     <div className="solo">
       <SoloTextOnlyLangTip />
+      <div className="solo-toolbar">
+        <button
+          type="button"
+          className="solo-paste-btn"
+          disabled={live}
+          onClick={() => void pasteAndTranslate()}
+          aria-label={biPlain(ui.pasteToTranslate)}
+          title={biPlain(ui.pasteToTranslate)}
+        >
+          <svg className="solo-paste-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M9 4.5h6M9.5 3h5a1 1 0 0 1 1 1v1.5h-7V4a1 1 0 0 1 1-1ZM8.5 5H7a1.5 1.5 0 0 0-1.5 1.5v12A1.5 1.5 0 0 0 7 20h10a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 17 5h-1.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <BiText copy={ui.pasteToTranslate} size="sm" layout="inline" hideJp />
+        </button>
+        {soloUpperLang === 'yue' || soloLowerLang === 'yue' ? (
+          <CantoneseRomanizationToggle />
+        ) : null}
+      </div>
+      {pasteHint ? (
+        <p className="solo-paste-hint muted" role="status">
+          <BiText copy={ui.pasteToTranslateEmpty} size="sm" layout="inline" hideJp />
+        </p>
+      ) : null}
       <motion.div
         className={`solo-stage ${live ? 'live' : ''} status-${status}`}
         animate={
@@ -672,6 +772,7 @@ export function SoloView() {
                   {upperDraft.trim() ? (
                     <SpeakButton text={upperDraft} lang={soloUpperLang} />
                   ) : null}
+                  {renderPaneExtras('upper')}
                 </div>
               </div>
             ) : null}
@@ -739,6 +840,7 @@ export function SoloView() {
                   {lowerDraft.trim() ? (
                     <SpeakButton text={lowerDraft} lang={soloLowerLang} />
                   ) : null}
+                  {renderPaneExtras('lower')}
                 </div>
               </div>
             ) : null}

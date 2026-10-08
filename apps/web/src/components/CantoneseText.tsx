@@ -6,8 +6,25 @@ import {
   type JyutSeg,
 } from '../lib/jyutping'
 import { useJpPopup } from '../lib/useJpPopup'
+import { useYueStore } from '../lib/store'
+import { jyutpingSyllableToYale } from '../lib/yale'
 import { JpPop } from './JpPop'
 import { JyutRuby } from './JyutRuby'
+
+/** Yale line under ruby Jyutping: syllables spaced, punctuation attached. */
+function yaleLineFromSegs(segs: JyutSeg[]): string {
+  let out = ''
+  for (const seg of segs) {
+    if (seg.jp) {
+      out += `${out && !out.endsWith(' ') ? ' ' : ''}${jyutpingSyllableToYale(seg.jp)}`
+    } else if (/^\s+$/.test(seg.char)) {
+      out += ' '
+    } else {
+      out += seg.char
+    }
+  }
+  return out.trim()
+}
 
 /** Cantonese line: ruby Jyutping above Han, or popup-on-hint for tight cards. */
 export function CantoneseText({
@@ -39,6 +56,7 @@ export function CantoneseText({
   jpMode?: 'inline' | 'popup'
 }) {
   const trimmed = text.trim()
+  const romanization = useYueStore((s) => s.cantoneseRomanization)
   const [jp, setJp] = useState(() => toJyutpingCached(trimmed))
   const [segs, setSegs] = useState<JyutSeg[]>([])
   const { tipId, show, bind, wrapRef } = useJpPopup(Boolean(jp))
@@ -111,11 +129,19 @@ export function CantoneseText({
       <span className={hanClass || undefined}>{trimmed}</span>
     )
 
+  const yaleLine =
+    showRuby && romanization === 'yale' && segs.length ? yaleLineFromSegs(segs) : ''
+
   const body = (
     <span
       className={`cantonese-block${hasMultiDef ? ' cantonese-block--multi-def' : ''}${popupJp ? ' cantonese-block--jp-popup' : ''}${showRuby ? ' cantonese-block--ruby' : ''}`}
     >
       {popupJp ? popupHan : inlineHan}
+      {yaleLine ? (
+        <span className="cantonese-yale-line" lang="en" aria-label="Yale romanization">
+          {yaleLine}
+        </span>
+      ) : null}
     </span>
   )
 
