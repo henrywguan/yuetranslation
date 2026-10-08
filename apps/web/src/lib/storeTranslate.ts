@@ -2,6 +2,7 @@ import { prefetchTts } from './tts'
 import { supportsTts } from './langCapabilities'
 import { translateText } from './api'
 import { humanizeThrownError } from './apiError'
+import { maybeOfferPushNudge } from './pushNudge'
 import { expireHistoryTurns, MAX_TURNS } from './historyMerge'
 import { newId } from './id'
 import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation, sanitizeThTranslation, sanitizeLoTranslation, sanitizeKoTranslation, sanitizeJaTranslation, sanitizeIdTranslation, sanitizeMsTranslation, sanitizePtTranslation, sanitizeFrTranslation, sanitizeHiTranslation, sanitizeKmTranslation, sanitizeMyTranslation, sanitizeJvTranslation, sanitizeItTranslation, sanitizeDeTranslation, sanitizeNlTranslation, sanitizeCebTranslation, sanitizeIloTranslation, sanitizeBclTranslation } from './translationGuard'
@@ -421,6 +422,8 @@ export async function runTranslation(
     speak = { text: clean, lang: to }
     const ent = get().entitlement
     if ((!ent || ent.allowed.tts) && supportsTts(to)) prefetchTts(clean, to)
+    // Soft retention: after a successful translate, once, offer push.
+    maybeOfferPushNudge()
 
     // Typed Solo EN→Chinese: paint primary first, then enrich alternatives without blocking TTS/UI.
     if (

@@ -874,6 +874,101 @@ export const ui = {
     zh: '裝到 iPhone',
     jp: 'zong1 dou3 iPhone',
   },
+  pwaInstall: {
+    en: 'Install app',
+    zh: '安裝應用',
+    jp: 'on1 zong1 jing3 jung6',
+  },
+  pwaInstalled: {
+    en: 'Running as installed app',
+    zh: '已用主畫面應用開啟',
+    jp: 'ji5 jung6 zyu2 waa2 min6 jing3 jung6 hoi1 hei2',
+  },
+  pwaCapabilities: {
+    en: 'Home Screen app',
+    zh: '主畫面應用',
+    jp: 'zyu2 waa2 min6 jing3 jung6',
+  },
+  pwaCapabilitiesHint: {
+    en: 'Installed JyutTranslate can receive shared text, open photos/PDFs, and use Home Screen shortcuts.',
+    zh: '安裝後可以接收分享文字、打開相片／PDF，同埋用主畫面捷徑。',
+    jp: 'on1 zong1 hau6 ho2 ji5 zip3 sau1 fan1 hoeng2 man4 zi6, daa2 hoi1 soeng3 pin2 / PDF, tung4 maai4 jung6 zyu2 waa2 min6 zit3 ging3.',
+  },
+  pwaCapShare: {
+    en: 'Share text into Solo from other apps (Share → JyutTranslate).',
+    zh: '喺其他應用分享文字到獨白（分享 → JyutTranslate）。',
+    jp: 'hai2 kei4 taa1 jing3 jung6 fan1 hoeng2 man4 zi6 dou3 duk6 baak6 (fan1 hoeng2 → JyutTranslate).',
+  },
+  pwaCapFiles: {
+    en: 'Open images or PDFs with JyutTranslate to jump into Cam.',
+    zh: '用 JyutTranslate 打開圖片或 PDF 會進入相機模式。',
+    jp: 'jung6 JyutTranslate daa2 hoi1 tou4 pin2 waak6 PDF wui5 zeon3 jap6 soeng1 gei1 mou4 sik1.',
+  },
+  pwaCapShortcuts: {
+    en: 'Long-press the icon for Translate, Camera, Conversation, or Harbor Quest.',
+    zh: '長按圖示可開翻譯、相機、對話或港灣任務。',
+    jp: 'coeng4 on3 tou4 si6 ho2 hoi1 faan1 jik6, soeng1 gei1, deoi3 waa6 waak6 gong2 waan1 jam6 mou6.',
+  },
+  offlinePack: {
+    en: 'Offline Cantonese pack',
+    zh: '離線粵語資料包',
+    jp: 'lei4 sin3 jyut6 jyu5 zi1 liu2 baau1',
+  },
+  offlinePackHint: {
+    en: 'Download once for offline en↔yue dictionary lookup. Live mic, TTS, Cam, and AI translate still need the network.',
+    zh: '下載一次即可離線查英↔粵詞典。即時咪、朗讀、相機同 AI 翻譯仍要網絡。',
+    jp: 'haa6 zoi3 jat1 ci3 zak1 ho2 lei4 sin3 caa4 jing1 ↔ jyut6 ci4 din2. zak1 si4 mai1, long5 duk6, soeng1 gei1 tung4 AI faan1 jik6 jing4 jiu3 mong5 lok3.',
+  },
+  offlinePackEssentials: {
+    en: 'Essentials',
+    zh: '精選包',
+    jp: 'zing1 syun2 baau1',
+  },
+  offlinePackFull: {
+    en: 'Full dictionary',
+    zh: '完整詞典',
+    jp: 'jyun4 zing2 ci4 din2',
+  },
+  offlinePackInstalled: {
+    en: 'Installed',
+    zh: '已安裝',
+    jp: 'ji5 on1 zong1',
+  },
+  offlinePackNone: {
+    en: 'No pack on this device yet',
+    zh: '呢部裝置未下載資料包',
+    jp: 'ni1 bou6 zong1 zi3 mei6 haa6 zoi3 zi1 liu2 baau1',
+  },
+  offlinePackRemove: {
+    en: 'Remove pack',
+    zh: '移除資料包',
+    jp: 'ji4 ceoi4 zi1 liu2 baau1',
+  },
+  offlineBannerWithPack: {
+    en: 'Offline · Dictionary pack — phrases & lookup only',
+    zh: '離線 · 詞典包 — 只限短語同查詞',
+    jp: 'lei4 sin3 · ci4 din2 baau1 — zi2 haan6 dyun2 jyu5 tung4 caa4 ci4',
+  },
+  offlineBannerNoPack: {
+    en: 'Offline — open Account Hub to download a Cantonese pack',
+    zh: '離線 — 打開帳戶下載粵語資料包',
+    jp: 'lei4 sin3 — daa2 hoi1 zoeng3 wu6 haa6 zoi3 jyut6 jyu5 zi1 liu2 baau1',
+  },
+  pushNudgeBody: {
+    en: 'Get a heads-up when JyutTranslate has something new — enable notifications?',
+    zh: '有新消息時提你一提——打開通知？',
+    jp: 'jau5 san1 siu1 sik1 si4 tai4 nei5 jat1 tai4 — daa2 hoi1 tung1 zi1?',
+  },
+  pushNudgeEnable: {
+    en: 'Enable',
+    zh: '開啟',
+    jp: 'hoi1 hei2',
+  },
+  pushNudgeDismiss: {
+    en: 'Not now',
+    zh: '而家唔使',
+    jp: 'ji4 gaa1 m4 sai2',
+  },
   charsLeft: (formatted: string): Bi => ({
     en: `${formatted} chars left`,
     zh: `剩 ${formatted} 字`,

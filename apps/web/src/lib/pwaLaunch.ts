@@ -79,12 +79,20 @@ export function bootstrapPwaLaunch(): void {
     }
   }
 
-  const camShortcut = url.searchParams.get('cam') === '1' || hashHasCamShortcut()
+  const camShortcut = url.searchParams.get('cam') === '1' || hashQueryParam('cam') === '1'
   if (camShortcut) {
     url.searchParams.delete('cam')
     window.history.replaceState({}, '', url.toString())
     navigate('app')
     useYueStore.getState().setMode('camera')
+  }
+
+  const modeShortcut = url.searchParams.get('mode') || hashQueryParam('mode')
+  if (modeShortcut === 'conversation' || modeShortcut === 'solo' || modeShortcut === 'camera') {
+    url.searchParams.delete('mode')
+    window.history.replaceState({}, '', url.toString())
+    navigate('app')
+    useYueStore.getState().setMode(modeShortcut)
   }
 
   const launchQueue = (window as Window & { launchQueue?: LaunchQueue }).launchQueue
@@ -97,10 +105,10 @@ export function bootstrapPwaLaunch(): void {
   })
 }
 
-function hashHasCamShortcut(): boolean {
+function hashQueryParam(key: string): string | null {
   const hash = window.location.hash.replace(/^#/, '')
   const q = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : ''
-  return new URLSearchParams(q).get('cam') === '1'
+  return new URLSearchParams(q).get(key)
 }
 
 interface LaunchQueue {

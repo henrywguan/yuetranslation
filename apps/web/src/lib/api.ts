@@ -10,6 +10,7 @@ import { getAccessToken } from './auth'
 import { captureDiagnostic } from './diagnostics'
 import { guestDeviceHeaders } from './guestDevice'
 import { messageFromApiBody } from './apiError'
+import { hasOfflinePack, offlineTranslate } from './offlineLexicon'
 import { sanitizeApiBase, sanitizeLeaveUrl } from './safeUrl'
 
 export function resolveApiBase(): string {
@@ -129,22 +130,64 @@ export async function translateText(
   const cached = translateCache.get(cacheKey)
   if (cached) return cached
 
-  // API defaults/coerces to final — never request interim MT.
-  const res = await apiFetch('/translate', {
-    method: 'POST',
-    signal: opts?.signal,
-    body: JSON.stringify({
-      text,
-      from,
-      to,
-      includeAlternatives: alts,
-      ...(opts?.register ? { register: opts.register } : {}),
-    }),
-  })
-  if (!res.ok) await throwApiError(res, 'Translation failed')
-  const data = (await res.json()) as TranslateResponse
-  rememberTranslate(cacheKey, data)
-  return data
+  const tryOffline = (): TranslateResponse | null => {
+    if (!hasOfflinePack()) return null
+    const hit = offlineTranslate(from, to, text, alts)
+    if (!hit?.text) return null
+    return {
+      text: hit.text,
+      definition: hit.definition,
+      definitions: hit.definitions,
+      alternatives: hit.alternatives,
+    }
+  }
+
+  // Prefer network; when offline / unreachable, use an installed dictionary pack.
+  const offlineFirst =
+    typeof navigator !== 'undefined' && navigator.onLine === false && (from === 'en' || from === 'yue')
+
+  if (offlineFirst) {
+    const local = tryOffline()
+    if (local) {
+      rememberTranslate(cacheKey, local)
+      return local
+    }
+  }
+
+  try {
+    // API defaults/coerces to final — never request interim MT.
+    const res = await apiFetch('/translate', {
+      method: 'POST',
+      signal: opts?.signal,
+      body: JSON.stringify({
+        text,
+        from,
+        to,
+        includeAlternatives: alts,
+        ...(opts?.register ? { register: opts.register } : {}),
+      }),
+    })
+    if (!res.ok) {
+      const local = tryOffline()
+      if (local) {
+        rememberTranslate(cacheKey, local)
+        return local
+      }
+      await throwApiError(res, 'Translation failed')
+    }
+    const data = (await res.json()) as TranslateResponse
+    rememberTranslate(cacheKey, data)
+    return data
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') throw err
+    if (err instanceof Error && err.name === 'AbortError') throw err
+    const local = tryOffline()
+    if (local) {
+      rememberTranslate(cacheKey, local)
+      return local
+    }
+    throw err
+  }
 }
 
 export async function fetchBreakdown(
