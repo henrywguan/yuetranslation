@@ -7,6 +7,8 @@ type Props = {
   onClose: () => void
   onSavePhoto: () => void
   onCopyTranslations: () => void
+  /** Optional: keep every translated line in the local phrasebook. */
+  onSaveToPhrasebook?: () => void
   busy?: boolean
 }
 
@@ -16,6 +18,7 @@ export function CameraArSaveModal({
   onClose,
   onSavePhoto,
   onCopyTranslations,
+  onSaveToPhrasebook,
   busy = false,
 }: Props) {
   if (!open || typeof document === 'undefined') return null
@@ -60,6 +63,21 @@ export function CameraArSaveModal({
               <BiText copy={ui.camArCopyTranslationsHint} size="sm" />
             </span>
           </button>
+          {onSaveToPhrasebook ? (
+            <button
+              type="button"
+              className="cam-choice-btn cam-choice-btn--upload"
+              disabled={busy}
+              onClick={onSaveToPhrasebook}
+            >
+              <span className="cam-choice-btn-label">
+                <BiText copy={ui.camSaveToPhrasebook} size="md" />
+              </span>
+              <span className="cam-choice-btn-hint">
+                <BiText copy={ui.camSaveToPhrasebookHint} size="sm" />
+              </span>
+            </button>
+          ) : null}
         </div>
       </div>
     </div>,

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { ensureJyutpingSegs, hasHan, type JyutSeg } from '../lib/jyutping'
+import { ensureJyutpingSegs, hasHan, parseJyutpingTone, type JyutSeg } from '../lib/jyutping'
 import { JyutpingSylText } from './JyutpingSylText'
 
 type JyutRubyProps = {
@@ -64,16 +64,22 @@ export function JyutRuby({
     <span
       className={`${rootClass} ${rootClass}--${size}${className ? ` ${className}` : ''}`.trim()}
     >
-      {segs.map((seg, i) => (
-        <span key={`${seg.char}-${i}`} className={cellClass}>
-          <span className={sylClass} lang="en">
-            {seg.jp ? <JyutpingSylText jp={seg.jp} /> : '\u00a0'}
+      {segs.map((seg, i) => {
+        const tone = seg.jp ? parseJyutpingTone(seg.jp)?.tone : undefined
+        return (
+          <span key={`${seg.char}-${i}`} className={cellClass}>
+            <span className={sylClass} lang="en">
+              {seg.jp ? <JyutpingSylText jp={seg.jp} /> : '\u00a0'}
+            </span>
+            <span
+              className={tone ? `${hanClass} jyut-tone-${tone}` : hanClass}
+              lang="zh-HK"
+            >
+              {renderChar ? renderChar(seg, i) : seg.char}
+            </span>
           </span>
-          <span className={hanClass} lang="zh-HK">
-            {renderChar ? renderChar(seg, i) : seg.char}
-          </span>
-        </span>
-      ))}
+        )
+      })}
     </span>
   )
 }

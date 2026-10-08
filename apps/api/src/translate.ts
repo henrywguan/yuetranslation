@@ -1289,6 +1289,120 @@ export function localFormalizeMexicanSpanish(text: string): string {
   return t.trim()
 }
 
+const SPOKEN_YUE_TO_WRITTEN: Array<[RegExp, string]> = [
+  [/係唔係/g, '是否'],
+  [/好唔好/g, '好不好'],
+  [/得唔得/g, '行不行'],
+  [/點解/g, '為什麼'],
+  [/邊度/g, '哪裏'],
+  [/做咩/g, '做什麼'],
+  [/冇/g, '沒有'],
+  [/唔/g, '不'],
+  [/係/g, '是'],
+  [/喺/g, '在'],
+  [/佢哋/g, '他們'],
+  [/我哋/g, '我們'],
+  [/你哋/g, '你們'],
+  [/佢/g, '他'],
+  [/哋/g, '們'],
+  [/嘅/g, '的'],
+  [/咗/g, '了'],
+  [/嚟/g, '來'],
+  [/睇/g, '看'],
+  [/嘢/g, '東西'],
+  [/嗰/g, '那'],
+  [/呢度/g, '這裏'],
+  [/嗰度/g, '那裏'],
+  [/啲/g, '些'],
+  [/咁/g, '這麼'],
+]
+
+/** Offline 口語→書面 polish (mirrors apps/web `localWrittenCantonese`). */
+export function localWrittenCantonese(text: string): string {
+  let out = text.trim()
+  if (!out) return out
+  for (const [re, to] of SPOKEN_YUE_TO_WRITTEN) {
+    out = out.replace(re, to)
+  }
+  out = out.replace(/[喇嘞喎噃呀啊]$/u, '')
+  return out.trim() || text.trim()
+}
+
+/** Details “Make written”: rewrite spoken 口語 Cantonese → 書面語 in place (yue→yue). */
+async function rewriteWrittenCantonese(opts: {
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+}): Promise<TranslateResult> {
+  const { text, stage, wantAlts } = opts
+  const client = openaiClient()
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+
+  if (!client) {
+    const written = localWrittenCantonese(text)
+    return {
+      text: written,
+      definition: '',
+      alternatives: written !== text ? [text] : [],
+      engine: 'demo',
+      from: 'yue',
+      to: 'yue',
+      stage,
+      meta: emptyMeta(['demo', 'yue-written-rewrite']),
+    }
+  }
+
+  const system = [
+    'You rewrite colloquial spoken Hong Kong Cantonese (口語) into standard written Chinese as used in Hong Kong print (書面語).',
+    'Keep the same meaning and register-appropriate politeness. Use Traditional characters.',
+    'Replace spoken-only words (係, 唔, 冇, 嘅, 咗, 喺, 佢, 哋, 嘢, 嚟, 睇, 嗰, 啲, 咁, sentence-final particles) with their written equivalents.',
+    'Do NOT add Jyutping, romanization, or explanations.',
+    'Return ONLY valid JSON:',
+    wantAlts
+      ? '{"primary":"<best written Chinese>","alternatives":["<other written variant>", "..."],"definition":"<short English gloss>"}'
+      : '{"translation":"<written Chinese>","definition":"<short English gloss>"}',
+  ].join('\n')
+
+  const completion = await client.chat.completions.create({
+    model: env.openaiModel,
+    temperature: 0.2,
+    max_tokens: 400,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: text },
+    ],
+    ...(wantAlts ? { response_format: { type: 'json_object' as const } } : {}),
+    ...llmChatExtras(),
+  })
+  const raw = completion.choices[0]?.message?.content?.trim() || ''
+  let primary = ''
+  let alternatives: string[] = []
+  let definition = ''
+  if (wantAlts) {
+    const parsed = parseYuePayload(raw, text, true)
+    primary = parsed.text
+    alternatives = parsed.alternatives
+    definition = parsed.definition || ''
+  } else {
+    const payload = parsePayload(raw, text, '', true)
+    primary = payload.text
+    definition = payload.definition || ''
+  }
+  const outText = primary && hasHan(primary) ? primary.trim() : ''
+  return {
+    text: outText || localWrittenCantonese(text),
+    definition,
+    alternatives: wantAlts
+      ? alternatives.filter((a) => a && hasHan(a) && a !== outText).slice(0, 3)
+      : [],
+    engine,
+    from: 'yue',
+    to: 'yue',
+    stage,
+    meta: emptyMeta(outText ? ['yue-written-rewrite'] : ['yue-written-rewrite', 'no-yue-output']),
+  }
+}
+
 async function rewriteMexicanSpanishFormal(opts: {
   text: string
   stage: TranslateStage
@@ -3141,6 +3255,15 @@ export async function translate(input: unknown) {
   // Details “Make formal”: rewrite colloquial Peninsular Spanish → polite Peninsular Spanish in place.
   if (from === 'eses' && to === 'eses' && parsed.register === 'formal') {
     return rewritePeninsularSpanishFormal({
+      text,
+      stage,
+      wantAlts: Boolean(parsed.includeAlternatives),
+    })
+  }
+
+  // Details “Make written”: rewrite spoken 口語 Cantonese → 書面語 in place.
+  if (from === 'yue' && to === 'yue' && parsed.register === 'formal') {
+    return rewriteWrittenCantonese({
       text,
       stage,
       wantAlts: Boolean(parsed.includeAlternatives),

@@ -33,13 +33,13 @@ import {
 } from '../lib/camera/overlayPaint'
 import { rgbCss, sampleColorsFromImageUrl } from '../lib/camera/sampleRegionColors'
 import { regionToEditable, type CameraTarget, type EditableBox, boxDetailArgs, speakLangForBox } from '../lib/camera/types'
-import { unwrapTranslationText } from '../lib/camera/unwrapTranslation'
 import { cameraBlockedMessage, stopMediaStream, unlockCamera } from '../lib/mediaAccess'
 import { useYueStore } from '../lib/store'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Entitlement } from '../lib/types'
 import { CameraArSaveModal } from './CameraArSaveModal'
+import { unwrapTranslationText } from '../lib/camera/unwrapTranslation'
 
 type Props = {
   target: CameraTarget
@@ -61,6 +61,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
   const scanTarget = target === 'auto' ? primaryLanguage : target
   const speakManual = useYueStore((s) => s.speakManual)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
+  const addCameraPhrases = useYueStore((s) => s.addCameraPhrases)
   const reduce = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
@@ -545,6 +546,19 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     })()
   }
 
+  const handleSaveToPhrasebook = () => {
+    addCameraPhrases(
+      boxesRef.current.map((b) => ({
+        source: b.text,
+        translation: unwrapTranslationText(b.translated),
+        from: b.from,
+        to: b.to,
+      })),
+    )
+    setSaveOpen(false)
+    flashSaveToast(biPlain(ui.camSavedToPhrasebook))
+  }
+
   const canSave = Boolean(stillUrl && boxes.length && !busy)
 
   const onZoomTouchStart = useCallback((e: TouchEvent) => {
@@ -935,6 +949,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         onClose={() => setSaveOpen(false)}
         onSavePhoto={handleSavePhoto}
         onCopyTranslations={handleCopyTranslations}
+        onSaveToPhrasebook={handleSaveToPhrasebook}
         busy={saveBusy}
       />
 

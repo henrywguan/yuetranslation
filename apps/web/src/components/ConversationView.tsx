@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Lang } from '../lib/types'
 import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
@@ -30,7 +31,8 @@ import { ClearIconButton } from './ClearIconButton'
 import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
 import { useYueStore } from '../lib/store'
-import { ui } from '../lib/uiCopy'
+import { biPlain, ui } from '../lib/uiCopy'
+import { BiText } from './BiText'
 import { conversationLabelHtmlLang, conversationPaneHint } from '../lib/conversationUi'
 import { normalizeEnglishApostrophes } from '../lib/typography'
 
@@ -83,6 +85,8 @@ export function ConversationView() {
   const status = useYueStore((s) => s.status)
   const translating = useYueStore((s) => s.translating)
   const translatingTo = useYueStore((s) => s.translatingTo)
+  const exportTranscript = useYueStore((s) => s.exportConversationTranscript)
+  const [exported, setExported] = useState(false)
 
   const youLang = conversationYouLang
   const partnerLang = chineseLang
@@ -137,6 +141,33 @@ export function ConversationView() {
     setConversationPaneLang(pane, lang)
     if (swapping) return
     if (otherSource) void translateTyped(otherSource, otherLang)
+  }
+
+  const exportConversation = async () => {
+    const transcript = exportTranscript()
+    if (!transcript) return
+    try {
+      await navigator.clipboard.writeText(transcript)
+    } catch {
+      const area = document.createElement('textarea')
+      area.value = transcript
+      area.setAttribute('readonly', '')
+      area.style.position = 'fixed'
+      area.style.left = '-9999px'
+      document.body.appendChild(area)
+      area.select()
+      document.execCommand('copy')
+      document.body.removeChild(area)
+    }
+    setExported(true)
+    window.setTimeout(() => setExported(false), 1500)
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: 'JyutTranslate', text: transcript })
+      } catch {
+        /* dismissed — clipboard copy already succeeded */
+      }
+    }
   }
 
   const renderPhrase = (
@@ -283,9 +314,39 @@ export function ConversationView() {
   return (
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
       {face.enTranslation || face.yueTranslation || face.enInterim || face.yueInterim ? (
-        <div className="conversation-clear">
-          <ClearIconButton onClick={clearCurrent} />
-        </div>
+        <>
+          <div className="conversation-clear">
+            <ClearIconButton onClick={clearCurrent} />
+          </div>
+          {face.enTranslation || face.yueTranslation ? (
+            <div className="conversation-export">
+              <button
+                type="button"
+                className={`conversation-export-btn${exported ? ' is-copied' : ''}`}
+                onClick={() => void exportConversation()}
+                aria-label={biPlain(exported ? ui.copied : ui.exportConversation)}
+                title={biPlain(exported ? ui.copied : ui.exportConversation)}
+              >
+                <svg className="conversation-export-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 15.2V4.6M12 4.6 8.4 8.2M12 4.6l3.6 3.6M6 11.5v6.2c0 .9.7 1.6 1.6 1.6h8.8c.9 0 1.6-.7 1.6-1.6v-6.2"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <BiText
+                  copy={exported ? ui.copied : ui.exportConversation}
+                  size="sm"
+                  layout="inline"
+                  hideJp
+                />
+              </button>
+            </div>
+          ) : null}
+        </>
       ) : null}
 
       <section

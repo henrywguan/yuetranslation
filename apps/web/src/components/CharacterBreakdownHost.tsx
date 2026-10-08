@@ -51,6 +51,8 @@ import { ResultActions } from './ResultActions'
 import { ShanghaineseText } from './ShanghaineseText'
 import { SichuaneseText } from './SichuaneseText'
 import { MexicanSpanishRegisterPanel } from './MexicanSpanishRegisterPanel'
+import { CantoneseRegisterPanel } from './CantoneseRegisterPanel'
+import { HandwritingLookup } from './HandwritingLookup'
 import { PeninsularSpanishRegisterPanel } from './PeninsularSpanishRegisterPanel'
 import { DetailDictionaryPanel } from './DetailDictionaryPanel'
 import { DetailCollapsible } from './DetailCollapsible'
@@ -883,6 +885,23 @@ export function CharacterBreakdownHost() {
               </DetailCollapsible>
             </div>
             <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} glossLang={primaryLanguage} />
+            {detailLang === 'yue' ? <HandwritingLookup /> : null}
+            {detailLang === 'yue' && pedagogy.extraPanels.includes('yue-register') ? (
+              <CantoneseRegisterPanel
+                text={topLabel}
+                sourceText={
+                  top.kind === 'phrase'
+                    ? top.translation ||
+                      (latestTurn?.to === 'yue' ? latestTurn.source : undefined)
+                    : undefined
+                }
+                sourceLang={
+                  latestTurn?.to === 'yue' && latestTurn.from !== 'yue'
+                    ? latestTurn.from
+                    : 'en'
+                }
+              />
+            ) : null}
             {isEsDetail && pedagogy.extraPanels.includes('mx-register') ? (
               <MexicanSpanishRegisterPanel
                 text={topLabel}

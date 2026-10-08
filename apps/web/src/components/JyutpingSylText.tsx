@@ -39,7 +39,7 @@ export function JyutpingSylText({ jp }: { jp: string }) {
     if (parsedEarly) {
       return (
         <span className="jyut-syl-ui jyut-syl-ui--unicode" {...trapProps}>
-          <span className="jyut-syl-roman">{parsedEarly.roman}</span>
+          <span className={`jyut-syl-roman jyut-tone-${parsedEarly.tone}`}>{parsedEarly.roman}</span>
           <span className="chao-face" aria-hidden="true">
             {chaoContourForTone(parsedEarly.tone)}
           </span>
@@ -59,7 +59,7 @@ export function JyutpingSylText({ jp }: { jp: string }) {
   if (JYUTPING_UI_TONE_MODE === 'svg') {
     return (
       <span className="jyut-syl-ui" {...trapProps}>
-        <span className="jyut-syl-roman">{parsed.roman}</span>
+        <span className={`jyut-syl-roman jyut-tone-${parsed.tone}`}>{parsed.roman}</span>
         <JyutToneMark tone={parsed.tone} />
       </span>
     )
@@ -67,7 +67,7 @@ export function JyutpingSylText({ jp }: { jp: string }) {
 
   return (
     <span className="jyut-syl-ui jyut-syl-ui--obfuscated" {...trapProps}>
-      <span className="jyut-syl-roman">{parsed.roman}</span>
+      <span className={`jyut-syl-roman jyut-tone-${parsed.tone}`}>{parsed.roman}</span>
       <JyutChaoGlyph tone={parsed.tone} />
     </span>
   )
