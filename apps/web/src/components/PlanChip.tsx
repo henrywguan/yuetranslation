@@ -12,6 +12,8 @@ import { AccountHubHousehold } from './AccountHubHousehold'
 import { AccountHubLearnCarousel } from './AccountHubLearnCarousel'
 import { AccountHubPrimarySelect } from './AccountHubPrimarySelect'
 import { AccountHubVoice } from './AccountHubVoice'
+import { OfflinePackPanel } from './OfflinePackPanel'
+import { PwaCapabilitiesPanel } from './PwaCapabilitiesPanel'
 import {
   badgeCopyFor,
   canShowMetric,
@@ -962,6 +964,34 @@ export function PlanChip() {
               onChange={setPrimaryLanguage}
               labelledBy="account-hub-primary-lang-label"
             />
+          </div>
+        </details>
+
+        <HubSep />
+
+        <details className="account-hub-fold account-hub-section">
+          <summary className="account-hub-fold-summary">
+            <span className="account-hub-label">
+              <BiText copy={ui.pwaCapabilities} size="sm" />
+            </span>
+            <span className="account-hub-fold-chevron" aria-hidden="true" />
+          </summary>
+          <div className="account-hub-fold-body">
+            <PwaCapabilitiesPanel onOpenIosGuide={() => setHomescreenOpen(true)} />
+          </div>
+        </details>
+
+        <HubSep />
+
+        <details className="account-hub-fold account-hub-section">
+          <summary className="account-hub-fold-summary">
+            <span className="account-hub-label">
+              <BiText copy={ui.offlinePack} size="sm" />
+            </span>
+            <span className="account-hub-fold-chevron" aria-hidden="true" />
+          </summary>
+          <div className="account-hub-fold-body">
+            <OfflinePackPanel />
           </div>
         </details>
 

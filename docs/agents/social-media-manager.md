@@ -274,7 +274,7 @@ Avoid: Mandarin pronunciation cues, generic stock "Asian family" clichés, clutt
 
 ## Guardrails
 
-- Do not claim features JyutTranslate doesn’t ship (offline packs, native App Store app, unlimited free live mic).
+- Do not claim features JyutTranslate doesn’t ship (native App Store app, unlimited free live mic). Offline dictionary packs (Account Hub → Offline Cantonese pack) are OK to mention; do **not** claim offline live mic / TTS / Cam / AI translate.
 - Do not generate posts that mock Google by trademark/logo — show generic "Other translator" vs JyutTranslate.
 - Confirm before Higgsfield runs that bill credits.
 - Respect AGENTS.md: Henry refreshes locally; routine social drafts do not require cloud demo videos unless he asks.

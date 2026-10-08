@@ -150,7 +150,7 @@ The Service may store preferences and caches on your device using browser storag
 - Push notification opt-in flags for this device
 - Small offline gloss / pedagogy caches
 
-When you install the Service as a progressive web app (PWA), a service worker may cache static app assets on your device for offline/performance use. Large Harbor Quest media assets are generally not precached into the service worker. This data stays on your device unless you clear site data or uninstall the app.
+When you install the Service as a progressive web app (PWA), a service worker may cache static app assets on your device for offline/performance use. Large Harbor Quest media assets are generally not precached into the service worker. If you choose **Download** under Offline Cantonese pack in Account Hub, dictionary phrase/gloss data is stored in your browser (IndexedDB) on that device for offline lookup. This data stays on your device unless you remove the pack, clear site data, or uninstall the app.
 
 ### 3.10 Approximate analytics
 

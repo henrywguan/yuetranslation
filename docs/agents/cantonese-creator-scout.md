@@ -29,7 +29,7 @@ Henry’s thesis: if creators can ship (and audiences can see) **clear Noto Sans
 | **口語-first translate** | Live Solo / Conversation | Real Hong Kong spoken lines, not 書面語 / Mandarin-default apps |
 | **Learn-as-you-speak** | Jyutping under every Cantonese line + Details pedagogy | Content that teaches, not only translates |
 
-Do **not** pitch offline packs, native App Store apps, or unlimited free live mic unless product docs say so.
+Do **not** pitch native App Store apps or unlimited free live mic. Offline dictionary packs (phrases + CC-Canto lookup) may be mentioned; never claim offline live mic / TTS / Cam / AI translate.
 
 ---
 

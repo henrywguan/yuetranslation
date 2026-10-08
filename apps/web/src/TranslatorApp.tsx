@@ -12,7 +12,9 @@ import { AppClothBg } from './components/AppClothBg'
 import { PanelDock } from './components/PanelDock'
 import { GlowRotateButton } from './components/GlowRotateButton'
 import { IosHomescreenTip } from './components/IosHomescreenGuide'
+import { OfflineBanner } from './components/OfflineBanner'
 import { PlanChip } from './components/PlanChip'
+import { PushNudgeBanner } from './components/PushNudgeBanner'
 import { SoloView } from './components/SoloView'
 import { ThemeToggle } from './components/ThemeToggle'
 import { TranslationHistory } from './components/TranslationHistory'
@@ -127,6 +129,8 @@ export function TranslatorApp() {
         </header>
 
         <IosHomescreenTip />
+        <OfflineBanner />
+        <PushNudgeBanner />
 
         <main className="main">
           {mode === 'solo' || mode === 'text' ? <SoloView /> : null}

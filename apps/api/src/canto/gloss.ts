@@ -145,6 +145,24 @@ export function glossStats() {
   }
 }
 
+/** Seed gloss map for offline pack export (client-side dictionary MT). */
+export function exportSeedGloss(): Record<string, string> {
+  return { ...SEED }
+}
+
+/** CC-Canto headwords for the full offline pack (null when file missing). */
+export function exportCcCantoEntries(): Record<
+  string,
+  { gloss: string; jyutping: string | null }
+> | null {
+  if (!ccCanto?.entries) return null
+  const out: Record<string, { gloss: string; jyutping: string | null }> = {}
+  for (const [trad, e] of Object.entries(ccCanto.entries)) {
+    out[trad] = { gloss: e.gloss, jyutping: e.jyutping }
+  }
+  return out
+}
+
 /** Look up a Traditional (or as-written) token: seed > words.hk (if gated) > CC-Canto. */
 export function lookupGloss(token: string): GlossHit | null {
   const t = token.trim()

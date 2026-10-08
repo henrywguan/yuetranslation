@@ -10,7 +10,10 @@ import {
 } from './lib/auth'
 import { isDisplayStandalone } from './lib/pwaInstall'
 import { bootstrapPwaLaunch } from './lib/pwaLaunch'
+import { hydrateOfflinePack } from './lib/offlinePackClient'
 import { listenPushNavigate, syncPushSubscriptionIfEnabled } from './lib/pushNotifications'
+import { requestPersistentStorage } from './lib/storagePersist'
+import './lib/pwaInstallPrompt'
 import { sanitizePushNavigateUrl } from './lib/safeUrl'
 import { loadSiteConfig } from './lib/siteLinks'
 import { bindMicBackgroundRelease, shouldForceReleaseMicOnBackground } from './lib/micPrivacy'
@@ -48,6 +51,8 @@ export default function App() {
 
   useEffect(() => {
     bootstrapPwaLaunch()
+    void hydrateOfflinePack()
+    if (isDisplayStandalone()) void requestPersistentStorage()
     void Promise.all([loadSiteConfig(), bootstrapAuthSession()]).finally(() => {
       // After OAuth is consumed — never rewrite `#access_token=...` to `#/app` first
       // (that race signed users back into the app without a session).

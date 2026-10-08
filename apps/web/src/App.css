@@ -4904,3 +4904,90 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+/* ---- PWA offline packs / install / capabilities ---- */
+.offline-pack-panel,
+.pwa-capabilities-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.offline-pack-actions,
+.pwa-capabilities-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+.offline-pack-btn,
+.pwa-install-btn {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border, #2c4a52));
+  background: color-mix(in srgb, var(--jade) 10%, transparent);
+  color: var(--ink, #e8f4f2);
+  border-radius: 0.65rem;
+  padding: 0.45rem 0.7rem;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  min-width: 6.5rem;
+}
+.offline-pack-btn:disabled,
+.pwa-install-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.offline-pack-btn.is-active {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--jade) 55%, transparent);
+  background: color-mix(in srgb, var(--jade) 22%, transparent);
+}
+.offline-pack-btn--danger {
+  background: transparent;
+  border-color: color-mix(in srgb, #e08a7a 40%, var(--glass-border, #2c4a52));
+}
+.offline-pack-btn-meta {
+  font-size: 0.72rem;
+  opacity: 0.72;
+}
+.offline-pack-installed {
+  margin: 0;
+  font-size: 0.86rem;
+}
+.offline-pack-note {
+  margin: 0;
+  opacity: 0.85;
+}
+.pwa-capabilities-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.pwa-capabilities-list li {
+  font-size: 0.86rem;
+  opacity: 0.92;
+}
+.push-nudge-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.85rem;
+  align-items: center;
+  justify-content: space-between;
+}
+.push-nudge-actions {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+}
+.push-nudge-error {
+  display: block;
+  margin-top: 0.25rem;
+  color: #f0b4a8;
+}
+.offline-banner {
+  justify-content: center;
+}

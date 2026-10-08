@@ -105,6 +105,7 @@ import { getPushConfig, subscribePush, unsubscribePush } from './pushRoutes.js'
 import { scheduleHouseholdUsageBackfillOnStartup } from './startupBackfill.js'
 import { getIncidentBanner } from './appSettings.js'
 import { pushConfigured } from './pushNotifications.js'
+import { getOfflinePack, isOfflinePackId, offlinePackManifest } from './offlinePack.js'
 
 export const app = express()
 app.disable('x-powered-by')
@@ -1186,6 +1187,23 @@ app.post('/api/bug-report', submitBugReport)
 app.get('/api/push/config', getPushConfig)
 app.post('/api/push/subscribe', subscribePush)
 app.post('/api/push/unsubscribe', unsubscribePush)
+
+/** Public offline dictionary packs for the installed PWA (no auth / no Azure). */
+app.get('/api/offline-pack/manifest', (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600')
+  res.json(offlinePackManifest())
+})
+app.get('/api/offline-pack/:id', (req, res) => {
+  const id = String(req.params.id || '')
+  if (!isOfflinePackId(id)) {
+    res.status(404).json({ message: 'Unknown offline pack' })
+    return
+  }
+  const pack = getOfflinePack(id)
+  res.setHeader('Cache-Control', 'public, max-age=86400')
+  res.setHeader('Content-Type', 'application/json; charset=utf-8')
+  res.json(pack)
+})
 
 app.get('/api/admin/me', adminMe)
 app.get('/api/admin/users', adminListUsers)
