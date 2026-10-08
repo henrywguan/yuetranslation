@@ -2359,8 +2359,16 @@
 
 .solo-pane-actions {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
+  min-width: 0;
+  max-width: min(100%, 12.5rem);
+}
+
+.solo-pane-actions .result-actions-minor {
+  flex: 0 0 auto;
 }
 
 .solo-details-btn {
@@ -2851,6 +2859,7 @@
   justify-content: space-between;
   gap: 8px;
   padding: 10px 12px 0;
+  min-width: 0;
 }
 
 .history-card-meta {
@@ -2858,6 +2867,7 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .history-card-dir {
@@ -4842,6 +4852,16 @@
 }
 
 
+.conversation-chrome {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.65rem;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: calc(100% - 1.3rem);
+}
 .conversation-clear {
   position: absolute;
   top: 0.65rem;
