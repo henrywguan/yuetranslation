@@ -24,6 +24,7 @@ import { JvText } from './JvText'
 import { ItText } from './ItText'
 import { DeText } from './DeText'
 import { NlText } from './NlText'
+import { ArText } from './ArText'
 import { InkSettle } from './InkSettle'
 import { LangLabelButton } from './LangLabelButton'
 import { LiveHoldButton } from './LiveHoldButton'
@@ -34,6 +35,7 @@ import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import { BiText } from './BiText'
 import { conversationLabelHtmlLang, conversationPaneHint } from '../lib/conversationUi'
+import { langDir } from '../lib/langCapabilities'
 import { normalizeEnglishApostrophes } from '../lib/typography'
 
 function langPlaceholder(lang: Lang): string {
@@ -56,6 +58,8 @@ function langPlaceholder(lang: Lang): string {
   if (lang === 'it') return ui.dirItalian.en
   if (lang === 'de') return ui.dirGerman.en
   if (lang === 'nl') return ui.dirDutch.en
+  if (lang === 'ar') return ui.dirEgyptianArabic.en
+  if (lang === 'arsa') return ui.dirModernStandardArabic.en
   if (lang === 'cmn') return ui.dirMandarin.zh
   if (lang === 'wuu') return ui.dirShanghainese.zh
   if (lang === 'sichuan') return ui.dirSichuanese.zh
@@ -265,6 +269,12 @@ export function ConversationView() {
     if (lang === 'nl') {
       return <NlText text={text} className={className} onActivate={onActivate} />
     }
+    if (lang === 'ar') {
+      return <ArText variant="ar" text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'arsa') {
+      return <ArText variant="arsa" text={text} className={className} onActivate={onActivate} />
+    }
     if (lang === 'cmn') {
       return (
         <MandarinText
@@ -362,7 +372,7 @@ export function ConversationView() {
               scope="conversation"
               onSelect={(lang) => onPaneLang('partner', lang)}
             />
-            <p lang={conversationLabelHtmlLang(partnerLang)}>
+            <p lang={conversationLabelHtmlLang(partnerLang)} dir={langDir(partnerLang)}>
               {conversationPaneHint(partnerLang, 'friend')}
             </p>
           </header>
@@ -432,7 +442,7 @@ export function ConversationView() {
             scope="conversation"
             onSelect={(lang) => onPaneLang('you', lang)}
           />
-          <p lang={conversationLabelHtmlLang(youLang)}>
+          <p lang={conversationLabelHtmlLang(youLang)} dir={langDir(youLang)}>
             {conversationPaneHint(youLang, 'you')}
           </p>
         </header>

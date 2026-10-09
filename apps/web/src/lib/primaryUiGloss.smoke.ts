@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { primaryReplacesChinese, resolvePrimaryUiGloss } from './primaryUiGloss'
+import { primaryGlossHtmlLang, primaryReplacesChinese, resolvePrimaryUiGloss } from './primaryUiGloss'
 import { ui } from './uiCopy'
 
 /** Offline: Tagalog/Spanish/… replace Chinese; Mandarin keeps 漢字 + pinyin gloss. */
@@ -17,6 +17,9 @@ function main() {
   // Newer primaries: no catalog gloss yet → undefined (BiText falls back to English-only).
   assert.equal(resolvePrimaryUiGloss(ui.modeSolo, 'ja'), undefined)
   assert.equal(resolvePrimaryUiGloss(ui.modeSolo, 'nl'), undefined)
+  assert.equal(resolvePrimaryUiGloss(ui.modeSolo, 'ar'), undefined)
+  assert.equal(primaryGlossHtmlLang('ar'), 'ar-EG')
+  assert.equal(primaryGlossHtmlLang('arsa'), 'ar-SA')
 
   const solo = ui.modeSolo
   assert.equal(resolvePrimaryUiGloss(solo, 'yue'), undefined)

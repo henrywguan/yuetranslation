@@ -34,6 +34,8 @@ const OPTIONS: LangOption[] = [
   { id: 'it', copy: ui.dirItalian, mark: 'It' },
   { id: 'de', copy: ui.dirGerman, mark: 'De' },
   { id: 'nl', copy: ui.dirDutch, mark: 'Nl' },
+  { id: 'ar', copy: ui.dirEgyptianArabic, mark: 'Ar' },
+  { id: 'arsa', copy: ui.dirModernStandardArabic, mark: 'Ar' },
   { id: 'ceb', copy: ui.dirCebuano, mark: 'Cb' },
   { id: 'ilo', copy: ui.dirIlocano, mark: 'Il' },
   { id: 'bcl', copy: ui.dirBikol, mark: 'Bc' },

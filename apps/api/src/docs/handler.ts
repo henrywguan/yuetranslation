@@ -38,6 +38,8 @@ const Lang = z.enum([
   'it',
   'de',
   'nl',
+  'ar',
+  'arsa',
   'ceb',
   'ilo',
   'bcl',

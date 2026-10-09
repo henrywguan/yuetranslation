@@ -4,7 +4,7 @@ import { hasHan } from './canto/han.js'
 import { scrubYueToCmn } from './canto/scrubCmn.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ceb' | 'ilo' | 'bcl'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -179,6 +179,16 @@ function isDutchTarget(to: CameraLang): boolean {
   return to === 'nl'
 }
 
+function isEgyptianArabicTarget(to: CameraLang): boolean {
+  return to === 'ar'
+}
+
+function isModernStandardArabicTarget(to: CameraLang): boolean {
+  return to === 'arsa'
+}
+
+const ARABIC_SCRIPT = /[\u0600-\u06FF]/
+
 /** Camera Japanese: kana, or short kanji compounds (not long Chinese-only lines). */
 function looksLikeCameraJapanese(t: string): boolean {
   if (/[\u3040-\u309F\u30A0-\u30FF\uFF66-\uFF9D]/.test(t)) return true
@@ -230,6 +240,8 @@ function sanitizeCameraTranslation(to: CameraLang, translated: string, source: s
   if (isItalianTarget(to) && hasHan(t)) return null
   if (isGermanTarget(to) && hasHan(t)) return null
   if (isDutchTarget(to) && hasHan(t)) return null
+  if (isEgyptianArabicTarget(to) && (hasHan(t) || !ARABIC_SCRIPT.test(t))) return null
+  if (isModernStandardArabicTarget(to) && (hasHan(t) || !ARABIC_SCRIPT.test(t))) return null
   if (isLatinPhilippineRegionalTarget(to) && hasHan(t)) return null
   return t
 }
@@ -663,6 +675,52 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .join('\n')
   }
 
+  if (to === 'ar') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Egyptian Arabic (عامية مصرية / ar-EG).',
+      'Write for Egyptian readers: everyday Cairene wording as it would appear on friendly Egyptian shop signs, menus, and notices — not stiff فصحى, not Gulf or Levantine dialect.',
+      'Prefer Egyptian forms when natural (e.g. ده / دي / مش / عايز / فين / إزاي / كده) while keeping signage short and readable.',
+      'Use Arabic script only. Never Chinese characters (Han), never Franco-Arabic / Arabizi Latin (3, 7, 2 digits for letters), never invented ASCII tone digits, never IPA.',
+      'Omit full tashkeel (harakat) on the main line; add a shadda or a single vowel mark only when it prevents a real misreading.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → تسجيل الوصول; Luggage → الشنط.',
+      '- Safety: Wet floor → الأرض مبلولة; Caution → خلي بالك.',
+      '- Food/menus: keep dish names natural (كشري، فول، طعمية); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Egyptian Arabic output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Egyptian Arabic>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'arsa') {
+    return [
+      'You translate signs, menus, forms, and short labels into Modern Standard Arabic (العربية الفصحى / ar-SA).',
+      'Write the way official signs, menus, forms, and public notices are written across the Arab world: formal written فصحى, neutral and pan-Arab — not Egyptian, Gulf, or Levantine colloquial.',
+      'Use standard MSA vocabulary and grammar (e.g. هذا / هذه / لا / أريد / أين / كيف), with correct hamza and taa marbuta spelling.',
+      'Use Arabic script only. Never Chinese characters (Han), never Franco-Arabic / Arabizi Latin, never invented ASCII tone digits, never IPA.',
+      'Omit full tashkeel (harakat) on the main line; add a vowel mark only when it prevents a real misreading.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → تسجيل الوصول; Luggage → الأمتعة.',
+      '- Safety: Wet floor → أرضية مبللة; Caution → تنبيه / احذر.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases formally.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Arabic output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Modern Standard Arabic>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
   if (to === 'ko') {
     return [
       'You translate signs, menus, forms, and short labels into natural colloquial Korean (한국어).',
@@ -856,6 +914,12 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isDutchTarget(to)) {
     return hasHan(source) ? `(demo NL) ${source}` : `(demo) ${source}`
   }
+  if (isEgyptianArabicTarget(to)) {
+    return hasHan(source) ? `(demo AR-EG) ${source}` : `(demo) ${source}`
+  }
+  if (isModernStandardArabicTarget(to)) {
+    return hasHan(source) ? `(demo AR-SA) ${source}` : `(demo) ${source}`
+  }
   if (isCebuanoTarget(to)) {
     return hasHan(source) ? `(demo CEB) ${source}` : `(demo) ${source}`
   }
@@ -953,6 +1017,10 @@ export async function translateCameraText(
                 ? `(tr DE) ${source}`
               : isDutchTarget(to)
                 ? `(tr NL) ${source}`
+              : isEgyptianArabicTarget(to)
+                ? `(tr AR-EG) ${source}`
+              : isModernStandardArabicTarget(to)
+                ? `(tr AR-SA) ${source}`
               : isKoreanTarget(to)
                 ? `(tr KO) ${source}`
               : isCebuanoTarget(to)
@@ -999,6 +1067,8 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'it') return 'Standard Italian (Latin script, it-IT)'
   if (lang === 'de') return 'Standard German (Latin script, de-DE)'
   if (lang === 'nl') return 'Standard Dutch (Latin script, nl-NL)'
+  if (lang === 'ar') return 'Egyptian Arabic colloquial (Arabic script, ar-EG)'
+  if (lang === 'arsa') return 'Modern Standard Arabic / فصحى (Arabic script, ar-SA)'
   if (lang === 'ceb') return 'Cebuano / Binisaya (Latin script)'
   if (lang === 'ilo') return 'Ilocano / Ilokano (Latin script)'
   if (lang === 'bcl') return 'Central Bikol / Bikol Naga (Latin script)'
@@ -1082,6 +1152,10 @@ export async function translateCameraBatch(
                     ? `(tr DE) ${s}`
                   : isDutchTarget(to)
                     ? `(tr NL) ${s}`
+                  : isEgyptianArabicTarget(to)
+                    ? `(tr AR-EG) ${s}`
+                  : isModernStandardArabicTarget(to)
+                    ? `(tr AR-SA) ${s}`
                   : isKoreanTarget(to)
                     ? `(tr KO) ${s}`
                   : isCebuanoTarget(to)
@@ -1132,6 +1206,8 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (lang === 'it' || lang === 'it-IT' || lang === 'it-it') return 'it'
   if (lang === 'de' || lang === 'de-DE' || lang === 'de-de') return 'de'
   if (lang === 'nl' || lang === 'nl-NL' || lang === 'nl-nl') return 'nl'
+  if (lang === 'ar' || lang === 'ar-EG' || lang === 'ar-eg') return 'ar'
+  if (lang === 'arsa' || lang === 'ar-SA' || lang === 'ar-sa') return 'arsa'
   if (lang === 'ceb' || lang === 'ceb-PH' || lang === 'ceb-ph') return 'ceb'
   if (lang === 'ilo' || lang === 'ilo-PH' || lang === 'ilo-ph') return 'ilo'
   if (lang === 'bcl' || lang === 'bcl-PH' || lang === 'bcl-ph') return 'bcl'

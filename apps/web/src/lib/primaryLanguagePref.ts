@@ -33,6 +33,8 @@ export const PRIMARY_LANGS = [
   'it',
   'de',
   'nl',
+  'ar',
+  'arsa',
 ] as const satisfies readonly VoiceLang[]
 export type PrimaryLang = (typeof PRIMARY_LANGS)[number]
 
@@ -299,6 +301,18 @@ export function primaryLangLabel(lang: PrimaryLang): {
         zh: '荷蘭文語言工具',
         gloss: 'Nederlandse taalhulpmiddel',
       }
+    case 'ar':
+      return {
+        en: 'Egyptian Arabic Language Tool',
+        zh: '埃及阿拉伯話語言工具',
+        gloss: 'أداة اللغة العربية المصرية',
+      }
+    case 'arsa':
+      return {
+        en: 'Modern Standard Arabic Language Tool',
+        zh: '標準阿拉伯文語言工具',
+        gloss: 'أداة اللغة العربية الفصحى',
+      }
     case 'yue':
     default:
       return {
@@ -357,6 +371,10 @@ export function primaryLangShortCopy(lang: PrimaryLang): { en: string; zh: strin
       return { en: 'German', zh: '德文' }
     case 'nl':
       return { en: 'Dutch', zh: '荷蘭文' }
+    case 'ar':
+      return { en: 'Egyptian Arabic', zh: '埃及阿拉伯話' }
+    case 'arsa':
+      return { en: 'Modern Standard Arabic', zh: '標準阿拉伯文' }
     case 'yue':
     default:
       return { en: 'Cantonese', zh: '粵語' }

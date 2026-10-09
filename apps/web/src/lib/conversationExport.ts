@@ -27,6 +27,8 @@ const LANG_NAMES: Partial<Record<Lang, string>> = {
   it: 'Italian',
   de: 'German',
   nl: 'Dutch',
+  ar: 'Egyptian Arabic',
+  arsa: 'Modern Standard Arabic',
   ceb: 'Cebuano',
   ilo: 'Ilocano',
   bcl: 'Bikol',

@@ -29,8 +29,19 @@ export function isVoiceLang(lang: string | null | undefined): lang is VoiceLang 
     lang === 'jv' ||
     lang === 'it' ||
     lang === 'de' ||
-    lang === 'nl'
+    lang === 'nl' ||
+    lang === 'ar' ||
+    lang === 'arsa'
   )
+}
+
+export function isRtlLang(lang: string | null | undefined): boolean {
+  return lang === 'ar' || lang === 'arsa'
+}
+
+/** `dir` attribute for text surfaces; undefined keeps the inherited LTR flow. */
+export function langDir(lang: string | null | undefined): 'rtl' | undefined {
+  return isRtlLang(lang) ? 'rtl' : undefined
 }
 
 /** Live mic + Azure/Web Speech STT. */

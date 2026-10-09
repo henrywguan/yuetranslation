@@ -21,6 +21,7 @@ import { JvText } from './JvText'
 import { ItText } from './ItText'
 import { DeText } from './DeText'
 import { NlText } from './NlText'
+import { ArText } from './ArText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -214,6 +215,13 @@ export function ResultWithDefinition({
               />
             ) : chineseLang === 'nl' ? (
               <NlText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'ar' || chineseLang === 'arsa' ? (
+              <ArText
+                variant={chineseLang}
                 text={trimmed}
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}

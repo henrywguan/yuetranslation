@@ -67,7 +67,7 @@ import {
   isViVoice,
   isThVoice,
   isLoVoice,
-  isKoVoice, isJaVoice, isIdVoice, isMsVoice, isPtVoice, isFrVoice, isHiVoice, isKmVoice, isMyVoice, isJvVoice, isItVoice, isDeVoice, isNlVoice,
+  isKoVoice, isJaVoice, isIdVoice, isMsVoice, isPtVoice, isFrVoice, isHiVoice, isKmVoice, isMyVoice, isJvVoice, isItVoice, isDeVoice, isNlVoice, isArVoice, isArsaVoice,
   isYueVoice,
 } from './ttsVoices.js'
 import {
@@ -446,6 +446,10 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
                             ? 'de-DE'
                           : lang === 'nl' || lang === 'nl-NL' || lang === 'nl-nl'
                             ? 'nl-NL'
+                          : lang === 'ar' || lang === 'ar-EG' || lang === 'ar-eg'
+                            ? 'ar-EG'
+                          : lang === 'arsa' || lang === 'ar-SA' || lang === 'ar-sa'
+                            ? 'ar-SA'
                           : 'zh-HK'
     const audio = await synthesize(text, azureLang, {
       voice: voiceOverride,
@@ -473,6 +477,8 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredIt: ent.prefs?.ttsVoiceIt,
       preferredDe: ent.prefs?.ttsVoiceDe,
       preferredNl: ent.prefs?.ttsVoiceNl,
+      preferredAr: ent.prefs?.ttsVoiceAr,
+      preferredArsa: ent.prefs?.ttsVoiceArsa,
       loud,
       performance,
     })
@@ -521,6 +527,8 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     tts_voice_it?: string
     tts_voice_de?: string
     tts_voice_nl?: string
+    tts_voice_ar?: string
+    tts_voice_arsa?: string
   } = {}
   if (body.ttsVoiceYue != null) {
     const v = String(body.ttsVoiceYue).trim()
@@ -698,6 +706,22 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     }
     patch.tts_voice_nl = v
   }
+  if (body.ttsVoiceAr != null) {
+    const v = String(body.ttsVoiceAr).trim()
+    if (!isArVoice(v)) {
+      res.status(400).json({ message: 'Invalid Egyptian Arabic voice.' })
+      return
+    }
+    patch.tts_voice_ar = v
+  }
+  if (body.ttsVoiceArsa != null) {
+    const v = String(body.ttsVoiceArsa).trim()
+    if (!isArsaVoice(v)) {
+      res.status(400).json({ message: 'Invalid Modern Standard Arabic voice.' })
+      return
+    }
+    patch.tts_voice_arsa = v
+  }
   if (!Object.keys(patch).length) {
     res.status(400).json({ message: 'No voice preferences provided.' })
     return
@@ -733,6 +757,8 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
         ttsVoiceIt: patch.tts_voice_it || ent.prefs.ttsVoiceIt,
         ttsVoiceDe: patch.tts_voice_de || ent.prefs.ttsVoiceDe,
         ttsVoiceNl: patch.tts_voice_nl || ent.prefs.ttsVoiceNl,
+        ttsVoiceAr: patch.tts_voice_ar || ent.prefs.ttsVoiceAr,
+        ttsVoiceArsa: patch.tts_voice_arsa || ent.prefs.ttsVoiceArsa,
         autoSpeak: ent.prefs.autoSpeak,
         primaryLang: ent.prefs.primaryLang,
         username: ent.prefs.username,

@@ -13,7 +13,7 @@ import { copyableText } from '../lib/copyText'
 import { SoloTextOnlyLangTip } from './TextOnlyLangTip'
 import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
-import { isTextOnlyLang, isVoiceLang } from '../lib/langCapabilities'
+import { isTextOnlyLang, isVoiceLang, langDir } from '../lib/langCapabilities'
 import { useYueStore } from '../lib/store'
 import { consumePendingShareText } from '../lib/pwaLaunch'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -54,6 +54,8 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'it') return 'Digita o parla in italiano…'
   if (lang === 'de') return 'Auf Deutsch tippen oder sprechen…'
   if (lang === 'nl') return 'Typ of spreek Nederlands…'
+  if (lang === 'ar') return 'اكتب أو اتكلم بالمصري…'
+  if (lang === 'arsa') return 'اكتب أو تحدّث بالعربية الفصحى…'
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
   if (lang === 'bcl') return 'I-type nin Bikol…'
@@ -86,6 +88,8 @@ function isRubyDisplayLang(lang: Lang): boolean {
     lang === 'it' ||
     lang === 'de' ||
     lang === 'nl' ||
+    lang === 'ar' ||
+    lang === 'arsa' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'
@@ -123,6 +127,8 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'it') return 'Speak Italian with the mic'
   if (lang === 'de') return 'Speak German with the mic'
   if (lang === 'nl') return 'Speak Dutch with the mic'
+  if (lang === 'ar') return 'Speak Egyptian Arabic with the mic'
+  if (lang === 'arsa') return 'Speak Modern Standard Arabic with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
   if (lang === 'sichuan') return 'Speak Sichuanese with the mic'
@@ -640,7 +646,7 @@ export function SoloView() {
               onSelect={selectYueVariation}
             />
           ) : null}
-          <button type="button" className="solo-edit-link" onClick={onEdit}>
+          <button type="button" className="solo-edit-link" onClick={onEdit} dir={langDir(lang)}>
             {placeholderFor(lang)}
           </button>
         </div>
@@ -656,6 +662,7 @@ export function SoloView() {
         disabled={inputLocked}
         placeholder={placeholderFor(lang)}
         aria-label={placeholderFor(lang)}
+        dir={langDir(lang)}
         onFocus={() => {
           editingRef.current = pane
           if (pane === 'upper') setUpperEditing(true)

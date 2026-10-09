@@ -306,6 +306,30 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     friendLooksHere: 'Je vriend kijkt naar deze kant',
     holdFacingYou: 'Houd de telefoon naar jezelf gericht',
   },
+  ar: {
+    htmlLang: 'ar-EG',
+    mic: {
+      holdOrTapToSpeak: 'اضغط مطوّلاً أو اضغط للتحدث',
+      releaseWhenDone: 'بسمعك — سيب الزرار لما تخلّص',
+      tapListening: 'بسمعك — استنى شوية أو دوس تاني عشان توقّف',
+      speaking: 'بيتكلم…',
+      translating: 'بيترجم…',
+    },
+    friendLooksHere: 'صاحبك يبص من الناحية دي',
+    holdFacingYou: 'خلّي الموبايل ناحيتك',
+  },
+  arsa: {
+    htmlLang: 'ar-SA',
+    mic: {
+      holdOrTapToSpeak: 'اضغط مطوّلاً أو انقر للتحدث',
+      releaseWhenDone: 'جارٍ الاستماع — ارفع إصبعك عند الانتهاء',
+      tapListening: 'جارٍ الاستماع — توقّف قليلاً أو انقر مجدداً للإيقاف',
+      speaking: 'جارٍ التحدث…',
+      translating: 'جارٍ الترجمة…',
+    },
+    friendLooksHere: 'ينظر صديقك من هذه الجهة',
+    holdFacingYou: 'أمسك الهاتف باتجاهك',
+  },
 }
 
 

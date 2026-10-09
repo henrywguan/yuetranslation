@@ -21,6 +21,7 @@ import { JvText } from './JvText'
 import { ItText } from './ItText'
 import { DeText } from './DeText'
 import { NlText } from './NlText'
+import { ArText } from './ArText'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
 import { BiText } from './BiText'
@@ -201,6 +202,13 @@ export function TranslationAlternatives({
                 />
               ) : lang === 'nl' ? (
                 <NlText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'ar' || lang === 'arsa' ? (
+                <ArText
+                  variant={lang}
                   text={alt}
                   className="result-text"
                   onActivate={onSelect}

@@ -28,6 +28,8 @@ export type DocLang =
   | 'it'
   | 'de'
   | 'nl'
+  | 'ar'
+  | 'arsa'
   | 'ceb'
   | 'ilo'
   | 'bcl'

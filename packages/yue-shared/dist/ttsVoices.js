@@ -27,6 +27,8 @@ export const DEFAULT_JV_VOICE = 'jv-ID-SitiNeural';
 export const DEFAULT_IT_VOICE = 'it-IT-ElsaNeural';
 export const DEFAULT_DE_VOICE = 'de-DE-KatjaNeural';
 export const DEFAULT_NL_VOICE = 'nl-NL-FennaNeural';
+export const DEFAULT_AR_VOICE = 'ar-EG-SalmaNeural';
+export const DEFAULT_ARSA_VOICE = 'ar-SA-ZariyahNeural';
 export const YUE_VOICES = [
     {
         id: 'zh-HK-HiuMaanNeural',
@@ -445,6 +447,42 @@ export const NL_VOICES = [
         gender: 'male',
     },
 ];
+export const AR_VOICES = [
+    {
+        id: 'ar-EG-SalmaNeural',
+        lang: 'ar',
+        xmlLang: 'ar-EG',
+        labelEn: 'Salma · Female',
+        labelZh: 'Salma · 女聲',
+        gender: 'female',
+    },
+    {
+        id: 'ar-EG-ShakirNeural',
+        lang: 'ar',
+        xmlLang: 'ar-EG',
+        labelEn: 'Shakir · Male',
+        labelZh: 'Shakir · 男聲',
+        gender: 'male',
+    },
+];
+export const ARSA_VOICES = [
+    {
+        id: 'ar-SA-ZariyahNeural',
+        lang: 'arsa',
+        xmlLang: 'ar-SA',
+        labelEn: 'Zariyah · Female',
+        labelZh: 'Zariyah · 女聲',
+        gender: 'female',
+    },
+    {
+        id: 'ar-SA-HamedNeural',
+        lang: 'arsa',
+        xmlLang: 'ar-SA',
+        labelEn: 'Hamed · Male',
+        labelZh: 'Hamed · 男聲',
+        gender: 'male',
+    },
+];
 export const CMN_VOICES = [
     {
         id: 'zh-CN-XiaoxiaoNeural',
@@ -515,6 +553,8 @@ const JV_SET = new Set(JV_VOICES.map((v) => v.id));
 const IT_SET = new Set(IT_VOICES.map((v) => v.id));
 const DE_SET = new Set(DE_VOICES.map((v) => v.id));
 const NL_SET = new Set(NL_VOICES.map((v) => v.id));
+const AR_SET = new Set(AR_VOICES.map((v) => v.id));
+const ARSA_SET = new Set(ARSA_VOICES.map((v) => v.id));
 const ALL = new Map([
     ...YUE_VOICES,
     ...EN_VOICES,
@@ -540,6 +580,8 @@ const ALL = new Map([
     ...IT_VOICES,
     ...DE_VOICES,
     ...NL_VOICES,
+    ...AR_VOICES,
+    ...ARSA_VOICES,
 ].map((v) => [v.id, v]));
 export function isYueVoice(id) {
     return YUE_SET.has(id);
@@ -682,14 +724,26 @@ export function resolveDeVoice(id) {
 export function isNlVoice(id) {
     return NL_SET.has(id);
 }
+export function isArVoice(id) {
+    return AR_SET.has(id);
+}
+export function isArsaVoice(id) {
+    return ARSA_SET.has(id);
+}
 export function resolveNlVoice(id) {
     return id && isNlVoice(id) ? id : DEFAULT_NL_VOICE;
+}
+export function resolveArVoice(id) {
+    return id && isArVoice(id) ? id : DEFAULT_AR_VOICE;
+}
+export function resolveArsaVoice(id) {
+    return id && isArsaVoice(id) ? id : DEFAULT_ARSA_VOICE;
 }
 export function voiceMeta(id) {
     return ALL.get(id);
 }
 /** Pick Azure voice + xml:lang for a speak request. */
-export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, preferredWuu, preferredSichuan, preferredTl, preferredEs, override, preferredVi, preferredEses, preferredTh, preferredLo, preferredKo, preferredJa, preferredId, preferredMs, preferredPt, preferredFr, preferredHi, preferredKm, preferredMy, preferredJv, preferredIt, preferredDe, preferredNl) {
+export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, preferredWuu, preferredSichuan, preferredTl, preferredEs, override, preferredVi, preferredEses, preferredTh, preferredLo, preferredKo, preferredJa, preferredId, preferredMs, preferredPt, preferredFr, preferredHi, preferredKm, preferredMy, preferredJv, preferredIt, preferredDe, preferredNl, preferredAr, preferredArsa) {
     const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU';
     const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans';
     const isWuu = lang === 'wuu' || lang === 'wuu-CN';
@@ -715,6 +769,8 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
     const isIt = lang === 'it' || lang === 'it-IT' || lang === 'it-it';
     const isDe = lang === 'de' || lang === 'de-DE' || lang === 'de-de';
     const isNl = lang === 'nl' || lang === 'nl-NL' || lang === 'nl-nl';
+    const isAr = lang === 'ar' || lang === 'ar-EG' || lang === 'ar-eg';
+    const isArsa = lang === 'arsa' || lang === 'ar-SA' || lang === 'ar-sa';
     if (override) {
         const meta = voiceMeta(override);
         if (meta) {
@@ -764,6 +820,10 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
                 return { voice: meta.id, xmlLang: meta.xmlLang };
             if (isNl && meta.lang === 'nl')
                 return { voice: meta.id, xmlLang: meta.xmlLang };
+            if (isAr && meta.lang === 'ar')
+                return { voice: meta.id, xmlLang: meta.xmlLang };
+            if (isArsa && meta.lang === 'arsa')
+                return { voice: meta.id, xmlLang: meta.xmlLang };
             if (!isEn &&
                 !isCmn &&
                 !isWuu &&
@@ -787,6 +847,8 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
                 !isIt &&
                 !isDe &&
                 !isNl &&
+                !isAr &&
+                !isArsa &&
                 meta.lang === 'yue') {
                 return { voice: meta.id, xmlLang: meta.xmlLang };
             }
@@ -884,6 +946,14 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
         const id = resolveNlVoice(preferredNl);
         return { voice: id, xmlLang: voiceMeta(id).xmlLang };
     }
+    if (isAr) {
+        const id = resolveArVoice(preferredAr);
+        return { voice: id, xmlLang: voiceMeta(id).xmlLang };
+    }
+    if (isArsa) {
+        const id = resolveArsaVoice(preferredArsa);
+        return { voice: id, xmlLang: voiceMeta(id).xmlLang };
+    }
     const id = resolveYueVoice(preferredYue);
     return { voice: id, xmlLang: voiceMeta(id).xmlLang };
 }
@@ -911,3 +981,5 @@ export const PREVIEW_JV = 'Halo — iki swara Basa Jawa sampeyan.';
 export const PREVIEW_IT = 'Ciao — questa è la tua voce in italiano.';
 export const PREVIEW_DE = 'Hallo — das ist Ihre deutsche Stimme.';
 export const PREVIEW_NL = 'Hallo — dit is je Nederlandse stem.';
+export const PREVIEW_AR = 'أهلاً — ده صوتك بالعامية المصرية.';
+export const PREVIEW_ARSA = 'مرحباً — هذا صوتك باللغة العربية الفصحى.';

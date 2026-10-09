@@ -32,6 +32,8 @@ import { translateJavanese } from './translateJavanese.js'
 import { translateItalian } from './translateItalian.js'
 import { translateGerman } from './translateGerman.js'
 import { translateDutch } from './translateDutch.js'
+import { translateEgyptianArabic } from './translateEgyptianArabic.js'
+import { translateModernStandardArabic } from './translateModernStandardArabic.js'
 import { translateCebuano, translateIlocano, translateBikol } from './translatePhilippineRegional.js'
 
 /** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
@@ -54,7 +56,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ceb', 'ilo', 'bcl'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ceb', 'ilo', 'bcl'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -94,7 +96,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ceb' | 'ilo' | 'bcl'
 
 type TranslateResult = {
   text: string
@@ -3490,6 +3492,34 @@ export async function translate(input: unknown) {
       await translateDutch({
         from: from as 'en' | 'nl',
         to: to as 'en' | 'nl',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'ar' || (from === 'ar' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateEgyptianArabic({
+        from: from as 'en' | 'ar',
+        to: to as 'en' | 'ar',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'arsa' || (from === 'arsa' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateModernStandardArabic({
+        from: from as 'en' | 'arsa',
+        to: to as 'en' | 'arsa',
         text,
         stage,
         wantAlts,
