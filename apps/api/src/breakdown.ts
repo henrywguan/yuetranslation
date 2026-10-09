@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ceb', 'ilo', 'bcl']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ceb', 'ilo', 'bcl']).optional(),
 })
 
 export type BreakdownChar = {
@@ -202,8 +202,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl',
-): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ceb' | 'ilo' | 'bcl',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ceb' | 'ilo' | 'bcl' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -1270,6 +1270,119 @@ async function hiBreakdown(text: string) {
 }
 
 
+/** Arabic letters + harakat + tatweel (excludes Arabic punctuation ، ؛ ؟ and digits). */
+const ARABIC_WORD = '\\u0621-\\u063A\\u0640-\\u065F\\u066E-\\u06D3\\u06D5-\\u06FF'
+
+export function tokenizeArabic(text: string): string[] {
+  const re = new RegExp(`[${ARABIC_WORD}]+|[0-9\\u0660-\\u0669]+|[^\\s${ARABIC_WORD}0-9\\u0660-\\u0669]+`, 'g')
+  return (text.match(re) || []).filter((t) => t.trim())
+}
+
+export function localArBreakdown(text: string): BreakdownChar[] {
+  const wordRe = new RegExp(`[${ARABIC_WORD}0-9\\u0660-\\u0669]`)
+  return tokenizeArabic(text).map((tok) => {
+    if (!wordRe.test(tok)) {
+      return {
+        char: tok,
+        jyutping: null,
+        meaning:
+          tok === '?' || tok === '؟' || tok === '？'
+            ? 'question mark'
+            : tok === '!' || tok === '！'
+              ? 'exclamation mark'
+              : tok === '.' || tok === '۔' || tok === '。'
+                ? 'full stop'
+                : tok === ',' || tok === '،' || tok === '，'
+                  ? 'comma'
+                  : tok === '؛' || tok === ';'
+                    ? 'semicolon'
+                    : 'punctuation',
+        glossSource: 'seed',
+      }
+    }
+    return {
+      char: tok,
+      jyutping: null,
+      meaning: '',
+    }
+  })
+}
+
+async function arBreakdown(text: string, lang: 'ar' | 'arsa') {
+  const fallback = localArBreakdown(text)
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang }
+  }
+
+  const client = openaiClientWithKey()
+  const variantLines =
+    lang === 'ar'
+      ? [
+          'You explain colloquial Egyptian Arabic (عامية مصرية, Cairo) word-by-word for English-speaking learners.',
+          'Given an Egyptian Arabic phrase in Arabic script, return ONLY valid JSON:',
+          '- Gloss Egyptian words with their Egyptian sense (e.g. ده = this, مش = not, عايز = want, فين = where, إزاي = how). Do not reinterpret them as فصحى.',
+        ]
+      : [
+          'You explain Modern Standard Arabic (العربية الفصحى) word-by-word for English-speaking learners.',
+          'Given an MSA phrase in Arabic script, return ONLY valid JSON:',
+          '- Gloss with the standard MSA sense; do not reinterpret words as Egyptian or other colloquial dialects.',
+        ]
+  const system = [
+    variantLines[0],
+    variantLines[1],
+    '{"words":[{"word":"<token>","accented":null,"meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every space-separated token in order (words and punctuation; skip spaces). Keep attached clitics (و / ف / ب / ل / ال / pronoun suffixes) inside the token and mention them in the gloss when useful.',
+    variantLines[2],
+    '- accented is always null — no transliteration in the JSON.',
+    '- Do NOT use Chinese characters, Arabizi / Latin transliteration, Chao tone letters, IPA, or invented ASCII tone digits.',
+    '- Meanings must be concise English that fit THIS phrase.',
+    '- No markdown.',
+  ].join('\n')
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 700,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const merged = parseTlBreakdownPayload(raw, fallback).map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char !== row.char) {
+        const byText = fallback.find((f) => f.char === row.char)
+        return {
+          ...row,
+          jyutping: null,
+          meaning: pickMeaning(row.meaning, byText?.meaning),
+          glossSource:
+            row.meaning && !isGenericCharGloss(row.meaning)
+              ? row.glossSource || 'model'
+              : byText?.glossSource,
+        }
+      }
+      return {
+        ...row,
+        jyutping: null,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return { characters: merged, engine: 'openai' as const, lang }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang }
+  }
+}
+
 async function cmnBreakdown(text: string) {
   // Preserve Mandarin — never scrub into Cantonese. Client supplies pinyin locally;
   // API returns gloss rows with jyutping left null for client merge.
@@ -1785,6 +1898,7 @@ export async function breakdown(input: unknown) {
   if (lang === 'lo') return loBreakdown(text)
   if (lang === 'ko') return koBreakdown(text)
   if (lang === 'hi') return hiBreakdown(text)
+  if (lang === 'ar' || lang === 'arsa') return arBreakdown(text, lang)
   if (lang === 'ja') return jaBreakdown(text)
   if (lang === 'km') {
     return scriptVoiceBreakdown(

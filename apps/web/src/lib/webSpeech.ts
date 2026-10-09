@@ -50,6 +50,8 @@ export function createWebSpeechSession(
   let itLocaleIndex = 0
   let deLocaleIndex = 0
   let nlLocaleIndex = 0
+  let arLocaleIndex = 0
+  let arsaLocaleIndex = 0
   const bilingualYueEn = Boolean(opts?.bilingualYueEn)
   const echo = createEchoGuard()
   const apple = isAppleTouchDevice()
@@ -78,6 +80,9 @@ export function createWebSpeechSession(
   const itLocales = ['it-IT', 'it']
   const deLocales = ['de-DE', 'de']
   const nlLocales = ['nl-NL', 'nl']
+  // Bare `ar` is a generic Web Speech tag fallback only; ar-EG and ar-SA never swap.
+  const arLocales = ['ar-EG', 'ar']
+  const arsaLocales = ['ar-SA', 'ar']
 
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
   const cmnLocale = () => cmnLocales[cmnLocaleIndex % cmnLocales.length]
@@ -102,6 +107,8 @@ export function createWebSpeechSession(
   const itLocale = () => itLocales[itLocaleIndex % itLocales.length]
   const deLocale = () => deLocales[deLocaleIndex % deLocales.length]
   const nlLocale = () => nlLocales[nlLocaleIndex % nlLocales.length]
+  const arLocale = () => arLocales[arLocaleIndex % arLocales.length]
+  const arsaLocale = () => arsaLocales[arsaLocaleIndex % arsaLocales.length]
 
   const resolveRecLang = (): string => {
     if (bilingualYueEn && activeLang === 'en') return 'en-US'
@@ -128,6 +135,8 @@ export function createWebSpeechSession(
     if (activeLang === 'it') return itLocale()
     if (activeLang === 'de') return deLocale()
     if (activeLang === 'nl') return nlLocale()
+    if (activeLang === 'ar') return arLocale()
+    if (activeLang === 'arsa') return arsaLocale()
     return 'en-US'
   }
 
@@ -295,6 +304,16 @@ export function createWebSpeechSession(
         queueMicrotask(() => startOne())
         return
       }
+      if (localeRejected && activeLang === 'ar' && arLocaleIndex < arLocales.length - 1) {
+        arLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'arsa' && arsaLocaleIndex < arsaLocales.length - 1) {
+        arsaLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
       if (e.error === 'not-allowed') {
         stopped = true
         handlers.onError('Microphone permission denied. Allow mic access and try again.')
@@ -392,6 +411,8 @@ export function createWebSpeechSession(
       itLocaleIndex = 0
       deLocaleIndex = 0
       nlLocaleIndex = 0
+      arLocaleIndex = 0
+      arsaLocaleIndex = 0
       startOne()
     },
     async stop() {

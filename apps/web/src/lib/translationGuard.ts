@@ -186,6 +186,15 @@ export function sanitizeNlTranslation(text: string | null | undefined): string |
   return sanitizeViTranslation(text)
 }
 
+/** Reject EN→Arabic payloads (Egyptian `ar` and MSA `arsa`) that are empty, glossy, Han, or missing Arabic script. */
+export function sanitizeArTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\u0600-\u06FF]/.test(t)) return null
+  return t
+}
+
 export function sanitizeScaffoldLatinTranslation(text: string | null | undefined): string | null {
   return sanitizeViTranslation(text)
 }

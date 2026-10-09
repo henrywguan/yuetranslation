@@ -28,6 +28,8 @@ export const DEFAULT_JV_VOICE = 'jv-ID-SitiNeural'
 export const DEFAULT_IT_VOICE = 'it-IT-ElsaNeural'
 export const DEFAULT_DE_VOICE = 'de-DE-KatjaNeural'
 export const DEFAULT_NL_VOICE = 'nl-NL-FennaNeural'
+export const DEFAULT_AR_VOICE = 'ar-EG-SalmaNeural'
+export const DEFAULT_ARSA_VOICE = 'ar-SA-ZariyahNeural'
 
 export type YueVoiceId =
   | 'zh-HK-HiuMaanNeural'
@@ -75,6 +77,8 @@ export type JvVoiceId = 'jv-ID-SitiNeural' | 'jv-ID-DimasNeural'
 export type ItVoiceId = 'it-IT-ElsaNeural' | 'it-IT-DiegoNeural'
 export type DeVoiceId = 'de-DE-KatjaNeural' | 'de-DE-ConradNeural'
 export type NlVoiceId = 'nl-NL-FennaNeural' | 'nl-NL-MaartenNeural'
+export type ArVoiceId = 'ar-EG-SalmaNeural' | 'ar-EG-ShakirNeural'
+export type ArsaVoiceId = 'ar-SA-ZariyahNeural' | 'ar-SA-HamedNeural'
 
 export type TtsVoiceId =
   | YueVoiceId
@@ -101,10 +105,12 @@ export type TtsVoiceId =
   | ItVoiceId
   | DeVoiceId
   | NlVoiceId
+  | ArVoiceId
+  | ArsaVoiceId
 
 export type TtsVoiceOption = {
   id: TtsVoiceId
-  lang: 'yue' | 'en' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl'
+  lang: 'yue' | 'en' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa'
   /** Azure SSML xml:lang */
   xmlLang: string
   labelEn: string
@@ -553,6 +559,44 @@ export const NL_VOICES: TtsVoiceOption[] = [
   },
 ]
 
+export const AR_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'ar-EG-SalmaNeural',
+    lang: 'ar',
+    xmlLang: 'ar-EG',
+    labelEn: 'Salma · Female',
+    labelZh: 'Salma · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'ar-EG-ShakirNeural',
+    lang: 'ar',
+    xmlLang: 'ar-EG',
+    labelEn: 'Shakir · Male',
+    labelZh: 'Shakir · 男聲',
+    gender: 'male',
+  },
+]
+
+export const ARSA_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'ar-SA-ZariyahNeural',
+    lang: 'arsa',
+    xmlLang: 'ar-SA',
+    labelEn: 'Zariyah · Female',
+    labelZh: 'Zariyah · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'ar-SA-HamedNeural',
+    lang: 'arsa',
+    xmlLang: 'ar-SA',
+    labelEn: 'Hamed · Male',
+    labelZh: 'Hamed · 男聲',
+    gender: 'male',
+  },
+]
+
 export const CMN_VOICES: TtsVoiceOption[] = [
   {
     id: 'zh-CN-XiaoxiaoNeural',
@@ -626,6 +670,8 @@ const JV_SET = new Set(JV_VOICES.map((v) => v.id))
 const IT_SET = new Set(IT_VOICES.map((v) => v.id))
 const DE_SET = new Set(DE_VOICES.map((v) => v.id))
 const NL_SET = new Set(NL_VOICES.map((v) => v.id))
+const AR_SET = new Set(AR_VOICES.map((v) => v.id))
+const ARSA_SET = new Set(ARSA_VOICES.map((v) => v.id))
 const ALL = new Map<string, TtsVoiceOption>(
   [
     ...YUE_VOICES,
@@ -652,6 +698,8 @@ const ALL = new Map<string, TtsVoiceOption>(
     ...IT_VOICES,
     ...DE_VOICES,
     ...NL_VOICES,
+    ...AR_VOICES,
+    ...ARSA_VOICES,
   ].map((v) => [v.id, v]),
 )
 
@@ -843,8 +891,24 @@ export function isNlVoice(id: string): id is NlVoiceId {
   return NL_SET.has(id as NlVoiceId)
 }
 
+export function isArVoice(id: string): id is ArVoiceId {
+  return AR_SET.has(id as ArVoiceId)
+}
+
+export function isArsaVoice(id: string): id is ArsaVoiceId {
+  return ARSA_SET.has(id as ArsaVoiceId)
+}
+
 export function resolveNlVoice(id: string | null | undefined): NlVoiceId {
   return id && isNlVoice(id) ? id : DEFAULT_NL_VOICE
+}
+
+export function resolveArVoice(id: string | null | undefined): ArVoiceId {
+  return id && isArVoice(id) ? id : DEFAULT_AR_VOICE
+}
+
+export function resolveArsaVoice(id: string | null | undefined): ArsaVoiceId {
+  return id && isArsaVoice(id) ? id : DEFAULT_ARSA_VOICE
 }
 
 export function voiceMeta(id: string): TtsVoiceOption | undefined {
@@ -879,6 +943,8 @@ export function resolveSpeakVoice(
   preferredIt?: string | null,
   preferredDe?: string | null,
   preferredNl?: string | null,
+  preferredAr?: string | null,
+  preferredArsa?: string | null,
 ): { voice: string; xmlLang: string } {
   const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU'
   const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans'
@@ -905,6 +971,8 @@ export function resolveSpeakVoice(
   const isIt = lang === 'it' || lang === 'it-IT' || lang === 'it-it'
   const isDe = lang === 'de' || lang === 'de-DE' || lang === 'de-de'
   const isNl = lang === 'nl' || lang === 'nl-NL' || lang === 'nl-nl'
+  const isAr = lang === 'ar' || lang === 'ar-EG' || lang === 'ar-eg'
+  const isArsa = lang === 'arsa' || lang === 'ar-SA' || lang === 'ar-sa'
   if (override) {
     const meta = voiceMeta(override)
     if (meta) {
@@ -931,6 +999,8 @@ export function resolveSpeakVoice(
       if (isIt && meta.lang === 'it') return { voice: meta.id, xmlLang: meta.xmlLang }
       if (isDe && meta.lang === 'de') return { voice: meta.id, xmlLang: meta.xmlLang }
       if (isNl && meta.lang === 'nl') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isAr && meta.lang === 'ar') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isArsa && meta.lang === 'arsa') return { voice: meta.id, xmlLang: meta.xmlLang }
       if (
         !isEn &&
         !isCmn &&
@@ -955,6 +1025,8 @@ export function resolveSpeakVoice(
         !isIt &&
         !isDe &&
         !isNl &&
+        !isAr &&
+        !isArsa &&
         meta.lang === 'yue'
       ) {
         return { voice: meta.id, xmlLang: meta.xmlLang }
@@ -1053,6 +1125,14 @@ export function resolveSpeakVoice(
     const id = resolveNlVoice(preferredNl)
     return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
   }
+  if (isAr) {
+    const id = resolveArVoice(preferredAr)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isArsa) {
+    const id = resolveArsaVoice(preferredArsa)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
   const id = resolveYueVoice(preferredYue)
   return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
 }
@@ -1081,3 +1161,5 @@ export const PREVIEW_JV = 'Halo — iki swara Basa Jawa sampeyan.'
 export const PREVIEW_IT = 'Ciao — questa è la tua voce in italiano.'
 export const PREVIEW_DE = 'Hallo — das ist Ihre deutsche Stimme.'
 export const PREVIEW_NL = 'Hallo — dit is je Nederlandse stem.'
+export const PREVIEW_AR = 'أهلاً — ده صوتك بالعامية المصرية.'
+export const PREVIEW_ARSA = 'مرحباً — هذا صوتك باللغة العربية الفصحى.'

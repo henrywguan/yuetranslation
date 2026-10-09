@@ -5001,3 +5001,56 @@
 .offline-banner {
   justify-content: center;
 }
+
+/* Arabic — Egyptian (ar-EG) + MSA (ar-SA). RTL script only on compact; Details adds honesty + tashkeel notes. */
+.arabic-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+  direction: rtl;
+  unicode-bidi: isolate;
+  font-family: 'Noto Naskh Arabic', 'Geeza Pro', 'Noto Sans Arabic', 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.55;
+}
+.arabic-block--detail {
+  gap: 0.35em;
+}
+.arabic-honesty,
+.arabic-diacritic-note {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+.arabic-diacritic-note {
+  opacity: 0.5;
+}
+button.arabic-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  direction: rtl;
+}
+
+/* RTL text surfaces (Arabic panes, mic labels, Solo input). Logical alignment keeps LTR untouched. */
+[dir='rtl'] {
+  unicode-bidi: isolate;
+}
+textarea[dir='rtl'],
+input[dir='rtl'] {
+  text-align: right;
+}
+p[dir='rtl'],
+.live-btn-label[dir='rtl'] {
+  text-align: start;
+}

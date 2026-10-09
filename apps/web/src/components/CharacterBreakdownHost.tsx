@@ -35,6 +35,7 @@ import { JvText } from './JvText'
 import { ItText } from './ItText'
 import { DeText } from './DeText'
 import { NlText } from './NlText'
+import { ArText } from './ArText'
 import { JyutRuby, JyutSyllable } from './JyutRuby'
 import { PinyinRuby, PinyinSyllable } from './PinyinRuby'
 import { JpPop } from './JpPop'
@@ -124,6 +125,8 @@ function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'it') return 'it'
   if (detailLang === 'de') return 'de'
   if (detailLang === 'nl') return 'nl'
+  if (detailLang === 'ar') return 'ar'
+  if (detailLang === 'arsa') return 'arsa'
   if (detailLang === 'ceb') return 'ceb'
   if (detailLang === 'ilo') return 'ilo'
   if (detailLang === 'bcl') return 'bcl'
@@ -456,7 +459,9 @@ export function CharacterBreakdownHost() {
     detailLang === 'jv' ||
     detailLang === 'it' ||
     detailLang === 'de' ||
-    detailLang === 'nl'
+    detailLang === 'nl' ||
+    detailLang === 'ar' ||
+    detailLang === 'arsa'
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
   const isLatinDetail =
@@ -695,6 +700,8 @@ export function CharacterBreakdownHost() {
               <ItText text={topLabel} showDetail />
             ) : detailLang === 'de' ? (
               <DeText text={topLabel} showDetail />
+            ) : detailLang === 'ar' || detailLang === 'arsa' ? (
+              <ArText variant={detailLang} text={topLabel} showDetail />
             ) : (
               <NlText text={topLabel} showDetail />
             )
@@ -852,27 +859,20 @@ export function CharacterBreakdownHost() {
                     lang={
                       isEnglishDetail
                         ? 'en'
-                        : isTlDetail
-                          ? 'tl'
-                          : isEsDetail
-                            ? 'es'
-                            : isEsesDetail
-                              ? 'eses'
-                              : isViDetail
-                              ? 'vi'
-                              : isThDetail
-                              ? 'th'
-                              : isLoDetail
-                              ? 'lo'
-                              : isKoDetail
-                                ? 'ko'
-                                : isCmnDetail
-                                ? 'cmn'
-                                : isWuuDetail
-                                  ? 'wuu'
-                                  : isSichuanDetail
-                                    ? 'sichuan'
-                                    : 'yue'
+                        : isScaffoldDetail ||
+                            isTlDetail ||
+                            isEsDetail ||
+                            isEsesDetail ||
+                            isViDetail ||
+                            isThDetail ||
+                            isLoDetail ||
+                            isKoDetail ||
+                            isCmnDetail ||
+                            isWuuDetail ||
+                            isSichuanDetail ||
+                            isPhilippineRegionalDetail
+                          ? detailLang
+                          : 'yue'
                     }
                     onSelect={isEnglishDetail ? selectEnVariation : selectYueVariation}
                     hideLabel
@@ -948,29 +948,24 @@ export function CharacterBreakdownHost() {
                   const canDrill = Boolean(meaning || glossForChar(row.char) || row.jyutping)
                   const canSpeak =
                     isEnglishDetail || isLatinDetail || isThDetail || isLoDetail || isKoDetail || isScaffoldDetail || isHanChar(row.char)
+                  // Prefer the Details pane language for word TTS — scaffold langs
+                  // (incl. ar / arsa) must not fall through to Cantonese.
                   const rowSpeakLang: Lang = isEnglishDetail
                     ? 'en'
-                    : isTlDetail
-                      ? 'tl'
-                      : isEsDetail
-                        ? 'es'
-                        : isEsesDetail
-                          ? 'eses'
-                          : isViDetail
-                          ? 'vi'
-                          : isThDetail
-                          ? 'th'
-                          : isLoDetail
-                          ? 'lo'
-                          : isKoDetail
-                            ? 'ko'
-                            : isCmnDetail
-                            ? 'cmn'
-                            : isWuuDetail
-                              ? 'wuu'
-                              : isSichuanDetail
-                                ? 'sichuan'
-                                : 'yue'
+                    : isScaffoldDetail ||
+                        isTlDetail ||
+                        isEsDetail ||
+                        isEsesDetail ||
+                        isViDetail ||
+                        isThDetail ||
+                        isLoDetail ||
+                        isKoDetail ||
+                        isCmnDetail ||
+                        isWuuDetail ||
+                        isSichuanDetail ||
+                        isPhilippineRegionalDetail
+                      ? detailLang
+                      : 'yue'
                   return (
                     <li key={`${row.char}-${i}`} className="detail-panel-row-wrap">
                       <button

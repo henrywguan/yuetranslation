@@ -10,7 +10,7 @@ import {
   liveMicLabel,
   type LiveMicKey,
 } from '../lib/conversationUi'
-import { isConversationLang } from '../lib/langCapabilities'
+import { isConversationLang, langDir } from '../lib/langCapabilities'
 import type { VoiceLang } from '../lib/types'
 
 /**
@@ -271,7 +271,7 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
         {labelLang === 'bi' ? (
           <BiText copy={liveCopy} size="sm" order={cantoPrimaryBi ? 'zh-first' : 'en-first'} />
         ) : (
-          <span className="live-btn-label" lang={labelHtmlLang}>
+          <span className="live-btn-label" lang={labelHtmlLang} dir={langDir(labelLang)}>
             {label}
           </span>
         )}

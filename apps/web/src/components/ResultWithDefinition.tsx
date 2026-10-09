@@ -21,6 +21,7 @@ import { JvText } from './JvText'
 import { ItText } from './ItText'
 import { DeText } from './DeText'
 import { NlText } from './NlText'
+import { ArText } from './ArText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -62,34 +63,8 @@ export function ResultWithDefinition({
   const trimmed = text.trim()
   const def = definition?.trim() || ''
   if (!trimmed) return null
-  const displayLang: Lang =
-    chineseLang === 'cmn'
-      ? 'cmn'
-      : chineseLang === 'wuu'
-        ? 'wuu'
-        : chineseLang === 'sichuan'
-          ? 'sichuan'
-          : chineseLang === 'tl'
-            ? 'tl'
-            : chineseLang === 'es'
-              ? 'es'
-              : chineseLang === 'eses'
-                ? 'eses'
-              : chineseLang === 'vi'
-                ? 'vi'
-              : chineseLang === 'th'
-                ? 'th'
-              : chineseLang === 'lo'
-                ? 'lo'
-                : chineseLang === 'ceb'
-                  ? 'ceb'
-                  : chineseLang === 'ilo'
-                    ? 'ilo'
-                    : chineseLang === 'bcl'
-                      ? 'bcl'
-                    : chineseLang === 'en'
-                      ? 'en'
-                      : 'yue'
+  // Keep copy / metadata on the pane language (incl. ar / arsa / scaffold VoiceLangs).
+  const displayLang: Lang = chineseLang
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
@@ -214,6 +189,13 @@ export function ResultWithDefinition({
               />
             ) : chineseLang === 'nl' ? (
               <NlText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'ar' || chineseLang === 'arsa' ? (
+              <ArText
+                variant={chineseLang}
                 text={trimmed}
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}

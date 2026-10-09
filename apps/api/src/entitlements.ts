@@ -31,6 +31,8 @@ import {
   DEFAULT_IT_VOICE,
   DEFAULT_DE_VOICE,
   DEFAULT_NL_VOICE,
+  DEFAULT_AR_VOICE,
+  DEFAULT_ARSA_VOICE,
   DEFAULT_YUE_VOICE,
   resolveCmnVoice,
   resolveEnVoice,
@@ -53,6 +55,8 @@ import {
   resolveItVoice,
   resolveDeVoice,
   resolveNlVoice,
+  resolveArVoice,
+  resolveArsaVoice,
   resolveYueVoice,
 } from './ttsVoices.js'
 
@@ -82,6 +86,8 @@ export const PRIMARY_LANGS = [
   'it',
   'de',
   'nl',
+  'ar',
+  'arsa',
 ] as const
 export type PrimaryLang = (typeof PRIMARY_LANGS)[number]
 
@@ -208,6 +214,8 @@ export type Entitlement = {
     ttsVoiceIt: string
     ttsVoiceDe: string
     ttsVoiceNl: string
+    ttsVoiceAr: string
+    ttsVoiceArsa: string
     /** Cross-device Auto-speak preference (playback still gated by plan). */
     autoSpeak: boolean
     /** Primary language for Solo / Conversation / Cam / brand. */
@@ -380,6 +388,8 @@ function buildSnapshot(
     ttsVoiceIt?: string | null
     ttsVoiceDe?: string | null
     ttsVoiceNl?: string | null
+    ttsVoiceAr?: string | null
+    ttsVoiceArsa?: string | null
     autoSpeak?: boolean | null
     primaryLang?: string | null
     household?: HouseholdSummary | null
@@ -416,6 +426,8 @@ function buildSnapshot(
     ttsVoiceIt: resolveItVoice(opts.ttsVoiceIt),
     ttsVoiceDe: resolveDeVoice(opts.ttsVoiceDe),
     ttsVoiceNl: resolveNlVoice(opts.ttsVoiceNl),
+    ttsVoiceAr: resolveArVoice(opts.ttsVoiceAr),
+    ttsVoiceArsa: resolveArsaVoice(opts.ttsVoiceArsa),
     autoSpeak: Boolean(opts.autoSpeak),
     primaryLang: normalizePrimaryLang(opts.primaryLang),
     username: opts.username?.trim() || null,
@@ -544,6 +556,8 @@ function buildSnapshot(
         ttsVoiceIt: DEFAULT_IT_VOICE,
         ttsVoiceDe: DEFAULT_DE_VOICE,
         ttsVoiceNl: DEFAULT_NL_VOICE,
+        ttsVoiceAr: DEFAULT_AR_VOICE,
+        ttsVoiceArsa: DEFAULT_ARSA_VOICE,
         autoSpeak: false,
         primaryLang: 'yue',
         username: null,
@@ -698,6 +712,8 @@ function localEntitlement(): Entitlement {
         ttsVoiceIt: DEFAULT_IT_VOICE,
         ttsVoiceDe: DEFAULT_DE_VOICE,
         ttsVoiceNl: DEFAULT_NL_VOICE,
+        ttsVoiceAr: DEFAULT_AR_VOICE,
+        ttsVoiceArsa: DEFAULT_ARSA_VOICE,
         autoSpeak: false,
         primaryLang: 'yue',
         username: null,
@@ -794,6 +810,8 @@ export async function resolveEntitlement(
     ttsVoiceIt: profile?.tts_voice_it,
     ttsVoiceDe: profile?.tts_voice_de,
     ttsVoiceNl: profile?.tts_voice_nl,
+    ttsVoiceAr: profile?.tts_voice_ar,
+    ttsVoiceArsa: profile?.tts_voice_arsa,
     autoSpeak: profile?.auto_speak,
     primaryLang: profile?.primary_lang,
     household,

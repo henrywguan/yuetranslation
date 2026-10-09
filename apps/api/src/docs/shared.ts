@@ -4,7 +4,7 @@
 import { translateCameraText, translateCameraBatch, type CameraLang } from '../translateCamera.js'
 import { hasHan } from '../canto/han.js'
 
-export type DocLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ceb' | 'ilo' | 'bcl'
+export type DocLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ceb' | 'ilo' | 'bcl'
 
 const SKIP_RE =
   /^(https?:\/\/\S+|[\w.+-]+@[\w.-]+\.\w+|[\d mon.,:%€$£¥+\-/=]+)$/i
@@ -14,9 +14,9 @@ export function shouldTranslateSegment(text: string): boolean {
   if (t.length < 2) return false
   if (SKIP_RE.test(t)) return false
   // Mostly punctuation / bullets — require at least one letter-like char from a
-  // supported script (Latin, Thai/Lao, Han, Hangul, kana, Devanagari, Khmer, Myanmar).
+  // supported script (Latin, Thai/Lao, Han, Hangul, kana, Devanagari, Khmer, Myanmar, Arabic).
   if (
-    !/[A-Za-z\u00C0-\u024F\u0E00-\u0EFF\u3400-\u9fff\uF900-\uFAFF\uAC00-\uD7A3\u3040-\u30FF\uFF66-\uFF9D\u0900-\u097F\u1780-\u17FF\u1000-\u109F]/.test(
+    !/[A-Za-z\u00C0-\u024F\u0E00-\u0EFF\u3400-\u9fff\uF900-\uFAFF\uAC00-\uD7A3\u3040-\u30FF\uFF66-\uFF9D\u0900-\u097F\u1780-\u17FF\u1000-\u109F\u0600-\u06FF]/.test(
       t,
     )
   ) {

@@ -7,6 +7,7 @@ import {
 } from '../lib/primaryUiGloss'
 import { ensurePinyinSegs, toPinyinCached } from '../lib/pinyin'
 import { useYueStore } from '../lib/store'
+import { langDir } from '../lib/langCapabilities'
 import { withChaoFace } from '../lib/chaoFace'
 import { normalizeEnglishApostrophes } from '../lib/typography'
 import type { Bi } from '../lib/uiCopy'
@@ -109,7 +110,7 @@ export function BiText({
 
   const primaryAsSecondary =
     replaceZh && gloss ? (
-      <span className="bi-zh-wrap" lang={primaryGlossHtmlLang(primaryLanguage)}>
+      <span className="bi-zh-wrap" lang={primaryGlossHtmlLang(primaryLanguage)} dir={langDir(primaryLanguage)}>
         <span className="bi-zh bi-zh--primary-lang">{withChaoFace(gloss)}</span>
       </span>
     ) : null

@@ -228,6 +228,22 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     localOffline: true,
     extraPanels: [],
   },
+  ar: {
+    htmlLang: 'ar-EG',
+    pronField: 'accented',
+    defaultGlossLang: 'ar',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  arsa: {
+    htmlLang: 'ar-SA',
+    pronField: 'accented',
+    defaultGlossLang: 'arsa',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
   ceb: {
     htmlLang: 'ceb',
     pronField: 'accented',

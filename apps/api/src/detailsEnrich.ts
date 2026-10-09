@@ -33,6 +33,8 @@ export const DetailLangSchema = z.enum([
   'it',
   'de',
   'nl',
+  'ar',
+  'arsa',
   'ceb',
   'ilo',
   'bcl',
@@ -221,6 +223,18 @@ const ENRICH_META: Record<
     glossLangHint:
       'Standard Dutch (Netherlands / nl-NL) — correct orthography; colloquial everyday, not Flemish-primary',
     exampleIn: 'natural Netherlands Dutch',
+  },
+  ar: {
+    label: 'Egyptian Arabic (عامية مصرية)',
+    glossLangHint:
+      'Egyptian Arabic colloquial (Cairene, ar-EG) — Arabic script only; everyday spoken wording (ده / مش / عايز), not فصحى or Gulf/Levantine; no Arabizi, no full tashkeel',
+    exampleIn: 'natural colloquial Egyptian Arabic (Arabic script)',
+  },
+  arsa: {
+    label: 'Modern Standard Arabic (العربية الفصحى)',
+    glossLangHint:
+      'Modern Standard Arabic (فصحى, ar-SA speech) — Arabic script only; formal written pan-Arab register, not Egyptian or Gulf colloquial; no Arabizi, no full tashkeel',
+    exampleIn: 'natural Modern Standard Arabic (Arabic script)',
   },
   ceb: {
     label: 'Cebuano / Bisaya',

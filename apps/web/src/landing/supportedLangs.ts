@@ -36,6 +36,8 @@ export const SUPPORTED_LANG_CARDS: SupportedLangCard[] = [
   { id: 'it', mark: 'It', en: 'Italian', native: 'Italiano', voice: true, flag: '🇮🇹' },
   { id: 'de', mark: 'De', en: 'German', native: 'Deutsch', voice: true, flag: '🇩🇪' },
   { id: 'nl', mark: 'Nl', en: 'Dutch', native: 'Nederlands', voice: true, flag: '🇳🇱' },
+  { id: 'ar', mark: 'Ar', en: 'Egyptian Arabic', native: 'العربية المصرية', voice: true, flag: '🇪🇬' },
+  { id: 'arsa', mark: 'Ar', en: 'Modern Standard Arabic', native: 'العربية الفصحى', voice: true, flag: '🇸🇦' },
   { id: 'ceb', mark: 'Ceb', en: 'Cebuano', native: 'Binisaya', voice: false, flag: '🇵🇭' },
   { id: 'ilo', mark: 'Ilo', en: 'Ilocano', native: 'Ilokano', voice: false, flag: '🇵🇭' },
   { id: 'bcl', mark: 'Bcl', en: 'Bikol (Central)', native: 'Bikol Sentral', voice: false, flag: '🇵🇭' },

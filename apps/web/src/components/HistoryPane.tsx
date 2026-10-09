@@ -27,78 +27,35 @@ export function HistoryPane({
   }, [latestId])
 
   const handleBreakdown = (phrase: string, turn: ConversationTurn) => {
-    const zhLang =
-      turn.to === 'cmn' || turn.from === 'cmn'
-        ? 'cmn'
-        : turn.to === 'wuu' || turn.from === 'wuu'
-          ? 'wuu'
-          : turn.to === 'sichuan' || turn.from === 'sichuan'
-            ? 'sichuan'
-            : turn.to === 'tl' || turn.from === 'tl'
-              ? 'tl'
-              : turn.to === 'es' || turn.from === 'es'
-                ? 'es'
-                : turn.to === 'eses' || turn.from === 'eses'
-                  ? 'eses'
-                  : turn.to === 'vi' || turn.from === 'vi'
-                    ? 'vi'
-                    : turn.to === 'th' || turn.from === 'th'
-                      ? 'th'
-                      : turn.to === 'lo' || turn.from === 'lo'
-                        ? 'lo'
-                        : turn.to === 'ko' || turn.from === 'ko'
-                          ? 'ko'
-                        : 'yue'
-    const canto =
-      turn.to === 'yue' ||
-      turn.to === 'cmn' ||
-      turn.to === 'wuu' ||
-      turn.to === 'sichuan' ||
-      turn.to === 'tl' ||
-      turn.to === 'es' ||
-      turn.to === 'eses' ||
-      turn.to === 'vi' ||
-      turn.to === 'th' ||
-      turn.to === 'lo' ||
-      turn.to === 'ko'
-        ? turn.translation
-        : turn.from === 'yue' ||
-            turn.from === 'cmn' ||
-            turn.from === 'wuu' ||
-            turn.from === 'sichuan' ||
-            turn.from === 'tl' ||
-            turn.from === 'es' ||
-            turn.from === 'eses' ||
-            turn.from === 'vi' ||
-            turn.from === 'th' ||
-            turn.from === 'lo' ||
-            turn.from === 'ko'
-          ? turn.source
-          : phrase
+    // Non-English side of the turn (covers ar / arsa and every other VoiceLang).
+    const detailLang =
+      turn.to !== 'en' ? turn.to : turn.from !== 'en' ? turn.from : ('yue' as const)
+    const nonEnText =
+      turn.to !== 'en' ? turn.translation : turn.from !== 'en' ? turn.source : phrase
     const english =
       turn.from === 'en' ? turn.source : turn.to === 'en' ? turn.translation : ''
     const tappedEn = Boolean(english && phrase.trim() === english.trim())
-    if (tappedEn || (turn.to === 'en' && !canto.trim())) {
+    if (tappedEn || (turn.to === 'en' && !nonEnText.trim())) {
       openBreakdown((english || phrase).trim(), {
         lang: 'en',
-        translation: canto.trim() || undefined,
+        translation: nonEnText.trim() || undefined,
         definition: turn.definition || undefined,
         definitions: turn.definitions,
         alternatives: turn.alternatives,
       })
     } else {
-      openBreakdown(canto.trim() || phrase, {
-        lang: zhLang,
+      openBreakdown(nonEnText.trim() || phrase, {
+        lang: detailLang,
         translation: english.trim() || undefined,
         definition: turn.definition || undefined,
         definitions: turn.definitions,
         alternatives: turn.alternatives,
         romanization:
-          zhLang === 'wuu' || zhLang === 'sichuan' ? turn.romanization : undefined,
-        sandhiHint: zhLang === 'wuu' ? turn.sandhiHint : undefined,
-        ipa: zhLang === 'wuu' ? turn.ipa : undefined,
+          detailLang === 'wuu' || detailLang === 'sichuan' ? turn.romanization : undefined,
+        sandhiHint: detailLang === 'wuu' ? turn.sandhiHint : undefined,
+        ipa: detailLang === 'wuu' ? turn.ipa : undefined,
         alternativeRomanizations:
-          zhLang === 'wuu' || zhLang === 'sichuan'
+          detailLang === 'wuu' || detailLang === 'sichuan'
             ? turn.alternativeRomanizations
             : undefined,
       })

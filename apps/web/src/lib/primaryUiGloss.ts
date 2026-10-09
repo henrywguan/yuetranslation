@@ -63,6 +63,10 @@ export function primaryGlossHtmlLang(lang: PrimaryLang): string {
       return 'de'
     case 'nl':
       return 'nl'
+    case 'ar':
+      return 'ar-EG'
+    case 'arsa':
+      return 'ar-SA'
     case 'cmn':
       return 'zh-Latn'
     case 'wuu':

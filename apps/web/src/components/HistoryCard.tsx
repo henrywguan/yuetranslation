@@ -23,6 +23,7 @@ import { JvText } from './JvText'
 import { ItText } from './ItText'
 import { DeText } from './DeText'
 import { NlText } from './NlText'
+import { ArText } from './ArText'
 import { BiText } from './BiText'
 import { StarPhraseButton } from './StarPhraseButton'
 import type { ConversationTurn, Lang } from '../lib/types'
@@ -52,6 +53,8 @@ export function langShort(lang: Lang): string {
   if (lang === 'it') return 'It'
   if (lang === 'de') return 'De'
   if (lang === 'nl') return 'Nl'
+  if (lang === 'ar') return 'Ar'
+  if (lang === 'arsa') return 'Ar'
   if (lang === 'ceb') return 'Cb'
   if (lang === 'ilo') return 'Il'
   if (lang === 'bcl') return 'Bc'
@@ -204,6 +207,12 @@ export function LangLine({
   if (lang === 'nl') {
     return <NlText text={text} className="history-card-line" onActivate={onBreakdown} />
   }
+  if (lang === 'ar') {
+    return <ArText variant="ar" text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'arsa') {
+    return <ArText variant="arsa" text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
   if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') {
     if (onBreakdown) {
       return (
@@ -263,6 +272,8 @@ function langLabel(lang: Lang) {
   if (lang === 'it') return <BiText copy={ui.dirItalian} size="sm" />
   if (lang === 'de') return <BiText copy={ui.dirGerman} size="sm" />
   if (lang === 'nl') return <BiText copy={ui.dirDutch} size="sm" />
+  if (lang === 'ar') return <BiText copy={ui.dirEgyptianArabic} size="sm" />
+  if (lang === 'arsa') return <BiText copy={ui.dirModernStandardArabic} size="sm" />
   if (lang === 'ceb') return <BiText copy={ui.dirCebuano} size="sm" />
   if (lang === 'ilo') return <BiText copy={ui.dirIlocano} size="sm" />
   if (lang === 'bcl') return <BiText copy={ui.dirBikol} size="sm" />
@@ -532,6 +543,8 @@ export function HistoryCard({
                       <DeText text={alt} className="history-card-line" onActivate={onBreakdown} />
                     ) : turn.to === 'nl' ? (
                       <NlText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'ar' || turn.to === 'arsa' ? (
+                      <ArText variant={turn.to} text={alt} className="history-card-line" onActivate={onBreakdown} />
                     ) : (
                       alt
                     )}

@@ -27,6 +27,8 @@ export {
   DEFAULT_IT_VOICE,
   DEFAULT_DE_VOICE,
   DEFAULT_NL_VOICE,
+  DEFAULT_AR_VOICE,
+  DEFAULT_ARSA_VOICE,
   YUE_VOICES,
   EN_VOICES,
   CMN_VOICES,
@@ -51,6 +53,8 @@ export {
   IT_VOICES,
   DE_VOICES,
   NL_VOICES,
+  AR_VOICES,
+  ARSA_VOICES,
   PREVIEW_YUE,
   PREVIEW_EN,
   PREVIEW_CMN,
@@ -75,6 +79,8 @@ export {
   PREVIEW_IT,
   PREVIEW_DE,
   PREVIEW_NL,
+  PREVIEW_AR,
+  PREVIEW_ARSA,
   resolveYueVoice,
   resolveEnVoice,
   resolveCmnVoice,
@@ -99,6 +105,8 @@ export {
   resolveItVoice,
   resolveDeVoice,
   resolveNlVoice,
+  resolveArVoice,
+  resolveArsaVoice,
   isYueVoice,
   isEnVoice,
   isCmnVoice,
@@ -123,6 +131,8 @@ export {
   isItVoice,
   isDeVoice,
   isNlVoice,
+  isArVoice,
+  isArsaVoice,
   voiceMeta,
   type YueVoiceId,
   type EnVoiceId,
@@ -148,6 +158,8 @@ export {
   type ItVoiceId,
   type DeVoiceId,
   type NlVoiceId,
+  type ArVoiceId,
+  type ArsaVoiceId,
   type TtsVoiceId,
   type TtsVoiceOption,
 } from '@jyut/shared/ttsVoices'
@@ -173,6 +185,8 @@ import {
   DEFAULT_IT_VOICE,
   DEFAULT_DE_VOICE,
   DEFAULT_NL_VOICE,
+  DEFAULT_AR_VOICE,
+  DEFAULT_ARSA_VOICE,
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
   DEFAULT_WUU_VOICE,
@@ -197,6 +211,8 @@ import {
   resolveItVoice,
   resolveDeVoice,
   resolveNlVoice,
+  resolveArVoice,
+  resolveArsaVoice,
   resolveEnVoice,
   resolveYueVoice,
   resolveWuuVoice,
@@ -222,6 +238,8 @@ import {
   type ItVoiceId,
   type DeVoiceId,
   type NlVoiceId,
+  type ArVoiceId,
+  type ArsaVoiceId,
   type EnVoiceId,
   type YueVoiceId,
   type WuuVoiceId,
@@ -252,6 +270,8 @@ const STORAGE_JV = 'yue-tts-voice-jv'
 const STORAGE_IT = 'yue-tts-voice-it'
 const STORAGE_DE = 'yue-tts-voice-de'
 const STORAGE_NL = 'yue-tts-voice-nl'
+const STORAGE_AR = 'yue-tts-voice-ar'
+const STORAGE_ARSA = 'yue-tts-voice-arsa'
 
 
 export function readLocalYueVoice(): YueVoiceId {
@@ -623,9 +643,43 @@ export function readLocalNlVoice(): NlVoiceId {
   }
 }
 
+export function readLocalArVoice(): ArVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_AR_VOICE
+  try {
+    return resolveArVoice(localStorage.getItem(STORAGE_AR))
+  } catch {
+    return DEFAULT_AR_VOICE
+  }
+}
+
+export function readLocalArsaVoice(): ArsaVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_ARSA_VOICE
+  try {
+    return resolveArsaVoice(localStorage.getItem(STORAGE_ARSA))
+  } catch {
+    return DEFAULT_ARSA_VOICE
+  }
+}
+
 export function writeLocalNlVoice(id: NlVoiceId) {
   try {
     localStorage.setItem(STORAGE_NL, resolveNlVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function writeLocalArVoice(id: ArVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_AR, resolveArVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function writeLocalArsaVoice(id: ArsaVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_ARSA, resolveArsaVoice(id))
   } catch {
     /* ignore */
   }
