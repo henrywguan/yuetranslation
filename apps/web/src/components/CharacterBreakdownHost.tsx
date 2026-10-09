@@ -955,29 +955,24 @@ export function CharacterBreakdownHost() {
                   const canDrill = Boolean(meaning || glossForChar(row.char) || row.jyutping)
                   const canSpeak =
                     isEnglishDetail || isLatinDetail || isThDetail || isLoDetail || isKoDetail || isScaffoldDetail || isHanChar(row.char)
+                  // Prefer the Details pane language for word TTS — scaffold langs
+                  // (incl. ar / arsa) must not fall through to Cantonese.
                   const rowSpeakLang: Lang = isEnglishDetail
                     ? 'en'
-                    : isTlDetail
-                      ? 'tl'
-                      : isEsDetail
-                        ? 'es'
-                        : isEsesDetail
-                          ? 'eses'
-                          : isViDetail
-                          ? 'vi'
-                          : isThDetail
-                          ? 'th'
-                          : isLoDetail
-                          ? 'lo'
-                          : isKoDetail
-                            ? 'ko'
-                            : isCmnDetail
-                            ? 'cmn'
-                            : isWuuDetail
-                              ? 'wuu'
-                              : isSichuanDetail
-                                ? 'sichuan'
-                                : 'yue'
+                    : isScaffoldDetail ||
+                        isTlDetail ||
+                        isEsDetail ||
+                        isEsesDetail ||
+                        isViDetail ||
+                        isThDetail ||
+                        isLoDetail ||
+                        isKoDetail ||
+                        isCmnDetail ||
+                        isWuuDetail ||
+                        isSichuanDetail ||
+                        isPhilippineRegionalDetail
+                      ? detailLang
+                      : 'yue'
                   return (
                     <li key={`${row.char}-${i}`} className="detail-panel-row-wrap">
                       <button
