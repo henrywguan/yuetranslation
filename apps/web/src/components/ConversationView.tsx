@@ -314,37 +314,45 @@ export function ConversationView() {
   return (
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
       {face.enTranslation || face.yueTranslation || face.enInterim || face.yueInterim ? (
-        <div className="conversation-chrome">
+        <>
+          {/*
+            Keep Clear top-right and Export top-left. Clustering both on the right
+            overlaps the partner LiveHoldButton after the 180° pane-face rotation.
+          */}
+          <div className="conversation-clear">
+            <ClearIconButton onClick={clearCurrent} />
+          </div>
           {face.enTranslation || face.yueTranslation ? (
-            <button
-              type="button"
-              className={`conversation-export-btn${exported ? ' is-copied' : ''}`}
-              onClick={() => void exportConversation()}
-              aria-label={biPlain(exported ? ui.copied : ui.exportConversation)}
-              title={biPlain(exported ? ui.copied : ui.exportConversation)}
-            >
-              <svg className="conversation-export-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M12 15.2V4.6M12 4.6 8.4 8.2M12 4.6l3.6 3.6M6 11.5v6.2c0 .9.7 1.6 1.6 1.6h8.8c.9 0 1.6-.7 1.6-1.6v-6.2"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className="conversation-export-label">
-                <BiText
-                  copy={exported ? ui.copied : ui.exportConversation}
-                  size="sm"
-                  layout="inline"
-                  hideJp
-                />
-              </span>
-            </button>
+            <div className="conversation-export">
+              <button
+                type="button"
+                className={`conversation-export-btn${exported ? ' is-copied' : ''}`}
+                onClick={() => void exportConversation()}
+                aria-label={biPlain(exported ? ui.copied : ui.exportConversation)}
+                title={biPlain(exported ? ui.copied : ui.exportConversation)}
+              >
+                <svg className="conversation-export-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 15.2V4.6M12 4.6 8.4 8.2M12 4.6l3.6 3.6M6 11.5v6.2c0 .9.7 1.6 1.6 1.6h8.8c.9 0 1.6-.7 1.6-1.6v-6.2"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="conversation-export-label">
+                  <BiText
+                    copy={exported ? ui.copied : ui.exportConversation}
+                    size="sm"
+                    layout="inline"
+                    hideJp
+                  />
+                </span>
+              </button>
+            </div>
           ) : null}
-          <ClearIconButton onClick={clearCurrent} />
-        </div>
+        </>
       ) : null}
 
       <section

@@ -4852,16 +4852,6 @@
 }
 
 
-.conversation-chrome {
-  position: absolute;
-  top: 0.55rem;
-  right: 0.65rem;
-  z-index: 5;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  max-width: calc(100% - 1.3rem);
-}
 .conversation-clear {
   position: absolute;
   top: 0.65rem;

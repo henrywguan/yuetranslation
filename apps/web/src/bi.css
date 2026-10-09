@@ -1653,6 +1653,18 @@ button.spoken-line-text--action:focus-visible {
   cursor: default;
 }
 
+.conversation-export {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  /* Stay clear of the rotated partner mic hit target in the top center. */
+  max-width: min(42vw, 11rem);
+}
+
 .conversation-export-btn {
   appearance: none;
   display: inline-flex;
