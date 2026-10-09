@@ -859,27 +859,20 @@ export function CharacterBreakdownHost() {
                     lang={
                       isEnglishDetail
                         ? 'en'
-                        : isTlDetail
-                          ? 'tl'
-                          : isEsDetail
-                            ? 'es'
-                            : isEsesDetail
-                              ? 'eses'
-                              : isViDetail
-                              ? 'vi'
-                              : isThDetail
-                              ? 'th'
-                              : isLoDetail
-                              ? 'lo'
-                              : isKoDetail
-                                ? 'ko'
-                                : isCmnDetail
-                                ? 'cmn'
-                                : isWuuDetail
-                                  ? 'wuu'
-                                  : isSichuanDetail
-                                    ? 'sichuan'
-                                    : 'yue'
+                        : isScaffoldDetail ||
+                            isTlDetail ||
+                            isEsDetail ||
+                            isEsesDetail ||
+                            isViDetail ||
+                            isThDetail ||
+                            isLoDetail ||
+                            isKoDetail ||
+                            isCmnDetail ||
+                            isWuuDetail ||
+                            isSichuanDetail ||
+                            isPhilippineRegionalDetail
+                          ? detailLang
+                          : 'yue'
                     }
                     onSelect={isEnglishDetail ? selectEnVariation : selectYueVariation}
                     hideLabel
