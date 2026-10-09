@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { BiText } from './BiText'
 import { isOnline, subscribeOnlineStatus } from '../lib/networkStatus'
 import { offlineLexiconReady } from '../lib/offlinePackClient'
-import { biPlain, ui } from '../lib/uiCopy'
+import { ui } from '../lib/uiCopy'
 
 /** Compact status when the device is offline (dictionary pack vs limited). */
 export function OfflineBanner() {

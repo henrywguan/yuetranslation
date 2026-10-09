@@ -315,6 +315,10 @@ export function ConversationView() {
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
       {face.enTranslation || face.yueTranslation || face.enInterim || face.yueInterim ? (
         <>
+          {/*
+            Keep Clear top-right and Export top-left. Clustering both on the right
+            overlaps the partner LiveHoldButton after the 180° pane-face rotation.
+          */}
           <div className="conversation-clear">
             <ClearIconButton onClick={clearCurrent} />
           </div>
@@ -337,12 +341,14 @@ export function ConversationView() {
                     strokeLinejoin="round"
                   />
                 </svg>
-                <BiText
-                  copy={exported ? ui.copied : ui.exportConversation}
-                  size="sm"
-                  layout="inline"
-                  hideJp
-                />
+                <span className="conversation-export-label">
+                  <BiText
+                    copy={exported ? ui.copied : ui.exportConversation}
+                    size="sm"
+                    layout="inline"
+                    hideJp
+                  />
+                </span>
               </button>
             </div>
           ) : null}

@@ -772,8 +772,8 @@ export function SoloView() {
                   {upperDraft.trim() ? (
                     <SpeakButton text={upperDraft} lang={soloUpperLang} />
                   ) : null}
-                  {renderPaneExtras('upper')}
                 </div>
+                {renderPaneExtras('upper')}
               </div>
             ) : null}
           </div>
@@ -840,8 +840,8 @@ export function SoloView() {
                   {lowerDraft.trim() ? (
                     <SpeakButton text={lowerDraft} lang={soloLowerLang} />
                   ) : null}
-                  {renderPaneExtras('lower')}
                 </div>
+                {renderPaneExtras('lower')}
               </div>
             ) : null}
           </div>

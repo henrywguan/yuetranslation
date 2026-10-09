@@ -1583,14 +1583,24 @@ button.spoken-line-text--action:focus-visible {
 
 .history-card-top-actions {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 0 1 auto;
+  max-width: 60%;
 }
 
 .history-card-top-actions .copy-btn,
 .history-card-top-actions .speak-btn {
   width: 1.7rem;
   height: 1.7rem;
+  flex: none;
+}
+
+.history-card-top-actions .history-card-expand {
+  min-width: 0;
 }
 
 .phrasebook-toolbar {
@@ -1651,15 +1661,17 @@ button.spoken-line-text--action:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  /* Stay clear of the rotated partner mic hit target in the top center. */
+  max-width: min(42vw, 11rem);
 }
 
 .conversation-export-btn {
   appearance: none;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   margin: 0;
-  padding: 0.3rem 0.75rem 0.3rem 0.55rem;
+  padding: 0.3rem 0.65rem 0.3rem 0.5rem;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--jade) 26%, var(--glass-border));
   background: color-mix(in srgb, var(--surface) 72%, transparent);
@@ -1668,6 +1680,25 @@ button.spoken-line-text--action:focus-visible {
   cursor: pointer;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  min-width: 0;
+}
+
+@media (max-width: 520px) {
+  .conversation-export-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .conversation-export-btn {
+    padding: 0.35rem;
+  }
 }
 
 .conversation-export-btn:hover,
@@ -1700,6 +1731,7 @@ button.spoken-line-text--action:focus-visible {
 
 .detail-handwriting-pad {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 0.6rem;
 }
@@ -1707,11 +1739,28 @@ button.spoken-line-text--action:focus-visible {
 .detail-handwriting-canvas {
   display: block;
   flex: none;
+  width: 168px;
+  max-width: 100%;
   border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--jade) 26%, var(--glass-border));
   background: color-mix(in srgb, var(--surface) 70%, transparent);
   touch-action: none;
   cursor: crosshair;
+}
+
+@media (max-width: 420px) {
+  .detail-handwriting-pad {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .detail-handwriting-canvas {
+    margin: 0 auto;
+  }
+
+  .detail-handwriting-clear {
+    align-self: flex-end;
+  }
 }
 
 [data-theme='light'] .detail-handwriting-canvas {
@@ -1744,6 +1793,7 @@ button.spoken-line-text--action:focus-visible {
 
 .detail-handwriting-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.7rem;
 }
