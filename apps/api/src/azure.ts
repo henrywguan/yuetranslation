@@ -94,7 +94,7 @@ export function ttsClipCacheKey(
   text: string,
   loud = false,
   kind = '',
-  /** Normal-speak equalize volume attr (e.g. `-40%`); ignored when loud. */
+  /** Normal-speak equalize volume attr (e.g. `+50%`); ignored when loud. */
   equalizeVolume = '',
 ) {
   const volTag = loud ? 'loud' : equalizeVolume || 'norm'
@@ -166,6 +166,7 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
   // Neural `x-loud` is a no-op there; use per-lang equalize volumes instead.
   const loud = Boolean(opts.loud)
   const performance = opts.performance?.phrase ? opts.performance : null
+  // Boost quieter-on-phone langs toward Yue (`+50%` is Azure’s useful max).
   const equalizeVolume = !loud && !performance ? ttsEqualizeVolumeAttr(lang) : null
   const cacheKey = performance
     ? ttsClipCacheKey(pick.voice, performanceCacheToken(performance), true, 'perf')
@@ -175,7 +176,7 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
 
   if (!env.azureSpeechKey) throw new Error('AZURE_SPEECH_KEY missing')
   // Practice Partner loud + performed clips keep categorical x-loud.
-  // Normal speak uses measured per-lang % volumes so every language matches Yue.
+  // Normal speak: SSML +50% boost + client Web Audio gain (see ttsVolumeEqualize).
   const spoken = performance
     ? null
     : loud

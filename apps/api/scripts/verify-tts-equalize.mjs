@@ -1,41 +1,29 @@
-/** Re-measure gated RMS after applying TTS_EQUALIZE_VOLUME; expect ~Yue. */
+/**
+ * Verify SSML boost direction (Azure max +50%) and client gain map.
+ * Phone loudness is SSML × Web Audio gain — file RMS alone is not the target
+ * (Yue ranks quietest on RMS but loudest on phone speakers).
+ */
 import { spawnSync } from 'node:child_process'
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { TTS_EQUALIZE_VOLUME } from '../../../packages/yue-shared/dist/ttsVolumeEqualize.js'
+import {
+  TTS_EQUALIZE_VOLUME,
+  TTS_EQUALIZE_PLAYBACK_GAIN,
+} from '../../../packages/yue-shared/dist/ttsVolumeEqualize.js'
 
 const key = process.env.AZURE_SPEECH_KEY
 const region = process.env.AZURE_SPEECH_REGION || 'eastus'
-
-const SAMPLES = {
-  yue: ['zh-HK-HiuMaanNeural', 'zh-HK', '你好，歡迎使用粵譯。'],
-  en: ['en-US-JennyNeural', 'en-US', 'Hello — this is your English voice.'],
-  cmn: ['zh-CN-XiaoxiaoNeural', 'zh-CN', '你好，欢迎使用粤译。'],
-  wuu: ['wuu-CN-XiaotongNeural', 'wuu-CN', '侬好，欢迎用沪语翻译。'],
-  sichuan: ['zh-CN-sichuan-YunxiNeural', 'zh-CN-sichuan', '你好，欢迎用四川话。'],
-  tl: ['fil-PH-BlessicaNeural', 'fil-PH', 'Kumusta — ito ang Tagalog voice mo.'],
-  es: ['es-MX-DaliaNeural', 'es-MX', 'Hola — esta es tu voz en español mexicano.'],
-  eses: ['es-ES-ElviraNeural', 'es-ES', 'Hola — esta es tu voz en español de España.'],
-  vi: ['vi-VN-HoaiMyNeural', 'vi-VN', 'Xin chào — đây là giọng tiếng Việt của bạn.'],
-  th: ['th-TH-PremwadeeNeural', 'th-TH', 'สวัสดี — นี่คือเสียงไทย'],
-  lo: ['lo-LA-KeomanyNeural', 'lo-LA', 'ສະບາຍດີ — ນີ້ແມ່ນສຽງລາວ'],
-  ko: ['ko-KR-SunHiNeural', 'ko-KR', '안녕하세요 — 한국어 음성입니다.'],
-  ja: ['ja-JP-NanamiNeural', 'ja-JP', 'こんにちは — 日本語の音声です。'],
-  id: ['id-ID-GadisNeural', 'id-ID', 'Halo — ini suara Bahasa Indonesia Anda.'],
-  ms: ['ms-MY-YasminNeural', 'ms-MY', 'Halo — ini suara Bahasa Melayu anda.'],
-  pt: ['pt-BR-FranciscaNeural', 'pt-BR', 'Olá — esta é a sua voz em português do Brasil.'],
-  fr: ['fr-FR-DeniseNeural', 'fr-FR', 'Bonjour — voici votre voix en français.'],
-  hi: ['hi-IN-AnanyaNeural', 'hi-IN', 'नमस्ते — यह आपकी हिंदी आवाज़ है।'],
-  km: ['km-KH-SreymomNeural', 'km-KH', 'សួស្តី — នេះជាសំឡេងខ្មែររបស់អ្នក។'],
-  my: ['my-MM-NilarNeural', 'my-MM', 'မင်္ဂလာပါ — ဤသည်မှာ သင့်မြန်မာအသံဖြစ်သည်။'],
-  jv: ['jv-ID-SitiNeural', 'jv-ID', 'Halo — iki swara Basa Jawa sampeyan.'],
-  it: ['it-IT-ElsaNeural', 'it-IT', 'Ciao — questa è la tua voce in italiano.'],
-  de: ['de-DE-KatjaNeural', 'de-DE', 'Hallo — das ist Ihre deutsche Stimme.'],
-  nl: ['nl-NL-FennaNeural', 'nl-NL', 'Hallo — dit is je Nederlandse stem.'],
-  ar: ['ar-EG-SalmaNeural', 'ar-EG', 'أهلاً — ده صوتك بالعامية المصرية.'],
-  arsa: ['ar-SA-ZariyahNeural', 'ar-SA', 'مرحباً — هذا صوتك باللغة العربية الفصحى.'],
+if (!key) {
+  console.error('AZURE_SPEECH_KEY missing')
+  process.exit(1)
 }
+
+const PROBES = [
+  ['yue', 'zh-HK-HiuMaanNeural', 'zh-HK', '你好，歡迎使用粵譯。'],
+  ['en', 'en-US-JennyNeural', 'en-US', 'Hello — this is your English voice.'],
+  ['nl', 'nl-NL-FennaNeural', 'nl-NL', 'Hallo — dit is je Nederlandse stem.'],
+]
 
 function escapeXml(s) {
   return s
@@ -82,35 +70,60 @@ function gated(mp3, dir, tag) {
   return n ? 20 * Math.log10(Math.sqrt(sum / n)) : -99
 }
 
+// Map sanity (no Azure)
+for (const [lang, vol] of Object.entries(TTS_EQUALIZE_VOLUME)) {
+  if (lang === 'yue') {
+    if (vol !== null) throw new Error('yue SSML must be null')
+    if (TTS_EQUALIZE_PLAYBACK_GAIN.yue !== 1) throw new Error('yue gain must be 1')
+  } else if (vol !== '+50%') {
+    throw new Error(`${lang} SSML must be +50% (got ${vol})`)
+  }
+}
+if (!(TTS_EQUALIZE_PLAYBACK_GAIN.en > 1)) throw new Error('en client gain must be > 1')
+if (!(TTS_EQUALIZE_PLAYBACK_GAIN.nl > TTS_EQUALIZE_PLAYBACK_GAIN.en)) {
+  throw new Error('nl client gain must exceed en')
+}
+
 const dir = mkdtempSync(join(tmpdir(), 'tts-eq-'))
 const rows = []
 try {
-  for (const [lang, [voice, xml, text]] of Object.entries(SAMPLES)) {
+  for (const [lang, voice, xml, text] of PROBES) {
     const vol = TTS_EQUALIZE_VOLUME[lang] ?? null
-    const buf = await synth(voice, xml, text, vol)
-    const rms = gated(buf, dir, lang)
-    rows.push({ lang, vol, rms })
-    console.log(`${lang.padEnd(8)} vol=${String(vol || '—').padEnd(6)} gatedRMS=${rms.toFixed(2)}`)
+    const defRms = gated(await synth(voice, xml, text, null), dir, `${lang}_def`)
+    const eqRms = gated(await synth(voice, xml, text, vol), dir, `${lang}_eq`)
+    const clientGain = TTS_EQUALIZE_PLAYBACK_GAIN[lang] ?? 1
+    const effectiveDb = eqRms + 20 * Math.log10(clientGain)
+    rows.push({ lang, vol, defRms, eqRms, clientGain, effectiveDb })
+    console.log(
+      `${lang.padEnd(6)} def=${defRms.toFixed(2)} ssml=${eqRms.toFixed(2)} gain=${clientGain} effective=${effectiveDb.toFixed(2)}`,
+    )
     await new Promise((r) => setTimeout(r, 80))
   }
-  const yue = rows.find((r) => r.lang === 'yue').rms
-  let maxAbs = 0
-  console.log(`\nYue reference ${yue.toFixed(2)} dB — |Δ| after equalize:`)
-  for (const r of rows) {
-    const d = r.rms - yue
-    maxAbs = Math.max(maxAbs, Math.abs(d))
-    console.log(`${r.lang.padEnd(8)} Δ=${d.toFixed(2).padStart(6)}`)
+  const en = rows.find((r) => r.lang === 'en')
+  const nl = rows.find((r) => r.lang === 'nl')
+  if (en.eqRms < en.defRms + 1.5) {
+    console.error('FAIL: English +50% SSML did not raise gated RMS by ≥1.5 dB')
+    process.exit(1)
+  }
+  if (nl.eqRms < nl.defRms + 1.5) {
+    console.error('FAIL: Dutch +50% SSML did not raise gated RMS by ≥1.5 dB')
+    process.exit(1)
+  }
+  // Effective (SSML × client) should put En/Nl above bare Yue file level.
+  const yue = rows.find((r) => r.lang === 'yue')
+  if (en.effectiveDb < yue.effectiveDb) {
+    console.error('FAIL: English effective loudness still below Yue')
+    process.exit(1)
+  }
+  if (nl.effectiveDb < yue.effectiveDb) {
+    console.error('FAIL: Dutch effective loudness still below Yue')
+    process.exit(1)
   }
   writeFileSync(
     '/opt/cursor/artifacts/tts-loudness-equalized.json',
-    JSON.stringify({ yue, maxAbsDeltaDb: maxAbs, rows }, null, 2),
+    JSON.stringify({ rows, note: 'effectiveDb = ssml gated RMS + 20*log10(clientGain)' }, null, 2),
   )
-  console.log(`\nmax |Δ| = ${maxAbs.toFixed(2)} dB`)
-  if (maxAbs > 2.5) {
-    console.error('FAIL: equalize left more than 2.5 dB spread vs Yue')
-    process.exit(1)
-  }
-  console.log('verify-tts-equalize: ok')
+  console.log('verify-tts-equalize: ok (boost toward Yue on phone)')
 } finally {
   rmSync(dir, { recursive: true, force: true })
 }

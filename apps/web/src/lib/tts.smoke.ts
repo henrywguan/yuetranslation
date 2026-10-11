@@ -122,6 +122,15 @@ export function readLocalViVoice() { return null }
 export function readLocalYueVoice() { return null }
 `,
 )
+writeFileSync(
+  join(dir, 'ttsVolumeEqualize.ts'),
+  `export function ttsEqualizePlaybackGain(lang: string) {
+  if (lang === 'en') return 1.45
+  if (lang === 'nl') return 2.25
+  return 1
+}
+`,
+)
 
 let src = readFileSync(new URL('./tts.ts', import.meta.url), 'utf8')
 src = src
@@ -130,6 +139,7 @@ src = src
   .replace("from './ttsVoices'", "from './ttsVoices.ts'")
   .replace("from './mediaAccess'", "from './mediaAccess.ts'")
   .replace("from './audioReactive'", "from './audioReactive.ts'")
+  .replace("from '@jyut/shared/ttsVolumeEqualize'", "from './ttsVolumeEqualize.ts'")
 writeFileSync(join(dir, 'tts.ts'), src)
 
 const tts = await import(pathToFileURL(join(dir, 'tts.ts')).href)
@@ -194,11 +204,15 @@ assert.equal(tts.ttsAudioCacheSizeForTests(), 1)
 const appleDir = join(tmpdir(), `tts-smoke-apple-${Date.now()}`)
 mkdirSync(appleDir, { recursive: true })
 writeFileSync(join(appleDir, 'api.ts'), readFileSync(join(dir, 'api.ts'), 'utf8'))
-writeFileSync(join(appleDir, 'types.ts'), `export type Lang = 'en' | 'yue'\n`)
+writeFileSync(join(appleDir, 'types.ts'), `export type Lang = 'en' | 'yue' | 'nl'\n`)
 writeFileSync(join(appleDir, 'mediaAccess.ts'), `export function isAppleTouchDevice() { return true }\n`)
 writeFileSync(
   join(appleDir, 'ttsVoices.ts'),
   readFileSync(join(dir, 'ttsVoices.ts'), 'utf8'),
+)
+writeFileSync(
+  join(appleDir, 'ttsVolumeEqualize.ts'),
+  readFileSync(join(dir, 'ttsVolumeEqualize.ts'), 'utf8'),
 )
 rmSync(dir, { recursive: true, force: true })
 
@@ -282,6 +296,16 @@ assert.ok(appleCtx.bufferStarts >= 1, 'loud iPhone TTS starts a BufferSource')
 assert.ok(appleCtx.gainSets.includes(1.85), 'opening loud clip keeps the boost')
 assert.equal(appleTts.loudPlaybackGainForTests(), 1.85, 'loud gain constant exported')
 
+// Normal speak with equalize gain > 1 must also use BufferSource on iPhone
+// (HTMLAudio volume cannot exceed 1; Dutch/English need client boost).
+appleCtx.gainSets.length = 0
+const decodeBeforeEq = appleCtx.decodeCalls
+const startsBeforeEq = appleCtx.bufferStarts
+await appleTts.speakText('hello equalize', 'en')
+assert.ok(appleCtx.decodeCalls > decodeBeforeEq, 'equalize iPhone TTS uses Web Audio decode')
+assert.ok(appleCtx.bufferStarts > startsBeforeEq, 'equalize iPhone TTS starts BufferSource')
+assert.ok(appleCtx.gainSets.includes(1.45), 'English equalize gain applied on iPhone')
+
 // Practice Partner: four mic → reply cycles must stay at the same boost
 // (3rd/4th turns used to go soft after the post-mic unity handoff).
 for (let turn = 1; turn <= 4; turn++) {
@@ -301,4 +325,4 @@ for (let turn = 1; turn <= 4; turn++) {
 }
 
 rmSync(appleDir, { recursive: true, force: true })
-console.log('tts.smoke: ok (barge-in preserveSession + clip cache + iPhone loud Web Audio)')
+console.log('tts.smoke: ok (barge-in preserveSession + clip cache + iPhone loud/equalize Web Audio)')

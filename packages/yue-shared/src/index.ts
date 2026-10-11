@@ -167,7 +167,9 @@ export {
 } from "./charGloss.js";
 export {
   TTS_EQUALIZE_VOLUME,
+  TTS_EQUALIZE_PLAYBACK_GAIN,
   equalizeLangKey,
   ttsEqualizeVolumeAttr,
+  ttsEqualizePlaybackGain,
   type TtsEqualizeLang,
 } from "./ttsVolumeEqualize.js";
