@@ -1,3 +1,4 @@
+import { ttsEqualizeVolumeAttr } from '@jyut/shared/ttsVolumeEqualize'
 import { env } from './env.js'
 import { resolveSpeakVoice } from './ttsVoices.js'
 import {
@@ -88,10 +89,16 @@ export type SynthesizeOpts = {
 const TTS_CLIP_CACHE_MAX = 48
 const ttsClipCache = new Map<string, Buffer>()
 
-export function ttsClipCacheKey(voice: string, text: string, loud = false, kind = '') {
-  return kind
-    ? `${voice}\n${kind}\n${loud ? 'loud' : 'norm'}\n${text}`
-    : `${voice}\n${loud ? 'loud' : 'norm'}\n${text}`
+export function ttsClipCacheKey(
+  voice: string,
+  text: string,
+  loud = false,
+  kind = '',
+  /** Normal-speak equalize volume attr (e.g. `+50%`); ignored when loud. */
+  equalizeVolume = '',
+) {
+  const volTag = loud ? 'loud' : equalizeVolume || 'norm'
+  return kind ? `${voice}\n${kind}\n${volTag}\n${text}` : `${voice}\n${volTag}\n${text}`
 }
 
 export function resetTtsClipCacheForTests() {
@@ -155,23 +162,28 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
     opts.preferredAr,
     opts.preferredArsa,
   )
-  const loud = Boolean(opts.loud) || pick.xmlLang === 'fil-PH'
+  // Practice Partner / explicit loud mode. Do not special-case fil-PH: Azure
+  // Neural `x-loud` is a no-op there; use per-lang equalize volumes instead.
+  const loud = Boolean(opts.loud)
   const performance = opts.performance?.phrase ? opts.performance : null
+  // Boost quieter-on-phone langs toward Yue (`+50%` is Azure’s useful max).
+  const equalizeVolume = !loud && !performance ? ttsEqualizeVolumeAttr(lang) : null
   const cacheKey = performance
     ? ttsClipCacheKey(pick.voice, performanceCacheToken(performance), true, 'perf')
-    : ttsClipCacheKey(pick.voice, text, loud)
+    : ttsClipCacheKey(pick.voice, text, loud, '', equalizeVolume || '')
   const cached = cachedTtsClip(cacheKey)
   if (cached) return Buffer.from(cached)
 
   if (!env.azureSpeechKey) throw new Error('AZURE_SPEECH_KEY missing')
-  // fil-PH neural voices (and Practice Partner / loud mode) need Azure's max
-  // prosody — HTMLAudioElement.volume cannot go past 1.0.
-  // A performed clip sets its own volumes: reaction loud, phrase x-loud.
+  // Practice Partner loud + performed clips keep categorical x-loud.
+  // Normal speak: SSML +50% boost + client Web Audio gain (see ttsVolumeEqualize).
   const spoken = performance
     ? null
     : loud
       ? `<prosody volume="x-loud">${escapeXml(text)}</prosody>`
-      : escapeXml(text)
+      : equalizeVolume
+        ? `<prosody volume="${equalizeVolume}">${escapeXml(text)}</prosody>`
+        : escapeXml(text)
   const ssml = performance
     ? buildPerformedSsml(pick.xmlLang, pick.voice, performance)
     : `<speak version="1.0" xml:lang="${pick.xmlLang}"><voice name="${pick.voice}">${spoken}</voice></speak>`

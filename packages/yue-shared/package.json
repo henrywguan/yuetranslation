@@ -19,6 +19,11 @@
       "import": "./dist/ttsVoices.js",
       "default": "./dist/ttsVoices.js"
     },
+    "./ttsVolumeEqualize": {
+      "types": "./dist/ttsVolumeEqualize.d.ts",
+      "import": "./dist/ttsVolumeEqualize.js",
+      "default": "./dist/ttsVolumeEqualize.js"
+    },
     "./charGloss": {
       "types": "./dist/charGloss.d.ts",
       "import": "./dist/charGloss.js",

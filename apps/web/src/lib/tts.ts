@@ -1,3 +1,4 @@
+import { ttsEqualizePlaybackGain } from '@jyut/shared/ttsVolumeEqualize'
 import { fetchTtsAudio } from './api'
 import type { PartnerPerformance } from './practicePartnerPerformance'
 import { ensureSharedAudioContext } from './audioReactive'
@@ -155,14 +156,14 @@ export function ttsKeepAliveArmedForTests() {
   return Boolean(ttsKeepAliveOsc)
 }
 
-function setTtsPlaybackGain(loud: boolean) {
+function setTtsPlaybackGain(loud: boolean, equalizeGain = 1) {
   try {
     const el = ensureSharedAudio()
     el.volume = 1
     // iPhone: createMediaElementSource permanently reroutes element output through
     // AudioContext. After Practice Partner's LLM await that context is often still
     // suspended outside the gesture → play() succeeds but TTS is silent, and busy
-    // stays true so the next mic tap no-ops. Azure SSML x-loud is enough on Apple.
+    // stays true so the next mic tap no-ops. Boosted / loud clips use BufferSource.
     if (isAppleTouchDevice()) return
     const ctx = ensureSharedAudioContext()
     if (ctx.state === 'suspended') void ctx.resume()
@@ -175,7 +176,10 @@ function setTtsPlaybackGain(loud: boolean) {
       ttsMediaSource.connect(ttsGainNode)
       ttsGainNode.connect(ctx.destination)
     }
-    if (ttsGainNode) ttsGainNode.gain.value = loud ? LOUD_PLAYBACK_GAIN : 1
+    if (ttsGainNode) {
+      const g = loud ? LOUD_PLAYBACK_GAIN : equalizeGain > 0 ? equalizeGain : 1
+      ttsGainNode.gain.value = g
+    }
   } catch {
     /* Web Audio may be unavailable — HTMLAudioElement.volume=1 still applies. */
   }
@@ -607,6 +611,7 @@ async function playAzureBlobViaWebAudio(
   blob: Blob,
   g: number,
   loud: boolean,
+  equalizeGain = 1,
 ): Promise<'played' | 'failed' | 'aborted'> {
   try {
     const ctx = ensureSharedAudioContext()
@@ -628,7 +633,7 @@ async function playAzureBlobViaWebAudio(
     stopTtsBufferSource()
     const src = ctx.createBufferSource()
     const gain = ctx.createGain()
-    gain.gain.value = loud ? loudPlaybackGain() : 1
+    gain.gain.value = loud ? loudPlaybackGain() : equalizeGain > 0 ? equalizeGain : 1
     src.buffer = audioBuf
     src.playbackRate.value = playbackRate
     src.connect(gain)
@@ -697,14 +702,21 @@ async function settleTtsMediaGraph(el: HTMLAudioElement) {
 async function playAzureBlob(
   blob: Blob,
   g: number,
-  opts?: { loud?: boolean },
+  opts?: { loud?: boolean; lang?: Lang },
 ): Promise<'played' | 'failed' | 'aborted'> {
   const loud = Boolean(opts?.loud)
+  const equalizeGain = loud ? 1 : ttsEqualizePlaybackGain(opts?.lang || '')
   // After Web Speech, HTMLAudio stays on iPhone's voice-chat / receiver route
-  // even at volume=1 + Azure x-loud. Play loud clips through Web Audio so
-  // they come out the speaker. Fall back to HTMLAudio if decode fails.
-  if (isAppleTouchDevice() && loud) {
-    const via = await playAzureBlobViaWebAudio(blob, g, loud)
+  // even at volume=1 + Azure x-loud. Play loud / boosted clips through Web Audio
+  // so they come out the speaker (and so gain can exceed HTMLAudio's cap of 1).
+  if (isAppleTouchDevice() && (loud || equalizeGain > 1)) {
+    const via = await playAzureBlobViaWebAudio(blob, g, loud, equalizeGain)
+    if (via === 'played' || via === 'aborted' || g !== gen) return via
+  }
+  // Desktop: prefer BufferSource when we need gain > 1 (MediaElement path also
+  // works, but BufferSource matches the iPhone boost path).
+  if (!isAppleTouchDevice() && !loud && equalizeGain > 1) {
+    const via = await playAzureBlobViaWebAudio(blob, g, false, equalizeGain)
     if (via === 'played' || via === 'aborted' || g !== gen) return via
   }
   if (g !== gen) return 'aborted'
@@ -719,7 +731,7 @@ async function playAzureBlob(
   el.src = objectUrl
   el.volume = 1
   el.muted = false
-  setTtsPlaybackGain(Boolean(opts?.loud))
+  setTtsPlaybackGain(loud, equalizeGain)
   // After Web Speech, iOS can leave volume ducked even when we set 1 above.
   try {
     el.volume = 1
@@ -782,7 +794,7 @@ export async function speakText(
     }
     if (g !== gen) return
     if (blob && blob.size > 0) {
-      const result = await playAzureBlob(blob, g, { loud })
+      const result = await playAzureBlob(blob, g, { loud, lang })
       if (result === 'played' || result === 'aborted' || g !== gen) return
       // play() blocked (often missing gesture unlock) — try browser fallback.
     }
@@ -797,8 +809,7 @@ export async function speakText(
       armTtsEchoTail()
     }
     // Reset gain so normal translator speak is not left boosted.
-    if (!loud) setTtsPlaybackGain(false)
-    else if (g === gen) setTtsPlaybackGain(false)
+    if (g === gen) setTtsPlaybackGain(false)
   }
 }
 
