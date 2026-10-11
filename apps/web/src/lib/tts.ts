@@ -162,7 +162,7 @@ function setTtsPlaybackGain(loud: boolean) {
     // iPhone: createMediaElementSource permanently reroutes element output through
     // AudioContext. After Practice Partner's LLM await that context is often still
     // suspended outside the gesture → play() succeeds but TTS is silent, and busy
-    // stays true so the next mic tap no-ops. Azure SSML x-loud is enough on Apple.
+    // stays true so the next mic tap no-ops. Azure loud clips use Web Audio on Apple.
     if (isAppleTouchDevice()) return
     const ctx = ensureSharedAudioContext()
     if (ctx.state === 'suspended') void ctx.resume()

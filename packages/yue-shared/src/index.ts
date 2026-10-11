@@ -165,3 +165,9 @@ export {
   GENERIC_CHAR_GLOSS,
   isGenericCharGloss,
 } from "./charGloss.js";
+export {
+  TTS_EQUALIZE_VOLUME,
+  equalizeLangKey,
+  ttsEqualizeVolumeAttr,
+  type TtsEqualizeLang,
+} from "./ttsVolumeEqualize.js";
