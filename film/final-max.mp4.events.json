@@ -1,0 +1,140 @@
+[
+ {
+  "t": 0.2,
+  "frame": 6,
+  "type": "enter",
+  "label": "Say"
+ },
+ {
+  "t": 0.2,
+  "frame": 6,
+  "type": "word",
+  "label": "Say"
+ },
+ {
+  "t": 0.4,
+  "frame": 12,
+  "type": "enter",
+  "label": "it."
+ },
+ {
+  "t": 0.4,
+  "frame": 12,
+  "type": "word",
+  "label": "it."
+ },
+ {
+  "t": 1.2,
+  "frame": 36,
+  "type": "enter",
+  "label": "#hook-sub"
+ },
+ {
+  "t": 4,
+  "frame": 120,
+  "type": "cut",
+  "label": "hide #s1 show #s2"
+ },
+ {
+  "t": 4,
+  "frame": 120,
+  "type": "enter",
+  "label": "#solo"
+ },
+ {
+  "t": 4.6667,
+  "frame": 140,
+  "type": "type",
+  "label": "start"
+ },
+ {
+  "t": 5.1,
+  "frame": 153,
+  "type": "type",
+  "label": "end"
+ },
+ {
+  "t": 9,
+  "frame": 270,
+  "type": "enter",
+  "label": "#chips"
+ },
+ {
+  "t": 12,
+  "frame": 360,
+  "type": "cut",
+  "label": "hide #s2 show #s3"
+ },
+ {
+  "t": 12,
+  "frame": 360,
+  "type": "enter",
+  "label": "#convo-plate"
+ },
+ {
+  "t": 12.5,
+  "frame": 375,
+  "type": "enter",
+  "label": "#bubble-a"
+ },
+ {
+  "t": 13.6667,
+  "frame": 410,
+  "type": "enter",
+  "label": "#bubble-b"
+ },
+ {
+  "t": 19,
+  "frame": 570,
+  "type": "cut",
+  "label": "hide #s3 show #s4"
+ },
+ {
+  "t": 19,
+  "frame": 570,
+  "type": "enter",
+  "label": "#phone"
+ },
+ {
+  "t": 19.5,
+  "frame": 585,
+  "type": "enter",
+  "label": "#ar-sign-en"
+ },
+ {
+  "t": 19.8333,
+  "frame": 595,
+  "type": "enter",
+  "label": "#ar-ring"
+ },
+ {
+  "t": 20.6667,
+  "frame": 620,
+  "type": "enter",
+  "label": "#ar-sticker"
+ },
+ {
+  "t": 28,
+  "frame": 840,
+  "type": "cut",
+  "label": "hide #s4 show #s5"
+ },
+ {
+  "t": 28,
+  "frame": 840,
+  "type": "enter",
+  "label": "#close"
+ },
+ {
+  "t": 28,
+  "frame": 840,
+  "type": "logo",
+  "label": "chop + wordmark"
+ },
+ {
+  "t": 28.6,
+  "frame": 858,
+  "type": "enter",
+  "label": "#close-line"
+ }
+]

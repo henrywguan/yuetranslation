@@ -1,0 +1,3702 @@
+{
+ "url": "https://www.jyuttranslate.com",
+ "finalUrl": "https://www.jyuttranslate.com/",
+ "capturedAt": "2026-10-13T18:02:35.190Z",
+ "viewport": {
+  "w": 1920,
+  "h": 1080
+ },
+ "docHeight": 5716,
+ "name": "JyutTranslate",
+ "title": "JyutTranslate — AI Language Tool",
+ "description": "AI language tool with live translation, voice, camera OCR, and document translation.",
+ "tagline": "JyutTranslate",
+ "lang": "en",
+ "themeColorMeta": "#eef5f8",
+ "colorSchemeMeta": null,
+ "manifest": {
+  "name": "JyutTranslate — AI Language Tool",
+  "short_name": "JyutTranslate",
+  "theme_color": "#07131f",
+  "background_color": "#07131f"
+ },
+ "copy": {
+  "h1": [
+   "JyutTranslate"
+  ],
+  "h2": [
+   "One app, 3 translation methods 一個應用，三種翻譯方式",
+   "Try Solo mode, live 試用獨白模式，即時見",
+   "Start free. Upgrade for more talk-time. 免費開始。升級享更多通話時間。",
+   "Ready to be understood? 準備好俾人聽明未？"
+  ],
+  "h3": [
+   "Jyutping built in 內建粵拼",
+   "Hong Kong Cantonese 香港粵語",
+   "Character breakdown 逐字拆解",
+   "AR Camera translation AR 相機翻譯",
+   "Free 免費",
+   "Family 家庭版"
+  ],
+  "heroLine": "JyutTranslate",
+  "ctas": [
+   {
+    "text": "Try the demo ↓ 試用示範 ↓",
+    "bg": "#ffffff",
+    "color": "#07131f",
+    "border": null,
+    "radius": 999,
+    "filled": true,
+    "inHeader": true,
+    "inHero": true,
+    "top": 614,
+    "w": 173,
+    "h": 73
+   },
+   {
+    "text": "Get started 立即開始",
+    "bg": "#ffffff",
+    "color": "#07131f",
+    "border": null,
+    "radius": 999,
+    "filled": true,
+    "inHeader": false,
+    "inHero": false,
+    "top": 4584,
+    "w": 299,
+    "h": 73
+   },
+   {
+    "text": "Launch translator 開啟翻譯器",
+    "bg": null,
+    "color": "#f4fffc",
+    "border": null,
+    "radius": 999,
+    "filled": false,
+    "inHeader": false,
+    "inHero": false,
+    "top": 5319,
+    "w": 195,
+    "h": 71
+   }
+  ],
+  "nav": [
+   "J 粵 yutTranslate",
+   "Features 功能",
+   "Tones 聲調",
+   "Creators 創作者",
+   "Pricing 價錢",
+   "Launch app 開啟應用"
+  ],
+  "sentences": [
+   "Type or speak — English and Cantonese side by side. 打字或說話——英文同粵語並排顯示。",
+   "Type in English — the Cantonese line updates below. Tap a sample to start. 打英文——粵語會喺下面更新。撳樣本試吓。",
+   "Open JyutTranslate and have your first bilingual conversation in seconds. 開啟 JyutTranslate，幾秒之內就可以開始雙語對話。"
+  ]
+ },
+ "colors": {
+  "theme": "light",
+  "monochrome": false,
+  "ground": [
+   {
+    "hex": "#eef5f8",
+    "share": 0.464,
+    "sources": [
+     "dom",
+     "pixels"
+    ]
+   },
+   {
+    "hex": "#e1f1ee",
+    "share": 0.425,
+    "sources": [
+     "pixels",
+     "dom"
+    ]
+   },
+   {
+    "hex": "#c9e6e0",
+    "share": 0.053,
+    "sources": [
+     "pixels",
+     "dom"
+    ]
+   }
+  ],
+  "ink": {
+   "hex": "#07131f",
+   "contrastOnGround": 16.98,
+   "source": "computed colour of the largest heading (h1 \"JyutTranslate\", 86px)"
+  },
+  "inkSoft": null,
+  "accentCandidates": {
+   "note": "saturated colours sampled from imagery (a CSS/DOM accent exists, these are extra)",
+   "items": [
+    {
+     "hex": "#1c9683",
+     "file": "screens/06.jpg",
+     "share": 0.01003,
+     "sharePct": 1
+    },
+    {
+     "hex": "#48a696",
+     "file": "screens/01.jpg",
+     "share": 0.00073,
+     "sharePct": 0.07
+    },
+    {
+     "hex": "#57ccb5",
+     "file": "screens/02.jpg",
+     "share": 0.00065,
+     "sharePct": 0.07
+    },
+    {
+     "hex": "#4d6bf9",
+     "file": "screens/01.jpg",
+     "share": 0.00025,
+     "sharePct": 0.03
+    }
+   ]
+  },
+  "inkMuted": null,
+  "accents": [
+   {
+    "hex": "#c9e6e0",
+    "role": "accent (primary)",
+    "score": 33,
+    "sources": [
+     "screenshot pixels",
+     "background"
+    ]
+   },
+   {
+    "hex": "#ffffff",
+    "role": "accent 2",
+    "score": 30,
+    "sources": [
+     "CTA background"
+    ]
+   }
+  ],
+  "ctaBg": "#ffffff",
+  "link": "#081320",
+  "palette": [
+   {
+    "hex": "#eef5f8",
+    "role": "ground (light theme)",
+    "share": 0.464
+   },
+   {
+    "hex": "#e1f1ee",
+    "role": "surface/ground 2",
+    "share": 0.425
+   },
+   {
+    "hex": "#c9e6e0",
+    "role": "surface/ground 3",
+    "share": 0.053
+   },
+   {
+    "hex": "#07131f",
+    "role": "ink (headline / logo ink)",
+    "contrast": 17
+   },
+   {
+    "hex": "#ffffff",
+    "role": "accent 2",
+    "sources": [
+     "CTA background"
+    ]
+   }
+  ],
+  "pixelPalette": [
+   {
+    "hex": "#e1f1ee",
+    "share": 0.836
+   },
+   {
+    "hex": "#c9e6e0",
+    "share": 0.093
+   },
+   {
+    "hex": "#859092",
+    "share": 0.017
+   },
+   {
+    "hex": "#a8d4d0",
+    "share": 0.015
+   },
+   {
+    "hex": "#bcc9c9",
+    "share": 0.009
+   },
+   {
+    "hex": "#a2b3b4",
+    "share": 0.008
+   },
+   {
+    "hex": "#89c9c3",
+    "share": 0.005
+   },
+   {
+    "hex": "#1c917e",
+    "share": 0.004
+   },
+   {
+    "hex": "#91a3a4",
+    "share": 0.002
+   },
+   {
+    "hex": "#f9fcfd",
+    "share": 0.002
+   }
+  ],
+  "domBackgrounds": [
+   {
+    "hex": "#eef5f8",
+    "share": 0.897
+   },
+   {
+    "hex": "#ffffff",
+    "share": 0.014
+   },
+   {
+    "hex": "#878f90",
+    "share": 0.011
+   },
+   {
+    "hex": "#9fd9c8",
+    "share": 0.01
+   },
+   {
+    "hex": "#d0eae4",
+    "share": 0.01
+   },
+   {
+    "hex": "#eef8f4",
+    "share": 0.01
+   },
+   {
+    "hex": "#ddefeb",
+    "share": 0.01
+   },
+   {
+    "hex": "#e7f5f2",
+    "share": 0.007
+   },
+   {
+    "hex": "#64beae",
+    "share": 0.006
+   },
+   {
+    "hex": "#64d9c5",
+    "share": 0.006
+   }
+  ],
+  "textColors": [
+   {
+    "hex": "#07131f",
+    "share": 0.547
+   },
+   {
+    "hex": "#0a1c2c",
+    "share": 0.189
+   },
+   {
+    "hex": "#06131f",
+    "share": 0.126
+   },
+   {
+    "hex": "#3dcfb6",
+    "share": 0.03
+   },
+   {
+    "hex": "#081320",
+    "share": 0.026
+   },
+   {
+    "hex": "#061320",
+    "share": 0.025
+   },
+   {
+    "hex": "#f4fffc",
+    "share": 0.017
+   },
+   {
+    "hex": "#1f9f8a",
+    "share": 0.012
+   }
+  ],
+  "cssVars": [
+   {
+    "name": "--harbor",
+    "value": "#eef5f8",
+    "hex": "#eef5f8"
+   },
+   {
+    "name": "--harbor-mid",
+    "value": "#e4eef4",
+    "hex": "#e4eef4"
+   },
+   {
+    "name": "--harbor-deep",
+    "value": "#d7e6ee",
+    "hex": "#d7e6ee"
+   },
+   {
+    "name": "--harbor-blue",
+    "value": "#b7d4e8",
+    "hex": "#b7d4e8"
+   },
+   {
+    "name": "--harbor-teal",
+    "value": "#9fd6cb",
+    "hex": "#9fd6cb"
+   },
+   {
+    "name": "--jade",
+    "value": "#1f9f8a",
+    "hex": "#1f9f8a"
+   },
+   {
+    "name": "--jade-mid",
+    "value": "#178574",
+    "hex": "#178574"
+   },
+   {
+    "name": "--jade-deep",
+    "value": "#0f6b5d",
+    "hex": "#0f6b5d"
+   },
+   {
+    "name": "--jade-bright",
+    "value": "#3dcfb6",
+    "hex": "#3dcfb6"
+   },
+   {
+    "name": "--on-jade",
+    "value": "#f4fffc",
+    "hex": "#f4fffc"
+   },
+   {
+    "name": "--usage-family",
+    "value": "#5a9fd0",
+    "hex": "#5a9fd0"
+   },
+   {
+    "name": "--ink",
+    "value": "#07131f",
+    "hex": "#07131f"
+   },
+   {
+    "name": "--ink-bright",
+    "value": "#0a1c2c",
+    "hex": "#0a1c2c"
+   },
+   {
+    "name": "--muted",
+    "value": "#07131f94",
+    "hex": "#07131f"
+   },
+   {
+    "name": "--mint",
+    "value": "#178574",
+    "hex": "#178574"
+   },
+   {
+    "name": "--surface",
+    "value": "#ffffff8c",
+    "hex": "#ffffff"
+   },
+   {
+    "name": "--surface-strong",
+    "value": "#ffffffb8",
+    "hex": "#ffffff"
+   },
+   {
+    "name": "--glass",
+    "value": "#ffffff7a",
+    "hex": "#ffffff"
+   },
+   {
+    "name": "--glass-shine",
+    "value": "#ffffffb3",
+    "hex": "#ffffff"
+   },
+   {
+    "name": "--danger",
+    "value": "#c44d4d",
+    "hex": "#c44d4d"
+   },
+   {
+    "name": "--danger-deep",
+    "value": "#a33a3a",
+    "hex": "#a33a3a"
+   },
+   {
+    "name": "--danger-ink",
+    "value": "#7a2020",
+    "hex": "#7a2020"
+   }
+  ]
+ },
+ "fonts": {
+  "roles": {
+   "heading": {
+    "family": "Syne, \"Noto Sans\", system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+    "weight": "800",
+    "size": "86.4px",
+    "style": "normal",
+    "letterSpacing": "-3.456px",
+    "lineHeight": "90.72px",
+    "textTransform": "none",
+    "color": "#07131f",
+    "primaryFamily": "Syne",
+    "file": "fonts/syne-800.woff2",
+    "fileWeight": "800"
+   },
+   "body": {
+    "family": "\"Noto Sans\", system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+    "weight": "400",
+    "size": "21.6px",
+    "style": "normal",
+    "letterSpacing": "normal",
+    "lineHeight": "33.48px",
+    "textTransform": "none",
+    "color": "#07131f",
+    "primaryFamily": "Noto Sans",
+    "file": "fonts/noto-sans-700.woff2",
+    "fileWeight": "700"
+   },
+   "button": {
+    "family": "Syne, \"Noto Sans\", system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+    "weight": "700",
+    "size": "16px",
+    "style": "normal",
+    "letterSpacing": "normal",
+    "lineHeight": "22.4px",
+    "textTransform": "none",
+    "color": "#07131f",
+    "primaryFamily": "Syne",
+    "file": "fonts/syne-800.woff2",
+    "fileWeight": "800"
+   }
+  },
+  "faces": [
+   {
+    "family": "Noto Sans Chao",
+    "weight": "400",
+    "style": "normal",
+    "url": "https://www.jyuttranslate.com/fonts/noto-sans-chao.woff2",
+    "file": "fonts/noto-sans-chao-400.woff2",
+    "bytes": 4512,
+    "used": true,
+    "range": "U+2E5, U+2E7-2E9"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "700",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/notosans/v42/o-0bIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjc5a7du3mhPy0.woff2",
+    "file": "fonts/noto-sans-700.woff2",
+    "bytes": 35856,
+    "used": false,
+    "range": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+   },
+   {
+    "family": "Syne",
+    "weight": "800",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm2BL9G78HEY.woff2",
+    "file": "fonts/syne-800.woff2",
+    "bytes": 34560,
+    "used": false,
+    "range": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+   },
+   {
+    "family": null,
+    "weight": "400",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm2BL9A.woff2",
+    "file": "fonts/8vih7w4qzmvxm2bl9a-400.woff2",
+    "bytes": 34608,
+    "used": true
+   },
+   {
+    "family": null,
+    "weight": "400",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/notosans/v42/o-0bIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjc5a7duw.woff2",
+    "file": "fonts/o-0bipqlx3qulc5a4pnb6ryti20-6n1iphjc5a7d-400.woff2",
+    "bytes": 35820,
+    "used": true
+   },
+   {
+    "family": null,
+    "weight": "400",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/notosanshk/v36/nKKQ-GM_FYFRJvXzVXaAPe9hMRhvEPeWV8Ydw9dTvaja5emiwCL1Dv89rTx5gtGuOA.106.woff2",
+    "file": "fonts/nkkq-gm-fyfrjvxzvxaape9hmrhvepewv8ydw9dt-400.woff2",
+    "bytes": 71980,
+    "used": true
+   },
+   {
+    "family": null,
+    "weight": "400",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/notosanshk/v36/nKKQ-GM_FYFRJvXzVXaAPe9hMRhvEPeWV8Ydw9dTvaja5emiwCL1Dv89rTx5gtGuOA.117.woff2",
+    "file": "fonts/nkkq-gm-fyfrjvxzvxaape9hmrhvepewv8ydw9dt-400-2.woff2",
+    "bytes": 65340,
+    "used": true
+   },
+   {
+    "family": null,
+    "weight": "400",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/notosanshk/v36/nKKQ-GM_FYFRJvXzVXaAPe9hMRhvEPeWV8Ydw9dTvaja5emiwCL1Dv89rTx5gtGuOA.119.woff2",
+    "file": "fonts/nkkq-gm-fyfrjvxzvxaape9hmrhvepewv8ydw9dt-400-3.woff2",
+    "bytes": 36308,
+    "used": true
+   },
+   {
+    "family": null,
+    "weight": "400",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/notosanshk/v36/nKKQ-GM_FYFRJvXzVXaAPe9hMRhvEPeWV8Ydw9dTvaja5emiwCL1Dv89rTx5gtGuOA.115.woff2",
+    "file": "fonts/nkkq-gm-fyfrjvxzvxaape9hmrhvepewv8ydw9dt-400-4.woff2",
+    "bytes": 73956,
+    "used": true
+   },
+   {
+    "family": null,
+    "weight": "400",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/notosanshk/v36/nKKQ-GM_FYFRJvXzVXaAPe9hMRhvEPeWV8Ydw9dTvaja5emiwCL1Dv89rTx5gtGuOA.103.woff2",
+    "file": "fonts/nkkq-gm-fyfrjvxzvxaape9hmrhvepewv8ydw9dt-400-5.woff2",
+    "bytes": 69760,
+    "used": true
+   },
+   {
+    "family": null,
+    "weight": "400",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/notosanshk/v36/nKKQ-GM_FYFRJvXzVXaAPe9hMRhvEPeWV8Ydw9dTvaja5emiwCL1Dv89rTx5gtGuOA.110.woff2",
+    "file": "fonts/nkkq-gm-fyfrjvxzvxaape9hmrhvepewv8ydw9dt-400-6.woff2",
+    "bytes": 79748,
+    "used": true
+   },
+   {
+    "family": null,
+    "weight": "400",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/notosanshk/v36/nKKQ-GM_FYFRJvXzVXaAPe9hMRhvEPeWV8Ydw9dTvaja5emiwCL1Dv89rTx5gtGuOA.112.woff2",
+    "file": "fonts/nkkq-gm-fyfrjvxzvxaape9hmrhvepewv8ydw9dt-400-7.woff2",
+    "bytes": 72948,
+    "used": true
+   },
+   {
+    "family": null,
+    "weight": "400",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/notosanshk/v36/nKKQ-GM_FYFRJvXzVXaAPe9RM3p2.woff2",
+    "file": "fonts/nkkq-gm-fyfrjvxzvxaape9rm3p2-400.woff2",
+    "bytes": 24776,
+    "used": true
+   },
+   {
+    "family": null,
+    "weight": "400",
+    "style": "normal",
+    "url": "https://fonts.gstatic.com/s/notosanshk/v36/nKKQ-GM_FYFRJvXzVXaAPe9hMRhvEPeWV8Ydw9dTvaja5emiwCL1Dv89rTx5gtGuOA.101.woff2",
+    "file": "fonts/nkkq-gm-fyfrjvxzvxaape9hmrhvepewv8ydw9dt-400-8.woff2",
+    "bytes": 62232,
+    "used": true
+   }
+  ],
+  "loadedByPage": [
+   {
+    "family": "Cinzel",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Cinzel",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Cinzel",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Cinzel",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans HK",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Syne",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Syne",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Syne",
+    "weight": "500",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Syne",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Syne",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Syne",
+    "weight": "600",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Syne",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Syne",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Syne",
+    "weight": "700",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Syne",
+    "weight": "800",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Syne",
+    "weight": "800",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Syne",
+    "weight": "800",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "400",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "500",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "600",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   },
+   {
+    "family": "Noto Sans Chao",
+    "weight": "400",
+    "style": "normal",
+    "status": "loaded"
+   },
+   {
+    "family": "Noto Sans Chao",
+    "weight": "700",
+    "style": "normal",
+    "status": "unloaded"
+   }
+  ],
+  "mostUsed": [
+   {
+    "key": "Noto Sans|600",
+    "weight": 19214
+   },
+   {
+    "key": "Noto Sans|700",
+    "weight": 6889
+   },
+   {
+    "key": "Noto Sans|400",
+    "weight": 6768
+   },
+   {
+    "key": "Noto Sans|750",
+    "weight": 6038
+   },
+   {
+    "key": "Noto Sans HK|500",
+    "weight": 5614
+   },
+   {
+    "key": "Syne|800",
+    "weight": 3405
+   },
+   {
+    "key": "Noto Sans HK|560",
+    "weight": 1089
+   },
+   {
+    "key": "Noto Sans|500",
+    "weight": 1061
+   }
+  ],
+  "platformFonts": {
+   "h1": [],
+   "body": [
+    {
+     "family": "Noto Sans",
+     "custom": true,
+     "glyphs": 101
+    }
+   ]
+  }
+ },
+ "logo": {
+  "file": "logo/logo.svg",
+  "kind": "svg",
+  "source": "inline svg (logo-attr,header,top)",
+  "fills": [
+   "#0a1c2c"
+  ],
+  "onDark": false,
+  "favicon": "logo/favicon.svg",
+  "appIcon": "logo/app-icon.png",
+  "text": null,
+  "candidates": [
+   {
+    "score": 12,
+    "why": [
+     "logo-attr",
+     "header",
+     "top"
+    ],
+    "members": [
+     "svg 216x36"
+    ],
+    "lockup": false
+   },
+   {
+    "score": 5,
+    "why": [
+     "header"
+    ],
+    "members": [
+     "svg 44x33"
+    ],
+    "lockup": false
+   },
+   {
+    "score": 4,
+    "why": [
+     "logo-attr"
+    ],
+    "members": [
+     "svg 52x52"
+    ],
+    "lockup": false
+   }
+  ]
+ },
+ "ogImage": "media/og-image.png",
+ "screens": [
+  {
+   "file": "screens/01.jpg",
+   "scrollY": 0
+  },
+  {
+   "file": "screens/02.jpg",
+   "scrollY": 927
+  },
+  {
+   "file": "screens/03.jpg",
+   "scrollY": 1854
+  },
+  {
+   "file": "screens/04.jpg",
+   "scrollY": 2782
+  },
+  {
+   "file": "screens/05.jpg",
+   "scrollY": 3709
+  },
+  {
+   "file": "screens/06.jpg",
+   "scrollY": 4636
+  }
+ ],
+ "media": [
+  {
+   "file": "media/01.jpg",
+   "kind": "canvas",
+   "src": null,
+   "alt": null,
+   "w": 1920,
+   "h": 721,
+   "flag": "screenshot, not product media",
+   "matchesScreen": "screens/02.jpg"
+  }
+ ],
+ "mediaDropped": [
+  {
+   "capturedAs": "media/01.jpg",
+   "kind": "canvas",
+   "w": 1920,
+   "h": 1080,
+   "src": null,
+   "reason": "blank (pixel std-dev 1.58)"
+  }
+ ],
+ "warnings": [
+  "dropped a blank canvas 1920x1080 (captured as media/01.jpg, pixel std-dev 1.58); media/ is renumbered",
+  "media/01.jpg contains the site nav (top 8% profile matches screens/02.jpg, r=0.93): screenshot, not product media"
+ ]
+}

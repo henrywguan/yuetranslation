@@ -1,0 +1,25 @@
+file        final-max-vo.mp4
+duration    30.00s   fps 30.000   size 1920x1080   codec h264   frames 900
+cuts        5 detected (scene>=0.30 | scene>=0.12+structure | pixel spike): 4.00, 12.00, 19.00, 20.67, 28.00
+shot length mean 5.00s over 6 shots
+            min 1.67s  max 8.00s
+still       1.30-3.17s (1.87s); 19.47-20.47s (1.00s)
+static-ish  longest 20.87-28.00s (7.13s, frame diff < 0.35/255; slow drift counts)
+final shot  28.00-30.00s (2.00s)   end hold ~ 0.00 s (picture unchanged for the last 0 frames)
+audio       aac 48000 Hz ch 2   integrated -14.4 LUFS   LRA 5.4 LU   true peak -1.1 dBFS
+files       look-max-vo/sheet.jpg  cuts.txt  still.txt  mid.jpg  strips.jpg
+
+AUDIO
+  loudness   integrated -14.4 LUFS   LRA 5.4 LU   true peak -1.1 dBFS
+  audible    0.27-29.99 s of 30.00 s (99 %)   lead silence 0.27 s   tail silence 0.01 s
+  onsets     51 sound onsets (>= 8 dB jump): 0.27, 0.36, 0.58, 0.85, 1.36, 1.45, 1.61, 1.74, 2.00, 2.24, 3.59, 4.01, 4.80, 5.06, 5.35, 5.48 ...
+  cut sync   2 of 5 cuts land within +-80 ms of a sound onset (40 %; pros ~35 %; chance level with 51 onsets in 30 s is ~27 %)
+  FLAG       digital-silence dropouts inside the film: 2.65-3.13 s, 6.09-7.92 s, 8.93-9.65 s, 11.39-13.03 s, 17.18-20.01 s, 20.91-21.99 s
+GATES
+  G0 render exists              PASS  duration 30.00 s matches --expect 30.00 s; audio present
+  G2 no empty frame             PASS  no run of > 3 flat frames
+  G3 end card hold, CTA share   PASS  end hold 0.00 s: ends mid-motion (NOTE: fine when intended); final shot 2.00 s = 7 % of the film (<= 25 %)
+  G1 proof readable / G4 one hero per frame: by eye on the sheet.   G5 no page chrome: node lint.mjs index.html
+MOTION
+  mean frame-to-frame luma change 0.9/255 (human-made films: median 6.8, IQR 4.4-9.8): below the human band
+  question: between the beats, what on screen is alive? (drift, creep, a caret, a loop), or is the film mostly held?

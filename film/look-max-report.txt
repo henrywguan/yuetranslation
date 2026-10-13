@@ -1,0 +1,20 @@
+file        final-max.mp4
+duration    30.00s   fps 30.000   size 1920x1080   codec h264   frames 900
+cuts        4 from events (final-max.mp4.events.json; cut 4): 4.00, 12.00, 19.00, 28.00
+detected    5 by analysis; not in events: 20.67
+shot length mean 6.00s over 5 shots
+            min 2.00s  max 9.00s
+still       1.30-3.17s (1.87s); 19.47-20.47s (1.00s)
+static-ish  longest 20.87-28.00s (7.13s, frame diff < 0.35/255; slow drift counts)
+final shot  28.00-30.00s (2.00s)   end hold ~ 0.00 s (picture unchanged for the last 0 frames)
+audio       none
+files       look-max/sheet.jpg  cuts.txt  still.txt  mid.jpg  strips.jpg
+
+GATES
+  G0 render exists              PASS  duration 30.00 s matches --expect 30.00 s; audio none (not required)
+  G2 no empty frame             PASS  no run of > 3 flat frames
+  G3 end card hold, CTA share   PASS  end hold 0.00 s: ends mid-motion (NOTE: fine when intended); final shot 2.00 s = 7 % of the film (<= 25 %)
+  G1 proof readable / G4 one hero per frame: by eye on the sheet.   G5 no page chrome: node lint.mjs index.html
+MOTION
+  mean frame-to-frame luma change 0.9/255 (human-made films: median 6.8, IQR 4.4-9.8): below the human band
+  question: between the beats, what on screen is alive? (drift, creep, a caret, a loop), or is the film mostly held?

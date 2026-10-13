@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>JyutTranslate — Say it</title>
+<meta name="viewport" content="width=1920, height=1080">
+<style>
+@font-face{font-family:"Syne";src:url("./fonts/syne-800.woff2") format("woff2");font-weight:700 800;font-display:block}
+@font-face{font-family:"Noto Sans Brand";src:url("./fonts/noto-sans-700.woff2") format("woff2");font-weight:700;font-display:block}
+@font-face{font-family:"Noto Sans Brand";src:url("./fonts/noto-sans-chao-400.woff2") format("woff2");font-weight:400;font-display:block}
+:root{
+  --ground:#eef5f8; --mint:#e1f1ee; --ink:#07131f; --ink-soft:#5a6b76;
+  --accent:#1c9683; --font:"Syne",system-ui,sans-serif;
+  --body:"Noto Sans Brand","Noto Sans HK","PingFang HK",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#000}
+#main{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;background:var(--ground);color:var(--ink);font-family:var(--font)}
+.scene{position:absolute;inset:0}
+.cam{position:absolute;inset:0}
+.wash{position:absolute;inset:0;background:
+  radial-gradient(120% 80% at 18% 8%,#c9e6e0 0%,transparent 55%),
+  radial-gradient(90% 70% at 92% 88%,#d7eef5 0%,transparent 52%),
+  linear-gradient(165deg,#eef5f8 0%,#e1f1ee 100%)}
+.arcs{position:absolute;inset:-12%;background:
+  radial-gradient(circle at 28% 42%,transparent 38%,rgba(7,19,31,.05) 38.6%,transparent 39.2%),
+  radial-gradient(circle at 72% 58%,transparent 44%,rgba(28,150,131,.07) 44.5%,transparent 45%),
+  radial-gradient(circle at 50% 78%,transparent 52%,rgba(7,19,31,.04) 52.5%,transparent 53%)}
+
+/* HOOK */
+#hook{position:absolute;left:0;top:390px;width:1920px;text-align:center;font-size:168px;line-height:190px;letter-spacing:-.05em;white-space:pre;font-weight:800}
+#hook-sub{position:absolute;left:0;top:620px;width:1920px;text-align:center;font-family:var(--body);font-size:42px;line-height:52px;font-weight:700;color:var(--ink-soft);letter-spacing:.02em}
+
+/* SOLO */
+#solo{position:absolute;left:220px;top:100px;width:1480px;height:880px;border-radius:40px;background:#fff;
+  box-shadow:0 48px 140px rgba(7,19,31,.14),0 2px 0 rgba(7,19,31,.04);overflow:hidden}
+#solo-chrome{position:absolute;left:32px;top:26px;display:flex;gap:9px}
+#solo-chrome i{width:13px;height:13px;border-radius:50%;background:#d5dde3;display:block}
+#solo-badge{position:absolute;right:40px;top:24px;text-align:right;font-family:var(--body);font-size:18px;line-height:22px;color:var(--ink-soft);font-weight:700}
+#solo-badge b{display:block;color:var(--ink);font-size:22px}
+#en-lab{position:absolute;left:64px;top:90px;font-family:var(--body);font-size:15px;letter-spacing:.16em;color:var(--ink-soft);font-weight:700}
+#en-box{position:absolute;left:52px;top:126px;width:1376px;height:128px;border-radius:22px;background:#f3f8fa;border:2px solid rgba(7,19,31,.06)}
+#en-text{position:absolute;left:40px;top:32px;height:64px;font-family:var(--body);font-weight:700;font-size:52px;line-height:64px;letter-spacing:-.02em;white-space:pre}
+#caret{position:absolute;top:38px;width:4px;height:56px;background:var(--accent);border-radius:2px}
+#yue-lab{position:absolute;left:64px;top:290px;font-family:var(--body);font-size:20px;color:var(--ink-soft);font-weight:700}
+#jp{position:absolute;left:64px;top:336px;display:flex;gap:22px;font-family:var(--body);font-weight:700;font-size:30px}
+#jp .t1{color:#2f6fed}#jp .t2{color:#8a5a2b}#jp .t3{color:#d17a1f}#jp .t4{color:#c23b3b}#jp .t5{color:#1c9683}#jp .t6{color:#6b4ea2}
+#han{position:absolute;left:64px;top:390px;font-family:var(--body);font-weight:700;font-size:108px;line-height:120px;letter-spacing:.05em}
+#jade{position:absolute;left:64px;top:528px;width:0;height:7px;border-radius:4px;background:var(--accent)}
+#chips{position:absolute;left:64px;top:560px;display:flex;gap:14px}
+.chip{padding:14px 22px;border-radius:999px;background:rgba(28,150,131,.1);color:var(--accent);font-family:var(--body);font-weight:700;font-size:22px}
+
+/* CONVO */
+#convo-plate{position:absolute;left:50%;top:50%;width:1600px;height:1000px;margin-left:-800px;margin-top:-500px;border-radius:28px;object-fit:cover;object-position:center 40%;box-shadow:0 40px 120px rgba(7,19,31,.25)}
+#convo-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(238,245,248,.15),rgba(238,245,248,.55))}
+#bubble-a,#bubble-b{position:absolute;left:50%;transform:translateX(-50%);width:920px;padding:36px 48px;border-radius:28px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 20px 60px rgba(7,19,31,.18);font-family:var(--body);text-align:center}
+#bubble-a{top:160px}
+#bubble-b{top:520px}
+#bubble-a .jp,#bubble-b .jp{display:block;font-size:26px;font-weight:700;margin-bottom:8px;letter-spacing:.06em}
+#bubble-a .han,#bubble-b .han{display:block;font-size:64px;font-weight:700;line-height:76px;color:var(--ink)}
+#bubble-a .en{display:block;margin-top:10px;font-size:28px;font-weight:700;color:var(--ink-soft)}
+#bubble-b .tag{display:block;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px}
+
+/* CAM AR */
+#street{position:absolute;inset:0;background:
+  linear-gradient(180deg,#1a3a44 0%,#0d2228 45%,#07131f 100%)}
+#street-glow{position:absolute;left:10%;top:8%;width:80%;height:40%;background:radial-gradient(ellipse,rgba(28,150,131,.35),transparent 70%);filter:blur(8px)}
+#phone{position:absolute;left:560px;top:80px;width:800px;height:920px;border-radius:56px;background:#0a1218;border:10px solid #1c2a33;box-shadow:0 50px 120px rgba(0,0,0,.45);overflow:hidden}
+#phone-notch{position:absolute;left:50%;top:14px;width:160px;height:28px;margin-left:-80px;border-radius:20px;background:#05080c;z-index:2}
+#ar-view{position:absolute;inset:18px;border-radius:42px;overflow:hidden;background:
+  linear-gradient(160deg,#2a5560 0%,#1a3540 40%,#0f242c 100%)}
+#ar-sign{position:absolute;left:80px;top:220px;width:420px;height:160px;border-radius:12px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.2)}
+#ar-sign-en{position:absolute;left:100px;top:260px;font-family:var(--body);font-size:36px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:.04em}
+#ar-sticker{position:absolute;left:140px;top:400px;padding:28px 36px;border-radius:24px;background:rgba(255,255,255,.94);box-shadow:0 16px 40px rgba(0,0,0,.35);font-family:var(--body);text-align:left}
+#ar-sticker .jp{font-size:22px;font-weight:700;margin-bottom:6px}
+#ar-sticker .han{font-size:52px;font-weight:700;line-height:60px;color:var(--ink)}
+#ar-ring{position:absolute;left:300px;top:180px;width:200px;height:200px;border:3px solid rgba(28,150,131,.85);border-radius:50%;box-shadow:0 0 0 2px rgba(28,150,131,.2)}
+
+/* CLOSE */
+#close{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:40px}
+#chop{width:168px;height:168px;border-radius:32px}
+#word{font-size:100px;line-height:104px;font-weight:800;letter-spacing:-.04em}
+#close-line{position:absolute;left:0;top:700px;width:1920px;text-align:center;font-family:var(--body);font-size:36px;font-weight:700;color:var(--ink-soft)}
+</style>
+</head>
+<body>
+<div id="main">
+  <!-- 1 HOOK -->
+  <section id="s1" class="scene">
+    <div class="wash"></div><div id="arcs1" class="arcs"></div>
+    <div id="hook">Say it.</div>
+    <div id="hook-sub">聽得明，先講得出。</div>
+  </section>
+
+  <!-- 2 SOLO -->
+  <section id="s2" class="scene" style="visibility:hidden">
+    <div class="wash"></div><div class="arcs"></div>
+    <div id="cam2" class="cam">
+      <div id="solo">
+        <div id="solo-chrome"><i></i><i></i><i></i></div>
+        <div id="solo-badge"><b>Solo</b>獨白</div>
+        <div id="en-lab">ENGLISH</div>
+        <div id="en-box">
+          <div id="en-text">Where is the MTR?</div>
+          <i id="caret"></i>
+        </div>
+        <div id="yue-lab">粵語 · Hong Kong</div>
+        <div id="jp">
+          <span class="t6">dei6</span>
+          <span class="t3">tit3</span>
+          <span class="t2">hai2</span>
+          <span class="t1">bin1</span>
+        </div>
+        <div id="han">地鐵喺邊？</div>
+        <div id="jade"></div>
+        <div id="chips">
+          <span class="chip">Jyutping</span>
+          <span class="chip">口語</span>
+          <span class="chip">6 tones</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 CONVO -->
+  <section id="s3" class="scene" style="visibility:hidden">
+    <div class="wash"></div>
+    <div id="cam3" class="cam">
+      <img id="convo-plate" src="./assets/ui/convo.jpg" alt="">
+      <div id="convo-veil"></div>
+      <div id="bubble-a">
+        <span class="jp"><span style="color:#6b4ea2">dei6</span> <span style="color:#d17a1f">tit3</span> <span style="color:#8a5a2b">hai2</span> <span style="color:#2f6fed">bin1</span></span>
+        <span class="han">地鐵喺邊？</span>
+        <span class="en">Where is the MTR?</span>
+      </div>
+      <div id="bubble-b">
+        <span class="tag">THEIR SIDE · 對面</span>
+        <span class="han">直走就到。</span>
+        <span class="jp" style="margin-top:8px;color:var(--ink-soft)">zik6 zau2 zau6 dou3</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 CAM -->
+  <section id="s4" class="scene" style="visibility:hidden">
+    <div id="street"></div>
+    <div id="street-glow"></div>
+    <div id="cam4" class="cam">
+      <div id="phone">
+        <div id="phone-notch"></div>
+        <div id="ar-view">
+          <div id="ar-sign"></div>
+          <div id="ar-sign-en">MTR →</div>
+          <div id="ar-ring"></div>
+          <div id="ar-sticker">
+            <div class="jp"><span style="color:#6b4ea2">dei6</span> <span style="color:#d17a1f">tit3</span> <span style="color:#8a5a2b">hai2</span> <span style="color:#2f6fed">bin1</span></div>
+            <div class="han">地鐵喺邊？</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 CLOSE -->
+  <section id="s5" class="scene" style="visibility:hidden">
+    <div class="wash"></div><div class="arcs"></div>
+    <div id="close">
+      <img id="chop" src="./assets/pwa-512.png" width="168" height="168" alt="">
+      <div id="word">JyutTranslate</div>
+    </div>
+    <div id="close-line">準備好俾人聽明未？</div>
+  </section>
+</div>
+
+<script src="./runtime/vendor/gsap.min.js"></script>
+<script src="./runtime/motion.js"></script>
+<script>
+const M = Motion.film({ fps: 30, duration: 30, width: 1920, height: 1080, clock: 'smooth' });
+const ACC = '#1c9683';
+
+/* ---- 1 HOOK 0-120 ---- */
+M.words('#hook', { at: 6, mech: 'rise', dist: 110, gaps: [6], frames: 15, fixedSlots: false,
+  smear: { px: 48 }, accent: { color: ACC, frames: 28, word: -1 },
+  words: (i) => (i === 1 ? { scale: 1.2, dist: 140 } : null) });
+M.enter('#hook-sub', { at: 36, frames: 14, ease: 'softLand', from: { y: 36, opacity: 0 } });
+M.kf('#hook', 'scale', [[6, 1], [95, 1.03], [119, 1.14, 'gentleIn']]);
+M.drift('#arcs1', { prop: 'scale', from: 1, to: 1.06, start: 0, end: 120 });
+
+/* ---- 2 SOLO 120-360 ---- */
+M.cut(120, { hide: ['#s1'], show: ['#s2'] });
+M.enter('#solo', { at: 120, frames: 18, ease: 'softLand', from: { y: 70, scale: 0.9 }, smear: { axis: 'y', px: 40 } });
+M.type('#en-text', { at: 140, style: 'fast', seed: 13, caret: '#caret', caretGap: 8, accentNewest: { color: ACC, frames: 2 } });
+/* Cantonese lands after typing */
+M.kf('#jp', 'opacity', [[120, 0], [220, 0], [228, 1, 'softLand']]);
+M.kf('#han', 'opacity', [[120, 0], [226, 0], [234, 1, 'softLand']]);
+M.kf('#han', 'y', [[226, 40], [252, 0, 'softLand']]);
+M.kf('#yue-lab', 'opacity', [[120, 0.3], [226, 0.3], [236, 1, 'glide']]);
+M.kf('#jade', 'width', [[234, 0], [280, 640, 'softLand']], { fmt: v => v + 'px' });
+M.enter('#chips', { at: 270, frames: 14, ease: 'softLand', from: { y: 30, opacity: 0 } });
+M.drift('#cam2', { prop: 'scale', from: 1, to: 1.12, start: 140, end: 360 });
+M.kf('#solo', 'y', [[234, 0], [360, -80, 'glide']]);
+M.kf('#jade', 'opacity', [[280, 1], [310, 0.4, 'softInOut'], [340, 1, 'softInOut'], [360, 1]]);
+
+/* ---- 3 CONVO 360-570 ---- */
+M.cut(360, { hide: ['#s2'], show: ['#s3'] });
+M.enter('#convo-plate', { at: 360, frames: 16, ease: 'softLand', from: { scale: 1.12, blur: 6 } });
+M.enter('#bubble-a', { at: 375, frames: 14, ease: 'snapSettle', from: { y: -80, scale: 0.92 }, smear: { axis: 'y', px: 36 } });
+M.enter('#bubble-b', { at: 410, frames: 14, ease: 'softLand', from: { y: 60, opacity: 0 } });
+M.camera('#cam3', [
+  [360, { scale: 1.05, y: 0 }],
+  [480, { scale: 1.18, y: -40 }, 'softInOut'],
+  [570, { scale: 1.28, y: -70 }, 'gentleIn'],
+], { origin: '50% 45%' });
+
+/* ---- 4 CAM 570-840 ---- */
+M.cut(570, { hide: ['#s3'], show: ['#s4'] });
+M.enter('#phone', { at: 570, frames: 18, ease: 'softLand', from: { y: 100, scale: 0.88 }, smear: { axis: 'y', px: 42 } });
+M.enter('#ar-ring', { at: 595, frames: 12, ease: 'popOver', from: { scale: 0.4, opacity: 0 } });
+M.enter('#ar-sticker', { at: 620, frames: 16, ease: 'snapSettle', from: { y: 80, scale: 1.4, blur: 8 }, smear: { axis: 'y', px: 40 } });
+M.enter('#ar-sign-en', { at: 585, frames: 12, ease: 'softLand', from: { opacity: 0, y: 20 } });
+M.drift('#cam4', { prop: 'scale', from: 1, to: 1.16, start: 595, end: 840 });
+M.kf('#ar-sticker', 'y', [[640, 0], [720, -22, 'softInOut'], [840, -48, 'glide']]);
+M.kf('#ar-sticker', 'rotation', [[640, -2], [740, 2, 'softInOut'], [840, -1, 'glide']]);
+M.kf('#ar-ring', 'scale', [[620, 1], [680, 1.18, 'softInOut'], [760, 0.94, 'softInOut'], [840, 1.08, 'glide']]);
+M.kf('#ar-sign', 'opacity', [[570, 0.55], [680, 0.95, 'softInOut'], [840, 0.65]]);
+M.kf('#street-glow', 'opacity', [[570, 0.6], [700, 1, 'softInOut'], [840, 0.7]]);
+/* late Cam breath so the handoff into the chop still moves */
+M.kf('#phone', 'y', [[780, 0], [840, -28, 'gentleIn']]);
+
+/* ---- 5 CLOSE 840-900 (≤2s; end hold 0.6–1.4) ---- */
+M.cut(840, { hide: ['#s4'], show: ['#s5'] });
+M.enter('#close', { at: 840, frames: 18, ease: 'snapSettle', from: { scale: 3.5, blur: 12 }, smear: { axis: 'x', px: 56, frames: 3 } });
+M.enter('#close-line', { at: 858, frames: 12, ease: 'softLand', from: { y: 28, opacity: 0 } });
+/* C1 perpetual contraction — accelerating, still shrinking on last frame */
+M.kf('#close', 'scale', [
+  [858, 1],
+  [878, 0.94, 'cruise'],
+  [892, 0.86, 'gentleIn'],
+  [899, 0.72, 'gentleIn'],
+]);
+M.kf('#close-line', 'opacity', [[858, 0], [870, 1, 'softLand'], [899, 0.85, 'glide']]);
+M.mark(840, 'logo', 'chop + wordmark');
+
+window.__ready = Motion.loaded().then(() => {
+  if (/selftest/.test(location.search)) Motion.selfTest(M, { samples: 24 });
+});
+</script>
+</body>
+</html>

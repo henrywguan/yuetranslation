@@ -1,0 +1,21 @@
+# Iterative drafts / v1 (keep MAX finals only)
+draft.mp4
+draft.mp4.events.json
+draft-max.mp4
+draft-max.mp4.events.json
+draft-max-render.log
+final.mp4
+final.mp4.events.json
+final-render.log
+final-vo.mp4
+look/
+look-final/
+look-vo/
+look-report.txt
+look-final-report.txt
+look-vo-report.txt
+stills/
+lint-report.txt
+vo.txt
+# Unused 3D runtime (skill has the copy; this film is 2D)
+runtime/hero3d/

@@ -1,0 +1,17 @@
+lint.mjs /workspace/film/index.html  1920x1080  duration 30s  36 samples (0.42, 1.25, 2.08, 2.92, 3.75, 4.58, 5.42, 6.25, ...)
+C1 corner/edge micro-label....................... PASS
+C2 tracked uppercase label....................... PASS
+C3 chapter / counter index....................... PASS
+C4 production metadata (BPM/FPS/timecode/version) PASS
+C5 mono micro-label.............................. PASS
+C6 header/footer bar or row...................... PASS
+C7 kicker above headline......................... PASS
+D1 deck layout (left-anchored headline block).... PASS
+P1 progress bar.................................. PASS
+T1 letter-typed headline......................... PASS
+V1 greeting header............................... PASS
+V2 label . value line............................ PASS
+V3 status dot beside text........................ PASS
+V4 zinc-grey text................................ PASS
+V5 vibe-coded UI card (cluster).................. PASS
+GATE G5: PASS   (a lead, not a verdict: text inside images/canvas is not seen)
