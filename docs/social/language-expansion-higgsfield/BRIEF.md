@@ -77,7 +77,7 @@ Music stays under VO the whole time; never mute the bed.
 PICTURE:
 0–2s: Night Hong Kong ferry wake / harbor lights, slow push-in, cool blue shadows with a thin jade accent rim light. Giant kinetic Syne-style word "MORE" in white ink, then it fractures into glowing language chips.
 2–12s: Rapid but elegant montage — young adults in travel / family / street moments across Asia and Europe (Tokyo neon alley, Seoul cafe, Bangkok night market, Paris metro, Cairo evening street, Jakarta street food, Berlin tram). Each beat: a language name appears as large kinetic type in its own script (日本語 · Bahasa · 한국어 · Español · Français · हिन्दी · العربية · Deutsch · ไทย · Tagalog · Tiếng Việt · 粵語) with jade underline flash, then exits. Faces optional, no readable fake app UI, no invented logos, no competitor names.
-12–15s: Quiet harbor hold — empty dark phone silhouette (screen black for later UI composite), soft jade glow, music swell then settle. No logo, no URL, no tagline on screen.
+12–15s: Quiet harbor hold — phone in frame with **real JyutTranslate Solo UI lit and readable** on screen (language panes + speak CTA). Soft jade glow, music swell then settle. No invented chrome; no empty black screen; no logo/URL/tagline outside the real UI.
 
 Look: luxury tech ad, photoreal, shallow depth, Harbor night grade (#07131f shadows, jade #1c9683 accents, ink highlights). No purple gradients, no cartoon mascots, no PowerPoint layout, no fake JyutTranslate chrome.
 ```

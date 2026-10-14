@@ -3,9 +3,16 @@
 ## Hero video — Seedance 2.5 (music + SFX + multi-lang VO)
 - job_id: `ea30b175-84f0-4705-94e4-ec76186c98e4`
 - config: 9:16 · 15s · 1080p · `generate_audio: true` · ~180 credits preflight
-- status: **completed**
+- status: **completed** (v1 — empty black phone at end; superseded)
 - result: https://d8j0ntlcm91z4.cloudfront.net/user_3Il2eGZ0s8ARZmKemoF2TKZQsja/hf_20261014_014349_ea30b175-84f0-4705-94e4-ec76186c98e4.mp4
-- local: `out/seedance-hero.mp4` (HEVC + AAC, 15.05s)
+- local: `out/seedance-hero.mp4`
+
+## Hero v2 — video_edit: real Solo UI on phone ending
+- job_id: `565ba670-935a-48d8-8987-801c3acfea43`
+- inputs: v1 video + `primary-lang/03-solo-yue.jpg` (real Solo plate)
+- status: **completed** — use this cut
+- result: https://d8j0ntlcm91z4.cloudfront.net/user_3Il2eGZ0s8ARZmKemoF2TKZQsja/hf_20261014_015836_565ba670-935a-48d8-8987-801c3acfea43.mp4
+- local: `out/seedance-hero-solo-ending.mp4`
 
 ## VO stems — Seed Audio batch (12)
 | i | Lang | job_id |
