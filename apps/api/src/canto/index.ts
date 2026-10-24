@@ -3,5 +3,7 @@ export { lexiconTranslate, lexiconStats, looksLikeGlossDump, englishDefinitionsF
 export { hardenYueOutput } from './postProcess.js'
 export { scrubMandarinToYue } from './scrub.js'
 export { scrubYueToCmn } from './scrubCmn.js'
+export { toHkTraditional, toSimplified } from './opencc.js'
+export { lookupGloss, lookupHeadword, glossStats } from './gloss.js'
 export { uniqStrings } from './normalize.js'
 export type { TranslateStage } from './types.js'

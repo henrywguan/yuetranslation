@@ -3,11 +3,12 @@ import { gunzipSync } from 'node:zlib'
 import { join } from 'node:path'
 import { cantoDataDir } from './dataDir.js'
 import { wordshkEnabled } from './licenseGate.js'
+import { toHkTraditional } from './opencc.js'
 
 export type GlossHit = {
   gloss: string
   jyutping: string | null
-  source: 'seed' | 'cc-canto' | 'wordshk'
+  source: 'seed' | 'cc-canto' | 'wordshk' | 'cc-cedict-readings'
 }
 
 type PackedDict = {
@@ -17,6 +18,16 @@ type PackedDict = {
   version?: string
   entryCount: number
   entries: Record<string, { jyutping: string | null; gloss: string; simplified?: string | null }>
+}
+
+/** Attestation / Jyutping-only pack (no English gloss for MT). */
+type PackedReadings = {
+  source: string
+  license: string
+  attribution?: string
+  version?: string
+  entryCount: number
+  entries: Record<string, { jyutping: string | null; simplified?: string | null }>
 }
 
 const dataDir = cantoDataDir()
@@ -103,8 +114,41 @@ function loadPacked(basename: string): PackedDict | null {
   return null
 }
 
+function loadReadings(basename: string): PackedReadings | null {
+  const gz = join(dataDir, `${basename}.json.gz`)
+  const plain = join(dataDir, `${basename}.json`)
+  try {
+    if (existsSync(gz)) {
+      const buf = gunzipSync(readFileSync(gz))
+      return JSON.parse(buf.toString('utf8')) as PackedReadings
+    }
+    if (existsSync(plain)) {
+      return JSON.parse(readFileSync(plain, 'utf8')) as PackedReadings
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
 const ccCanto = loadPacked('cc-canto-gloss')
 const wordshk = wordshkEnabled() ? loadPacked('wordshk-gloss') : null
+const ccCedictReadings = loadReadings('cc-cedict-readings')
+
+/** Simplified → Traditional reverse index from CC-Canto (+ readings). */
+const simpToTrad = new Map<string, string>()
+function indexSimp(
+  entries: Record<string, { simplified?: string | null }> | undefined,
+) {
+  if (!entries) return
+  for (const [trad, e] of Object.entries(entries)) {
+    const simp = e.simplified
+    if (!simp || simp === trad) continue
+    if (!simpToTrad.has(simp)) simpToTrad.set(simp, trad)
+  }
+}
+indexSimp(ccCanto?.entries)
+indexSimp(ccCedictReadings?.entries)
 
 export type LexiconEntry = {
   trad: string
@@ -113,7 +157,7 @@ export type LexiconEntry = {
   source: 'seed' | 'cc-canto' | 'wordshk'
 }
 
-/** Walk seed + optional words.hk + CC-Canto for offline lexicon indexing. */
+/** Walk seed + optional words.hk + CC-Canto for offline lexicon indexing (gloss MT). */
 export function eachLexiconEntry(fn: (entry: LexiconEntry) => void) {
   for (const [trad, gloss] of Object.entries(SEED)) {
     fn({ trad, gloss, jyutping: null, source: 'seed' })
@@ -138,9 +182,12 @@ export function glossStats() {
     ccCanto: ccCanto?.entryCount || 0,
     wordshk: wordshkEnabled() ? wordshk?.entryCount || 0 : 0,
     wordshkEligible: wordshkEnabled(),
+    ccCedictReadings: ccCedictReadings?.entryCount || 0,
+    simpAliases: simpToTrad.size,
     attributions: [
       ccCanto?.attribution,
       wordshkEnabled() ? wordshk?.attribution : null,
+      ccCedictReadings?.attribution,
     ].filter(Boolean),
   }
 }
@@ -163,20 +210,61 @@ export function exportCcCantoEntries(): Record<
   return out
 }
 
-/** Look up a Traditional (or as-written) token: seed > words.hk (if gated) > CC-Canto. */
-export function lookupGloss(token: string): GlossHit | null {
+function resolveTokenVariants(token: string): string[] {
   const t = token.trim()
-  if (!t) return null
-  if (SEED[t]) {
-    return { gloss: SEED[t], jyutping: null, source: 'seed' }
+  if (!t) return []
+  const out: string[] = [t]
+  const hk = toHkTraditional(t)
+  if (hk !== t) out.push(hk)
+  const viaSimp = simpToTrad.get(t) || simpToTrad.get(hk)
+  if (viaSimp && !out.includes(viaSimp)) out.push(viaSimp)
+  return out
+}
+
+function glossHitForTrad(trad: string): GlossHit | null {
+  if (SEED[trad]) {
+    return { gloss: SEED[trad], jyutping: null, source: 'seed' }
   }
-  if (wordshk?.entries[t]) {
-    const e = wordshk.entries[t]
+  if (wordshk?.entries[trad]) {
+    const e = wordshk.entries[trad]
     return { gloss: e.gloss, jyutping: e.jyutping, source: 'wordshk' }
   }
-  if (ccCanto?.entries[t]) {
-    const e = ccCanto.entries[t]
+  if (ccCanto?.entries[trad]) {
+    const e = ccCanto.entries[trad]
     return { gloss: e.gloss, jyutping: e.jyutping, source: 'cc-canto' }
+  }
+  return null
+}
+
+/**
+ * Look up a Traditional (or Simplified) token: seed > words.hk (if gated) > CC-Canto.
+ * OpenCC s2hk + CC-Canto simplified aliases unlock Simplified OCR / model drafts.
+ * Does **not** return CC-CEDICT readings (no English gloss — see lookupHeadword).
+ */
+export function lookupGloss(token: string): GlossHit | null {
+  for (const v of resolveTokenVariants(token)) {
+    const hit = glossHitForTrad(v)
+    if (hit) return hit
+  }
+  return null
+}
+
+/**
+ * Headword presence for attestation / Jyutping: gloss sources + CC-CEDICT readings.
+ * Readings never feed offline lexicon MT (no English gloss).
+ */
+export function lookupHeadword(token: string): GlossHit | null {
+  const gloss = lookupGloss(token)
+  if (gloss) return gloss
+  for (const v of resolveTokenVariants(token)) {
+    const e = ccCedictReadings?.entries[v]
+    if (e) {
+      return {
+        gloss: '',
+        jyutping: e.jyutping,
+        source: 'cc-cedict-readings',
+      }
+    }
   }
   return null
 }

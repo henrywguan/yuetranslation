@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { env, llmChatExtras } from './env.js'
 import { openaiClientWithKey } from './openaiClient.js'
-import { lookupGloss } from './canto/gloss.js'
+import { lookupGloss, lookupHeadword } from './canto/gloss.js'
 import { hasHan, isHanChar } from './canto/han.js'
 import { scrubMandarinToYue } from './canto/scrub.js'
 import { cantoneseGlossForEnglish } from './canto/lexiconTranslate.js'
@@ -99,6 +99,7 @@ function localYueBreakdown(text: string): BreakdownChar[] {
     if (!isHanChar(ch) && !/[？！。，、…]/.test(ch)) continue
 
     const hit = lookupGloss(ch)
+    const head = hit || lookupHeadword(ch)
     let meaning = hit?.gloss ? firstSense(hit.gloss) : ''
     if (!meaning && isHanChar(ch)) {
       meaning = meaningInWordSpan(i, spans)
@@ -110,9 +111,9 @@ function localYueBreakdown(text: string): BreakdownChar[] {
 
     rows.push({
       char: ch,
-      jyutping: hit?.jyutping || null,
+      jyutping: head?.jyutping || null,
       meaning,
-      glossSource: hit?.source,
+      glossSource: hit?.source || (head?.source === 'cc-cedict-readings' ? head.source : undefined),
     })
   }
   return rows

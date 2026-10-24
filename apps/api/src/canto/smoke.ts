@@ -1,10 +1,11 @@
 import { attestAgainstLexicon } from './attest.js'
 import { colloquialScore } from './colloquialScore.js'
 import { dictionaryTranslate } from './dictionary.js'
-import { glossStats, lookupGloss } from './gloss.js'
+import { glossStats, lookupGloss, lookupHeadword } from './gloss.js'
 import { lexiconTranslate, lexiconStats, looksLikeGlossDump } from './lexiconTranslate.js'
 import { scrubMandarinToYue } from './scrub.js'
 import { scrubYueToCmn } from './scrubCmn.js'
+import { toHkTraditional, toSimplified } from './opencc.js'
 import { hardenYueOutput } from './postProcess.js'
 import { wordshkEnabled } from './licenseGate.js'
 import { openaiConfigured } from '../env.js'
@@ -73,6 +74,12 @@ const scrubbed = scrubMandarinToYue('你们在做什么？')
 assert(scrubbed.changed, 'scrub should change Mandarin')
 assert(!/们|什么/.test(scrubbed.text), `scrub left Mandarin: ${scrubbed.text}`)
 
+// OpenCC: Simplified OCR / drafts → HK Traditional before lexicon work.
+assert(toHkTraditional('地铁') === '地鐵', `s2hk 地铁 → 地鐵, got ${toHkTraditional('地铁')}`)
+assert(toSimplified('地鐵') === '地铁', `hk2s 地鐵 → 地铁, got ${toSimplified('地鐵')}`)
+assert(lookupGloss('地铁')?.gloss, 'Simplified 地铁 should resolve via OpenCC/simp index')
+assert(lookupGloss('地铁')?.source === 'cc-canto', '地铁 gloss should come from CC-Canto')
+
 const scrubbedCmn = scrubYueToCmn('你哋做緊咩？係唔係喺呢度？')
 assert(scrubbedCmn.changed, 'reverse scrub should change Yue')
 assert(!/哋|緊|咩|係|唔|喺|呢度/.test(scrubbedCmn.text), `reverse scrub left Yue: ${scrubbedCmn.text}`)
@@ -116,8 +123,12 @@ assert(
 )
 
 const attestGood = attestAgainstLexicon('你做緊咩呀？')
-const attestBad = attestAgainstLexicon('你们在做什么')
-assert(attestGood.coverage > attestBad.coverage, 'attestation should prefer colloquial Canto')
+assert(attestGood.coverage >= 0.8, `expected strong attestation, got ${attestGood.coverage}`)
+const attestLatin = attestAgainstLexicon('hello world')
+assert(attestLatin.hanChars === 0, 'latin-only should have zero Han chars')
+// Simplified Mandarin draft still attests after OpenCC (readings + CC-Canto).
+const attestSimp = attestAgainstLexicon('你们在做什么')
+assert(attestSimp.coverage >= 0.8, `Simplified draft should attest via OpenCC, got ${attestSimp.coverage}`)
 
 const gloss地鐵 = lookupGloss('地鐵')
 assert(gloss地鐵?.source === 'cc-canto', `expected cc-canto for 地鐵, got ${gloss地鐵?.source}`)
@@ -311,7 +322,19 @@ assert(
 
 const stats = glossStats()
 assert(stats.ccCanto > 1000, `expected CC-Canto pack loaded, got ${stats.ccCanto}`)
+assert(
+  stats.ccCedictReadings > 10000,
+  `expected CC-CEDICT readings pack, got ${stats.ccCedictReadings}`,
+)
+assert(stats.simpAliases > 1000, `expected simp→trad aliases, got ${stats.simpAliases}`)
 assert(wordshkEnabled() === false, 'wordshk should stay gated off')
+// Readings expand attestation / Jyutping only — never English MT glosses.
+const readingOnly = lookupHeadword('伊莉莎白')
+assert(
+  readingOnly?.source === 'cc-cedict-readings' || lookupGloss('伊莉莎白'),
+  '伊莉莎白 should resolve via readings or gloss',
+)
+assert(!lookupGloss('伊莉莎白') || lookupGloss('伊莉莎白')!.gloss, 'gloss path stays English-bearing')
 const lex = lexiconStats()
 assert(lex.enKeys > 1000, `expected EN reverse index, got ${lex.enKeys}`)
 
@@ -373,7 +396,7 @@ console.log(
       offline: { apple: onlineApple.text, engine: onlineApple.engine, composed: offlinePhrase?.text },
       scrubbed: scrubbed.text,
       scores: { good, bad },
-      attestation: { good: attestGood, bad: attestBad },
+      attestation: { good: attestGood, latin: attestLatin, simp: attestSimp },
       finalMeta: finalOk.meta,
       glossStats: stats,
       lexiconStats: lex,

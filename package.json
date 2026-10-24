@@ -17,6 +17,7 @@
     "build:web:marketing": "node scripts/generate-icons.mjs && VITE_BASE_PATH=./ npm run build --prefix apps/web && rm -rf dist-marketing && mkdir -p dist-marketing && cp -R apps/web/dist/. dist-marketing/",
     "icons": "node scripts/generate-icons.mjs",
     "smoke:canto": "npm run smoke:canto --prefix apps/api",
+    "smoke:canto-quality": "python3 scripts/canto-quality-harness/harness.py",
     "smoke:entitlements": "npm run smoke:entitlements --prefix apps/api",
     "smoke:usage": "npm run smoke:usage --prefix apps/api",
     "smoke:household-usage": "npm run smoke:household-usage --prefix apps/api",

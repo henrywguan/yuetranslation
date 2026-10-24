@@ -24,7 +24,9 @@
     "smoke:practice-partner": "tsx src/practicePartnerAi.smoke.ts && tsx src/practicePartnerPerformance.smoke.ts && tsx src/practicePartnerLeaderboard.smoke.ts",
     "smoke:all": "npm run smoke:entitlements && npm run smoke:usage && npm run smoke:household-usage && npm run smoke:admin-usage-range && npm run smoke:guest-rl && npm run smoke:guest-identity && npm run smoke:history && npm run smoke:canto && npm run smoke:details-enrich && npm run smoke:translate-camera && npm run smoke:harbor-quest && npm run smoke:practice-partner",
     "import:cc-canto": "tsx scripts/import-cc-canto.ts",
-    "import:wordshk": "tsx scripts/import-wordshk.ts"
+    "import:cc-cedict-readings": "tsx scripts/import-cc-cedict-readings.ts",
+    "import:wordshk": "tsx scripts/import-wordshk.ts",
+    "smoke:canto-quality": "python3 ../../scripts/canto-quality-harness/harness.py"
   },
   "dependencies": {
     "@jyut/shared": "file:../../packages/yue-shared",
@@ -36,6 +38,7 @@
     "express": "^4.21.2",
     "jszip": "^3.10.1",
     "openai": "^4.77.0",
+    "opencc-js": "^1.4.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "resend": "^4.8.0",
