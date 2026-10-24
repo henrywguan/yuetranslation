@@ -213,11 +213,14 @@ export function exportCcCantoEntries(): Record<
 function resolveTokenVariants(token: string): string[] {
   const t = token.trim()
   if (!t) return []
+  // Prefer cheap simp→trad index before OpenCC (covers most CC-Canto OCR misses).
   const out: string[] = [t]
+  const viaSimp = simpToTrad.get(t)
+  if (viaSimp) out.push(viaSimp)
   const hk = toHkTraditional(t)
-  if (hk !== t) out.push(hk)
-  const viaSimp = simpToTrad.get(t) || simpToTrad.get(hk)
-  if (viaSimp && !out.includes(viaSimp)) out.push(viaSimp)
+  if (hk !== t && !out.includes(hk)) out.push(hk)
+  const viaSimpHk = simpToTrad.get(hk)
+  if (viaSimpHk && !out.includes(viaSimpHk)) out.push(viaSimpHk)
   return out
 }
 
@@ -252,11 +255,15 @@ export function lookupGloss(token: string): GlossHit | null {
 /**
  * Headword presence for attestation / Jyutping: gloss sources + CC-CEDICT readings.
  * Readings never feed offline lexicon MT (no English gloss).
+ * Resolves variants once (OpenCC is the expensive step on hot attestation paths).
  */
 export function lookupHeadword(token: string): GlossHit | null {
-  const gloss = lookupGloss(token)
-  if (gloss) return gloss
-  for (const v of resolveTokenVariants(token)) {
+  const variants = resolveTokenVariants(token)
+  for (const v of variants) {
+    const hit = glossHitForTrad(v)
+    if (hit) return hit
+  }
+  for (const v of variants) {
     const e = ccCedictReadings?.entries[v]
     if (e) {
       return {

@@ -151,16 +151,34 @@ def main() -> int:
                 examples_fail.append(f"{text!r}: {e}")
             continue
 
-        jp_vals: list[str] = []
-        if isinstance(labeled, list):
-            for item in labeled:
+        def collect_jp(rows: list) -> list[str]:
+            vals: list[str] = []
+            for item in rows:
                 if isinstance(item, (tuple, list)) and len(item) >= 2:
                     jp = item[1]
                     if isinstance(jp, str) and JP_TOKEN_RE.search(jp):
-                        jp_vals.append(jp)
+                        vals.append(jp)
+            return vals
 
-        # Require Jyutping on a majority of Han chars (punctuation may be None)
-        han_labeled = sum(1 for item in labeled if isinstance(item, (tuple, list)) and HAN_RE.match(str(item[0])))
+        jp_vals = collect_jp(labeled) if isinstance(labeled, list) else []
+        # Word-level None (e.g. 幸会) — fall back to per-character labeling.
+        if not jp_vals:
+            per_char: list = []
+            for ch in text:
+                if not HAN_RE.match(ch):
+                    continue
+                try:
+                    per_char.extend(pc.characters_to_jyutping(ch) or [])
+                except Exception:
+                    pass
+            labeled = per_char
+            jp_vals = collect_jp(per_char)
+
+        han_labeled = sum(
+            1
+            for item in labeled
+            if isinstance(item, (tuple, list)) and HAN_RE.match(str(item[0]))
+        )
         if jp_vals and (len(jp_vals) / max(han_labeled, 1)) >= 0.5:
             jp_ok += 1
         else:

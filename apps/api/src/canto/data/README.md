@@ -23,8 +23,10 @@ Pronunciation on the web client remains **`to-jyutping`**.
 
 ## Orthography / 字形
 
-- **OpenCC** (`opencc-js`, `s2hk` / `hk2s`) normalizes Simplified ↔ Hong Kong Traditional on scrub, attestation, and Cam Chinese OCR paths.  
-  **OpenCC** 在清洗、核验与相机中文 OCR 路径上做简繁（香港）归一。  
+- **OpenCC** (`opencc-js`, `s2hk` / `hk2s`) normalizes Simplified ↔ Hong Kong Traditional on scrub, attestation, and **Yue/Mandarin** Cam OCR paths.  
+  **OpenCC** 在清洗、核验与**粤／普**相机 OCR 路径上做简繁（香港）归一。  
+- **Wu / Sichuanese Cam sources are not forced through HK OpenCC** (avoids Hong Kong regional variants on dialect text).  
+  **吴／四川相机原文不做香港 OpenCC**（避免港式异体改写方言字）。  
 - CC-Canto **simplified** aliases are reverse-indexed so Simplified tokens hit Traditional headwords even before OpenCC.  
   CC-Canto 的简体字段已建倒排，简化字也可命中繁体词头。
 

@@ -5,7 +5,12 @@ import { glossStats, lookupGloss, lookupHeadword } from './gloss.js'
 import { lexiconTranslate, lexiconStats, looksLikeGlossDump } from './lexiconTranslate.js'
 import { scrubMandarinToYue } from './scrub.js'
 import { scrubYueToCmn } from './scrubCmn.js'
-import { toHkTraditional, toSimplified } from './opencc.js'
+import {
+  normalizeCamChineseSource,
+  toHkTraditional,
+  toSimplified,
+  usesHkCamOrthography,
+} from './opencc.js'
 import { hardenYueOutput } from './postProcess.js'
 import { wordshkEnabled } from './licenseGate.js'
 import { openaiConfigured } from '../env.js'
@@ -79,6 +84,17 @@ assert(toHkTraditional('地铁') === '地鐵', `s2hk 地铁 → 地鐵, got ${to
 assert(toSimplified('地鐵') === '地铁', `hk2s 地鐵 → 地铁, got ${toSimplified('地鐵')}`)
 assert(lookupGloss('地铁')?.gloss, 'Simplified 地铁 should resolve via OpenCC/simp index')
 assert(lookupGloss('地铁')?.source === 'cc-canto', '地铁 gloss should come from CC-Canto')
+// Bugbot: never force HK OpenCC onto Wu / Sichuanese Cam sources.
+assert(usesHkCamOrthography('yue') && usesHkCamOrthography('cmn'), 'yue/cmn use HK Cam orthography')
+assert(!usesHkCamOrthography('wuu') && !usesHkCamOrthography('sichuan'), 'wuu/sichuan skip HK Cam OpenCC')
+assert(
+  normalizeCamChineseSource('wuu', '侬好') === '侬好',
+  'wuu Cam source must stay unchanged by HK OpenCC',
+)
+assert(
+  normalizeCamChineseSource('yue', '地铁') === '地鐵',
+  'yue Cam source should s2hk',
+)
 
 const scrubbedCmn = scrubYueToCmn('你哋做緊咩？係唔係喺呢度？')
 assert(scrubbedCmn.changed, 'reverse scrub should change Yue')
@@ -329,12 +345,11 @@ assert(
 assert(stats.simpAliases > 1000, `expected simp→trad aliases, got ${stats.simpAliases}`)
 assert(wordshkEnabled() === false, 'wordshk should stay gated off')
 // Readings expand attestation / Jyutping only — never English MT glosses.
-const readingOnly = lookupHeadword('伊莉莎白')
-assert(
-  readingOnly?.source === 'cc-cedict-readings' || lookupGloss('伊莉莎白'),
-  '伊莉莎白 should resolve via readings or gloss',
-)
-assert(!lookupGloss('伊莉莎白') || lookupGloss('伊莉莎白')!.gloss, 'gloss path stays English-bearing')
+const readingName = '伊莉莎白'
+assert(!lookupGloss(readingName), `${readingName} must not be an EN gloss headword`)
+const readingOnly = lookupHeadword(readingName)
+assert(readingOnly?.source === 'cc-cedict-readings', `${readingName} should be readings-only`)
+assert(readingOnly?.jyutping, `${readingName} should carry Jyutping`)
 const lex = lexiconStats()
 assert(lex.enKeys > 1000, `expected EN reverse index, got ${lex.enKeys}`)
 
