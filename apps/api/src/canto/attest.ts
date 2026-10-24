@@ -1,8 +1,9 @@
-import { lookupGloss } from './gloss.js'
+import { lookupHeadword } from './gloss.js'
 import { isHanChar } from './han.js'
+import { toHkTraditional } from './opencc.js'
 
 export type AttestationResult = {
-  /** 0–1 share of Han characters covered by known CC-Canto/seed tokens. */
+  /** 0–1 share of Han characters covered by known lexicon headwords. */
   coverage: number
   hanChars: number
   attestedChars: number
@@ -10,18 +11,20 @@ export type AttestationResult = {
 }
 
 /**
- * Verify a Cantonese string against the local CC-Canto (+ seed) headword set.
+ * Verify a Cantonese string against seed + CC-Canto + CC-CEDICT readings.
  * Used as a reference layer on finals — not shown to users as definitions.
+ * Input is normalized to HK Traditional so Simplified drafts still attest.
  */
 export function attestAgainstLexicon(text: string): AttestationResult {
-  const chars = Array.from(text.trim()).filter((ch) => isHanChar(ch))
+  const normalized = toHkTraditional(text.trim())
+  const chars = Array.from(normalized).filter((ch) => isHanChar(ch))
   if (!chars.length) {
     return { coverage: 0, hanChars: 0, attestedChars: 0, unknownSpans: [] }
   }
 
   let attested = 0
   const unknownSpans: string[] = []
-  const full = Array.from(text.trim())
+  const full = Array.from(normalized)
 
   let fi = 0
   while (fi < full.length) {
@@ -36,7 +39,7 @@ export function attestAgainstLexicon(text: string): AttestationResult {
       const slice = full.slice(fi, fi + L)
       if (!slice.every((c) => isHanChar(c))) continue
       const surface = slice.join('')
-      if (lookupGloss(surface)) {
+      if (lookupHeadword(surface)) {
         matchedLen = L
         attested += L
         break

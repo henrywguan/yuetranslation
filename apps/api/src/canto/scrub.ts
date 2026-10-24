@@ -3,6 +3,7 @@
  * Phrase-level first (safer), then a few high-confidence character swaps.
  * Runs in milliseconds — safe on interim + final.
  */
+import { toHkTraditional } from './opencc.js'
 
 const PHRASE_SWAPS: Array<[RegExp, string]> = [
   [/在干嘛|在幹嘛|在干什么|在幹什麼|在做什么|在做什麼/g, '做緊咩'],
@@ -54,8 +55,10 @@ const CHAR_SWAPS: Array<[RegExp, string]> = [
 ]
 
 export function scrubMandarinToYue(input: string): { text: string; changed: boolean } {
-  let text = input
-  const before = text
+  const before = input
+  // Normalize Simplified → HK Traditional first so lexicon/attestation + swaps
+  // see one orthography (e.g. 们 → 們 before 哋 scrub).
+  let text = toHkTraditional(input)
   for (const [re, to] of PHRASE_SWAPS) {
     text = text.replace(re, to)
   }

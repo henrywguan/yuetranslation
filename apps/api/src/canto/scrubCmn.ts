@@ -3,6 +3,7 @@
  * Phrase-level first (safer), then high-confidence character swaps when Yue-heavy.
  * Inverse of scrubMandarinToYue — never run when target is Yue.
  */
+import { toSimplified } from './opencc.js'
 
 const PHRASE_SWAPS: Array<[RegExp, string]> = [
   [/係唔係/g, '是不是'],
@@ -48,8 +49,8 @@ const CHAR_SWAPS: Array<[RegExp, string]> = [
 ]
 
 export function scrubYueToCmn(input: string): { text: string; changed: boolean } {
+  const before = input
   let text = input
-  const before = text
   for (const [re, to] of PHRASE_SWAPS) {
     text = text.replace(re, to)
   }
@@ -58,6 +59,8 @@ export function scrubYueToCmn(input: string): { text: string; changed: boolean }
       text = text.replace(re, to)
     }
   }
+  // Prefer Simplified Mandarin for Mainland / cmn readers.
+  text = toSimplified(text)
   return { text, changed: text !== before }
 }
 

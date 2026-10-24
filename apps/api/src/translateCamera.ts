@@ -2,6 +2,11 @@ import { env, llmChatExtras } from './env.js'
 import { openaiClient } from './openaiClient.js'
 import { hasHan } from './canto/han.js'
 import { scrubYueToCmn } from './canto/scrubCmn.js'
+import {
+  normalizeCamChineseSource,
+  polishCamYueOutput,
+  toSimplified,
+} from './canto/opencc.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
 export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ceb' | 'ilo' | 'bcl'
@@ -855,6 +860,7 @@ function demoTranslation(source: string, to: CameraLang): string {
         ? `（示范）${source}`
         : `（示範）${source}`
     if (to === 'cmn') demo = scrubYueToCmn(demo).text
+    else if (to === 'yue') demo = polishCamYueOutput(demo)
     return demo
   }
   if (isTagalogTarget(to)) {
@@ -941,9 +947,16 @@ export async function translateCameraText(
   to: CameraLang,
   opts?: CameraTranslateOpts,
 ): Promise<{ text: string; engine: string; cacheHit: boolean }> {
-  const source = text.trim().slice(0, 2000)
+  // OCR often returns Simplified. HK OpenCC only for yue/cmn — never force
+  // Hong Kong variants onto Shanghainese / Sichuanese Cam text.
+  const source = normalizeCamChineseSource(from, text.trim().slice(0, 2000))
   if (!source) return { text: '', engine: 'empty', cacheHit: true }
-  if (from === to) return { text: source, engine: 'identity', cacheHit: true }
+  if (from === to) {
+    if (to === 'cmn') {
+      return { text: toSimplified(source), engine: 'identity', cacheHit: true }
+    }
+    return { text: source, engine: 'identity', cacheHit: true }
+  }
 
   const key = `${from}|${to}|${source}`
   const hit = cache.get(key)
@@ -1032,6 +1045,7 @@ export async function translateCameraText(
                 : `(tr) ${source}`
   let translated = parseTranslation(raw, fallback)
   if (to === 'cmn') translated = scrubYueToCmn(translated).text
+  else if (to === 'yue') translated = polishCamYueOutput(translated)
   const guarded = sanitizeCameraTranslation(to, translated, source)
   const outText = guarded ?? source
   remember(key, outText)
@@ -1082,19 +1096,25 @@ export async function translateCameraBatch(
   to: CameraLang,
 ): Promise<{ translations: string[]; engine: string }> {
   if (!segments.length) return { translations: [], engine: 'empty' }
-  if (from === to) return { translations: segments, engine: 'identity' }
+  const normalized = segments.map((s) => normalizeCamChineseSource(from, s))
+  if (from === to) {
+    if (to === 'cmn') {
+      return { translations: normalized.map((s) => toSimplified(s)), engine: 'identity' }
+    }
+    return { translations: normalized, engine: 'identity' }
+  }
 
   const client = openaiClient()
   if (!client) {
     return {
-      translations: segments.map((s) => demoTranslation(s, to)),
+      translations: normalized.map((s) => demoTranslation(s, to)),
       engine: 'demo',
     }
   }
 
-  const out = [...segments]
-  for (let start = 0; start < segments.length; start += BATCH_SIZE) {
-    const chunk = segments.slice(start, start + BATCH_SIZE)
+  const out = [...normalized]
+  for (let start = 0; start < normalized.length; start += BATCH_SIZE) {
+    const chunk = normalized.slice(start, start + BATCH_SIZE)
     const numbered = chunk.map((line, i) => `${i + 1}. ${line}`).join('\n')
     const completion = await client.chat.completions.create({
       model: env.openaiModel,
@@ -1171,6 +1191,7 @@ export async function translateCameraBatch(
       let t = stripLeadingListNumber((translated[i] || '').trim())
       const src = chunk[i] || ''
       if (to === 'cmn' && t) t = scrubYueToCmn(t).text
+      else if (to === 'yue' && t) t = polishCamYueOutput(t)
       const guarded = sanitizeCameraTranslation(to, t, src)
       out[start + i] = guarded ?? src
       remember(`${from}|${to}|${src}`, out[start + i]!)

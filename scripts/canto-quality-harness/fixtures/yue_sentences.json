@@ -1,0 +1,16 @@
+{
+  "description": "Small offline Yue sentences for PyCantonese harness (no audio). Prefer colloquial HK Cantonese.",
+  "license": "original / curated for JyutTranslate tests",
+  "sentences": [
+    "你做緊咩呀？",
+    "唔該借借。",
+    "今日天氣好好。",
+    "我哋一齊食飯啦。",
+    "地鐵喺邊度？",
+    "對唔住，我聽唔到。",
+    "而家幾點呀？",
+    "呢個幾多錢？",
+    "生日快樂！",
+    "我鍾意學粵語。"
+  ]
+}

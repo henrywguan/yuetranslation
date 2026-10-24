@@ -21,6 +21,29 @@ Pronunciation on the web client remains **`to-jyutping`**.
 
 网页端读音仍由 **`to-jyutping`** 提供。
 
+## Orthography / 字形
+
+- **OpenCC** (`opencc-js`, `s2hk` / `hk2s`) normalizes Simplified ↔ Hong Kong Traditional on scrub, attestation, and **Yue/Mandarin** Cam OCR paths.  
+  **OpenCC** 在清洗、核验与**粤／普**相机 OCR 路径上做简繁（香港）归一。  
+- **Wu / Sichuanese Cam sources are not forced through HK OpenCC** (avoids Hong Kong regional variants on dialect text).  
+  **吴／四川相机原文不做香港 OpenCC**（避免港式异体改写方言字）。  
+- CC-Canto **simplified** aliases are reverse-indexed so Simplified tokens hit Traditional headwords even before OpenCC.  
+  CC-Canto 的简体字段已建倒排，简化字也可命中繁体词头。
+
+## Attestation depth / 核验加深
+
+On finals, headword attestation uses:
+
+终稿词头核验使用：
+
+1. Seed  
+2. CC-Canto (gloss + Jyutping)  
+3. **CC-CEDICT Cantonese readings** (Jyutping / presence only — **not** offline EN MT)
+
+CC-CEDICT readings never feed `lexiconTranslate` English senses.
+
+CC-CEDICT 读音不会进入离线英译释义。
+
 ## Live pipeline (final only) / 实时流程（仅终稿）
 
 Mic / typed input never requests interim machine translations:
@@ -75,7 +98,7 @@ On EN→粵 translations, the API:
 
 1. Scrubs common Mandarin/書面 slips / 清洗常见普通话/书面语串扰
 2. Scores 口語 particles / 给口语助词打分
-3. **Attests** the string against **CC-Canto (+ seed) headwords** / 用 **CC-Canto（+ 种子）词头**核验字符串
+3. **Attests** the string against **seed + CC-Canto + CC-CEDICT readings** headwords (after OpenCC s2hk) / 用 **种子 + CC-Canto + CC-CEDICT 读音**词头核验（先 OpenCC 转香港繁体）
 4. If still Mandarin-leaning or weakly attested → one constrained rewrite (when a model key is set) / 若仍偏普通话或核验偏弱 → 在有密钥时做一次受限改写
 
 ## words.hk (optional / license-gated) / 粤典（可选 / 许可闸门）
@@ -96,7 +119,8 @@ Paid / commercial deploys should stay on CC-Canto only until licensed.
 
 ```bash
 cd apps/api
-npm run import:cc-canto   # builds cc-canto-gloss.json.gz
+npm run import:cc-canto              # builds cc-canto-gloss.json.gz
+npm run import:cc-cedict-readings    # builds cc-cedict-readings.json.gz (attestation / Jyutping)
 npm run smoke:canto
 ```
 
@@ -104,8 +128,9 @@ From repo root / 在仓库根目录：
 
 ```bash
 npm run smoke:canto
-npm run test:translate    # quality bot (API + Solo/Conversation panes)
-                          # 质量机器人（接口 + 独白/对话面板）
+npm run smoke:canto-quality   # PyCantonese offline harness (optional Common Voice TSV)
+npm run test:translate        # quality bot (API + Solo/Conversation panes)
+                              # 质量机器人（接口 + 独白/对话面板）
 ```
 
 ## Attribution / 署名
