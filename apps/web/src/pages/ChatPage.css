@@ -334,7 +334,7 @@
 }
 
 .ds-chat-bubble.is-streaming .ds-chat-bubble-body::after {
-  content: '▍
+  content: '|';
   display: inline-block;
   width: 0.45em;
   margin-left: 0.1em;
