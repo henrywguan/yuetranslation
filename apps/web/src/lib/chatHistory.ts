@@ -2,6 +2,11 @@
 
 export type ChatRole = 'user' | 'assistant'
 
+export type ChatSource = {
+  url: string
+  title: string
+}
+
 export type ChatMessage = {
   id: string
   role: ChatRole
@@ -11,6 +16,8 @@ export type ChatMessage = {
   reasoning?: string
   /** Wall time spent in thinking mode, ms. */
   thoughtMs?: number
+  /** Web search citations (assistant only, Search toggle). */
+  sources?: ChatSource[]
 }
 
 export type ChatThread = {
@@ -40,6 +47,20 @@ export function emptyThread(): ChatThread {
   return { id: uid(), title: 'New chat', updatedAt: now, messages: [] }
 }
 
+function normalizeSources(raw: unknown): ChatSource[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const out: ChatSource[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const url = String((item as ChatSource).url || '').trim()
+    if (!/^https?:\/\//i.test(url)) continue
+    const title = String((item as ChatSource).title || '').trim() || url
+    if (out.some((s) => s.url === url)) continue
+    out.push({ url, title })
+  }
+  return out.length ? out : undefined
+}
+
 function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
   if (!m || (m.role !== 'user' && m.role !== 'assistant')) return null
   return {
@@ -49,6 +70,7 @@ function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
     createdAt: Number(m.createdAt) || Date.now(),
     reasoning: typeof m.reasoning === 'string' && m.reasoning.trim() ? m.reasoning : undefined,
     thoughtMs: Number.isFinite(m.thoughtMs) ? Math.max(0, Number(m.thoughtMs)) : undefined,
+    sources: normalizeSources(m.sources),
   }
 }
 
@@ -137,7 +159,7 @@ export function patchAssistantContent(
   thread: ChatThread,
   messageId: string,
   content: string,
-  extras?: { reasoning?: string; thoughtMs?: number },
+  extras?: { reasoning?: string; thoughtMs?: number; sources?: ChatSource[] },
 ): ChatThread {
   return {
     ...thread,
@@ -149,6 +171,7 @@ export function patchAssistantContent(
             content,
             ...(extras?.reasoning !== undefined ? { reasoning: extras.reasoning } : null),
             ...(extras?.thoughtMs !== undefined ? { thoughtMs: extras.thoughtMs } : null),
+            ...(extras?.sources !== undefined ? { sources: extras.sources } : null),
           }
         : m,
     ),

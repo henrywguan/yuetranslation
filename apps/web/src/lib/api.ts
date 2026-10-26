@@ -737,11 +737,18 @@ export async function putPracticePartnerLeaderboard(score: {
 
 export type DeepseekChatApiMessage = { role: 'user' | 'assistant'; content: string }
 
+export type DeepseekChatSource = {
+  url: string
+  title: string
+}
+
 export type DeepseekChatStreamHandlers = {
   onDelta: (delta: string) => void
   onReasoning?: (delta: string) => void
-  onStatus?: (status: 'thinking') => void
+  onStatus?: (status: 'thinking' | 'searching') => void
+  onSources?: (sources: DeepseekChatSource[]) => void
   thinking?: boolean
+  search?: boolean
   signal?: AbortSignal
 }
 
@@ -755,6 +762,7 @@ export async function streamDeepseekChat(
     body: JSON.stringify({
       messages,
       thinking: handlers.thinking !== false,
+      search: handlers.search === true,
     }),
     headers: { Accept: 'text/event-stream' },
     signal: handlers.signal,
@@ -789,6 +797,7 @@ export async function streamDeepseekChat(
         model?: string
         error?: string
         status?: string
+        sources?: DeepseekChatSource[]
       }
       try {
         parsed = JSON.parse(payload) as typeof parsed
@@ -796,8 +805,11 @@ export async function streamDeepseekChat(
         continue
       }
       if (parsed.error) throw new Error(parsed.error)
-      if (parsed.status === 'thinking') handlers.onStatus?.('thinking')
+      if (parsed.status === 'thinking' || parsed.status === 'searching') {
+        handlers.onStatus?.(parsed.status)
+      }
       if (parsed.reasoning) handlers.onReasoning?.(parsed.reasoning)
+      if (parsed.sources?.length) handlers.onSources?.(parsed.sources)
       if (parsed.delta) handlers.onDelta(parsed.delta)
       if (parsed.model) model = parsed.model
     }

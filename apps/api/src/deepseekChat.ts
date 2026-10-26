@@ -20,6 +20,8 @@ export const DeepseekChatBodySchema = z.object({
   messages: z.array(DeepseekChatMessageSchema).min(1).max(48),
   /** DeepThink toggle — default on for DeepSeek hosts. */
   thinking: z.boolean().optional(),
+  /** Search toggle — Anthropic web_search path when host supports it. */
+  search: z.boolean().optional(),
 })
 
 export type DeepseekChatMessage = z.infer<typeof DeepseekChatMessageSchema>
