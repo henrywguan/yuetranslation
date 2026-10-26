@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import {
   canUseDeepseekChat,
+  DEEPSEEK_CHAT_MAX_TOKENS,
   DEEPSEEK_CHAT_SYSTEM,
+  deepseekChatLlmExtras,
   deepseekChatTurnLimit,
   DeepseekChatBodySchema,
   recentDeepseekChatMessages,
@@ -10,6 +12,18 @@ import {
 
 assert.match(DEEPSEEK_CHAT_SYSTEM, /helpful AI assistant/i, 'System prompt is general assistant')
 assert.doesNotMatch(DEEPSEEK_CHAT_SYSTEM, /JyutTranslate|Cantonese|粵語/i, 'No product/Cantonese framing')
+assert.doesNotMatch(DEEPSEEK_CHAT_SYSTEM, /concise/i, 'Do not bias chat toward shallow brevity')
+assert.match(DEEPSEEK_CHAT_SYSTEM, /thorough/i, 'Encourage thorough answers when useful')
+assert.ok(DEEPSEEK_CHAT_MAX_TOKENS >= 4096, 'Chat needs room for thinking + answer')
+
+const extras = deepseekChatLlmExtras()
+// When OPENAI_MODEL / base URL is not DeepSeek in this smoke env, extras may be {}.
+// The helper must never force thinking:disabled (that was the quality bug).
+assert.notEqual(
+  (extras.thinking as { type?: string } | undefined)?.type,
+  'disabled',
+  'Chat must not disable DeepSeek thinking',
+)
 
 assert.equal(canUseDeepseekChat('guest', false), false)
 assert.equal(canUseDeepseekChat('free', false), false)

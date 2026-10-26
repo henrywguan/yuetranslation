@@ -104,6 +104,7 @@ export function ChatPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [streamingId, setStreamingId] = useState<string | null>(null)
+  const [thinking, setThinking] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const bootstrapped = useRef(false)
@@ -203,6 +204,7 @@ export function ChatPage() {
     const assistantId = assistantStep.message.id
     persist(thread)
     setStreamingId(assistantId)
+    setThinking(false)
 
     const controller = new AbortController()
     abortRef.current = controller
@@ -212,11 +214,13 @@ export function ChatPage() {
       await streamDeepseekChat(
         apiMessagesFromThread(thread).filter((m) => m.content.trim()),
         (delta) => {
+          if (assembled.length === 0) setThinking(false)
           assembled += delta
           thread = patchAssistantContent(thread, assistantId, assembled)
           persist(thread)
         },
         controller.signal,
+        () => setThinking(true),
       )
       if (!assembled.trim()) {
         thread = {
@@ -240,6 +244,7 @@ export function ChatPage() {
       }
     } finally {
       setStreamingId(null)
+      setThinking(false)
       setBusy(false)
       abortRef.current = null
     }
@@ -420,7 +425,14 @@ export function ChatPage() {
                   className={`ds-chat-bubble is-${m.role}${streamingId === m.id ? ' is-streaming' : ''}`}
                 >
                   <span className="ds-chat-bubble-role">{m.role === 'user' ? 'You' : 'DeepSeek'}</span>
-                  <div className="ds-chat-bubble-body">{m.content || (streamingId === m.id ? '' : '…')}</div>
+                  <div className="ds-chat-bubble-body">
+                    {m.content ||
+                      (streamingId === m.id && thinking
+                        ? 'Thinking…'
+                        : streamingId === m.id
+                          ? ''
+                          : '…')}
+                  </div>
                 </article>
               ))
             )}

@@ -95,9 +95,13 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     res.flushHeaders?.()
 
     let full = ''
-    for await (const delta of streamDeepseekChatReply(parsed.data.messages)) {
-      full += delta
-      res.write(`data: ${JSON.stringify({ delta })}\n\n`)
+    for await (const event of streamDeepseekChatReply(parsed.data.messages)) {
+      if (event.kind === 'thinking') {
+        res.write(`data: ${JSON.stringify({ status: 'thinking' })}\n\n`)
+        continue
+      }
+      full += event.text
+      res.write(`data: ${JSON.stringify({ delta: event.text })}\n\n`)
     }
     if (!full.trim()) {
       res.write(`data: ${JSON.stringify({ error: 'Empty model reply.' })}\n\n`)
