@@ -79,12 +79,16 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
   }
 
   const stream = wantsStream(req)
+  const thinkingEnabled = parsed.data.thinking !== false
 
   try {
     if (!stream) {
-      const { reply, model } = await generateDeepseekChatReply(parsed.data.messages)
+      const { reply, model, reasoning } = await generateDeepseekChatReply(
+        parsed.data.messages,
+        thinkingEnabled,
+      )
       void addDeepseekChatTurns(auth.userId, 1)
-      res.json({ ok: true, reply, model })
+      res.json({ ok: true, reply, model, reasoning: reasoning || undefined })
       return
     }
 
@@ -95,9 +99,13 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     res.flushHeaders?.()
 
     let full = ''
-    for await (const event of streamDeepseekChatReply(parsed.data.messages)) {
+    for await (const event of streamDeepseekChatReply(parsed.data.messages, thinkingEnabled)) {
       if (event.kind === 'thinking') {
         res.write(`data: ${JSON.stringify({ status: 'thinking' })}\n\n`)
+        continue
+      }
+      if (event.kind === 'reasoning') {
+        res.write(`data: ${JSON.stringify({ reasoning: event.text })}\n\n`)
         continue
       }
       full += event.text
