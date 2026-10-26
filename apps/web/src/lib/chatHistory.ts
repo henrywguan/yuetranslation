@@ -7,6 +7,10 @@ export type ChatMessage = {
   role: ChatRole
   content: string
   createdAt: number
+  /** DeepSeek chain-of-thought (assistant only). */
+  reasoning?: string
+  /** Wall time spent in thinking mode, ms. */
+  thoughtMs?: number
 }
 
 export type ChatThread = {
@@ -36,6 +40,18 @@ export function emptyThread(): ChatThread {
   return { id: uid(), title: 'New chat', updatedAt: now, messages: [] }
 }
 
+function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
+  if (!m || (m.role !== 'user' && m.role !== 'assistant')) return null
+  return {
+    id: typeof m.id === 'string' ? m.id : uid(),
+    role: m.role,
+    content: String(m.content || ''),
+    createdAt: Number(m.createdAt) || Date.now(),
+    reasoning: typeof m.reasoning === 'string' && m.reasoning.trim() ? m.reasoning : undefined,
+    thoughtMs: Number.isFinite(m.thoughtMs) ? Math.max(0, Number(m.thoughtMs)) : undefined,
+  }
+}
+
 export function readChatThreads(): ChatThread[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -50,16 +66,8 @@ export function readChatThreads(): ChatThread[] {
         updatedAt: Number(t.updatedAt) || Date.now(),
         messages: Array.isArray(t.messages)
           ? t.messages
-              .filter(
-                (m): m is ChatMessage =>
-                  Boolean(m && typeof m === 'object' && (m.role === 'user' || m.role === 'assistant')),
-              )
-              .map((m) => ({
-                id: typeof m.id === 'string' ? m.id : uid(),
-                role: m.role,
-                content: String(m.content || ''),
-                createdAt: Number(m.createdAt) || Date.now(),
-              }))
+              .map((m) => normalizeMessage(m as Partial<ChatMessage>))
+              .filter((m): m is ChatMessage => Boolean(m))
               .slice(-MAX_MESSAGES)
           : [],
       }))
@@ -125,11 +133,25 @@ export function appendChatMessage(
   }
 }
 
-export function patchAssistantContent(thread: ChatThread, messageId: string, content: string): ChatThread {
+export function patchAssistantContent(
+  thread: ChatThread,
+  messageId: string,
+  content: string,
+  extras?: { reasoning?: string; thoughtMs?: number },
+): ChatThread {
   return {
     ...thread,
     updatedAt: Date.now(),
-    messages: thread.messages.map((m) => (m.id === messageId ? { ...m, content } : m)),
+    messages: thread.messages.map((m) =>
+      m.id === messageId
+        ? {
+            ...m,
+            content,
+            ...(extras?.reasoning !== undefined ? { reasoning: extras.reasoning } : null),
+            ...(extras?.thoughtMs !== undefined ? { thoughtMs: extras.thoughtMs } : null),
+          }
+        : m,
+    ),
   }
 }
 

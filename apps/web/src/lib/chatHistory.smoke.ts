@@ -15,8 +15,13 @@ assert.match(t1.title, /Hello world/)
 assert.equal(t1.messages.length, 1)
 
 const { thread: t2, message } = appendChatMessage(t1, 'assistant', '')
-const t3 = patchAssistantContent(t2, message.id, 'Hi there')
+const t3 = patchAssistantContent(t2, message.id, 'Hi there', {
+  reasoning: 'consider greeting',
+  thoughtMs: 1400,
+})
 assert.equal(t3.messages.at(-1)?.content, 'Hi there')
+assert.equal(t3.messages.at(-1)?.reasoning, 'consider greeting')
+assert.equal(t3.messages.at(-1)?.thoughtMs, 1400)
 
 const api = apiMessagesFromThread(t3)
 assert.deepEqual(api, [
