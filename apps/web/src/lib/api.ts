@@ -742,6 +742,7 @@ export async function streamDeepseekChat(
   messages: DeepseekChatApiMessage[],
   onDelta: (delta: string) => void,
   signal?: AbortSignal,
+  onStatus?: (status: 'thinking') => void,
 ): Promise<{ model?: string }> {
   const res = await apiFetch('/chat?stream=1', {
     method: 'POST',
@@ -772,13 +773,20 @@ export async function streamDeepseekChat(
       if (!trimmed.startsWith('data:')) continue
       const payload = trimmed.slice(5).trim()
       if (!payload || payload === '[DONE]') continue
-      let parsed: { delta?: string; done?: boolean; model?: string; error?: string }
+      let parsed: {
+        delta?: string
+        done?: boolean
+        model?: string
+        error?: string
+        status?: string
+      }
       try {
         parsed = JSON.parse(payload) as typeof parsed
       } catch {
         continue
       }
       if (parsed.error) throw new Error(parsed.error)
+      if (parsed.status === 'thinking') onStatus?.('thinking')
       if (parsed.delta) onDelta(parsed.delta)
       if (parsed.model) model = parsed.model
     }
