@@ -188,6 +188,8 @@ export type Entitlement = {
     docs: boolean
     /** Multimodal LLM OCR fallback within monthly hard cap. */
     aiVision: boolean
+    /** General DeepSeek Chat (#/chat) — Family/Business (or admin). */
+    chat: boolean
   }
   reason: string | null
   /** Synced account preferences. */
@@ -469,6 +471,7 @@ function buildSnapshot(
         camera: false,
         docs: false,
         aiVision: false,
+        chat: false,
       },
       reason: 'account_disabled',
       prefs,
@@ -531,6 +534,7 @@ function buildSnapshot(
         camera: canCamera,
         docs: false,
         aiVision: false,
+        chat: false,
       },
       reason,
       prefs: {
@@ -627,6 +631,7 @@ function buildSnapshot(
       camera: canCamera,
       docs: canDocs,
       aiVision: canAiVision,
+      chat: isAdmin || plan === 'family' || plan === 'business',
     },
     reason,
     prefs,
@@ -687,6 +692,7 @@ function localEntitlement(): Entitlement {
         camera: true,
         docs: true,
         aiVision: true,
+        chat: true,
       },
       reason: null,
       prefs: {

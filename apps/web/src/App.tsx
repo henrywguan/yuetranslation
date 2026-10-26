@@ -39,6 +39,7 @@ const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default:
 const PracticePage = lazy(() =>
   import('./pages/PracticePage').then((m) => ({ default: m.PracticePage })),
 )
+const ChatPage = lazy(() => import('./pages/ChatPage').then((m) => ({ default: m.ChatPage })))
 const LegalPage = lazy(() => import('./landing/LegalPage').then((m) => ({ default: m.LegalPage })))
 const NotFoundPage = lazy(() =>
   import('./landing/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
@@ -123,6 +124,7 @@ export default function App() {
   else if (route === 'tones') page = <TonesPage />
   else if (route === 'learn') page = <LearnPage />
   else if (route === 'practice') page = <PracticePage />
+  else if (route === 'chat') page = <ChatPage />
   else if (route === 'creators') page = <CreatorsPage />
   else if (route === 'admin') page = <AdminPage />
   else if (route === 'privacy') page = <LegalPage doc="privacy" />

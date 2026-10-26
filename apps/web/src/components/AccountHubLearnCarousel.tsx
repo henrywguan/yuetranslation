@@ -1,13 +1,14 @@
 import { useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { ChatAccountLaunch } from './ChatAccountLaunch'
 import { HarborQuestAccountLaunch } from './HarborQuestAccountLaunch'
 import { PracticePartnerAccountLaunch } from './PracticePartnerAccountLaunch'
 import { biPlain, ui } from '../lib/uiCopy'
 import './AccountHubLearnCarousel.css'
 
-export type AccountHubLearnSlide = 'harbor' | 'partner'
+export type AccountHubLearnSlide = 'harbor' | 'partner' | 'chat'
 
-const SLIDES: AccountHubLearnSlide[] = ['harbor', 'partner']
+const SLIDES: AccountHubLearnSlide[] = ['harbor', 'partner', 'chat']
 const STORAGE_KEY = 'yue-account-hub-learn-v1'
 const SWIPE_PX = 36
 
@@ -19,7 +20,7 @@ type Props = {
 function readSlide(): AccountHubLearnSlide {
   try {
     const v = localStorage.getItem(STORAGE_KEY)
-    if (v === 'partner' || v === 'harbor') return v
+    if (v === 'partner' || v === 'harbor' || v === 'chat') return v
   } catch {
     /* ignore */
   }
@@ -39,7 +40,13 @@ function nextSlide(cur: AccountHubLearnSlide, dir: -1 | 1): AccountHubLearnSlide
   return SLIDES[(i + dir + SLIDES.length) % SLIDES.length]
 }
 
-/** Account Hub header: swipe or tap arrows to pick Harbor Quest / Practice Partner. */
+function slideLabel(slide: AccountHubLearnSlide): string {
+  if (slide === 'harbor') return biPlain(ui.harborQuestShort)
+  if (slide === 'partner') return biPlain(ui.practicePartnerShort)
+  return biPlain(ui.deepseekChatShort)
+}
+
+/** Account Hub header: swipe or tap arrows to pick Harbor / Practice / DeepSeek Chat. */
 export function AccountHubLearnCarousel({ onNavigate }: Props) {
   const [slide, setSlide] = useState<AccountHubLearnSlide>(readSlide)
   const [dir, setDir] = useState<1 | -1>(1)
@@ -55,10 +62,7 @@ export function AccountHubLearnCarousel({ onNavigate }: Props) {
     })
   }
 
-  const showHarbor = slide === 'harbor'
-  const otherLabel = showHarbor
-    ? biPlain(ui.practicePartnerShort)
-    : biPlain(ui.harborQuestShort)
+  const otherLabel = slideLabel(nextSlide(slide, 1))
 
   return (
     <div
@@ -121,10 +125,12 @@ export function AccountHubLearnCarousel({ onNavigate }: Props) {
             exit={{ opacity: 0, x: dir * -18 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
           >
-            {showHarbor ? (
+            {slide === 'harbor' ? (
               <HarborQuestAccountLaunch onNavigate={onNavigate} />
-            ) : (
+            ) : slide === 'partner' ? (
               <PracticePartnerAccountLaunch onNavigate={onNavigate} />
+            ) : (
+              <ChatAccountLaunch onNavigate={onNavigate} />
             )}
           </motion.div>
         </AnimatePresence>

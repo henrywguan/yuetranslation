@@ -134,6 +134,18 @@
   }
 }
 
+.ds-account-launch-whale {
+  color: #8ea4ff;
+}
+
+.ds-account-launch.is-locked {
+  opacity: 0.78;
+}
+
+.ds-account-launch.is-locked .hq-account-launch-beta {
+  color: #f0c36a;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hq-account-launch-boat,
   .hq-account-launch-wave--a,
