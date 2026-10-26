@@ -734,3 +734,55 @@ export async function putPracticePartnerLeaderboard(score: {
     throw new Error(data.message || 'Could not sync Practice Partner score')
   }
 }
+
+export type DeepseekChatApiMessage = { role: 'user' | 'assistant'; content: string }
+
+/** Stream DeepSeek Chat tokens (Family/Business). Calls onDelta for each chunk. */
+export async function streamDeepseekChat(
+  messages: DeepseekChatApiMessage[],
+  onDelta: (delta: string) => void,
+  signal?: AbortSignal,
+): Promise<{ model?: string }> {
+  const res = await apiFetch('/chat?stream=1', {
+    method: 'POST',
+    body: JSON.stringify({ messages }),
+    headers: { Accept: 'text/event-stream' },
+    signal,
+  })
+  if (!res.ok) {
+    await throwApiError(res, 'Chat failed')
+  }
+  if (!res.body) {
+    throw new Error('Chat stream unavailable')
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let model: string | undefined
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const parts = buffer.split('\n')
+    buffer = parts.pop() || ''
+    for (const line of parts) {
+      const trimmed = line.trim()
+      if (!trimmed.startsWith('data:')) continue
+      const payload = trimmed.slice(5).trim()
+      if (!payload || payload === '[DONE]') continue
+      let parsed: { delta?: string; done?: boolean; model?: string; error?: string }
+      try {
+        parsed = JSON.parse(payload) as typeof parsed
+      } catch {
+        continue
+      }
+      if (parsed.error) throw new Error(parsed.error)
+      if (parsed.delta) onDelta(parsed.delta)
+      if (parsed.model) model = parsed.model
+    }
+  }
+
+  return { model }
+}

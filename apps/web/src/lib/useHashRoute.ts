@@ -7,6 +7,7 @@ export type Route =
   | 'tones'
   | 'learn'
   | 'practice'
+  | 'chat'
   | 'creators'
   | 'admin'
   | 'privacy'
@@ -49,6 +50,7 @@ export function useRoute(): Route {
   if (path === 'tones') return 'tones'
   if (path === 'learn' || path.startsWith('learn/')) return 'learn'
   if (path === 'practice') return 'practice'
+  if (path === 'chat') return 'chat'
   if (path === 'creators') return 'creators'
   if (path === 'admin') return 'admin'
   if (path === 'privacy') return 'privacy'
@@ -71,6 +73,8 @@ export function navigate(route: Route) {
     window.location.hash = '/learn'
   } else if (route === 'practice') {
     window.location.hash = '/practice'
+  } else if (route === 'chat') {
+    window.location.hash = '/chat'
   } else if (route === 'creators') {
     window.location.hash = '/creators'
   } else if (route === 'admin') {

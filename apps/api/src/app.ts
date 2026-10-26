@@ -103,6 +103,7 @@ import {
 } from './admin.js'
 import { getPushConfig, subscribePush, unsubscribePush } from './pushRoutes.js'
 import { scheduleHouseholdUsageBackfillOnStartup } from './startupBackfill.js'
+import { postDeepseekChat } from './deepseekChatRoutes.js'
 import { getIncidentBanner } from './appSettings.js'
 import { pushConfigured } from './pushNotifications.js'
 import { getOfflinePack, isOfflinePackId, offlinePackManifest } from './offlinePack.js'
@@ -1260,6 +1261,7 @@ app.get('/api/admin/push/stats', adminPushStats)
 app.get('/api/admin/push/sends', adminListPushSends)
 app.post('/api/admin/push/send', adminSendPush)
 app.post('/api/admin/practice-partner/chat', adminPracticePartnerChat)
+app.post('/api/chat', postDeepseekChat)
 
 scheduleHouseholdUsageBackfillOnStartup()
 

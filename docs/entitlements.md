@@ -58,6 +58,7 @@ Code defaults in `apps/api/src/env.ts`. **Production overrides** in `vercel.json
 | Document pages | `YUE_FREE_DOCS_PAGES` (default **40**) | `YUE_FAMILY_DOCS_PAGES` (default **400**) | Unlimited (`docsUnlimited`) — still counted |
 | Auto-speak | No | Yes | Yes |
 | AI vision OCR fallbacks | `YUE_FREE_AI_VISION_COUNT` (default **200**) hard cap | `YUE_FAMILY_AI_VISION_COUNT` (default **2000**) hard cap | `YUE_BUSINESS_AI_VISION_COUNT` (default **10000**) hard cap |
+| DeepSeek Chat (`#/chat`) | Locked CTA → pricing | Yes — `YUE_FAMILY_CHAT_TURNS` (default **3000**) | Yes — `YUE_BUSINESS_CHAT_TURNS` (default **0** = unlimited) |
 
 Marketing copy rounds Free live as “~1 hr” and Family live as “~8 hr”; production sets Free live to **60 minutes** and Family live to **480 minutes** via `vercel.json`. Prefer this table + env over stale marketing blurbs when debugging quotas.
 

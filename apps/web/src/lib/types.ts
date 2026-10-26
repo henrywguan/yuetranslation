@@ -95,6 +95,8 @@ export type Entitlement = {
     docs?: boolean
     /** Multimodal LLM OCR fallback within monthly hard cap. */
     aiVision?: boolean
+    /** General DeepSeek Chat (#/chat) — Family/Business (or admin). */
+    chat?: boolean
   }
   reason: string | null
   /** Synced account preferences. */

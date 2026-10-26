@@ -136,6 +136,11 @@ export function openPracticePartner() {
   navigate('practice')
 }
 
+/** Open DeepSeek general chat (`#/chat`) from Account Hub. */
+export function openDeepseekChat() {
+  navigate('chat')
+}
+
 /** Open the creator kit (`#/creators`) — Jyutping+Chao copy + Noto fonts. */
 export function openCreators() {
   navigate('creators')

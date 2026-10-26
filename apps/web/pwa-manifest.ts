@@ -79,6 +79,13 @@ export function createPwaManifest(base: string) {
         url: `${root}#/learn`,
         icons: [shortcutIcon],
       },
+      {
+        name: 'DeepSeek Chat',
+        short_name: 'Chat',
+        description: 'Open DeepSeek general chat',
+        url: `${root}#/chat`,
+        icons: [shortcutIcon],
+      },
     ],
     screenshots: [
       {

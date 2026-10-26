@@ -134,6 +134,11 @@ export const env = {
   /** Harbor Quest cloud sync / gift — per signed-in user. Set 0 to disable. */
   harborPutRlPerMin: Number(process.env.YUE_HARBOR_PUT_RL_PER_MIN || 120),
   harborGiftRlPerMin: Number(process.env.YUE_HARBOR_GIFT_RL_PER_MIN || 30),
+  /** DeepSeek general chat (#/chat) — per signed-in user. Set 0 to disable. */
+  chatRlPerMin: Number(process.env.YUE_CHAT_RL_PER_MIN || 40),
+  /** Monthly DeepSeek Chat turns. 0 = unlimited. Family/Business only. */
+  familyChatTurns: Number(process.env.YUE_FAMILY_CHAT_TURNS || 3000),
+  businessChatTurns: Number(process.env.YUE_BUSINESS_CHAT_TURNS || 0),
   familyLiveMinutes: Number(
     process.env.YUE_FAMILY_LIVE_MINUTES || process.env.YUE_PRO_LIVE_MINUTES || 480,
   ),
