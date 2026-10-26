@@ -9,6 +9,11 @@ import {
   recentDeepseekChatMessages,
   type DeepseekChatMessage,
 } from './deepseekChat.js'
+import {
+  deepseekAnthropicBaseUrl,
+  deepseekAnthropicMessagesUrl,
+  deepseekChatSupportsSearch,
+} from './deepseekChatSearch.js'
 
 assert.match(DEEPSEEK_CHAT_SYSTEM, /helpful AI assistant/i, 'System prompt is general assistant')
 assert.doesNotMatch(DEEPSEEK_CHAT_SYSTEM, /JyutTranslate|Cantonese|粵語/i, 'No product/Cantonese framing')
@@ -46,10 +51,27 @@ assert.equal(recent.at(-1)?.content, 'm39')
 
 const ok = DeepseekChatBodySchema.safeParse({
   messages: [{ role: 'user', content: 'Hello' }],
+  thinking: true,
+  search: true,
 })
 assert.equal(ok.success, true)
+assert.equal(ok.data?.search, true)
 
 const bad = DeepseekChatBodySchema.safeParse({ messages: [] })
 assert.equal(bad.success, false)
+
+assert.equal(
+  deepseekAnthropicBaseUrl('https://api.deepseek.com/v1'),
+  'https://api.deepseek.com/anthropic',
+)
+assert.equal(
+  deepseekAnthropicMessagesUrl('https://api.deepseek.com/v1'),
+  'https://api.deepseek.com/anthropic/v1/messages',
+)
+assert.equal(
+  deepseekAnthropicBaseUrl('https://api.deepseek.com/v1/'),
+  'https://api.deepseek.com/anthropic',
+)
+assert.equal(typeof deepseekChatSupportsSearch(), 'boolean')
 
 console.log('deepseekChat.smoke: ok')

@@ -13,6 +13,11 @@ import {
   getDeepseekChatTurns,
   streamDeepseekChatReply,
 } from './deepseekChat.js'
+import {
+  deepseekChatSupportsSearch,
+  streamDeepseekChatWithSearch,
+  type DeepseekChatSearchStreamEvent,
+} from './deepseekChatSearch.js'
 import { env, openaiConfigured } from './env.js'
 import { resolveEntitlement } from './entitlements.js'
 import { allowUserRateOrReject } from './guestRateLimit.js'
@@ -22,6 +27,26 @@ function wantsStream(req: AuthedRequest): boolean {
   if (q === '1' || q === 'true') return true
   const accept = String(req.headers.accept || '')
   return /text\/event-stream/i.test(accept)
+}
+
+async function* chatStreamEvents(
+  messages: Parameters<typeof streamDeepseekChatReply>[0],
+  thinkingEnabled: boolean,
+  searchEnabled: boolean,
+): AsyncGenerator<DeepseekChatSearchStreamEvent, void, unknown> {
+  if (searchEnabled && deepseekChatSupportsSearch()) {
+    try {
+      yield* streamDeepseekChatWithSearch(messages, thinkingEnabled)
+      return
+    } catch (err) {
+      console.warn(
+        '[deepseek-chat] Anthropic search stream failed, falling back to Chat Completions:',
+        err instanceof Error ? err.message : err,
+      )
+      // Fall through to Chat Completions (no native search).
+    }
+  }
+  yield* streamDeepseekChatReply(messages, thinkingEnabled)
 }
 
 /** POST /api/chat — signed-in Family/Business (or admin) general assistant. */
@@ -80,9 +105,11 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
 
   const stream = wantsStream(req)
   const thinkingEnabled = parsed.data.thinking !== false
+  const searchEnabled = parsed.data.search === true
 
   try {
     if (!stream) {
+      // Non-stream path stays on Chat Completions (Search is stream-first).
       const { reply, model, reasoning } = await generateDeepseekChatReply(
         parsed.data.messages,
         thinkingEnabled,
@@ -99,13 +126,25 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     res.flushHeaders?.()
 
     let full = ''
-    for await (const event of streamDeepseekChatReply(parsed.data.messages, thinkingEnabled)) {
+    for await (const event of chatStreamEvents(
+      parsed.data.messages,
+      thinkingEnabled,
+      searchEnabled,
+    )) {
       if (event.kind === 'thinking') {
         res.write(`data: ${JSON.stringify({ status: 'thinking' })}\n\n`)
         continue
       }
+      if (event.kind === 'searching') {
+        res.write(`data: ${JSON.stringify({ status: 'searching' })}\n\n`)
+        continue
+      }
       if (event.kind === 'reasoning') {
         res.write(`data: ${JSON.stringify({ reasoning: event.text })}\n\n`)
+        continue
+      }
+      if (event.kind === 'sources') {
+        res.write(`data: ${JSON.stringify({ sources: event.sources })}\n\n`)
         continue
       }
       full += event.text

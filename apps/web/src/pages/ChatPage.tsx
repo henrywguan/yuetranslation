@@ -12,6 +12,7 @@ import {
   readChatThreads,
   upsertChatThread,
   type ChatMessage,
+  type ChatSource,
   type ChatThread,
 } from '../lib/chatHistory'
 import { openAuthScreen } from '../lib/auth'
@@ -30,6 +31,7 @@ const SUGGESTIONS = [
 ]
 
 const THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
+const SEARCH_KEY = 'yue-deepseek-chat-search-v1'
 
 const MENU_ICON = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -74,6 +76,39 @@ const BRAIN_ICON = (
   </svg>
 )
 
+const SEARCH_ICON = (
+  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+    <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+    <path d="M16.2 16.2 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+)
+
+const COPY_ICON = (
+  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+    <rect x="9" y="9" width="10" height="10" rx="2" fill="none" stroke="currentColor" strokeWidth="1.7" />
+    <path
+      d="M7 15H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v1"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
+const REGEN_ICON = (
+  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+    <path
+      d="M20 12a8 8 0 1 1-2.2-5.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+    />
+    <path d="M20 4v5h-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 function canChat(entitlement: ReturnType<typeof useYueStore.getState>['entitlement']): boolean {
   if (!entitlement) return false
   if (entitlement.allowed?.chat) return true
@@ -81,20 +116,20 @@ function canChat(entitlement: ReturnType<typeof useYueStore.getState>['entitleme
   return entitlement.plan === 'family' || entitlement.plan === 'business'
 }
 
-function readDeepThink(): boolean {
+function readFlag(key: string, fallback: boolean): boolean {
   try {
-    const v = localStorage.getItem(THINK_KEY)
+    const v = localStorage.getItem(key)
     if (v === '0') return false
     if (v === '1') return true
   } catch {
     /* ignore */
   }
-  return true
+  return fallback
 }
 
-function writeDeepThink(on: boolean) {
+function writeFlag(key: string, on: boolean) {
   try {
-    localStorage.setItem(THINK_KEY, on ? '1' : '0')
+    localStorage.setItem(key, on ? '1' : '0')
   } catch {
     /* ignore */
   }
@@ -138,14 +173,94 @@ function ReasoningPanel({
   )
 }
 
+function SourcesList({ sources }: { sources: ChatSource[] }) {
+  if (!sources.length) return null
+  return (
+    <div className="ds-chat-sources">
+      <div className="ds-chat-sources-label">Sources</div>
+      <ol className="ds-chat-sources-list">
+        {sources.map((s, i) => (
+          <li key={s.url}>
+            <a href={s.url} target="_blank" rel="noopener noreferrer">
+              <span className="ds-chat-source-index">{i + 1}</span>
+              <span className="ds-chat-source-title">{s.title}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
+function MessageActions({
+  content,
+  disabled,
+  onRegenerate,
+}: {
+  content: string
+  disabled?: boolean
+  onRegenerate: () => void
+}) {
+  const [copied, setCopied] = useState(false)
+  const timerRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current)
+    }
+  }, [])
+
+  const copy = async () => {
+    const text = content.trim()
+    if (!text) return
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      if (timerRef.current) window.clearTimeout(timerRef.current)
+      timerRef.current = window.setTimeout(() => setCopied(false), 1600)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return (
+    <div className="ds-chat-actions">
+      <button
+        type="button"
+        className={`ds-chat-action${copied ? ' is-copied' : ''}`}
+        aria-label={copied ? 'Copied' : 'Copy'}
+        title={copied ? 'Copied' : 'Copy'}
+        disabled={!content.trim()}
+        onClick={() => void copy()}
+      >
+        {COPY_ICON}
+        <span>{copied ? 'Copied' : 'Copy'}</span>
+      </button>
+      <button
+        type="button"
+        className="ds-chat-action"
+        aria-label="Regenerate"
+        title="Regenerate"
+        disabled={disabled}
+        onClick={onRegenerate}
+      >
+        {REGEN_ICON}
+        <span>Regenerate</span>
+      </button>
+    </div>
+  )
+}
+
 function AssistantBody({
   message,
   streaming,
   thinking,
+  searching,
 }: {
   message: ChatMessage
   streaming?: boolean
   thinking?: boolean
+  searching?: boolean
 }) {
   const showMd = Boolean(message.content) && !streaming
   return (
@@ -163,6 +278,8 @@ function AssistantBody({
           renderChatMarkdown(message.content)
         ) : message.content ? (
           message.content
+        ) : streaming && searching && !thinking ? (
+          <span className="ds-chat-thinking-line">Searching…</span>
         ) : streaming && thinking ? (
           <span className="ds-chat-thinking-line">Thinking…</span>
         ) : streaming ? (
@@ -171,6 +288,7 @@ function AssistantBody({
           '…'
         )}
       </div>
+      {!streaming && message.sources?.length ? <SourcesList sources={message.sources} /> : null}
     </>
   )
 }
@@ -215,7 +333,9 @@ export function ChatPage() {
   const [error, setError] = useState<string | null>(null)
   const [streamingId, setStreamingId] = useState<string | null>(null)
   const [thinking, setThinking] = useState(false)
-  const [deepThink, setDeepThink] = useState(readDeepThink)
+  const [searching, setSearching] = useState(false)
+  const [deepThink, setDeepThink] = useState(() => readFlag(THINK_KEY, true))
+  const [searchOn, setSearchOn] = useState(() => readFlag(SEARCH_KEY, false))
   const listRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const bootstrapped = useRef(false)
@@ -247,7 +367,7 @@ export function ChatPage() {
     const el = listRef.current
     if (!el) return
     el.scrollTop = el.scrollHeight
-  }, [active.messages, streamingId, busy, thinking])
+  }, [active.messages, streamingId, busy, thinking, searching])
 
   const unlocked = canChat(entitlement)
   const loggedIn = Boolean(entitlement?.loggedIn)
@@ -286,35 +406,15 @@ export function ChatPage() {
     if (activeId === id) setActiveId(next[0]!.id)
   }
 
-  const send = async (text: string) => {
-    const content = text.trim()
-    if (!content || busy) return
-    if (!unlocked) {
-      if (!loggedIn) openAuthScreen()
-      else openPricing()
-      return
-    }
-
-    setError(null)
-    setDraft('')
-    setBusy(true)
-
-    let thread = active
-    if (!threads.some((t) => t.id === thread.id)) {
-      thread = { ...thread, id: activeId }
-    }
-
-    const userStep = appendChatMessage(thread, 'user', content)
-    thread = userStep.thread
-    persist(thread)
-    setActiveId(thread.id)
-
+  const runAssistant = async (baseThread: ChatThread) => {
+    let thread = baseThread
     const assistantStep = appendChatMessage(thread, 'assistant', '')
     thread = assistantStep.thread
     const assistantId = assistantStep.message.id
     persist(thread)
     setStreamingId(assistantId)
     setThinking(false)
+    setSearching(false)
     thinkStartedAt.current = null
 
     const controller = new AbortController()
@@ -322,11 +422,18 @@ export function ChatPage() {
 
     let assembled = ''
     let reasoning = ''
+    let sources: ChatSource[] | undefined
+
     try {
       await streamDeepseekChat(apiMessagesFromThread(thread).filter((m) => m.content.trim()), {
         thinking: deepThink,
+        search: searchOn,
         signal: controller.signal,
-        onStatus: () => {
+        onStatus: (status) => {
+          if (status === 'searching') {
+            setSearching(true)
+            return
+          }
           if (!thinkStartedAt.current) thinkStartedAt.current = Date.now()
           setThinking(true)
         },
@@ -337,14 +444,24 @@ export function ChatPage() {
           thread = patchAssistantContent(thread, assistantId, assembled, { reasoning })
           persist(thread)
         },
+        onSources: (next) => {
+          sources = next
+          thread = patchAssistantContent(thread, assistantId, assembled, {
+            reasoning: reasoning || undefined,
+            sources,
+          })
+          persist(thread)
+        },
         onDelta: (delta) => {
           if (assembled.length === 0) {
             setThinking(false)
+            setSearching(false)
             const thoughtMs = thinkStartedAt.current ? Date.now() - thinkStartedAt.current : undefined
             assembled += delta
             thread = patchAssistantContent(thread, assistantId, assembled, {
               reasoning: reasoning || undefined,
               thoughtMs,
+              sources,
             })
           } else {
             assembled += delta
@@ -376,9 +493,55 @@ export function ChatPage() {
     } finally {
       setStreamingId(null)
       setThinking(false)
+      setSearching(false)
       setBusy(false)
       abortRef.current = null
     }
+  }
+
+  const send = async (text: string) => {
+    const content = text.trim()
+    if (!content || busy) return
+    if (!unlocked) {
+      if (!loggedIn) openAuthScreen()
+      else openPricing()
+      return
+    }
+
+    setError(null)
+    setDraft('')
+    setBusy(true)
+
+    let thread = active
+    if (!threads.some((t) => t.id === thread.id)) {
+      thread = { ...thread, id: activeId }
+    }
+
+    const userStep = appendChatMessage(thread, 'user', content)
+    thread = userStep.thread
+    persist(thread)
+    setActiveId(thread.id)
+
+    await runAssistant(thread)
+  }
+
+  const regenerate = async (assistantId: string) => {
+    if (busy || !unlocked) return
+    const idx = active.messages.findIndex((m) => m.id === assistantId)
+    if (idx < 1) return
+    const prev = active.messages[idx - 1]
+    if (!prev || prev.role !== 'user') return
+
+    setError(null)
+    setBusy(true)
+    const truncated: ChatThread = {
+      ...active,
+      messages: active.messages.slice(0, idx),
+      updatedAt: Date.now(),
+    }
+    persist(truncated)
+    setActiveId(truncated.id)
+    await runAssistant(truncated)
   }
 
   useEffect(() => {
@@ -554,7 +717,15 @@ export function ChatPage() {
                       message={m}
                       streaming={streamingId === m.id}
                       thinking={streamingId === m.id && thinking}
+                      searching={streamingId === m.id && searching}
                     />
+                    {streamingId !== m.id && m.content.trim() ? (
+                      <MessageActions
+                        content={m.content}
+                        disabled={busy}
+                        onRegenerate={() => void regenerate(m.id)}
+                      />
+                    ) : null}
                   </article>
                 ),
               )}
@@ -578,13 +749,28 @@ export function ChatPage() {
                 onClick={() => {
                   setDeepThink((v) => {
                     const next = !v
-                    writeDeepThink(next)
+                    writeFlag(THINK_KEY, next)
                     return next
                   })
                 }}
               >
                 {BRAIN_ICON}
                 DeepThink
+              </button>
+              <button
+                type="button"
+                className={`ds-chat-toggle${searchOn ? ' is-on' : ''}`}
+                aria-pressed={searchOn}
+                onClick={() => {
+                  setSearchOn((v) => {
+                    const next = !v
+                    writeFlag(SEARCH_KEY, next)
+                    return next
+                  })
+                }}
+              >
+                {SEARCH_ICON}
+                Search
               </button>
             </div>
             <div className="ds-chat-composer-card">
