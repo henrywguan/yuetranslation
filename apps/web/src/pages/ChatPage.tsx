@@ -64,6 +64,24 @@ const SEND_ICON = (
   </svg>
 )
 
+const STOP_ICON = (
+  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+    <rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" />
+  </svg>
+)
+
+const PLUS_ICON = (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+)
+
+const CHEVRON_ICON = (
+  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" className="ds-chat-reasoning-chevron">
+    <path d="M8 10l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 const BRAIN_ICON = (
   <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
     <path
@@ -144,17 +162,54 @@ function ReasoningPanel({
   reasoning,
   thoughtMs,
   streaming,
+  thinkStartedAt,
   defaultOpen = true,
+  autoCollapse = false,
 }: {
   reasoning: string
   thoughtMs?: number
   streaming?: boolean
+  thinkStartedAt?: number | null
   defaultOpen?: boolean
+  /** Collapse after answer completes when the trace is long. */
+  autoCollapse?: boolean
 }) {
   const [open, setOpen] = useState(defaultOpen)
+  const [liveMs, setLiveMs] = useState(0)
+  const didAutoCollapse = useRef(false)
+
+  useEffect(() => {
+    if (!streaming || !thinkStartedAt) return
+    const tick = () => setLiveMs(Date.now() - thinkStartedAt)
+    tick()
+    const id = window.setInterval(tick, 250)
+    return () => window.clearInterval(id)
+  }, [streaming, thinkStartedAt])
+
+  useEffect(() => {
+    if (streaming) {
+      didAutoCollapse.current = false
+      setOpen(true)
+      return
+    }
+    if (autoCollapse && !didAutoCollapse.current && reasoning.length > 420) {
+      didAutoCollapse.current = true
+      setOpen(false)
+    }
+  }, [streaming, autoCollapse, reasoning.length])
+
   if (!reasoning.trim() && !streaming) return null
+
+  const labelMs = streaming ? liveMs || thoughtMs : thoughtMs
+  const header =
+    streaming && !thoughtMs
+      ? liveMs > 0
+        ? formatThoughtSeconds(liveMs)
+        : 'Thinking…'
+      : formatThoughtSeconds(labelMs)
+
   return (
-    <div className="ds-chat-reasoning">
+    <div className={`ds-chat-reasoning${streaming ? ' is-streaming' : ''}${open ? ' is-open' : ''}`}>
       <button
         type="button"
         className="ds-chat-reasoning-toggle"
@@ -162,13 +217,15 @@ function ReasoningPanel({
         aria-expanded={open}
       >
         <span aria-hidden="true">{BRAIN_ICON}</span>
-        <span>
-          {streaming && !thoughtMs
-            ? 'Thinking…'
-            : `${formatThoughtSeconds(thoughtMs)}${open ? '' : ' · tap to expand'}`}
+        <span className="ds-chat-reasoning-label">
+          {header}
+          {!open ? ' · tap to expand' : streaming ? '' : ' · tap to collapse'}
         </span>
+        <span aria-hidden="true">{CHEVRON_ICON}</span>
       </button>
-      {open ? <pre className="ds-chat-reasoning-body">{reasoning || (streaming ? '…' : '')}</pre> : null}
+      <div className={`ds-chat-reasoning-panel${open ? ' is-open' : ''}`}>
+        <pre className="ds-chat-reasoning-body">{reasoning || (streaming ? '…' : '')}</pre>
+      </div>
     </div>
   )
 }
@@ -234,7 +291,7 @@ function MessageActions({
         onClick={() => void copy()}
       >
         {COPY_ICON}
-        <span>{copied ? 'Copied' : 'Copy'}</span>
+        <span className="ds-chat-action-label">{copied ? 'Copied' : 'Copy'}</span>
       </button>
       <button
         type="button"
@@ -245,7 +302,7 @@ function MessageActions({
         onClick={onRegenerate}
       >
         {REGEN_ICON}
-        <span>Regenerate</span>
+        <span className="ds-chat-action-label">Regenerate</span>
       </button>
     </div>
   )
@@ -256,28 +313,30 @@ function AssistantBody({
   streaming,
   thinking,
   searching,
+  thinkStartedAt,
 }: {
   message: ChatMessage
   streaming?: boolean
   thinking?: boolean
   searching?: boolean
+  thinkStartedAt?: number | null
 }) {
-  const showMd = Boolean(message.content) && !streaming
+  const hasContent = Boolean(message.content)
   return (
     <>
       {(message.reasoning || (streaming && thinking)) && (
         <ReasoningPanel
           reasoning={message.reasoning || ''}
           thoughtMs={message.thoughtMs}
-          streaming={streaming && thinking && !message.content}
+          streaming={streaming && thinking && !hasContent}
+          thinkStartedAt={thinkStartedAt}
           defaultOpen
+          autoCollapse={!streaming && hasContent}
         />
       )}
-      <div className={`ds-chat-assistant-body${streaming && message.content ? ' is-streaming' : ''}`}>
-        {showMd ? (
-          renderChatMarkdown(message.content)
-        ) : message.content ? (
-          message.content
+      <div className={`ds-chat-assistant-body${streaming && hasContent ? ' is-streaming' : ''}`}>
+        {hasContent ? (
+          renderChatMarkdown(message.content, { sources: message.sources })
         ) : streaming && searching && !thinking ? (
           <span className="ds-chat-thinking-line">Searching…</span>
         ) : streaming && thinking ? (
@@ -290,6 +349,17 @@ function AssistantBody({
       </div>
       {!streaming && message.sources?.length ? <SourcesList sources={message.sources} /> : null}
     </>
+  )
+}
+
+function TopBrand() {
+  return (
+    <div className="ds-chat-top-brand" aria-hidden="true">
+      <DeepSeekMark className="ds-chat-top-brand-mark" />
+      <span className="ds-chat-top-brand-name">
+        Deep<span>Seek</span>
+      </span>
+    </div>
   )
 }
 
@@ -336,6 +406,7 @@ export function ChatPage() {
   const [searching, setSearching] = useState(false)
   const [deepThink, setDeepThink] = useState(() => readFlag(THINK_KEY, true))
   const [searchOn, setSearchOn] = useState(() => readFlag(SEARCH_KEY, false))
+  const [thinkClock, setThinkClock] = useState<number | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const bootstrapped = useRef(false)
@@ -406,6 +477,10 @@ export function ChatPage() {
     if (activeId === id) setActiveId(next[0]!.id)
   }
 
+  const stopGeneration = () => {
+    abortRef.current?.abort()
+  }
+
   const runAssistant = async (baseThread: ChatThread) => {
     let thread = baseThread
     const assistantStep = appendChatMessage(thread, 'assistant', '')
@@ -416,6 +491,7 @@ export function ChatPage() {
     setThinking(false)
     setSearching(false)
     thinkStartedAt.current = null
+    setThinkClock(null)
 
     const controller = new AbortController()
     abortRef.current = controller
@@ -434,11 +510,17 @@ export function ChatPage() {
             setSearching(true)
             return
           }
-          if (!thinkStartedAt.current) thinkStartedAt.current = Date.now()
+          if (!thinkStartedAt.current) {
+            thinkStartedAt.current = Date.now()
+            setThinkClock(thinkStartedAt.current)
+          }
           setThinking(true)
         },
         onReasoning: (delta) => {
-          if (!thinkStartedAt.current) thinkStartedAt.current = Date.now()
+          if (!thinkStartedAt.current) {
+            thinkStartedAt.current = Date.now()
+            setThinkClock(thinkStartedAt.current)
+          }
           setThinking(true)
           reasoning += delta
           thread = patchAssistantContent(thread, assistantId, assembled, { reasoning })
@@ -480,7 +562,14 @@ export function ChatPage() {
       }
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') {
-        /* ignore */
+        /* user stopped — keep partial reply if any */
+        if (!assembled.trim()) {
+          thread = {
+            ...thread,
+            messages: thread.messages.filter((m) => m.id !== assistantId),
+          }
+          persist(thread)
+        }
       } else {
         const message = err instanceof Error ? err.message : 'Chat failed'
         setError(message)
@@ -495,6 +584,7 @@ export function ChatPage() {
       setThinking(false)
       setSearching(false)
       setBusy(false)
+      setThinkClock(null)
       abortRef.current = null
     }
   }
@@ -561,7 +651,9 @@ export function ChatPage() {
       <aside className={`ds-chat-sidebar${sidebarOpen ? ' is-open' : ''}`} aria-label="Chat history">
         <div className="ds-chat-sidebar-brand">
           <DeepSeekMark className="ds-chat-sidebar-brand-mark" />
-          <span className="ds-chat-sidebar-brand-name">DeepSeek</span>
+          <span className="ds-chat-sidebar-brand-name">
+            Deep<span>Seek</span>
+          </span>
         </div>
         <button type="button" className="ds-chat-new" onClick={startNewChat} disabled={busy}>
           <span aria-hidden="true">+</span> New chat
@@ -597,19 +689,43 @@ export function ChatPage() {
     </>
   )
 
+  const topBar = (opts?: { showNew?: boolean }) => (
+    <header className="ds-chat-top">
+      <button
+        type="button"
+        className="ds-chat-icon-btn ds-chat-menu-btn"
+        aria-label="Chat history"
+        aria-expanded={sidebarOpen}
+        onClick={() => setSidebarOpen((v) => !v)}
+      >
+        {MENU_ICON}
+      </button>
+      <button type="button" className="ds-chat-icon-btn" aria-label="Back to app" onClick={() => openApp()}>
+        {BACK_ICON}
+      </button>
+      <TopBrand />
+      <span className="ds-chat-top-spacer" />
+      {opts?.showNew ? (
+        <button
+          type="button"
+          className="ds-chat-icon-btn"
+          aria-label="New chat"
+          disabled={busy}
+          onClick={startNewChat}
+        >
+          {PLUS_ICON}
+        </button>
+      ) : null}
+      <PwaInstallButton />
+    </header>
+  )
+
   if (entitlement && !loggedIn) {
     return (
       <div className="ds-chat">
         {shellChrome}
         <div className="ds-chat-main">
-          <header className="ds-chat-top">
-            <button type="button" className="ds-chat-icon-btn ds-chat-menu-btn" aria-label="Menu" onClick={() => setSidebarOpen(true)}>
-              {MENU_ICON}
-            </button>
-            <button type="button" className="ds-chat-icon-btn" aria-label="Back" onClick={() => openApp()}>
-              {BACK_ICON}
-            </button>
-          </header>
+          {topBar()}
           <div className="ds-chat-gate">
             <DeepSeekMark className="ds-chat-empty-mark" />
             <h1>Sign in to chat</h1>
@@ -631,14 +747,7 @@ export function ChatPage() {
       <div className="ds-chat">
         {shellChrome}
         <div className="ds-chat-main">
-          <header className="ds-chat-top">
-            <button type="button" className="ds-chat-icon-btn ds-chat-menu-btn" aria-label="Menu" onClick={() => setSidebarOpen(true)}>
-              {MENU_ICON}
-            </button>
-            <button type="button" className="ds-chat-icon-btn" aria-label="Back" onClick={() => openApp()}>
-              {BACK_ICON}
-            </button>
-          </header>
+          {topBar()}
           <div className="ds-chat-gate">
             <DeepSeekMark className="ds-chat-empty-mark" />
             <h1>Family or Business</h1>
@@ -661,22 +770,7 @@ export function ChatPage() {
       {shellChrome}
 
       <div className="ds-chat-main" aria-labelledby={titleId}>
-        <header className="ds-chat-top">
-          <button
-            type="button"
-            className="ds-chat-icon-btn ds-chat-menu-btn"
-            aria-label="Chat history"
-            aria-expanded={sidebarOpen}
-            onClick={() => setSidebarOpen((v) => !v)}
-          >
-            {MENU_ICON}
-          </button>
-          <button type="button" className="ds-chat-icon-btn" aria-label="Back to app" onClick={() => openApp()}>
-            {BACK_ICON}
-          </button>
-          <span className="ds-chat-top-spacer" />
-          <PwaInstallButton />
-        </header>
+        {topBar({ showNew: true })}
 
         <div className="ds-chat-messages" ref={listRef}>
           {!active.messages.length ? (
@@ -687,11 +781,12 @@ export function ChatPage() {
               </h1>
               <p>How can I help you today?</p>
               <div className="ds-chat-suggestions">
-                {SUGGESTIONS.map((s) => (
+                {SUGGESTIONS.map((s, i) => (
                   <button
                     key={s}
                     type="button"
                     className="ds-chat-suggestion"
+                    style={{ animationDelay: `${i * 40}ms` }}
                     disabled={busy}
                     onClick={() => void send(s)}
                   >
@@ -704,11 +799,11 @@ export function ChatPage() {
             <div className="ds-chat-feed">
               {active.messages.map((m) =>
                 m.role === 'user' ? (
-                  <article key={m.id} className="ds-chat-msg is-user">
+                  <article key={m.id} className="ds-chat-msg is-user is-enter">
                     <div className="ds-chat-user-bubble">{m.content}</div>
                   </article>
                 ) : (
-                  <article key={m.id} className="ds-chat-msg is-assistant">
+                  <article key={m.id} className="ds-chat-msg is-assistant is-enter">
                     <div className="ds-chat-assistant-head">
                       <DeepSeekMark className="ds-chat-assistant-head-mark" />
                       <span>DeepSeek</span>
@@ -718,6 +813,7 @@ export function ChatPage() {
                       streaming={streamingId === m.id}
                       thinking={streamingId === m.id && thinking}
                       searching={streamingId === m.id && searching}
+                      thinkStartedAt={streamingId === m.id ? thinkClock : null}
                     />
                     {streamingId !== m.id && m.content.trim() ? (
                       <MessageActions
@@ -738,6 +834,7 @@ export function ChatPage() {
             className="ds-chat-composer"
             onSubmit={(e) => {
               e.preventDefault()
+              if (busy) return
               void send(draft)
             }}
           >
@@ -789,18 +886,29 @@ export function ChatPage() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()
-                    void send(draft)
+                    if (!busy) void send(draft)
                   }
                 }}
               />
-              <button
-                type="submit"
-                className="ds-chat-send"
-                aria-label="Send"
-                disabled={busy || !draft.trim()}
-              >
-                {SEND_ICON}
-              </button>
+              {busy ? (
+                <button
+                  type="button"
+                  className="ds-chat-send is-stop"
+                  aria-label="Stop generating"
+                  onClick={stopGeneration}
+                >
+                  {STOP_ICON}
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="ds-chat-send"
+                  aria-label="Send"
+                  disabled={!draft.trim()}
+                >
+                  {SEND_ICON}
+                </button>
+              )}
             </div>
             {error ? (
               <p className="ds-chat-error" role="alert">
