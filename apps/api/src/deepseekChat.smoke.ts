@@ -14,6 +14,10 @@ import {
   deepseekAnthropicMessagesUrl,
   deepseekChatSupportsSearch,
 } from './deepseekChatSearch.js'
+import { DEEPSEEK_CHAT_SSE_HEARTBEAT_MS } from './deepseekChatRoutes.js'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
 
 assert.match(DEEPSEEK_CHAT_SYSTEM, /helpful AI assistant/i, 'System prompt is general assistant')
 assert.doesNotMatch(DEEPSEEK_CHAT_SYSTEM, /JyutTranslate|Cantonese|粵語/i, 'No product/Cantonese framing')
@@ -73,5 +77,20 @@ assert.equal(
   'https://api.deepseek.com/anthropic',
 )
 assert.equal(typeof deepseekChatSupportsSearch(), 'boolean')
+
+assert.ok(
+  DEEPSEEK_CHAT_SSE_HEARTBEAT_MS >= 5_000 && DEEPSEEK_CHAT_SSE_HEARTBEAT_MS <= 30_000,
+  'SSE heartbeats should be frequent enough for Vercel HTTP/1.1 idle proxies',
+)
+
+const vercelJsonPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../vercel.json')
+const vercel = JSON.parse(readFileSync(vercelJsonPath, 'utf8')) as {
+  functions?: { 'api/index.ts'?: { maxDuration?: number } }
+}
+const maxDuration = vercel.functions?.['api/index.ts']?.maxDuration
+assert.ok(
+  typeof maxDuration === 'number' && maxDuration >= 300,
+  'DeepThink chat needs api maxDuration ≥ 300s (was timing out at 60s)',
+)
 
 console.log('deepseekChat.smoke: ok')
