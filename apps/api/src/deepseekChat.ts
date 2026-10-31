@@ -186,6 +186,7 @@ export async function generateDeepseekChatReply(
 export async function* streamDeepseekChatReply(
   messages: DeepseekChatMessage[],
   thinkingEnabled = true,
+  signal?: AbortSignal,
 ): AsyncGenerator<DeepseekChatStreamEvent, void, unknown> {
   if (!openaiConfigured()) {
     throw new Error('Chat model is not configured.')
@@ -193,11 +194,14 @@ export async function* streamDeepseekChatReply(
   const client = openaiClient()
   if (!client) throw new Error('Chat model is not configured.')
 
-  const stream = await client.chat.completions.create({
-    ...chatBaseParams(thinkingEnabled),
-    stream: true,
-    messages: chatMessagesPayload(messages),
-  })
+  const stream = await client.chat.completions.create(
+    {
+      ...chatBaseParams(thinkingEnabled),
+      stream: true,
+      messages: chatMessagesPayload(messages),
+    },
+    signal ? { signal } : undefined,
+  )
 
   let announcedThinking = false
   for await (const chunk of stream) {

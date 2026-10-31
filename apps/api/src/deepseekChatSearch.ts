@@ -119,6 +119,7 @@ function pushUniqueSources(
 export async function* streamDeepseekChatWithSearch(
   messages: DeepseekChatMessage[],
   thinkingEnabled = true,
+  signal?: AbortSignal,
 ): AsyncGenerator<DeepseekChatSearchStreamEvent, void, unknown> {
   if (!openaiConfigured()) {
     throw new Error('Chat model is not configured.')
@@ -140,6 +141,7 @@ export async function* streamDeepseekChatWithSearch(
       Accept: 'text/event-stream',
     },
     body: JSON.stringify(anthropicMessagesPayload(messages, thinkingEnabled)),
+    signal,
   })
 
   if (!res.ok) {
