@@ -791,22 +791,24 @@ export function SoloView() {
               </div>
             ) : null}
           </div>
-          {renderPaneBody({
-            pane: 'upper',
-            lang: soloUpperLang,
-            draft: upperDraft,
-            thinking: upperThinking,
-            showResult: showUpperResult,
-            inputRef: upperInputRef,
-            onChange: onUpperChange,
-            onEdit: () => {
-              editingRef.current = 'upper'
-              setUpperEditing(true)
-              activatePane('upper')
-              queueMicrotask(() => upperInputRef.current?.focus())
-            },
-            onBlurEdit: () => setUpperEditing(false),
-          })}
+          <div className="solo-pane-scroll">
+            {renderPaneBody({
+              pane: 'upper',
+              lang: soloUpperLang,
+              draft: upperDraft,
+              thinking: upperThinking,
+              showResult: showUpperResult,
+              inputRef: upperInputRef,
+              onChange: onUpperChange,
+              onEdit: () => {
+                editingRef.current = 'upper'
+                setUpperEditing(true)
+                activatePane('upper')
+                queueMicrotask(() => upperInputRef.current?.focus())
+              },
+              onBlurEdit: () => setUpperEditing(false),
+            })}
+          </div>
         </div>
 
         <div className="solo-divider" />
@@ -859,49 +861,52 @@ export function SoloView() {
               </div>
             ) : null}
           </div>
-          {renderPaneBody({
-            pane: 'lower',
-            lang: soloLowerLang,
-            draft: lowerDraft,
-            thinking: lowerThinking,
-            showResult: showLowerResult,
-            inputRef: lowerInputRef,
-            onChange: onLowerChange,
-            onEdit: () => {
-              editingRef.current = 'lower'
-              setLowerEditing(true)
-              activatePane('lower')
-              queueMicrotask(() => lowerInputRef.current?.focus())
-            },
-            onBlurEdit: () => setLowerEditing(false),
-          })}
-          {!showLowerRuby && altsLoading && alts.length === 0 && lowerDraft.trim() ? (
-            <p className="solo-alts-loading muted" aria-live="polite">
-              <BiText copy={ui.loadingVariations} size="sm" layout="inline" />
-            </p>
-          ) : null}
-          {!showLowerRuby &&
-          alts.length > 0 &&
-          (soloLowerLang === 'yue' ||
-            soloLowerLang === 'cmn' ||
-            soloLowerLang === 'wuu' ||
-            soloLowerLang === 'sichuan' ||
-            soloLowerLang === 'tl' ||
-            soloLowerLang === 'es' || soloLowerLang === 'eses' ||
-            soloLowerLang === 'vi' ||
-            soloLowerLang === 'th' ||
-            soloLowerLang === 'lo') ? (
-            <TranslationAlternatives
-              alternatives={alts}
-              alternativeRomanizations={
-                soloLowerLang === 'wuu' || soloLowerLang === 'sichuan'
-                  ? latest?.alternativeRomanizations
-                  : undefined
-              }
-              lang={soloLowerLang}
-              onSelect={selectYueVariation}
-            />
-          ) : null}
+          <div className="solo-pane-scroll">
+            {renderPaneBody({
+              pane: 'lower',
+              lang: soloLowerLang,
+              draft: lowerDraft,
+              thinking: lowerThinking,
+              showResult: showLowerResult,
+              inputRef: lowerInputRef,
+              onChange: onLowerChange,
+              onEdit: () => {
+                editingRef.current = 'lower'
+                setLowerEditing(true)
+                activatePane('lower')
+                queueMicrotask(() => lowerInputRef.current?.focus())
+              },
+              onBlurEdit: () => setLowerEditing(false),
+            })}
+            {!showLowerRuby && altsLoading && alts.length === 0 && lowerDraft.trim() ? (
+              <p className="solo-alts-loading muted" aria-live="polite">
+                <BiText copy={ui.loadingVariations} size="sm" layout="inline" />
+              </p>
+            ) : null}
+            {!showLowerRuby &&
+            alts.length > 0 &&
+            (soloLowerLang === 'yue' ||
+              soloLowerLang === 'cmn' ||
+              soloLowerLang === 'wuu' ||
+              soloLowerLang === 'sichuan' ||
+              soloLowerLang === 'tl' ||
+              soloLowerLang === 'es' ||
+              soloLowerLang === 'eses' ||
+              soloLowerLang === 'vi' ||
+              soloLowerLang === 'th' ||
+              soloLowerLang === 'lo') ? (
+              <TranslationAlternatives
+                alternatives={alts}
+                alternativeRomanizations={
+                  soloLowerLang === 'wuu' || soloLowerLang === 'sichuan'
+                    ? latest?.alternativeRomanizations
+                    : undefined
+                }
+                lang={soloLowerLang}
+                onSelect={selectYueVariation}
+              />
+            ) : null}
+          </div>
         </div>
       </motion.div>
     </div>

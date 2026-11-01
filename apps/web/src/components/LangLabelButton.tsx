@@ -177,7 +177,8 @@ export function LangLabelButton({
           <span className="lang-dd-mark" aria-hidden="true">
             {current.mark}
           </span>
-          <BiText copy={current.copy} size="sm" only={labelOnly} hideJp />
+          {/* Inline keeps primary-lang gloss / 英文·粵 labels inside the pill chrome. */}
+          <BiText copy={current.copy} size="sm" only={labelOnly} hideJp layout="inline" />
           <span className={`lang-dd-chevron${open ? ' is-open' : ''}`} aria-hidden="true">
             <ChevronIcon />
           </span>
