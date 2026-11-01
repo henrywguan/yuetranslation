@@ -1497,6 +1497,7 @@ button.spoken-line-text--action:focus-visible {
 
 .canto-roman-toggle {
   display: inline-flex;
+  align-items: center;
   padding: 2px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--jade) 22%, var(--glass-border));
@@ -1506,16 +1507,36 @@ button.spoken-line-text--action:focus-visible {
 .canto-roman-toggle-btn {
   appearance: none;
   margin: 0;
-  padding: 0.22rem 0.7rem;
+  padding: 0.32rem 0.85rem;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: color-mix(in srgb, var(--muted) 88%, var(--ink));
   font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition:
     background 0.18s ease,
     color 0.18s ease;
+}
+
+.canto-roman-toggle-btn .bi {
+  display: inline;
+  max-width: none;
+  line-height: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.canto-roman-toggle-btn .bi-en {
+  display: inline;
+  line-height: inherit;
 }
 
 .canto-roman-toggle-btn.is-active {

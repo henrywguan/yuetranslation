@@ -280,6 +280,14 @@ export async function runTranslation(
   const seq = ++translateSeq
   pending.set(lang, seq)
   beginTranslate(set, to)
+  // Solo: seed source into the speaking pane immediately. `translating` makes
+  // turnActive true and disables history fallback — without this seed the
+  // source draft syncs to '' as soon as the textarea blurs (Enter / timer).
+  if (!isFace) {
+    const fromUpper = lang === get().soloUpperLang
+    if (fromUpper) set({ enInterim: text })
+    else set({ yueInterim: text })
+  }
   const startedAt = Date.now()
   let speak: { text: string; lang: Lang } | null = null
   // Live mic + Conversation: skip EN→ZH variation fan-out for lower latency.

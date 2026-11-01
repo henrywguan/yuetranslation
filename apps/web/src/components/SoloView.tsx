@@ -228,7 +228,11 @@ export function SoloView() {
 
   useEffect(() => {
     if (editingRef.current !== 'upper') {
-      setUpperDraft(storeUpper)
+      setUpperDraft((prev) => {
+        // Keep typed source visible if store briefly clears while translating.
+        if (translating && prev.trim() && !String(storeUpper).trim()) return prev
+        return storeUpper
+      })
       return
     }
     // Text-only panes auto-focus empty — don't let that edit lock hide a
@@ -239,11 +243,14 @@ export function SoloView() {
       queueMicrotask(() => setUpperEditing(false))
       return storeUpper
     })
-  }, [storeUpper])
+  }, [storeUpper, translating])
 
   useEffect(() => {
     if (editingRef.current !== 'lower') {
-      setLowerDraft(storeLower)
+      setLowerDraft((prev) => {
+        if (translating && prev.trim() && !String(storeLower).trim()) return prev
+        return storeLower
+      })
       return
     }
     setLowerDraft((prev) => {
@@ -252,7 +259,7 @@ export function SoloView() {
       queueMicrotask(() => setLowerEditing(false))
       return storeLower
     })
-  }, [storeLower])
+  }, [storeLower, translating])
 
   useEffect(() => {
     if (live || translating || enInterim || yueInterim || enTranslation || yueTranslation) {
