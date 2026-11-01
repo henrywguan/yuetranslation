@@ -85,6 +85,34 @@ function beginTranslate(set: Set, to: Lang) {
   set({ translating: true, translatingTo: to })
 }
 
+/**
+ * Keep the speaking-side source visible for the whole in-flight window.
+ * Solo stores by pane (en*=upper, yue*=lower) for any Lang; Conversation uses
+ * face.en* = you, face.yue* = partner — also regardless of which languages.
+ */
+export function seedSpeakingSource(
+  get: Get,
+  set: Set,
+  lang: Lang,
+  text: string,
+  isFace: boolean,
+) {
+  if (isFace) {
+    const face = get().face
+    const youLang = get().conversationYouLang
+    if (lang === youLang) {
+      set({ face: { ...face, enInterim: text } })
+    } else {
+      set({ face: { ...face, yueInterim: text } })
+    }
+    return
+  }
+  const upper = get().soloUpperLang
+  const lower = get().soloLowerLang
+  if (lang === upper) set({ enInterim: text })
+  else if (lang === lower) set({ yueInterim: text })
+}
+
 function endTranslate(set: Set) {
   translateInFlight = Math.max(0, translateInFlight - 1)
   if (translateInFlight === 0) {
@@ -280,14 +308,11 @@ export async function runTranslation(
   const seq = ++translateSeq
   pending.set(lang, seq)
   beginTranslate(set, to)
-  // Solo: seed source into the speaking pane immediately. `translating` makes
-  // turnActive true and disables history fallback — without this seed the
-  // source draft syncs to '' as soon as the textarea blurs (Enter / timer).
-  if (!isFace) {
-    const fromUpper = lang === get().soloUpperLang
-    if (fromUpper) set({ enInterim: text })
-    else set({ yueInterim: text })
-  }
+  // Seed source immediately for every language. `translating` makes Solo
+  // turnActive true (history fallback off) — without a seed, any blurred
+  // source pane (EN, 粵, Tagalog, Spanish, … upper or lower) syncs to ''.
+  // Conversation paints from face.*Interim the same way for you/partner langs.
+  seedSpeakingSource(get, set, lang, text, isFace)
   const startedAt = Date.now()
   let speak: { text: string; lang: Lang } | null = null
   // Live mic + Conversation: skip EN→ZH variation fan-out for lower latency.
