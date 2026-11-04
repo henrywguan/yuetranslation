@@ -21,6 +21,7 @@
     "smoke:entitlements": "npm run smoke:entitlements --prefix apps/api",
     "smoke:usage": "npm run smoke:usage --prefix apps/api",
     "smoke:household-usage": "npm run smoke:household-usage --prefix apps/api",
+    "smoke:chat-ui": "npx tsx apps/web/src/lib/chatHistory.smoke.ts && npx tsx apps/web/src/lib/visualViewportHeight.smoke.ts && npx tsx apps/web/src/lib/chatStream.smoke.ts",
     "smoke:all": "npm run smoke:all --prefix apps/api",
     "security:api-health": "./scripts/security-api-health.sh",
     "test:translate": "node scripts/translation-quality-bot.mjs",
