@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { startTransition, useEffect, useId, useRef, useState } from 'react'
 import { DeepSeekMark } from '../components/DeepSeekMark'
 import { IosHomescreenTip } from '../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../components/PwaInstallButton'
@@ -37,6 +37,18 @@ const SEARCH_KEY = 'yue-deepseek-chat-search-v1'
 /** Stable empty list for the orphan-activeId fallback — a fresh `[]` each render
  *  would retrigger the messages scroll effect forever while entitlement hydrates. */
 const EMPTY_MESSAGES: ChatMessage[] = []
+
+/** First-paint placeholder so Suspense can drop "Loading chat…" before localStorage
+ *  DeepThink history is parsed/rendered (large threads were freezing desktop Chrome). */
+const BOOT_THREAD: ChatThread = {
+  id: '__boot__',
+  title: 'New chat',
+  updatedAt: 0,
+  messages: EMPTY_MESSAGES,
+}
+
+/** Cap DOM work on open — storage may keep more; older turns stay in localStorage. */
+const MAX_RENDER_MESSAGES = 48
 
 const MENU_ICON = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -229,7 +241,11 @@ function ReasoningPanel({
         <span aria-hidden="true">{CHEVRON_ICON}</span>
       </button>
       <div className={`ds-chat-reasoning-panel${open ? ' is-open' : ''}`}>
-        <pre className="ds-chat-reasoning-body">{reasoning || (streaming ? '…' : '')}</pre>
+        {/* Keep collapsed traces out of the DOM — 40× long DeepThink <pre>s on open
+         * blocked the main thread so Chrome only showed "Loading chat…" then killed the tab. */}
+        {open || streaming ? (
+          <pre className="ds-chat-reasoning-body">{reasoning || (streaming ? '…' : '')}</pre>
+        ) : null}
       </div>
     </div>
   )
@@ -410,28 +426,26 @@ export function ChatPage() {
     // Remeasure after layout / portal teardown — first paint can still see vv=0.
     const raf = window.requestAnimationFrame(apply)
     const t = window.setTimeout(apply, 120)
+    // resize only — visualViewport `scroll` was re-added in #721 and can
+    // feedback with shell height updates; iOS 0-height is handled by the
+    // safe reader + rAF/timeout remounts above.
     window.visualViewport?.addEventListener('resize', apply)
-    // scroll: height-only via lastPx — needed when iOS restores vv after sheet close
-    // without a resize; ignore when height is unchanged (no layout thrash).
-    window.visualViewport?.addEventListener('scroll', apply)
     window.addEventListener('resize', apply)
     return () => {
       window.cancelAnimationFrame(raf)
       window.clearTimeout(t)
       root.style.removeProperty('--ds-chat-vh')
       window.visualViewport?.removeEventListener('resize', apply)
-      window.visualViewport?.removeEventListener('scroll', apply)
       window.removeEventListener('resize', apply)
     }
   }, [])
 
   const entitlement = useYueStore((s) => s.entitlement)
   const titleId = useId()
-  const [threads, setThreads] = useState<ChatThread[]>(() => readChatThreads())
-  const [activeId, setActiveId] = useState<string>(() => {
-    const existing = readChatThreads()
-    return existing[0]?.id || emptyThread().id
-  })
+  // Cheap first paint (replaces Suspense boot) — hydrate threads after mount.
+  const [threads, setThreads] = useState<ChatThread[]>(() => [BOOT_THREAD])
+  const [activeId, setActiveId] = useState<string>(BOOT_THREAD.id)
+  const [historyReady, setHistoryReady] = useState(false)
   const [draft, setDraft] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -456,19 +470,27 @@ export function ChatPage() {
       messages: EMPTY_MESSAGES,
     } satisfies ChatThread)
 
+  const visibleMessages =
+    active.messages.length > MAX_RENDER_MESSAGES
+      ? active.messages.slice(-MAX_RENDER_MESSAGES)
+      : active.messages
+
   useEffect(() => {
     if (bootstrapped.current) return
     bootstrapped.current = true
     const existing = readChatThreads()
-    if (existing.length) {
-      setThreads(existing)
-      setActiveId(existing[0]!.id)
-      return
-    }
-    const created = emptyThread()
-    setThreads([created])
-    setActiveId(created.id)
-    upsertChatThread(created)
+    startTransition(() => {
+      if (existing.length) {
+        setThreads(existing)
+        setActiveId(existing[0]!.id)
+      } else {
+        const created = emptyThread()
+        setThreads([created])
+        setActiveId(created.id)
+        upsertChatThread(created)
+      }
+      setHistoryReady(true)
+    })
   }, [])
 
   const lastMessageId = active.messages.at(-1)?.id
@@ -702,26 +724,28 @@ export function ChatPage() {
           <span aria-hidden="true">+</span> New chat
         </button>
         <ul className="ds-chat-thread-list">
-          {threads.map((t) => (
-            <li key={t.id} className="ds-chat-thread-item">
-              <button
-                type="button"
-                className={`ds-chat-thread-btn${t.id === active.id ? ' is-active' : ''}`}
-                onClick={() => selectThread(t.id)}
-              >
-                {t.title}
-              </button>
-              <button
-                type="button"
-                className="ds-chat-thread-del"
-                aria-label={`Delete ${t.title}`}
-                onClick={() => removeThread(t.id)}
-                disabled={busy}
-              >
-                ×
-              </button>
-            </li>
-          ))}
+          {threads
+            .filter((t) => t.id !== BOOT_THREAD.id)
+            .map((t) => (
+              <li key={t.id} className="ds-chat-thread-item">
+                <button
+                  type="button"
+                  className={`ds-chat-thread-btn${t.id === active.id ? ' is-active' : ''}`}
+                  onClick={() => selectThread(t.id)}
+                >
+                  {t.title}
+                </button>
+                <button
+                  type="button"
+                  className="ds-chat-thread-del"
+                  aria-label={`Delete ${t.title}`}
+                  onClick={() => removeThread(t.id)}
+                  disabled={busy}
+                >
+                  ×
+                </button>
+              </li>
+            ))}
         </ul>
         <div className="ds-chat-sidebar-foot">
           <button type="button" className="ds-chat-sidebar-link" onClick={() => openApp()}>
@@ -816,7 +840,13 @@ export function ChatPage() {
         {topBar({ showNew: true })}
 
         <div className="ds-chat-messages" ref={listRef}>
-          {!active.messages.length ? (
+          {!historyReady ? (
+            <div className="ds-chat-empty" aria-busy="true">
+              <DeepSeekMark className="ds-chat-empty-mark" />
+              <h1 id={titleId}>DeepSeek</h1>
+              <p>Loading conversation…</p>
+            </div>
+          ) : !active.messages.length ? (
             <div className="ds-chat-empty">
               <DeepSeekMark className="ds-chat-empty-mark" />
               <h1 id={titleId}>
@@ -840,7 +870,12 @@ export function ChatPage() {
             </div>
           ) : (
             <div className="ds-chat-feed">
-              {active.messages.map((m) => {
+              {active.messages.length > visibleMessages.length ? (
+                <p className="ds-chat-history-trim" role="note">
+                  Showing last {visibleMessages.length} of {active.messages.length} messages
+                </p>
+              ) : null}
+              {visibleMessages.map((m) => {
                 const isLive = streamingId === m.id
                 // Enter motion only for the in-flight turn — replaying is-enter on
                 // every historical row fought layout when opening a long thread.
