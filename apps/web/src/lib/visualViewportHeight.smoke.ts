@@ -12,6 +12,8 @@ const chat = readFileSync(join(root, '../pages/ChatPage.tsx'), 'utf8')
 assert.match(chat, /safeShellViewportHeight/, 'ChatPage rejects zero visualViewport heights')
 assert.match(chat, /BOOT_THREAD/, 'ChatPage first paint skips localStorage history')
 assert.match(chat, /MAX_RENDER_MESSAGES/, 'ChatPage caps DOM messages on open')
+assert.match(chat, /HYDRATE_BATCH/, 'ChatPage paints history in idle batches')
+assert.match(chat, /hydrateChatThreadsAsync/, 'ChatPage hydrates history off the first paint')
 assert.match(chat, /open \|\| streaming \?/, 'Collapsed DeepThink traces stay out of the DOM')
 assert.doesNotMatch(
   chat,

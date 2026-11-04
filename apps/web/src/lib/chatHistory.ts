@@ -30,6 +30,15 @@ export type ChatThread = {
 const STORAGE_KEY = 'yue-deepseek-chat-v1'
 const MAX_THREADS = 40
 const MAX_MESSAGES = 80
+/** Drop DeepThink traces except on the newest N assistant rows per thread. */
+const KEEP_REASONING_TAIL = 4
+/** Cap a single message body so one thread cannot OOM the tab on open. */
+const MAX_CONTENT_CHARS = 12_000
+/**
+ * Raw localStorage payload above this is cleared on hydrate — JSON.parse of
+ * multi‑MB DeepThink history freezes Chrome on "Loading conversation…".
+ */
+export const CHAT_HYDRATE_MAX_RAW_BYTES = 256_000
 
 function uid(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
@@ -74,29 +83,131 @@ function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
   }
 }
 
+export function normalizeChatThreads(parsed: unknown): ChatThread[] {
+  if (!Array.isArray(parsed)) return []
+  return parsed
+    .filter((t): t is ChatThread => Boolean(t && typeof t === 'object' && typeof (t as ChatThread).id === 'string'))
+    .map((t) => ({
+      id: t.id,
+      title: typeof t.title === 'string' && t.title.trim() ? t.title : 'New chat',
+      updatedAt: Number(t.updatedAt) || Date.now(),
+      messages: Array.isArray(t.messages)
+        ? t.messages
+            .map((m) => normalizeMessage(m as Partial<ChatMessage>))
+            .filter((m): m is ChatMessage => Boolean(m))
+            .slice(-MAX_MESSAGES)
+        : [],
+    }))
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, MAX_THREADS)
+}
+
 export function readChatThreads(): ChatThread[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) return []
-    return parsed
-      .filter((t): t is ChatThread => Boolean(t && typeof t === 'object' && typeof t.id === 'string'))
-      .map((t) => ({
-        id: t.id,
-        title: typeof t.title === 'string' && t.title.trim() ? t.title : 'New chat',
-        updatedAt: Number(t.updatedAt) || Date.now(),
-        messages: Array.isArray(t.messages)
-          ? t.messages
-              .map((m) => normalizeMessage(m as Partial<ChatMessage>))
-              .filter((m): m is ChatMessage => Boolean(m))
-              .slice(-MAX_MESSAGES)
-          : [],
-      }))
-      .sort((a, b) => b.updatedAt - a.updatedAt)
-      .slice(0, MAX_THREADS)
+    return normalizeChatThreads(JSON.parse(raw) as unknown)
   } catch {
     return []
+  }
+}
+
+/** Pure prune — does not touch localStorage. */
+export function pruneChatThreads(threads: ChatThread[]): { threads: ChatThread[]; changed: boolean } {
+  let changed = false
+  const next = threads.map((t) => {
+    const messages = t.messages.slice(-MAX_MESSAGES)
+    if (messages.length !== t.messages.length) changed = true
+
+    const keepReasoning = new Set<string>()
+    let assistantsFromEnd = 0
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const m = messages[i]!
+      if (m.role !== 'assistant') continue
+      if (assistantsFromEnd < KEEP_REASONING_TAIL && m.reasoning) keepReasoning.add(m.id)
+      assistantsFromEnd += 1
+    }
+
+    const slimmed = messages.map((m) => {
+      let row = m
+      if (m.reasoning && !keepReasoning.has(m.id)) {
+        changed = true
+        row = { ...row, reasoning: undefined }
+      }
+      if (row.content.length > MAX_CONTENT_CHARS) {
+        changed = true
+        row = { ...row, content: `${row.content.slice(0, MAX_CONTENT_CHARS)}\n\n…` }
+      }
+      return row
+    })
+
+    return { ...t, messages: slimmed }
+  })
+  return { threads: next, changed }
+}
+
+/**
+ * Permanently slim device history that can freeze `#/chat` on open (huge DeepThink
+ * traces + multi‑KB markdown). Safe to call on every hydrate — no-op when already lean.
+ */
+export function pruneHeavyChatStorage(threads = readChatThreads()): ChatThread[] {
+  const { threads: next, changed } = pruneChatThreads(threads)
+  if (changed) writeChatThreads(next)
+  return next
+}
+
+function yieldToMain(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(() => {
+        window.setTimeout(resolve, 0)
+      })
+      return
+    }
+    setTimeout(resolve, 0)
+  })
+}
+
+export type ChatHydrateResult = {
+  threads: ChatThread[]
+  /** True when oversized / corrupt history was deleted so the tab can open. */
+  clearedHeavy: boolean
+}
+
+/**
+ * Async hydrate for `#/chat` open — yields between parse/prune steps and clears
+ * payloads that would lock the main thread on JSON.parse.
+ */
+export async function hydrateChatThreadsAsync(): Promise<ChatHydrateResult> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return { threads: [], clearedHeavy: false }
+
+    if (raw.length > CHAT_HYDRATE_MAX_RAW_BYTES) {
+      localStorage.removeItem(STORAGE_KEY)
+      return { threads: [], clearedHeavy: true }
+    }
+
+    await yieldToMain()
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      localStorage.removeItem(STORAGE_KEY)
+      return { threads: [], clearedHeavy: true }
+    }
+
+    await yieldToMain()
+    const normalized = normalizeChatThreads(parsed)
+    await yieldToMain()
+    const { threads, changed } = pruneChatThreads(normalized)
+    if (changed) {
+      await yieldToMain()
+      writeChatThreads(threads)
+    }
+    return { threads, clearedHeavy: false }
+  } catch {
+    return { threads: [], clearedHeavy: false }
   }
 }
 
