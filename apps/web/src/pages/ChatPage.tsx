@@ -228,6 +228,11 @@ function ReasoningPanel({
         : 'Thinking…'
       : formatThoughtSeconds(labelMs)
 
+  // While streaming, only paint the tail of the trace — a 50k+ <pre> rewrite every
+  // paint still freezes the tab even with coalesced React updates.
+  const liveReasoning =
+    streaming && reasoning.length > 8_000 ? `…\n${reasoning.slice(-8_000)}` : reasoning
+
   return (
     <div className={`ds-chat-reasoning${streaming ? ' is-streaming' : ''}${open ? ' is-open' : ''}`}>
       <button
@@ -247,7 +252,7 @@ function ReasoningPanel({
         {/* Keep collapsed traces out of the DOM — 40× long DeepThink <pre>s on open
          * blocked the main thread so Chrome only showed "Loading chat…" then killed the tab. */}
         {open || streaming ? (
-          <pre className="ds-chat-reasoning-body">{reasoning || (streaming ? '…' : '')}</pre>
+          <pre className="ds-chat-reasoning-body">{liveReasoning || (streaming ? '…' : '')}</pre>
         ) : null}
       </div>
     </div>
@@ -366,11 +371,10 @@ function AssistantBody({
       <div className={`ds-chat-assistant-body${streaming && hasContent ? ' is-streaming' : ''}`}>
         {hasContent ? (
           streaming ? (
-            renderChatMarkdown(message.content, { sources: message.sources })
-          ) : (
-            /* Historical rows: plain text — full markdown on 12× large answers was
-             * enough to keep "Loading conversation…" frozen until Chrome killed the tab. */
+            /* Live tokens stay plain — remounting markdown on every delta freezes DeepThink. */
             <div className="ds-chat-plain">{message.content}</div>
+          ) : (
+            renderChatMarkdown(message.content, { sources: message.sources })
           )
         ) : streaming && searching && !thinking ? (
           <span className="ds-chat-thinking-line">Searching…</span>
@@ -557,6 +561,12 @@ export function ChatPage() {
   const unlocked = canChat(entitlement)
   const loggedIn = Boolean(entitlement?.loggedIn)
 
+  /** Update React state only — no localStorage. Used for throttled stream paints. */
+  const paintThread = (thread: ChatThread) => {
+    setThreads((prev) => [thread, ...prev.filter((t) => t.id !== thread.id)])
+  }
+
+  /** Persist to disk + React (send start/end, errors — not every token). */
   const persist = (thread: ChatThread) => {
     setThreads((prev) => upsertChatThread(thread, prev))
   }
@@ -604,6 +614,7 @@ export function ChatPage() {
     thread = assistantStep.thread
     const assistantId = assistantStep.message.id
     persist(thread)
+    setRevealCount((n) => Math.min(MAX_RENDER_MESSAGES, Math.max(n + 2, thread.messages.length)))
     setStreamingId(assistantId)
     setThinking(false)
     setSearching(false)
@@ -616,6 +627,30 @@ export function ChatPage() {
     let assembled = ''
     let reasoning = ''
     let sources: ChatSource[] | undefined
+
+    // Coalesce stream paints — DeepThink can emit hundreds of reasoning deltas/sec;
+    // each used to JSON.stringify the whole history into localStorage (#723 path).
+    let paintTimer: number | null = null
+    let needsPaint = false
+    const STREAM_PAINT_MS = 80
+    const schedulePaint = () => {
+      needsPaint = true
+      if (paintTimer != null) return
+      paintTimer = window.setTimeout(() => {
+        paintTimer = null
+        if (!needsPaint) return
+        needsPaint = false
+        paintThread(thread)
+      }, STREAM_PAINT_MS)
+    }
+    const flushPaint = () => {
+      if (paintTimer != null) {
+        window.clearTimeout(paintTimer)
+        paintTimer = null
+      }
+      needsPaint = false
+      paintThread(thread)
+    }
 
     try {
       await streamDeepseekChat(apiMessagesFromThread(thread).filter((m) => m.content.trim()), {
@@ -641,7 +676,7 @@ export function ChatPage() {
           setThinking(true)
           reasoning += delta
           thread = patchAssistantContent(thread, assistantId, assembled, { reasoning })
-          persist(thread)
+          schedulePaint()
         },
         onSources: (next) => {
           sources = next
@@ -649,7 +684,7 @@ export function ChatPage() {
             reasoning: reasoning || undefined,
             sources,
           })
-          persist(thread)
+          schedulePaint()
         },
         onDelta: (delta) => {
           if (assembled.length === 0) {
@@ -666,9 +701,10 @@ export function ChatPage() {
             assembled += delta
             thread = patchAssistantContent(thread, assistantId, assembled)
           }
-          persist(thread)
+          schedulePaint()
         },
       })
+      flushPaint()
       if (!assembled.trim()) {
         thread = {
           ...thread,
@@ -676,8 +712,12 @@ export function ChatPage() {
         }
         persist(thread)
         setError('No reply — try again.')
+      } else {
+        // One disk write at end of stream (not per token).
+        persist(thread)
       }
     } catch (err) {
+      flushPaint()
       if ((err as Error)?.name === 'AbortError') {
         /* user stopped — keep partial reply if any */
         if (!assembled.trim()) {
@@ -685,6 +725,8 @@ export function ChatPage() {
             ...thread,
             messages: thread.messages.filter((m) => m.id !== assistantId),
           }
+          persist(thread)
+        } else {
           persist(thread)
         }
       } else {
@@ -697,6 +739,7 @@ export function ChatPage() {
         persist(thread)
       }
     } finally {
+      if (paintTimer != null) window.clearTimeout(paintTimer)
       setStreamingId(null)
       setThinking(false)
       setSearching(false)
@@ -728,6 +771,7 @@ export function ChatPage() {
     thread = userStep.thread
     persist(thread)
     setActiveId(thread.id)
+    setRevealCount((n) => Math.min(MAX_RENDER_MESSAGES, Math.max(n + 1, thread.messages.length)))
 
     await runAssistant(thread)
   }

@@ -15,6 +15,8 @@ assert.match(chat, /MAX_RENDER_MESSAGES/, 'ChatPage caps DOM messages on open')
 assert.match(chat, /HYDRATE_BATCH/, 'ChatPage paints history in idle batches')
 assert.match(chat, /hydrateChatThreadsAsync/, 'ChatPage hydrates history off the first paint')
 assert.match(chat, /open \|\| streaming \?/, 'Collapsed DeepThink traces stay out of the DOM')
+assert.match(chat, /schedulePaint/, 'Stream tokens coalesce React paints')
+assert.match(chat, /paintThread/, 'Live stream skips localStorage per token')
 assert.doesNotMatch(
   chat,
   /visualViewport\?\.addEventListener\('scroll'/,
