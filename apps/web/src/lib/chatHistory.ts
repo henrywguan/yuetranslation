@@ -33,12 +33,18 @@ const MAX_MESSAGES = 80
 /** Drop DeepThink traces except on the newest N assistant rows per thread. */
 const KEEP_REASONING_TAIL = 4
 /** Cap a single message body so one thread cannot OOM the tab on open. */
-const MAX_CONTENT_CHARS = 12_000
+export const MAX_CONTENT_CHARS = 12_000
+/** Cap a single DeepThink trace in storage / expanded panels. */
+export const MAX_REASONING_CHARS = 12_000
 /**
  * Raw localStorage payload above this is cleared on hydrate — JSON.parse of
  * multi‑MB DeepThink history freezes Chrome on "Loading conversation…".
  */
 export const CHAT_HYDRATE_MAX_RAW_BYTES = 256_000
+
+/** Coalesce disk writes so stream-end stringify does not fight first markdown paint. */
+let pendingDiskWrite: ChatThread[] | null = null
+let diskWriteHandle: number | null = null
 
 function uid(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
@@ -134,6 +140,13 @@ export function pruneChatThreads(threads: ChatThread[]): { threads: ChatThread[]
         changed = true
         row = { ...row, reasoning: undefined }
       }
+      if (row.reasoning && row.reasoning.length > MAX_REASONING_CHARS) {
+        changed = true
+        row = {
+          ...row,
+          reasoning: `${row.reasoning.slice(0, MAX_REASONING_CHARS)}\n\n…`,
+        }
+      }
       if (row.content.length > MAX_CONTENT_CHARS) {
         changed = true
         row = { ...row, content: `${row.content.slice(0, MAX_CONTENT_CHARS)}\n\n…` }
@@ -211,19 +224,54 @@ export async function hydrateChatThreadsAsync(): Promise<ChatHydrateResult> {
   }
 }
 
-export function writeChatThreads(threads: ChatThread[]) {
+function prepareThreadsForDisk(threads: ChatThread[]): ChatThread[] {
+  return threads
+    .slice()
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, MAX_THREADS)
+    .map((t) => ({
+      ...t,
+      messages: t.messages.slice(-MAX_MESSAGES),
+    }))
+}
+
+function commitDiskWrite(threads: ChatThread[]) {
   try {
-    const next = threads
-      .slice()
-      .sort((a, b) => b.updatedAt - a.updatedAt)
-      .slice(0, MAX_THREADS)
-      .map((t) => ({
-        ...t,
-        messages: t.messages.slice(-MAX_MESSAGES),
-      }))
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(threads))
   } catch {
     /* ignore quota */
+  }
+}
+
+/**
+ * Persist threads. Coalesces via requestIdleCallback (timeout fallback) so a
+ * stream-end stringify does not block the first post-stream markdown paint.
+ */
+export function writeChatThreads(threads: ChatThread[]) {
+  pendingDiskWrite = prepareThreadsForDisk(threads)
+  if (typeof window === 'undefined') {
+    const payload = pendingDiskWrite
+    pendingDiskWrite = null
+    commitDiskWrite(payload)
+    return
+  }
+  if (diskWriteHandle != null) return
+  const run = () => {
+    diskWriteHandle = null
+    const payload = pendingDiskWrite
+    pendingDiskWrite = null
+    if (!payload) return
+    commitDiskWrite(payload)
+  }
+  const ric = (
+    window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
+    }
+  ).requestIdleCallback
+  if (typeof ric === 'function') {
+    diskWriteHandle = ric(run, { timeout: 600 })
+  } else {
+    diskWriteHandle = window.setTimeout(run, 0)
   }
 }
 

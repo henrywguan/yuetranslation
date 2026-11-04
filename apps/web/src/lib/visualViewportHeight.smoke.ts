@@ -17,6 +17,7 @@ assert.match(chat, /hydrateChatThreadsAsync/, 'ChatPage hydrates history off the
 assert.match(chat, /open \|\| streaming \?/, 'Collapsed DeepThink traces stay out of the DOM')
 assert.match(chat, /schedulePaint/, 'Stream tokens coalesce React paints')
 assert.match(chat, /paintThread/, 'Live stream skips localStorage per token')
+assert.match(chat, /beginBatchedReveal/, 'Thread switch / hydrate share batched reveal')
 assert.doesNotMatch(
   chat,
   /visualViewport\?\.addEventListener\('scroll'/,

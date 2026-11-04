@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { startTransition, useEffect, useId, useRef, useState } from 'react'
 import { DeepSeekMark } from '../components/DeepSeekMark'
 import { IosHomescreenTip } from '../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../components/PwaInstallButton'
@@ -9,6 +9,7 @@ import {
   deleteChatThread,
   emptyThread,
   hydrateChatThreadsAsync,
+  MAX_CONTENT_CHARS,
   patchAssistantContent,
   upsertChatThread,
   type ChatMessage,
@@ -52,6 +53,8 @@ const MAX_RENDER_MESSAGES = 12
 /** Paint this many messages per idle slice while leaving "Loading conversation…". */
 const HYDRATE_BATCH = 2
 const HYDRATE_GAP_MS = 48
+/** Bound live DeepThink buffer mid-stream (full prune still runs on disk write). */
+const LIVE_REASONING_KEEP = 24_000
 
 const MENU_ICON = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -351,6 +354,23 @@ function AssistantBody({
   thinkStartedAt?: number | null
 }) {
   const hasContent = Boolean(message.content)
+  // Live tokens stay plain; after settle, promote to markdown in a transition so
+  // the composer stays responsive during the first parse.
+  const [rich, setRich] = useState(false)
+  useEffect(() => {
+    if (streaming || !hasContent) {
+      setRich(false)
+      return
+    }
+    let cancelled = false
+    startTransition(() => {
+      if (!cancelled) setRich(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [streaming, hasContent, message.id, message.content])
+
   return (
     <>
       {(message.reasoning || (streaming && thinking)) && (
@@ -370,8 +390,8 @@ function AssistantBody({
       )}
       <div className={`ds-chat-assistant-body${streaming && hasContent ? ' is-streaming' : ''}`}>
         {hasContent ? (
-          streaming ? (
-            /* Live tokens stay plain — remounting markdown on every delta freezes DeepThink. */
+          streaming || !rich ? (
+            /* Live / pre-transition: plain text — remounting markdown per delta freezes DeepThink. */
             <div className="ds-chat-plain">{message.content}</div>
           ) : (
             renderChatMarkdown(message.content, { sources: message.sources })
@@ -474,6 +494,9 @@ export function ChatPage() {
   const listRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const thinkStartedAt = useRef<number | null>(null)
+  /** Cancel pending HYDRATE_BATCH timers when switching threads / unmounting. */
+  const revealTimersRef = useRef<number[]>([])
+  const revealGenRef = useRef(0)
 
   const active =
     threads.find((t) => t.id === activeId) ||
@@ -487,12 +510,48 @@ export function ChatPage() {
   const revealCap = Math.min(MAX_RENDER_MESSAGES, Math.max(revealCount, 0))
   const visibleMessages = revealCap > 0 ? active.messages.slice(-revealCap) : EMPTY_MESSAGES
 
+  const clearRevealTimers = () => {
+    for (const id of revealTimersRef.current) window.clearTimeout(id)
+    revealTimersRef.current = []
+  }
+
+  /** Same HYDRATE_BATCH / HYDRATE_GAP_MS cadence as open — avoid an instant 12-message mount. */
+  const beginBatchedReveal = (messageCount: number) => {
+    clearRevealTimers()
+    const gen = ++revealGenRef.current
+    const maxShow = Math.min(MAX_RENDER_MESSAGES, Math.max(0, messageCount))
+    if (!maxShow) {
+      setRevealCount(0)
+      return
+    }
+    let shown = Math.min(HYDRATE_BATCH, maxShow)
+    setRevealCount(shown)
+    const grow = () => {
+      if (gen !== revealGenRef.current || shown >= maxShow) return
+      shown = Math.min(shown + HYDRATE_BATCH, maxShow)
+      setRevealCount(shown)
+      if (shown < maxShow) {
+        revealTimersRef.current.push(window.setTimeout(grow, HYDRATE_GAP_MS))
+      }
+    }
+    if (shown < maxShow) {
+      revealTimersRef.current.push(window.setTimeout(grow, HYDRATE_GAP_MS))
+    }
+  }
+
+  const stickMessagesToBottom = () => {
+    const el = listRef.current
+    if (!el) return
+    // Instant jump — CSS `scroll-behavior: smooth` on this scroller made every
+    // stream/hydration scrollTop write animate and compete with layout.
+    const prev = el.style.scrollBehavior
+    el.style.scrollBehavior = 'auto'
+    el.scrollTop = el.scrollHeight
+    el.style.scrollBehavior = prev
+  }
+
   useEffect(() => {
     let cancelled = false
-    const timers: number[] = []
-    const later = (fn: () => void, ms: number) => {
-      timers.push(window.setTimeout(fn, ms))
-    }
 
     void (async () => {
       // Yielding hydrate — sync JSON.parse of multi‑MB DeepThink history was
@@ -514,48 +573,28 @@ export function ChatPage() {
         setActiveId(created.id)
         upsertChatThread(created)
         setHistoryReady(true)
-        setRevealCount(0)
+        beginBatchedReveal(0)
         return
       }
 
       const head = existing[0]!
-      const maxShow = Math.min(MAX_RENDER_MESSAGES, head.messages.length)
       setThreads(existing)
       setActiveId(head.id)
       setHistoryReady(true)
-
-      if (!maxShow) {
-        setRevealCount(0)
-        return
-      }
-
-      let shown = Math.min(HYDRATE_BATCH, maxShow)
-      setRevealCount(shown)
-      const grow = () => {
-        if (cancelled || shown >= maxShow) return
-        shown = Math.min(shown + HYDRATE_BATCH, maxShow)
-        setRevealCount(shown)
-        if (shown < maxShow) later(grow, HYDRATE_GAP_MS)
-      }
-      if (shown < maxShow) later(grow, HYDRATE_GAP_MS)
+      beginBatchedReveal(head.messages.length)
     })()
 
     return () => {
       cancelled = true
-      for (const id of timers) window.clearTimeout(id)
+      clearRevealTimers()
     }
+    // beginBatchedReveal is stable enough for mount-only hydrate (refs + setState).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount hydrate
   }, [])
 
   const lastMessageId = active.messages.at(-1)?.id
   useEffect(() => {
-    const el = listRef.current
-    if (!el) return
-    // Instant jump — CSS `scroll-behavior: smooth` on this scroller made every
-    // stream/hydration scrollTop write animate and compete with layout.
-    const prev = el.style.scrollBehavior
-    el.style.scrollBehavior = 'auto'
-    el.scrollTop = el.scrollHeight
-    el.style.scrollBehavior = prev
+    stickMessagesToBottom()
   }, [activeId, active.messages.length, lastMessageId, streamingId, busy, thinking, searching])
 
   const unlocked = canChat(entitlement)
@@ -573,6 +612,8 @@ export function ChatPage() {
 
   const startNewChat = () => {
     if (busy) return
+    clearRevealTimers()
+    revealGenRef.current += 1
     const created = emptyThread()
     setThreads((prev) => upsertChatThread(created, prev))
     setActiveId(created.id)
@@ -586,7 +627,7 @@ export function ChatPage() {
     if (busy) return
     setActiveId(id)
     const full = threads.find((t) => t.id === id)
-    setRevealCount(Math.min(MAX_RENDER_MESSAGES, full?.messages.length || 0))
+    beginBatchedReveal(full?.messages.length || 0)
     setError(null)
     setSidebarOpen(false)
   }
@@ -598,10 +639,14 @@ export function ChatPage() {
       const created = emptyThread()
       setThreads((prev) => upsertChatThread(created, prev.filter((t) => t.id !== id)))
       setActiveId(created.id)
+      beginBatchedReveal(0)
       return
     }
     setThreads(next)
-    if (activeId === id) setActiveId(next[0]!.id)
+    if (activeId === id) {
+      setActiveId(next[0]!.id)
+      beginBatchedReveal(next[0]!.messages.length)
+    }
   }
 
   const stopGeneration = () => {
@@ -633,6 +678,10 @@ export function ChatPage() {
     let paintTimer: number | null = null
     let needsPaint = false
     const STREAM_PAINT_MS = 80
+    const scrollAfterPaint = () => {
+      // Content grows without changing message count — effect deps miss mid-stream stick.
+      window.requestAnimationFrame(stickMessagesToBottom)
+    }
     const schedulePaint = () => {
       needsPaint = true
       if (paintTimer != null) return
@@ -641,6 +690,7 @@ export function ChatPage() {
         if (!needsPaint) return
         needsPaint = false
         paintThread(thread)
+        scrollAfterPaint()
       }, STREAM_PAINT_MS)
     }
     const flushPaint = () => {
@@ -650,6 +700,7 @@ export function ChatPage() {
       }
       needsPaint = false
       paintThread(thread)
+      scrollAfterPaint()
     }
 
     try {
@@ -675,6 +726,9 @@ export function ChatPage() {
           }
           setThinking(true)
           reasoning += delta
+          if (reasoning.length > LIVE_REASONING_KEEP) {
+            reasoning = reasoning.slice(-LIVE_REASONING_KEEP)
+          }
           thread = patchAssistantContent(thread, assistantId, assembled, { reasoning })
           schedulePaint()
         },
@@ -692,6 +746,9 @@ export function ChatPage() {
             setSearching(false)
             const thoughtMs = thinkStartedAt.current ? Date.now() - thinkStartedAt.current : undefined
             assembled += delta
+            if (assembled.length > MAX_CONTENT_CHARS) {
+              assembled = assembled.slice(0, MAX_CONTENT_CHARS)
+            }
             thread = patchAssistantContent(thread, assistantId, assembled, {
               reasoning: reasoning || undefined,
               thoughtMs,
@@ -699,6 +756,9 @@ export function ChatPage() {
             })
           } else {
             assembled += delta
+            if (assembled.length > MAX_CONTENT_CHARS) {
+              assembled = assembled.slice(0, MAX_CONTENT_CHARS)
+            }
             thread = patchAssistantContent(thread, assistantId, assembled)
           }
           schedulePaint()
