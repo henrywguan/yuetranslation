@@ -5,6 +5,7 @@ import { openApp } from '../lib/siteLinks'
 import { usePartnerLook } from '../lib/partnerLook'
 import { useAppViewportLock } from '../lib/useAppViewportLock'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
+import { safeShellViewportHeight } from '../lib/visualViewportHeight'
 import { ui } from '../lib/uiCopy'
 import './PracticePage.css'
 
@@ -21,15 +22,22 @@ export function PracticePage() {
   useAppViewportLock(true)
   useEffect(() => {
     const root = document.documentElement
+    let lastPx = ''
     const apply = () => {
-      const height = window.visualViewport?.height ?? window.innerHeight
-      root.style.setProperty('--practice-vh', `${Math.round(height)}px`)
+      const height = safeShellViewportHeight()
+      if (height == null) return
+      const next = `${height}px`
+      if (next === lastPx) return
+      lastPx = next
+      root.style.setProperty('--practice-vh', next)
     }
     apply()
+    const raf = window.requestAnimationFrame(apply)
     window.visualViewport?.addEventListener('resize', apply)
     window.visualViewport?.addEventListener('scroll', apply)
     window.addEventListener('resize', apply)
     return () => {
+      window.cancelAnimationFrame(raf)
       root.style.removeProperty('--practice-vh')
       window.visualViewport?.removeEventListener('resize', apply)
       window.visualViewport?.removeEventListener('scroll', apply)

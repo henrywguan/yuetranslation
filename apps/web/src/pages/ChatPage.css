@@ -31,7 +31,10 @@
   width: 100%;
   max-width: 100vw;
   display: flex;
+  /* min-height floors a bad `--ds-chat-vh: 0px` (iOS sheet dismiss); max-height
+   * still tracks the soft keyboard when the CSS var is a real viewport. */
   height: var(--ds-chat-vh, 100dvh);
+  min-height: 100dvh;
   max-height: var(--ds-chat-vh, 100dvh);
   background: var(--ds-canvas);
   color: var(--ds-text);

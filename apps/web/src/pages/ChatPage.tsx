@@ -21,6 +21,7 @@ import { openApp, openPricing } from '../lib/siteLinks'
 import { useYueStore } from '../lib/store'
 import { useAppViewportLock } from '../lib/useAppViewportLock'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
+import { safeShellViewportHeight } from '../lib/visualViewportHeight'
 import './ChatPage.css'
 
 const SUGGESTIONS = [
@@ -395,21 +396,31 @@ export function ChatPage() {
     const root = document.documentElement
     let lastPx = ''
     const apply = () => {
-      const height = Math.round(window.visualViewport?.height ?? window.innerHeight)
+      // Never write 0px — iPhone can report visualViewport.height === 0 when
+      // leaving Account Hub; that collapsed the fixed .ds-chat to an empty
+      // dark screen after #720.
+      const height = safeShellViewportHeight()
+      if (height == null) return
       const next = `${height}px`
       if (next === lastPx) return
       lastPx = next
       root.style.setProperty('--ds-chat-vh', next)
     }
     apply()
-    // resize covers keyboard / URL-bar chrome; skip visualViewport `scroll` —
-    // it fires continuously on iOS while offsetTop moves and was re-setting
-    // the same (or oscillating) height, forcing full-shell layout thrash.
+    // Remeasure after layout / portal teardown — first paint can still see vv=0.
+    const raf = window.requestAnimationFrame(apply)
+    const t = window.setTimeout(apply, 120)
     window.visualViewport?.addEventListener('resize', apply)
+    // scroll: height-only via lastPx — needed when iOS restores vv after sheet close
+    // without a resize; ignore when height is unchanged (no layout thrash).
+    window.visualViewport?.addEventListener('scroll', apply)
     window.addEventListener('resize', apply)
     return () => {
+      window.cancelAnimationFrame(raf)
+      window.clearTimeout(t)
       root.style.removeProperty('--ds-chat-vh')
       window.visualViewport?.removeEventListener('resize', apply)
+      window.visualViewport?.removeEventListener('scroll', apply)
       window.removeEventListener('resize', apply)
     }
   }, [])
