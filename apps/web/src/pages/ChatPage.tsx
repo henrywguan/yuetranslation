@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { DeepSeekMark } from '../components/DeepSeekMark'
 import { IosHomescreenTip } from '../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../components/PwaInstallButton'
@@ -8,8 +8,8 @@ import {
   appendChatMessage,
   deleteChatThread,
   emptyThread,
+  hydrateChatThreadsAsync,
   patchAssistantContent,
-  readChatThreads,
   upsertChatThread,
   type ChatMessage,
   type ChatSource,
@@ -48,7 +48,10 @@ const BOOT_THREAD: ChatThread = {
 }
 
 /** Cap DOM work on open — storage may keep more; older turns stay in localStorage. */
-const MAX_RENDER_MESSAGES = 48
+const MAX_RENDER_MESSAGES = 12
+/** Paint this many messages per idle slice while leaving "Loading conversation…". */
+const HYDRATE_BATCH = 2
+const HYDRATE_GAP_MS = 48
 
 const MENU_ICON = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -362,7 +365,13 @@ function AssistantBody({
       )}
       <div className={`ds-chat-assistant-body${streaming && hasContent ? ' is-streaming' : ''}`}>
         {hasContent ? (
-          renderChatMarkdown(message.content, { sources: message.sources })
+          streaming ? (
+            renderChatMarkdown(message.content, { sources: message.sources })
+          ) : (
+            /* Historical rows: plain text — full markdown on 12× large answers was
+             * enough to keep "Loading conversation…" frozen until Chrome killed the tab. */
+            <div className="ds-chat-plain">{message.content}</div>
+          )
         ) : streaming && searching && !thinking ? (
           <span className="ds-chat-thinking-line">Searching…</span>
         ) : streaming && thinking ? (
@@ -446,6 +455,8 @@ export function ChatPage() {
   const [threads, setThreads] = useState<ChatThread[]>(() => [BOOT_THREAD])
   const [activeId, setActiveId] = useState<string>(BOOT_THREAD.id)
   const [historyReady, setHistoryReady] = useState(false)
+  /** How many tail messages to mount — grown in batches so hydrate cannot lock the tab. */
+  const [revealCount, setRevealCount] = useState(0)
   const [draft, setDraft] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -458,7 +469,6 @@ export function ChatPage() {
   const [thinkClock, setThinkClock] = useState<number | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
-  const bootstrapped = useRef(false)
   const thinkStartedAt = useRef<number | null>(null)
 
   const active =
@@ -470,27 +480,66 @@ export function ChatPage() {
       messages: EMPTY_MESSAGES,
     } satisfies ChatThread)
 
-  const visibleMessages =
-    active.messages.length > MAX_RENDER_MESSAGES
-      ? active.messages.slice(-MAX_RENDER_MESSAGES)
-      : active.messages
+  const revealCap = Math.min(MAX_RENDER_MESSAGES, Math.max(revealCount, 0))
+  const visibleMessages = revealCap > 0 ? active.messages.slice(-revealCap) : EMPTY_MESSAGES
 
   useEffect(() => {
-    if (bootstrapped.current) return
-    bootstrapped.current = true
-    const existing = readChatThreads()
-    startTransition(() => {
-      if (existing.length) {
-        setThreads(existing)
-        setActiveId(existing[0]!.id)
-      } else {
+    let cancelled = false
+    const timers: number[] = []
+    const later = (fn: () => void, ms: number) => {
+      timers.push(window.setTimeout(fn, ms))
+    }
+
+    void (async () => {
+      // Yielding hydrate — sync JSON.parse of multi‑MB DeepThink history was
+      // freezing Chrome on "Loading conversation…" after #722.
+      // Do not gate on a bootstrapped ref: React Strict Mode cancels the first
+      // effect and would skip a second run, leaving this screen forever.
+      const { threads: existing, clearedHeavy } = await hydrateChatThreadsAsync()
+      if (cancelled) return
+
+      if (clearedHeavy) {
+        setError(
+          'Previous chat history was too large and was cleared so DeepSeek Chat can open. Start a new chat.',
+        )
+      }
+
+      if (!existing.length) {
         const created = emptyThread()
         setThreads([created])
         setActiveId(created.id)
         upsertChatThread(created)
+        setHistoryReady(true)
+        setRevealCount(0)
+        return
       }
+
+      const head = existing[0]!
+      const maxShow = Math.min(MAX_RENDER_MESSAGES, head.messages.length)
+      setThreads(existing)
+      setActiveId(head.id)
       setHistoryReady(true)
-    })
+
+      if (!maxShow) {
+        setRevealCount(0)
+        return
+      }
+
+      let shown = Math.min(HYDRATE_BATCH, maxShow)
+      setRevealCount(shown)
+      const grow = () => {
+        if (cancelled || shown >= maxShow) return
+        shown = Math.min(shown + HYDRATE_BATCH, maxShow)
+        setRevealCount(shown)
+        if (shown < maxShow) later(grow, HYDRATE_GAP_MS)
+      }
+      if (shown < maxShow) later(grow, HYDRATE_GAP_MS)
+    })()
+
+    return () => {
+      cancelled = true
+      for (const id of timers) window.clearTimeout(id)
+    }
   }, [])
 
   const lastMessageId = active.messages.at(-1)?.id
@@ -517,6 +566,7 @@ export function ChatPage() {
     const created = emptyThread()
     setThreads((prev) => upsertChatThread(created, prev))
     setActiveId(created.id)
+    setRevealCount(0)
     setDraft('')
     setError(null)
     setSidebarOpen(false)
@@ -525,6 +575,8 @@ export function ChatPage() {
   const selectThread = (id: string) => {
     if (busy) return
     setActiveId(id)
+    const full = threads.find((t) => t.id === id)
+    setRevealCount(Math.min(MAX_RENDER_MESSAGES, full?.messages.length || 0))
     setError(null)
     setSidebarOpen(false)
   }
