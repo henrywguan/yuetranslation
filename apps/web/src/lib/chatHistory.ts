@@ -117,6 +117,8 @@ export function writeChatThreads(threads: ChatThread[]) {
 }
 
 export function upsertChatThread(thread: ChatThread, all = readChatThreads()): ChatThread[] {
+  // Prefer the caller's in-memory list when provided — re-parsing localStorage on
+  // every stream delta (default arg) was multi-ms sync work per token.
   const rest = all.filter((t) => t.id !== thread.id)
   const next = [thread, ...rest]
   writeChatThreads(next)
