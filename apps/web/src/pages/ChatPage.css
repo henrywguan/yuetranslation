@@ -21,7 +21,15 @@
   --ds-mono: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
   --ds-sidebar-w: 17.5rem;
 
-  position: relative;
+  /* Match Practice / app-shell: pin to the visual viewport. `position: relative`
+   * left #/chat in document flow — after Account Hub (body portal) → route
+   * change, a restored window scrollY or leftover hub shell made chat paint
+   * below the fold / under the hub while the hub stayed scrollable. */
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  width: 100%;
+  max-width: 100vw;
   display: flex;
   height: var(--ds-chat-vh, 100dvh);
   max-height: var(--ds-chat-vh, 100dvh);
@@ -31,6 +39,9 @@
   font-size: 0.9375rem;
   line-height: 1.6;
   overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
 }
 

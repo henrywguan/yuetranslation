@@ -136,7 +136,22 @@ export default function App() {
     <>
       <IncidentBanner />
       <JyutpingSelectCopyTrap />
-      <Suspense fallback={null}>{page}</Suspense>
+      {/* key={route} drops the previous page (Account Hub portal) instead of
+          keeping #/app painted under a null fallback while ChatPage lazy-loads. */}
+      <Suspense
+        key={route}
+        fallback={
+          route === 'chat' ? (
+            <div
+              className="ds-chat-boot"
+              aria-busy="true"
+              aria-label="Loading chat"
+            />
+          ) : null
+        }
+      >
+        {page}
+      </Suspense>
       <AuthPanel onAuthChange={() => void loadBootstrap()} />
       <BugReportModal />
     </>

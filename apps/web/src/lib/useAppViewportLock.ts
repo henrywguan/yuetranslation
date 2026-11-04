@@ -11,6 +11,9 @@ export function useAppViewportLock(active = true) {
 
     const root = document.documentElement
     const body = document.body
+    // Drop any scroll carried over from marketing / hub transitions before
+    // pinning the body — otherwise relative shells can paint below the fold.
+    window.scrollTo({ top: 0, left: 0 })
     root.classList.add('yue-app-lock')
 
     return () => {

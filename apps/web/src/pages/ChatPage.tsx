@@ -198,7 +198,7 @@ function ReasoningPanel({
     }
     if (autoCollapse && !didAutoCollapse.current && reasoning.length > 420) {
       didAutoCollapse.current = true
-      setOpen(false)
+      setOpen((was) => (was ? false : was))
     }
   }, [streaming, autoCollapse, reasoning.length])
 
@@ -338,7 +338,9 @@ function AssistantBody({
            * expand every past panel on mount then setState-close them (#716),
            * which freezes #/chat open when DeepThink history is present. */
           defaultOpen={Boolean(streaming && thinking && !hasContent)}
-          autoCollapse={!streaming && hasContent}
+          /* Only collapse the live panel once the answer arrives — never arm
+           * autoCollapse on historical rows (that was still one setState each). */
+          autoCollapse={Boolean(streaming && hasContent)}
         />
       )}
       <div className={`ds-chat-assistant-body${streaming && hasContent ? ' is-streaming' : ''}`}>
@@ -378,6 +380,16 @@ export function ChatPage() {
     description: 'General AI chat powered by DeepSeek. Family and Business.',
     path: '/#/chat',
   })
+
+  useEffect(() => {
+    // Account Hub is a createPortal → document.body layer (z-index 110–111).
+    // Leaving #/app mid-AnimatePresence can leave orphan backdrop/shell nodes
+    // that keep scrolling on top of chat; strip any leftovers on mount.
+    window.scrollTo({ top: 0, left: 0 })
+    document
+      .querySelectorAll('.account-hub-backdrop, .account-hub-shell')
+      .forEach((el) => el.remove())
+  }, [])
 
   useEffect(() => {
     const root = document.documentElement
@@ -817,25 +829,29 @@ export function ChatPage() {
             </div>
           ) : (
             <div className="ds-chat-feed">
-              {active.messages.map((m) =>
-                m.role === 'user' ? (
-                  <article key={m.id} className="ds-chat-msg is-user is-enter">
+              {active.messages.map((m) => {
+                const isLive = streamingId === m.id
+                // Enter motion only for the in-flight turn — replaying is-enter on
+                // every historical row fought layout when opening a long thread.
+                const enter = isLive || (!streamingId && m.id === lastMessageId) ? ' is-enter' : ''
+                return m.role === 'user' ? (
+                  <article key={m.id} className={`ds-chat-msg is-user${enter}`}>
                     <div className="ds-chat-user-bubble">{m.content}</div>
                   </article>
                 ) : (
-                  <article key={m.id} className="ds-chat-msg is-assistant is-enter">
+                  <article key={m.id} className={`ds-chat-msg is-assistant${enter}`}>
                     <div className="ds-chat-assistant-head">
                       <DeepSeekMark className="ds-chat-assistant-head-mark" />
                       <span>DeepSeek</span>
                     </div>
                     <AssistantBody
                       message={m}
-                      streaming={streamingId === m.id}
-                      thinking={streamingId === m.id && thinking}
-                      searching={streamingId === m.id && searching}
-                      thinkStartedAt={streamingId === m.id ? thinkClock : null}
+                      streaming={isLive}
+                      thinking={isLive && thinking}
+                      searching={isLive && searching}
+                      thinkStartedAt={isLive ? thinkClock : null}
                     />
-                    {streamingId !== m.id && m.content.trim() ? (
+                    {!isLive && m.content.trim() ? (
                       <MessageActions
                         content={m.content}
                         disabled={busy}
@@ -843,8 +859,8 @@ export function ChatPage() {
                       />
                     ) : null}
                   </article>
-                ),
-              )}
+                )
+              })}
             </div>
           )}
         </div>
