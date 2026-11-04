@@ -2,6 +2,7 @@
   position: fixed;
   inset: 0;
   height: var(--practice-vh, 100svh);
+  min-height: 100svh;
   max-height: var(--practice-vh, 100svh);
   overflow: hidden;
   overscroll-behavior: none;
