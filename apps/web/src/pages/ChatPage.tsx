@@ -33,6 +33,10 @@ const SUGGESTIONS = [
 const THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
 const SEARCH_KEY = 'yue-deepseek-chat-search-v1'
 
+/** Stable empty list for the orphan-activeId fallback — a fresh `[]` each render
+ *  would retrigger the messages scroll effect forever while entitlement hydrates. */
+const EMPTY_MESSAGES: ChatMessage[] = []
+
 const MENU_ICON = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
     <path
@@ -189,7 +193,7 @@ function ReasoningPanel({
   useEffect(() => {
     if (streaming) {
       didAutoCollapse.current = false
-      setOpen(true)
+      setOpen((was) => (was ? was : true))
       return
     }
     if (autoCollapse && !didAutoCollapse.current && reasoning.length > 420) {
@@ -330,7 +334,10 @@ function AssistantBody({
           thoughtMs={message.thoughtMs}
           streaming={streaming && thinking && !hasContent}
           thinkStartedAt={thinkStartedAt}
-          defaultOpen
+          /* Historical traces stay collapsed — defaultOpen+autoCollapse used to
+           * expand every past panel on mount then setState-close them (#716),
+           * which freezes #/chat open when DeepThink history is present. */
+          defaultOpen={Boolean(streaming && thinking && !hasContent)}
           autoCollapse={!streaming && hasContent}
         />
       )}
@@ -374,18 +381,23 @@ export function ChatPage() {
 
   useEffect(() => {
     const root = document.documentElement
+    let lastPx = ''
     const apply = () => {
-      const height = window.visualViewport?.height ?? window.innerHeight
-      root.style.setProperty('--ds-chat-vh', `${Math.round(height)}px`)
+      const height = Math.round(window.visualViewport?.height ?? window.innerHeight)
+      const next = `${height}px`
+      if (next === lastPx) return
+      lastPx = next
+      root.style.setProperty('--ds-chat-vh', next)
     }
     apply()
+    // resize covers keyboard / URL-bar chrome; skip visualViewport `scroll` —
+    // it fires continuously on iOS while offsetTop moves and was re-setting
+    // the same (or oscillating) height, forcing full-shell layout thrash.
     window.visualViewport?.addEventListener('resize', apply)
-    window.visualViewport?.addEventListener('scroll', apply)
     window.addEventListener('resize', apply)
     return () => {
       root.style.removeProperty('--ds-chat-vh')
       window.visualViewport?.removeEventListener('resize', apply)
-      window.visualViewport?.removeEventListener('scroll', apply)
       window.removeEventListener('resize', apply)
     }
   }, [])
@@ -414,10 +426,12 @@ export function ChatPage() {
 
   const active =
     threads.find((t) => t.id === activeId) ||
-    (() => {
-      const created = { ...emptyThread(), id: activeId }
-      return created
-    })()
+    ({
+      id: activeId,
+      title: 'New chat',
+      updatedAt: 0,
+      messages: EMPTY_MESSAGES,
+    } satisfies ChatThread)
 
   useEffect(() => {
     if (bootstrapped.current) return
@@ -434,23 +448,29 @@ export function ChatPage() {
     upsertChatThread(created)
   }, [])
 
+  const lastMessageId = active.messages.at(-1)?.id
   useEffect(() => {
     const el = listRef.current
     if (!el) return
+    // Instant jump — CSS `scroll-behavior: smooth` on this scroller made every
+    // stream/hydration scrollTop write animate and compete with layout.
+    const prev = el.style.scrollBehavior
+    el.style.scrollBehavior = 'auto'
     el.scrollTop = el.scrollHeight
-  }, [active.messages, streamingId, busy, thinking, searching])
+    el.style.scrollBehavior = prev
+  }, [activeId, active.messages.length, lastMessageId, streamingId, busy, thinking, searching])
 
   const unlocked = canChat(entitlement)
   const loggedIn = Boolean(entitlement?.loggedIn)
 
   const persist = (thread: ChatThread) => {
-    setThreads(upsertChatThread(thread))
+    setThreads((prev) => upsertChatThread(thread, prev))
   }
 
   const startNewChat = () => {
     if (busy) return
     const created = emptyThread()
-    setThreads(upsertChatThread(created))
+    setThreads((prev) => upsertChatThread(created, prev))
     setActiveId(created.id)
     setDraft('')
     setError(null)
@@ -469,7 +489,7 @@ export function ChatPage() {
     const next = deleteChatThread(id)
     if (!next.length) {
       const created = emptyThread()
-      setThreads(upsertChatThread(created))
+      setThreads((prev) => upsertChatThread(created, prev.filter((t) => t.id !== id)))
       setActiveId(created.id)
       return
     }
