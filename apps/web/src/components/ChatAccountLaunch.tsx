@@ -34,9 +34,15 @@ export function ChatAccountLaunch({ onNavigate }: Props) {
       aria-label={label}
       title={label}
       onClick={() => {
+        // Navigate first so #/chat unmounts TranslatorApp (and its body-portal
+        // Account Hub). Closing the hub before navigate left the portal scrolling
+        // on top while lazy ChatPage painted underneath / offscreen.
+        if (open) {
+          openDeepseekChat()
+          return
+        }
         onNavigate?.()
-        if (open) openDeepseekChat()
-        else openPricing()
+        openPricing()
       }}
     >
       <span className="hq-account-launch-glyph" aria-hidden="true">
