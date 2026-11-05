@@ -49,11 +49,21 @@ function resolveTimeZone(raw?: string): string {
   }
 }
 
+function resolveLocale(raw?: string): string {
+  const locale = String(raw || '').trim() || 'en-US'
+  try {
+    Intl.DateTimeFormat(locale).format(new Date())
+    return locale
+  } catch {
+    return 'en-US'
+  }
+}
+
 /** Weekday + calendar date in the user's zone (and UTC). */
 export function formatTemporalBlock(ctx: DeepseekChatPromptContext = {}): string {
   const now = ctx.now ?? new Date()
   const timeZone = resolveTimeZone(ctx.timeZone)
-  const locale = String(ctx.locale || 'en-US').trim() || 'en-US'
+  const locale = resolveLocale(ctx.locale)
 
   const local = new Intl.DateTimeFormat(locale, {
     timeZone,
