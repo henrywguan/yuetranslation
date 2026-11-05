@@ -17,6 +17,7 @@ import {
   type ChatThread,
 } from '../lib/chatHistory'
 import { openAuthScreen } from '../lib/auth'
+import { canUseDeepseekChat } from '../lib/chatAccess'
 import { renderChatMarkdown } from '../lib/renderChatMarkdown'
 import { openApp, openPricing } from '../lib/siteLinks'
 import { useYueStore } from '../lib/store'
@@ -150,13 +151,6 @@ const REGEN_ICON = (
   </svg>
 )
 
-function canChat(entitlement: ReturnType<typeof useYueStore.getState>['entitlement']): boolean {
-  if (!entitlement) return false
-  if (entitlement.allowed?.chat) return true
-  if (entitlement.isAdmin) return true
-  return entitlement.plan === 'family' || entitlement.plan === 'business'
-}
-
 function readFlag(key: string, fallback: boolean): boolean {
   try {
     const v = localStorage.getItem(key)
@@ -212,12 +206,12 @@ function ReasoningPanel({
   useEffect(() => {
     if (streaming) {
       didAutoCollapse.current = false
-      setOpen((was) => (was ? was : true))
+      setOpen(true)
       return
     }
     if (autoCollapse && !didAutoCollapse.current && reasoning.length > 420) {
       didAutoCollapse.current = true
-      setOpen((was) => (was ? false : was))
+      setOpen(false)
     }
   }, [streaming, autoCollapse, reasoning.length])
 
@@ -354,19 +348,13 @@ function AssistantBody({
   thinkStartedAt?: number | null
 }) {
   const hasContent = Boolean(message.content)
-  // Only the bubble that streamed live in this session may promote to markdown.
-  // Historical rows stay plain (#723) — #725 promoted every settled message via
-  // startTransition and froze #/chat open on heavy DeepThink history.
+  // Historical rows stay plain; only a live-streamed bubble may promote to markdown.
   const sawLiveRef = useRef(Boolean(streaming))
   if (streaming) sawLiveRef.current = true
 
   const [rich, setRich] = useState(false)
   useEffect(() => {
-    if (streaming || !hasContent) {
-      setRich(false)
-      return
-    }
-    if (!sawLiveRef.current) {
+    if (streaming || !hasContent || !sawLiveRef.current) {
       setRich(false)
       return
     }
@@ -387,20 +375,15 @@ function AssistantBody({
           thoughtMs={message.thoughtMs}
           streaming={streaming && thinking && !hasContent}
           thinkStartedAt={thinkStartedAt}
-          /* Historical traces stay collapsed — defaultOpen+autoCollapse used to
-           * expand every past panel on mount then setState-close them (#716),
-           * which freezes #/chat open when DeepThink history is present. */
+          /* Historical traces stay collapsed; only the live thinking panel opens. */
           defaultOpen={Boolean(streaming && thinking && !hasContent)}
-          /* Only collapse the live panel once the answer arrives — never arm
-           * autoCollapse on historical rows (that was still one setState each). */
+          /* Collapse the live panel once the answer arrives — never on historical rows. */
           autoCollapse={Boolean(streaming && hasContent)}
         />
       )}
       <div className={`ds-chat-assistant-body${streaming && hasContent ? ' is-streaming' : ''}`}>
         {hasContent ? (
           streaming || !rich ? (
-            /* Live / historical / pre-transition: plain text — remounting markdown
-             * per delta freezes DeepThink; historical markdown on open freezes hydrate. */
             <div className="ds-chat-plain">{message.content}</div>
           ) : (
             renderChatMarkdown(message.content, { sources: message.sources })
@@ -454,9 +437,7 @@ export function ChatPage() {
     const root = document.documentElement
     let lastPx = ''
     const apply = () => {
-      // Never write 0px — iPhone can report visualViewport.height === 0 when
-      // leaving Account Hub; that collapsed the fixed .ds-chat to an empty
-      // dark screen after #720.
+      // Never write 0px — visualViewport can briefly report 0 after Account Hub.
       const height = safeShellViewportHeight()
       if (height == null) return
       const next = `${height}px`
@@ -465,12 +446,9 @@ export function ChatPage() {
       root.style.setProperty('--ds-chat-vh', next)
     }
     apply()
-    // Remeasure after layout / portal teardown — first paint can still see vv=0.
     const raf = window.requestAnimationFrame(apply)
     const t = window.setTimeout(apply, 120)
-    // resize only — visualViewport `scroll` was re-added in #721 and can
-    // feedback with shell height updates; iOS 0-height is handled by the
-    // safe reader + rAF/timeout remounts above.
+    // resize only — do not listen to visualViewport scroll (desktop hang risk).
     window.visualViewport?.addEventListener('resize', apply)
     window.addEventListener('resize', apply)
     return () => {
@@ -563,10 +541,7 @@ export function ChatPage() {
     let cancelled = false
 
     void (async () => {
-      // Yielding hydrate — sync JSON.parse of multi‑MB DeepThink history was
-      // freezing Chrome on "Loading conversation…" after #722.
-      // Do not gate on a bootstrapped ref: React Strict Mode cancels the first
-      // effect and would skip a second run, leaving this screen forever.
+      // Yielding hydrate — do not gate on a bootstrapped ref (Strict Mode would skip).
       const { threads: existing, clearedHeavy } = await hydrateChatThreadsAsync()
       if (cancelled) return
 
@@ -580,7 +555,7 @@ export function ChatPage() {
         const created = emptyThread()
         setThreads([created])
         setActiveId(created.id)
-        upsertChatThread(created)
+        upsertChatThread(created, [created])
         setHistoryReady(true)
         beginBatchedReveal(0)
         return
@@ -597,8 +572,6 @@ export function ChatPage() {
       cancelled = true
       clearRevealTimers()
     }
-    // beginBatchedReveal is stable enough for mount-only hydrate (refs + setState).
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount hydrate
   }, [])
 
   const lastMessageId = active.messages.at(-1)?.id
@@ -606,7 +579,7 @@ export function ChatPage() {
     stickMessagesToBottom()
   }, [activeId, active.messages.length, lastMessageId, streamingId, busy, thinking, searching])
 
-  const unlocked = canChat(entitlement)
+  const unlocked = canUseDeepseekChat(entitlement)
   const loggedIn = Boolean(entitlement?.loggedIn)
 
   /** Update React state only — no localStorage. Used for throttled stream paints. */
@@ -643,10 +616,11 @@ export function ChatPage() {
 
   const removeThread = (id: string) => {
     if (busy) return
-    const next = deleteChatThread(id)
+    // Pass in-memory threads — default readChatThreads() can race idle disk coalesce.
+    const next = deleteChatThread(id, threads)
     if (!next.length) {
       const created = emptyThread()
-      setThreads((prev) => upsertChatThread(created, prev.filter((t) => t.id !== id)))
+      setThreads(upsertChatThread(created, [created]))
       setActiveId(created.id)
       beginBatchedReveal(0)
       return
@@ -682,13 +656,11 @@ export function ChatPage() {
     let reasoning = ''
     let sources: ChatSource[] | undefined
 
-    // Coalesce stream paints — DeepThink can emit hundreds of reasoning deltas/sec;
-    // each used to JSON.stringify the whole history into localStorage (#723 path).
+    // Coalesce stream paints — never persist per token (idle disk write at end).
     let paintTimer: number | null = null
     let needsPaint = false
     const STREAM_PAINT_MS = 80
     const scrollAfterPaint = () => {
-      // Content grows without changing message count — effect deps miss mid-stream stick.
       window.requestAnimationFrame(stickMessagesToBottom)
     }
     const schedulePaint = () => {
@@ -711,6 +683,17 @@ export function ChatPage() {
       paintThread(thread)
       scrollAfterPaint()
     }
+    const markThinking = () => {
+      if (!thinkStartedAt.current) {
+        thinkStartedAt.current = Date.now()
+        setThinkClock(thinkStartedAt.current)
+      }
+      setThinking(true)
+    }
+    const dropEmptyAssistant = (t: ChatThread) => ({
+      ...t,
+      messages: t.messages.filter((m) => m.id !== assistantId),
+    })
 
     try {
       await streamDeepseekChat(apiMessagesFromThread(thread).filter((m) => m.content.trim()), {
@@ -722,18 +705,10 @@ export function ChatPage() {
             setSearching(true)
             return
           }
-          if (!thinkStartedAt.current) {
-            thinkStartedAt.current = Date.now()
-            setThinkClock(thinkStartedAt.current)
-          }
-          setThinking(true)
+          markThinking()
         },
         onReasoning: (delta) => {
-          if (!thinkStartedAt.current) {
-            thinkStartedAt.current = Date.now()
-            setThinkClock(thinkStartedAt.current)
-          }
-          setThinking(true)
+          markThinking()
           reasoning += delta
           if (reasoning.length > LIVE_REASONING_KEEP) {
             reasoning = reasoning.slice(-LIVE_REASONING_KEEP)
@@ -750,54 +725,38 @@ export function ChatPage() {
           schedulePaint()
         },
         onDelta: (delta) => {
-          if (assembled.length === 0) {
+          const firstToken = assembled.length === 0
+          if (firstToken) {
             setThinking(false)
             setSearching(false)
-            const thoughtMs = thinkStartedAt.current ? Date.now() - thinkStartedAt.current : undefined
-            assembled += delta
-            if (assembled.length > MAX_CONTENT_CHARS) {
-              assembled = assembled.slice(0, MAX_CONTENT_CHARS)
-            }
-            thread = patchAssistantContent(thread, assistantId, assembled, {
-              reasoning: reasoning || undefined,
-              thoughtMs,
-              sources,
-            })
-          } else {
-            assembled += delta
-            if (assembled.length > MAX_CONTENT_CHARS) {
-              assembled = assembled.slice(0, MAX_CONTENT_CHARS)
-            }
-            thread = patchAssistantContent(thread, assistantId, assembled)
           }
+          assembled += delta
+          if (assembled.length > MAX_CONTENT_CHARS) {
+            assembled = assembled.slice(0, MAX_CONTENT_CHARS)
+          }
+          thread = firstToken
+            ? patchAssistantContent(thread, assistantId, assembled, {
+                reasoning: reasoning || undefined,
+                thoughtMs: thinkStartedAt.current ? Date.now() - thinkStartedAt.current : undefined,
+                sources,
+              })
+            : patchAssistantContent(thread, assistantId, assembled)
           schedulePaint()
         },
       })
       flushPaint()
       if (!assembled.trim()) {
-        thread = {
-          ...thread,
-          messages: thread.messages.filter((m) => m.id !== assistantId),
-        }
+        thread = dropEmptyAssistant(thread)
         persist(thread)
         setError('No reply — try again.')
       } else {
-        // One disk write at end of stream (not per token).
         persist(thread)
       }
     } catch (err) {
       flushPaint()
       if ((err as Error)?.name === 'AbortError') {
-        /* user stopped — keep partial reply if any */
-        if (!assembled.trim()) {
-          thread = {
-            ...thread,
-            messages: thread.messages.filter((m) => m.id !== assistantId),
-          }
-          persist(thread)
-        } else {
-          persist(thread)
-        }
+        if (!assembled.trim()) thread = dropEmptyAssistant(thread)
+        persist(thread)
       } else {
         const message = err instanceof Error ? err.message : 'Chat failed'
         setError(message)

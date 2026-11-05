@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { DeepSeekMark } from './DeepSeekMark'
+import { canUseDeepseekChat } from '../lib/chatAccess'
 import { openDeepseekChat, openPricing } from '../lib/siteLinks'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -10,19 +11,12 @@ type Props = {
   onNavigate?: () => void
 }
 
-function unlocked(entitlement: ReturnType<typeof useYueStore.getState>['entitlement']): boolean {
-  if (!entitlement) return false
-  if (entitlement.allowed?.chat) return true
-  if (entitlement.isAdmin) return true
-  return entitlement.plan === 'family' || entitlement.plan === 'business'
-}
-
 /** Account Hub launcher for DeepSeek Chat — Family/Business; Free sees locked CTA. */
 export function ChatAccountLaunch({ onNavigate }: Props) {
   const uid = useId().replace(/:/g, '')
   const seaId = `ds-sea-${uid}`
   const entitlement = useYueStore((s) => s.entitlement)
-  const open = unlocked(entitlement)
+  const open = canUseDeepseekChat(entitlement)
   const label = open
     ? `${biPlain(ui.deepseekChatLaunch)} (${biPlain(ui.deepseekChatPlan)})`
     : `${biPlain(ui.deepseekChatLocked)} (${biPlain(ui.deepseekChatPlan)})`

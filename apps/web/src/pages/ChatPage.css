@@ -48,8 +48,9 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Dark tokens: OS preference, or explicit app theme (yue-theme → data-theme). */
 @media (prefers-color-scheme: dark) {
-  .ds-chat {
+  html:not([data-theme='light']) .ds-chat {
     --ds-blue-soft: #1e2240;
     --ds-blue-soft-border: #2a3360;
     --ds-canvas: #0e0e10;
@@ -64,7 +65,6 @@
   }
 }
 
-/* App theme (yue-theme → data-theme) wins over OS preference when set. */
 html[data-theme='dark'] .ds-chat {
   --ds-blue-soft: #1e2240;
   --ds-blue-soft-border: #2a3360;
@@ -344,7 +344,7 @@ html[data-theme='light'] .ds-chat {
   min-height: 0;
   overflow: auto;
   padding: 0.5rem 1rem 1.25rem;
-  scroll-behavior: smooth;
+  /* Instant stick — smooth competed with stream/hydration scrollTop writes. */
 }
 
 .ds-chat-empty {
