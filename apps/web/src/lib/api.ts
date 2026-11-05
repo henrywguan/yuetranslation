@@ -757,12 +757,22 @@ export async function streamDeepseekChat(
   messages: DeepseekChatApiMessage[],
   handlers: DeepseekChatStreamHandlers,
 ): Promise<{ model?: string }> {
+  let timeZone: string | undefined
+  let locale: string | undefined
+  try {
+    timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    locale = typeof navigator !== 'undefined' ? navigator.language : undefined
+  } catch {
+    /* ignore */
+  }
   const res = await apiFetch('/chat?stream=1', {
     method: 'POST',
     body: JSON.stringify({
       messages,
       thinking: handlers.thinking !== false,
       search: handlers.search === true,
+      timeZone,
+      locale,
     }),
     headers: { Accept: 'text/event-stream' },
     signal: handlers.signal,
