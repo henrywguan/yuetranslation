@@ -55,7 +55,10 @@ async function* chatStreamEvents(
 ): AsyncGenerator<DeepseekChatSearchStreamEvent, void, unknown> {
   if (searchEnabled && deepseekChatSupportsSearch()) {
     try {
-      yield* streamDeepseekChatWithSearch(messages, thinkingEnabled, signal, prompt)
+      yield* streamDeepseekChatWithSearch(messages, thinkingEnabled, signal, {
+        ...prompt,
+        mode: 'search',
+      })
       return
     } catch (err) {
       if (signal?.aborted) throw err
@@ -65,7 +68,11 @@ async function* chatStreamEvents(
       )
     }
   }
-  yield* streamDeepseekChatAgent(messages, { thinkingEnabled, prompt, signal })
+  yield* streamDeepseekChatAgent(messages, {
+    thinkingEnabled,
+    prompt: { ...prompt, mode: 'tools' },
+    signal,
+  })
 }
 
 /** POST /api/chat — signed-in Family/Business (or admin) general assistant. */
@@ -129,7 +136,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     userAskedSearch ||
     (deepseekChatSupportsSearch() && shouldAutoEnableSearch(last.content))
 
-  const prompt: DeepseekChatPromptContext = {
+  const promptBase: DeepseekChatPromptContext = {
     timeZone: parsed.data.timeZone,
     locale: parsed.data.locale,
     plan: entitlement.isAdmin ? `admin (${entitlement.plan})` : entitlement.plan,
@@ -139,7 +146,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     if (!stream) {
       const { reply, model, reasoning } = await generateDeepseekChatAgentReply(parsed.data.messages, {
         thinkingEnabled,
-        prompt,
+        prompt: { ...promptBase, mode: 'tools' },
       })
       void addDeepseekChatTurns(auth.userId, 1)
       res.json({ ok: true, reply, model, reasoning: reasoning || undefined })
@@ -177,7 +184,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         parsed.data.messages,
         thinkingEnabled,
         searchEnabled,
-        prompt,
+        { ...promptBase, mode: searchEnabled ? 'search' : 'tools' },
         upstream.signal,
       )) {
         if (upstream.signal.aborted || res.writableEnded) break

@@ -22,12 +22,18 @@ const system = buildDeepseekChatSystem({
   timeZone: 'America/Los_Angeles',
   now: fixed,
   plan: 'family',
+  mode: 'tools',
 })
 assert.match(system, /Current datetime/)
 assert.match(system, /get_date/)
 assert.match(system, /jyut_plan_limits/)
 assert.match(system, /Freshness/)
 assert.match(system, /family/)
+
+const searchSystem = buildDeepseekChatSystem({ mode: 'search', now: fixed })
+assert.match(searchSystem, /web_search only/)
+assert.match(searchSystem, /Plan snapshot/)
+assert.doesNotMatch(searchSystem, /call jyut_plan_limits/)
 
 assert.equal(shouldAutoEnableSearch('what day is today?'), false, 'clock questions use temporal inject')
 assert.equal(shouldAutoEnableSearch("what's the latest news on AI?"), true)

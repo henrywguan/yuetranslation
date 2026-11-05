@@ -2,6 +2,7 @@
  * Server-side tools for DeepSeek Chat Completions (no MCP).
  * Keep executors offline / free APIs — Open-Meteo weather, no DeepSeek billing inside tools.
  */
+import dns from 'node:dns/promises'
 import { dictionaryTranslate } from './canto/dictionary.js'
 import { env } from './env.js'
 import { resolveTimeZone, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
@@ -137,18 +138,20 @@ export const DEEPSEEK_CHAT_TOOLS: OpenAiTool[] = [
     function: {
       name: 'jyut_phrase_lookup',
       description:
-        'Offline JyutTranslate phrase memory lookup (en↔yue and curated langs). Returns null if unknown.',
+        'Offline JyutTranslate phrase memory for en↔yue only. Other language pairs are not supported here — say so and suggest Solo translate.',
       parameters: {
         type: 'object',
         properties: {
           text: { type: 'string' },
           sourceLang: {
             type: 'string',
-            description: 'Source lang code, e.g. en or yue',
+            enum: ['en', 'yue'],
+            description: 'Must be en or yue',
           },
           targetLang: {
             type: 'string',
-            description: 'Target lang code, e.g. yue or en',
+            enum: ['en', 'yue'],
+            description: 'Must be en or yue',
           },
         },
         required: ['text', 'sourceLang', 'targetLang'],
@@ -224,21 +227,26 @@ export function convertUnits(value: number, fromRaw: string, toRaw: string): num
   return b.fromSi(a.toSi(value))
 }
 
+function isPrivateIp(ip: string): boolean {
+  const h = ip.toLowerCase().replace(/^\[|\]$/g, '')
+  if (h === '::1' || h === '0.0.0.0') return true
+  if (h.startsWith('fc') || h.startsWith('fd') || h.startsWith('fe80')) return true
+  const m = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(h)
+  if (!m) return false
+  const a = Number(m[1])
+  const b = Number(m[2])
+  if (a === 10 || a === 127 || a === 0) return true
+  if (a === 169 && b === 254) return true
+  if (a === 172 && b >= 16 && b <= 31) return true
+  if (a === 192 && b === 168) return true
+  return false
+}
+
 function isPrivateHostname(hostname: string): boolean {
   const h = hostname.toLowerCase()
   if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local')) return true
   if (h === '0.0.0.0' || h === '::1') return true
-  // Literal IPv4
-  const m = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(h)
-  if (m) {
-    const a = Number(m[1])
-    const b = Number(m[2])
-    if (a === 10 || a === 127 || a === 0) return true
-    if (a === 169 && b === 254) return true
-    if (a === 172 && b >= 16 && b <= 31) return true
-    if (a === 192 && b === 168) return true
-  }
-  return false
+  return isPrivateIp(h)
 }
 
 const FETCH_MAX_BYTES = 256_000
@@ -247,6 +255,19 @@ const FETCH_MAX_REDIRECTS = 3
 function assertPublicHttpsUrl(url: URL) {
   if (url.protocol !== 'https:') throw new Error('Only https URLs are allowed.')
   if (isPrivateHostname(url.hostname)) throw new Error('Private/local hosts are blocked.')
+}
+
+async function assertPublicHttpsResolved(url: URL) {
+  assertPublicHttpsUrl(url)
+  let lookup: { address: string; family: number }
+  try {
+    lookup = await dns.lookup(url.hostname)
+  } catch {
+    throw new Error('DNS lookup failed.')
+  }
+  if (isPrivateIp(lookup.address)) {
+    throw new Error('Resolved address is private/blocked.')
+  }
 }
 
 async function readResponseTextCapped(res: Response, maxBytes: number): Promise<string> {
@@ -281,7 +302,7 @@ export async function fetchPublicHttpsText(urlRaw: string, signal?: AbortSignal)
   } catch {
     throw new Error('Invalid URL.')
   }
-  assertPublicHttpsUrl(url)
+  await assertPublicHttpsResolved(url)
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), 8_000)
   const onAbort = () => ctrl.abort()
@@ -290,7 +311,7 @@ export async function fetchPublicHttpsText(urlRaw: string, signal?: AbortSignal)
     // Manual redirects so each hop re-checks private/local hosts (no SSRF via 302).
     let res: Response | null = null
     for (let hop = 0; hop <= FETCH_MAX_REDIRECTS; hop += 1) {
-      assertPublicHttpsUrl(url)
+      await assertPublicHttpsResolved(url)
       res = await fetch(url.toString(), {
         method: 'GET',
         redirect: 'manual',
@@ -362,6 +383,12 @@ async function getWeather(location: string, date: string | undefined, signal?: A
 
 function planLimitsPayload() {
   return {
+    guest: {
+      liveMinutes: env.guestLiveMinutes,
+      cameraScans: env.guestCameraScans,
+      docs: 'sign-in required',
+      chat: 'locked',
+    },
     free: {
       liveMinutes: env.freeLiveMinutes,
       cameraScans: env.freeCameraScans,
@@ -382,7 +409,7 @@ function planLimitsPayload() {
       chatTurnsPerMonth: env.businessChatTurns === 0 ? 'unlimited' : env.businessChatTurns,
       seats: 10,
     },
-    note: 'Canonical details: docs/entitlements.md. Guests have separate live/cam trials.',
+    note: 'Canonical details: docs/entitlements.md.',
   }
 }
 
@@ -493,22 +520,34 @@ export async function executeDeepseekChatTool(
         return JSON.stringify(planLimitsPayload())
       case 'jyut_phrase_lookup': {
         const text = String(args.text || '').trim()
-        const sourceLang = String(args.sourceLang || 'en') as 'en' | 'yue'
-        const targetLang = String(args.targetLang || 'yue') as 'en' | 'yue'
+        const sourceLang = String(args.sourceLang || '')
+        const targetLang = String(args.targetLang || '')
         if (!text) throw new Error('text required')
-        // Only support common en/yue offline path for safety/type narrowness.
+        if (
+          (sourceLang !== 'en' && sourceLang !== 'yue') ||
+          (targetLang !== 'en' && targetLang !== 'yue')
+        ) {
+          return JSON.stringify({
+            found: false,
+            error: 'jyut_phrase_lookup supports en↔yue only. Suggest Solo translate for other langs.',
+            sourceLang,
+            targetLang,
+          })
+        }
         const hit = dictionaryTranslate({
-          sourceLang: sourceLang === 'yue' ? 'yue' : 'en',
-          targetLang: targetLang === 'en' ? 'en' : 'yue',
+          sourceLang,
+          targetLang,
           source: text,
           wantAlternatives: true,
         })
-        if (!hit) return JSON.stringify({ found: false, text })
+        if (!hit) return JSON.stringify({ found: false, text, sourceLang, targetLang })
         return JSON.stringify({
           found: true,
           text: hit.text,
           romanization: hit.romanization,
           alternatives: hit.alternatives,
+          sourceLang,
+          targetLang,
         })
       }
       case 'jyut_learn_hint':

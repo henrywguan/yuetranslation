@@ -30,8 +30,20 @@ assert.match(date.date, /^\d{4}-\d{2}-\d{2}$/)
 
 const limits = JSON.parse(await executeDeepseekChatTool('jyut_plan_limits', '{}', {})) as {
   family: { seats: number }
+  guest: { liveMinutes: number }
 }
 assert.equal(limits.family.seats, 4)
+assert.ok(limits.guest.liveMinutes > 0)
+
+const badPair = JSON.parse(
+  await executeDeepseekChatTool(
+    'jyut_phrase_lookup',
+    JSON.stringify({ text: 'hello', sourceLang: 'cmn', targetLang: 'yue' }),
+    {},
+  ),
+) as { error?: string; found?: boolean }
+assert.equal(badPair.found, false)
+assert.match(String(badPair.error || ''), /en↔yue only/)
 
 const learn = JSON.parse(await executeDeepseekChatTool('jyut_learn_hint', '{}', {})) as {
   route: string

@@ -74,7 +74,7 @@ export async function* streamDeepseekChatAgent(
     | { role: 'system' | 'user' | 'assistant' | 'tool'; content: string; tool_call_id?: string }
     | AssistantToolMessage
 
-  const msgs: Msg[] = seedMessages(messages, opts.prompt)
+  const msgs: Msg[] = seedMessages(messages, { ...opts.prompt, mode: 'tools' })
 
   let announcedThinking = false
   for (let round = 0; round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS; round += 1) {

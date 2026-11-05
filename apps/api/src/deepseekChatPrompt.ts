@@ -2,6 +2,7 @@
  * Dynamic system prompt for DeepSeek Chat — temporal grounding, freshness rules,
  * and JyutTranslate-native skill catalog (no paid APIs).
  */
+import { env } from './env.js'
 
 export type DeepseekChatPromptContext = {
   /** IANA timezone from the client (e.g. America/Los_Angeles). */
@@ -11,6 +12,11 @@ export type DeepseekChatPromptContext = {
   /** Plan label for product-skill hints (family / business / admin). */
   plan?: string
   now?: Date
+  /**
+   * `tools` = Completions tool belt available.
+   * `search` = Anthropic web_search only (no jyut_* / calc tools this turn).
+   */
+  mode?: 'tools' | 'search'
 }
 
 const BASE = [
@@ -26,15 +32,22 @@ const FRESHNESS = [
   'If a tool is available for date/time, call it rather than claiming you have no clock.',
 ].join(' ')
 
-const SKILLS = [
-  'Available capabilities (use tools when they match):',
+const SKILLS_TOOLS = [
+  'Available tools this turn (call them when they match):',
   '- Clock/calendar: get_date, get_now, calendar_math.',
   '- Math/units: calc, convert_units.',
   '- Weather: get_weather (Open-Meteo).',
   '- Web page: fetch_url (public https only).',
-  '- JyutTranslate: jyut_plan_limits (plan quotas), jyut_phrase_lookup (offline phrase memory), jyut_learn_hint (Harbor Quest / Learn).',
+  '- JyutTranslate: jyut_plan_limits, jyut_phrase_lookup (en↔yue offline only), jyut_learn_hint.',
   'Do not invent JyutTranslate plan numbers — call jyut_plan_limits.',
   'For Cantonese/Jyutping phrase help, try jyut_phrase_lookup first; if miss, answer normally and suggest Solo translate in the app.',
+].join('\n')
+
+const SKILLS_SEARCH = [
+  'This turn uses web_search only (no calc/weather/jyut tools).',
+  'Temporal context below is authoritative for "today"/clock questions — do not claim you lack a clock.',
+  'For JyutTranslate plan limits, use the embedded Plan snapshot below — do not invent numbers.',
+  'For Cantonese tutoring beyond general knowledge, suggest Solo translate or Harbor Quest (#/learn) in the app.',
 ].join('\n')
 
 function resolveTimeZone(raw?: string): string {
@@ -88,12 +101,30 @@ export function formatTemporalBlock(ctx: DeepseekChatPromptContext = {}): string
 /** Static base string kept for smoke / docs that import DEEPSEEK_CHAT_SYSTEM. */
 export const DEEPSEEK_CHAT_SYSTEM_BASE = BASE
 
+/** Compact plan snapshot embedded when tools are unavailable (Search path). */
+export function formatPlanSnapshot(): string {
+  return [
+    'Plan snapshot (grounded; do not invent other numbers):',
+    `- Guest trial: ${env.guestLiveMinutes} live min/mo, ${env.guestCameraScans} cam scans/mo; Documents need sign-in.`,
+    `- Free: ${env.freeLiveMinutes} live min, ${env.freeCameraScans} cam scans, ${env.freeDocsPages} doc pages; DeepSeek Chat locked.`,
+    `- Family: ${env.familyLiveMinutes} live min, ${env.familyCameraScans} cam scans, ${env.familyDocsPages} doc pages, chat ${env.familyChatTurns}/mo, 4 seats.`,
+    `- Business: ${env.businessLiveMinutes} live min, cam/docs unlimited, chat ${env.businessChatTurns === 0 ? 'unlimited' : env.businessChatTurns + '/mo'}, 10 seats.`,
+  ].join('\n')
+}
+
 /**
  * Full system prompt for a chat turn.
  * Includes temporal grounding so "what day is today?" is answerable without search.
  */
 export function buildDeepseekChatSystem(ctx: DeepseekChatPromptContext = {}): string {
-  const parts = [BASE, FRESHNESS, formatTemporalBlock(ctx), SKILLS]
+  const mode = ctx.mode === 'search' ? 'search' : 'tools'
+  const parts = [
+    BASE,
+    FRESHNESS,
+    formatTemporalBlock(ctx),
+    mode === 'search' ? SKILLS_SEARCH : SKILLS_TOOLS,
+  ]
+  if (mode === 'search') parts.push(formatPlanSnapshot())
   if (ctx.plan) parts.push(`Signed-in plan context: ${ctx.plan}.`)
   return parts.join('\n\n')
 }
