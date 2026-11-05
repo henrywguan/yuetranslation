@@ -1,5 +1,9 @@
 # JyutTranslate — Language Expansion (Higgsfield MAX)
 
+**Recall names:** Higgsfield language expansion · language expansion Reel · Seedance language Reel  
+**Find from:** [`docs/social/TEMPLATES.md`](../TEMPLATES.md) → *Language expansion Reels*  
+**Sibling cut (Showtime, local kinetic):** [`../language-expansion-showtime/BRIEF.md`](../language-expansion-showtime/BRIEF.md) · comparison [`../language-expansion-showtime/COMPARISON.md`](../language-expansion-showtime/COMPARISON.md)
+
 **Goal:** Showcase the wave of new voice languages (12 + Arabic pair + existing) with **native bed music, UI SFX, and multilingual VO** — maximizing what Higgsfield can do in one pipeline.
 
 **Format:** Instagram Reel · **9:16** · **15s** · 1080p  
