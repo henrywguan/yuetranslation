@@ -33,5 +33,8 @@ assert.equal(shouldAutoEnableSearch('what day is today?'), false, 'clock questio
 assert.equal(shouldAutoEnableSearch("what's the latest news on AI?"), true)
 assert.equal(shouldAutoEnableSearch('who is the current president of France?'), true)
 assert.equal(shouldAutoEnableSearch('Explain quantum computing'), false)
+assert.equal(shouldAutoEnableSearch('Explain how the stock market works'), false, 'no bare stock keyword')
+assert.equal(shouldAutoEnableSearch('What does a test score mean?'), false)
+assert.equal(shouldAutoEnableSearch('stock price of AAPL'), true)
 
 console.log('deepseekChatPrompt.smoke: ok')

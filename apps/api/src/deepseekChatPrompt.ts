@@ -101,22 +101,24 @@ export function buildDeepseekChatSystem(ctx: DeepseekChatPromptContext = {}): st
 /**
  * Heuristic: auto-enable web search for freshness / news intents when the user
  * left Search off. Temporal questions alone do NOT force search (clock injection covers them).
+ * Keep this strict — false positives burn DeepSeek search quota on textbook questions.
  */
 export function shouldAutoEnableSearch(userText: string): boolean {
   const t = userText.trim().toLowerCase()
   if (!t) return false
-  // Explicit news / live facts — not pure "what day is today"
-  if (
-    /\b(news|headline|breaking|score|stock|price of|bitcoin|election|who won|latest on|what's happening|what is happening)\b/i.test(
-      t,
-    )
-  ) {
+  if (/\b(breaking news|today'?s news|current events|latest headlines?)\b/i.test(t)) return true
+  if (/\b(what'?s|what is) happening (today|right now|in the world)\b/i.test(t)) return true
+  if (/\blatest (news|on|about)\b/i.test(t)) return true
+  if (/\b(bitcoin|btc|eth)\b.+\b(price|worth)\b/i.test(t) || /\b(price|worth)\b.+\b(bitcoin|btc)\b/i.test(t)) {
     return true
   }
-  if (/\b(today'?s news|current events|right now in the world)\b/i.test(t)) return true
-  // "who is the current …" / "president of … now"
-  if (/\b(current|incumbent)\b.+\b(president|prime minister|ceo|champion)\b/i.test(t)) return true
+  if (/\bstock price of\b/i.test(t) || /\b(share|stock) price\b/i.test(t)) return true
+  // Live office-holders — require "current/incumbent/new" near a role
+  if (/\b(current|incumbent|newly elected)\b.{0,40}\b(president|prime minister|ceo|champion)\b/i.test(t)) {
+    return true
+  }
   if (/\bwho is (the )?(current|new)\b/i.test(t)) return true
+  if (/\bwho won\b.+\b(yesterday|today|this (week|month|year)|last night)\b/i.test(t)) return true
   return false
 }
 
