@@ -5,12 +5,15 @@
 import { env, openaiConfigured } from './env.js'
 import {
   DEEPSEEK_CHAT_MAX_TOKENS,
-  DEEPSEEK_CHAT_SYSTEM,
   deepseekChatUsesThinking,
   recentDeepseekChatMessages,
   type DeepseekChatMessage,
   type DeepseekChatStreamEvent,
 } from './deepseekChat.js'
+import {
+  buildDeepseekChatSystem,
+  type DeepseekChatPromptContext,
+} from './deepseekChatPrompt.js'
 
 export type DeepseekChatSource = {
   url: string
@@ -45,13 +48,14 @@ export function deepseekAnthropicMessagesUrl(openaiBaseUrl = env.openaiBaseUrl):
 function anthropicMessagesPayload(
   messages: DeepseekChatMessage[],
   thinkingEnabled: boolean,
+  prompt: DeepseekChatPromptContext = {},
 ): Record<string, unknown> {
   const recent = recentDeepseekChatMessages(messages)
   const body: Record<string, unknown> = {
     model: env.openaiModel,
     max_tokens: DEEPSEEK_CHAT_MAX_TOKENS,
     stream: true,
-    system: DEEPSEEK_CHAT_SYSTEM,
+    system: buildDeepseekChatSystem(prompt),
     messages: recent.map((m) => ({
       role: m.role,
       content: m.content,
@@ -120,6 +124,7 @@ export async function* streamDeepseekChatWithSearch(
   messages: DeepseekChatMessage[],
   thinkingEnabled = true,
   signal?: AbortSignal,
+  prompt: DeepseekChatPromptContext = {},
 ): AsyncGenerator<DeepseekChatSearchStreamEvent, void, unknown> {
   if (!openaiConfigured()) {
     throw new Error('Chat model is not configured.')
@@ -140,7 +145,7 @@ export async function* streamDeepseekChatWithSearch(
       'anthropic-version': '2023-06-01',
       Accept: 'text/event-stream',
     },
-    body: JSON.stringify(anthropicMessagesPayload(messages, thinkingEnabled)),
+    body: JSON.stringify(anthropicMessagesPayload(messages, thinkingEnabled, prompt)),
     signal,
   })
 

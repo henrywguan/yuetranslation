@@ -1,11 +1,12 @@
 /**
  * General DeepSeek / OpenAI-compatible chat (Family/Business #/chat).
- * Not product-support or Cantonese tutoring — plain assistant.
  *
  * Unlike translate (`llmChatExtras` disables thinking to save tokens), this path
  * keeps DeepSeek thinking on so quality matches the official DeepSeek app.
+ * Temporal context + tools live in deepseekChatPrompt / Tools / Agent.
  */
 import { z } from 'zod'
+import { DEEPSEEK_CHAT_SYSTEM_BASE } from './deepseekChatPrompt.js'
 import { env, openaiConfigured } from './env.js'
 import { openaiClient } from './openaiClient.js'
 import { getAdmin } from './supabase.js'
@@ -22,6 +23,10 @@ export const DeepseekChatBodySchema = z.object({
   thinking: z.boolean().optional(),
   /** Search toggle — Anthropic web_search path when host supports it. */
   search: z.boolean().optional(),
+  /** IANA timezone from the browser (temporal grounding). */
+  timeZone: z.string().trim().max(80).optional(),
+  /** BCP-47 locale hint. */
+  locale: z.string().trim().max(32).optional(),
 })
 
 export type DeepseekChatMessage = z.infer<typeof DeepseekChatMessageSchema>
@@ -37,12 +42,8 @@ export const DEEPSEEK_CHAT_HISTORY_LIMIT = 24
 /** Room for chain-of-thought + a long structured answer. */
 export const DEEPSEEK_CHAT_MAX_TOKENS = 8192
 
-export const DEEPSEEK_CHAT_SYSTEM = [
-  'You are a helpful AI assistant.',
-  'Give accurate, well-structured answers.',
-  'When a question benefits from detail (guides, comparisons, plans), be thorough and organized — use headings, bullets, or tables when they help.',
-  'Use the language the user writes in unless they ask otherwise.',
-].join(' ')
+/** Timeless base — prefer buildDeepseekChatSystem() for live requests. */
+export const DEEPSEEK_CHAT_SYSTEM = DEEPSEEK_CHAT_SYSTEM_BASE
 
 /** True when chat should use DeepSeek thinking mode (default on for DeepSeek hosts/models). */
 export function deepseekChatUsesThinking(): boolean {

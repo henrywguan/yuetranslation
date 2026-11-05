@@ -9,14 +9,17 @@ import type { Response } from 'express'
 import type { AuthedRequest } from './auth.js'
 import { requireAuth } from './auth.js'
 import {
+  generateDeepseekChatAgentReply,
+  streamDeepseekChatAgent,
+} from './deepseekChatAgent.js'
+import {
   addDeepseekChatTurns,
   canUseDeepseekChat,
   DeepseekChatBodySchema,
   deepseekChatTurnLimit,
-  generateDeepseekChatReply,
   getDeepseekChatTurns,
-  streamDeepseekChatReply,
 } from './deepseekChat.js'
+import { shouldAutoEnableSearch, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
 import {
   deepseekChatSupportsSearch,
   streamDeepseekChatWithSearch,
@@ -39,31 +42,37 @@ function wantsStream(req: AuthedRequest): boolean {
 function writeSse(res: Response, payload: string) {
   if (res.writableEnded) return
   res.write(payload)
-  // Express compression / some hosts buffer until flush.
   const flushable = res as Response & { flush?: () => void }
   flushable.flush?.()
 }
 
 async function* chatStreamEvents(
-  messages: Parameters<typeof streamDeepseekChatReply>[0],
+  messages: Parameters<typeof streamDeepseekChatAgent>[0],
   thinkingEnabled: boolean,
   searchEnabled: boolean,
+  prompt: DeepseekChatPromptContext,
   signal?: AbortSignal,
 ): AsyncGenerator<DeepseekChatSearchStreamEvent, void, unknown> {
   if (searchEnabled && deepseekChatSupportsSearch()) {
     try {
-      yield* streamDeepseekChatWithSearch(messages, thinkingEnabled, signal)
+      yield* streamDeepseekChatWithSearch(messages, thinkingEnabled, signal, {
+        ...prompt,
+        mode: 'search',
+      })
       return
     } catch (err) {
       if (signal?.aborted) throw err
       console.warn(
-        '[deepseek-chat] Anthropic search stream failed, falling back to Chat Completions:',
+        '[deepseek-chat] Anthropic search stream failed, falling back to tool agent:',
         err instanceof Error ? err.message : err,
       )
-      // Fall through to Chat Completions (no native search).
     }
   }
-  yield* streamDeepseekChatReply(messages, thinkingEnabled, signal)
+  yield* streamDeepseekChatAgent(messages, {
+    thinkingEnabled,
+    prompt: { ...prompt, mode: 'tools' },
+    signal,
+  })
 }
 
 /** POST /api/chat — signed-in Family/Business (or admin) general assistant. */
@@ -122,15 +131,23 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
 
   const stream = wantsStream(req)
   const thinkingEnabled = parsed.data.thinking !== false
-  const searchEnabled = parsed.data.search === true
+  const userAskedSearch = parsed.data.search === true
+  const searchEnabled =
+    userAskedSearch ||
+    (deepseekChatSupportsSearch() && shouldAutoEnableSearch(last.content))
+
+  const promptBase: DeepseekChatPromptContext = {
+    timeZone: parsed.data.timeZone,
+    locale: parsed.data.locale,
+    plan: entitlement.isAdmin ? `admin (${entitlement.plan})` : entitlement.plan,
+  }
 
   try {
     if (!stream) {
-      // Non-stream path stays on Chat Completions (Search is stream-first).
-      const { reply, model, reasoning } = await generateDeepseekChatReply(
-        parsed.data.messages,
+      const { reply, model, reasoning } = await generateDeepseekChatAgentReply(parsed.data.messages, {
         thinkingEnabled,
-      )
+        prompt: { ...promptBase, mode: 'tools' },
+      })
       void addDeepseekChatTurns(auth.userId, 1)
       res.json({ ok: true, reply, model, reasoning: reasoning || undefined })
       return
@@ -150,9 +167,11 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     res.setHeader('X-Accel-Buffering', 'no')
     res.flushHeaders?.()
 
-    // Immediate keepalive so the client sees the stream open before DeepSeek tokens.
     writeSse(res, `: open\n\n`)
     writeSse(res, `data: ${JSON.stringify({ status: 'started' })}\n\n`)
+    if (searchEnabled && !userAskedSearch) {
+      writeSse(res, `data: ${JSON.stringify({ status: 'searching', auto: true })}\n\n`)
+    }
 
     const heartbeat = setInterval(() => {
       writeSse(res, `: ping ${Date.now()}\n\n`)
@@ -165,6 +184,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         parsed.data.messages,
         thinkingEnabled,
         searchEnabled,
+        { ...promptBase, mode: searchEnabled ? 'search' : 'tools' },
         upstream.signal,
       )) {
         if (upstream.signal.aborted || res.writableEnded) break

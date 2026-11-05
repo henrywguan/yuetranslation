@@ -20,10 +20,16 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
 assert.match(DEEPSEEK_CHAT_SYSTEM, /helpful AI assistant/i, 'System prompt is general assistant')
-assert.doesNotMatch(DEEPSEEK_CHAT_SYSTEM, /JyutTranslate|Cantonese|粵語/i, 'No product/Cantonese framing')
 assert.doesNotMatch(DEEPSEEK_CHAT_SYSTEM, /concise/i, 'Do not bias chat toward shallow brevity')
 assert.match(DEEPSEEK_CHAT_SYSTEM, /thorough/i, 'Encourage thorough answers when useful')
 assert.ok(DEEPSEEK_CHAT_MAX_TOKENS >= 4096, 'Chat needs room for thinking + answer')
+
+// Dynamic system (temporal + skills) is built per request — base stays timeless.
+const { buildDeepseekChatSystem } = await import('./deepseekChatPrompt.js')
+const liveSystem = buildDeepseekChatSystem({ timeZone: 'UTC', plan: 'family' })
+assert.match(liveSystem, /Current datetime/)
+assert.match(liveSystem, /jyut_plan_limits/)
+assert.match(liveSystem, /get_date/)
 
 const extras = deepseekChatLlmExtras()
 // When OPENAI_MODEL / base URL is not DeepSeek in this smoke env, extras may be {}.
@@ -57,9 +63,26 @@ const ok = DeepseekChatBodySchema.safeParse({
   messages: [{ role: 'user', content: 'Hello' }],
   thinking: true,
   search: true,
+  timeZone: 'America/Los_Angeles',
+  locale: 'en-US',
 })
 assert.equal(ok.success, true)
 assert.equal(ok.data?.search, true)
+assert.equal(ok.data?.timeZone, 'America/Los_Angeles')
+
+const routes = readFileSync(
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatRoutes.ts'),
+  'utf8',
+)
+assert.match(routes, /shouldAutoEnableSearch/, 'Routes auto-enable search for freshness intents')
+assert.match(routes, /streamDeepseekChatAgent/, 'Routes use tool agent when search is off')
+
+const agent = readFileSync(
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatAgent.ts'),
+  'utf8',
+)
+assert.match(agent, /DEEPSEEK_CHAT_TOOLS/, 'Agent registers chat tools')
+assert.match(agent, /reasoning_content/, 'Tool rounds echo reasoning_content')
 
 const bad = DeepseekChatBodySchema.safeParse({ messages: [] })
 assert.equal(bad.success, false)
