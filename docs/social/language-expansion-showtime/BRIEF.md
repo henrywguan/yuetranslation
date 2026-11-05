@@ -1,4 +1,9 @@
-# JyutTranslate — Language Expansion (Showtime local)
+# JyutTranslate — Language Expansion (Showtime cut)
+
+**Recall names:** Showtime language expansion · language expansion Reel (Showtime) · local kinetic language Reel  
+**Find from:** [`docs/social/TEMPLATES.md`](../TEMPLATES.md) → *Language expansion Reels* · sibling Higgsfield: [`../language-expansion-higgsfield/BRIEF.md`](../language-expansion-higgsfield/BRIEF.md) · side-by-side: [`COMPARISON.md`](./COMPARISON.md)
+
+**Status:** Kept as a **reference cut** for timing, VO script, captions, and brand-true Solo close. Not a standing Showtime pipeline — for new generative shoots prefer Higgsfield / Studio.
 
 **Goal:** Same language-expansion brief as the Higgsfield Seedance reel, rebuilt end-to-end in [Showtime](https://github.com/FavioVazquez/showtime) (local HTML → voice → music → render).
 
@@ -6,7 +11,8 @@
 **Brand:** Harbor `#07131f` · Jade accent `#0a5a4a` / `#3dcfb6` · Mist `#eef5f8` · Syne + Noto CJK stacks  
 **UI:** Real Solo plate (`shots/solo-yue.jpg`) on the close beat — not an empty phone  
 **Audio:** Supertonic multilingual VO + Incompetech “How it Begins” bed + synth whoosh/pop/tick/logo-sting  
-**Tooling:** Showtime **0.4.4** · job `jyut-lang-expand-20261014-221524`
+**Tooling:** Showtime **0.4.4** · job `jyut-lang-expand-20261014-221524`  
+**Watch:** [`out/jyut-lang-expand-showtime.mp4`](./out/jyut-lang-expand-showtime.mp4)
 
 ---
 

@@ -1,5 +1,7 @@
 # Showtime vs Higgsfield (same language-expansion brief)
 
+**Index:** [`TEMPLATES.md` → Language expansion Reels](../TEMPLATES.md#language-expansion-reels-keep-findable) · Showtime [`BRIEF.md`](./BRIEF.md) · Higgsfield [`../language-expansion-higgsfield/BRIEF.md`](../language-expansion-higgsfield/BRIEF.md)
+
 | | **Showtime 0.4.4** (this pack) | **Higgsfield Seedance** ([language-expansion-higgsfield](../language-expansion-higgsfield/)) |
 |---|---|---|
 | **Picture** | Designed HTML / kinetic type / real Solo plate | Generative lifestyle montage + later Solo plate edit |

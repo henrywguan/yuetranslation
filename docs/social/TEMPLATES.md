@@ -19,6 +19,7 @@ When adding a new template: create its canon doc under `docs/social/` (or `ig-po
 | Flat 2.0 edutainment · vector game-UI motion · Drops motion | **Drops-style motion** |
 | studio hybrid · feature tour Story · Apple demo tour | **Studio feature tour** |
 | Mandarin support ad · language launch promo · Tagalog-style promo | **language-launch promo** |
+| language expansion Reel · Showtime language expansion · Higgsfield language expansion · 26 languages Reel | **Language expansion Reels** → [`TEMPLATES.md` §](#language-expansion-reels-keep-findable) · packs below |
 
 ## Shared rules (all templates)
 
@@ -39,7 +40,18 @@ When adding a new template: create its canon doc under `docs/social/` (or `ig-po
 | [`COMPETITOR-AD-CLONE-PROMPTS.md`](./COMPETITOR-AD-CLONE-PROMPTS.md) | High-end peer ad grammars + paste-ready Higgsfield/Studio clone prompts |
 | [`ig-posts/out/`](./ig-posts/out/) | Rendered PNG outs + captions |
 
-### Archive / one-shot briefs (completed shoots — not living SOPs)
+### Language expansion Reels (keep findable)
+
+Same brief, two finished cuts — **Cantonese stays the heart; the world around it got bigger.** Say **language expansion Reel** / **Showtime language expansion** / **Higgsfield language expansion**.
+
+| Pack | What it is | Open first |
+| --- | --- | --- |
+| **Higgsfield language expansion** | Seedance lifestyle Reel (~15s) + Solo-ending fix | [`language-expansion-higgsfield/BRIEF.md`](./language-expansion-higgsfield/BRIEF.md) · hero [`…/out/seedance-hero-solo-ending.mp4`](./language-expansion-higgsfield/out/seedance-hero-solo-ending.mp4) |
+| **Showtime language expansion** | Local kinetic HTML Reel (~18.4s), real Solo close, VO + captions | [`language-expansion-showtime/BRIEF.md`](./language-expansion-showtime/BRIEF.md) · cut [`…/out/jyut-lang-expand-showtime.mp4`](./language-expansion-showtime/out/jyut-lang-expand-showtime.mp4) · vs Seedance [`…/COMPARISON.md`](./language-expansion-showtime/COMPARISON.md) |
+
+Showtime is a **reference cut** (not a standing pipeline). Keep the pack for look / timing / VO script recall; prefer Higgsfield / Studio for new generative shoots.
+
+### Completed shoots (one-shot briefs — not living SOPs)
 
 | Asset | Notes |
 | --- | --- |
