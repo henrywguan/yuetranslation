@@ -81,7 +81,8 @@ const chatPage = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../
 assert.match(chatPage, /hydrateChatThreadsAsync/, 'ChatPage uses async hydrate')
 assert.match(chatPage, /revealCount/, 'ChatPage reveals history in batches')
 assert.match(chatPage, /ds-chat-plain/, 'Streaming answers use plain text')
-assert.match(chatPage, /renderChatMarkdown/, 'Settled answers use markdown')
+assert.match(chatPage, /renderChatMarkdown/, 'Just-settled live answers use markdown')
+assert.match(chatPage, /sawLiveRef/, 'Historical assistants stay plain; only live-settled promote')
 assert.match(chatPage, /clearedHeavy/, 'ChatPage surfaces oversized-history recovery')
 assert.match(chatPage, /beginBatchedReveal/, 'selectThread / hydrate share batched reveal')
 
