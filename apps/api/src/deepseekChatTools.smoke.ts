@@ -48,4 +48,13 @@ const badProto = JSON.parse(
 ) as { error?: string }
 assert.match(String(badProto.error || ''), /https/i)
 
+const { fetchPublicHttpsText } = await import('./deepseekChatTools.js')
+// Ensure redirect: 'manual' path is present (SSRF hardening).
+const toolsSrc = await import('node:fs').then((fs) =>
+  fs.readFileSync(new URL('./deepseekChatTools.ts', import.meta.url), 'utf8'),
+)
+assert.match(toolsSrc, /redirect: 'manual'/)
+assert.match(toolsSrc, /FETCH_MAX_BYTES/)
+void fetchPublicHttpsText
+
 console.log('deepseekChatTools.smoke: ok')

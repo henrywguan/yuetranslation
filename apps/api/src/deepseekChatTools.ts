@@ -241,6 +241,39 @@ function isPrivateHostname(hostname: string): boolean {
   return false
 }
 
+const FETCH_MAX_BYTES = 256_000
+const FETCH_MAX_REDIRECTS = 3
+
+function assertPublicHttpsUrl(url: URL) {
+  if (url.protocol !== 'https:') throw new Error('Only https URLs are allowed.')
+  if (isPrivateHostname(url.hostname)) throw new Error('Private/local hosts are blocked.')
+}
+
+async function readResponseTextCapped(res: Response, maxBytes: number): Promise<string> {
+  if (!res.body) return ''
+  const reader = res.body.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    if (!value) continue
+    total += value.byteLength
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => undefined)
+      throw new Error('Response too large.')
+    }
+    chunks.push(value)
+  }
+  const merged = new Uint8Array(total)
+  let offset = 0
+  for (const c of chunks) {
+    merged.set(c, offset)
+    offset += c.byteLength
+  }
+  return new TextDecoder().decode(merged)
+}
+
 export async function fetchPublicHttpsText(urlRaw: string, signal?: AbortSignal): Promise<string> {
   let url: URL
   try {
@@ -248,25 +281,38 @@ export async function fetchPublicHttpsText(urlRaw: string, signal?: AbortSignal)
   } catch {
     throw new Error('Invalid URL.')
   }
-  if (url.protocol !== 'https:') throw new Error('Only https URLs are allowed.')
-  if (isPrivateHostname(url.hostname)) throw new Error('Private/local hosts are blocked.')
+  assertPublicHttpsUrl(url)
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), 8_000)
   const onAbort = () => ctrl.abort()
   signal?.addEventListener('abort', onAbort)
   try {
-    const res = await fetch(url.toString(), {
-      method: 'GET',
-      redirect: 'follow',
-      signal: ctrl.signal,
-      headers: { Accept: 'text/html,text/plain,application/json;q=0.9,*/*;q=0.1' },
-    })
+    // Manual redirects so each hop re-checks private/local hosts (no SSRF via 302).
+    let res: Response | null = null
+    for (let hop = 0; hop <= FETCH_MAX_REDIRECTS; hop += 1) {
+      assertPublicHttpsUrl(url)
+      res = await fetch(url.toString(), {
+        method: 'GET',
+        redirect: 'manual',
+        signal: ctrl.signal,
+        headers: { Accept: 'text/html,text/plain,application/json;q=0.9,*/*;q=0.1' },
+      })
+      if (res.status >= 300 && res.status < 400) {
+        const loc = res.headers.get('location')
+        if (!loc) throw new Error('Redirect without Location.')
+        url = new URL(loc, url)
+        continue
+      }
+      break
+    }
+    if (!res) throw new Error('Fetch failed.')
+    if (res.status >= 300 && res.status < 400) throw new Error('Too many redirects.')
     if (!res.ok) throw new Error(`Fetch failed (${res.status}).`)
     const ctype = String(res.headers.get('content-type') || '')
     if (/image\/|audio\/|video\/|octet-stream/i.test(ctype)) {
       throw new Error('Binary content not supported.')
     }
-    const text = await res.text()
+    const text = await readResponseTextCapped(res, FETCH_MAX_BYTES)
     const stripped = text
       .replace(/<script[\s\S]*?<\/script>/gi, ' ')
       .replace(/<style[\s\S]*?<\/style>/gi, ' ')
