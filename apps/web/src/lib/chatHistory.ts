@@ -1,5 +1,7 @@
 /** Local DeepSeek Chat threads (device-only; no cloud sync). */
 
+import { agentDebugLog } from './agentDebugLog'
+
 export type ChatRole = 'user' | 'assistant'
 
 export type ChatSource = {
@@ -192,34 +194,107 @@ export type ChatHydrateResult = {
  * payloads that would lock the main thread on JSON.parse.
  */
 export async function hydrateChatThreadsAsync(): Promise<ChatHydrateResult> {
+  const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
+  // #region agent log
+  agentDebugLog({
+    hypothesisId: 'B',
+    location: 'chatHistory.ts:hydrateChatThreadsAsync:entry',
+    message: 'hydrate start',
+    data: { t0 },
+  })
+  // #endregion
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { threads: [], clearedHeavy: false }
+    if (!raw) {
+      // #region agent log
+      agentDebugLog({
+        hypothesisId: 'B',
+        location: 'chatHistory.ts:hydrateChatThreadsAsync:empty',
+        message: 'no raw storage',
+        data: { ms: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0 },
+      })
+      // #endregion
+      return { threads: [], clearedHeavy: false }
+    }
 
     if (raw.length > CHAT_HYDRATE_MAX_RAW_BYTES) {
       localStorage.removeItem(STORAGE_KEY)
+      // #region agent log
+      agentDebugLog({
+        hypothesisId: 'B',
+        location: 'chatHistory.ts:hydrateChatThreadsAsync:clearedHeavy',
+        message: 'raw over byte cap',
+        data: { rawLen: raw.length, cap: CHAT_HYDRATE_MAX_RAW_BYTES },
+      })
+      // #endregion
       return { threads: [], clearedHeavy: true }
     }
 
     await yieldToMain()
     let parsed: unknown
+    const parseT0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
       parsed = JSON.parse(raw)
     } catch {
       localStorage.removeItem(STORAGE_KEY)
       return { threads: [], clearedHeavy: true }
     }
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: 'B',
+      location: 'chatHistory.ts:hydrateChatThreadsAsync:parsed',
+      message: 'JSON.parse done',
+      data: {
+        rawLen: raw.length,
+        parseMs: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - parseT0,
+      },
+    })
+    // #endregion
 
     await yieldToMain()
     const normalized = normalizeChatThreads(parsed)
     await yieldToMain()
+    const pruneT0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     const { threads, changed } = pruneChatThreads(normalized)
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: 'B',
+      location: 'chatHistory.ts:hydrateChatThreadsAsync:pruned',
+      message: 'prune done',
+      data: {
+        threadCount: threads.length,
+        headMsgs: threads[0]?.messages.length ?? 0,
+        changed,
+        pruneMs: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - pruneT0,
+      },
+    })
+    // #endregion
     if (changed) {
       await yieldToMain()
       writeChatThreads(threads)
     }
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: 'B',
+      location: 'chatHistory.ts:hydrateChatThreadsAsync:exit',
+      message: 'hydrate return',
+      data: {
+        threadCount: threads.length,
+        totalMs: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0,
+        wrote: changed,
+      },
+    })
+    // #endregion
     return { threads, clearedHeavy: false }
-  } catch {
+  } catch (err) {
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: 'B',
+      location: 'chatHistory.ts:hydrateChatThreadsAsync:catch',
+      message: 'hydrate threw',
+      data: { err: String(err) },
+    })
+    // #endregion
     return { threads: [], clearedHeavy: false }
   }
 }
@@ -249,6 +324,18 @@ function commitDiskWrite(threads: ChatThread[]) {
  */
 export function writeChatThreads(threads: ChatThread[]) {
   pendingDiskWrite = prepareThreadsForDisk(threads)
+  // #region agent log
+  agentDebugLog({
+    hypothesisId: 'E',
+    location: 'chatHistory.ts:writeChatThreads:schedule',
+    data: {
+      threadCount: pendingDiskWrite.length,
+      msgCount: pendingDiskWrite.reduce((n, t) => n + t.messages.length, 0),
+      coalesced: diskWriteHandle != null,
+    },
+    message: 'disk write scheduled',
+  })
+  // #endregion
   if (typeof window === 'undefined') {
     const payload = pendingDiskWrite
     pendingDiskWrite = null
@@ -261,7 +348,19 @@ export function writeChatThreads(threads: ChatThread[]) {
     const payload = pendingDiskWrite
     pendingDiskWrite = null
     if (!payload) return
+    const stringifyT0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     commitDiskWrite(payload)
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: 'E',
+      location: 'chatHistory.ts:writeChatThreads:commit',
+      message: 'disk write committed',
+      data: {
+        threadCount: payload.length,
+        stringifyMs: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - stringifyT0,
+      },
+    })
+    // #endregion
   }
   const ric = (
     window as Window & {

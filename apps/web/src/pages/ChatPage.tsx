@@ -3,6 +3,7 @@ import { DeepSeekMark } from '../components/DeepSeekMark'
 import { IosHomescreenTip } from '../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../components/PwaInstallButton'
 import { streamDeepseekChat } from '../lib/api'
+import { agentDebugLog } from '../lib/agentDebugLog'
 import {
   apiMessagesFromThread,
   appendChatMessage,
@@ -16,6 +17,7 @@ import {
   type ChatSource,
   type ChatThread,
 } from '../lib/chatHistory'
+import { installHeavyChatSeedHelper } from '../lib/chatHangFixture'
 import { openAuthScreen } from '../lib/auth'
 import { renderChatMarkdown } from '../lib/renderChatMarkdown'
 import { openApp, openPricing } from '../lib/siteLinks'
@@ -55,6 +57,9 @@ const HYDRATE_BATCH = 2
 const HYDRATE_GAP_MS = 48
 /** Bound live DeepThink buffer mid-stream (full prune still runs on disk write). */
 const LIVE_REASONING_KEEP = 24_000
+
+/** Dev: log each historical markdown promote at most once (avoid log storms). */
+const loggedMarkdownIds = new Set<string>()
 
 const MENU_ICON = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -363,8 +368,30 @@ function AssistantBody({
       return
     }
     let cancelled = false
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: 'A',
+      location: 'ChatPage.tsx:AssistantBody:promote',
+      message: 'schedule rich promotion',
+      data: {
+        id: message.id,
+        contentLen: message.content.length,
+        streaming: Boolean(streaming),
+      },
+    })
+    // #endregion
     startTransition(() => {
-      if (!cancelled) setRich(true)
+      if (!cancelled) {
+        // #region agent log
+        agentDebugLog({
+          hypothesisId: 'A',
+          location: 'ChatPage.tsx:AssistantBody:setRich',
+          message: 'setRich(true) in transition',
+          data: { id: message.id, contentLen: message.content.length },
+        })
+        // #endregion
+        setRich(true)
+      }
     })
     return () => {
       cancelled = true
@@ -394,7 +421,36 @@ function AssistantBody({
             /* Live / pre-transition: plain text — remounting markdown per delta freezes DeepThink. */
             <div className="ds-chat-plain">{message.content}</div>
           ) : (
-            renderChatMarkdown(message.content, { sources: message.sources })
+            (() => {
+              // #region agent log
+              const first = !loggedMarkdownIds.has(message.id)
+              const mdT0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
+              if (first) {
+                loggedMarkdownIds.add(message.id)
+                agentDebugLog({
+                  hypothesisId: 'A',
+                  location: 'ChatPage.tsx:AssistantBody:markdownBefore',
+                  message: 'renderChatMarkdown start',
+                  data: { id: message.id, contentLen: message.content.length },
+                })
+              }
+              // #endregion
+              const node = renderChatMarkdown(message.content, { sources: message.sources })
+              // #region agent log
+              if (first) {
+                agentDebugLog({
+                  hypothesisId: 'A',
+                  location: 'ChatPage.tsx:AssistantBody:markdownAfter',
+                  message: 'renderChatMarkdown done',
+                  data: {
+                    id: message.id,
+                    mdMs: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - mdT0,
+                  },
+                })
+              }
+              // #endregion
+              return node
+            })()
           )
         ) : streaming && searching && !thinking ? (
           <span className="ds-chat-thinking-line">Searching…</span>
@@ -432,6 +488,7 @@ export function ChatPage() {
   })
 
   useEffect(() => {
+    if (import.meta.env.DEV) installHeavyChatSeedHelper()
     // Account Hub is a createPortal → document.body layer (z-index 110–111).
     // Leaving #/app mid-AnimatePresence can leave orphan backdrop/shell nodes
     // that keep scrolling on top of chat; strip any leftovers on mount.
@@ -520,6 +577,14 @@ export function ChatPage() {
     clearRevealTimers()
     const gen = ++revealGenRef.current
     const maxShow = Math.min(MAX_RENDER_MESSAGES, Math.max(0, messageCount))
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: 'A',
+      location: 'ChatPage.tsx:beginBatchedReveal',
+      message: 'batched reveal start',
+      data: { messageCount, maxShow, gen, batch: HYDRATE_BATCH },
+    })
+    // #endregion
     if (!maxShow) {
       setRevealCount(0)
       return
@@ -529,6 +594,14 @@ export function ChatPage() {
     const grow = () => {
       if (gen !== revealGenRef.current || shown >= maxShow) return
       shown = Math.min(shown + HYDRATE_BATCH, maxShow)
+      // #region agent log
+      agentDebugLog({
+        hypothesisId: 'A',
+        location: 'ChatPage.tsx:beginBatchedReveal:grow',
+        message: 'reveal grow',
+        data: { shown, maxShow, gen },
+      })
+      // #endregion
       setRevealCount(shown)
       if (shown < maxShow) {
         revealTimersRef.current.push(window.setTimeout(grow, HYDRATE_GAP_MS))
@@ -552,6 +625,15 @@ export function ChatPage() {
 
   useEffect(() => {
     let cancelled = false
+    const effectId = Math.random().toString(36).slice(2, 8)
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: 'C',
+      location: 'ChatPage.tsx:hydrateEffect:mount',
+      message: 'hydrate effect mounted',
+      data: { effectId },
+    })
+    // #endregion
 
     void (async () => {
       // Yielding hydrate — sync JSON.parse of multi‑MB DeepThink history was
@@ -559,7 +641,31 @@ export function ChatPage() {
       // Do not gate on a bootstrapped ref: React Strict Mode cancels the first
       // effect and would skip a second run, leaving this screen forever.
       const { threads: existing, clearedHeavy } = await hydrateChatThreadsAsync()
-      if (cancelled) return
+      // #region agent log
+      agentDebugLog({
+        hypothesisId: 'C',
+        location: 'ChatPage.tsx:hydrateEffect:afterAwait',
+        message: 'hydrate await resolved',
+        data: {
+          effectId,
+          cancelled,
+          threadCount: existing.length,
+          headMsgs: existing[0]?.messages.length ?? 0,
+          clearedHeavy,
+        },
+      })
+      // #endregion
+      if (cancelled) {
+        // #region agent log
+        agentDebugLog({
+          hypothesisId: 'C',
+          location: 'ChatPage.tsx:hydrateEffect:cancelled',
+          message: 'skip setState — effect cleaned up',
+          data: { effectId },
+        })
+        // #endregion
+        return
+      }
 
       if (clearedHeavy) {
         setError(
@@ -572,19 +678,60 @@ export function ChatPage() {
         setThreads([created])
         setActiveId(created.id)
         upsertChatThread(created)
+        // #region agent log
+        agentDebugLog({
+          hypothesisId: 'D',
+          location: 'ChatPage.tsx:hydrateEffect:emptyReady',
+          message: 'setHistoryReady empty thread',
+          data: { effectId },
+        })
+        // #endregion
         setHistoryReady(true)
         beginBatchedReveal(0)
         return
       }
 
       const head = existing[0]!
+      const setT0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
+      // #region agent log
+      agentDebugLog({
+        hypothesisId: 'D',
+        location: 'ChatPage.tsx:hydrateEffect:beforeSetThreads',
+        message: 'about to setThreads + historyReady',
+        data: {
+          effectId,
+          threadCount: existing.length,
+          headMsgs: head.messages.length,
+          headContentChars: head.messages.reduce((n, m) => n + (m.content?.length || 0), 0),
+        },
+      })
+      // #endregion
       setThreads(existing)
       setActiveId(head.id)
       setHistoryReady(true)
+      // #region agent log
+      agentDebugLog({
+        hypothesisId: 'D',
+        location: 'ChatPage.tsx:hydrateEffect:afterSetHistoryReady',
+        message: 'setHistoryReady(true) issued',
+        data: {
+          effectId,
+          setCallMs: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - setT0,
+        },
+      })
+      // #endregion
       beginBatchedReveal(head.messages.length)
     })()
 
     return () => {
+      // #region agent log
+      agentDebugLog({
+        hypothesisId: 'C',
+        location: 'ChatPage.tsx:hydrateEffect:cleanup',
+        message: 'hydrate effect cleanup',
+        data: { effectId },
+      })
+      // #endregion
       cancelled = true
       clearRevealTimers()
     }
