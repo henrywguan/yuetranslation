@@ -10,7 +10,36 @@ import { createPwaManifest } from './pwa-manifest.js'
 const base = process.env.VITE_BASE_PATH || '/'
 const appBuild = '2026-09-03-pwa-builder-followup'
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
-const agentDebugLogPath = '/opt/cursor/logs/debug.log'
+const agentDebugLogPrimary = '/opt/cursor/logs/debug.log'
+const agentDebugLogFallback = path.join(repoRoot, 'apps/web/.agent-debug.log')
+
+function appendAgentDebugLine(line: string) {
+  const targets = [agentDebugLogPrimary, agentDebugLogFallback]
+  let wrote = false
+  for (const target of targets) {
+    try {
+      fs.mkdirSync(path.dirname(target), { recursive: true })
+      fs.appendFileSync(target, line.endsWith('\n') ? line : `${line}\n`)
+      wrote = true
+      // Prefer cloud path when writable; still mirror to repo fallback for local Mac.
+      if (target === agentDebugLogPrimary) {
+        try {
+          fs.mkdirSync(path.dirname(agentDebugLogFallback), { recursive: true })
+          fs.appendFileSync(
+            agentDebugLogFallback,
+            line.endsWith('\n') ? line : `${line}\n`,
+          )
+        } catch {
+          /* ignore secondary */
+        }
+      }
+      break
+    } catch {
+      /* try next */
+    }
+  }
+  return wrote
+}
 
 /** Dev-only: browser agentDebugLog → NDJSON file for hang investigations. */
 function agentDebugLogPlugin() {
@@ -27,9 +56,10 @@ function agentDebugLogPlugin() {
         req.on('end', () => {
           try {
             const raw = Buffer.concat(chunks).toString('utf8').trim()
-            if (raw) {
-              fs.mkdirSync(path.dirname(agentDebugLogPath), { recursive: true })
-              fs.appendFileSync(agentDebugLogPath, raw.endsWith('\n') ? raw : `${raw}\n`)
+            if (raw && !appendAgentDebugLine(raw)) {
+              res.statusCode = 500
+              res.end('log-fail')
+              return
             }
             res.statusCode = 204
             res.end()
