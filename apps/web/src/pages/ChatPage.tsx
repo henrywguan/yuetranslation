@@ -354,11 +354,19 @@ function AssistantBody({
   thinkStartedAt?: number | null
 }) {
   const hasContent = Boolean(message.content)
-  // Live tokens stay plain; after settle, promote to markdown in a transition so
-  // the composer stays responsive during the first parse.
+  // Only the bubble that streamed live in this session may promote to markdown.
+  // Historical rows stay plain (#723) — #725 promoted every settled message via
+  // startTransition and froze #/chat open on heavy DeepThink history.
+  const sawLiveRef = useRef(Boolean(streaming))
+  if (streaming) sawLiveRef.current = true
+
   const [rich, setRich] = useState(false)
   useEffect(() => {
     if (streaming || !hasContent) {
+      setRich(false)
+      return
+    }
+    if (!sawLiveRef.current) {
       setRich(false)
       return
     }
@@ -391,7 +399,8 @@ function AssistantBody({
       <div className={`ds-chat-assistant-body${streaming && hasContent ? ' is-streaming' : ''}`}>
         {hasContent ? (
           streaming || !rich ? (
-            /* Live / pre-transition: plain text — remounting markdown per delta freezes DeepThink. */
+            /* Live / historical / pre-transition: plain text — remounting markdown
+             * per delta freezes DeepThink; historical markdown on open freezes hydrate. */
             <div className="ds-chat-plain">{message.content}</div>
           ) : (
             renderChatMarkdown(message.content, { sources: message.sources })
