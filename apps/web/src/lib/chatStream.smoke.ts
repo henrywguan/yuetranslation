@@ -18,8 +18,10 @@ assert.match(chat, /beginBatchedReveal/, 'Thread switch uses batched reveal')
 assert.match(chat, /selectThread[\s\S]*beginBatchedReveal/, 'selectThread calls batched reveal')
 assert.match(chat, /startTransition/, 'Post-stream markdown settles via startTransition')
 assert.match(chat, /sawLiveRef/, 'Historical rows stay plain; only live-settled promote')
+assert.match(chat, /canUseDeepseekChat/, 'Chat gate shares canUseDeepseekChat helper')
 assert.match(chat, /requestAnimationFrame\(stickMessagesToBottom\)/, 'Stream paints stick scroll via rAF')
 assert.match(chat, /slice\(-8_000\)/, 'Live reasoning panel paints a tail only')
+assert.match(chat, /dropEmptyAssistant/, 'Empty assistant cleanup is shared on abort/empty reply')
 
 // No persist inside onDelta / onReasoning bodies (disk only at stream end / abort).
 const onReasoningBlock = chat.match(/onReasoning:\s*\([^)]*\)\s*=>\s*\{[\s\S]*?\n\s*\},/)

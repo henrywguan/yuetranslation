@@ -10,14 +10,6 @@ assert.equal(readVisualViewportHeight(), 0, 'no window → 0')
 const root = dirname(fileURLToPath(import.meta.url))
 const chat = readFileSync(join(root, '../pages/ChatPage.tsx'), 'utf8')
 assert.match(chat, /safeShellViewportHeight/, 'ChatPage rejects zero visualViewport heights')
-assert.match(chat, /BOOT_THREAD/, 'ChatPage first paint skips localStorage history')
-assert.match(chat, /MAX_RENDER_MESSAGES/, 'ChatPage caps DOM messages on open')
-assert.match(chat, /HYDRATE_BATCH/, 'ChatPage paints history in idle batches')
-assert.match(chat, /hydrateChatThreadsAsync/, 'ChatPage hydrates history off the first paint')
-assert.match(chat, /open \|\| streaming \?/, 'Collapsed DeepThink traces stay out of the DOM')
-assert.match(chat, /schedulePaint/, 'Stream tokens coalesce React paints')
-assert.match(chat, /paintThread/, 'Live stream skips localStorage per token')
-assert.match(chat, /beginBatchedReveal/, 'Thread switch / hydrate share batched reveal')
 assert.doesNotMatch(
   chat,
   /visualViewport\?\.addEventListener\('scroll'/,
@@ -26,5 +18,6 @@ assert.doesNotMatch(
 
 const css = readFileSync(join(root, '../pages/ChatPage.css'), 'utf8')
 assert.match(css, /min-height:\s*100dvh/, '.ds-chat keeps a dvh floor if --ds-chat-vh is bad')
+assert.doesNotMatch(css, /\.ds-chat-messages[^{]*\{[^}]*scroll-behavior:\s*smooth/, 'message list sticks instantly')
 
 console.log('visualViewportHeight.smoke: ok')

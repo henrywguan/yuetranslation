@@ -89,7 +89,7 @@ function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
   }
 }
 
-export function normalizeChatThreads(parsed: unknown): ChatThread[] {
+function normalizeChatThreads(parsed: unknown): ChatThread[] {
   if (!Array.isArray(parsed)) return []
   return parsed
     .filter((t): t is ChatThread => Boolean(t && typeof t === 'object' && typeof (t as ChatThread).id === 'string'))
@@ -159,16 +159,6 @@ export function pruneChatThreads(threads: ChatThread[]): { threads: ChatThread[]
   return { threads: next, changed }
 }
 
-/**
- * Permanently slim device history that can freeze `#/chat` on open (huge DeepThink
- * traces + multi‑KB markdown). Safe to call on every hydrate — no-op when already lean.
- */
-export function pruneHeavyChatStorage(threads = readChatThreads()): ChatThread[] {
-  const { threads: next, changed } = pruneChatThreads(threads)
-  if (changed) writeChatThreads(next)
-  return next
-}
-
 function yieldToMain(): Promise<void> {
   return new Promise((resolve) => {
     if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
@@ -225,7 +215,10 @@ export async function hydrateChatThreadsAsync(): Promise<ChatHydrateResult> {
 }
 
 function prepareThreadsForDisk(threads: ChatThread[]): ChatThread[] {
-  return threads
+  // Apply content/reasoning caps on every write so stream-end idle flush cannot
+  // leave 24k live traces on disk until the next open prune.
+  const { threads: pruned } = pruneChatThreads(threads)
+  return pruned
     .slice()
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .slice(0, MAX_THREADS)
@@ -276,8 +269,8 @@ export function writeChatThreads(threads: ChatThread[]) {
 }
 
 export function upsertChatThread(thread: ChatThread, all = readChatThreads()): ChatThread[] {
-  // Prefer the caller's in-memory list when provided — re-parsing localStorage on
-  // every stream delta (default arg) was multi-ms sync work per token.
+  // Prefer the caller's in-memory list when provided — avoids re-parsing disk
+  // (and racing idle coalesce) on every persist.
   const rest = all.filter((t) => t.id !== thread.id)
   const next = [thread, ...rest]
   writeChatThreads(next)
