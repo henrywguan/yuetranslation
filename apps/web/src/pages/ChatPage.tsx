@@ -1,8 +1,11 @@
 import { startTransition, useEffect, useId, useRef, useState } from 'react'
+import { ChatDictateButton } from '../components/ChatDictateButton'
 import { DeepSeekMark } from '../components/DeepSeekMark'
 import { IosHomescreenTip } from '../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../components/PwaInstallButton'
+import { SpeakButton } from '../components/SpeakButton'
 import { streamDeepseekChat } from '../lib/api'
+import { chatSpeakLang } from '../lib/chatVoice'
 import {
   apiMessagesFromThread,
   appendChatMessage,
@@ -286,6 +289,7 @@ function MessageActions({
 }) {
   const [copied, setCopied] = useState(false)
   const timerRef = useRef<number | null>(null)
+  const speakLang = chatSpeakLang(content)
 
   useEffect(() => {
     return () => {
@@ -308,6 +312,7 @@ function MessageActions({
 
   return (
     <div className="ds-chat-actions">
+      <SpeakButton text={content} lang={speakLang} className="ds-chat-speak" warm={false} />
       <button
         type="button"
         className={`ds-chat-action${copied ? ' is-copied' : ''}`}
@@ -479,8 +484,19 @@ export function ChatPage() {
   const [searchOn, setSearchOn] = useState(() => readFlag(SEARCH_KEY, false))
   const [thinkClock, setThinkClock] = useState<number | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const thinkStartedAt = useRef<number | null>(null)
+
+  const setDraftAndResize = (next: string) => {
+    setDraft(next)
+    requestAnimationFrame(() => {
+      const el = inputRef.current
+      if (!el) return
+      el.style.height = 'auto'
+      el.style.height = `${Math.min(el.scrollHeight, 136)}px`
+    })
+  }
   /** Cancel pending HYDRATE_BATCH timers when switching threads / unmounting. */
   const revealTimersRef = useRef<number[]>([])
   const revealGenRef = useRef(0)
@@ -1077,17 +1093,21 @@ export function ChatPage() {
               </button>
             </div>
             <div className="ds-chat-composer-card">
+              <ChatDictateButton
+                disabled={busy || !unlocked}
+                draft={draft}
+                onDraft={setDraftAndResize}
+                onError={(message) => setError(message)}
+              />
               <textarea
+                ref={inputRef}
                 className="ds-chat-input"
                 rows={1}
                 value={draft}
                 placeholder="Message DeepSeek"
                 disabled={busy}
                 onChange={(e) => {
-                  setDraft(e.target.value)
-                  const el = e.target
-                  el.style.height = 'auto'
-                  el.style.height = `${Math.min(el.scrollHeight, 136)}px`
+                  setDraftAndResize(e.target.value)
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
