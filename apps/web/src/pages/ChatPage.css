@@ -649,8 +649,28 @@ html[data-theme='light'] .ds-chat {
 .ds-chat-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.15rem;
   margin-top: 0.15rem;
+}
+
+.ds-chat-speak.speak-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: 0;
+  color: var(--ds-text-2);
+  box-shadow: none;
+}
+
+.ds-chat-speak.speak-btn:hover:not(:disabled) {
+  background: var(--ds-surface-1);
+  color: var(--ds-text);
+}
+
+.ds-chat-speak.speak-btn.is-speaking {
+  color: var(--ds-blue);
 }
 
 .ds-chat-action {
@@ -977,15 +997,47 @@ html[data-theme='light'] .ds-chat-assistant-body code {
 
 .ds-chat-composer-card {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.45rem;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.35rem;
   align-items: end;
   background: var(--ds-surface-1);
   border: 1px solid var(--ds-divider);
   border-radius: 1.55rem;
-  padding: 0.55rem 0.55rem 0.55rem 1rem;
+  padding: 0.55rem 0.55rem 0.55rem 0.65rem;
   box-shadow: 0 8px 28px rgba(16, 18, 24, 0.06);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ds-chat-dictate {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-2);
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: background 0.15s ease, color 0.15s ease;
+  touch-action: none;
+}
+
+.ds-chat-dictate:hover:not(:disabled) {
+  background: var(--ds-surface-2);
+  color: var(--ds-text);
+}
+
+.ds-chat-dictate:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ds-chat-dictate.is-listening {
+  color: #fff;
+  background: var(--ds-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ds-danger) 28%, transparent);
 }
 
 .ds-chat-composer-card:focus-within {
