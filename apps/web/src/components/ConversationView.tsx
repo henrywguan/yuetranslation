@@ -31,6 +31,9 @@ import { LiveHoldButton } from './LiveHoldButton'
 import { ClearIconButton } from './ClearIconButton'
 import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
+import { canUseDeepseekChat } from '../lib/chatAccess'
+import { translationChatPrefill } from '../lib/chatSkills'
+import { openDeepseekChatWithPrefill } from '../lib/siteLinks'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import { BiText } from './BiText'
@@ -90,10 +93,12 @@ export function ConversationView() {
   const translating = useYueStore((s) => s.translating)
   const translatingTo = useYueStore((s) => s.translatingTo)
   const exportTranscript = useYueStore((s) => s.exportConversationTranscript)
+  const entitlement = useYueStore((s) => s.entitlement)
   const [exported, setExported] = useState(false)
 
   const youLang = conversationYouLang
   const partnerLang = chineseLang
+  const canAskChat = canUseDeepseekChat(entitlement)
 
   const youThinking = translating && translatingTo === youLang
   const partnerThinking = translating && translatingTo === partnerLang
@@ -480,6 +485,26 @@ export function ConversationView() {
                     renderPhrase(youLang, youText, () => openYouDetails(), 'pane-hero--en')
                   )}
                   {face.enTranslation ? <SpeakButton text={face.enTranslation} lang={youLang} /> : null}
+                  {canAskChat && face.enTranslation && face.yueTranslation ? (
+                    <button
+                      type="button"
+                      className="solo-ask-chat-btn"
+                      aria-label="Ask DeepSeek Chat about this translation"
+                      title="Ask in Chat"
+                      onClick={() =>
+                        openDeepseekChatWithPrefill(
+                          translationChatPrefill({
+                            source: face.yueTranslation || partnerText,
+                            translation: face.enTranslation || youText,
+                            fromLang: partnerLang,
+                            toLang: youLang,
+                          }),
+                        )
+                      }
+                    >
+                      Ask in Chat
+                    </button>
+                  ) : null}
                 </span>
               ) : (
                 <span className="placeholder">{langPlaceholder(youLang)}</span>

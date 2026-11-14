@@ -105,8 +105,12 @@ const chatPage = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../
 assert.match(chatPage, /hydrateChatThreadsAsync/, 'ChatPage uses async hydrate')
 assert.match(chatPage, /revealCount/, 'ChatPage reveals history in batches')
 assert.match(chatPage, /ds-chat-plain/, 'Streaming answers use plain text')
-assert.match(chatPage, /renderChatMarkdown/, 'Just-settled live answers use markdown')
-assert.match(chatPage, /sawLiveRef/, 'Historical assistants stay plain; only live-settled promote')
+assert.match(chatPage, /renderChatMarkdown/, 'Settled answers use markdown')
+assert.match(
+  chatPage,
+  /Plain while streaming|setRich\(true\)/,
+  'Settled visible assistants promote to markdown (DOM already capped)',
+)
 assert.match(chatPage, /clearedHeavy/, 'ChatPage surfaces oversized-history recovery')
 assert.match(chatPage, /beginBatchedReveal/, 'selectThread / hydrate share batched reveal')
 assert.match(
@@ -118,6 +122,7 @@ assert.match(chatPage, /uploadDeepseekChatFile|onPickFile/, 'Composer supports f
 assert.match(chatPage, /editUserMessage/, 'User messages can be edited')
 assert.match(chatPage, /searchSteps|SearchStepsList/, 'Search step cards render')
 assert.match(chatPage, /chatQuotaLabel|chatTurnsLimit/, 'Chat quota chip wired')
+assert.match(chatPage, /MessageActions/, 'Message action bar present')
 
 const apiSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './api.ts'), 'utf8')
 assert.match(apiSrc, /sanitizeDeepseekChatMessages/, 'streamDeepseekChat sanitizes wire payload')
@@ -131,5 +136,6 @@ assert.match(mdSrc, /mermaid/i, 'Markdown renders Mermaid fences')
 
 const historySrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './chatHistory.ts'), 'utf8')
 assert.match(historySrc, /requestIdleCallback/, 'Disk flush is idle-coalesced')
+assert.match(historySrc, /pinned|archived|searchChatThreads/, 'History supports pin/archive/search')
 
 console.log('chatHistory.smoke: ok')

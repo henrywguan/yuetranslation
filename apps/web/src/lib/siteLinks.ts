@@ -141,6 +141,19 @@ export function openDeepseekChat() {
   navigate('chat')
 }
 
+/** Open `#/chat` with a composer prefill (Solo / Conversation handoff). */
+export function openDeepseekChatWithPrefill(text: string) {
+  const t = text.trim().slice(0, 12_000)
+  if (t) {
+    try {
+      sessionStorage.setItem('yue-deepseek-chat-prefill-v1', t)
+    } catch {
+      /* ignore */
+    }
+  }
+  navigate('chat')
+}
+
 /** Open the creator kit (`#/creators`) — Jyutping+Chao copy + Noto fonts. */
 export function openCreators() {
   navigate('creators')

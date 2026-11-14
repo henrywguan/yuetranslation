@@ -1,10 +1,29 @@
-import { startTransition, useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { ChatDictateButton } from '../components/ChatDictateButton'
+import {
+  ChatArtifactPanel,
+  ChatRelatedQuestions,
+  ChatSkillMenu,
+  ChatSourcesList,
+  ChatThreadRow,
+  ChatUserFiles,
+} from '../components/ChatShellExtras'
 import { DeepSeekMark } from '../components/DeepSeekMark'
 import { IosHomescreenTip } from '../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../components/PwaInstallButton'
 import { SpeakButton } from '../components/SpeakButton'
 import { streamDeepseekChat, uploadDeepseekChatFile } from '../lib/api'
+import { extractChatArtifacts, relatedQuestionsFromReply, type ChatArtifact } from '../lib/chatArtifacts'
+import {
+  consumeChatPrefill,
+  consumeSharedThread,
+  downloadTextFile,
+  parseImportedThread,
+  safeExportBasename,
+  stashSharedThread,
+  threadToJson,
+  threadToMarkdown,
+} from '../lib/chatExport'
 import { chatSpeakLang } from '../lib/chatVoice'
 import {
   apiMessagesFromThread,
@@ -15,12 +34,21 @@ import {
   MAX_CONTENT_CHARS,
   patchAssistantContent,
   renameChatThread,
+  searchChatThreads,
+  setChatThreadArchived,
+  setChatThreadPinned,
   upsertChatThread,
+  type ChatFileMeta,
   type ChatMessage,
   type ChatSearchStep,
   type ChatSource,
   type ChatThread,
 } from '../lib/chatHistory'
+import {
+  applyChatSkill,
+  filterChatSkills,
+  type ChatSkill,
+} from '../lib/chatSkills'
 import { openAuthScreen } from '../lib/auth'
 import { canUseDeepseekChat } from '../lib/chatAccess'
 import { renderChatMarkdown } from '../lib/renderChatMarkdown'
@@ -30,6 +58,8 @@ import { useAppViewportLock } from '../lib/useAppViewportLock'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { safeShellViewportHeight } from '../lib/visualViewportHeight'
 import './ChatPage.css'
+
+type PendingChatFile = ChatFileMeta & { previewUrl?: string }
 
 const SUGGESTIONS = [
   'Explain quantum computing simply',
@@ -261,25 +291,6 @@ function ReasoningPanel({
   )
 }
 
-function SourcesList({ sources }: { sources: ChatSource[] }) {
-  if (!sources.length) return null
-  return (
-    <div className="ds-chat-sources">
-      <div className="ds-chat-sources-label">Sources</div>
-      <ol className="ds-chat-sources-list">
-        {sources.map((s, i) => (
-          <li key={s.url}>
-            <a href={s.url} target="_blank" rel="noopener noreferrer">
-              <span className="ds-chat-source-index">{i + 1}</span>
-              <span className="ds-chat-source-title">{s.title}</span>
-            </a>
-          </li>
-        ))}
-      </ol>
-    </div>
-  )
-}
-
 function SearchStepsList({ steps }: { steps: ChatSearchStep[] }) {
   if (!steps.length) return null
   return (
@@ -314,11 +325,15 @@ function MessageActions({
   disabled,
   onRegenerate,
   onEdit,
+  onSearchReply,
+  onOpenArtifacts,
 }: {
   content: string
   disabled?: boolean
-  onRegenerate: () => void
+  onRegenerate?: () => void
   onEdit?: () => void
+  onSearchReply?: () => void
+  onOpenArtifacts?: () => void
 }) {
   const [copied, setCopied] = useState(false)
   const timerRef = useRef<number | null>(null)
@@ -357,17 +372,43 @@ function MessageActions({
         {COPY_ICON}
         <span className="ds-chat-action-label">{copied ? 'Copied' : 'Copy'}</span>
       </button>
-      <button
-        type="button"
-        className="ds-chat-action"
-        aria-label="Regenerate"
-        title="Regenerate"
-        disabled={disabled}
-        onClick={onRegenerate}
-      >
-        {REGEN_ICON}
-        <span className="ds-chat-action-label">Regenerate</span>
-      </button>
+      {onRegenerate ? (
+        <button
+          type="button"
+          className="ds-chat-action"
+          aria-label="Regenerate"
+          title="Regenerate"
+          disabled={disabled}
+          onClick={onRegenerate}
+        >
+          {REGEN_ICON}
+          <span className="ds-chat-action-label">Regenerate</span>
+        </button>
+      ) : null}
+      {onSearchReply ? (
+        <button
+          type="button"
+          className="ds-chat-action"
+          aria-label="Search this reply"
+          title="Search this reply"
+          disabled={disabled}
+          onClick={onSearchReply}
+        >
+          {SEARCH_ICON}
+          <span className="ds-chat-action-label">Search</span>
+        </button>
+      ) : null}
+      {onOpenArtifacts ? (
+        <button
+          type="button"
+          className="ds-chat-action"
+          aria-label="Open artifacts"
+          title="Open artifacts"
+          onClick={onOpenArtifacts}
+        >
+          <span className="ds-chat-action-label">Artifacts</span>
+        </button>
+      ) : null}
       {onEdit ? (
         <button
           type="button"
@@ -390,35 +431,28 @@ function AssistantBody({
   thinking,
   searching,
   thinkStartedAt,
-  preferMarkdown,
+  onOpenArtifact,
 }: {
   message: ChatMessage
   streaming?: boolean
   thinking?: boolean
   searching?: boolean
   thinkStartedAt?: number | null
-  /** Promote markdown for recent settled assistants without a live stream. */
-  preferMarkdown?: boolean
+  onOpenArtifact?: (lang: string, source: string) => void
 }) {
   const hasContent = Boolean(message.content)
-  // Live-streamed bubbles always may promote; recent settled rows use preferMarkdown.
-  const sawLiveRef = useRef(Boolean(streaming) || Boolean(preferMarkdown))
-  if (streaming) sawLiveRef.current = true
-
-  const [rich, setRich] = useState(false)
+  // Plain while streaming (per-token markdown remounts freeze DeepThink). After
+  // settle, always promote — visible DOM is already capped (MAX_RENDER_MESSAGES),
+  // so historical markdown on open stays cheap. Avoid startTransition+cancel
+  // races that could leave settled replies stuck showing raw ## / **.
+  const [rich, setRich] = useState(() => Boolean(hasContent && !streaming))
   useEffect(() => {
-    if (streaming || !hasContent || (!sawLiveRef.current && !preferMarkdown)) {
+    if (streaming || !hasContent) {
       setRich(false)
       return
     }
-    let cancelled = false
-    startTransition(() => {
-      if (!cancelled) setRich(true)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [streaming, hasContent, preferMarkdown, message.id, message.content])
+    setRich(true)
+  }, [streaming, hasContent, message.id])
 
   return (
     <>
@@ -440,7 +474,10 @@ function AssistantBody({
           streaming || !rich ? (
             <div className="ds-chat-plain">{message.content}</div>
           ) : (
-            renderChatMarkdown(message.content, { sources: message.sources })
+            renderChatMarkdown(message.content, {
+              sources: message.sources,
+              onOpenArtifact,
+            })
           )
         ) : streaming && searching && !thinking ? (
           <span className="ds-chat-thinking-line">Searching…</span>
@@ -452,7 +489,7 @@ function AssistantBody({
           '…'
         )}
       </div>
-      {!streaming && message.sources?.length ? <SourcesList sources={message.sources} /> : null}
+      {!streaming && message.sources?.length ? <ChatSourcesList sources={message.sources} /> : null}
     </>
   )
 }
@@ -532,13 +569,20 @@ export function ChatPage() {
   const [deepThink, setDeepThink] = useState(() => readFlag(THINK_KEY, true))
   const [searchOn, setSearchOn] = useState(() => readFlag(SEARCH_KEY, false))
   const [thinkClock, setThinkClock] = useState<number | null>(null)
-  const [pendingFiles, setPendingFiles] = useState<{ fileId: string; filename: string }[]>([])
+  const [pendingFiles, setPendingFiles] = useState<PendingChatFile[]>([])
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [sidebarQuery, setSidebarQuery] = useState('')
+  const [artifact, setArtifact] = useState<ChatArtifact | null>(null)
+  const [dragOver, setDragOver] = useState(false)
+  const [shareNote, setShareNote] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const importInputRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const thinkStartedAt = useRef<number | null>(null)
+  const autoSpeak = useYueStore((s) => s.autoSpeak)
+  const speakManual = useYueStore((s) => s.speakManual)
 
   const setDraftAndResize = (next: string) => {
     setDraft(next)
@@ -619,21 +663,40 @@ export function ChatPage() {
         )
       }
 
-      if (!existing.length) {
+      const shared = consumeSharedThread()
+      let list = existing
+      if (shared) {
+        list = upsertChatThread(shared, existing)
+      }
+
+      if (!list.length) {
         const created = emptyThread()
         setThreads([created])
         setActiveId(created.id)
         upsertChatThread(created, [created])
         setHistoryReady(true)
         beginBatchedReveal(0)
-        return
+      } else {
+        const head = shared || list[0]!
+        setThreads(list)
+        setActiveId(head.id)
+        setHistoryReady(true)
+        beginBatchedReveal(head.messages.length)
       }
 
-      const head = existing[0]!
-      setThreads(existing)
-      setActiveId(head.id)
-      setHistoryReady(true)
-      beginBatchedReveal(head.messages.length)
+      const prefill = consumeChatPrefill()
+      if (prefill) setDraftAndResize(prefill)
+
+      // Clear ?share=1 from the address bar after consuming.
+      try {
+        const url = new URL(window.location.href)
+        if (url.searchParams.has('share')) {
+          url.searchParams.delete('share')
+          window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+        }
+      } catch {
+        /* ignore */
+      }
     })()
 
     return () => {
@@ -649,6 +712,12 @@ export function ChatPage() {
 
   const unlocked = canUseDeepseekChat(entitlement)
   const loggedIn = Boolean(entitlement?.loggedIn)
+  const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
+  const skillSuggestions = filterChatSkills(draft)
+  const visibleThreads = searchChatThreads(
+    threads.filter((t) => t.id !== BOOT_THREAD.id),
+    sidebarQuery,
+  )
 
   /** Update React state only — no localStorage. Used for throttled stream paints. */
   const paintThread = (thread: ChatThread) => {
@@ -837,6 +906,9 @@ export function ChatPage() {
         setError('No reply — try again.')
       } else {
         persist(thread)
+        if (canAutoSpeak && autoSpeak && assembled.trim()) {
+          void speakManual(assembled.trim(), chatSpeakLang(assembled))
+        }
       }
     } catch (err) {
       flushPaint()
@@ -877,9 +949,19 @@ export function ChatPage() {
     }
 
     const fileIds = pendingFiles.map((f) => f.fileId)
+    const filesMeta: ChatFileMeta[] = pendingFiles.map(({ fileId, filename, mime }) => ({
+      fileId,
+      filename,
+      mime,
+    }))
     setError(null)
     setDraft('')
-    setPendingFiles([])
+    setPendingFiles((prev) => {
+      for (const f of prev) {
+        if (f.previewUrl) URL.revokeObjectURL(f.previewUrl)
+      }
+      return []
+    })
     setBusy(true)
 
     let thread = active
@@ -893,7 +975,7 @@ export function ChatPage() {
       thread = {
         ...thread,
         messages: thread.messages.map((m) =>
-          m.id === userStep.message.id ? { ...m, fileIds } : m,
+          m.id === userStep.message.id ? { ...m, fileIds, files: filesMeta } : m,
         ),
       }
     }
@@ -930,7 +1012,11 @@ export function ChatPage() {
     const msg = active.messages[idx]
     if (!msg || msg.role !== 'user') return
     setDraftAndResize(msg.content)
-    setPendingFiles((msg.fileIds || []).map((fileId) => ({ fileId, filename: 'attachment' })))
+    const restored =
+      msg.files?.length
+        ? msg.files.map((f) => ({ ...f }))
+        : (msg.fileIds || []).map((fileId) => ({ fileId, filename: 'attachment' }))
+    setPendingFiles(restored)
     const truncated: ChatThread = {
       ...active,
       messages: active.messages.slice(0, idx),
@@ -955,13 +1041,81 @@ export function ChatPage() {
     setError(null)
     try {
       const uploaded = await uploadDeepseekChatFile(file)
-      setPendingFiles((prev) => [...prev, uploaded].slice(0, 5))
+      const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+      setPendingFiles((prev) =>
+        [
+          ...prev,
+          {
+            fileId: uploaded.fileId,
+            filename: uploaded.filename || file.name,
+            mime: file.type || undefined,
+            previewUrl,
+          },
+        ].slice(0, 5),
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'File upload failed')
     } finally {
       setUploadingFile(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
+  }
+
+  const openArtifactFromFence = (lang: string, source: string) => {
+    const lower = lang.trim().toLowerCase()
+    const kind =
+      lower === 'mermaid'
+        ? 'mermaid'
+        : lower === 'html' || lower === 'htm'
+          ? 'html'
+          : lower === 'svg'
+            ? 'svg'
+            : 'code'
+    setArtifact({
+      id: `live-${Date.now()}`,
+      kind,
+      lang: lower || 'code',
+      title: kind === 'mermaid' ? 'Diagram' : kind === 'code' ? lower || 'Code' : 'Preview',
+      source,
+    })
+  }
+
+  const searchThisReply = (content: string) => {
+    const snippet = content.replace(/\s+/g, ' ').trim().slice(0, 220)
+    writeFlag(SEARCH_KEY, true)
+    setSearchOn(true)
+    setDraftAndResize(`Search the web to verify and expand on this:\n\n${snippet}`)
+    inputRef.current?.focus()
+  }
+
+  const patchThread = (next: ChatThread) => {
+    setThreads((prev) => upsertChatThread(next, prev))
+  }
+
+  const copyConversation = async () => {
+    try {
+      await navigator.clipboard.writeText(threadToMarkdown(active))
+      setShareNote('Conversation copied')
+      window.setTimeout(() => setShareNote(null), 1600)
+    } catch {
+      setError('Could not copy conversation')
+    }
+  }
+
+  const shareConversation = async () => {
+    const url = stashSharedThread(active)
+    try {
+      await navigator.clipboard.writeText(url)
+      setShareNote('Share link copied (this browser session)')
+      window.setTimeout(() => setShareNote(null), 2200)
+    } catch {
+      setShareNote(url)
+    }
+  }
+
+  const pickSkill = (skill: ChatSkill) => {
+    setDraftAndResize(applyChatSkill(skill))
+    inputRef.current?.focus()
   }
 
   const chatTurnsUsed = entitlement?.chatTurnsUsed
@@ -997,31 +1151,78 @@ export function ChatPage() {
         <button type="button" className="ds-chat-new" onClick={startNewChat} disabled={busy}>
           <span aria-hidden="true">+</span> New chat
         </button>
+        <label className="ds-chat-sidebar-search">
+          <input
+            type="search"
+            placeholder="Search chats"
+            aria-label="Search chats"
+            value={sidebarQuery}
+            onChange={(e) => setSidebarQuery(e.target.value)}
+          />
+        </label>
         <ul className="ds-chat-thread-list">
-          {threads
-            .filter((t) => t.id !== BOOT_THREAD.id)
-            .map((t) => (
-              <li key={t.id} className="ds-chat-thread-item">
-                <button
-                  type="button"
-                  className={`ds-chat-thread-btn${t.id === active.id ? ' is-active' : ''}`}
-                  onClick={() => selectThread(t.id)}
-                >
-                  {t.title}
-                </button>
-                <button
-                  type="button"
-                  className="ds-chat-thread-del"
-                  aria-label={`Delete ${t.title}`}
-                  onClick={() => removeThread(t.id)}
-                  disabled={busy}
-                >
-                  ×
-                </button>
-              </li>
-            ))}
+          {visibleThreads.map((t) => (
+            <ChatThreadRow
+              key={t.id}
+              thread={t}
+              active={t.id === active.id}
+              busy={busy}
+              onSelect={() => selectThread(t.id)}
+              onDelete={() => removeThread(t.id)}
+              onRename={(title) => patchThread(renameChatThread(t, title))}
+              onTogglePin={() => patchThread(setChatThreadPinned(t, !t.pinned))}
+              onToggleArchive={() => patchThread(setChatThreadArchived(t, !t.archived))}
+              onExportMd={() =>
+                downloadTextFile(
+                  `${safeExportBasename(t.title)}.md`,
+                  threadToMarkdown(t),
+                  'text/markdown;charset=utf-8',
+                )
+              }
+              onExportJson={() =>
+                downloadTextFile(
+                  `${safeExportBasename(t.title)}.json`,
+                  threadToJson(t),
+                  'application/json;charset=utf-8',
+                )
+              }
+            />
+          ))}
         </ul>
         <div className="ds-chat-sidebar-foot">
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="ds-chat-file-input"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              try {
+                const raw = await file.text()
+                const imported = parseImportedThread(raw)
+                if (!imported) {
+                  setError('Could not import that chat JSON.')
+                  return
+                }
+                setThreads((prev) => upsertChatThread(imported, prev))
+                setActiveId(imported.id)
+                beginBatchedReveal(imported.messages.length)
+                setSidebarOpen(false)
+              } catch {
+                setError('Could not import that chat JSON.')
+              } finally {
+                e.target.value = ''
+              }
+            }}
+          />
+          <button
+            type="button"
+            className="ds-chat-sidebar-link"
+            onClick={() => importInputRef.current?.click()}
+          >
+            Import JSON
+          </button>
           <button type="button" className="ds-chat-sidebar-link" onClick={() => openApp()}>
             Back to JyutTranslate
           </button>
@@ -1107,11 +1308,57 @@ export function ChatPage() {
   }
 
   return (
-    <div className="ds-chat">
+    <div
+      className={`ds-chat${artifact ? ' has-artifact' : ''}${dragOver ? ' is-dragover' : ''}`}
+      onDragEnter={(e) => {
+        if (!unlocked || busy) return
+        if ([...e.dataTransfer.types].includes('Files')) setDragOver(true)
+      }}
+      onDragOver={(e) => {
+        if (![...e.dataTransfer.types].includes('Files')) return
+        e.preventDefault()
+        setDragOver(true)
+      }}
+      onDragLeave={(e) => {
+        if (e.currentTarget === e.target) setDragOver(false)
+      }}
+      onDrop={(e) => {
+        e.preventDefault()
+        setDragOver(false)
+        const file = e.dataTransfer.files?.[0]
+        if (file) void onPickFile(file)
+      }}
+      onPaste={(e) => {
+        if (busy || !unlocked) return
+        const items = e.clipboardData?.items
+        if (!items) return
+        for (const item of items) {
+          if (item.kind === 'file' && item.type.startsWith('image/')) {
+            const file = item.getAsFile()
+            if (file) {
+              e.preventDefault()
+              void onPickFile(file)
+            }
+            break
+          }
+        }
+      }}
+    >
       {shellChrome}
 
       <div className="ds-chat-main" aria-labelledby={titleId}>
         {topBar({ showNew: true })}
+        {active.messages.length ? (
+          <div className="ds-chat-thread-bar">
+            <button type="button" className="ds-chat-thread-bar-btn" disabled={busy} onClick={() => void copyConversation()}>
+              Copy chat
+            </button>
+            <button type="button" className="ds-chat-thread-bar-btn" disabled={busy} onClick={() => void shareConversation()}>
+              Share
+            </button>
+            {shareNote ? <span className="ds-chat-share-note">{shareNote}</span> : null}
+          </div>
+        ) : null}
 
         <div className="ds-chat-messages" ref={listRef}>
           {!historyReady ? (
@@ -1154,22 +1401,23 @@ export function ChatPage() {
                 // Enter motion only for the in-flight turn — replaying is-enter on
                 // every historical row fought layout when opening a long thread.
                 const enter = isLive || (!streamingId && m.id === lastMessageId) ? ' is-enter' : ''
+                const arts = m.role === 'assistant' ? extractChatArtifacts(m.content) : []
                 return m.role === 'user' ? (
                   <article key={m.id} className={`ds-chat-msg is-user${enter}`}>
                     <div className="ds-chat-user-bubble">{m.content}</div>
-                    {m.fileIds?.length ? (
-                      <div className="ds-chat-user-files">
-                        {m.fileIds.length} attachment{m.fileIds.length === 1 ? '' : 's'}
-                      </div>
+                    {m.files?.length ? (
+                      <ChatUserFiles files={m.files} />
+                    ) : m.fileIds?.length ? (
+                      <ChatUserFiles
+                        files={m.fileIds.map((fileId) => ({ fileId, filename: 'attachment' }))}
+                      />
                     ) : null}
                     {!busy ? (
-                      <button
-                        type="button"
-                        className="ds-chat-user-edit"
-                        onClick={() => editUserMessage(m.id)}
-                      >
-                        Edit
-                      </button>
+                      <MessageActions
+                        content={m.content}
+                        disabled={busy}
+                        onEdit={() => editUserMessage(m.id)}
+                      />
                     ) : null}
                   </article>
                 ) : (
@@ -1184,20 +1432,27 @@ export function ChatPage() {
                       thinking={isLive && thinking}
                       searching={isLive && searching}
                       thinkStartedAt={isLive ? thinkClock : null}
-                      preferMarkdown={
-                        !isLive &&
-                        visibleMessages
-                          .filter((x) => x.role === 'assistant')
-                          .slice(-4)
-                          .some((x) => x.id === m.id)
-                      }
+                      onOpenArtifact={openArtifactFromFence}
                     />
                     {!isLive && m.content.trim() ? (
-                      <MessageActions
-                        content={m.content}
-                        disabled={busy}
-                        onRegenerate={() => void regenerate(m.id)}
-                      />
+                      <>
+                        <MessageActions
+                          content={m.content}
+                          disabled={busy}
+                          onRegenerate={() => void regenerate(m.id)}
+                          onSearchReply={() => searchThisReply(m.content)}
+                          onOpenArtifacts={
+                            arts.length
+                              ? () => setArtifact(arts[0]!)
+                              : undefined
+                          }
+                        />
+                        <ChatRelatedQuestions
+                          questions={relatedQuestionsFromReply(m.content)}
+                          disabled={busy}
+                          onPick={(q) => void send(q)}
+                        />
+                      </>
                     ) : null}
                   </article>
                 )
@@ -1207,6 +1462,7 @@ export function ChatPage() {
         </div>
 
         <div className="ds-chat-composer-wrap">
+          {dragOver ? <div className="ds-chat-drop-hint">Drop file to attach</div> : null}
           <form
             className="ds-chat-composer"
             onSubmit={(e) => {
@@ -1249,16 +1505,30 @@ export function ChatPage() {
               </button>
               {chatQuotaLabel ? <span className="ds-chat-quota">{chatQuotaLabel}</span> : null}
             </div>
+            {skillSuggestions.length ? (
+              <ChatSkillMenu skills={skillSuggestions} onPick={pickSkill} />
+            ) : null}
             {pendingFiles.length ? (
               <ul className="ds-chat-attach-list">
                 {pendingFiles.map((f) => (
                   <li key={f.fileId}>
+                    {f.previewUrl ? (
+                      <img src={f.previewUrl} alt="" className="ds-chat-attach-thumb" />
+                    ) : (
+                      <span className="ds-chat-attach-kind">
+                        {f.mime === 'application/pdf' || /\.pdf$/i.test(f.filename) ? 'PDF' : 'FILE'}
+                      </span>
+                    )}
                     <span>{f.filename}</span>
                     <button
                       type="button"
                       aria-label={`Remove ${f.filename}`}
                       onClick={() =>
-                        setPendingFiles((prev) => prev.filter((x) => x.fileId !== f.fileId))
+                        setPendingFiles((prev) => {
+                          const next = prev.filter((x) => x.fileId !== f.fileId)
+                          if (f.previewUrl) URL.revokeObjectURL(f.previewUrl)
+                          return next
+                        })
                       }
                     >
                       ×
@@ -1338,6 +1608,7 @@ export function ChatPage() {
         </div>
       </div>
 
+      <ChatArtifactPanel artifact={artifact} onClose={() => setArtifact(null)} />
       <IosHomescreenTip />
     </div>
   )

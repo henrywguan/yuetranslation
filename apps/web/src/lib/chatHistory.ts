@@ -1,4 +1,7 @@
-/** Local DeepSeek Chat threads (device-only; no cloud sync). */
+/**
+ * Local DeepSeek Chat threads (device-local).
+ * Full Supabase cloud sync is deferred — see `chatDeferred.ts`.
+ */
 
 export type ChatRole = 'user' | 'assistant'
 
@@ -16,6 +19,13 @@ export type ChatSearchStep = {
   snippet?: string
 }
 
+/** Display metadata for an attached file (ids still drive the API). */
+export type ChatFileMeta = {
+  fileId: string
+  filename: string
+  mime?: string
+}
+
 export type ChatMessage = {
   id: string
   role: ChatRole
@@ -31,6 +41,8 @@ export type ChatMessage = {
   searchSteps?: ChatSearchStep[]
   /** DeepSeek Files API ids attached to a user turn. */
   fileIds?: string[]
+  /** Filenames / mime for UI chips (optional; fileIds remain source of truth for API). */
+  files?: ChatFileMeta[]
 }
 
 export type ChatThread = {
@@ -38,6 +50,8 @@ export type ChatThread = {
   title: string
   updatedAt: number
   messages: ChatMessage[]
+  pinned?: boolean
+  archived?: boolean
 }
 
 const STORAGE_KEY = 'yue-deepseek-chat-v1'
@@ -120,8 +134,29 @@ function normalizeFileIds(raw: unknown): string[] | undefined {
   return ids.length ? ids.slice(0, 5) : undefined
 }
 
+function normalizeFiles(raw: unknown, fileIds?: string[]): ChatFileMeta[] | undefined {
+  const byId = new Map<string, ChatFileMeta>()
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      if (!item || typeof item !== 'object') continue
+      const row = item as ChatFileMeta
+      const fileId = String(row.fileId || '').trim()
+      if (!/^file-api-/.test(fileId)) continue
+      const filename = String(row.filename || '').trim() || 'attachment'
+      const mime = typeof row.mime === 'string' ? row.mime : undefined
+      byId.set(fileId, { fileId, filename, mime })
+    }
+  }
+  for (const id of fileIds || []) {
+    if (!byId.has(id)) byId.set(id, { fileId: id, filename: 'attachment' })
+  }
+  const out = [...byId.values()].slice(0, 5)
+  return out.length ? out : undefined
+}
+
 function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
   if (!m || (m.role !== 'user' && m.role !== 'assistant')) return null
+  const fileIds = normalizeFileIds(m.fileIds)
   return {
     id: typeof m.id === 'string' ? m.id : uid(),
     role: m.role,
@@ -131,27 +166,43 @@ function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
     thoughtMs: Number.isFinite(m.thoughtMs) ? Math.max(0, Number(m.thoughtMs)) : undefined,
     sources: normalizeSources(m.sources),
     searchSteps: normalizeSearchSteps(m.searchSteps),
-    fileIds: normalizeFileIds(m.fileIds),
+    fileIds,
+    files: normalizeFiles(m.files, fileIds),
   }
+}
+
+function sortThreads(threads: ChatThread[]): ChatThread[] {
+  return threads.slice().sort((a, b) => {
+    const ap = a.pinned ? 1 : 0
+    const bp = b.pinned ? 1 : 0
+    if (ap !== bp) return bp - ap
+    const aa = a.archived ? 1 : 0
+    const ba = b.archived ? 1 : 0
+    if (aa !== ba) return aa - ba
+    return b.updatedAt - a.updatedAt
+  })
 }
 
 function normalizeChatThreads(parsed: unknown): ChatThread[] {
   if (!Array.isArray(parsed)) return []
-  return parsed
-    .filter((t): t is ChatThread => Boolean(t && typeof t === 'object' && typeof (t as ChatThread).id === 'string'))
-    .map((t) => ({
-      id: t.id,
-      title: typeof t.title === 'string' && t.title.trim() ? t.title : 'New chat',
-      updatedAt: Number(t.updatedAt) || Date.now(),
-      messages: Array.isArray(t.messages)
-        ? t.messages
-            .map((m) => normalizeMessage(m as Partial<ChatMessage>))
-            .filter((m): m is ChatMessage => Boolean(m))
-            .slice(-MAX_MESSAGES)
-        : [],
-    }))
-    .sort((a, b) => b.updatedAt - a.updatedAt)
-    .slice(0, MAX_THREADS)
+  return sortThreads(
+    parsed
+      .filter((t): t is ChatThread => Boolean(t && typeof t === 'object' && typeof (t as ChatThread).id === 'string'))
+      .map((t) => ({
+        id: t.id,
+        title: typeof t.title === 'string' && t.title.trim() ? t.title : 'New chat',
+        updatedAt: Number(t.updatedAt) || Date.now(),
+        pinned: Boolean(t.pinned),
+        archived: Boolean(t.archived),
+        messages: Array.isArray(t.messages)
+          ? t.messages
+              .map((m) => normalizeMessage(m as Partial<ChatMessage>))
+              .filter((m): m is ChatMessage => Boolean(m))
+              .slice(-MAX_MESSAGES)
+          : [],
+      }))
+      .slice(0, MAX_THREADS),
+  )
 }
 
 export function readChatThreads(): ChatThread[] {
@@ -264,9 +315,7 @@ function prepareThreadsForDisk(threads: ChatThread[]): ChatThread[] {
   // Apply content/reasoning caps on every write so stream-end idle flush cannot
   // leave 24k live traces on disk until the next open prune.
   const { threads: pruned } = pruneChatThreads(threads)
-  return pruned
-    .slice()
-    .sort((a, b) => b.updatedAt - a.updatedAt)
+  return sortThreads(pruned)
     .slice(0, MAX_THREADS)
     .map((t) => ({
       ...t,
@@ -388,6 +437,31 @@ export function renameChatThread(thread: ChatThread, title: string): ChatThread 
   const next = title.trim().slice(0, 80)
   if (!next) return thread
   return { ...thread, title: next, updatedAt: Date.now() }
+}
+
+export function setChatThreadPinned(thread: ChatThread, pinned: boolean): ChatThread {
+  return { ...thread, pinned: Boolean(pinned), updatedAt: Date.now() }
+}
+
+export function setChatThreadArchived(thread: ChatThread, archived: boolean): ChatThread {
+  return {
+    ...thread,
+    archived: Boolean(archived),
+    pinned: archived ? false : thread.pinned,
+    updatedAt: Date.now(),
+  }
+}
+
+/** Case-insensitive search over titles + recent message text. */
+export function searchChatThreads(threads: ChatThread[], query: string): ChatThread[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return sortThreads(threads)
+  return sortThreads(
+    threads.filter((t) => {
+      if (t.title.toLowerCase().includes(q)) return true
+      return t.messages.some((m) => m.content.toLowerCase().includes(q))
+    }),
+  )
 }
 
 /**

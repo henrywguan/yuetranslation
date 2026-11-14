@@ -11,6 +11,7 @@ assert.equal(chatDictateLang('es-MX'), 'es')
 
 assert.equal(chatSpeakLang('Hello, how can I help?'), 'en')
 assert.equal(chatSpeakLang('你好，今天天气怎么样？我们可以一起聊聊。'), 'cmn')
+assert.equal(chatSpeakLang('nei5 hou2 maa3 sik6 zo2 faan6 mei6'), 'yue')
 
 assert.equal(mergeDictateText('', 'hello'), 'hello')
 assert.equal(mergeDictateText('Hi', 'there'), 'Hi there')
