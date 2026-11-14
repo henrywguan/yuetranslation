@@ -739,6 +739,7 @@ export type DeepseekChatApiMessage = {
   role: 'user' | 'assistant'
   content: string
   reasoning?: string
+  fileIds?: string[]
 }
 
 export type DeepseekChatSource = {
@@ -786,7 +787,16 @@ function sanitizeDeepseekChatMessages(
         m.role === 'assistant' && m.reasoning?.trim()
           ? m.reasoning.trim().slice(0, CHAT_API_CONTENT_MAX)
           : undefined
-      return reasoning ? { role: m.role, content, reasoning } : { role: m.role, content }
+      const fileIds =
+        m.role === 'user' && Array.isArray(m.fileIds)
+          ? m.fileIds.filter((id) => /^file-api-/.test(String(id))).slice(0, 5)
+          : undefined
+      return {
+        role: m.role,
+        content,
+        ...(reasoning ? { reasoning } : null),
+        ...(fileIds?.length ? { fileIds } : null),
+      }
     })
     .filter((m): m is DeepseekChatApiMessage => Boolean(m))
     .slice(-CHAT_API_MESSAGES_MAX)

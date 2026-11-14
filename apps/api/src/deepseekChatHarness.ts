@@ -179,11 +179,21 @@ function chatBaseParams(thinkingEnabled: boolean) {
   }
 }
 
+function userContentWithFiles(
+  text: string,
+  fileIds?: string[],
+): string | Array<Record<string, unknown>> {
+  const ids = (fileIds || []).filter((id) => /^file-api-/.test(id)).slice(0, 5)
+  if (!ids.length) return text
+  return [...ids.map((file_id) => ({ type: 'file', file_id })), { type: 'text', text }]
+}
+
 function seedWireMessages(
   messages: DeepseekChatMessage[],
   prompt: DeepseekChatPromptContext,
   searchEnabled: boolean,
-  fileIds?: string[],
+  /** Extra ids merged onto the last user turn (composer convenience). */
+  lastTurnFileIds?: string[],
 ): WireMsg[] {
   const recent = recentDeepseekChatMessages(messages, DEEPSEEK_CHAT_HISTORY_LIMIT)
   const system = buildDeepseekChatSystem({
@@ -196,20 +206,15 @@ function seedWireMessages(
   for (let i = 0; i < recent.length; i += 1) {
     const m = recent[i]!
     const isLast = i === recent.length - 1
-    if (isLast && m.role === 'user') {
-      out.push(formatLatestReminder(prompt))
-      const ids = (fileIds || []).filter((id) => /^file-api-/.test(id)).slice(0, 5)
-      if (ids.length) {
-        out.push({
-          role: 'user',
-          content: [
-            ...ids.map((file_id) => ({ type: 'file', file_id })),
-            { type: 'text', text: m.content },
-          ],
-        })
-      } else {
-        out.push({ role: 'user', content: m.content })
-      }
+    if (m.role === 'user') {
+      if (isLast) out.push(formatLatestReminder(prompt))
+      const ids = isLast
+        ? [...(m.fileIds || []), ...(lastTurnFileIds || [])]
+        : m.fileIds
+      out.push({
+        role: 'user',
+        content: userContentWithFiles(m.content, ids),
+      })
       continue
     }
     if (m.role === 'assistant') {

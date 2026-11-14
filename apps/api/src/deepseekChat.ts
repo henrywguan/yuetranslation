@@ -23,6 +23,8 @@ export const DeepseekChatMessageSchema = z.object({
   content: z.string().trim().min(1).max(DEEPSEEK_CHAT_CONTENT_MAX),
   /** Prior DeepThink trace — replayed as reasoning_content on assistant turns. */
   reasoning: z.string().trim().max(DEEPSEEK_CHAT_CONTENT_MAX).optional(),
+  /** DeepSeek Files API ids on user turns (replayed every request for multi-turn context). */
+  fileIds: z.array(z.string().regex(/^file-api-/)).max(5).optional(),
 })
 
 export const DeepseekChatBodySchema = z.object({
@@ -35,7 +37,7 @@ export const DeepseekChatBodySchema = z.object({
   timeZone: z.string().trim().max(80).optional(),
   /** BCP-47 locale hint. */
   locale: z.string().trim().max(32).optional(),
-  /** DeepSeek Files API ids from POST /api/chat/files (attached to last user turn). */
+  /** Convenience: merge onto the last user message if that row omitted fileIds. */
   fileIds: z.array(z.string().regex(/^file-api-/)).max(5).optional(),
 })
 

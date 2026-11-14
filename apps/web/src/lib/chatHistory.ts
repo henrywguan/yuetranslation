@@ -396,7 +396,7 @@ export function renameChatThread(thread: ChatThread, title: string): ChatThread 
  */
 export function apiMessagesFromThread(
   thread: ChatThread,
-): { role: ChatRole; content: string; reasoning?: string }[] {
+): { role: ChatRole; content: string; reasoning?: string; fileIds?: string[] }[] {
   return thread.messages
     .map((m) => {
       const content = m.content.trim().slice(0, MAX_CONTENT_CHARS)
@@ -405,8 +405,20 @@ export function apiMessagesFromThread(
         m.role === 'assistant' && m.reasoning?.trim()
           ? m.reasoning.trim().slice(0, MAX_REASONING_CHARS)
           : undefined
-      return reasoning ? { role: m.role, content, reasoning } : { role: m.role, content }
+      const fileIds =
+        m.role === 'user' && m.fileIds?.length
+          ? m.fileIds.filter((id) => /^file-api-/.test(id)).slice(0, 5)
+          : undefined
+      return {
+        role: m.role,
+        content,
+        ...(reasoning ? { reasoning } : null),
+        ...(fileIds?.length ? { fileIds } : null),
+      }
     })
-    .filter((m): m is { role: ChatRole; content: string; reasoning?: string } => Boolean(m))
+    .filter(
+      (m): m is { role: ChatRole; content: string; reasoning?: string; fileIds?: string[] } =>
+        Boolean(m),
+    )
     .slice(-API_CHAT_MESSAGES_MAX)
 }
