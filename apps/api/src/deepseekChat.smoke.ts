@@ -1,9 +1,13 @@
 import assert from 'node:assert/strict'
 import {
   canUseDeepseekChat,
+  DEEPSEEK_CHAT_CONTENT_MAX,
   DEEPSEEK_CHAT_MAX_TOKENS,
+  DEEPSEEK_CHAT_MESSAGES_MAX,
   DEEPSEEK_CHAT_SYSTEM,
   deepseekChatLlmExtras,
+  deepseekChatPayloadMessage,
+  deepseekChatPayloadReason,
   deepseekChatTurnLimit,
   DeepseekChatBodySchema,
   recentDeepseekChatMessages,
@@ -86,6 +90,44 @@ assert.match(agent, /reasoning_content/, 'Tool rounds echo reasoning_content')
 
 const bad = DeepseekChatBodySchema.safeParse({ messages: [] })
 assert.equal(bad.success, false)
+assert.equal(deepseekChatPayloadReason(bad.error!), 'empty_messages')
+
+assert.equal(DEEPSEEK_CHAT_CONTENT_MAX, 12_000, 'Align with web MAX_CONTENT_CHARS')
+assert.equal(DEEPSEEK_CHAT_MESSAGES_MAX, 48)
+
+const atCap = DeepseekChatBodySchema.safeParse({
+  messages: [{ role: 'user', content: 'x'.repeat(DEEPSEEK_CHAT_CONTENT_MAX) }],
+})
+assert.equal(atCap.success, true, 'Content at shared max must parse')
+
+const overContent = DeepseekChatBodySchema.safeParse({
+  messages: [
+    { role: 'assistant', content: 'y'.repeat(DEEPSEEK_CHAT_CONTENT_MAX + 1) },
+    { role: 'user', content: 'follow-up' },
+  ],
+})
+assert.equal(overContent.success, false)
+assert.equal(deepseekChatPayloadReason(overContent.error!), 'message_too_long')
+assert.match(deepseekChatPayloadMessage('message_too_long'), /too long/i)
+
+const atMsgCap = DeepseekChatBodySchema.safeParse({
+  messages: Array.from({ length: DEEPSEEK_CHAT_MESSAGES_MAX }, (_, i) => ({
+    role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
+    content: `m${i}`,
+  })),
+})
+assert.equal(atMsgCap.success, true)
+
+const overMsg = DeepseekChatBodySchema.safeParse({
+  messages: Array.from({ length: DEEPSEEK_CHAT_MESSAGES_MAX + 1 }, (_, i) => ({
+    role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
+    content: `m${i}`,
+  })),
+})
+assert.equal(overMsg.success, false)
+assert.equal(deepseekChatPayloadReason(overMsg.error!), 'too_many_messages')
+assert.match(routes, /chat_payload_invalid/, 'Routes return structured payload error code')
+assert.match(routes, /deepseekChatPayloadReason/, 'Routes classify Zod failures')
 
 assert.equal(
   deepseekAnthropicBaseUrl('https://api.deepseek.com/v1'),

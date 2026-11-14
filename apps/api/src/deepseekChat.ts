@@ -12,13 +12,19 @@ import { openaiClient } from './openaiClient.js'
 import { getAdmin } from './supabase.js'
 import { currentMonthKey } from './usage.js'
 
+/** Per-message body cap — keep in sync with web `MAX_CONTENT_CHARS`. */
+export const DEEPSEEK_CHAT_CONTENT_MAX = 12_000
+
+/** Max messages accepted on the wire (model window is DEEPSEEK_CHAT_HISTORY_LIMIT). */
+export const DEEPSEEK_CHAT_MESSAGES_MAX = 48
+
 export const DeepseekChatMessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
-  content: z.string().trim().min(1).max(8000),
+  content: z.string().trim().min(1).max(DEEPSEEK_CHAT_CONTENT_MAX),
 })
 
 export const DeepseekChatBodySchema = z.object({
-  messages: z.array(DeepseekChatMessageSchema).min(1).max(48),
+  messages: z.array(DeepseekChatMessageSchema).min(1).max(DEEPSEEK_CHAT_MESSAGES_MAX),
   /** DeepThink toggle — default on for DeepSeek hosts. */
   thinking: z.boolean().optional(),
   /** Search toggle — Anthropic web_search path when host supports it. */
@@ -30,6 +36,48 @@ export const DeepseekChatBodySchema = z.object({
 })
 
 export type DeepseekChatMessage = z.infer<typeof DeepseekChatMessageSchema>
+
+export type DeepseekChatPayloadReason =
+  | 'empty_messages'
+  | 'too_many_messages'
+  | 'message_too_long'
+  | 'message_empty'
+  | 'invalid_role'
+  | 'invalid_shape'
+
+/** Map Zod failure → stable reason for logs + client UX. */
+export function deepseekChatPayloadReason(error: z.ZodError): DeepseekChatPayloadReason {
+  for (const issue of error.issues) {
+    if (issue.path[0] !== 'messages') continue
+    if (issue.path.length === 1) {
+      if (issue.code === 'too_big') return 'too_many_messages'
+      if (issue.code === 'too_small') return 'empty_messages'
+    }
+    if (issue.path.includes('content')) {
+      if (issue.code === 'too_big') return 'message_too_long'
+      if (issue.code === 'too_small') return 'message_empty'
+    }
+    if (issue.path.includes('role')) return 'invalid_role'
+  }
+  return 'invalid_shape'
+}
+
+export function deepseekChatPayloadMessage(reason: DeepseekChatPayloadReason): string {
+  switch (reason) {
+    case 'too_many_messages':
+      return 'Chat history is too long for one request. Start a new chat.'
+    case 'message_too_long':
+      return 'A message is too long. Shorten it and try again.'
+    case 'message_empty':
+      return 'Message cannot be empty.'
+    case 'empty_messages':
+      return 'No messages to send.'
+    case 'invalid_role':
+      return 'Invalid chat message role.'
+    default:
+      return 'Invalid chat payload.'
+  }
+}
 
 export type DeepseekChatStreamEvent =
   | { kind: 'thinking' }
