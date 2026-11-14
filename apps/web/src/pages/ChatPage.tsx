@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { ChatDictateButton } from '../components/ChatDictateButton'
 import {
   ChatArtifactPanel,
@@ -431,7 +431,6 @@ function AssistantBody({
   thinking,
   searching,
   thinkStartedAt,
-  preferMarkdown,
   onOpenArtifact,
 }: {
   message: ChatMessage
@@ -439,29 +438,21 @@ function AssistantBody({
   thinking?: boolean
   searching?: boolean
   thinkStartedAt?: number | null
-  /** Promote markdown for recent settled assistants without a live stream. */
-  preferMarkdown?: boolean
   onOpenArtifact?: (lang: string, source: string) => void
 }) {
   const hasContent = Boolean(message.content)
-  // Live-streamed bubbles always may promote; recent settled rows use preferMarkdown.
-  const sawLiveRef = useRef(Boolean(streaming) || Boolean(preferMarkdown))
-  if (streaming) sawLiveRef.current = true
-
-  const [rich, setRich] = useState(false)
+  // Plain while streaming (per-token markdown remounts freeze DeepThink). After
+  // settle, always promote — visible DOM is already capped (MAX_RENDER_MESSAGES),
+  // so historical markdown on open stays cheap. Avoid startTransition+cancel
+  // races that could leave settled replies stuck showing raw ## / **.
+  const [rich, setRich] = useState(() => Boolean(hasContent && !streaming))
   useEffect(() => {
-    if (streaming || !hasContent || (!sawLiveRef.current && !preferMarkdown)) {
+    if (streaming || !hasContent) {
       setRich(false)
       return
     }
-    let cancelled = false
-    startTransition(() => {
-      if (!cancelled) setRich(true)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [streaming, hasContent, preferMarkdown, message.id, message.content])
+    setRich(true)
+  }, [streaming, hasContent, message.id])
 
   return (
     <>
@@ -1441,13 +1432,6 @@ export function ChatPage() {
                       thinking={isLive && thinking}
                       searching={isLive && searching}
                       thinkStartedAt={isLive ? thinkClock : null}
-                      preferMarkdown={
-                        !isLive &&
-                        visibleMessages
-                          .filter((x) => x.role === 'assistant')
-                          .slice(-4)
-                          .some((x) => x.id === m.id)
-                      }
                       onOpenArtifact={openArtifactFromFence}
                     />
                     {!isLive && m.content.trim() ? (

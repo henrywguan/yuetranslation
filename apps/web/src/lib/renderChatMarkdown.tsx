@@ -77,18 +77,14 @@ function parseBlocks(md: string): Block[] {
       continue
     }
 
-    if (trimmed.startsWith('# ')) {
-      blocks.push({ type: 'h1', text: trimmed.slice(2).trim() })
-      i += 1
-      continue
-    }
-    if (trimmed.startsWith('## ')) {
-      blocks.push({ type: 'h2', text: trimmed.slice(3).trim() })
-      i += 1
-      continue
-    }
-    if (trimmed.startsWith('### ')) {
-      blocks.push({ type: 'h3', text: trimmed.slice(4).trim() })
+    const heading = trimmed.match(/^(#{1,3})\s+(.+)$/)
+    if (heading) {
+      const level = heading[1]!.length
+      const text = heading[2]!.trim()
+      blocks.push({
+        type: level === 1 ? 'h1' : level === 2 ? 'h2' : 'h3',
+        text,
+      })
       i += 1
       continue
     }
