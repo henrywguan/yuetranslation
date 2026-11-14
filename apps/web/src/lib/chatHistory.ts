@@ -94,6 +94,32 @@ function normalizeSources(raw: unknown): ChatSource[] | undefined {
   return out.length ? out : undefined
 }
 
+function normalizeSearchSteps(raw: unknown): ChatSearchStep[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const out: ChatSearchStep[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as ChatSearchStep
+    const kind = String(row.kind || '').trim()
+    if (!kind) continue
+    out.push({
+      kind,
+      queries: Array.isArray(row.queries) ? row.queries.map(String).filter(Boolean) : undefined,
+      url: typeof row.url === 'string' ? row.url : undefined,
+      title: typeof row.title === 'string' ? row.title : undefined,
+      siteName: typeof row.siteName === 'string' ? row.siteName : undefined,
+      snippet: typeof row.snippet === 'string' ? row.snippet : undefined,
+    })
+  }
+  return out.length ? out.slice(-24) : undefined
+}
+
+function normalizeFileIds(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const ids = raw.map(String).filter((id) => /^file-api-/.test(id))
+  return ids.length ? ids.slice(0, 5) : undefined
+}
+
 function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
   if (!m || (m.role !== 'user' && m.role !== 'assistant')) return null
   return {
@@ -104,6 +130,8 @@ function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
     reasoning: typeof m.reasoning === 'string' && m.reasoning.trim() ? m.reasoning : undefined,
     thoughtMs: Number.isFinite(m.thoughtMs) ? Math.max(0, Number(m.thoughtMs)) : undefined,
     sources: normalizeSources(m.sources),
+    searchSteps: normalizeSearchSteps(m.searchSteps),
+    fileIds: normalizeFileIds(m.fileIds),
   }
 }
 

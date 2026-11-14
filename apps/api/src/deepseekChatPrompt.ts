@@ -120,7 +120,10 @@ export function formatPlanSnapshot(): string {
  */
 export function buildDeepseekChatSystem(ctx: DeepseekChatPromptContext = {}): string {
   const parts = [BASE, FRESHNESS, formatTemporalBlock(ctx), SKILLS_TOOLS]
-  if (ctx.searchEnabled) parts.push(SKILLS_WEB)
+  // Only advertise server web tools when the request will actually declare them.
+  if (ctx.searchEnabled && /deepseek/i.test(`${env.openaiBaseUrl} ${env.openaiModel} ${env.chatModel}`)) {
+    parts.push(SKILLS_WEB)
+  }
   // Legacy search-only callers still get a grounded plan snapshot.
   if (ctx.mode === 'search' && !ctx.searchEnabled) parts.push(formatPlanSnapshot())
   if (ctx.plan) parts.push(`Signed-in plan context: ${ctx.plan}.`)

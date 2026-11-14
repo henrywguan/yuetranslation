@@ -80,10 +80,11 @@ async function* chatStreamEvents(
     return
   } catch (err) {
     if (signal?.aborted) throw err
-    console.warn(
-      '[deepseek-chat] harness failed, falling back:',
-      err instanceof Error ? err.message : err,
-    )
+    const message = err instanceof Error ? err.message : String(err)
+    // Attachments are harness-only; do not silently drop them on fallback.
+    if (fileIds?.length) throw err
+    if (/content safety|chat_refusal|blocked/i.test(message)) throw err
+    console.warn('[deepseek-chat] harness failed, falling back:', message)
   }
 
   if (searchEnabled && deepseekChatSupportsSearch()) {
@@ -200,7 +201,18 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         void addDeepseekChatTurns(auth.userId, 1)
         res.json({ ok: true, reply, model, reasoning: reasoning || undefined, title })
         return
-      } catch {
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Chat failed.'
+        // Never fall back after a content-safety refusal — that would bypass safety_check.
+        if (/content safety|chat_refusal|blocked/i.test(message)) {
+          res.status(451).json({ message, code: 'chat_refusal' })
+          return
+        }
+        // Attachments only exist on the harness path — do not retry without them.
+        if (fileIds?.length) {
+          res.status(502).json({ message })
+          return
+        }
         const { reply, model, reasoning } = await generateDeepseekChatAgentReply(parsed.data.messages, {
           thinkingEnabled,
           prompt: { ...promptBase, mode: 'tools' },

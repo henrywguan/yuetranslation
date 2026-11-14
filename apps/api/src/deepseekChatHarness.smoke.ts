@@ -66,6 +66,7 @@ const routes = readFileSync(
 assert.match(routes, /streamDeepseekChatHarness/, 'Routes use unified harness')
 assert.match(routes, /searchStep/, 'Routes forward search step cards')
 assert.match(routes, /chat_refusal/, 'Routes surface safety refusals')
+assert.match(routes, /Never fall back after a content-safety/, 'Non-stream refuses safety bypass')
 
 const filesSrc = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatFiles.ts'),
