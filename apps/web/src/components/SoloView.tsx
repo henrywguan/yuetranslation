@@ -9,11 +9,14 @@ import { SayItBack } from './SayItBack'
 import { ShareButton } from './ShareButton'
 import { StarPhraseButton } from './StarPhraseButton'
 import { CantoneseRomanizationToggle } from './CantoneseRomanizationToggle'
+import { canUseDeepseekChat } from '../lib/chatAccess'
+import { translationChatPrefill } from '../lib/chatSkills'
 import { copyableText } from '../lib/copyText'
 import { SoloTextOnlyLangTip } from './TextOnlyLangTip'
 import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { isTextOnlyLang, isVoiceLang, langDir } from '../lib/langCapabilities'
+import { openDeepseekChatWithPrefill } from '../lib/siteLinks'
 import { useYueStore } from '../lib/store'
 import { consumePendingShareText } from '../lib/pwaLaunch'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -161,6 +164,8 @@ export function SoloView() {
   const history = useYueStore((s) => s.history)
   const translating = useYueStore((s) => s.translating)
   const translatingTo = useYueStore((s) => s.translatingTo)
+  const entitlement = useYueStore((s) => s.entitlement)
+  const canAskChat = canUseDeepseekChat(entitlement)
 
   const [upperDraft, setUpperDraft] = useState('')
   const [lowerDraft, setLowerDraft] = useState('')
@@ -855,6 +860,26 @@ export function SoloView() {
                   {canClear ? <ClearIconButton onClick={clearSolo} /> : null}
                   {lowerDraft.trim() ? (
                     <SpeakButton text={lowerDraft} lang={soloLowerLang} />
+                  ) : null}
+                  {canAskChat && upperDraft.trim() && lowerDraft.trim() ? (
+                    <button
+                      type="button"
+                      className="solo-ask-chat-btn"
+                      aria-label="Ask DeepSeek Chat about this translation"
+                      title="Ask in Chat"
+                      onClick={() =>
+                        openDeepseekChatWithPrefill(
+                          translationChatPrefill({
+                            source: upperDraft,
+                            translation: lowerDraft,
+                            fromLang: soloUpperLang,
+                            toLang: soloLowerLang,
+                          }),
+                        )
+                      }
+                    >
+                      Ask in Chat
+                    </button>
                   ) : null}
                 </div>
                 {renderPaneExtras('lower')}

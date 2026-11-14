@@ -1332,3 +1332,417 @@ html[data-theme='light'] .ds-chat-assistant-body code {
     padding-right: 1.5rem;
   }
 }
+
+/* —— Roadmap UX: history / attachments / artifacts / skills / sources —— */
+
+.ds-chat-sidebar-search {
+  display: block;
+  padding: 0 0.85rem 0.65rem;
+}
+
+.ds-chat-sidebar-search input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.65rem;
+  background: var(--ds-surface-1);
+  color: var(--ds-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.45rem 0.65rem;
+}
+
+.ds-chat-thread-item {
+  position: relative;
+}
+
+.ds-chat-thread-item.is-archived .ds-chat-thread-title {
+  opacity: 0.55;
+}
+
+.ds-chat-thread-pin {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--ds-blue);
+  flex: 0 0 auto;
+}
+
+.ds-chat-thread-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ds-chat-thread-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ds-chat-thread-tools {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.ds-chat-thread-more {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-3);
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+
+.ds-chat-thread-more:hover {
+  background: var(--ds-surface-2);
+  color: var(--ds-text);
+}
+
+.ds-chat-thread-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 5;
+  min-width: 10rem;
+  padding: 0.35rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-canvas);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  display: grid;
+  gap: 0.15rem;
+}
+
+.ds-chat-thread-menu button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--ds-text);
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+
+.ds-chat-thread-menu button:hover {
+  background: var(--ds-surface-1);
+}
+
+.ds-chat-thread-menu button.is-danger {
+  color: var(--ds-danger);
+}
+
+.ds-chat-thread-rename {
+  flex: 1;
+  min-width: 0;
+}
+
+.ds-chat-thread-rename input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--ds-blue-soft-border);
+  border-radius: 0.45rem;
+  background: var(--ds-blue-soft);
+  color: var(--ds-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.ds-chat-thread-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem 0;
+  flex: 0 0 auto;
+}
+
+.ds-chat-thread-bar-btn {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  color: var(--ds-text-2);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  cursor: pointer;
+}
+
+.ds-chat-thread-bar-btn:hover:not(:disabled) {
+  color: var(--ds-text);
+  border-color: var(--ds-blue-soft-border);
+}
+
+.ds-chat-share-note {
+  font-size: 0.75rem;
+  color: var(--ds-success);
+}
+
+.ds-chat-user-files {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ds-chat-user-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--ds-surface-1);
+  border: 1px solid var(--ds-divider);
+  font-size: 0.75rem;
+  color: var(--ds-text-2);
+}
+
+.ds-chat-user-file-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ds-blue);
+}
+
+.ds-chat-user-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 12rem;
+}
+
+.ds-chat-attach-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ds-chat-attach-thumb {
+  width: 1.75rem;
+  height: 1.75rem;
+  object-fit: cover;
+  border-radius: 0.35rem;
+}
+
+.ds-chat-attach-kind {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--ds-blue);
+}
+
+.ds-chat-drop-hint {
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ds-blue);
+  padding: 0.35rem 0;
+}
+
+.ds-chat.is-dragover .ds-chat-composer-card {
+  outline: 2px dashed var(--ds-blue);
+  outline-offset: 2px;
+}
+
+.ds-chat-sources-toggle {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  margin-bottom: 0.35rem;
+}
+
+.ds-chat-source-fav {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  flex: 0 0 auto;
+}
+
+.ds-chat-related {
+  margin-top: 0.65rem;
+}
+
+.ds-chat-related-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-text-3);
+  margin-bottom: 0.35rem;
+}
+
+.ds-chat-related-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ds-chat-related-btn {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  color: var(--ds-text-2);
+  font: inherit;
+  font-size: 0.8125rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ds-chat-related-btn:hover:not(:disabled) {
+  border-color: var(--ds-blue-soft-border);
+  color: var(--ds-text);
+}
+
+.ds-chat-skill-menu {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0.35rem;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.75rem;
+  background: var(--ds-surface-1);
+  display: grid;
+  gap: 0.15rem;
+}
+
+.ds-chat-skill-item {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  text-align: left;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--ds-text);
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+}
+
+.ds-chat-skill-item:hover {
+  background: var(--ds-surface-2);
+}
+
+.ds-chat-skill-item code {
+  font-family: var(--ds-mono);
+  color: var(--ds-blue);
+  font-size: 0.75rem;
+}
+
+.ds-chat-artifact {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(26rem, 92vw);
+  z-index: 8;
+  background: var(--ds-canvas);
+  border-left: 1px solid var(--ds-divider);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.08);
+}
+
+.ds-chat.has-artifact .ds-chat-main {
+  margin-right: min(26rem, 92vw);
+}
+
+.ds-chat-artifact-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--ds-divider);
+}
+
+.ds-chat-artifact-kicker {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ds-text-3);
+}
+
+.ds-chat-artifact-title {
+  font-weight: 650;
+}
+
+.ds-chat-artifact-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.75rem;
+}
+
+.ds-chat-artifact-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 18rem;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.65rem;
+  background: #fff;
+}
+
+.ds-chat-artifact-code {
+  margin: 0;
+  padding: 0.85rem;
+  border-radius: 0.65rem;
+  background: var(--ds-surface-1);
+  overflow: auto;
+  font-family: var(--ds-mono);
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+}
+
+.ds-md-mermaid-toolbar,
+.ds-md-code-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.ds-md-mermaid-host svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.ds-md-mermaid-loading {
+  font-size: 0.8125rem;
+  color: var(--ds-text-3);
+}
+
+@media (max-width: 900px) {
+  .ds-chat.has-artifact .ds-chat-main {
+    margin-right: 0;
+  }
+
+  .ds-chat-artifact {
+    width: 100%;
+  }
+}

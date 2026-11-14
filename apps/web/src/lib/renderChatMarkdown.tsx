@@ -175,18 +175,98 @@ function parseBlocks(md: string): Block[] {
   return blocks
 }
 
-function mermaidInkUrl(source: string): string {
-  const encoded = btoa(unescape(encodeURIComponent(source.trim())))
-  return `https://mermaid.ink/svg/${encoded}`
+type MermaidApi = {
+  initialize: (opts: Record<string, unknown>) => void
+  render: (id: string, text: string) => Promise<{ svg: string }>
 }
 
-function MermaidBlock({ text }: { text: string }) {
+declare global {
+  interface Window {
+    mermaid?: MermaidApi
+  }
+}
+
+let mermaidLoader: Promise<MermaidApi | null> | null = null
+
+async function loadMermaid(): Promise<MermaidApi | null> {
+  if (typeof window === 'undefined') return null
+  if (window.mermaid) return window.mermaid
+  if (mermaidLoader) return mermaidLoader
+  mermaidLoader = new Promise((resolve) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-yue-mermaid]')
+    const boot = () => {
+      const api = window.mermaid || null
+      if (api) {
+        try {
+          api.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'neutral' })
+        } catch {
+          /* already initialized */
+        }
+      }
+      resolve(api)
+    }
+    if (existing) {
+      if (window.mermaid) boot()
+      else existing.addEventListener('load', boot, { once: true })
+      existing.addEventListener('error', () => resolve(null), { once: true })
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js'
+    script.async = true
+    script.dataset.yueMermaid = '1'
+    script.onload = () => boot()
+    script.onerror = () => resolve(null)
+    document.head.appendChild(script)
+  })
+  return mermaidLoader
+}
+
+function MermaidBlock({ text, onOpenArtifact }: { text: string; onOpenArtifact?: () => void }) {
+  const hostRef = useRef<HTMLDivElement>(null)
   const [failed, setFailed] = useState(false)
-  if (failed || !text.trim()) {
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      if (!text.trim()) {
+        setFailed(true)
+        return
+      }
+      const api = await loadMermaid()
+      if (cancelled) return
+      if (!api || !hostRef.current) {
+        setFailed(true)
+        return
+      }
+      try {
+        const id = `mmd-${Math.random().toString(36).slice(2, 10)}`
+        const { svg } = await api.render(id, text.trim())
+        if (cancelled || !hostRef.current) return
+        hostRef.current.innerHTML = svg
+        setReady(true)
+        setFailed(false)
+      } catch {
+        if (!cancelled) setFailed(true)
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [text])
+
+  if (failed) {
     return (
       <div className="ds-md-code-wrap ds-md-mermaid-fallback">
         <div className="ds-md-code-head">
           <span className="ds-md-code-lang">mermaid</span>
+          {onOpenArtifact ? (
+            <button type="button" className="ds-md-code-copy" onClick={onOpenArtifact}>
+              Open
+            </button>
+          ) : null}
         </div>
         <pre className="ds-md-code" data-lang="mermaid">
           <code>{text}</code>
@@ -194,19 +274,32 @@ function MermaidBlock({ text }: { text: string }) {
       </div>
     )
   }
+
   return (
     <figure className="ds-md-mermaid">
-      <img
-        src={mermaidInkUrl(text)}
-        alt="Mermaid diagram"
-        loading="lazy"
-        onError={() => setFailed(true)}
-      />
+      <div className="ds-md-mermaid-toolbar">
+        <span className="ds-md-code-lang">mermaid</span>
+        {onOpenArtifact ? (
+          <button type="button" className="ds-md-code-copy" onClick={onOpenArtifact}>
+            Open
+          </button>
+        ) : null}
+      </div>
+      <div ref={hostRef} className="ds-md-mermaid-host" aria-busy={!ready} />
+      {!ready ? <div className="ds-md-mermaid-loading">Rendering diagram…</div> : null}
     </figure>
   )
 }
 
-function CodeBlock({ lang, text }: { lang: string; text: string }) {
+function CodeBlock({
+  lang,
+  text,
+  onOpenArtifact,
+}: {
+  lang: string
+  text: string
+  onOpenArtifact?: () => void
+}) {
   const [copied, setCopied] = useState(false)
   const timerRef = useRef<number | null>(null)
 
@@ -217,7 +310,7 @@ function CodeBlock({ lang, text }: { lang: string; text: string }) {
   }, [])
 
   if (/^mermaid$/i.test(lang.trim())) {
-    return <MermaidBlock text={text} />
+    return <MermaidBlock text={text} onOpenArtifact={onOpenArtifact} />
   }
 
   const copy = async () => {
@@ -231,13 +324,22 @@ function CodeBlock({ lang, text }: { lang: string; text: string }) {
     }
   }
 
+  const previewable = /^(html|htm|svg)$/i.test(lang.trim()) || text.length >= 280
+
   return (
     <div className="ds-md-code-wrap">
       <div className="ds-md-code-head">
         <span className="ds-md-code-lang">{lang || 'code'}</span>
-        <button type="button" className={`ds-md-code-copy${copied ? ' is-copied' : ''}`} onClick={() => void copy()}>
-          {copied ? 'Copied' : 'Copy'}
-        </button>
+        <div className="ds-md-code-actions">
+          {previewable && onOpenArtifact ? (
+            <button type="button" className="ds-md-code-copy" onClick={onOpenArtifact}>
+              Open
+            </button>
+          ) : null}
+          <button type="button" className={`ds-md-code-copy${copied ? ' is-copied' : ''}`} onClick={() => void copy()}>
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+        </div>
       </div>
       <pre className="ds-md-code" data-lang={lang || undefined}>
         <code>{text}</code>
@@ -248,12 +350,15 @@ function CodeBlock({ lang, text }: { lang: string; text: string }) {
 
 export type RenderChatMarkdownOptions = {
   sources?: ChatSource[]
+  /** When set, code/mermaid fences can open the artifacts panel. */
+  onOpenArtifact?: (lang: string, source: string) => void
 }
 
 /** Render assistant markdown in DeepSeek-style chat classes. */
 export function renderChatMarkdown(md: string, options?: RenderChatMarkdownOptions): ReactNode {
   if (!md.trim()) return null
   const sources = options?.sources
+  const onOpenArtifact = options?.onOpenArtifact
   const blocks = parseBlocks(md)
   const fmt = (text: string) => inlineFormat(text, sources)
 
@@ -308,7 +413,16 @@ export function renderChatMarkdown(md: string, options?: RenderChatMarkdownOptio
           </div>
         )
       case 'code':
-        return <CodeBlock key={key} lang={block.lang} text={block.text} />
+        return (
+          <CodeBlock
+            key={key}
+            lang={block.lang}
+            text={block.text}
+            onOpenArtifact={
+              onOpenArtifact ? () => onOpenArtifact(block.lang || 'code', block.text) : undefined
+            }
+          />
+        )
       case 'hr':
         return <hr key={key} className="ds-md-hr" />
       default:

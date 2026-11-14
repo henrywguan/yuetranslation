@@ -14,14 +14,35 @@ export function chatDictateLang(navLang = typeof navigator !== 'undefined' ? nav
 
 /**
  * Pick Azure TTS voice lang for an assistant bubble.
- * CJK-heavy → Mandarin; otherwise English (DeepSeek answers are usually English).
+ * Heuristic: Jyutping-ish → yue; Hangul/Kana unused; CJK → cmn; Spanish/Vietnamese/Tagalog
+ * cues; else English.
  */
 export function chatSpeakLang(text: string): Lang {
   const t = text.trim()
   if (!t) return 'en'
+  const lower = t.toLowerCase()
   const cjk = (t.match(/[\u3400-\u9fff]/g) || []).length
   const latin = (t.match(/[A-Za-z]/g) || []).length
+  // Jyutping tone digits after latin syllables are a strong Cantonese signal.
+  const jyutpingHits = (lower.match(/\b[a-z]{1,6}[1-6]\b/g) || []).length
+  if (jyutpingHits >= 3 || (cjk >= 4 && /jyutping|cantonese|粵|廣東話|广东话/i.test(t))) return 'yue'
   if (cjk >= 8 && cjk >= latin) return 'cmn'
+  if ((lower.match(/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/g) || []).length >= 4) {
+    return 'vi'
+  }
+  if (
+    (lower.match(
+      /\b(el|la|los|las|de|que|y|en|un|una|es|por|para|con|como|más|también|hola|gracias)\b/g,
+    ) || []).length >= 5
+  ) {
+    return 'es'
+  }
+  if (
+    (lower.match(/\b(ang|mga|ng|sa|ako|ikaw|siya|kami|kayo|sila|po|opo|salamat|kumusta)\b/g) || [])
+      .length >= 4
+  ) {
+    return 'tl'
+  }
   return 'en'
 }
 

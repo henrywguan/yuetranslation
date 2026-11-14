@@ -5094,3 +5094,21 @@ p[dir='rtl'],
 .live-btn-label[dir='rtl'] {
   text-align: start;
 }
+
+.solo-ask-chat-btn {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--jade, #0f6b4c) 35%, transparent);
+  background: color-mix(in srgb, var(--jade, #0f6b4c) 12%, transparent);
+  color: inherit;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 650;
+  border-radius: 999px;
+  padding: 0.28rem 0.65rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.solo-ask-chat-btn:hover {
+  background: color-mix(in srgb, var(--jade, #0f6b4c) 20%, transparent);
+}
