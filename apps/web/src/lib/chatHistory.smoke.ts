@@ -35,7 +35,7 @@ assert.equal(t3.messages.at(-1)?.thoughtMs, 1400)
 const api = apiMessagesFromThread(t3)
 assert.deepEqual(api, [
   { role: 'user', content: 'Hello world from DeepSeek' },
-  { role: 'assistant', content: 'Hi there' },
+  { role: 'assistant', content: 'Hi there', reasoning: 'consider greeting' },
 ])
 
 assert.equal(API_CHAT_MESSAGES_MAX, 48)
@@ -114,9 +114,20 @@ assert.match(
   /content\.length > MAX_CONTENT_CHARS/,
   'Composer rejects oversized drafts before POST',
 )
+assert.match(chatPage, /uploadDeepseekChatFile|onPickFile/, 'Composer supports file attach')
+assert.match(chatPage, /editUserMessage/, 'User messages can be edited')
+assert.match(chatPage, /searchSteps|SearchStepsList/, 'Search step cards render')
+assert.match(chatPage, /chatQuotaLabel|chatTurnsLimit/, 'Chat quota chip wired')
 
 const apiSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './api.ts'), 'utf8')
 assert.match(apiSrc, /sanitizeDeepseekChatMessages/, 'streamDeepseekChat sanitizes wire payload')
+assert.match(apiSrc, /onSearchStep|onTitle/, 'Client handles harness SSE extensions')
+
+const mdSrc = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), './renderChatMarkdown.tsx'),
+  'utf8',
+)
+assert.match(mdSrc, /mermaid/i, 'Markdown renders Mermaid fences')
 
 const historySrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './chatHistory.ts'), 'utf8')
 assert.match(historySrc, /requestIdleCallback/, 'Disk flush is idle-coalesced')

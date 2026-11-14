@@ -8,6 +8,7 @@ import {
   DEEPSEEK_CHAT_HISTORY_LIMIT,
   DEEPSEEK_CHAT_MAX_TOKENS,
   deepseekChatLlmExtras,
+  deepseekChatModel,
   deepseekChatUsesThinking,
   recentDeepseekChatMessages,
   type DeepseekChatMessage,
@@ -16,7 +17,8 @@ import {
 import { buildDeepseekChatSystem, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
 import { DEEPSEEK_CHAT_TOOLS, executeDeepseekChatTool } from './deepseekChatTools.js'
 
-export const DEEPSEEK_CHAT_MAX_TOOL_ROUNDS = 4
+/** Prefer harness DEEPSEEK_CHAT_MAX_TOOL_ROUNDS; kept for agent fallback. */
+export const DEEPSEEK_CHAT_MAX_TOOL_ROUNDS = 10
 
 export type DeepseekChatAgentOptions = {
   thinkingEnabled?: boolean
@@ -40,7 +42,7 @@ type AssistantToolMessage = {
 function chatBaseParams(thinkingEnabled: boolean) {
   const thinking = deepseekChatUsesThinking() && thinkingEnabled
   return {
-    model: env.openaiModel,
+    model: deepseekChatModel(),
     ...(thinking ? {} : { temperature: 0.7 as const }),
     max_tokens: DEEPSEEK_CHAT_MAX_TOKENS,
     ...deepseekChatLlmExtras(thinkingEnabled),
@@ -68,7 +70,8 @@ export async function* streamDeepseekChatAgent(
   if (!client) throw new Error('Chat model is not configured.')
 
   const thinkingEnabled = opts.thinkingEnabled !== false
-  const useTools = deepseekChatUsesThinking() || /deepseek/i.test(`${env.openaiBaseUrl} ${env.openaiModel}`)
+  const useTools =
+    deepseekChatUsesThinking() || /deepseek/i.test(`${env.openaiBaseUrl} ${deepseekChatModel()}`)
 
   type Msg =
     | { role: 'system' | 'user' | 'assistant' | 'tool'; content: string; tool_call_id?: string }
@@ -190,7 +193,7 @@ export async function generateDeepseekChatAgentReply(
   if (!reply.trim()) throw new Error('Empty model reply.')
   return {
     reply: reply.trim(),
-    model: env.openaiModel,
+    model: deepseekChatModel(),
     reasoning: reasoning.trim() || undefined,
   }
 }

@@ -21,18 +21,22 @@ export const DEEPSEEK_CHAT_MESSAGES_MAX = 48
 export const DeepseekChatMessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
   content: z.string().trim().min(1).max(DEEPSEEK_CHAT_CONTENT_MAX),
+  /** Prior DeepThink trace — replayed as reasoning_content on assistant turns. */
+  reasoning: z.string().trim().max(DEEPSEEK_CHAT_CONTENT_MAX).optional(),
 })
 
 export const DeepseekChatBodySchema = z.object({
   messages: z.array(DeepseekChatMessageSchema).min(1).max(DEEPSEEK_CHAT_MESSAGES_MAX),
   /** DeepThink toggle — default on for DeepSeek hosts. */
   thinking: z.boolean().optional(),
-  /** Search toggle — Anthropic web_search path when host supports it. */
+  /** Search toggle — native deepseek_web_search / read_url when host supports it. */
   search: z.boolean().optional(),
   /** IANA timezone from the browser (temporal grounding). */
   timeZone: z.string().trim().max(80).optional(),
   /** BCP-47 locale hint. */
   locale: z.string().trim().max(32).optional(),
+  /** DeepSeek Files API ids from POST /api/chat/files (attached to last user turn). */
+  fileIds: z.array(z.string().regex(/^file-api-/)).max(5).optional(),
 })
 
 export type DeepseekChatMessage = z.infer<typeof DeepseekChatMessageSchema>
@@ -93,9 +97,19 @@ export const DEEPSEEK_CHAT_MAX_TOKENS = 8192
 /** Timeless base — prefer buildDeepseekChatSystem() for live requests. */
 export const DEEPSEEK_CHAT_SYSTEM = DEEPSEEK_CHAT_SYSTEM_BASE
 
+/** Model id for #/chat (not Solo/Cam translate). */
+export function deepseekChatModel(): string {
+  return env.chatModel || env.openaiModel
+}
+
 /** True when chat should use DeepSeek thinking mode (default on for DeepSeek hosts/models). */
 export function deepseekChatUsesThinking(): boolean {
-  return /deepseek/i.test(`${env.openaiBaseUrl} ${env.openaiModel}`)
+  return /deepseek/i.test(`${env.openaiBaseUrl} ${env.openaiModel} ${deepseekChatModel()}`)
+}
+
+/** Native deepseek_web_search / deepseek_read_url available on this host. */
+export function deepseekChatSupportsNativeWebTools(): boolean {
+  return openaiConfigured() && deepseekChatUsesThinking()
 }
 
 /**
@@ -195,7 +209,7 @@ function chatMessagesPayload(messages: DeepseekChatMessage[]) {
 function chatBaseParams(thinkingEnabled = true) {
   const thinking = deepseekChatUsesThinking() && thinkingEnabled
   return {
-    model: env.openaiModel,
+    model: deepseekChatModel(),
     // Thinking mode ignores temperature; omit it there so we match DeepSeek docs.
     ...(thinking ? {} : { temperature: 0.7 as const }),
     max_tokens: DEEPSEEK_CHAT_MAX_TOKENS,
@@ -225,7 +239,7 @@ export async function generateDeepseekChatReply(
   const reply = message?.content?.trim() || ''
   if (!reply) throw new Error('Empty model reply.')
   const reasoning = message?.reasoning_content?.trim() || undefined
-  return { reply, model: env.openaiModel, reasoning }
+  return { reply, model: deepseekChatModel(), reasoning }
 }
 
 /**

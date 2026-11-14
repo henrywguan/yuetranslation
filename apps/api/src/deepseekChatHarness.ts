@@ -1,0 +1,507 @@
+/**
+ * Unified DeepSeek Chat Completions harness:
+ * thinking + client function tools + native deepseek_web_search / deepseek_read_url,
+ * safety_check, conversation title, and latest_reminder metadata.
+ */
+import { openaiConfigured } from './env.js'
+import { openaiClient } from './openaiClient.js'
+import {
+  DEEPSEEK_CHAT_HISTORY_LIMIT,
+  DEEPSEEK_CHAT_MAX_TOKENS,
+  deepseekChatLlmExtras,
+  deepseekChatModel,
+  deepseekChatSupportsNativeWebTools,
+  deepseekChatUsesThinking,
+  recentDeepseekChatMessages,
+  type DeepseekChatMessage,
+} from './deepseekChat.js'
+import { buildDeepseekChatSystem, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
+import { DEEPSEEK_CHAT_TOOLS, executeDeepseekChatTool } from './deepseekChatTools.js'
+
+export const DEEPSEEK_CHAT_MAX_TOOL_ROUNDS = 10
+
+export const DEEPSEEK_CHAT_WEB_TOOLS = [
+  { type: 'deepseek_web_search' as const },
+  { type: 'deepseek_read_url' as const },
+]
+
+export type DeepseekChatSearchStep = {
+  kind: string
+  queries?: string[]
+  url?: string
+  title?: string
+  siteName?: string
+  snippet?: string
+}
+
+export type DeepseekChatHarnessEvent =
+  | { kind: 'thinking' }
+  | { kind: 'searching' }
+  | { kind: 'reasoning'; text: string }
+  | { kind: 'delta'; text: string }
+  | { kind: 'sources'; sources: { url: string; title: string }[] }
+  | { kind: 'search_step'; step: DeepseekChatSearchStep }
+  | { kind: 'title'; title: string }
+  | { kind: 'refusal' }
+
+export type DeepseekChatHarnessOptions = {
+  thinkingEnabled?: boolean
+  searchEnabled?: boolean
+  prompt: DeepseekChatPromptContext
+  signal?: AbortSignal
+  fileIds?: string[]
+}
+
+type ToolCall = {
+  id: string
+  type: 'function'
+  function: { name: string; arguments: string }
+}
+
+type WireMsg =
+  | { role: 'system'; content: string }
+  | { role: 'latest_reminder'; content: string }
+  | {
+      role: 'user'
+      content: string | Array<Record<string, unknown>>
+    }
+  | {
+      role: 'assistant'
+      content: string | null
+      reasoning_content?: string | null
+      tool_calls?: ToolCall[]
+    }
+  | { role: 'tool'; tool_call_id: string; content: string }
+
+/** Function tools always; native web tools when Search is on and host supports them. */
+export function buildDeepseekChatToolList(searchEnabled: boolean): unknown[] {
+  const tools: unknown[] = [...DEEPSEEK_CHAT_TOOLS]
+  if (searchEnabled && deepseekChatSupportsNativeWebTools()) {
+    tools.push(...DEEPSEEK_CHAT_WEB_TOOLS)
+  }
+  return tools
+}
+
+const LANG_NAMES: Record<string, string> = {
+  en: 'English',
+  zh: 'Chinese',
+  yue: 'Cantonese',
+  ja: 'Japanese',
+  ko: 'Korean',
+  es: 'Spanish',
+  fr: 'French',
+  de: 'German',
+  vi: 'Vietnamese',
+  th: 'Thai',
+  id: 'Indonesian',
+  ms: 'Malay',
+  tl: 'Tagalog',
+  pt: 'Portuguese',
+  hi: 'Hindi',
+  ar: 'Arabic',
+  it: 'Italian',
+  nl: 'Dutch',
+}
+
+function languageFromLocale(locale: string): string {
+  const primary = locale.split('-')[0]?.toLowerCase() || 'en'
+  if (LANG_NAMES[primary]) return LANG_NAMES[primary]
+  try {
+    const dn = new Intl.DisplayNames(['en'], { type: 'language' })
+    return dn.of(primary) || 'English'
+  } catch {
+    return 'English'
+  }
+}
+
+function locationFromTimeZone(timeZone: string): string {
+  const tz = timeZone.trim() || 'UTC'
+  const city = tz.includes('/') ? tz.slice(tz.lastIndexOf('/') + 1) : tz
+  return city.replace(/_/g, ' ') || 'Unknown'
+}
+
+/**
+ * DeepSeek latest_reminder: `YYYY-MM-DD,Weekday,Location,Web,Language`
+ * Must sit immediately before the user message it belongs to.
+ */
+export function formatLatestReminder(ctx: DeepseekChatPromptContext = {}): {
+  role: 'latest_reminder'
+  content: string
+} {
+  const now = ctx.now ?? new Date()
+  let timeZone = 'UTC'
+  try {
+    const raw = String(ctx.timeZone || '').trim()
+    if (raw) {
+      Intl.DateTimeFormat('en-US', { timeZone: raw }).format(now)
+      timeZone = raw
+    }
+  } catch {
+    timeZone = 'UTC'
+  }
+  let locale = 'en-US'
+  try {
+    const raw = String(ctx.locale || '').trim() || 'en-US'
+    Intl.DateTimeFormat(raw).format(now)
+    locale = raw
+  } catch {
+    locale = 'en-US'
+  }
+
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'long',
+  }).formatToParts(now)
+  const get = (type: string) => parts.find((p) => p.type === type)?.value || ''
+  const y = get('year')
+  const m = get('month')
+  const d = get('day')
+  const weekday = get('weekday')
+  const date = `${y}-${m}-${d}`
+  const location = locationFromTimeZone(timeZone)
+  const language = languageFromLocale(locale)
+  return {
+    role: 'latest_reminder',
+    content: `${date},${weekday},${location},Web,${language}`,
+  }
+}
+
+function chatBaseParams(thinkingEnabled: boolean) {
+  const thinking = deepseekChatUsesThinking() && thinkingEnabled
+  return {
+    model: deepseekChatModel(),
+    ...(thinking ? {} : { temperature: 0.7 as const }),
+    max_tokens: DEEPSEEK_CHAT_MAX_TOKENS,
+    ...deepseekChatLlmExtras(thinkingEnabled),
+  }
+}
+
+function seedWireMessages(
+  messages: DeepseekChatMessage[],
+  prompt: DeepseekChatPromptContext,
+  searchEnabled: boolean,
+  fileIds?: string[],
+): WireMsg[] {
+  const recent = recentDeepseekChatMessages(messages, DEEPSEEK_CHAT_HISTORY_LIMIT)
+  const system = buildDeepseekChatSystem({
+    ...prompt,
+    mode: 'tools',
+    searchEnabled,
+  })
+  const out: WireMsg[] = [{ role: 'system', content: system }]
+
+  for (let i = 0; i < recent.length; i += 1) {
+    const m = recent[i]!
+    const isLast = i === recent.length - 1
+    if (isLast && m.role === 'user') {
+      out.push(formatLatestReminder(prompt))
+      const ids = (fileIds || []).filter((id) => /^file-api-/.test(id)).slice(0, 5)
+      if (ids.length) {
+        out.push({
+          role: 'user',
+          content: [
+            ...ids.map((file_id) => ({ type: 'file', file_id })),
+            { type: 'text', text: m.content },
+          ],
+        })
+      } else {
+        out.push({ role: 'user', content: m.content })
+      }
+      continue
+    }
+    if (m.role === 'assistant') {
+      const row: WireMsg = {
+        role: 'assistant',
+        content: m.content,
+      }
+      if (m.reasoning?.trim()) {
+        ;(row as { reasoning_content?: string }).reasoning_content = m.reasoning.trim()
+      }
+      out.push(row)
+      continue
+    }
+    out.push({ role: m.role, content: m.content })
+  }
+  return out
+}
+
+function collectSourcesFromServerCall(
+  call: Record<string, unknown>,
+  into: Map<string, string>,
+) {
+  const sources = call.sources
+  if (Array.isArray(sources)) {
+    for (const s of sources) {
+      if (!s || typeof s !== 'object') continue
+      const row = s as Record<string, unknown>
+      const url = typeof row.url === 'string' ? row.url.trim() : ''
+      if (!/^https?:\/\//i.test(url)) continue
+      const title =
+        (typeof row.title === 'string' && row.title.trim()) ||
+        (typeof row.site_name === 'string' && row.site_name.trim()) ||
+        url
+      if (!into.has(url)) into.set(url, title)
+    }
+  }
+  const page = call.page
+  if (page && typeof page === 'object') {
+    const p = page as Record<string, unknown>
+    const url = typeof p.url === 'string' ? p.url.trim() : ''
+    if (/^https?:\/\//i.test(url) && !into.has(url)) {
+      const title = (typeof p.title === 'string' && p.title.trim()) || url
+      into.set(url, title)
+    }
+  }
+}
+
+function stepFromServerCall(call: Record<string, unknown>): DeepseekChatSearchStep {
+  const action = (call.action || {}) as Record<string, unknown>
+  const kind = String(call.kind || action.type || call.type || 'search')
+  const step: DeepseekChatSearchStep = { kind }
+  if (Array.isArray(action.queries)) {
+    step.queries = action.queries.map((q) => String(q)).filter(Boolean)
+  }
+  if (typeof action.url === 'string') step.url = action.url
+  const page = call.page as Record<string, unknown> | undefined
+  if (page) {
+    if (typeof page.url === 'string') step.url = page.url
+    if (typeof page.title === 'string') step.title = page.title
+  }
+  const sources = call.sources
+  if (Array.isArray(sources) && sources[0] && typeof sources[0] === 'object') {
+    const s0 = sources[0] as Record<string, unknown>
+    if (typeof s0.title === 'string') step.title = s0.title
+    if (typeof s0.site_name === 'string') step.siteName = s0.site_name
+    if (typeof s0.snippet === 'string') step.snippet = s0.snippet
+    if (typeof s0.url === 'string') step.url = s0.url
+  }
+  return step
+}
+
+/**
+ * Primary #/chat stream: Completions with optional native web tools + client tools.
+ */
+export async function* streamDeepseekChatHarness(
+  messages: DeepseekChatMessage[],
+  opts: DeepseekChatHarnessOptions,
+): AsyncGenerator<DeepseekChatHarnessEvent, void, unknown> {
+  if (!openaiConfigured()) throw new Error('Chat model is not configured.')
+  const client = openaiClient()
+  if (!client) throw new Error('Chat model is not configured.')
+
+  const thinkingEnabled = opts.thinkingEnabled !== false
+  const searchEnabled = opts.searchEnabled === true
+  const useNativeWeb = searchEnabled && deepseekChatSupportsNativeWebTools()
+  const tools = buildDeepseekChatToolList(searchEnabled)
+  const deepseekHost = deepseekChatUsesThinking()
+
+  const msgs: WireMsg[] = seedWireMessages(messages, opts.prompt, searchEnabled, opts.fileIds)
+
+  let announcedThinking = false
+  let announcedSearching = false
+  const allSources = new Map<string, string>()
+
+  for (let round = 0; round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS; round += 1) {
+    if (opts.signal?.aborted) {
+      const err = new Error('Aborted')
+      err.name = 'AbortError'
+      throw err
+    }
+
+    const body: Record<string, unknown> = {
+      ...chatBaseParams(thinkingEnabled),
+      stream: true,
+      messages: msgs,
+    }
+    if (tools.length) {
+      body.tools = tools
+      body.tool_choice = 'auto'
+    }
+    if (deepseekHost) {
+      body.safety_check = { level: 'high' }
+      body.title = { enabled: true }
+    }
+
+    const stream = (await client.chat.completions.create(
+      body as never,
+      opts.signal ? { signal: opts.signal } : undefined,
+    )) as unknown as AsyncIterable<{
+      choices?: Array<{
+        finish_reason?: string | null
+        delta?: Record<string, unknown>
+        server_tool_event?: Record<string, unknown>
+      }>
+    }>
+
+    let finishReason: string | null = null
+    let pendingToolCalls: ToolCall[] = []
+    let assistantContent = ''
+    let assistantReasoning = ''
+    const toolCallBuf = new Map<number, ToolCall>()
+
+    for await (const chunk of stream) {
+      const choice = chunk.choices?.[0]
+      if (!choice) continue
+      if (choice.finish_reason) finishReason = choice.finish_reason
+
+      const evt = choice.server_tool_event
+      if (evt && typeof evt === 'object') {
+        const type = String(evt.type || '')
+        if (type === 'call_started' || type === 'call_completed') {
+          if (!announcedSearching) {
+            announcedSearching = true
+            yield { kind: 'searching' }
+          }
+          const call = (evt.call || {}) as Record<string, unknown>
+          yield { kind: 'search_step', step: stepFromServerCall(call) }
+          if (type === 'call_completed') {
+            collectSourcesFromServerCall(call, allSources)
+            if (allSources.size) {
+              yield {
+                kind: 'sources',
+                sources: [...allSources.entries()].map(([url, title]) => ({ url, title })),
+              }
+            }
+          }
+        }
+      }
+
+      const delta = choice.delta
+      if (!delta) continue
+
+      const reasoning = delta.reasoning_content
+      if (typeof reasoning === 'string' && reasoning) {
+        if (!announcedThinking) {
+          announcedThinking = true
+          yield { kind: 'thinking' }
+        }
+        assistantReasoning += reasoning
+        yield { kind: 'reasoning', text: reasoning }
+      }
+
+      const content = delta.content
+      if (typeof content === 'string' && content) {
+        assistantContent += content
+        yield { kind: 'delta', text: content }
+      }
+
+      const title = delta.title
+      if (typeof title === 'string' && title.trim()) {
+        yield { kind: 'title', title: title.trim() }
+      }
+
+      // Accumulate streamed function tool_calls
+      const tcs = delta.tool_calls
+      if (Array.isArray(tcs)) {
+        for (const raw of tcs) {
+          if (!raw || typeof raw !== 'object') continue
+          const tc = raw as {
+            index?: number
+            id?: string
+            type?: string
+            function?: { name?: string; arguments?: string }
+          }
+          const idx = Number(tc.index ?? 0)
+          const prev = toolCallBuf.get(idx) || {
+            id: '',
+            type: 'function' as const,
+            function: { name: '', arguments: '' },
+          }
+          if (tc.id) prev.id = tc.id
+          if (tc.function?.name) prev.function.name += tc.function.name
+          if (tc.function?.arguments) prev.function.arguments += tc.function.arguments
+          toolCallBuf.set(idx, prev)
+        }
+      }
+
+      // Final chunk may include annotations / server_tool_calls for sources
+      const annotations = delta.annotations
+      if (Array.isArray(annotations)) {
+        for (const a of annotations) {
+          if (!a || typeof a !== 'object') continue
+          const ann = a as Record<string, unknown>
+          const cite = (ann.url_citation || ann) as Record<string, unknown>
+          const url = typeof cite.url === 'string' ? cite.url : ''
+          if (!/^https?:\/\//i.test(url)) continue
+          const title =
+            (typeof cite.title === 'string' && cite.title.trim()) || url
+          if (!allSources.has(url)) allSources.set(url, title)
+        }
+        if (allSources.size) {
+          yield {
+            kind: 'sources',
+            sources: [...allSources.entries()].map(([url, title]) => ({ url, title })),
+          }
+        }
+      }
+    }
+
+    if (finishReason === 'content_filter') {
+      yield { kind: 'refusal' }
+      return
+    }
+
+    pendingToolCalls = [...toolCallBuf.values()].filter((t) => t.id && t.function.name)
+    if (pendingToolCalls.length) {
+      msgs.push({
+        role: 'assistant',
+        content: assistantContent || null,
+        reasoning_content: assistantReasoning || null,
+        tool_calls: pendingToolCalls,
+      })
+      if (!announcedSearching && !useNativeWeb) {
+        announcedSearching = true
+        yield { kind: 'searching' }
+      }
+      for (const call of pendingToolCalls) {
+        const result = await executeDeepseekChatTool(call.function.name, call.function.arguments || '{}', {
+          ...opts.prompt,
+          signal: opts.signal,
+        })
+        msgs.push({
+          role: 'tool',
+          tool_call_id: call.id,
+          content: result,
+        })
+      }
+      continue
+    }
+
+    // Completed answer (or empty after server tools — should have content)
+    if (!assistantContent.trim() && finishReason !== 'stop') {
+      // fall through to next round only if tools ran; otherwise empty
+    }
+    if (allSources.size) {
+      yield {
+        kind: 'sources',
+        sources: [...allSources.entries()].map(([url, title]) => ({ url, title })),
+      }
+    }
+    return
+  }
+}
+
+export async function generateDeepseekChatHarnessReply(
+  messages: DeepseekChatMessage[],
+  opts: DeepseekChatHarnessOptions,
+): Promise<{ reply: string; model: string; reasoning?: string; title?: string }> {
+  let reply = ''
+  let reasoning = ''
+  let title: string | undefined
+  for await (const ev of streamDeepseekChatHarness(messages, opts)) {
+    if (ev.kind === 'reasoning') reasoning += ev.text
+    if (ev.kind === 'delta') reply += ev.text
+    if (ev.kind === 'title') title = ev.title
+    if (ev.kind === 'refusal') throw new Error('Response blocked by content safety.')
+  }
+  if (!reply.trim()) throw new Error('Empty model reply.')
+  return {
+    reply: reply.trim(),
+    model: deepseekChatModel(),
+    reasoning: reasoning.trim() || undefined,
+    title,
+  }
+}

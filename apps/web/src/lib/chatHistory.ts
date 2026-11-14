@@ -7,6 +7,15 @@ export type ChatSource = {
   title: string
 }
 
+export type ChatSearchStep = {
+  kind: string
+  queries?: string[]
+  url?: string
+  title?: string
+  siteName?: string
+  snippet?: string
+}
+
 export type ChatMessage = {
   id: string
   role: ChatRole
@@ -18,6 +27,10 @@ export type ChatMessage = {
   thoughtMs?: number
   /** Web search citations (assistant only, Search toggle). */
   sources?: ChatSource[]
+  /** Live search/fetch steps for the thinking panel. */
+  searchSteps?: ChatSearchStep[]
+  /** DeepSeek Files API ids attached to a user turn. */
+  fileIds?: string[]
 }
 
 export type ChatThread = {
@@ -318,7 +331,12 @@ export function patchAssistantContent(
   thread: ChatThread,
   messageId: string,
   content: string,
-  extras?: { reasoning?: string; thoughtMs?: number; sources?: ChatSource[] },
+  extras?: {
+    reasoning?: string
+    thoughtMs?: number
+    sources?: ChatSource[]
+    searchSteps?: ChatSearchStep[]
+  },
 ): ChatThread {
   return {
     ...thread,
@@ -331,22 +349,36 @@ export function patchAssistantContent(
             ...(extras?.reasoning !== undefined ? { reasoning: extras.reasoning } : null),
             ...(extras?.thoughtMs !== undefined ? { thoughtMs: extras.thoughtMs } : null),
             ...(extras?.sources !== undefined ? { sources: extras.sources } : null),
+            ...(extras?.searchSteps !== undefined ? { searchSteps: extras.searchSteps } : null),
           }
         : m,
     ),
   }
 }
 
+export function renameChatThread(thread: ChatThread, title: string): ChatThread {
+  const next = title.trim().slice(0, 80)
+  if (!next) return thread
+  return { ...thread, title: next, updatedAt: Date.now() }
+}
+
 /**
  * Build the POST /api/chat messages array: drop empties, truncate to the
  * shared content cap, keep the newest wire-max turns so Zod cannot 400.
  */
-export function apiMessagesFromThread(thread: ChatThread): { role: ChatRole; content: string }[] {
+export function apiMessagesFromThread(
+  thread: ChatThread,
+): { role: ChatRole; content: string; reasoning?: string }[] {
   return thread.messages
     .map((m) => {
       const content = m.content.trim().slice(0, MAX_CONTENT_CHARS)
-      return content ? { role: m.role, content } : null
+      if (!content) return null
+      const reasoning =
+        m.role === 'assistant' && m.reasoning?.trim()
+          ? m.reasoning.trim().slice(0, MAX_REASONING_CHARS)
+          : undefined
+      return reasoning ? { role: m.role, content, reasoning } : { role: m.role, content }
     })
-    .filter((m): m is { role: ChatRole; content: string } => Boolean(m))
+    .filter((m): m is { role: ChatRole; content: string; reasoning?: string } => Boolean(m))
     .slice(-API_CHAT_MESSAGES_MAX)
 }

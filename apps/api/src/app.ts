@@ -104,6 +104,7 @@ import {
 import { getPushConfig, subscribePush, unsubscribePush } from './pushRoutes.js'
 import { scheduleHouseholdUsageBackfillOnStartup } from './startupBackfill.js'
 import { postDeepseekChat } from './deepseekChatRoutes.js'
+import { postDeepseekChatFile } from './deepseekChatFiles.js'
 import { getIncidentBanner } from './appSettings.js'
 import { pushConfigured } from './pushNotifications.js'
 import { getOfflinePack, isOfflinePackId, offlinePackManifest } from './offlinePack.js'
@@ -128,6 +129,7 @@ app.post(
 // Default JSON body limit is small; Cam/Docs keep a larger parser (images / files).
 const jsonSmall = express.json({ limit: '256kb' })
 const jsonLarge = express.json({ limit: '12mb' })
+const jsonChatFile = express.json({ limit: '8mb' })
 app.use((req, res, next) => {
   if (
     req.method === 'POST' &&
@@ -137,6 +139,9 @@ app.use((req, res, next) => {
       req.path === '/api/docs/commit')
   ) {
     return jsonLarge(req, res, next)
+  }
+  if (req.method === 'POST' && req.path === '/api/chat/files') {
+    return jsonChatFile(req, res, next)
   }
   return jsonSmall(req, res, next)
 })
@@ -1262,6 +1267,7 @@ app.get('/api/admin/push/sends', adminListPushSends)
 app.post('/api/admin/push/send', adminSendPush)
 app.post('/api/admin/practice-partner/chat', adminPracticePartnerChat)
 app.post('/api/chat', postDeepseekChat)
+app.post('/api/chat/files', postDeepseekChatFile)
 
 scheduleHouseholdUsageBackfillOnStartup()
 

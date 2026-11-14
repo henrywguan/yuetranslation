@@ -1,10 +1,11 @@
 /**
- * DeepSeek Anthropic Messages path with server-side web_search (Search toggle).
- * Chat Completions does not honor a fabricated web_search flag — use this endpoint instead.
+ * DeepSeek Anthropic Messages fallback with native deepseek_web_search / read_url.
+ * Primary path is Completions harness (deepseekChatHarness.ts).
  */
 import { env, openaiConfigured } from './env.js'
 import {
   DEEPSEEK_CHAT_MAX_TOKENS,
+  deepseekChatModel,
   deepseekChatUsesThinking,
   recentDeepseekChatMessages,
   type DeepseekChatMessage,
@@ -25,9 +26,12 @@ export type DeepseekChatSearchStreamEvent =
   | { kind: 'searching' }
   | { kind: 'sources'; sources: DeepseekChatSource[] }
 
-/** True when the configured host can use DeepSeek Anthropic web_search. */
+/** True when the configured host can use DeepSeek native web tools. */
 export function deepseekChatSupportsSearch(): boolean {
-  return openaiConfigured() && /deepseek/i.test(`${env.openaiBaseUrl} ${env.openaiModel}`)
+  return (
+    openaiConfigured() &&
+    /deepseek/i.test(`${env.openaiBaseUrl} ${env.openaiModel} ${deepseekChatModel()}`)
+  )
 }
 
 /**
@@ -52,21 +56,20 @@ function anthropicMessagesPayload(
 ): Record<string, unknown> {
   const recent = recentDeepseekChatMessages(messages)
   const body: Record<string, unknown> = {
-    model: env.openaiModel,
+    model: deepseekChatModel(),
     max_tokens: DEEPSEEK_CHAT_MAX_TOKENS,
     stream: true,
-    system: buildDeepseekChatSystem(prompt),
+    system: buildDeepseekChatSystem({ ...prompt, searchEnabled: true }),
     messages: recent.map((m) => ({
       role: m.role,
       content: m.content,
     })),
     tools: [
-      {
-        type: 'web_search_20250305',
-        name: 'web_search',
-        max_uses: 5,
-      },
+      { type: 'deepseek_web_search', name: 'deepseek_web_search' },
+      { type: 'deepseek_read_url', name: 'deepseek_read_url' },
     ],
+    safety_check: { level: 'high' },
+    title: { enabled: true },
   }
   // Thinking on Anthropic path (budget_tokens ignored on DeepSeek; effort via output_config).
   if (deepseekChatUsesThinking() && thinkingEnabled) {
@@ -199,13 +202,19 @@ export async function* streamDeepseekChatWithSearch(
           yield { kind: 'thinking' }
         }
       }
-      if (blockType === 'server_tool_use' && String(block.name || '') === 'web_search') {
+      if (
+        blockType === 'server_tool_use' &&
+        /deepseek_web_search|deepseek_read_url|web_search/i.test(String(block.name || ''))
+      ) {
         if (!announcedSearching) {
           announcedSearching = true
           yield { kind: 'searching' }
         }
       }
-      if (blockType === 'web_search_tool_result') {
+      if (
+        blockType === 'web_search_tool_result' ||
+        blockType === 'web_fetch_tool_result'
+      ) {
         if (!announcedSearching) {
           announcedSearching = true
           yield { kind: 'searching' }

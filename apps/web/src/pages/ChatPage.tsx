@@ -4,7 +4,7 @@ import { DeepSeekMark } from '../components/DeepSeekMark'
 import { IosHomescreenTip } from '../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../components/PwaInstallButton'
 import { SpeakButton } from '../components/SpeakButton'
-import { streamDeepseekChat } from '../lib/api'
+import { streamDeepseekChat, uploadDeepseekChatFile } from '../lib/api'
 import { chatSpeakLang } from '../lib/chatVoice'
 import {
   apiMessagesFromThread,
@@ -14,8 +14,10 @@ import {
   hydrateChatThreadsAsync,
   MAX_CONTENT_CHARS,
   patchAssistantContent,
+  renameChatThread,
   upsertChatThread,
   type ChatMessage,
+  type ChatSearchStep,
   type ChatSource,
   type ChatThread,
 } from '../lib/chatHistory'
@@ -278,14 +280,45 @@ function SourcesList({ sources }: { sources: ChatSource[] }) {
   )
 }
 
+function SearchStepsList({ steps }: { steps: ChatSearchStep[] }) {
+  if (!steps.length) return null
+  return (
+    <ul className="ds-chat-search-steps">
+      {steps.map((step, i) => {
+        const label =
+          step.title ||
+          step.queries?.join(' · ') ||
+          step.url ||
+          step.kind ||
+          'Search'
+        return (
+          <li key={`${step.kind}-${i}`} className="ds-chat-search-step">
+            <span className="ds-chat-search-step-kind">{step.kind}</span>
+            {step.url ? (
+              <a href={step.url} target="_blank" rel="noopener noreferrer">
+                {label}
+              </a>
+            ) : (
+              <span>{label}</span>
+            )}
+            {step.siteName ? <span className="ds-chat-search-step-site">{step.siteName}</span> : null}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 function MessageActions({
   content,
   disabled,
   onRegenerate,
+  onEdit,
 }: {
   content: string
   disabled?: boolean
   onRegenerate: () => void
+  onEdit?: () => void
 }) {
   const [copied, setCopied] = useState(false)
   const timerRef = useRef<number | null>(null)
@@ -335,6 +368,18 @@ function MessageActions({
         {REGEN_ICON}
         <span className="ds-chat-action-label">Regenerate</span>
       </button>
+      {onEdit ? (
+        <button
+          type="button"
+          className="ds-chat-action"
+          aria-label="Edit"
+          title="Edit"
+          disabled={disabled}
+          onClick={onEdit}
+        >
+          <span className="ds-chat-action-label">Edit</span>
+        </button>
+      ) : null}
     </div>
   )
 }
@@ -345,21 +390,24 @@ function AssistantBody({
   thinking,
   searching,
   thinkStartedAt,
+  preferMarkdown,
 }: {
   message: ChatMessage
   streaming?: boolean
   thinking?: boolean
   searching?: boolean
   thinkStartedAt?: number | null
+  /** Promote markdown for recent settled assistants without a live stream. */
+  preferMarkdown?: boolean
 }) {
   const hasContent = Boolean(message.content)
-  // Historical rows stay plain; only a live-streamed bubble may promote to markdown.
-  const sawLiveRef = useRef(Boolean(streaming))
+  // Live-streamed bubbles always may promote; recent settled rows use preferMarkdown.
+  const sawLiveRef = useRef(Boolean(streaming) || Boolean(preferMarkdown))
   if (streaming) sawLiveRef.current = true
 
   const [rich, setRich] = useState(false)
   useEffect(() => {
-    if (streaming || !hasContent || !sawLiveRef.current) {
+    if (streaming || !hasContent || (!sawLiveRef.current && !preferMarkdown)) {
       setRich(false)
       return
     }
@@ -370,11 +418,11 @@ function AssistantBody({
     return () => {
       cancelled = true
     }
-  }, [streaming, hasContent, message.id, message.content])
+  }, [streaming, hasContent, preferMarkdown, message.id, message.content])
 
   return (
     <>
-      {(message.reasoning || (streaming && thinking)) && (
+      {(message.reasoning || (streaming && thinking) || message.searchSteps?.length) && (
         <ReasoningPanel
           reasoning={message.reasoning || ''}
           thoughtMs={message.thoughtMs}
@@ -386,6 +434,7 @@ function AssistantBody({
           autoCollapse={Boolean(streaming && hasContent)}
         />
       )}
+      {message.searchSteps?.length ? <SearchStepsList steps={message.searchSteps} /> : null}
       <div className={`ds-chat-assistant-body${streaming && hasContent ? ' is-streaming' : ''}`}>
         {hasContent ? (
           streaming || !rich ? (
@@ -483,8 +532,11 @@ export function ChatPage() {
   const [deepThink, setDeepThink] = useState(() => readFlag(THINK_KEY, true))
   const [searchOn, setSearchOn] = useState(() => readFlag(SEARCH_KEY, false))
   const [thinkClock, setThinkClock] = useState<number | null>(null)
+  const [pendingFiles, setPendingFiles] = useState<{ fileId: string; filename: string }[]>([])
+  const [uploadingFile, setUploadingFile] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const thinkStartedAt = useRef<number | null>(null)
 
@@ -652,7 +704,7 @@ export function ChatPage() {
     abortRef.current?.abort()
   }
 
-  const runAssistant = async (baseThread: ChatThread) => {
+  const runAssistant = async (baseThread: ChatThread, fileIds?: string[]) => {
     let thread = baseThread
     const assistantStep = appendChatMessage(thread, 'assistant', '')
     thread = assistantStep.thread
@@ -671,6 +723,7 @@ export function ChatPage() {
     let assembled = ''
     let reasoning = ''
     let sources: ChatSource[] | undefined
+    let searchSteps: ChatSearchStep[] = []
 
     // Coalesce stream paints — never persist per token (idle disk write at end).
     let paintTimer: number | null = null
@@ -715,6 +768,7 @@ export function ChatPage() {
       await streamDeepseekChat(apiMessagesFromThread(thread).filter((m) => m.content.trim()), {
         thinking: deepThink,
         search: searchOn,
+        fileIds,
         signal: controller.signal,
         onStatus: (status) => {
           if (status === 'searching') {
@@ -737,7 +791,22 @@ export function ChatPage() {
           thread = patchAssistantContent(thread, assistantId, assembled, {
             reasoning: reasoning || undefined,
             sources,
+            searchSteps: searchSteps.length ? searchSteps : undefined,
           })
+          schedulePaint()
+        },
+        onSearchStep: (step) => {
+          setSearching(true)
+          searchSteps = [...searchSteps, step].slice(-24)
+          thread = patchAssistantContent(thread, assistantId, assembled, {
+            reasoning: reasoning || undefined,
+            sources,
+            searchSteps,
+          })
+          schedulePaint()
+        },
+        onTitle: (title) => {
+          thread = renameChatThread(thread, title)
           schedulePaint()
         },
         onDelta: (delta) => {
@@ -755,6 +824,7 @@ export function ChatPage() {
                 reasoning: reasoning || undefined,
                 thoughtMs: thinkStartedAt.current ? Date.now() - thinkStartedAt.current : undefined,
                 sources,
+                searchSteps: searchSteps.length ? searchSteps : undefined,
               })
             : patchAssistantContent(thread, assistantId, assembled)
           schedulePaint()
@@ -795,7 +865,7 @@ export function ChatPage() {
 
   const send = async (text: string) => {
     const content = text.trim()
-    if (!content || busy) return
+    if ((!content && !pendingFiles.length) || busy) return
     if (content.length > MAX_CONTENT_CHARS) {
       setError(`Message is too long (max ${MAX_CONTENT_CHARS.toLocaleString()} characters).`)
       return
@@ -806,8 +876,10 @@ export function ChatPage() {
       return
     }
 
+    const fileIds = pendingFiles.map((f) => f.fileId)
     setError(null)
     setDraft('')
+    setPendingFiles([])
     setBusy(true)
 
     let thread = active
@@ -815,13 +887,21 @@ export function ChatPage() {
       thread = { ...thread, id: activeId }
     }
 
-    const userStep = appendChatMessage(thread, 'user', content)
+    const userStep = appendChatMessage(thread, 'user', content || '(attached file)')
     thread = userStep.thread
+    if (fileIds.length) {
+      thread = {
+        ...thread,
+        messages: thread.messages.map((m) =>
+          m.id === userStep.message.id ? { ...m, fileIds } : m,
+        ),
+      }
+    }
     persist(thread)
     setActiveId(thread.id)
     setRevealCount((n) => Math.min(MAX_RENDER_MESSAGES, Math.max(n + 1, thread.messages.length)))
 
-    await runAssistant(thread)
+    await runAssistant(thread, fileIds)
   }
 
   const regenerate = async (assistantId: string) => {
@@ -840,8 +920,58 @@ export function ChatPage() {
     }
     persist(truncated)
     setActiveId(truncated.id)
-    await runAssistant(truncated)
+    await runAssistant(truncated, prev.fileIds)
   }
+
+  const editUserMessage = (userId: string) => {
+    if (busy || !unlocked) return
+    const idx = active.messages.findIndex((m) => m.id === userId)
+    if (idx < 0) return
+    const msg = active.messages[idx]
+    if (!msg || msg.role !== 'user') return
+    setDraftAndResize(msg.content)
+    setPendingFiles((msg.fileIds || []).map((fileId) => ({ fileId, filename: 'attachment' })))
+    const truncated: ChatThread = {
+      ...active,
+      messages: active.messages.slice(0, idx),
+      updatedAt: Date.now(),
+    }
+    persist(truncated)
+    setActiveId(truncated.id)
+    inputRef.current?.focus()
+  }
+
+  const onPickFile = async (file: File | null) => {
+    if (!file || busy || !unlocked) return
+    if (pendingFiles.length >= 5) {
+      setError('You can attach up to 5 files per message.')
+      return
+    }
+    if (file.size > 6_000_000) {
+      setError('File too large (max 6 MB).')
+      return
+    }
+    setUploadingFile(true)
+    setError(null)
+    try {
+      const uploaded = await uploadDeepseekChatFile(file)
+      setPendingFiles((prev) => [...prev, uploaded].slice(0, 5))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'File upload failed')
+    } finally {
+      setUploadingFile(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const chatTurnsUsed = entitlement?.chatTurnsUsed
+  const chatTurnsLimit = entitlement?.chatTurnsLimit
+  const chatQuotaLabel =
+    unlocked && typeof chatTurnsLimit === 'number' && chatTurnsLimit > 0
+      ? `${Math.max(0, chatTurnsLimit - (chatTurnsUsed || 0)).toLocaleString()} chat turns left`
+      : unlocked && chatTurnsLimit === 0
+        ? 'Unlimited chat'
+        : null
 
   useEffect(() => {
     return () => abortRef.current?.abort()
@@ -1027,6 +1157,20 @@ export function ChatPage() {
                 return m.role === 'user' ? (
                   <article key={m.id} className={`ds-chat-msg is-user${enter}`}>
                     <div className="ds-chat-user-bubble">{m.content}</div>
+                    {m.fileIds?.length ? (
+                      <div className="ds-chat-user-files">
+                        {m.fileIds.length} attachment{m.fileIds.length === 1 ? '' : 's'}
+                      </div>
+                    ) : null}
+                    {!busy ? (
+                      <button
+                        type="button"
+                        className="ds-chat-user-edit"
+                        onClick={() => editUserMessage(m.id)}
+                      >
+                        Edit
+                      </button>
+                    ) : null}
                   </article>
                 ) : (
                   <article key={m.id} className={`ds-chat-msg is-assistant${enter}`}>
@@ -1040,6 +1184,13 @@ export function ChatPage() {
                       thinking={isLive && thinking}
                       searching={isLive && searching}
                       thinkStartedAt={isLive ? thinkClock : null}
+                      preferMarkdown={
+                        !isLive &&
+                        visibleMessages
+                          .filter((x) => x.role === 'assistant')
+                          .slice(-4)
+                          .some((x) => x.id === m.id)
+                      }
                     />
                     {!isLive && m.content.trim() ? (
                       <MessageActions
@@ -1084,6 +1235,7 @@ export function ChatPage() {
                 type="button"
                 className={`ds-chat-toggle${searchOn ? ' is-on' : ''}`}
                 aria-pressed={searchOn}
+                title="Search + DeepThink = deep thinking search"
                 onClick={() => {
                   setSearchOn((v) => {
                     const next = !v
@@ -1095,8 +1247,45 @@ export function ChatPage() {
                 {SEARCH_ICON}
                 Search
               </button>
+              {chatQuotaLabel ? <span className="ds-chat-quota">{chatQuotaLabel}</span> : null}
             </div>
+            {pendingFiles.length ? (
+              <ul className="ds-chat-attach-list">
+                {pendingFiles.map((f) => (
+                  <li key={f.fileId}>
+                    <span>{f.filename}</span>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${f.filename}`}
+                      onClick={() =>
+                        setPendingFiles((prev) => prev.filter((x) => x.fileId !== f.fileId))
+                      }
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             <div className="ds-chat-composer-card">
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="ds-chat-file-input"
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,.gif,.txt,.md"
+                disabled={busy || !unlocked || uploadingFile}
+                onChange={(e) => void onPickFile(e.target.files?.[0] || null)}
+              />
+              <button
+                type="button"
+                className="ds-chat-attach"
+                aria-label="Attach file"
+                title="Attach PDF, Office, or image"
+                disabled={busy || !unlocked || uploadingFile}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploadingFile ? '…' : '+'}
+              </button>
               <ChatDictateButton
                 disabled={busy || !unlocked}
                 draft={draft}
@@ -1134,7 +1323,7 @@ export function ChatPage() {
                   type="submit"
                   className="ds-chat-send"
                   aria-label="Send"
-                  disabled={!draft.trim()}
+                  disabled={!draft.trim() && !pendingFiles.length}
                 >
                   {SEND_ICON}
                 </button>

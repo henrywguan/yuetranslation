@@ -49,6 +49,17 @@ export const env = {
   openaiBaseUrl: trimUrl(process.env.OPENAI_BASE_URL || ''),
   openaiModel: (process.env.OPENAI_MODEL || 'gpt-4o-mini').trim(),
   /**
+   * DeepSeek Chat (#/chat) model. Defaults to `deepseek-flash` on DeepSeek hosts
+   * so Solo/Cam can keep a different OPENAI_MODEL.
+   */
+  chatModel: (() => {
+    const explicit = (process.env.YUE_CHAT_MODEL || '').trim()
+    if (explicit) return explicit
+    const host = `${trimUrl(process.env.OPENAI_BASE_URL || '')} ${(process.env.OPENAI_MODEL || '').trim()}`
+    if (/deepseek/i.test(host)) return 'deepseek-flash'
+    return (process.env.OPENAI_MODEL || 'gpt-4o-mini').trim()
+  })(),
+  /**
    * Vision LLM for Cam OCR fallback (calligraphy / foil).
    * Same key/host as translate by default — set OPENAI_VISION_MODEL to a vision-capable
    * model (e.g. deepseek-v4-flash-vision-exp or gpt-4o-mini). Empty MODEL = fallback off.
