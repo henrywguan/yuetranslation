@@ -18,8 +18,23 @@ function citationChipHtml(n: number, href?: string): string {
   return `<span class="ds-md-cite">[${label}]</span>`
 }
 
+function safeImageSrc(href: string): string | null {
+  const h = href.trim()
+  if (/^https?:\/\//i.test(h)) return h
+  if (/^data:image\/(png|jpeg|jpg|gif|webp);base64,/i.test(h)) return h
+  // Same-origin generated image proxy
+  if (/^\/api\/chat\/generated-images\/[0-9a-f-]{36}$/i.test(h)) return h
+  return null
+}
+
 function inlineFormat(raw: string, sources?: ChatSource[]): string {
   let s = escapeHtml(raw)
+  // Images first so they are not eaten by the link rewriter.
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_m, alt: string, href: string) => {
+    const src = safeImageSrc(href)
+    if (!src) return escapeHtml(`![${alt}](${href})`)
+    return `<img class="ds-md-img" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy" />`
+  })
   s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, (_m, label: string, href: string) => {
     return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`
   })
@@ -42,6 +57,7 @@ type Block =
   | { type: 'ol'; items: string[] }
   | { type: 'table'; headers: string[]; rows: string[][] }
   | { type: 'code'; lang: string; text: string }
+  | { type: 'image'; alt: string; src: string }
   | { type: 'hr' }
 
 function parseBlocks(md: string): Block[] {
@@ -69,6 +85,16 @@ function parseBlocks(md: string): Block[] {
       if (i < lines.length) i += 1
       blocks.push({ type: 'code', lang, text: body.join('\n') })
       continue
+    }
+
+    const aloneImage = trimmed.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/)
+    if (aloneImage) {
+      const src = safeImageSrc(aloneImage[2]!)
+      if (src) {
+        blocks.push({ type: 'image', alt: aloneImage[1] || '', src })
+        i += 1
+        continue
+      }
     }
 
     if (trimmed === '---') {
@@ -418,6 +444,13 @@ export function renderChatMarkdown(md: string, options?: RenderChatMarkdownOptio
               onOpenArtifact ? () => onOpenArtifact(block.lang || 'code', block.text) : undefined
             }
           />
+        )
+      case 'image':
+        return (
+          <figure key={key} className="ds-md-figure">
+            <img className="ds-md-img" src={block.src} alt={block.alt || ''} loading="lazy" />
+            {block.alt ? <figcaption className="ds-md-figcaption">{block.alt}</figcaption> : null}
+          </figure>
         )
       case 'hr':
         return <hr key={key} className="ds-md-hr" />

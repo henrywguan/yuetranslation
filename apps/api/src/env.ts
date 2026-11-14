@@ -75,6 +75,24 @@ export const env = {
   /** Empty = vision LLM fallback disabled (Azure Read only). */
   openaiVisionModel: (process.env.OPENAI_VISION_MODEL || '').trim(),
   /**
+   * OpenAI Images for DeepSeek Chat `generate_image` tool.
+   * Defaults to OPENAI_API_KEY but **clears base URL** unless OPENAI_IMAGE_BASE_URL is set —
+   * DeepSeek Completions hosts do not serve /v1/images.
+   */
+  openaiImageApiKey: (
+    process.env.OPENAI_IMAGE_API_KEY ||
+    process.env.OPENAI_API_KEY ||
+    ''
+  ).trim(),
+  openaiImageBaseUrl: trimUrl(process.env.OPENAI_IMAGE_BASE_URL || ''),
+  /** DALL·E 3 returns URLs; gpt-image-* may return b64. */
+  chatImageModel: (process.env.YUE_CHAT_IMAGE_MODEL || 'dall-e-3').trim(),
+  /**
+   * JSON array of remote MCP servers for #/chat plugins:
+   * [{"id":"docs","name":"Docs","url":"https://…/mcp","headers":{"Authorization":"Bearer …"}}]
+   */
+  chatMcpServersJson: (process.env.YUE_CHAT_MCP_SERVERS || '').trim(),
+  /**
    * Allow loading dictionaries under non-commercial licenses (words.hk).
    * Keep off for paid/ad-supported commercial deployments unless you have a separate license.
    */

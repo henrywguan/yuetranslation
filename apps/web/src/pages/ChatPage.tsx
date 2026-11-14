@@ -12,7 +12,12 @@ import { DeepSeekMark } from '../components/DeepSeekMark'
 import { IosHomescreenTip } from '../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../components/PwaInstallButton'
 import { SpeakButton } from '../components/SpeakButton'
-import { streamDeepseekChat, uploadDeepseekChatFile } from '../lib/api'
+import {
+  fetchDeepseekChatPlugins,
+  streamDeepseekChat,
+  uploadDeepseekChatFile,
+  type DeepseekChatPlugin,
+} from '../lib/api'
 import { extractChatArtifacts, relatedQuestionsFromReply, type ChatArtifact } from '../lib/chatArtifacts'
 import {
   consumeChatPrefill,
@@ -70,6 +75,27 @@ const SUGGESTIONS = [
 
 const THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
 const SEARCH_KEY = 'yue-deepseek-chat-search-v1'
+const PLUGINS_KEY = 'yue-deepseek-chat-plugins-v1'
+
+function readPluginIds(): string[] | null {
+  try {
+    const raw = localStorage.getItem(PLUGINS_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return null
+    return parsed.map(String).filter(Boolean).slice(0, 16)
+  } catch {
+    return null
+  }
+}
+
+function writePluginIds(ids: string[]) {
+  try {
+    localStorage.setItem(PLUGINS_KEY, JSON.stringify(ids.slice(0, 16)))
+  } catch {
+    /* ignore */
+  }
+}
 
 /** Stable empty list for the orphan-activeId fallback — a fresh `[]` each render
  *  would retrigger the messages scroll effect forever while entitlement hydrates. */
@@ -575,6 +601,9 @@ export function ChatPage() {
   const [artifact, setArtifact] = useState<ChatArtifact | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [shareNote, setShareNote] = useState<string | null>(null)
+  const [pluginCatalog, setPluginCatalog] = useState<DeepseekChatPlugin[]>([])
+  const [enabledPlugins, setEnabledPlugins] = useState<string[]>(() => readPluginIds() || ['image'])
+  const [pluginsOpen, setPluginsOpen] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -648,6 +677,28 @@ export function ChatPage() {
     el.scrollTop = el.scrollHeight
     el.style.scrollBehavior = prev
   }
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const plugins = await fetchDeepseekChatPlugins()
+        if (cancelled) return
+        setPluginCatalog(plugins)
+        const stored = readPluginIds()
+        if (!stored) {
+          const defaults = plugins.filter((p) => p.defaultEnabled && p.configured).map((p) => p.id)
+          setEnabledPlugins(defaults.length ? defaults : ['image'])
+          writePluginIds(defaults.length ? defaults : ['image'])
+        }
+      } catch {
+        /* catalog optional — image still attempted server-side when configured */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -838,6 +889,7 @@ export function ChatPage() {
         thinking: deepThink,
         search: searchOn,
         fileIds,
+        plugins: enabledPlugins,
         signal: controller.signal,
         onStatus: (status) => {
           if (status === 'searching') {
@@ -877,6 +929,18 @@ export function ChatPage() {
         onTitle: (title) => {
           thread = renameChatThread(thread, title)
           schedulePaint()
+        },
+        onImage: (image) => {
+          const md = `\n\n![${image.prompt.slice(0, 80)}](${image.url})`
+          if (!assembled.includes(image.url)) {
+            assembled = `${assembled}${md}`.slice(0, MAX_CONTENT_CHARS)
+            thread = patchAssistantContent(thread, assistantId, assembled, {
+              reasoning: reasoning || undefined,
+              sources,
+              searchSteps: searchSteps.length ? searchSteps : undefined,
+            })
+            schedulePaint()
+          }
         },
         onDelta: (delta) => {
           const firstToken = assembled.length === 0
@@ -1503,8 +1567,59 @@ export function ChatPage() {
                 {SEARCH_ICON}
                 Search
               </button>
+              <button
+                type="button"
+                className={`ds-chat-toggle${pluginsOpen || enabledPlugins.length ? ' is-on' : ''}`}
+                aria-pressed={pluginsOpen}
+                title="Plugins — image generation & MCP"
+                onClick={() => setPluginsOpen((v) => !v)}
+              >
+                Plugins
+                {enabledPlugins.length ? ` · ${enabledPlugins.length}` : ''}
+              </button>
               {chatQuotaLabel ? <span className="ds-chat-quota">{chatQuotaLabel}</span> : null}
             </div>
+            {pluginsOpen ? (
+              <ul className="ds-chat-plugins" aria-label="Chat plugins">
+                {(pluginCatalog.length
+                  ? pluginCatalog
+                  : [
+                      {
+                        id: 'image',
+                        name: 'Image generation',
+                        description: 'OpenAI Images (set OPENAI_IMAGE_API_KEY on the API).',
+                        kind: 'builtin' as const,
+                        configured: true,
+                      },
+                    ]
+                ).map((p) => {
+                  const on = enabledPlugins.includes(p.id)
+                  return (
+                    <li key={p.id} className={`ds-chat-plugin${on ? ' is-on' : ''}${p.configured ? '' : ' is-off'}`}>
+                      <button
+                        type="button"
+                        disabled={!p.configured}
+                        title={p.error || p.description}
+                        onClick={() => {
+                          setEnabledPlugins((prev) => {
+                            const next = on ? prev.filter((id) => id !== p.id) : [...prev, p.id]
+                            writePluginIds(next)
+                            return next
+                          })
+                        }}
+                      >
+                        <span className="ds-chat-plugin-name">{p.name}</span>
+                        <span className="ds-chat-plugin-meta">
+                          {p.kind === 'mcp' ? 'MCP' : 'Built-in'}
+                          {!p.configured ? ' · not configured' : on ? ' · on' : ' · off'}
+                        </span>
+                        <span className="ds-chat-plugin-desc">{p.description}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : null}
             {skillSuggestions.length ? (
               <ChatSkillMenu skills={skillSuggestions} onPick={pickSkill} />
             ) : null}

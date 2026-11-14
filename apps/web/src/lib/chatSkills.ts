@@ -45,6 +45,12 @@ export const CHAT_SKILLS: ChatSkill[] = [
     label: 'Learn hint',
     prompt: 'Give me a Jyutping / Cantonese learning hint about: ',
   },
+  {
+    id: 'image',
+    slash: '/image',
+    label: 'Generate image',
+    prompt: 'Generate an image of: ',
+  },
 ]
 
 /** Match `/skill` or `/skill rest` at the start of the draft. */
