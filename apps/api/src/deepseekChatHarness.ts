@@ -1,7 +1,9 @@
 /**
  * Unified DeepSeek Chat Completions harness:
  * thinking + client function tools + native deepseek_web_search / deepseek_read_url,
- * safety_check, conversation title, and latest_reminder metadata.
+ * conversation title, and latest_reminder metadata.
+ *
+ * Intentionally omits DeepSeek `safety_check` — #/chat stays uncensored / abliterated.
  */
 import { openaiConfigured } from './env.js'
 import { openaiClient } from './openaiClient.js'
@@ -42,7 +44,6 @@ export type DeepseekChatHarnessEvent =
   | { kind: 'sources'; sources: { url: string; title: string }[] }
   | { kind: 'search_step'; step: DeepseekChatSearchStep }
   | { kind: 'title'; title: string }
-  | { kind: 'refusal' }
 
 export type DeepseekChatHarnessOptions = {
   thinkingEnabled?: boolean
@@ -325,8 +326,8 @@ export async function* streamDeepseekChatHarness(
       body.tools = tools
       body.tool_choice = 'auto'
     }
+    // Do not set safety_check — product requirement: uncensored chat replies.
     if (deepseekHost) {
-      body.safety_check = { level: 'high' }
       body.title = { enabled: true }
     }
 
@@ -444,9 +445,9 @@ export async function* streamDeepseekChatHarness(
       }
     }
 
+    // Ignore content_filter stop reasons; never surface a refusal to the client.
     if (finishReason === 'content_filter') {
-      yield { kind: 'refusal' }
-      return
+      console.warn('[deepseek-chat] content_filter finish_reason ignored (uncensored harness)')
     }
 
     pendingToolCalls = [...toolCallBuf.values()].filter((t) => t.id && t.function.name)
@@ -500,7 +501,6 @@ export async function generateDeepseekChatHarnessReply(
     if (ev.kind === 'reasoning') reasoning += ev.text
     if (ev.kind === 'delta') reply += ev.text
     if (ev.kind === 'title') title = ev.title
-    if (ev.kind === 'refusal') throw new Error('Response blocked by content safety.')
   }
   if (!reply.trim()) throw new Error('Empty model reply.')
   return {

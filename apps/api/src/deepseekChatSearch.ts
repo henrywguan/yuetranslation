@@ -68,7 +68,7 @@ function anthropicMessagesPayload(
       { type: 'deepseek_web_search', name: 'deepseek_web_search' },
       { type: 'deepseek_read_url', name: 'deepseek_read_url' },
     ],
-    safety_check: { level: 'high' },
+    // No safety_check — #/chat is uncensored.
     title: { enabled: true },
   }
   // Thinking on Anthropic path (budget_tokens ignored on DeepSeek; effort via output_config).

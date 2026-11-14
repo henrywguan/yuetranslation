@@ -64,8 +64,7 @@ async function* chatStreamEvents(
   | { kind: 'delta'; text: string }
   | { kind: 'sources'; sources: { url: string; title: string }[] }
   | { kind: 'search_step'; step: unknown }
-  | { kind: 'title'; title: string }
-  | { kind: 'refusal' },
+  | { kind: 'title'; title: string },
   void,
   unknown
 > {
@@ -89,7 +88,6 @@ async function* chatStreamEvents(
       Boolean(fileIds?.length) || messages.some((m) => Array.isArray(m.fileIds) && m.fileIds.length > 0)
     // Attachments are harness-only; do not silently drop them on fallback.
     if (hasFiles) throw err
-    if (/content safety|chat_refusal|blocked/i.test(message)) throw err
     // Partial SSE already went to the client — never concatenate a second model.
     if (harnessEmitted) throw err
     console.warn('[deepseek-chat] harness failed before first event, falling back:', message)
@@ -211,11 +209,6 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         return
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Chat failed.'
-        // Never fall back after a content-safety refusal — that would bypass safety_check.
-        if (/content safety|chat_refusal|blocked/i.test(message)) {
-          res.status(451).json({ message, code: 'chat_refusal' })
-          return
-        }
         // Attachments only exist on the harness path — do not retry without them.
         const hasFiles =
           Boolean(fileIds?.length) ||
@@ -293,18 +286,6 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         if (event.kind === 'title') {
           writeSse(res, `data: ${JSON.stringify({ title: event.title })}\n\n`)
           continue
-        }
-        if (event.kind === 'refusal') {
-          writeSse(
-            res,
-            `data: ${JSON.stringify({
-              error: 'Response blocked by content safety.',
-              code: 'chat_refusal',
-            })}\n\n`,
-          )
-          writeSse(res, 'data: [DONE]\n\n')
-          res.end()
-          return
         }
         full += event.text
         writeSse(res, `data: ${JSON.stringify({ delta: event.text })}\n\n`)

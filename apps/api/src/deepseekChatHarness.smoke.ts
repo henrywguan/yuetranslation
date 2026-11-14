@@ -53,7 +53,12 @@ const harnessSrc = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatHarness.ts'),
   'utf8',
 )
-assert.match(harnessSrc, /safety_check/, 'Harness enables content safety')
+assert.doesNotMatch(
+  harnessSrc,
+  /safety_check\s*[:=]/,
+  'Harness must not enable DeepSeek safety_check (uncensored chat)',
+)
+assert.match(harnessSrc, /uncensored|abliterated|Do not set safety_check/, 'Harness documents uncensored policy')
 assert.match(harnessSrc, /enabled:\s*true/, 'Harness requests conversation titles')
 assert.match(harnessSrc, /body\.title/, 'Harness sets title on Completions body')
 assert.match(harnessSrc, /latest_reminder/, 'Harness injects user metadata marker')
@@ -65,15 +70,20 @@ const routes = readFileSync(
 )
 assert.match(routes, /streamDeepseekChatHarness/, 'Routes use unified harness')
 assert.match(routes, /searchStep/, 'Routes forward search step cards')
-assert.match(routes, /chat_refusal/, 'Routes surface safety refusals')
-assert.match(routes, /Never fall back after a content-safety/, 'Non-stream refuses safety bypass')
+assert.doesNotMatch(routes, /chat_refusal/, 'Routes must not surface content-safety refusals')
 assert.match(routes, /harnessEmitted/, 'Partial harness streams do not concatenate fallbacks')
 
 const agentSrc = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatAgent.ts'),
   'utf8',
 )
-assert.match(agentSrc, /safety_check/, 'Agent fallback keeps safety_check')
+assert.doesNotMatch(agentSrc, /safety_check/, 'Agent fallback must not enable safety_check')
+
+const searchSrc = readFileSync(
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatSearch.ts'),
+  'utf8',
+)
+assert.doesNotMatch(searchSrc, /safety_check\s*:/, 'Anthropic search fallback must not enable safety_check')
 
 const filesSrc = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatFiles.ts'),
