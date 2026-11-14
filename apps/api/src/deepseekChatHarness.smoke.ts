@@ -67,6 +67,13 @@ assert.match(routes, /streamDeepseekChatHarness/, 'Routes use unified harness')
 assert.match(routes, /searchStep/, 'Routes forward search step cards')
 assert.match(routes, /chat_refusal/, 'Routes surface safety refusals')
 assert.match(routes, /Never fall back after a content-safety/, 'Non-stream refuses safety bypass')
+assert.match(routes, /harnessEmitted/, 'Partial harness streams do not concatenate fallbacks')
+
+const agentSrc = readFileSync(
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatAgent.ts'),
+  'utf8',
+)
+assert.match(agentSrc, /safety_check/, 'Agent fallback keeps safety_check')
 
 const filesSrc = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatFiles.ts'),

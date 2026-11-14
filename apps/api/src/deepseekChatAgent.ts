@@ -93,7 +93,9 @@ export async function* streamDeepseekChatAgent(
         stream: false,
         messages: msgs as never,
         ...(useTools ? { tools: DEEPSEEK_CHAT_TOOLS, tool_choice: 'auto' as const } : {}),
-      },
+        // Keep public-app safety on the agent fallback path too.
+        ...(deepseekChatUsesThinking() ? { safety_check: { level: 'high' as const } } : {}),
+      } as never,
       opts.signal ? { signal: opts.signal } : undefined,
     )
 
@@ -160,7 +162,8 @@ export async function* streamDeepseekChatAgent(
       ...chatBaseParams(thinkingEnabled),
       stream: true,
       messages: msgs as never,
-    },
+      ...(deepseekChatUsesThinking() ? { safety_check: { level: 'high' as const } } : {}),
+    } as never,
     opts.signal ? { signal: opts.signal } : undefined,
   )
   for await (const chunk of stream) {

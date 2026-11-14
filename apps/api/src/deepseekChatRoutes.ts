@@ -69,14 +69,18 @@ async function* chatStreamEvents(
   void,
   unknown
 > {
+  let harnessEmitted = false
   try {
-    yield* streamDeepseekChatHarness(messages, {
+    for await (const event of streamDeepseekChatHarness(messages, {
       thinkingEnabled,
       searchEnabled,
       prompt: { ...prompt, searchEnabled },
       signal,
       fileIds,
-    })
+    })) {
+      harnessEmitted = true
+      yield event
+    }
     return
   } catch (err) {
     if (signal?.aborted) throw err
@@ -84,7 +88,9 @@ async function* chatStreamEvents(
     // Attachments are harness-only; do not silently drop them on fallback.
     if (fileIds?.length) throw err
     if (/content safety|chat_refusal|blocked/i.test(message)) throw err
-    console.warn('[deepseek-chat] harness failed, falling back:', message)
+    // Partial SSE already went to the client — never concatenate a second model.
+    if (harnessEmitted) throw err
+    console.warn('[deepseek-chat] harness failed before first event, falling back:', message)
   }
 
   if (searchEnabled && deepseekChatSupportsSearch()) {
@@ -215,7 +221,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         }
         const { reply, model, reasoning } = await generateDeepseekChatAgentReply(parsed.data.messages, {
           thinkingEnabled,
-          prompt: { ...promptBase, mode: 'tools' },
+          prompt: { ...promptBase, mode: 'tools', searchEnabled: false },
         })
         void addDeepseekChatTurns(auth.userId, 1)
         res.json({ ok: true, reply, model, reasoning: reasoning || undefined })
