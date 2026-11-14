@@ -16,6 +16,8 @@ import {
   addDeepseekChatTurns,
   canUseDeepseekChat,
   DeepseekChatBodySchema,
+  deepseekChatPayloadMessage,
+  deepseekChatPayloadReason,
   deepseekChatTurnLimit,
   getDeepseekChatTurns,
 } from './deepseekChat.js'
@@ -104,7 +106,13 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
 
   const parsed = DeepseekChatBodySchema.safeParse(req.body)
   if (!parsed.success) {
-    res.status(400).json({ message: 'Invalid chat payload.' })
+    const reason = deepseekChatPayloadReason(parsed.error)
+    console.warn('[deepseek-chat] invalid payload', reason, parsed.error.flatten())
+    res.status(400).json({
+      message: deepseekChatPayloadMessage(reason),
+      code: 'chat_payload_invalid',
+      reason,
+    })
     return
   }
 

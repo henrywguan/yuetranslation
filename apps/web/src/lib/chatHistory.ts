@@ -34,6 +34,11 @@ const MAX_MESSAGES = 80
 const KEEP_REASONING_TAIL = 4
 /** Cap a single message body so one thread cannot OOM the tab on open. */
 export const MAX_CONTENT_CHARS = 12_000
+/**
+ * Max messages sent to POST /api/chat — keep in sync with API
+ * `DEEPSEEK_CHAT_MESSAGES_MAX` (model window is smaller).
+ */
+export const API_CHAT_MESSAGES_MAX = 48
 /** Cap a single DeepThink trace in storage / expanded panels. */
 export const MAX_REASONING_CHARS = 12_000
 /**
@@ -332,8 +337,16 @@ export function patchAssistantContent(
   }
 }
 
+/**
+ * Build the POST /api/chat messages array: drop empties, truncate to the
+ * shared content cap, keep the newest wire-max turns so Zod cannot 400.
+ */
 export function apiMessagesFromThread(thread: ChatThread): { role: ChatRole; content: string }[] {
   return thread.messages
-    .filter((m) => m.content.trim())
-    .map((m) => ({ role: m.role, content: m.content }))
+    .map((m) => {
+      const content = m.content.trim().slice(0, MAX_CONTENT_CHARS)
+      return content ? { role: m.role, content } : null
+    })
+    .filter((m): m is { role: ChatRole; content: string } => Boolean(m))
+    .slice(-API_CHAT_MESSAGES_MAX)
 }

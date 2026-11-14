@@ -752,6 +752,26 @@ export type DeepseekChatStreamHandlers = {
   signal?: AbortSignal
 }
 
+/** Per-message / wire caps — keep in sync with API DEEPSEEK_CHAT_*_MAX. */
+const CHAT_API_CONTENT_MAX = 12_000
+const CHAT_API_MESSAGES_MAX = 48
+
+function sanitizeDeepseekChatMessages(
+  messages: DeepseekChatApiMessage[],
+): DeepseekChatApiMessage[] {
+  return messages
+    .map((m) => {
+      const content = String(m.content || '')
+        .trim()
+        .slice(0, CHAT_API_CONTENT_MAX)
+      if (!content) return null
+      if (m.role !== 'user' && m.role !== 'assistant') return null
+      return { role: m.role, content }
+    })
+    .filter((m): m is DeepseekChatApiMessage => Boolean(m))
+    .slice(-CHAT_API_MESSAGES_MAX)
+}
+
 /** Stream DeepSeek Chat tokens (Family/Business). */
 export async function streamDeepseekChat(
   messages: DeepseekChatApiMessage[],
@@ -765,10 +785,14 @@ export async function streamDeepseekChat(
   } catch {
     /* ignore */
   }
+  const safeMessages = sanitizeDeepseekChatMessages(messages)
+  if (!safeMessages.length) {
+    throw new Error('No messages to send.')
+  }
   const res = await apiFetch('/chat?stream=1', {
     method: 'POST',
     body: JSON.stringify({
-      messages,
+      messages: safeMessages,
       thinking: handlers.thinking !== false,
       search: handlers.search === true,
       timeZone,

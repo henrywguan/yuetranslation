@@ -8,9 +8,11 @@ import {
   patchAssistantContent,
   apiMessagesFromThread,
   pruneChatThreads,
+  API_CHAT_MESSAGES_MAX,
   CHAT_HYDRATE_MAX_RAW_BYTES,
   MAX_CONTENT_CHARS,
   MAX_REASONING_CHARS,
+  type ChatThread,
 } from './chatHistory.js'
 
 const t0 = emptyThread()
@@ -35,6 +37,28 @@ assert.deepEqual(api, [
   { role: 'user', content: 'Hello world from DeepSeek' },
   { role: 'assistant', content: 'Hi there' },
 ])
+
+assert.equal(API_CHAT_MESSAGES_MAX, 48)
+assert.equal(MAX_CONTENT_CHARS, 12_000)
+
+const longThread: ChatThread = {
+  ...emptyThread(),
+  messages: Array.from({ length: API_CHAT_MESSAGES_MAX + 20 }, (_, i) => ({
+    id: `m${i}`,
+    role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
+    // Fat row inside the kept tail so truncate is exercised.
+    content: i === 60 ? 'z'.repeat(MAX_CONTENT_CHARS + 500) : `turn-${i}`,
+    createdAt: i,
+  })),
+}
+const sanitized = apiMessagesFromThread(longThread)
+assert.equal(sanitized.length, API_CHAT_MESSAGES_MAX)
+assert.ok(sanitized.every((m) => m.content.length <= MAX_CONTENT_CHARS))
+assert.equal(sanitized[0]?.content, 'turn-20')
+assert.equal(sanitized.at(-1)?.content, `turn-${API_CHAT_MESSAGES_MAX + 19}`)
+const fatApi = sanitized.find((m) => m.content.startsWith('z'))
+assert.ok(fatApi)
+assert.equal(fatApi!.content.length, MAX_CONTENT_CHARS)
 
 const fat = {
   ...emptyThread(),
@@ -85,6 +109,14 @@ assert.match(chatPage, /renderChatMarkdown/, 'Just-settled live answers use mark
 assert.match(chatPage, /sawLiveRef/, 'Historical assistants stay plain; only live-settled promote')
 assert.match(chatPage, /clearedHeavy/, 'ChatPage surfaces oversized-history recovery')
 assert.match(chatPage, /beginBatchedReveal/, 'selectThread / hydrate share batched reveal')
+assert.match(
+  chatPage,
+  /content\.length > MAX_CONTENT_CHARS/,
+  'Composer rejects oversized drafts before POST',
+)
+
+const apiSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './api.ts'), 'utf8')
+assert.match(apiSrc, /sanitizeDeepseekChatMessages/, 'streamDeepseekChat sanitizes wire payload')
 
 const historySrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './chatHistory.ts'), 'utf8')
 assert.match(historySrc, /requestIdleCallback/, 'Disk flush is idle-coalesced')

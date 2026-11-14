@@ -796,6 +796,10 @@ export function ChatPage() {
   const send = async (text: string) => {
     const content = text.trim()
     if (!content || busy) return
+    if (content.length > MAX_CONTENT_CHARS) {
+      setError(`Message is too long (max ${MAX_CONTENT_CHARS.toLocaleString()} characters).`)
+      return
+    }
     if (!unlocked) {
       if (!loggedIn) openAuthScreen()
       else openPricing()
