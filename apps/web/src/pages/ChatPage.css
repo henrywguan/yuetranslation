@@ -995,9 +995,82 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   color: var(--ds-blue);
 }
 
+.ds-chat-quota {
+  margin-left: auto;
+  align-self: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ds-text-3);
+}
+
+.ds-chat-attach-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ds-chat-attach-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  background: var(--ds-surface-2);
+  font-size: 0.75rem;
+  color: var(--ds-text-2);
+}
+
+.ds-chat-attach-list button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-3);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.ds-chat-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ds-chat-attach {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-2);
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 1.25rem;
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+.ds-chat-attach:hover:not(:disabled) {
+  background: var(--ds-surface-2);
+  color: var(--ds-text);
+}
+
+.ds-chat-attach:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .ds-chat-composer-card {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto auto 1fr auto;
   gap: 0.35rem;
   align-items: end;
   background: var(--ds-surface-1);
@@ -1006,6 +1079,71 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   padding: 0.55rem 0.55rem 0.55rem 0.65rem;
   box-shadow: 0 8px 28px rgba(16, 18, 24, 0.06);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+}
+
+.ds-chat-search-steps {
+  list-style: none;
+  margin: 0.35rem 0 0.55rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ds-chat-search-step {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: baseline;
+  font-size: 0.8125rem;
+  color: var(--ds-text-2);
+}
+
+.ds-chat-search-step-kind {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ds-blue);
+}
+
+.ds-chat-search-step-site {
+  color: var(--ds-text-3);
+}
+
+.ds-chat-user-edit {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-3);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.25rem;
+  align-self: flex-end;
+}
+
+.ds-chat-user-files {
+  font-size: 0.75rem;
+  color: var(--ds-text-3);
+  margin-top: 0.2rem;
+}
+
+.ds-md-mermaid {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: var(--ds-surface-1);
+  overflow: auto;
+}
+
+.ds-md-mermaid img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
 }
 
 .ds-chat-dictate {

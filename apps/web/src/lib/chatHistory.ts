@@ -7,6 +7,15 @@ export type ChatSource = {
   title: string
 }
 
+export type ChatSearchStep = {
+  kind: string
+  queries?: string[]
+  url?: string
+  title?: string
+  siteName?: string
+  snippet?: string
+}
+
 export type ChatMessage = {
   id: string
   role: ChatRole
@@ -18,6 +27,10 @@ export type ChatMessage = {
   thoughtMs?: number
   /** Web search citations (assistant only, Search toggle). */
   sources?: ChatSource[]
+  /** Live search/fetch steps for the thinking panel. */
+  searchSteps?: ChatSearchStep[]
+  /** DeepSeek Files API ids attached to a user turn. */
+  fileIds?: string[]
 }
 
 export type ChatThread = {
@@ -81,6 +94,32 @@ function normalizeSources(raw: unknown): ChatSource[] | undefined {
   return out.length ? out : undefined
 }
 
+function normalizeSearchSteps(raw: unknown): ChatSearchStep[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const out: ChatSearchStep[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as ChatSearchStep
+    const kind = String(row.kind || '').trim()
+    if (!kind) continue
+    out.push({
+      kind,
+      queries: Array.isArray(row.queries) ? row.queries.map(String).filter(Boolean) : undefined,
+      url: typeof row.url === 'string' ? row.url : undefined,
+      title: typeof row.title === 'string' ? row.title : undefined,
+      siteName: typeof row.siteName === 'string' ? row.siteName : undefined,
+      snippet: typeof row.snippet === 'string' ? row.snippet : undefined,
+    })
+  }
+  return out.length ? out.slice(-24) : undefined
+}
+
+function normalizeFileIds(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const ids = raw.map(String).filter((id) => /^file-api-/.test(id))
+  return ids.length ? ids.slice(0, 5) : undefined
+}
+
 function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
   if (!m || (m.role !== 'user' && m.role !== 'assistant')) return null
   return {
@@ -91,6 +130,8 @@ function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
     reasoning: typeof m.reasoning === 'string' && m.reasoning.trim() ? m.reasoning : undefined,
     thoughtMs: Number.isFinite(m.thoughtMs) ? Math.max(0, Number(m.thoughtMs)) : undefined,
     sources: normalizeSources(m.sources),
+    searchSteps: normalizeSearchSteps(m.searchSteps),
+    fileIds: normalizeFileIds(m.fileIds),
   }
 }
 
@@ -318,7 +359,12 @@ export function patchAssistantContent(
   thread: ChatThread,
   messageId: string,
   content: string,
-  extras?: { reasoning?: string; thoughtMs?: number; sources?: ChatSource[] },
+  extras?: {
+    reasoning?: string
+    thoughtMs?: number
+    sources?: ChatSource[]
+    searchSteps?: ChatSearchStep[]
+  },
 ): ChatThread {
   return {
     ...thread,
@@ -331,22 +377,48 @@ export function patchAssistantContent(
             ...(extras?.reasoning !== undefined ? { reasoning: extras.reasoning } : null),
             ...(extras?.thoughtMs !== undefined ? { thoughtMs: extras.thoughtMs } : null),
             ...(extras?.sources !== undefined ? { sources: extras.sources } : null),
+            ...(extras?.searchSteps !== undefined ? { searchSteps: extras.searchSteps } : null),
           }
         : m,
     ),
   }
 }
 
+export function renameChatThread(thread: ChatThread, title: string): ChatThread {
+  const next = title.trim().slice(0, 80)
+  if (!next) return thread
+  return { ...thread, title: next, updatedAt: Date.now() }
+}
+
 /**
  * Build the POST /api/chat messages array: drop empties, truncate to the
  * shared content cap, keep the newest wire-max turns so Zod cannot 400.
  */
-export function apiMessagesFromThread(thread: ChatThread): { role: ChatRole; content: string }[] {
+export function apiMessagesFromThread(
+  thread: ChatThread,
+): { role: ChatRole; content: string; reasoning?: string; fileIds?: string[] }[] {
   return thread.messages
     .map((m) => {
       const content = m.content.trim().slice(0, MAX_CONTENT_CHARS)
-      return content ? { role: m.role, content } : null
+      if (!content) return null
+      const reasoning =
+        m.role === 'assistant' && m.reasoning?.trim()
+          ? m.reasoning.trim().slice(0, MAX_REASONING_CHARS)
+          : undefined
+      const fileIds =
+        m.role === 'user' && m.fileIds?.length
+          ? m.fileIds.filter((id) => /^file-api-/.test(id)).slice(0, 5)
+          : undefined
+      return {
+        role: m.role,
+        content,
+        ...(reasoning ? { reasoning } : null),
+        ...(fileIds?.length ? { fileIds } : null),
+      }
     })
-    .filter((m): m is { role: ChatRole; content: string } => Boolean(m))
+    .filter(
+      (m): m is { role: ChatRole; content: string; reasoning?: string; fileIds?: string[] } =>
+        Boolean(m),
+    )
     .slice(-API_CHAT_MESSAGES_MAX)
 }

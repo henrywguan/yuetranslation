@@ -1,6 +1,7 @@
 /**
  * Family/Business DeepSeek general chat — POST /api/chat
  *
+ * Unified Completions harness (thinking + client tools + native web tools).
  * DeepThink + Search streams often exceed 60s. vercel.json sets api maxDuration
  * to 300s; this route also emits SSE heartbeats so HTTP/1.1 proxies do not idle-close
  * while waiting on the first reasoning/search token.
@@ -8,24 +9,25 @@
 import type { Response } from 'express'
 import type { AuthedRequest } from './auth.js'
 import { requireAuth } from './auth.js'
-import {
-  generateDeepseekChatAgentReply,
-  streamDeepseekChatAgent,
-} from './deepseekChatAgent.js'
+import { generateDeepseekChatAgentReply, streamDeepseekChatAgent } from './deepseekChatAgent.js'
 import {
   addDeepseekChatTurns,
   canUseDeepseekChat,
+  deepseekChatModel,
   DeepseekChatBodySchema,
   deepseekChatPayloadMessage,
   deepseekChatPayloadReason,
   deepseekChatTurnLimit,
   getDeepseekChatTurns,
 } from './deepseekChat.js'
+import {
+  generateDeepseekChatHarnessReply,
+  streamDeepseekChatHarness,
+} from './deepseekChatHarness.js'
 import { shouldAutoEnableSearch, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
 import {
   deepseekChatSupportsSearch,
   streamDeepseekChatWithSearch,
-  type DeepseekChatSearchStreamEvent,
 } from './deepseekChatSearch.js'
 import { env, openaiConfigured } from './env.js'
 import { resolveEntitlement } from './entitlements.js'
@@ -49,17 +51,54 @@ function writeSse(res: Response, payload: string) {
 }
 
 async function* chatStreamEvents(
-  messages: Parameters<typeof streamDeepseekChatAgent>[0],
+  messages: Parameters<typeof streamDeepseekChatHarness>[0],
   thinkingEnabled: boolean,
   searchEnabled: boolean,
   prompt: DeepseekChatPromptContext,
   signal?: AbortSignal,
-): AsyncGenerator<DeepseekChatSearchStreamEvent, void, unknown> {
+  fileIds?: string[],
+): AsyncGenerator<
+  | { kind: 'thinking' }
+  | { kind: 'searching' }
+  | { kind: 'reasoning'; text: string }
+  | { kind: 'delta'; text: string }
+  | { kind: 'sources'; sources: { url: string; title: string }[] }
+  | { kind: 'search_step'; step: unknown }
+  | { kind: 'title'; title: string },
+  void,
+  unknown
+> {
+  let harnessEmitted = false
+  try {
+    for await (const event of streamDeepseekChatHarness(messages, {
+      thinkingEnabled,
+      searchEnabled,
+      prompt: { ...prompt, searchEnabled },
+      signal,
+      fileIds,
+    })) {
+      harnessEmitted = true
+      yield event
+    }
+    return
+  } catch (err) {
+    if (signal?.aborted) throw err
+    const message = err instanceof Error ? err.message : String(err)
+    const hasFiles =
+      Boolean(fileIds?.length) || messages.some((m) => Array.isArray(m.fileIds) && m.fileIds.length > 0)
+    // Attachments are harness-only; do not silently drop them on fallback.
+    if (hasFiles) throw err
+    // Partial SSE already went to the client — never concatenate a second model.
+    if (harnessEmitted) throw err
+    console.warn('[deepseek-chat] harness failed before first event, falling back:', message)
+  }
+
   if (searchEnabled && deepseekChatSupportsSearch()) {
     try {
       yield* streamDeepseekChatWithSearch(messages, thinkingEnabled, signal, {
         ...prompt,
         mode: 'search',
+        searchEnabled: true,
       })
       return
     } catch (err) {
@@ -70,9 +109,10 @@ async function* chatStreamEvents(
       )
     }
   }
+
   yield* streamDeepseekChatAgent(messages, {
     thinkingEnabled,
-    prompt: { ...prompt, mode: 'tools' },
+    prompt: { ...prompt, mode: 'tools', searchEnabled: false },
     signal,
   })
 }
@@ -148,17 +188,43 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     timeZone: parsed.data.timeZone,
     locale: parsed.data.locale,
     plan: entitlement.isAdmin ? `admin (${entitlement.plan})` : entitlement.plan,
+    searchEnabled,
   }
+  const fileIds = parsed.data.fileIds
 
   try {
     if (!stream) {
-      const { reply, model, reasoning } = await generateDeepseekChatAgentReply(parsed.data.messages, {
-        thinkingEnabled,
-        prompt: { ...promptBase, mode: 'tools' },
-      })
-      void addDeepseekChatTurns(auth.userId, 1)
-      res.json({ ok: true, reply, model, reasoning: reasoning || undefined })
-      return
+      try {
+        const { reply, model, reasoning, title } = await generateDeepseekChatHarnessReply(
+          parsed.data.messages,
+          {
+            thinkingEnabled,
+            searchEnabled,
+            prompt: promptBase,
+            fileIds,
+          },
+        )
+        void addDeepseekChatTurns(auth.userId, 1)
+        res.json({ ok: true, reply, model, reasoning: reasoning || undefined, title })
+        return
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Chat failed.'
+        // Attachments only exist on the harness path — do not retry without them.
+        const hasFiles =
+          Boolean(fileIds?.length) ||
+          parsed.data.messages.some((m) => Array.isArray(m.fileIds) && m.fileIds.length > 0)
+        if (hasFiles) {
+          res.status(502).json({ message })
+          return
+        }
+        const { reply, model, reasoning } = await generateDeepseekChatAgentReply(parsed.data.messages, {
+          thinkingEnabled,
+          prompt: { ...promptBase, mode: 'tools', searchEnabled: false },
+        })
+        void addDeepseekChatTurns(auth.userId, 1)
+        res.json({ ok: true, reply, model, reasoning: reasoning || undefined })
+        return
+      }
     }
 
     const upstream = new AbortController()
@@ -192,8 +258,9 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         parsed.data.messages,
         thinkingEnabled,
         searchEnabled,
-        { ...promptBase, mode: searchEnabled ? 'search' : 'tools' },
+        promptBase,
         upstream.signal,
+        fileIds,
       )) {
         if (upstream.signal.aborted || res.writableEnded) break
         if (event.kind === 'thinking') {
@@ -212,6 +279,14 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
           writeSse(res, `data: ${JSON.stringify({ sources: event.sources })}\n\n`)
           continue
         }
+        if (event.kind === 'search_step') {
+          writeSse(res, `data: ${JSON.stringify({ searchStep: event.step })}\n\n`)
+          continue
+        }
+        if (event.kind === 'title') {
+          writeSse(res, `data: ${JSON.stringify({ title: event.title })}\n\n`)
+          continue
+        }
         full += event.text
         writeSse(res, `data: ${JSON.stringify({ delta: event.text })}\n\n`)
       }
@@ -227,7 +302,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         return
       }
       void addDeepseekChatTurns(auth.userId, 1)
-      writeSse(res, `data: ${JSON.stringify({ done: true, model: env.openaiModel })}\n\n`)
+      writeSse(res, `data: ${JSON.stringify({ done: true, model: deepseekChatModel() })}\n\n`)
       writeSse(res, 'data: [DONE]\n\n')
       res.end()
     } finally {

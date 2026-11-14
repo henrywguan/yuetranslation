@@ -735,11 +735,25 @@ export async function putPracticePartnerLeaderboard(score: {
   }
 }
 
-export type DeepseekChatApiMessage = { role: 'user' | 'assistant'; content: string }
+export type DeepseekChatApiMessage = {
+  role: 'user' | 'assistant'
+  content: string
+  reasoning?: string
+  fileIds?: string[]
+}
 
 export type DeepseekChatSource = {
   url: string
   title: string
+}
+
+export type DeepseekChatSearchStep = {
+  kind: string
+  queries?: string[]
+  url?: string
+  title?: string
+  siteName?: string
+  snippet?: string
 }
 
 export type DeepseekChatStreamHandlers = {
@@ -747,8 +761,11 @@ export type DeepseekChatStreamHandlers = {
   onReasoning?: (delta: string) => void
   onStatus?: (status: 'thinking' | 'searching') => void
   onSources?: (sources: DeepseekChatSource[]) => void
+  onSearchStep?: (step: DeepseekChatSearchStep) => void
+  onTitle?: (title: string) => void
   thinking?: boolean
   search?: boolean
+  fileIds?: string[]
   signal?: AbortSignal
 }
 
@@ -766,10 +783,46 @@ function sanitizeDeepseekChatMessages(
         .slice(0, CHAT_API_CONTENT_MAX)
       if (!content) return null
       if (m.role !== 'user' && m.role !== 'assistant') return null
-      return { role: m.role, content }
+      const reasoning =
+        m.role === 'assistant' && m.reasoning?.trim()
+          ? m.reasoning.trim().slice(0, CHAT_API_CONTENT_MAX)
+          : undefined
+      const fileIds =
+        m.role === 'user' && Array.isArray(m.fileIds)
+          ? m.fileIds.filter((id) => /^file-api-/.test(String(id))).slice(0, 5)
+          : undefined
+      return {
+        role: m.role,
+        content,
+        ...(reasoning ? { reasoning } : null),
+        ...(fileIds?.length ? { fileIds } : null),
+      }
     })
     .filter((m): m is DeepseekChatApiMessage => Boolean(m))
     .slice(-CHAT_API_MESSAGES_MAX)
+}
+
+/** Upload a chat attachment; returns DeepSeek file-api-* id. */
+export async function uploadDeepseekChatFile(file: File): Promise<{ fileId: string; filename: string }> {
+  const buf = await file.arrayBuffer()
+  const bytes = new Uint8Array(buf)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]!)
+  const dataBase64 = btoa(binary)
+  const purpose = /\.(png|jpe?g|gif|webp)$/i.test(file.name) ? 'user_data' : 'text_recognition'
+  const res = await apiFetch('/chat/files', {
+    method: 'POST',
+    body: JSON.stringify({
+      filename: file.name || 'upload.bin',
+      mime: file.type || undefined,
+      dataBase64,
+      purpose,
+    }),
+  })
+  if (!res.ok) await throwApiError(res, 'File upload failed')
+  const data = (await res.json()) as { fileId?: string; filename?: string }
+  if (!data.fileId) throw new Error('File upload missing id')
+  return { fileId: data.fileId, filename: data.filename || file.name }
 }
 
 /** Stream DeepSeek Chat tokens (Family/Business). */
@@ -789,6 +842,7 @@ export async function streamDeepseekChat(
   if (!safeMessages.length) {
     throw new Error('No messages to send.')
   }
+  const fileIds = (handlers.fileIds || []).filter((id) => /^file-api-/.test(id)).slice(0, 5)
   const res = await apiFetch('/chat?stream=1', {
     method: 'POST',
     body: JSON.stringify({
@@ -797,6 +851,7 @@ export async function streamDeepseekChat(
       search: handlers.search === true,
       timeZone,
       locale,
+      ...(fileIds.length ? { fileIds } : null),
     }),
     headers: { Accept: 'text/event-stream' },
     signal: handlers.signal,
@@ -832,6 +887,8 @@ export async function streamDeepseekChat(
         error?: string
         status?: string
         sources?: DeepseekChatSource[]
+        searchStep?: DeepseekChatSearchStep
+        title?: string
       }
       try {
         parsed = JSON.parse(payload) as typeof parsed
@@ -844,6 +901,8 @@ export async function streamDeepseekChat(
       }
       if (parsed.reasoning) handlers.onReasoning?.(parsed.reasoning)
       if (parsed.sources?.length) handlers.onSources?.(parsed.sources)
+      if (parsed.searchStep) handlers.onSearchStep?.(parsed.searchStep)
+      if (parsed.title?.trim()) handlers.onTitle?.(parsed.title.trim())
       if (parsed.delta) handlers.onDelta(parsed.delta)
       if (parsed.model) model = parsed.model
     }

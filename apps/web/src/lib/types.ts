@@ -98,6 +98,10 @@ export type Entitlement = {
     /** General DeepSeek Chat (#/chat) — Family/Business (or admin). */
     chat?: boolean
   }
+  /** DeepSeek Chat monthly turns used (Family metered). */
+  chatTurnsUsed?: number
+  /** 0 = unlimited. */
+  chatTurnsLimit?: number
   reason: string | null
   /** Synced account preferences. */
   prefs?: {

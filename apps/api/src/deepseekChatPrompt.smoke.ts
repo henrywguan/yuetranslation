@@ -31,9 +31,12 @@ assert.match(system, /Freshness/)
 assert.match(system, /family/)
 
 const searchSystem = buildDeepseekChatSystem({ mode: 'search', now: fixed })
-assert.match(searchSystem, /web_search only/)
-assert.match(searchSystem, /Plan snapshot/)
-assert.doesNotMatch(searchSystem, /call jyut_plan_limits/)
+assert.match(searchSystem, /Plan snapshot/, 'Legacy search-only mode still embeds plan snapshot')
+assert.match(searchSystem, /get_date/, 'Unified prompt keeps client tools catalog')
+
+const webOn = buildDeepseekChatSystem({ searchEnabled: true, now: fixed, mode: 'tools' })
+assert.match(webOn, /deepseek_web_search/)
+assert.match(webOn, /jyut_plan_limits/)
 
 assert.equal(shouldAutoEnableSearch('what day is today?'), false, 'clock questions use temporal inject')
 assert.equal(shouldAutoEnableSearch("what's the latest news on AI?"), true)

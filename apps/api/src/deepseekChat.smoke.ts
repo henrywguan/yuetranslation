@@ -79,7 +79,8 @@ const routes = readFileSync(
   'utf8',
 )
 assert.match(routes, /shouldAutoEnableSearch/, 'Routes auto-enable search for freshness intents')
-assert.match(routes, /streamDeepseekChatAgent/, 'Routes use tool agent when search is off')
+assert.match(routes, /streamDeepseekChatHarness/, 'Routes use unified Completions harness')
+assert.match(routes, /streamDeepseekChatAgent/, 'Routes keep tool agent as fallback')
 
 const agent = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatAgent.ts'),

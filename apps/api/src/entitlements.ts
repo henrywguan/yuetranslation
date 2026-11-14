@@ -1,4 +1,5 @@
 import { env, isAdminEmail } from './env.js'
+import { deepseekChatTurnLimit, getDeepseekChatTurns } from './deepseekChat.js'
 import type { AuthContext } from './auth.js'
 import {
   ensureOwnerHousehold,
@@ -191,6 +192,10 @@ export type Entitlement = {
     /** General DeepSeek Chat (#/chat) — Family/Business (or admin). */
     chat: boolean
   }
+  /** DeepSeek Chat monthly turns (Family metered; 0 limit = unlimited). */
+  chatTurnsUsed?: number
+  /** 0 = unlimited (admin / Business default / open mode). */
+  chatTurnsLimit?: number
   reason: string | null
   /** Synced account preferences. */
   prefs: {
@@ -694,6 +699,8 @@ function localEntitlement(): Entitlement {
         aiVision: true,
         chat: true,
       },
+      chatTurnsUsed: 0,
+      chatTurnsLimit: 0,
       reason: null,
       prefs: {
         ttsVoiceYue: DEFAULT_YUE_VOICE,
@@ -790,8 +797,9 @@ export async function resolveEntitlement(
     usageSelf = { ...usage }
   }
 
-  return buildSnapshot(plan, true, usage, {
-    isAdmin: isAdminEmail(auth.email) || role === 'admin',
+  const isAdmin = isAdminEmail(auth.email) || role === 'admin'
+  const snap = buildSnapshot(plan, true, usage, {
+    isAdmin,
     role,
     disabled: Boolean(profile?.disabled),
     ttsVoiceYue: profile?.tts_voice_yue,
@@ -825,4 +833,11 @@ export async function resolveEntitlement(
     usernameChangedAt: profile?.username_changed_at,
     usageSelf,
   })
+  if (snap.allowed.chat) {
+    const limit = deepseekChatTurnLimit(plan, isAdmin)
+    const used = limit > 0 ? await getDeepseekChatTurns(auth.userId) : 0
+    snap.chatTurnsLimit = limit
+    snap.chatTurnsUsed = used
+  }
+  return snap
 }

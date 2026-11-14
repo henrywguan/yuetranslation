@@ -13,10 +13,12 @@ export type DeepseekChatPromptContext = {
   plan?: string
   now?: Date
   /**
-   * `tools` = Completions tool belt available.
-   * `search` = Anthropic web_search only (no jyut_* / calc tools this turn).
+   * `tools` = Completions tool belt (default).
+   * `search` kept for legacy callers — harness always uses tools mode + optional web.
    */
   mode?: 'tools' | 'search'
+  /** When true, native deepseek_web_search / deepseek_read_url are declared. */
+  searchEnabled?: boolean
 }
 
 const BASE = [
@@ -43,11 +45,11 @@ const SKILLS_TOOLS = [
   'For Cantonese/Jyutping phrase help, try jyut_phrase_lookup first; if miss, answer normally and suggest Solo translate in the app.',
 ].join('\n')
 
-const SKILLS_SEARCH = [
-  'This turn uses web_search only (no calc/weather/jyut tools).',
-  'Temporal context below is authoritative for "today"/clock questions — do not claim you lack a clock.',
-  'For JyutTranslate plan limits, use the embedded Plan snapshot below — do not invent numbers.',
-  'For Cantonese tutoring beyond general knowledge, suggest Solo translate or Harbor Quest (#/learn) in the app.',
+const SKILLS_WEB = [
+  'Web tools this turn (server-side; the host runs them):',
+  '- deepseek_web_search — search the live web (with DeepThink on, deep thinking search).',
+  '- deepseek_read_url — read links the user pasted.',
+  'Prefer web tools for news, prices, and facts that may have changed after your cutoff.',
 ].join('\n')
 
 function resolveTimeZone(raw?: string): string {
@@ -117,14 +119,13 @@ export function formatPlanSnapshot(): string {
  * Includes temporal grounding so "what day is today?" is answerable without search.
  */
 export function buildDeepseekChatSystem(ctx: DeepseekChatPromptContext = {}): string {
-  const mode = ctx.mode === 'search' ? 'search' : 'tools'
-  const parts = [
-    BASE,
-    FRESHNESS,
-    formatTemporalBlock(ctx),
-    mode === 'search' ? SKILLS_SEARCH : SKILLS_TOOLS,
-  ]
-  if (mode === 'search') parts.push(formatPlanSnapshot())
+  const parts = [BASE, FRESHNESS, formatTemporalBlock(ctx), SKILLS_TOOLS]
+  // Only advertise server web tools when the request will actually declare them.
+  if (ctx.searchEnabled && /deepseek/i.test(`${env.openaiBaseUrl} ${env.openaiModel} ${env.chatModel}`)) {
+    parts.push(SKILLS_WEB)
+  }
+  // Legacy search-only callers still get a grounded plan snapshot.
+  if (ctx.mode === 'search' && !ctx.searchEnabled) parts.push(formatPlanSnapshot())
   if (ctx.plan) parts.push(`Signed-in plan context: ${ctx.plan}.`)
   return parts.join('\n\n')
 }

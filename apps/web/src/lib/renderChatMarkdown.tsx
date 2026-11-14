@@ -175,6 +175,37 @@ function parseBlocks(md: string): Block[] {
   return blocks
 }
 
+function mermaidInkUrl(source: string): string {
+  const encoded = btoa(unescape(encodeURIComponent(source.trim())))
+  return `https://mermaid.ink/svg/${encoded}`
+}
+
+function MermaidBlock({ text }: { text: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed || !text.trim()) {
+    return (
+      <div className="ds-md-code-wrap ds-md-mermaid-fallback">
+        <div className="ds-md-code-head">
+          <span className="ds-md-code-lang">mermaid</span>
+        </div>
+        <pre className="ds-md-code" data-lang="mermaid">
+          <code>{text}</code>
+        </pre>
+      </div>
+    )
+  }
+  return (
+    <figure className="ds-md-mermaid">
+      <img
+        src={mermaidInkUrl(text)}
+        alt="Mermaid diagram"
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+    </figure>
+  )
+}
+
 function CodeBlock({ lang, text }: { lang: string; text: string }) {
   const [copied, setCopied] = useState(false)
   const timerRef = useRef<number | null>(null)
@@ -184,6 +215,10 @@ function CodeBlock({ lang, text }: { lang: string; text: string }) {
       if (timerRef.current) window.clearTimeout(timerRef.current)
     }
   }, [])
+
+  if (/^mermaid$/i.test(lang.trim())) {
+    return <MermaidBlock text={text} />
+  }
 
   const copy = async () => {
     try {
