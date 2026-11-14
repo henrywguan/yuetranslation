@@ -6,8 +6,9 @@ import dns from 'node:dns/promises'
 import { dictionaryTranslate } from './canto/dictionary.js'
 import { env } from './env.js'
 import { resolveTimeZone, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
+import { randomUUID } from 'node:crypto'
 import { generateChatImage } from './deepseekChatImage.js'
-import { callMcpTool, parseMcpToolName } from './deepseekChatMcp.js'
+import { callMcpTool, extractImageUrlsFromMcpResult, parseMcpToolName } from './deepseekChatMcp.js'
 
 export type ChatToolContext = DeepseekChatPromptContext & {
   signal?: AbortSignal
@@ -582,6 +583,13 @@ export async function executeDeepseekChatTool(
         const mcp = parseMcpToolName(name)
         if (mcp) {
           const result = await callMcpTool(mcp.serverId, mcp.toolName, args, ctx.signal)
+          for (const url of extractImageUrlsFromMcpResult(result)) {
+            ctx.onImage?.({
+              url,
+              prompt: `${mcp.serverId}/${mcp.toolName}`,
+              id: randomUUID(),
+            })
+          }
           return result
         }
         return JSON.stringify({ error: `Unknown tool: ${name}` })

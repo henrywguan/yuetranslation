@@ -1590,12 +1590,57 @@ export function ChatPage() {
                         description: 'OpenAI Images (set OPENAI_IMAGE_API_KEY on the API).',
                         kind: 'builtin' as const,
                         configured: true,
+                        category: 'generation' as const,
+                        status: 'ready' as const,
+                      },
+                      {
+                        id: 'mcp:higgsfield',
+                        name: 'Higgsfield',
+                        description: 'Image, video, characters & audio (needs MCP token).',
+                        kind: 'mcp' as const,
+                        configured: false,
+                        category: 'generation' as const,
+                        status: 'needs_token' as const,
+                      },
+                      {
+                        id: 'mcp:adobe',
+                        name: 'Adobe for creativity',
+                        description: 'Firefly / Photoshop MCP (needs MCP token).',
+                        kind: 'mcp' as const,
+                        configured: false,
+                        category: 'generation' as const,
+                        status: 'needs_token' as const,
+                      },
+                      {
+                        id: 'mcp:cursor',
+                        name: 'Cursor',
+                        description: 'Cursor remote generation MCP — coming soon.',
+                        kind: 'mcp' as const,
+                        configured: false,
+                        category: 'generation' as const,
+                        status: 'coming_soon' as const,
                       },
                     ]
                 ).map((p) => {
                   const on = enabledPlugins.includes(p.id)
+                  const status =
+                    p.status ||
+                    (p.configured ? 'ready' : p.id === 'mcp:cursor' ? 'coming_soon' : 'needs_token')
+                  const statusLabel =
+                    status === 'coming_soon'
+                      ? 'coming soon'
+                      : status === 'needs_token'
+                        ? 'needs token'
+                        : on
+                          ? 'on'
+                          : 'off'
                   return (
-                    <li key={p.id} className={`ds-chat-plugin${on ? ' is-on' : ''}${p.configured ? '' : ' is-off'}`}>
+                    <li
+                      key={p.id}
+                      className={`ds-chat-plugin${on ? ' is-on' : ''}${p.configured ? '' : ' is-off'}${
+                        p.category === 'generation' ? ' is-gen' : ''
+                      }`}
+                    >
                       <button
                         type="button"
                         disabled={!p.configured}
@@ -1611,7 +1656,8 @@ export function ChatPage() {
                         <span className="ds-chat-plugin-name">{p.name}</span>
                         <span className="ds-chat-plugin-meta">
                           {p.kind === 'mcp' ? 'MCP' : 'Built-in'}
-                          {!p.configured ? ' · not configured' : on ? ' · on' : ' · off'}
+                          {p.category === 'generation' ? ' · Gen' : ''}
+                          {` · ${statusLabel}`}
                         </span>
                         <span className="ds-chat-plugin-desc">{p.description}</span>
                       </button>

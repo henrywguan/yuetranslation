@@ -88,10 +88,27 @@ export const env = {
   /** DALL·E 3 returns URLs; gpt-image-* may return b64. */
   chatImageModel: (process.env.YUE_CHAT_IMAGE_MODEL || 'dall-e-3').trim(),
   /**
-   * JSON array of remote MCP servers for #/chat plugins:
+   * JSON array of extra remote MCP servers for #/chat plugins:
    * [{"id":"docs","name":"Docs","url":"https://…/mcp","headers":{"Authorization":"Bearer …"}}]
+   * Same `id` as a generation preset (higgsfield/adobe/cursor) overrides that preset.
    */
   chatMcpServersJson: (process.env.YUE_CHAT_MCP_SERVERS || '').trim(),
+  /** Higgsfield MCP — default URL; Bearer required to enable the plugin. */
+  chatMcpHiggsfieldUrl: trimUrl(
+    process.env.YUE_CHAT_MCP_HIGGSFIELD_URL || 'https://mcp.higgsfield.ai/mcp',
+  ),
+  chatMcpHiggsfieldToken: (process.env.YUE_CHAT_MCP_HIGGSFIELD_TOKEN || '').trim(),
+  /** Adobe for creativity MCP — default URL; Bearer required to enable. */
+  chatMcpAdobeUrl: trimUrl(
+    process.env.YUE_CHAT_MCP_ADOBE_URL || 'https://adobe-creativity.adobe.io/mcp',
+  ),
+  chatMcpAdobeToken: (process.env.YUE_CHAT_MCP_ADOBE_TOKEN || '').trim(),
+  /**
+   * Cursor remote generation MCP — empty until Cursor publishes a hosted endpoint.
+   * Set URL + token to light up the Cursor card in #/chat Plugins.
+   */
+  chatMcpCursorUrl: trimUrl(process.env.YUE_CHAT_MCP_CURSOR_URL || ''),
+  chatMcpCursorToken: (process.env.YUE_CHAT_MCP_CURSOR_TOKEN || '').trim(),
   /**
    * Allow loading dictionaries under non-commercial licenses (words.hk).
    * Keep off for paid/ad-supported commercial deployments unless you have a separate license.

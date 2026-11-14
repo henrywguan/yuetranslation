@@ -772,6 +772,10 @@ export type DeepseekChatPlugin = {
   toolCount?: number
   tools?: string[]
   error?: string
+  category?: 'generation' | 'general'
+  auth?: 'none' | 'bearer' | 'oauth'
+  status?: 'ready' | 'needs_token' | 'coming_soon'
+  url?: string
 }
 
 export type DeepseekChatStreamHandlers = {

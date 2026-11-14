@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "higgsfield": {
+      "url": "https://mcp.higgsfield.ai/mcp"
+    },
+    "adobe-creativity": {
+      "url": "https://adobe-creativity.adobe.io/mcp"
+    }
+  }
+}

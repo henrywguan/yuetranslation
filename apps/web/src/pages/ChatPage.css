@@ -1819,3 +1819,7 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   font-size: 0.8125rem;
   color: var(--ds-text-2);
 }
+
+.ds-chat-plugin.is-gen .ds-chat-plugin-meta {
+  color: var(--ds-blue, #3b6cff);
+}

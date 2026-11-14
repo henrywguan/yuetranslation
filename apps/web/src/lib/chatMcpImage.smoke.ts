@@ -23,5 +23,15 @@ const page = readFileSync(join(here, '../pages/ChatPage.tsx'), 'utf8')
 assert.match(page, /enabledPlugins/, 'ChatPage plugin toggles')
 assert.match(page, /ds-chat-plugins/, 'Plugins panel markup')
 assert.match(page, /onImage:/, 'ChatPage appends image markdown')
+assert.match(page, /coming soon|needs token|is-gen/, 'Generation MCP status UI')
+
+const mcpApi = readFileSync(
+  join(here, '../../../api/src/deepseekChatMcp.ts'),
+  'utf8',
+)
+assert.match(mcpApi, /GENERATION_MCP_PRESETS/, 'API ships generation MCP presets')
+assert.match(mcpApi, /higgsfield/, 'Higgsfield preset')
+assert.match(mcpApi, /adobe-creativity\.adobe\.io/, 'Adobe preset URL')
+assert.match(mcpApi, /mcp:cursor|id: 'cursor'/, 'Cursor preset slot')
 
 console.log('chatMcpImage.smoke: ok')
