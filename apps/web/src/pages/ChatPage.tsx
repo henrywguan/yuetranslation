@@ -12,7 +12,15 @@ import { DeepSeekMark } from '../components/DeepSeekMark'
 import { IosHomescreenTip } from '../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../components/PwaInstallButton'
 import { SpeakButton } from '../components/SpeakButton'
-import { streamDeepseekChat, uploadDeepseekChatFile } from '../lib/api'
+import { ChatPluginKeysModal } from '../components/ChatPluginKeysModal'
+import {
+  fetchDeepseekChatPlugins,
+  streamDeepseekChat,
+  uploadDeepseekChatFile,
+  type DeepseekChatPlugin,
+  type DeepseekChatPluginKeyHint,
+  type DeepseekChatPluginKeyId,
+} from '../lib/api'
 import { extractChatArtifacts, relatedQuestionsFromReply, type ChatArtifact } from '../lib/chatArtifacts'
 import {
   consumeChatPrefill,
@@ -70,6 +78,27 @@ const SUGGESTIONS = [
 
 const THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
 const SEARCH_KEY = 'yue-deepseek-chat-search-v1'
+const PLUGINS_KEY = 'yue-deepseek-chat-plugins-v1'
+
+function readPluginIds(): string[] | null {
+  try {
+    const raw = localStorage.getItem(PLUGINS_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return null
+    return parsed.map(String).filter(Boolean).slice(0, 16)
+  } catch {
+    return null
+  }
+}
+
+function writePluginIds(ids: string[]) {
+  try {
+    localStorage.setItem(PLUGINS_KEY, JSON.stringify(ids.slice(0, 16)))
+  } catch {
+    /* ignore */
+  }
+}
 
 /** Stable empty list for the orphan-activeId fallback — a fresh `[]` each render
  *  would retrigger the messages scroll effect forever while entitlement hydrates. */
@@ -575,6 +604,19 @@ export function ChatPage() {
   const [artifact, setArtifact] = useState<ChatArtifact | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [shareNote, setShareNote] = useState<string | null>(null)
+  const [pluginCatalog, setPluginCatalog] = useState<DeepseekChatPlugin[]>([])
+  const [enabledPlugins, setEnabledPlugins] = useState<string[]>(() => readPluginIds() || ['image'])
+  const [pluginsOpen, setPluginsOpen] = useState(false)
+  const [pluginKeyHints, setPluginKeyHints] = useState<
+    Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint>
+  >({
+    image: { set: false },
+    higgsfield: { set: false },
+    adobe: { set: false },
+    cursor: { set: false },
+  })
+  const [keysModalOpen, setKeysModalOpen] = useState(false)
+  const [keysFocusId, setKeysFocusId] = useState<DeepseekChatPluginKeyId | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -648,6 +690,29 @@ export function ChatPage() {
     el.scrollTop = el.scrollHeight
     el.style.scrollBehavior = prev
   }
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const { plugins, keyHints } = await fetchDeepseekChatPlugins()
+        if (cancelled) return
+        setPluginCatalog(plugins)
+        setPluginKeyHints(keyHints)
+        const stored = readPluginIds()
+        if (!stored) {
+          const defaults = plugins.filter((p) => p.defaultEnabled && p.configured).map((p) => p.id)
+          setEnabledPlugins(defaults.length ? defaults : ['image'])
+          writePluginIds(defaults.length ? defaults : ['image'])
+        }
+      } catch {
+        /* catalog optional — image still attempted server-side when configured */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -838,6 +903,7 @@ export function ChatPage() {
         thinking: deepThink,
         search: searchOn,
         fileIds,
+        plugins: enabledPlugins,
         signal: controller.signal,
         onStatus: (status) => {
           if (status === 'searching') {
@@ -877,6 +943,18 @@ export function ChatPage() {
         onTitle: (title) => {
           thread = renameChatThread(thread, title)
           schedulePaint()
+        },
+        onImage: (image) => {
+          const md = `\n\n![${image.prompt.slice(0, 80)}](${image.url})`
+          if (!assembled.includes(image.url)) {
+            assembled = `${assembled}${md}`.slice(0, MAX_CONTENT_CHARS)
+            thread = patchAssistantContent(thread, assistantId, assembled, {
+              reasoning: reasoning || undefined,
+              sources,
+              searchSteps: searchSteps.length ? searchSteps : undefined,
+            })
+            schedulePaint()
+          }
         },
         onDelta: (delta) => {
           const firstToken = assembled.length === 0
@@ -1503,8 +1581,156 @@ export function ChatPage() {
                 {SEARCH_ICON}
                 Search
               </button>
+              <button
+                type="button"
+                className={`ds-chat-toggle${pluginsOpen || enabledPlugins.length ? ' is-on' : ''}`}
+                aria-pressed={pluginsOpen}
+                title="Plugins — image generation & MCP"
+                onClick={() => setPluginsOpen((v) => !v)}
+              >
+                Plugins
+                {enabledPlugins.length ? ` · ${enabledPlugins.length}` : ''}
+              </button>
               {chatQuotaLabel ? <span className="ds-chat-quota">{chatQuotaLabel}</span> : null}
             </div>
+            {pluginsOpen ? (
+              <div className="ds-chat-plugins-wrap">
+                <div className="ds-chat-plugins-toolbar">
+                  <button
+                    type="button"
+                    className="ds-chat-keys-open"
+                    onClick={() => {
+                      setKeysFocusId(null)
+                      setKeysModalOpen(true)
+                    }}
+                  >
+                    API keys
+                  </button>
+                </div>
+                <ul className="ds-chat-plugins" aria-label="Chat plugins">
+                  {(pluginCatalog.length
+                    ? pluginCatalog
+                    : [
+                        {
+                          id: 'image',
+                          name: 'Image generation',
+                          description: 'OpenAI Images — add your key via API keys.',
+                          kind: 'builtin' as const,
+                          configured: false,
+                          category: 'generation' as const,
+                          status: 'needs_token' as const,
+                        },
+                        {
+                          id: 'mcp:higgsfield',
+                          name: 'Higgsfield',
+                          description: 'Image, video, characters & audio (needs MCP token).',
+                          kind: 'mcp' as const,
+                          configured: false,
+                          category: 'generation' as const,
+                          status: 'needs_token' as const,
+                        },
+                        {
+                          id: 'mcp:adobe',
+                          name: 'Adobe for creativity',
+                          description: 'Firefly / Photoshop MCP (needs MCP token).',
+                          kind: 'mcp' as const,
+                          configured: false,
+                          category: 'generation' as const,
+                          status: 'needs_token' as const,
+                        },
+                        {
+                          id: 'mcp:cursor',
+                          name: 'Cursor',
+                          description: 'Cursor remote generation MCP — coming soon.',
+                          kind: 'mcp' as const,
+                          configured: false,
+                          category: 'generation' as const,
+                          status: 'coming_soon' as const,
+                        },
+                      ]
+                  ).map((p) => {
+                    const on = enabledPlugins.includes(p.id)
+                    const status =
+                      p.status ||
+                      (p.configured ? 'ready' : p.id === 'mcp:cursor' ? 'coming_soon' : 'needs_token')
+                    const statusLabel =
+                      status === 'coming_soon'
+                        ? 'coming soon'
+                        : status === 'needs_token'
+                          ? 'needs key'
+                          : on
+                            ? 'on'
+                            : 'off'
+                    const keyId: DeepseekChatPluginKeyId | null =
+                      p.id === 'image'
+                        ? 'image'
+                        : p.id === 'mcp:higgsfield'
+                          ? 'higgsfield'
+                          : p.id === 'mcp:adobe'
+                            ? 'adobe'
+                            : p.id === 'mcp:cursor'
+                              ? 'cursor'
+                              : null
+                    return (
+                      <li
+                        key={p.id}
+                        className={`ds-chat-plugin${on ? ' is-on' : ''}${p.configured ? '' : ' is-off'}${
+                          p.category === 'generation' ? ' is-gen' : ''
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          disabled={status === 'coming_soon'}
+                          title={
+                            !p.configured && keyId
+                              ? 'Add an API key to enable this plugin'
+                              : p.error || p.description
+                          }
+                          onClick={() => {
+                            if (!p.configured && keyId) {
+                              setKeysFocusId(keyId)
+                              setKeysModalOpen(true)
+                              return
+                            }
+                            if (!p.configured) return
+                            setEnabledPlugins((prev) => {
+                              const next = on ? prev.filter((id) => id !== p.id) : [...prev, p.id]
+                              writePluginIds(next)
+                              return next
+                            })
+                          }}
+                        >
+                          <span className="ds-chat-plugin-name">{p.name}</span>
+                          <span className="ds-chat-plugin-meta">
+                            {p.kind === 'mcp' ? 'MCP' : 'Built-in'}
+                            {p.category === 'generation' ? ' · Gen' : ''}
+                            {` · ${statusLabel}`}
+                          </span>
+                          <span className="ds-chat-plugin-desc">{p.description}</span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ) : null}
+            <ChatPluginKeysModal
+              open={keysModalOpen}
+              initialHints={pluginKeyHints}
+              focusId={keysFocusId}
+              onClose={() => setKeysModalOpen(false)}
+              onSaved={(hints) => {
+                setPluginKeyHints(hints)
+                void (async () => {
+                  try {
+                    const { plugins } = await fetchDeepseekChatPlugins()
+                    setPluginCatalog(plugins)
+                  } catch {
+                    /* keep prior catalog */
+                  }
+                })()
+              }}
+            />
             {skillSuggestions.length ? (
               <ChatSkillMenu skills={skillSuggestions} onPick={pickSkill} />
             ) : null}

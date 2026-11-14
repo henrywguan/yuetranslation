@@ -756,6 +756,28 @@ export type DeepseekChatSearchStep = {
   snippet?: string
 }
 
+export type DeepseekChatImageEvent = {
+  url: string
+  prompt: string
+  id: string
+}
+
+export type DeepseekChatPlugin = {
+  id: string
+  name: string
+  description: string
+  kind: 'builtin' | 'mcp'
+  defaultEnabled?: boolean
+  configured: boolean
+  toolCount?: number
+  tools?: string[]
+  error?: string
+  category?: 'generation' | 'general'
+  auth?: 'none' | 'bearer' | 'oauth'
+  status?: 'ready' | 'needs_token' | 'coming_soon'
+  url?: string
+}
+
 export type DeepseekChatStreamHandlers = {
   onDelta: (delta: string) => void
   onReasoning?: (delta: string) => void
@@ -763,9 +785,11 @@ export type DeepseekChatStreamHandlers = {
   onSources?: (sources: DeepseekChatSource[]) => void
   onSearchStep?: (step: DeepseekChatSearchStep) => void
   onTitle?: (title: string) => void
+  onImage?: (image: DeepseekChatImageEvent) => void
   thinking?: boolean
   search?: boolean
   fileIds?: string[]
+  plugins?: string[]
   signal?: AbortSignal
 }
 
@@ -843,6 +867,7 @@ export async function streamDeepseekChat(
     throw new Error('No messages to send.')
   }
   const fileIds = (handlers.fileIds || []).filter((id) => /^file-api-/.test(id)).slice(0, 5)
+  const plugins = (handlers.plugins || []).map(String).filter(Boolean).slice(0, 16)
   const res = await apiFetch('/chat?stream=1', {
     method: 'POST',
     body: JSON.stringify({
@@ -852,6 +877,7 @@ export async function streamDeepseekChat(
       timeZone,
       locale,
       ...(fileIds.length ? { fileIds } : null),
+      ...(plugins.length ? { plugins } : null),
     }),
     headers: { Accept: 'text/event-stream' },
     signal: handlers.signal,
@@ -889,6 +915,7 @@ export async function streamDeepseekChat(
         sources?: DeepseekChatSource[]
         searchStep?: DeepseekChatSearchStep
         title?: string
+        image?: DeepseekChatImageEvent
       }
       try {
         parsed = JSON.parse(payload) as typeof parsed
@@ -903,10 +930,82 @@ export async function streamDeepseekChat(
       if (parsed.sources?.length) handlers.onSources?.(parsed.sources)
       if (parsed.searchStep) handlers.onSearchStep?.(parsed.searchStep)
       if (parsed.title?.trim()) handlers.onTitle?.(parsed.title.trim())
+      if (parsed.image?.url) handlers.onImage?.(parsed.image)
       if (parsed.delta) handlers.onDelta(parsed.delta)
       if (parsed.model) model = parsed.model
     }
   }
 
   return { model }
+}
+
+export type DeepseekChatPluginKeyId = 'image' | 'higgsfield' | 'adobe' | 'cursor'
+
+export type DeepseekChatPluginKeyHint = {
+  set: boolean
+  hint?: string
+}
+
+/** Marketplace catalog for #/chat plugins (image + MCP). */
+export async function fetchDeepseekChatPlugins(): Promise<{
+  plugins: DeepseekChatPlugin[]
+  keyHints: Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint>
+}> {
+  const res = await apiFetch('/chat/plugins')
+  if (!res.ok) await throwApiError(res, 'Failed to load chat plugins')
+  const data = (await res.json()) as {
+    plugins?: DeepseekChatPlugin[]
+    keyHints?: Record<string, DeepseekChatPluginKeyHint>
+  }
+  const emptyHint = { set: false }
+  const keyHints: Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint> = {
+    image: data.keyHints?.image || emptyHint,
+    higgsfield: data.keyHints?.higgsfield || emptyHint,
+    adobe: data.keyHints?.adobe || emptyHint,
+    cursor: data.keyHints?.cursor || emptyHint,
+  }
+  return {
+    plugins: Array.isArray(data.plugins) ? data.plugins : [],
+    keyHints,
+  }
+}
+
+/** Masked BYOK hints (never raw secrets). */
+export async function fetchDeepseekChatPluginKeys(): Promise<
+  Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint>
+> {
+  const res = await apiFetch('/chat/plugin-keys')
+  if (!res.ok) await throwApiError(res, 'Failed to load plugin keys')
+  const data = (await res.json()) as { keys?: Record<string, DeepseekChatPluginKeyHint> }
+  const emptyHint = { set: false }
+  return {
+    image: data.keys?.image || emptyHint,
+    higgsfield: data.keys?.higgsfield || emptyHint,
+    adobe: data.keys?.adobe || emptyHint,
+    cursor: data.keys?.cursor || emptyHint,
+  }
+}
+
+/** Save / clear per-user plugin API keys (encrypted on the server). */
+export async function saveDeepseekChatPluginKeys(opts: {
+  keys?: Partial<Record<DeepseekChatPluginKeyId, string>>
+  clear?: DeepseekChatPluginKeyId[]
+}): Promise<Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint>> {
+  const res = await apiFetch('/chat/plugin-keys', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...(opts.keys && Object.keys(opts.keys).length ? { keys: opts.keys } : null),
+      ...(opts.clear?.length ? { clear: opts.clear } : null),
+    }),
+  })
+  if (!res.ok) await throwApiError(res, 'Failed to save plugin keys')
+  const data = (await res.json()) as { keys?: Record<string, DeepseekChatPluginKeyHint> }
+  const emptyHint = { set: false }
+  return {
+    image: data.keys?.image || emptyHint,
+    higgsfield: data.keys?.higgsfield || emptyHint,
+    adobe: data.keys?.adobe || emptyHint,
+    cursor: data.keys?.cursor || emptyHint,
+  }
 }

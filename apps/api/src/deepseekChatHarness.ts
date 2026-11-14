@@ -18,6 +18,7 @@ import {
   type DeepseekChatMessage,
 } from './deepseekChat.js'
 import { buildDeepseekChatSystem, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
+import { buildPluginTools } from './deepseekChatMcp.js'
 import { DEEPSEEK_CHAT_TOOLS, executeDeepseekChatTool } from './deepseekChatTools.js'
 
 export const DEEPSEEK_CHAT_MAX_TOOL_ROUNDS = 10
@@ -44,6 +45,7 @@ export type DeepseekChatHarnessEvent =
   | { kind: 'sources'; sources: { url: string; title: string }[] }
   | { kind: 'search_step'; step: DeepseekChatSearchStep }
   | { kind: 'title'; title: string }
+  | { kind: 'image'; url: string; prompt: string; id: string }
 
 export type DeepseekChatHarnessOptions = {
   thinkingEnabled?: boolean
@@ -51,6 +53,10 @@ export type DeepseekChatHarnessOptions = {
   prompt: DeepseekChatPromptContext
   signal?: AbortSignal
   fileIds?: string[]
+  /** Enabled plugin ids (`image`, `mcp:<id>`). */
+  plugins?: string[]
+  /** Per-user BYOK secrets for image + MCP presets. */
+  pluginCreds?: import('./deepseekChatPluginKeys.js').ChatPluginCredentials
 }
 
 type ToolCall = {
@@ -75,8 +81,8 @@ type WireMsg =
   | { role: 'tool'; tool_call_id: string; content: string }
 
 /** Function tools always; native web tools when Search is on and host supports them. */
-export function buildDeepseekChatToolList(searchEnabled: boolean): unknown[] {
-  const tools: unknown[] = [...DEEPSEEK_CHAT_TOOLS]
+export function buildDeepseekChatToolList(searchEnabled: boolean, pluginTools: unknown[] = []): unknown[] {
+  const tools: unknown[] = [...DEEPSEEK_CHAT_TOOLS, ...pluginTools]
   if (searchEnabled && deepseekChatSupportsNativeWebTools()) {
     tools.push(...DEEPSEEK_CHAT_WEB_TOOLS)
   }
@@ -301,7 +307,8 @@ export async function* streamDeepseekChatHarness(
   const thinkingEnabled = opts.thinkingEnabled !== false
   const searchEnabled = opts.searchEnabled === true
   const useNativeWeb = searchEnabled && deepseekChatSupportsNativeWebTools()
-  const tools = buildDeepseekChatToolList(searchEnabled)
+  const pluginTools = await buildPluginTools(opts.plugins, opts.signal, opts.pluginCreds)
+  const tools = buildDeepseekChatToolList(searchEnabled, pluginTools)
   const deepseekHost = deepseekChatUsesThinking()
 
   const msgs: WireMsg[] = seedWireMessages(messages, opts.prompt, searchEnabled, opts.fileIds)
@@ -309,6 +316,7 @@ export async function* streamDeepseekChatHarness(
   let announcedThinking = false
   let announcedSearching = false
   const allSources = new Map<string, string>()
+  const pendingImages: Array<{ url: string; prompt: string; id: string }> = []
 
   for (let round = 0; round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS; round += 1) {
     if (opts.signal?.aborted) {
@@ -466,12 +474,20 @@ export async function* streamDeepseekChatHarness(
         const result = await executeDeepseekChatTool(call.function.name, call.function.arguments || '{}', {
           ...opts.prompt,
           signal: opts.signal,
+          pluginCreds: opts.pluginCreds,
+          onImage: (image) => {
+            pendingImages.push(image)
+          },
         })
         msgs.push({
           role: 'tool',
           tool_call_id: call.id,
           content: result,
         })
+      }
+      while (pendingImages.length) {
+        const image = pendingImages.shift()!
+        yield { kind: 'image', ...image }
       }
       continue
     }

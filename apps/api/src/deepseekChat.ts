@@ -39,6 +39,11 @@ export const DeepseekChatBodySchema = z.object({
   locale: z.string().trim().max(32).optional(),
   /** Convenience: merge onto the last user message if that row omitted fileIds. */
   fileIds: z.array(z.string().regex(/^file-api-/)).max(5).optional(),
+  /**
+   * Enabled chat plugins (`image`, `mcp:<id>`). Omit = default-enabled configured builtins.
+   * Empty array = no plugin tools.
+   */
+  plugins: z.array(z.string().trim().min(1).max(64)).max(16).optional(),
 })
 
 export type DeepseekChatMessage = z.infer<typeof DeepseekChatMessageSchema>

@@ -41,6 +41,8 @@ const SKILLS_TOOLS = [
   '- Weather: get_weather (Open-Meteo).',
   '- Web page: fetch_url (public https only).',
   '- JyutTranslate: jyut_plan_limits, jyut_phrase_lookup (en↔yue offline only), jyut_learn_hint.',
+  '- Image (when enabled): generate_image — then paste the returned markdown into your reply.',
+  '- Generation MCPs (when enabled): Higgsfield / Adobe / Cursor tools are namespaced mcp__<id>__… — prefer them for video or multi-step creative work; include any returned image markdown in your reply.',
   'Do not invent JyutTranslate plan numbers — call jyut_plan_limits.',
   'For Cantonese/Jyutping phrase help, try jyut_phrase_lookup first; if miss, answer normally and suggest Solo translate in the app.',
 ].join('\n')

@@ -105,6 +105,12 @@ import { getPushConfig, subscribePush, unsubscribePush } from './pushRoutes.js'
 import { scheduleHouseholdUsageBackfillOnStartup } from './startupBackfill.js'
 import { postDeepseekChat } from './deepseekChatRoutes.js'
 import { postDeepseekChatFile } from './deepseekChatFiles.js'
+import {
+  getDeepseekChatGeneratedImage,
+  getDeepseekChatPluginKeys,
+  getDeepseekChatPlugins,
+  putDeepseekChatPluginKeys,
+} from './deepseekChatPluginsRoutes.js'
 import { getIncidentBanner } from './appSettings.js'
 import { pushConfigured } from './pushNotifications.js'
 import { getOfflinePack, isOfflinePackId, offlinePackManifest } from './offlinePack.js'
@@ -1268,6 +1274,10 @@ app.post('/api/admin/push/send', adminSendPush)
 app.post('/api/admin/practice-partner/chat', adminPracticePartnerChat)
 app.post('/api/chat', postDeepseekChat)
 app.post('/api/chat/files', postDeepseekChatFile)
+app.get('/api/chat/plugins', getDeepseekChatPlugins)
+app.get('/api/chat/plugin-keys', getDeepseekChatPluginKeys)
+app.put('/api/chat/plugin-keys', putDeepseekChatPluginKeys)
+app.get('/api/chat/generated-images/:id', getDeepseekChatGeneratedImage)
 
 scheduleHouseholdUsageBackfillOnStartup()
 

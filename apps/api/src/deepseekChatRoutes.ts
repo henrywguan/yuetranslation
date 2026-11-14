@@ -29,6 +29,8 @@ import {
   deepseekChatSupportsSearch,
   streamDeepseekChatWithSearch,
 } from './deepseekChatSearch.js'
+import { loadChatPluginCredentials } from './deepseekChatPluginKeys.js'
+import type { ChatPluginCredentials } from './deepseekChatPluginKeys.js'
 import { env, openaiConfigured } from './env.js'
 import { resolveEntitlement } from './entitlements.js'
 import { allowUserRateOrReject } from './guestRateLimit.js'
@@ -57,6 +59,8 @@ async function* chatStreamEvents(
   prompt: DeepseekChatPromptContext,
   signal?: AbortSignal,
   fileIds?: string[],
+  plugins?: string[],
+  pluginCreds?: ChatPluginCredentials,
 ): AsyncGenerator<
   | { kind: 'thinking' }
   | { kind: 'searching' }
@@ -64,7 +68,8 @@ async function* chatStreamEvents(
   | { kind: 'delta'; text: string }
   | { kind: 'sources'; sources: { url: string; title: string }[] }
   | { kind: 'search_step'; step: unknown }
-  | { kind: 'title'; title: string },
+  | { kind: 'title'; title: string }
+  | { kind: 'image'; url: string; prompt: string; id: string },
   void,
   unknown
 > {
@@ -76,6 +81,8 @@ async function* chatStreamEvents(
       prompt: { ...prompt, searchEnabled },
       signal,
       fileIds,
+      plugins,
+      pluginCreds,
     })) {
       harnessEmitted = true
       yield event
@@ -191,6 +198,8 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     searchEnabled,
   }
   const fileIds = parsed.data.fileIds
+  const plugins = parsed.data.plugins
+  const pluginCreds = await loadChatPluginCredentials(auth.userId)
 
   try {
     if (!stream) {
@@ -202,6 +211,8 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
             searchEnabled,
             prompt: promptBase,
             fileIds,
+            plugins,
+            pluginCreds,
           },
         )
         void addDeepseekChatTurns(auth.userId, 1)
@@ -261,6 +272,8 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         promptBase,
         upstream.signal,
         fileIds,
+        plugins,
+        pluginCreds,
       )) {
         if (upstream.signal.aborted || res.writableEnded) break
         if (event.kind === 'thinking') {
@@ -287,8 +300,17 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
           writeSse(res, `data: ${JSON.stringify({ title: event.title })}\n\n`)
           continue
         }
-        full += event.text
-        writeSse(res, `data: ${JSON.stringify({ delta: event.text })}\n\n`)
+        if (event.kind === 'image') {
+          writeSse(
+            res,
+            `data: ${JSON.stringify({ image: { url: event.url, prompt: event.prompt, id: event.id } })}\n\n`,
+          )
+          continue
+        }
+        if (event.kind === 'delta') {
+          full += event.text
+          writeSse(res, `data: ${JSON.stringify({ delta: event.text })}\n\n`)
+        }
       }
 
       if (upstream.signal.aborted || res.writableEnded) {

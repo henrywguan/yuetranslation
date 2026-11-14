@@ -4,6 +4,9 @@
 # Preview deployment for the PR head SHA. No Vercel token required — uses
 # GitHub Deployments + commit statuses published by vercel[bot].
 #
+# If Vercel skips via Ignored Build Step (commit status success + that
+# description), treat as green — there is no Preview Deployment to wait for.
+#
 # Companion Cursor Automation brief: docs/agents/vercel-deploy-guardian.md
 
 name: Vercel preview
@@ -27,7 +30,40 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Skip when Vercel Ignored Build Step
+        id: ignored
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          # Poll briefly — vercel[bot] status often lands before Deployments.
+          for i in $(seq 1 12); do
+            json=$(gh api "repos/${{ github.repository }}/commits/${SHA}/status")
+            desc=$(echo "$json" | jq -r '.statuses[]? | select(.context=="Vercel") | .description // empty' | head -n1)
+            state=$(echo "$json" | jq -r '.statuses[]? | select(.context=="Vercel") | .state // empty' | head -n1)
+            echo "attempt=${i} vercel.state=${state:-none} desc=${desc:-none}"
+            if [ "${state}" = "success" ] && echo "${desc}" | grep -qi 'Ignored Build Step'; then
+              echo "Vercel skipped this SHA via Ignored Build Step — no Preview to wait for."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            # Real failure from Vercel — fail fast (do not wait 15m for a missing Deployment).
+            if [ "${state}" = "failure" ] || [ "${state}" = "error" ]; then
+              echo "::error::Vercel status is ${state}: ${desc}"
+              exit 1
+            fi
+            # Building / pending / no status yet — keep waiting a bit, then fall through to wait-for-deployment.
+            if [ "${state}" = "success" ] && [ -n "${desc}" ] && ! echo "${desc}" | grep -qi 'Ignored Build Step'; then
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
       - name: Wait for Vercel Preview deployment
+        if: steps.ignored.outputs.skip != 'true'
         id: vercel
         uses: vercel/wait-for-deployment-action@0e2b0c5c5cce31f1648108aeec56467187aca037
         with:
@@ -38,6 +74,7 @@ jobs:
           require-deployment-id: false
 
       - name: Confirm Preview URL responds
+        if: steps.ignored.outputs.skip != 'true'
         env:
           URL: ${{ steps.vercel.outputs.deployment-url }}
           STATE: ${{ steps.vercel.outputs.deployment-state }}

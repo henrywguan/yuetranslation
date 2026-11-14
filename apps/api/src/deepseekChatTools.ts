@@ -6,9 +6,17 @@ import dns from 'node:dns/promises'
 import { dictionaryTranslate } from './canto/dictionary.js'
 import { env } from './env.js'
 import { resolveTimeZone, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
+import { randomUUID } from 'node:crypto'
+import { generateChatImage } from './deepseekChatImage.js'
+import { callMcpTool, extractImageUrlsFromMcpResult, parseMcpToolName } from './deepseekChatMcp.js'
+import type { ChatPluginCredentials } from './deepseekChatPluginKeys.js'
 
 export type ChatToolContext = DeepseekChatPromptContext & {
   signal?: AbortSignal
+  /** Optional sink so the harness can emit SSE image events. */
+  onImage?: (image: { url: string; prompt: string; id: string }) => void
+  /** Per-user BYOK secrets for image + MCP presets. */
+  pluginCreds?: ChatPluginCredentials
 }
 
 type OpenAiTool = {
@@ -167,6 +175,8 @@ export const DEEPSEEK_CHAT_TOOLS: OpenAiTool[] = [
     },
   },
 ]
+
+/** Built-in plugin tools are merged at request time — see deepseekChatMcp / deepseekChatImage. */
 
 function ymdInZone(d: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -557,8 +567,46 @@ export async function executeDeepseekChatTool(
           access: 'Signed-in Free+ from Account Hub (Beta) or open #/learn directly.',
           note: 'Jyutping voyage paced to Open Cantonese Pronunciation Guide.',
         })
-      default:
+      case 'generate_image': {
+        const prompt = String(args.prompt || '').trim()
+        const sizeRaw = String(args.size || '1024x1024')
+        const size =
+          sizeRaw === '1024x1792' || sizeRaw === '1792x1024' ? sizeRaw : ('1024x1024' as const)
+        const { markdown, image } = await generateChatImage(prompt, {
+          signal: ctx.signal,
+          size,
+          apiKey: ctx.pluginCreds?.image,
+        })
+        ctx.onImage?.({ url: image.url, prompt: image.prompt, id: image.id })
+        return JSON.stringify({
+          ok: true,
+          markdown,
+          url: image.url,
+          prompt: image.prompt,
+          note: 'Include the markdown string in your assistant reply so the user sees the image.',
+        })
+      }
+      default: {
+        const mcp = parseMcpToolName(name)
+        if (mcp) {
+          const result = await callMcpTool(
+            mcp.serverId,
+            mcp.toolName,
+            args,
+            ctx.signal,
+            ctx.pluginCreds,
+          )
+          for (const url of extractImageUrlsFromMcpResult(result)) {
+            ctx.onImage?.({
+              url,
+              prompt: `${mcp.serverId}/${mcp.toolName}`,
+              id: randomUUID(),
+            })
+          }
+          return result
+        }
         return JSON.stringify({ error: `Unknown tool: ${name}` })
+      }
     }
   } catch (err) {
     return JSON.stringify({ error: err instanceof Error ? err.message : 'Tool failed' })
