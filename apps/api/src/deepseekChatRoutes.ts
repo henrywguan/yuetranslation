@@ -85,8 +85,10 @@ async function* chatStreamEvents(
   } catch (err) {
     if (signal?.aborted) throw err
     const message = err instanceof Error ? err.message : String(err)
+    const hasFiles =
+      Boolean(fileIds?.length) || messages.some((m) => Array.isArray(m.fileIds) && m.fileIds.length > 0)
     // Attachments are harness-only; do not silently drop them on fallback.
-    if (fileIds?.length) throw err
+    if (hasFiles) throw err
     if (/content safety|chat_refusal|blocked/i.test(message)) throw err
     // Partial SSE already went to the client — never concatenate a second model.
     if (harnessEmitted) throw err
@@ -215,7 +217,10 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
           return
         }
         // Attachments only exist on the harness path — do not retry without them.
-        if (fileIds?.length) {
+        const hasFiles =
+          Boolean(fileIds?.length) ||
+          parsed.data.messages.some((m) => Array.isArray(m.fileIds) && m.fileIds.length > 0)
+        if (hasFiles) {
           res.status(502).json({ message })
           return
         }
