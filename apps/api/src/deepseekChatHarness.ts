@@ -55,6 +55,8 @@ export type DeepseekChatHarnessOptions = {
   fileIds?: string[]
   /** Enabled plugin ids (`image`, `mcp:<id>`). */
   plugins?: string[]
+  /** Per-user BYOK secrets for image + MCP presets. */
+  pluginCreds?: import('./deepseekChatPluginKeys.js').ChatPluginCredentials
 }
 
 type ToolCall = {
@@ -305,7 +307,7 @@ export async function* streamDeepseekChatHarness(
   const thinkingEnabled = opts.thinkingEnabled !== false
   const searchEnabled = opts.searchEnabled === true
   const useNativeWeb = searchEnabled && deepseekChatSupportsNativeWebTools()
-  const pluginTools = await buildPluginTools(opts.plugins, opts.signal)
+  const pluginTools = await buildPluginTools(opts.plugins, opts.signal, opts.pluginCreds)
   const tools = buildDeepseekChatToolList(searchEnabled, pluginTools)
   const deepseekHost = deepseekChatUsesThinking()
 
@@ -472,6 +474,7 @@ export async function* streamDeepseekChatHarness(
         const result = await executeDeepseekChatTool(call.function.name, call.function.arguments || '{}', {
           ...opts.prompt,
           signal: opts.signal,
+          pluginCreds: opts.pluginCreds,
           onImage: (image) => {
             pendingImages.push(image)
           },

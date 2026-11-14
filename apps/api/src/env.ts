@@ -110,6 +110,11 @@ export const env = {
   chatMcpCursorUrl: trimUrl(process.env.YUE_CHAT_MCP_CURSOR_URL || ''),
   chatMcpCursorToken: (process.env.YUE_CHAT_MCP_CURSOR_TOKEN || '').trim(),
   /**
+   * AES key material for encrypting per-user #/chat plugin secrets (BYOK).
+   * Defaults to hashing SUPABASE_SERVICE_ROLE when unset.
+   */
+  chatSecretsKey: (process.env.YUE_CHAT_SECRETS_KEY || '').trim(),
+  /**
    * Allow loading dictionaries under non-commercial licenses (words.hk).
    * Keep off for paid/ad-supported commercial deployments unless you have a separate license.
    */

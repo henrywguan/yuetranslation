@@ -10,6 +10,11 @@ import {
   parseMcpToolName,
 } from './deepseekChatMcp.js'
 import { chatImageConfigured } from './deepseekChatImage.js'
+import {
+  credentialsToHints,
+  parseChatPluginCredentialsBody,
+  saveChatPluginCredentials,
+} from './deepseekChatPluginKeys.js'
 
 const plugins = listChatPlugins()
 assert.ok(plugins.some((p) => p.id === 'image'), 'Image plugin is in the marketplace')
@@ -39,6 +44,28 @@ assert.deepEqual(
   extractImageUrlsFromMcpResult('See ![cat](https://cdn.example/a.png) and https://cdn.example/b.jpg'),
   ['https://cdn.example/a.png', 'https://cdn.example/b.jpg'],
 )
+
+const withUserImage = listChatPlugins({ image: 'sk-test-user-key' })
+assert.equal(withUserImage.find((p) => p.id === 'image')?.configured, true, 'User image key enables plugin')
+
+const withUserHf = listChatPlugins({ higgsfield: 'hf-test-token' })
+assert.equal(withUserHf.find((p) => p.id === 'mcp:higgsfield')?.configured, true)
+
+const parsedKeys = parseChatPluginCredentialsBody({
+  keys: { image: 'sk-abc', higgsfield: ' tok ' },
+  clear: ['adobe'],
+})
+assert.equal(parsedKeys.ok, true)
+if (parsedKeys.ok) {
+  assert.equal(parsedKeys.creds.image, 'sk-abc')
+  assert.equal(parsedKeys.creds.higgsfield, 'tok')
+  assert.deepEqual(parsedKeys.clear, ['adobe'])
+}
+const hints = credentialsToHints({ image: 'sk-abcdefgh' })
+assert.equal(hints.image.set, true)
+assert.equal(hints.image.hint, 'efgh')
+const savedMem = await saveChatPluginCredentials('smoke-user-byok', { adobe: 'adobe-tok' })
+assert.equal(savedMem.adobe, 'adobe-tok')
 
 const toolsOff = await buildPluginTools([])
 assert.equal(toolsOff.length, 0, 'Empty plugins array disables plugin tools')
@@ -86,6 +113,7 @@ const appSrc = readFileSync(
   'utf8',
 )
 assert.match(appSrc, /\/api\/chat\/plugins/, 'Plugins catalog route registered')
+assert.match(appSrc, /plugin-keys/, 'BYOK plugin-keys routes registered')
 assert.match(appSrc, /generated-images/, 'Generated image route registered')
 
 const envSrc = readFileSync(

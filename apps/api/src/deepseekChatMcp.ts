@@ -11,7 +11,8 @@
  * per-user OAuth in #/chat. Paste a token from your MCP client session or API gateway.
  */
 import { env } from './env.js'
-import { chatImageConfigured } from './deepseekChatImage.js'
+import { chatImageConfiguredWith } from './deepseekChatImage.js'
+import type { ChatPluginCredentials } from './deepseekChatPluginKeys.js'
 
 export type ChatPluginKind = 'builtin' | 'mcp'
 
@@ -95,7 +96,9 @@ export const GENERATION_MCP_PRESETS = [
 
 export type GenerationMcpPresetId = (typeof GENERATION_MCP_PRESETS)[number]['id']
 
-function presetToken(id: GenerationMcpPresetId): string {
+function presetToken(id: GenerationMcpPresetId, creds?: ChatPluginCredentials): string {
+  const user = creds?.[id]?.trim()
+  if (user) return user
   if (id === 'higgsfield') return env.chatMcpHiggsfieldToken
   if (id === 'adobe') return env.chatMcpAdobeToken
   return env.chatMcpCursorToken
@@ -146,10 +149,10 @@ function parseCustomMcpServers(): McpServerConfig[] {
   }
 }
 
-function buildGenerationPresetServers(): McpServerConfig[] {
+function buildGenerationPresetServers(creds?: ChatPluginCredentials): McpServerConfig[] {
   return GENERATION_MCP_PRESETS.map((preset) => {
     const url = presetUrl(preset.id, preset.defaultUrl).trim()
-    const token = presetToken(preset.id).trim()
+    const token = presetToken(preset.id, creds).trim()
     const comingSoon = !url
     const ready = Boolean(url && token)
     const status: ChatPluginStatus = comingSoon
@@ -175,8 +178,8 @@ function buildGenerationPresetServers(): McpServerConfig[] {
 /**
  * All MCP server rows (presets + custom). Custom rows with the same id override presets.
  */
-export function listConfiguredMcpServers(): McpServerConfig[] {
-  const presets = buildGenerationPresetServers()
+export function listConfiguredMcpServers(creds?: ChatPluginCredentials): McpServerConfig[] {
+  const presets = buildGenerationPresetServers(creds)
   const custom = parseCustomMcpServers()
   const byId = new Map<string, McpServerConfig>()
   for (const p of presets) byId.set(p.id, p)
@@ -195,23 +198,25 @@ export function listConfiguredMcpServers(): McpServerConfig[] {
 }
 
 /** Marketplace catalog for GET /api/chat/plugins. */
-export function listChatPlugins(): ChatPluginInfo[] {
+export function listChatPlugins(creds?: ChatPluginCredentials): ChatPluginInfo[] {
+  const imageOk = chatImageConfiguredWith(creds?.image)
   const builtins: ChatPluginInfo[] = [
     {
       id: 'image',
       name: 'Image generation',
-      description: 'Create images with OpenAI Images (DALL·E / gpt-image) via the generate_image tool.',
+      description:
+        'Create images with OpenAI Images (DALL·E / gpt-image) via the generate_image tool. Add your key in Plugins → API keys.',
       kind: 'builtin',
       defaultEnabled: true,
-      configured: chatImageConfigured(),
+      configured: imageOk,
       toolCount: 1,
       category: 'generation',
       auth: 'bearer',
-      status: chatImageConfigured() ? 'ready' : 'needs_token',
+      status: imageOk ? 'ready' : 'needs_token',
     },
   ]
 
-  const remote = listConfiguredMcpServers().map((s) => ({
+  const remote = listConfiguredMcpServers(creds).map((s) => ({
     id: `mcp:${s.id}`,
     name: s.name,
     description: s.description || `Remote MCP server at ${s.url}`,
@@ -310,17 +315,19 @@ const TOOL_CACHE_MS = 60_000
 export async function listMcpServerTools(
   serverId: string,
   signal?: AbortSignal,
+  creds?: ChatPluginCredentials,
 ): Promise<McpTool[]> {
-  const server = listConfiguredMcpServers().find((s) => s.id === serverId)
+  const server = listConfiguredMcpServers(creds).find((s) => s.id === serverId)
   if (!server) throw new Error(`Unknown MCP server: ${serverId}`)
   if (!server.ready) {
     throw new Error(
       server.status === 'coming_soon'
         ? `MCP ${serverId} is coming soon`
-        : `MCP ${serverId} needs a Bearer token`,
+        : `MCP ${serverId} needs a Bearer token — add it in Plugins → API keys.`,
     )
   }
-  const cached = toolCache.get(serverId)
+  const cacheKey = `${serverId}:${server.headers?.Authorization ? 'auth' : 'anon'}`
+  const cached = toolCache.get(cacheKey)
   if (cached && Date.now() - cached.at < TOOL_CACHE_MS) return cached.tools
 
   try {
@@ -341,7 +348,7 @@ export async function listMcpServerTools(
 
   const listed = await mcpJsonRpc<{ tools?: McpTool[] }>(server, 'tools/list', {}, signal)
   const tools = Array.isArray(listed?.tools) ? listed.tools.slice(0, 48) : []
-  toolCache.set(serverId, { at: Date.now(), tools })
+  toolCache.set(cacheKey, { at: Date.now(), tools })
   return tools
 }
 
@@ -350,8 +357,9 @@ export async function callMcpTool(
   toolName: string,
   args: Record<string, unknown>,
   signal?: AbortSignal,
+  creds?: ChatPluginCredentials,
 ): Promise<string> {
-  const server = listConfiguredMcpServers().find((s) => s.id === serverId)
+  const server = listConfiguredMcpServers(creds).find((s) => s.id === serverId)
   if (!server) throw new Error(`Unknown MCP server: ${serverId}`)
   const result = await mcpJsonRpc<{
     content?: Array<{ type?: string; text?: string; data?: string; mimeType?: string }>
@@ -406,8 +414,9 @@ const IMAGE_TOOL: OpenAiTool = {
 export async function buildPluginTools(
   plugins: string[] | undefined,
   signal?: AbortSignal,
+  creds?: ChatPluginCredentials,
 ): Promise<OpenAiTool[]> {
-  const catalog = listChatPlugins()
+  const catalog = listChatPlugins(creds)
   const enabledIds =
     plugins === undefined
       ? catalog.filter((p) => p.defaultEnabled && p.configured).map((p) => p.id)
@@ -416,7 +425,7 @@ export async function buildPluginTools(
 
   const tools: OpenAiTool[] = []
 
-  if (enabled.has('image') && chatImageConfigured()) {
+  if (enabled.has('image') && chatImageConfiguredWith(creds?.image)) {
     tools.push(IMAGE_TOOL)
   }
 
@@ -424,7 +433,7 @@ export async function buildPluginTools(
     if (plugin.kind !== 'mcp' || !enabled.has(plugin.id) || !plugin.configured) continue
     const serverId = plugin.id.replace(/^mcp:/, '')
     try {
-      const mcpTools = await listMcpServerTools(serverId, signal)
+      const mcpTools = await listMcpServerTools(serverId, signal, creds)
       for (const t of mcpTools) {
         tools.push({
           type: 'function',

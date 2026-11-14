@@ -35,10 +35,16 @@ export function chatImageConfigured(): boolean {
   return Boolean(env.openaiImageApiKey)
 }
 
-export function chatImageClient(): OpenAI | null {
-  if (!chatImageConfigured()) return null
+/** Env key and/or per-user BYOK OpenAI Images key. */
+export function chatImageConfiguredWith(userKey?: string): boolean {
+  return Boolean((userKey || '').trim() || env.openaiImageApiKey)
+}
+
+export function chatImageClient(userKey?: string): OpenAI | null {
+  const apiKey = (userKey || '').trim() || env.openaiImageApiKey
+  if (!apiKey) return null
   return new OpenAI({
-    apiKey: env.openaiImageApiKey,
+    apiKey,
     ...(env.openaiImageBaseUrl ? { baseURL: env.openaiImageBaseUrl } : {}),
   })
 }
@@ -65,12 +71,17 @@ function publicImagePath(id: string): string {
  */
 export async function generateChatImage(
   prompt: string,
-  opts?: { signal?: AbortSignal; size?: '1024x1024' | '1024x1792' | '1792x1024' },
+  opts?: {
+    signal?: AbortSignal
+    size?: '1024x1024' | '1024x1792' | '1792x1024'
+    /** Per-user BYOK OpenAI Images key. */
+    apiKey?: string
+  },
 ): Promise<{ markdown: string; image: GeneratedChatImage }> {
-  const client = chatImageClient()
+  const client = chatImageClient(opts?.apiKey)
   if (!client) {
     throw new Error(
-      'Image generation is not configured. Set OPENAI_IMAGE_API_KEY (or OPENAI_API_KEY with an Images-capable host).',
+      'Image generation is not configured. Add an OpenAI Images key in Plugins → API keys (or set OPENAI_IMAGE_API_KEY on the server).',
     )
   }
   const cleaned = prompt.trim().slice(0, 3_000)

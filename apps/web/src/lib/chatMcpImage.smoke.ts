@@ -16,14 +16,20 @@ assert.match(md, /type: 'image'/, 'Standalone image blocks parsed')
 
 const api = readFileSync(join(here, './api.ts'), 'utf8')
 assert.match(api, /fetchDeepseekChatPlugins/, 'Client loads plugin catalog')
+assert.match(api, /saveDeepseekChatPluginKeys/, 'Client saves BYOK plugin keys')
 assert.match(api, /onImage/, 'Client handles image SSE')
 assert.match(api, /plugins/, 'Client sends plugins in chat body')
 
 const page = readFileSync(join(here, '../pages/ChatPage.tsx'), 'utf8')
 assert.match(page, /enabledPlugins/, 'ChatPage plugin toggles')
 assert.match(page, /ds-chat-plugins/, 'Plugins panel markup')
+assert.match(page, /ChatPluginKeysModal|API keys/, 'BYOK keys modal entry')
 assert.match(page, /onImage:/, 'ChatPage appends image markdown')
-assert.match(page, /coming soon|needs token|is-gen/, 'Generation MCP status UI')
+assert.match(page, /coming soon|needs key|is-gen/, 'Generation MCP status UI')
+
+const modal = readFileSync(join(here, '../components/ChatPluginKeysModal.tsx'), 'utf8')
+assert.match(modal, /Plugin API keys/, 'Keys modal title')
+assert.match(modal, /higgsfield/, 'Higgsfield key field')
 
 const mcpApi = readFileSync(
   join(here, '../../../api/src/deepseekChatMcp.ts'),

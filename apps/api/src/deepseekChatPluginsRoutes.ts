@@ -1,5 +1,5 @@
 /**
- * Chat plugins catalog + hosted generated-image bytes.
+ * Chat plugins catalog + BYOK keys + hosted generated-image bytes.
  */
 import type { Response } from 'express'
 import type { AuthedRequest } from './auth.js'
@@ -7,7 +7,14 @@ import { requireAuth } from './auth.js'
 import { canUseDeepseekChat } from './deepseekChat.js'
 import { getGeneratedChatImage } from './deepseekChatImage.js'
 import { listChatPlugins, listMcpServerTools } from './deepseekChatMcp.js'
+import {
+  credentialsToHints,
+  loadChatPluginCredentials,
+  parseChatPluginCredentialsBody,
+  saveChatPluginCredentials,
+} from './deepseekChatPluginKeys.js'
 import { resolveEntitlement } from './entitlements.js'
+import { allowUserRateOrReject } from './guestRateLimit.js'
 
 /** GET /api/chat/plugins — marketplace catalog for #/chat. */
 export async function getDeepseekChatPlugins(req: AuthedRequest, res: Response) {
@@ -19,13 +26,14 @@ export async function getDeepseekChatPlugins(req: AuthedRequest, res: Response) 
     return
   }
 
-  const plugins = listChatPlugins()
+  const creds = await loadChatPluginCredentials(auth.userId)
+  const plugins = listChatPlugins(creds)
   const enriched = []
   for (const p of plugins) {
     if (p.kind === 'mcp' && p.configured) {
       const serverId = p.id.replace(/^mcp:/, '')
       try {
-        const tools = await listMcpServerTools(serverId)
+        const tools = await listMcpServerTools(serverId, undefined, creds)
         enriched.push({ ...p, toolCount: tools.length, tools: tools.map((t) => t.name) })
       } catch (err) {
         enriched.push({
@@ -38,7 +46,50 @@ export async function getDeepseekChatPlugins(req: AuthedRequest, res: Response) 
       enriched.push(p)
     }
   }
-  res.json({ ok: true, plugins: enriched })
+  res.json({
+    ok: true,
+    plugins: enriched,
+    keyHints: credentialsToHints(creds),
+  })
+}
+
+/**
+ * GET /api/chat/plugin-keys — masked hints only (never raw secrets).
+ */
+export async function getDeepseekChatPluginKeys(req: AuthedRequest, res: Response) {
+  const auth = await requireAuth(req, res)
+  if (!auth) return
+  const entitlement = await resolveEntitlement(auth)
+  if (!canUseDeepseekChat(entitlement.plan, entitlement.isAdmin)) {
+    res.status(403).json({ message: 'DeepSeek Chat requires Family or Business.' })
+    return
+  }
+  const creds = await loadChatPluginCredentials(auth.userId)
+  res.json({ ok: true, keys: credentialsToHints(creds) })
+}
+
+/**
+ * PUT /api/chat/plugin-keys — save / clear BYOK secrets.
+ * Body: { keys?: { image?, higgsfield?, adobe?, cursor? }, clear?: string[] }
+ */
+export async function putDeepseekChatPluginKeys(req: AuthedRequest, res: Response) {
+  const auth = await requireAuth(req, res)
+  if (!auth) return
+  const entitlement = await resolveEntitlement(auth)
+  if (!canUseDeepseekChat(entitlement.plan, entitlement.isAdmin)) {
+    res.status(403).json({ message: 'DeepSeek Chat requires Family or Business.' })
+    return
+  }
+  if (!allowUserRateOrReject(res, auth.userId, 'chatPluginKeys', 30)) return
+
+  const parsed = parseChatPluginCredentialsBody(req.body)
+  if (!parsed.ok) {
+    res.status(400).json({ message: parsed.message })
+    return
+  }
+
+  const saved = await saveChatPluginCredentials(auth.userId, parsed.creds, parsed.clear)
+  res.json({ ok: true, keys: credentialsToHints(saved) })
 }
 
 /**

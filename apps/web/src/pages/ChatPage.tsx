@@ -12,11 +12,14 @@ import { DeepSeekMark } from '../components/DeepSeekMark'
 import { IosHomescreenTip } from '../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../components/PwaInstallButton'
 import { SpeakButton } from '../components/SpeakButton'
+import { ChatPluginKeysModal } from '../components/ChatPluginKeysModal'
 import {
   fetchDeepseekChatPlugins,
   streamDeepseekChat,
   uploadDeepseekChatFile,
   type DeepseekChatPlugin,
+  type DeepseekChatPluginKeyHint,
+  type DeepseekChatPluginKeyId,
 } from '../lib/api'
 import { extractChatArtifacts, relatedQuestionsFromReply, type ChatArtifact } from '../lib/chatArtifacts'
 import {
@@ -604,6 +607,16 @@ export function ChatPage() {
   const [pluginCatalog, setPluginCatalog] = useState<DeepseekChatPlugin[]>([])
   const [enabledPlugins, setEnabledPlugins] = useState<string[]>(() => readPluginIds() || ['image'])
   const [pluginsOpen, setPluginsOpen] = useState(false)
+  const [pluginKeyHints, setPluginKeyHints] = useState<
+    Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint>
+  >({
+    image: { set: false },
+    higgsfield: { set: false },
+    adobe: { set: false },
+    cursor: { set: false },
+  })
+  const [keysModalOpen, setKeysModalOpen] = useState(false)
+  const [keysFocusId, setKeysFocusId] = useState<DeepseekChatPluginKeyId | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -682,9 +695,10 @@ export function ChatPage() {
     let cancelled = false
     void (async () => {
       try {
-        const plugins = await fetchDeepseekChatPlugins()
+        const { plugins, keyHints } = await fetchDeepseekChatPlugins()
         if (cancelled) return
         setPluginCatalog(plugins)
+        setPluginKeyHints(keyHints)
         const stored = readPluginIds()
         if (!stored) {
           const defaults = plugins.filter((p) => p.defaultEnabled && p.configured).map((p) => p.id)
@@ -1580,92 +1594,143 @@ export function ChatPage() {
               {chatQuotaLabel ? <span className="ds-chat-quota">{chatQuotaLabel}</span> : null}
             </div>
             {pluginsOpen ? (
-              <ul className="ds-chat-plugins" aria-label="Chat plugins">
-                {(pluginCatalog.length
-                  ? pluginCatalog
-                  : [
-                      {
-                        id: 'image',
-                        name: 'Image generation',
-                        description: 'OpenAI Images (set OPENAI_IMAGE_API_KEY on the API).',
-                        kind: 'builtin' as const,
-                        configured: true,
-                        category: 'generation' as const,
-                        status: 'ready' as const,
-                      },
-                      {
-                        id: 'mcp:higgsfield',
-                        name: 'Higgsfield',
-                        description: 'Image, video, characters & audio (needs MCP token).',
-                        kind: 'mcp' as const,
-                        configured: false,
-                        category: 'generation' as const,
-                        status: 'needs_token' as const,
-                      },
-                      {
-                        id: 'mcp:adobe',
-                        name: 'Adobe for creativity',
-                        description: 'Firefly / Photoshop MCP (needs MCP token).',
-                        kind: 'mcp' as const,
-                        configured: false,
-                        category: 'generation' as const,
-                        status: 'needs_token' as const,
-                      },
-                      {
-                        id: 'mcp:cursor',
-                        name: 'Cursor',
-                        description: 'Cursor remote generation MCP — coming soon.',
-                        kind: 'mcp' as const,
-                        configured: false,
-                        category: 'generation' as const,
-                        status: 'coming_soon' as const,
-                      },
-                    ]
-                ).map((p) => {
-                  const on = enabledPlugins.includes(p.id)
-                  const status =
-                    p.status ||
-                    (p.configured ? 'ready' : p.id === 'mcp:cursor' ? 'coming_soon' : 'needs_token')
-                  const statusLabel =
-                    status === 'coming_soon'
-                      ? 'coming soon'
-                      : status === 'needs_token'
-                        ? 'needs token'
-                        : on
-                          ? 'on'
-                          : 'off'
-                  return (
-                    <li
-                      key={p.id}
-                      className={`ds-chat-plugin${on ? ' is-on' : ''}${p.configured ? '' : ' is-off'}${
-                        p.category === 'generation' ? ' is-gen' : ''
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        disabled={!p.configured}
-                        title={p.error || p.description}
-                        onClick={() => {
-                          setEnabledPlugins((prev) => {
-                            const next = on ? prev.filter((id) => id !== p.id) : [...prev, p.id]
-                            writePluginIds(next)
-                            return next
-                          })
-                        }}
+              <div className="ds-chat-plugins-wrap">
+                <div className="ds-chat-plugins-toolbar">
+                  <button
+                    type="button"
+                    className="ds-chat-keys-open"
+                    onClick={() => {
+                      setKeysFocusId(null)
+                      setKeysModalOpen(true)
+                    }}
+                  >
+                    API keys
+                  </button>
+                </div>
+                <ul className="ds-chat-plugins" aria-label="Chat plugins">
+                  {(pluginCatalog.length
+                    ? pluginCatalog
+                    : [
+                        {
+                          id: 'image',
+                          name: 'Image generation',
+                          description: 'OpenAI Images — add your key via API keys.',
+                          kind: 'builtin' as const,
+                          configured: false,
+                          category: 'generation' as const,
+                          status: 'needs_token' as const,
+                        },
+                        {
+                          id: 'mcp:higgsfield',
+                          name: 'Higgsfield',
+                          description: 'Image, video, characters & audio (needs MCP token).',
+                          kind: 'mcp' as const,
+                          configured: false,
+                          category: 'generation' as const,
+                          status: 'needs_token' as const,
+                        },
+                        {
+                          id: 'mcp:adobe',
+                          name: 'Adobe for creativity',
+                          description: 'Firefly / Photoshop MCP (needs MCP token).',
+                          kind: 'mcp' as const,
+                          configured: false,
+                          category: 'generation' as const,
+                          status: 'needs_token' as const,
+                        },
+                        {
+                          id: 'mcp:cursor',
+                          name: 'Cursor',
+                          description: 'Cursor remote generation MCP — coming soon.',
+                          kind: 'mcp' as const,
+                          configured: false,
+                          category: 'generation' as const,
+                          status: 'coming_soon' as const,
+                        },
+                      ]
+                  ).map((p) => {
+                    const on = enabledPlugins.includes(p.id)
+                    const status =
+                      p.status ||
+                      (p.configured ? 'ready' : p.id === 'mcp:cursor' ? 'coming_soon' : 'needs_token')
+                    const statusLabel =
+                      status === 'coming_soon'
+                        ? 'coming soon'
+                        : status === 'needs_token'
+                          ? 'needs key'
+                          : on
+                            ? 'on'
+                            : 'off'
+                    const keyId: DeepseekChatPluginKeyId | null =
+                      p.id === 'image'
+                        ? 'image'
+                        : p.id === 'mcp:higgsfield'
+                          ? 'higgsfield'
+                          : p.id === 'mcp:adobe'
+                            ? 'adobe'
+                            : p.id === 'mcp:cursor'
+                              ? 'cursor'
+                              : null
+                    return (
+                      <li
+                        key={p.id}
+                        className={`ds-chat-plugin${on ? ' is-on' : ''}${p.configured ? '' : ' is-off'}${
+                          p.category === 'generation' ? ' is-gen' : ''
+                        }`}
                       >
-                        <span className="ds-chat-plugin-name">{p.name}</span>
-                        <span className="ds-chat-plugin-meta">
-                          {p.kind === 'mcp' ? 'MCP' : 'Built-in'}
-                          {p.category === 'generation' ? ' · Gen' : ''}
-                          {` · ${statusLabel}`}
-                        </span>
-                        <span className="ds-chat-plugin-desc">{p.description}</span>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
+                        <button
+                          type="button"
+                          disabled={status === 'coming_soon'}
+                          title={
+                            !p.configured && keyId
+                              ? 'Add an API key to enable this plugin'
+                              : p.error || p.description
+                          }
+                          onClick={() => {
+                            if (!p.configured && keyId) {
+                              setKeysFocusId(keyId)
+                              setKeysModalOpen(true)
+                              return
+                            }
+                            if (!p.configured) return
+                            setEnabledPlugins((prev) => {
+                              const next = on ? prev.filter((id) => id !== p.id) : [...prev, p.id]
+                              writePluginIds(next)
+                              return next
+                            })
+                          }}
+                        >
+                          <span className="ds-chat-plugin-name">{p.name}</span>
+                          <span className="ds-chat-plugin-meta">
+                            {p.kind === 'mcp' ? 'MCP' : 'Built-in'}
+                            {p.category === 'generation' ? ' · Gen' : ''}
+                            {` · ${statusLabel}`}
+                          </span>
+                          <span className="ds-chat-plugin-desc">{p.description}</span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
             ) : null}
+            <ChatPluginKeysModal
+              open={keysModalOpen}
+              initialHints={pluginKeyHints}
+              focusId={keysFocusId}
+              onClose={() => setKeysModalOpen(false)}
+              onSaved={(hints) => {
+                setPluginKeyHints(hints)
+                void (async () => {
+                  try {
+                    const { plugins } = await fetchDeepseekChatPlugins()
+                    setPluginCatalog(plugins)
+                  } catch {
+                    /* keep prior catalog */
+                  }
+                })()
+              }}
+            />
             {skillSuggestions.length ? (
               <ChatSkillMenu skills={skillSuggestions} onPick={pickSkill} />
             ) : null}

@@ -29,6 +29,8 @@ import {
   deepseekChatSupportsSearch,
   streamDeepseekChatWithSearch,
 } from './deepseekChatSearch.js'
+import { loadChatPluginCredentials } from './deepseekChatPluginKeys.js'
+import type { ChatPluginCredentials } from './deepseekChatPluginKeys.js'
 import { env, openaiConfigured } from './env.js'
 import { resolveEntitlement } from './entitlements.js'
 import { allowUserRateOrReject } from './guestRateLimit.js'
@@ -58,6 +60,7 @@ async function* chatStreamEvents(
   signal?: AbortSignal,
   fileIds?: string[],
   plugins?: string[],
+  pluginCreds?: ChatPluginCredentials,
 ): AsyncGenerator<
   | { kind: 'thinking' }
   | { kind: 'searching' }
@@ -79,6 +82,7 @@ async function* chatStreamEvents(
       signal,
       fileIds,
       plugins,
+      pluginCreds,
     })) {
       harnessEmitted = true
       yield event
@@ -195,6 +199,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
   }
   const fileIds = parsed.data.fileIds
   const plugins = parsed.data.plugins
+  const pluginCreds = await loadChatPluginCredentials(auth.userId)
 
   try {
     if (!stream) {
@@ -207,6 +212,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
             prompt: promptBase,
             fileIds,
             plugins,
+            pluginCreds,
           },
         )
         void addDeepseekChatTurns(auth.userId, 1)
@@ -267,6 +273,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         upstream.signal,
         fileIds,
         plugins,
+        pluginCreds,
       )) {
         if (upstream.signal.aborted || res.writableEnded) break
         if (event.kind === 'thinking') {
