@@ -30,6 +30,7 @@ assert.match(page, /coming soon|needs key|is-gen/, 'Generation MCP status UI')
 const modal = readFileSync(join(here, '../components/ChatPluginKeysModal.tsx'), 'utf8')
 assert.match(modal, /Plugin API keys/, 'Keys modal title')
 assert.match(modal, /higgsfield/, 'Higgsfield key field')
+assert.match(modal, /Google Gemini/, 'Gemini key field')
 
 const mcpApi = readFileSync(
   join(here, '../../../api/src/deepseekChatMcp.ts'),
@@ -39,5 +40,9 @@ assert.match(mcpApi, /GENERATION_MCP_PRESETS/, 'API ships generation MCP presets
 assert.match(mcpApi, /higgsfield/, 'Higgsfield preset')
 assert.match(mcpApi, /adobe-creativity\.adobe\.io/, 'Adobe preset URL')
 assert.match(mcpApi, /mcp:cursor|id: 'cursor'/, 'Cursor preset slot')
+
+const imageApi = readFileSync(join(here, '../../../api/src/deepseekChatImage.ts'), 'utf8')
+assert.match(imageApi, /generateViaGemini/, 'Gemini is the preferred image backend')
+assert.match(imageApi, /geminiApiKey/, 'Gemini env wiring')
 
 console.log('chatMcpImage.smoke: ok')

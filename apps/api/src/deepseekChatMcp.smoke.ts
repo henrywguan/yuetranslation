@@ -45,8 +45,12 @@ assert.deepEqual(
   ['https://cdn.example/a.png', 'https://cdn.example/b.jpg'],
 )
 
+const withUserGemini = listChatPlugins({ gemini: 'AIza-test-user-key' })
+assert.equal(withUserGemini.find((p) => p.id === 'image')?.configured, true, 'User Gemini key enables plugin')
+assert.match(withUserGemini.find((p) => p.id === 'image')?.name || '', /Gemini/)
+
 const withUserImage = listChatPlugins({ image: 'sk-test-user-key' })
-assert.equal(withUserImage.find((p) => p.id === 'image')?.configured, true, 'User image key enables plugin')
+assert.equal(withUserImage.find((p) => p.id === 'image')?.configured, true, 'User OpenAI key enables plugin')
 
 const withUserHf = listChatPlugins({ higgsfield: 'hf-test-token' })
 assert.equal(withUserHf.find((p) => p.id === 'mcp:higgsfield')?.configured, true)
@@ -123,5 +127,19 @@ const envSrc = readFileSync(
 assert.match(envSrc, /chatMcpHiggsfieldToken/, 'Higgsfield token env')
 assert.match(envSrc, /chatMcpAdobeToken/, 'Adobe token env')
 assert.match(envSrc, /chatMcpCursorUrl/, 'Cursor URL env')
+assert.match(envSrc, /geminiApiKey/, 'Gemini API key env')
+assert.match(envSrc, /chatGeminiImageModel/, 'Gemini image model env')
+
+const imageSrc = readFileSync(
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatImage.ts'),
+  'utf8',
+)
+assert.match(imageSrc, /generateViaGemini/, 'Gemini image path implemented')
+assert.match(imageSrc, /geminiAspectRatio/, 'Gemini aspect ratio helper')
+
+const { geminiAspectRatio } = await import('./deepseekChatImage.js')
+assert.equal(geminiAspectRatio('1024x1024'), '1:1')
+assert.equal(geminiAspectRatio('1024x1792'), '9:16')
+assert.equal(geminiAspectRatio('1792x1024'), '16:9')
 
 console.log('deepseekChatMcp.smoke: ok')

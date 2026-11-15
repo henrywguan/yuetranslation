@@ -11,7 +11,7 @@
  * per-user OAuth in #/chat. Paste a token from your MCP client session or API gateway.
  */
 import { env } from './env.js'
-import { chatImageConfiguredWith } from './deepseekChatImage.js'
+import { chatImageConfiguredWith, chatImageProviderLabel } from './deepseekChatImage.js'
 import type { ChatPluginCredentials } from './deepseekChatPluginKeys.js'
 
 export type ChatPluginKind = 'builtin' | 'mcp'
@@ -199,13 +199,19 @@ export function listConfiguredMcpServers(creds?: ChatPluginCredentials): McpServ
 
 /** Marketplace catalog for GET /api/chat/plugins. */
 export function listChatPlugins(creds?: ChatPluginCredentials): ChatPluginInfo[] {
-  const imageOk = chatImageConfiguredWith(creds?.image)
+  const imageOk = chatImageConfiguredWith(creds)
+  const provider = chatImageProviderLabel(creds)
+  const imageDesc =
+    provider === 'gemini'
+      ? 'Create images with Google Gemini (Nano Banana / Flash Image) via generate_image — shared server key or your Gemini key.'
+      : provider === 'openai'
+        ? 'Create images with OpenAI Images (DALL·E / gpt-image) via generate_image.'
+        : 'Create images via generate_image. Set GEMINI_API_KEY on the API (preferred) or add Gemini/OpenAI in Plugins → API keys.'
   const builtins: ChatPluginInfo[] = [
     {
       id: 'image',
-      name: 'Image generation',
-      description:
-        'Create images with OpenAI Images (DALL·E / gpt-image) via the generate_image tool. Add your key in Plugins → API keys.',
+      name: provider === 'gemini' ? 'Image generation (Gemini)' : 'Image generation',
+      description: imageDesc,
       kind: 'builtin',
       defaultEnabled: true,
       configured: imageOk,
@@ -391,7 +397,7 @@ const IMAGE_TOOL: OpenAiTool = {
   function: {
     name: 'generate_image',
     description:
-      'Generate an image from a text prompt (OpenAI Images). Return the image to the user by including the provided markdown in your reply.',
+      'Generate an image from a text prompt (Google Gemini by default; OpenAI Images as fallback). Return the image to the user by including the provided markdown in your reply.',
     parameters: {
       type: 'object',
       properties: {
@@ -425,7 +431,7 @@ export async function buildPluginTools(
 
   const tools: OpenAiTool[] = []
 
-  if (enabled.has('image') && chatImageConfiguredWith(creds?.image)) {
+  if (enabled.has('image') && chatImageConfiguredWith(creds)) {
     tools.push(IMAGE_TOOL)
   }
 

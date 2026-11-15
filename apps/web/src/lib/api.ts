@@ -939,7 +939,7 @@ export async function streamDeepseekChat(
   return { model }
 }
 
-export type DeepseekChatPluginKeyId = 'image' | 'higgsfield' | 'adobe' | 'cursor'
+export type DeepseekChatPluginKeyId = 'gemini' | 'image' | 'higgsfield' | 'adobe' | 'cursor'
 
 export type DeepseekChatPluginKeyHint = {
   set: boolean
@@ -959,6 +959,7 @@ export async function fetchDeepseekChatPlugins(): Promise<{
   }
   const emptyHint = { set: false }
   const keyHints: Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint> = {
+    gemini: data.keyHints?.gemini || emptyHint,
     image: data.keyHints?.image || emptyHint,
     higgsfield: data.keyHints?.higgsfield || emptyHint,
     adobe: data.keyHints?.adobe || emptyHint,
@@ -970,6 +971,17 @@ export async function fetchDeepseekChatPlugins(): Promise<{
   }
 }
 
+function emptyPluginKeyHints(): Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint> {
+  const emptyHint = { set: false }
+  return {
+    gemini: emptyHint,
+    image: emptyHint,
+    higgsfield: emptyHint,
+    adobe: emptyHint,
+    cursor: emptyHint,
+  }
+}
+
 /** Masked BYOK hints (never raw secrets). */
 export async function fetchDeepseekChatPluginKeys(): Promise<
   Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint>
@@ -977,12 +989,13 @@ export async function fetchDeepseekChatPluginKeys(): Promise<
   const res = await apiFetch('/chat/plugin-keys')
   if (!res.ok) await throwApiError(res, 'Failed to load plugin keys')
   const data = (await res.json()) as { keys?: Record<string, DeepseekChatPluginKeyHint> }
-  const emptyHint = { set: false }
+  const base = emptyPluginKeyHints()
   return {
-    image: data.keys?.image || emptyHint,
-    higgsfield: data.keys?.higgsfield || emptyHint,
-    adobe: data.keys?.adobe || emptyHint,
-    cursor: data.keys?.cursor || emptyHint,
+    gemini: data.keys?.gemini || base.gemini,
+    image: data.keys?.image || base.image,
+    higgsfield: data.keys?.higgsfield || base.higgsfield,
+    adobe: data.keys?.adobe || base.adobe,
+    cursor: data.keys?.cursor || base.cursor,
   }
 }
 
@@ -1001,11 +1014,12 @@ export async function saveDeepseekChatPluginKeys(opts: {
   })
   if (!res.ok) await throwApiError(res, 'Failed to save plugin keys')
   const data = (await res.json()) as { keys?: Record<string, DeepseekChatPluginKeyHint> }
-  const emptyHint = { set: false }
+  const base = emptyPluginKeyHints()
   return {
-    image: data.keys?.image || emptyHint,
-    higgsfield: data.keys?.higgsfield || emptyHint,
-    adobe: data.keys?.adobe || emptyHint,
-    cursor: data.keys?.cursor || emptyHint,
+    gemini: data.keys?.gemini || base.gemini,
+    image: data.keys?.image || base.image,
+    higgsfield: data.keys?.higgsfield || base.higgsfield,
+    adobe: data.keys?.adobe || base.adobe,
+    cursor: data.keys?.cursor || base.cursor,
   }
 }

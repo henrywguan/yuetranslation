@@ -610,6 +610,7 @@ export function ChatPage() {
   const [pluginKeyHints, setPluginKeyHints] = useState<
     Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint>
   >({
+    gemini: { set: false },
     image: { set: false },
     higgsfield: { set: false },
     adobe: { set: false },
@@ -1614,7 +1615,7 @@ export function ChatPage() {
                         {
                           id: 'image',
                           name: 'Image generation',
-                          description: 'OpenAI Images — add your key via API keys.',
+                          description: 'Gemini images — set GEMINI_API_KEY or add a key via API keys.',
                           kind: 'builtin' as const,
                           configured: false,
                           category: 'generation' as const,
@@ -1663,7 +1664,7 @@ export function ChatPage() {
                             : 'off'
                     const keyId: DeepseekChatPluginKeyId | null =
                       p.id === 'image'
-                        ? 'image'
+                        ? 'gemini'
                         : p.id === 'mcp:higgsfield'
                           ? 'higgsfield'
                           : p.id === 'mcp:adobe'
