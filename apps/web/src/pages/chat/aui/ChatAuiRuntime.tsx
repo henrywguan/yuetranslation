@@ -14,7 +14,15 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { streamDeepseekChat } from '../../../lib/api'
+import {
+  fetchDeepseekChatPlugins,
+  ocrDeepseekChatFile,
+  streamDeepseekChat,
+  uploadDeepseekChatFile,
+  type DeepseekChatPlugin,
+  type DeepseekChatPluginKeyHint,
+  type DeepseekChatPluginKeyId,
+} from '../../../lib/api'
 import {
   apiMessagesFromThread,
   appendChatMessage,
@@ -26,6 +34,7 @@ import {
   renameChatThread,
   setChatThreadArchived,
   upsertChatThread,
+  type ChatFileMeta,
   type ChatMessage,
   type ChatSearchStep,
   type ChatSource,
@@ -45,8 +54,12 @@ const BOOT_THREAD: ChatThread = {
 
 const THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
 const SEARCH_KEY = 'yue-deepseek-chat-search-v1'
+const RICH_LAYOUT_KEY = 'yue-deepseek-chat-rich-layout-v1'
+const PLUGINS_KEY = 'yue-deepseek-chat-plugins-v1'
 const LIVE_REASONING_KEEP = 24_000
 const STREAM_PAINT_MS = 80
+
+export type PendingChatFile = ChatFileMeta & { previewUrl?: string }
 
 function readFlag(key: string, fallback: boolean): boolean {
   try {
@@ -67,6 +80,26 @@ function writeFlag(key: string, on: boolean) {
   }
 }
 
+function readPluginIds(): string[] | null {
+  try {
+    const raw = localStorage.getItem(PLUGINS_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return null
+    return parsed.map(String).filter(Boolean).slice(0, 16)
+  } catch {
+    return null
+  }
+}
+
+function writePluginIds(ids: string[]) {
+  try {
+    localStorage.setItem(PLUGINS_KEY, JSON.stringify(ids.slice(0, 16)))
+  } catch {
+    /* ignore */
+  }
+}
+
 export type ChatAuiSession = {
   threads: ChatThread[]
   activeId: string
@@ -74,13 +107,27 @@ export type ChatAuiSession = {
   busy: boolean
   error: string | null
   clearError: () => void
+  setError: (message: string | null) => void
   deepThink: boolean
   setDeepThink: (on: boolean) => void
   searchOn: boolean
   setSearchOn: (on: boolean) => void
+  richLayout: boolean
+  setRichLayout: (on: boolean) => void
   thinking: boolean
   searching: boolean
   streamingId: string | null
+  pendingFiles: PendingChatFile[]
+  uploadingFile: boolean
+  ocrBusy: boolean
+  pluginCatalog: DeepseekChatPlugin[]
+  enabledPlugins: string[]
+  togglePlugin: (id: string) => void
+  pluginKeyHints: Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint>
+  refreshPlugins: () => Promise<void>
+  pickFile: (file: File | null) => Promise<void>
+  pickOcr: (file: File | null, setDraft: (text: string) => void) => Promise<void>
+  removePendingFile: (fileId: string) => void
   startNewChat: () => void
   selectThread: (id: string) => void
   removeThread: (id: string) => void
@@ -112,8 +159,29 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [searching, setSearching] = useState(false)
   const [deepThink, setDeepThinkState] = useState(() => readFlag(THINK_KEY, true))
   const [searchOn, setSearchOnState] = useState(() => readFlag(SEARCH_KEY, false))
+  const [richLayout, setRichLayoutState] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
+  const [pendingFiles, setPendingFiles] = useState<PendingChatFile[]>([])
+  const [uploadingFile, setUploadingFile] = useState(false)
+  const [ocrBusy, setOcrBusy] = useState(false)
+  const [pluginCatalog, setPluginCatalog] = useState<DeepseekChatPlugin[]>([])
+  const [enabledPlugins, setEnabledPlugins] = useState<string[]>(
+    () => readPluginIds() || ['image'],
+  )
+  const [pluginKeyHints, setPluginKeyHints] = useState<
+    Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint>
+  >({
+    gemini: { set: false },
+    image: { set: false },
+    higgsfield: { set: false },
+    adobe: { set: false },
+    cursor: { set: false },
+  })
 
   const abortRef = useRef<AbortController | null>(null)
+  const enabledPluginsRef = useRef(enabledPlugins)
+  const pendingFilesRef = useRef(pendingFiles)
+  enabledPluginsRef.current = enabledPlugins
+  pendingFilesRef.current = pendingFiles
   const streamTtsRef = useRef<StreamingDeepseekChatTts | null>(null)
   const thinkStartedAt = useRef<number | null>(null)
   const threadsRef = useRef(threads)
@@ -143,6 +211,21 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     }
   }, [])
 
+  const refreshPlugins = useCallback(async () => {
+    try {
+      const { plugins, keyHints } = await fetchDeepseekChatPlugins()
+      setPluginCatalog(plugins)
+      if (keyHints) setPluginKeyHints((prev) => ({ ...prev, ...keyHints }))
+    } catch {
+      /* offline / unpaid — keep fallback catalog in UI */
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!unlocked) return
+    void refreshPlugins()
+  }, [refreshPlugins, unlocked])
+
   const persist = useCallback((thread: ChatThread) => {
     setThreads((prev) => upsertChatThread(thread, prev.filter((t) => t.id !== BOOT_THREAD.id)))
   }, [])
@@ -167,6 +250,86 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     setSearchOnState(on)
     writeFlag(SEARCH_KEY, on)
   }, [])
+
+  const setRichLayout = useCallback((on: boolean) => {
+    setRichLayoutState(on)
+    writeFlag(RICH_LAYOUT_KEY, on)
+  }, [])
+
+  const togglePlugin = useCallback((id: string) => {
+    setEnabledPlugins((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id].slice(0, 16)
+      writePluginIds(next)
+      return next
+    })
+  }, [])
+
+  const removePendingFile = useCallback((fileId: string) => {
+    setPendingFiles((prev) => {
+      const hit = prev.find((f) => f.fileId === fileId)
+      if (hit?.previewUrl) URL.revokeObjectURL(hit.previewUrl)
+      return prev.filter((f) => f.fileId !== fileId)
+    })
+  }, [])
+
+  const pickFile = useCallback(
+    async (file: File | null) => {
+      if (!file || busy || !unlocked) return
+      if (pendingFilesRef.current.length >= 5) {
+        setError('You can attach up to 5 files per message.')
+        return
+      }
+      if (file.size > 6_000_000) {
+        setError('File too large (max 6 MB).')
+        return
+      }
+      setUploadingFile(true)
+      setError(null)
+      try {
+        const uploaded = await uploadDeepseekChatFile(file, { preferRichLayout: richLayout })
+        const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+        setPendingFiles((prev) =>
+          [
+            ...prev,
+            {
+              fileId: uploaded.fileId,
+              filename: uploaded.filename || file.name,
+              mime: file.type || undefined,
+              previewUrl,
+            },
+          ].slice(0, 5),
+        )
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'File upload failed')
+      } finally {
+        setUploadingFile(false)
+      }
+    },
+    [busy, richLayout, unlocked],
+  )
+
+  const pickOcr = useCallback(
+    async (file: File | null, setDraft: (text: string) => void) => {
+      if (!file || busy || ocrBusy || !unlocked) return
+      if (file.size > 6_000_000) {
+        setError('File too large (max 6 MB).')
+        return
+      }
+      setOcrBusy(true)
+      setError(null)
+      try {
+        const { text } = await ocrDeepseekChatFile(file, {
+          purpose: richLayout ? 'rich_layout_recognition' : 'text_recognition',
+        })
+        setDraft(text)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'OCR failed')
+      } finally {
+        setOcrBusy(false)
+      }
+    },
+    [busy, ocrBusy, richLayout, unlocked],
+  )
 
   const stopGeneration = useCallback(() => {
     abortRef.current?.abort()
@@ -218,7 +381,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   }, [])
 
   const runAssistant = useCallback(
-    async (baseThread: ChatThread) => {
+    async (baseThread: ChatThread, fileIds?: string[]) => {
       let thread = baseThread
       const assistantStep = appendChatMessage(thread, 'assistant', '')
       thread = assistantStep.thread
@@ -277,6 +440,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         await streamDeepseekChat(wireMessages, {
           thinking: deepThink,
           search: searchOn,
+          fileIds,
+          plugins: enabledPluginsRef.current,
           primaryLang: primaryLanguage,
           signal: controller.signal,
           onStatus: (status) => {
@@ -436,18 +601,40 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       if (!unlocked || busy) return
       const textPart = message.content.find((p) => p.type === 'text')
       const content = (textPart && textPart.type === 'text' ? textPart.text : '').trim()
-      if (!content) return
+      const pending = pendingFilesRef.current
+      if (!content && !pending.length) return
       if (content.length > MAX_CONTENT_CHARS) {
         setError(`Message is too long (max ${MAX_CONTENT_CHARS.toLocaleString()} characters).`)
         return
       }
+      const fileIds = pending.map((f) => f.fileId)
+      const filesMeta: ChatFileMeta[] = pending.map(({ fileId, filename, mime }) => ({
+        fileId,
+        filename,
+        mime,
+      }))
       setError(null)
+      setPendingFiles((prev) => {
+        for (const f of prev) {
+          if (f.previewUrl) URL.revokeObjectURL(f.previewUrl)
+        }
+        return []
+      })
       setBusy(true)
       const cur =
         threadsRef.current.find((t) => t.id === activeIdRef.current) || emptyThread()
-      const { thread } = appendChatMessage(cur, 'user', content)
+      const userStep = appendChatMessage(cur, 'user', content || '(attached file)')
+      let thread = userStep.thread
+      if (fileIds.length) {
+        thread = {
+          ...thread,
+          messages: thread.messages.map((m) =>
+            m.id === userStep.message.id ? { ...m, fileIds, files: filesMeta } : m,
+          ),
+        }
+      }
       persist(thread)
-      await runAssistant(thread)
+      await runAssistant(thread, fileIds.length ? fileIds : undefined)
     },
     [busy, persist, runAssistant, unlocked],
   )
@@ -529,13 +716,27 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       busy,
       error,
       clearError: () => setError(null),
+      setError,
       deepThink,
       setDeepThink,
       searchOn,
       setSearchOn,
+      richLayout,
+      setRichLayout,
       thinking,
       searching,
       streamingId,
+      pendingFiles,
+      uploadingFile,
+      ocrBusy,
+      pluginCatalog,
+      enabledPlugins,
+      togglePlugin,
+      pluginKeyHints,
+      refreshPlugins,
+      pickFile,
+      pickOcr,
+      removePendingFile,
       startNewChat,
       selectThread,
       removeThread,
@@ -547,19 +748,32 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       archiveThread,
       busy,
       deepThink,
+      enabledPlugins,
       error,
       historyReady,
+      ocrBusy,
+      pendingFiles,
+      pickFile,
+      pickOcr,
+      pluginCatalog,
+      pluginKeyHints,
+      refreshPlugins,
+      removePendingFile,
       removeThread,
+      richLayout,
       searchOn,
       searching,
       selectThread,
       setDeepThink,
+      setRichLayout,
       setSearchOn,
       startNewChat,
       stopGeneration,
       streamingId,
       thinking,
       threads,
+      togglePlugin,
+      uploadingFile,
     ],
   )
 

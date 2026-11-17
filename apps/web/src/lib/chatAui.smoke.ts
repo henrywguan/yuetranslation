@@ -35,6 +35,9 @@ assert.match(runtime, /useExternalStoreRuntime/, 'ExternalStoreRuntime bridge')
 assert.match(runtime, /streamDeepseekChat/, 'SSE still via streamDeepseekChat')
 assert.match(runtime, /hydrateChatThreadsAsync/, 'device-local history hydrate')
 assert.match(runtime, /adapters:\s*\{[\s\S]*threadList/, 'thread list adapter')
+assert.match(runtime, /plugins: enabledPluginsRef/, 'plugins forwarded to SSE')
+assert.match(runtime, /uploadDeepseekChatFile/, 'file attach upload')
+assert.match(runtime, /ocrDeepseekChatFile/, 'OCR helper')
 
 const thread = readFileSync(join(root, 'pages/chat/aui/ChatAuiThread.tsx'), 'utf8')
 assert.match(thread, /ThreadPrimitive/, 'Thread primitives')
@@ -42,6 +45,8 @@ assert.match(thread, /ComposerPrimitive/, 'Composer primitives')
 assert.match(thread, /ChatDictateButton/, 'keeps DeepSeek dictate')
 assert.match(thread, /SpeakButton/, 'keeps SpeakButton')
 assert.match(thread, /DeepThink/, 'DeepThink toggle chrome')
+assert.match(thread, /ChatPluginKeysModal/, 'BYOK keys modal')
+assert.match(thread, /Rich layout/, 'rich layout toggle')
 assert.doesNotMatch(thread, /WebSpeechSynthesisAdapter|speechSynthesis\.speak/, 'no browser TTS adapter')
 
 const pkg = JSON.parse(readFileSync(join(root, '../package.json'), 'utf8')) as {

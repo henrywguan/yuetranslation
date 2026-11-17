@@ -12,10 +12,13 @@ import {
   useMessagePartSource,
   useMessagePartText,
 } from '@assistant-ui/react'
+import { useRef, useState } from 'react'
 import { ChatDictateButton } from '../../../components/ChatDictateButton'
+import { ChatPluginKeysModal } from '../../../components/ChatPluginKeysModal'
 import { DeepSeekMark } from '../../../components/DeepSeekMark'
 import { SpeakButton } from '../../../components/SpeakButton'
-import { chatSpeakLang } from '../../../lib/chatVoice'
+import type { DeepseekChatPluginKeyId } from '../../../lib/api'
+import { chatSpeakLang, mergeDictateText } from '../../../lib/chatVoice'
 import { renderChatMarkdown } from '../../../lib/renderChatMarkdown'
 import { useChatAuiSession } from './ChatAuiRuntime'
 
@@ -136,16 +139,56 @@ function ThreadSidebar() {
 function ComposerChrome() {
   const aui = useAui()
   const draft = useAuiState((s) => s.composer.text)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const ocrInputRef = useRef<HTMLInputElement>(null)
+  const [pluginsOpen, setPluginsOpen] = useState(false)
+  const [keysOpen, setKeysOpen] = useState(false)
+  const [keysFocusId, setKeysFocusId] = useState<DeepseekChatPluginKeyId | null>(null)
   const {
     deepThink,
     setDeepThink,
     searchOn,
     setSearchOn,
+    richLayout,
+    setRichLayout,
     busy,
     thinking,
     searching,
     stopGeneration,
+    pendingFiles,
+    uploadingFile,
+    ocrBusy,
+    pickFile,
+    pickOcr,
+    removePendingFile,
+    pluginCatalog,
+    enabledPlugins,
+    togglePlugin,
+    pluginKeyHints,
+    refreshPlugins,
+    setError,
   } = useChatAuiSession()
+
+  const fallbackPlugins = [
+    {
+      id: 'image',
+      name: 'Image generation',
+      description: 'Gemini images',
+      kind: 'builtin' as const,
+      configured: false,
+      category: 'generation' as const,
+      status: 'needs_token' as const,
+    },
+    {
+      id: 'mcp:higgsfield',
+      name: 'Higgsfield',
+      description: 'Image / video MCP',
+      kind: 'mcp' as const,
+      configured: false,
+      category: 'generation' as const,
+      status: 'needs_token' as const,
+    },
+  ]
 
   return (
     <ComposerPrimitive.Root className="aui-composer">
@@ -168,10 +211,111 @@ function ComposerChrome() {
         >
           Search
         </button>
+        <button
+          type="button"
+          className={`aui-toggle${richLayout ? ' is-on' : ''}`}
+          aria-pressed={richLayout}
+          disabled={busy}
+          title="Rich layout for PDF / Office uploads"
+          onClick={() => setRichLayout(!richLayout)}
+        >
+          Rich layout
+        </button>
+        <button
+          type="button"
+          className={`aui-toggle${pluginsOpen || enabledPlugins.length ? ' is-on' : ''}`}
+          aria-pressed={pluginsOpen}
+          disabled={busy}
+          onClick={() => setPluginsOpen((v) => !v)}
+        >
+          Plugins{enabledPlugins.length ? ` · ${enabledPlugins.length}` : ''}
+        </button>
         {thinking ? <span className="aui-status">Thinking…</span> : null}
         {searching ? <span className="aui-status">Searching…</span> : null}
       </div>
+
+      {pluginsOpen ? (
+        <div className="aui-plugins">
+          <button
+            type="button"
+            className="aui-keys-open"
+            onClick={() => {
+              setKeysFocusId(null)
+              setKeysOpen(true)
+            }}
+          >
+            API keys
+          </button>
+          <ul className="aui-plugin-list">
+            {(pluginCatalog.length ? pluginCatalog : fallbackPlugins).map((p) => {
+              const on = enabledPlugins.includes(p.id)
+              return (
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    className={`aui-plugin${on ? ' is-on' : ''}`}
+                    disabled={p.status === 'coming_soon'}
+                    onClick={() => togglePlugin(p.id)}
+                  >
+                    <strong>{p.name}</strong>
+                    <span>{on ? 'on' : 'off'}</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      ) : null}
+
+      {pendingFiles.length ? (
+        <ul className="aui-pending-files">
+          {pendingFiles.map((f) => (
+            <li key={f.fileId}>
+              <span>{f.filename}</span>
+              <button type="button" onClick={() => removePendingFile(f.fileId)} aria-label="Remove file">
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
       <div className="aui-composer-row">
+        <input
+          ref={fileInputRef}
+          type="file"
+          hidden
+          onChange={(e) => void pickFile(e.target.files?.[0] || null)}
+        />
+        <input
+          ref={ocrInputRef}
+          type="file"
+          accept="image/*,.pdf"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null
+            void pickOcr(file, (text) => aui.composer.setText(mergeDictateText(draft, text)))
+            if (ocrInputRef.current) ocrInputRef.current.value = ''
+          }}
+        />
+        <button
+          type="button"
+          className="aui-attach"
+          disabled={busy || uploadingFile}
+          title="Attach file"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {uploadingFile ? '…' : '+'}
+        </button>
+        <button
+          type="button"
+          className="aui-attach"
+          disabled={busy || ocrBusy}
+          title="OCR into draft"
+          onClick={() => ocrInputRef.current?.click()}
+        >
+          {ocrBusy ? '…' : 'OCR'}
+        </button>
         <ComposerPrimitive.Input
           className="aui-composer-input"
           placeholder="Message DeepSeek…"
@@ -184,6 +328,7 @@ function ComposerChrome() {
           draft={draft}
           onDraft={(next) => aui.composer.setText(next)}
           onBargeIn={() => stopGeneration()}
+          onError={(message) => setError(message)}
         />
         <AuiIf condition={(s) => s.thread.isRunning}>
           <ComposerPrimitive.Cancel
@@ -197,6 +342,18 @@ function ComposerChrome() {
           <ComposerPrimitive.Send className="aui-send">Send</ComposerPrimitive.Send>
         </AuiIf>
       </div>
+
+      {keysOpen ? (
+        <ChatPluginKeysModal
+          open={keysOpen}
+          focusId={keysFocusId}
+          initialHints={pluginKeyHints}
+          onClose={() => setKeysOpen(false)}
+          onSaved={() => {
+            void refreshPlugins()
+          }}
+        />
+      ) : null}
     </ComposerPrimitive.Root>
   )
 }
