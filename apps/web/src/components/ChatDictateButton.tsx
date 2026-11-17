@@ -141,10 +141,31 @@ export function ChatDictateButton({ disabled, draft, onDraft, onError, onBargeIn
   }, [])
 
   // Background privacy — drop mic when app is hidden (orange Safari pill leak).
+  // Discard ASR recordings instead of uploading after the user left.
   useEffect(() => {
     const onVis = () => {
-      if (document.visibilityState === 'hidden' && listeningRef.current) {
-        void stopSession()
+      if (document.visibilityState !== 'hidden' || !listeningRef.current) return
+      clearSilence()
+      stickyRef.current = false
+      listeningRef.current = false
+      setListening(false)
+      const session = sessionRef.current
+      sessionRef.current = null
+      if (session) {
+        void session.stop().catch(() => {
+          /* ignore */
+        })
+      }
+      const media = mediaRef.current
+      mediaRef.current = null
+      asrModeRef.current = false
+      if (media) {
+        try {
+          if (media.recorder.state !== 'inactive') media.recorder.stop()
+        } catch {
+          /* ignore */
+        }
+        stopMediaTracks(media.stream)
       }
     }
     document.addEventListener('visibilitychange', onVis)

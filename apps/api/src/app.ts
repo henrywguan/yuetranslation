@@ -105,6 +105,7 @@ import { getPushConfig, subscribePush, unsubscribePush } from './pushRoutes.js'
 import { scheduleHouseholdUsageBackfillOnStartup } from './startupBackfill.js'
 import { postDeepseekChat } from './deepseekChatRoutes.js'
 import { postDeepseekChatFile } from './deepseekChatFiles.js'
+import { postDeepseekChatOcr } from './deepseekChatOcr.js'
 import { postDeepseekChatAsr, postDeepseekChatTts } from './deepseekChatVoice.js'
 import {
   getDeepseekChatGeneratedImage,
@@ -1277,6 +1278,7 @@ app.post('/api/chat', postDeepseekChat)
 app.post('/api/chat/files', postDeepseekChatFile)
 app.post('/api/chat/tts', postDeepseekChatTts)
 app.post('/api/chat/asr', postDeepseekChatAsr)
+app.post('/api/chat/ocr', postDeepseekChatOcr)
 app.get('/api/chat/plugins', getDeepseekChatPlugins)
 app.get('/api/chat/plugin-keys', getDeepseekChatPluginKeys)
 app.put('/api/chat/plugin-keys', putDeepseekChatPluginKeys)

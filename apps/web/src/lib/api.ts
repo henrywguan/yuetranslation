@@ -907,6 +907,32 @@ export async function transcribeDeepseekChatAudio(
   return text
 }
 
+/** POST /api/chat/ocr — one-shot OCR text for composer prefill. */
+export async function ocrDeepseekChatFile(
+  file: File,
+  opts?: { purpose?: 'text_recognition' | 'rich_layout_recognition' },
+): Promise<{ text: string; pageCount?: number }> {
+  const buf = await file.arrayBuffer()
+  const bytes = new Uint8Array(buf)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]!)
+  const dataBase64 = btoa(binary)
+  const res = await apiFetch('/chat/ocr', {
+    method: 'POST',
+    body: JSON.stringify({
+      filename: file.name || 'scan.bin',
+      mime: file.type || undefined,
+      dataBase64,
+      purpose: opts?.purpose || 'text_recognition',
+    }),
+  })
+  if (!res.ok) await throwApiError(res, 'OCR failed')
+  const data = (await res.json()) as { text?: string; pageCount?: number }
+  const text = String(data.text || '').trim()
+  if (!text) throw new Error('OCR returned no text')
+  return { text, pageCount: data.pageCount }
+}
+
 /** Upload a chat attachment; returns DeepSeek file-api-* id. */
 export async function uploadDeepseekChatFile(
   file: File,

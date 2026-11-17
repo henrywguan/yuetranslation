@@ -198,11 +198,11 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
   const userAskedSearch = parsed.data.search === true
   const lastUser =
     [...parsed.data.messages].reverse().find((m) => m.role === 'user') || last
-  const searchEnabled =
-    userAskedSearch ||
-    (!continueReply &&
-      deepseekChatSupportsSearch() &&
-      shouldAutoEnableSearch(lastUser.content))
+  // Prefix continue must not declare native web tools (wrong wire shape on /beta).
+  const searchEnabled = continueReply
+    ? false
+    : userAskedSearch ||
+      (deepseekChatSupportsSearch() && shouldAutoEnableSearch(lastUser.content))
 
   const promptBase: DeepseekChatPromptContext = {
     timeZone: parsed.data.timeZone,
@@ -239,7 +239,8 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         const hasFiles =
           Boolean(fileIds?.length) ||
           parsed.data.messages.some((m) => Array.isArray(m.fileIds) && m.fileIds.length > 0)
-        if (hasFiles) {
+        if (hasFiles || continueReply) {
+          // Continue is beta-prefix only — do not fall back to a normal agent turn.
           res.status(502).json({ message })
           return
         }

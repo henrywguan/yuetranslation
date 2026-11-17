@@ -15,6 +15,7 @@ import { SpeakButton } from '../components/SpeakButton'
 import { ChatPluginKeysModal } from '../components/ChatPluginKeysModal'
 import {
   fetchDeepseekChatPlugins,
+  ocrDeepseekChatFile,
   streamDeepseekChat,
   uploadDeepseekChatFile,
   type DeepseekChatPlugin,
@@ -38,7 +39,7 @@ import {
   threadToMarkdown,
 } from '../lib/chatExport'
 import { StreamingDeepseekChatTts, speakDeepseekChatText } from '../lib/chatDeepseekVoice'
-import { chatSpeakLang } from '../lib/chatVoice'
+import { chatSpeakLang, mergeDictateText } from '../lib/chatVoice'
 import {
   apiMessagesFromThread,
   appendChatMessage,
@@ -359,7 +360,13 @@ function SearchStepsList({ steps }: { steps: ChatSearchStep[] }) {
         <div className="ds-chat-image-results" aria-label="Image search results">
           {imageSteps.flatMap((step, si) =>
             (step.images || []).map((img, ii) => {
-              const href = img.url || img.imageUrl
+              const href =
+                img.url && /^https?:\/\//i.test(img.url)
+                  ? img.url
+                  : /^https?:\/\//i.test(img.imageUrl)
+                    ? img.imageUrl
+                    : null
+              if (!href) return null
               return (
                 <a
                   key={`${si}-${ii}-${img.imageUrl}`}
@@ -723,6 +730,8 @@ export function ChatPage() {
   const [thinkClock, setThinkClock] = useState<number | null>(null)
   const [pendingFiles, setPendingFiles] = useState<PendingChatFile[]>([])
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [ocrBusy, setOcrBusy] = useState(false)
+  const ocrInputRef = useRef<HTMLInputElement>(null)
   const [sidebarQuery, setSidebarQuery] = useState('')
   const [artifact, setArtifact] = useState<ChatArtifact | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -1357,6 +1366,28 @@ export function ChatPage() {
     } finally {
       setUploadingFile(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const onPickOcr = async (file: File | null) => {
+    if (!file || busy || ocrBusy || !unlocked) return
+    if (file.size > 6_000_000) {
+      setError('File too large (max 6 MB).')
+      return
+    }
+    setOcrBusy(true)
+    setError(null)
+    try {
+      const { text } = await ocrDeepseekChatFile(file, {
+        purpose: richLayout ? 'rich_layout_recognition' : 'text_recognition',
+      })
+      setDraftAndResize(mergeDictateText(draft, text))
+      inputRef.current?.focus()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'OCR failed')
+    } finally {
+      setOcrBusy(false)
+      if (ocrInputRef.current) ocrInputRef.current.value = ''
     }
   }
 
@@ -2023,6 +2054,14 @@ export function ChatPage() {
                 disabled={busy || !unlocked || uploadingFile}
                 onChange={(e) => void onPickFile(e.target.files?.[0] || null)}
               />
+              <input
+                ref={ocrInputRef}
+                type="file"
+                className="ds-chat-file-input"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.ppt,.pptx"
+                disabled={busy || !unlocked || ocrBusy}
+                onChange={(e) => void onPickOcr(e.target.files?.[0] || null)}
+              />
               <button
                 type="button"
                 className="ds-chat-attach"
@@ -2032,6 +2071,16 @@ export function ChatPage() {
                 onClick={() => fileInputRef.current?.click()}
               >
                 {uploadingFile ? '…' : '+'}
+              </button>
+              <button
+                type="button"
+                className="ds-chat-attach ds-chat-ocr"
+                aria-label="OCR into message"
+                title="OCR — paste recognized text into the composer (not stored as a file)"
+                disabled={busy || !unlocked || ocrBusy}
+                onClick={() => ocrInputRef.current?.click()}
+              >
+                {ocrBusy ? '…' : 'OCR'}
               </button>
               <ChatDictateButton
                 disabled={busy || !unlocked}
