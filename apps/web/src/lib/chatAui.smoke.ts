@@ -55,6 +55,28 @@ const page = readFileSync(join(root, 'pages/chat/aui/ChatAuiPage.tsx'), 'utf8')
 assert.match(page, /ChatAuiRuntimeProvider/, 'AUI page wraps runtime')
 assert.match(page, /canUseDeepseekChat/, 'AUI page keeps Family gate')
 assert.match(page, /Classic chat UI/, 'AUI page can flip back to classic')
+assert.match(page, /ds-chat-top-brand/, 'AUI uses classic centered brand classes')
+// Header must be nested under main — a header sibling of main under row-flex
+// .ds-chat vertically centered the chrome and hid the composer on iPhone.
+const auiShellFn = page.slice(page.indexOf('function AuiShell'), page.indexOf('function GateShell'))
+assert.match(
+  auiShellFn,
+  /ds-chat-main aui-main[\s\S]*<header className="ds-chat-top"[\s\S]*ChatAuiThread/,
+  'top bar lives inside ds-chat-main (mobile layout)',
+)
+assert.doesNotMatch(
+  auiShellFn,
+  /<header className="ds-chat-top"[\s\S]*ds-chat-main aui-main/,
+  'top bar must not precede ds-chat-main in AuiShell',
+)
+
+const auiCss = readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8')
+assert.match(auiCss, /\.ds-chat\.aui-chat/, 'AUI shell scoped under .aui-chat')
+assert.match(
+  auiCss,
+  /Top bar must live inside|never becomes a full-height row sibling|flex-row sibling/i,
+  'CSS documents the iPhone layout invariant',
+)
 
 const runtime = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtime, /useExternalStoreRuntime/, 'ExternalStoreRuntime bridge')
