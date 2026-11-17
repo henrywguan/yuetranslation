@@ -63,6 +63,8 @@ const harnessSrc = readFileSync(
 )
 assert.match(harnessSrc, /content_replace/, 'Harness rewrites answer with citation chips')
 assert.match(harnessSrc, /image_url/, 'Harness extracts image_search cards')
+assert.match(harnessSrc, /orderedSources/, 'Cited sources emit in chip order')
+assert.match(harnessSrc, /content_replace.*reply = ev\.text|ev\.kind === 'content_replace'/, 'Non-stream reply applies content_replace')
 assert.doesNotMatch(
   harnessSrc,
   /safety_check\s*[:=]/,

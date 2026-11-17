@@ -49,6 +49,11 @@ assert.equal(sameUrl.citations.length, 1)
 const sources = sourcesFromInlineCitations(citations)
 assert.equal(sources.length, 2)
 assert.equal(sources[0]!.title, 'A')
+assert.equal(sources[0]!.url, 'https://example.com/a')
+assert.equal(sources[1]!.url, 'https://example.com/b')
+// Chip [1] must map to sources[0]
+assert.equal(citations[0]!.index, 1)
+assert.equal(citations[0]!.url, sources[0]!.url)
 
 // CJK code points (not UTF-16 units)
 const cjk = applyInlineCitationMarkers('你好世界', [

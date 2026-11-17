@@ -146,8 +146,16 @@ function languageFromPrompt(ctx: DeepseekChatPromptContext): string {
   const raw = String(ctx.primaryLang || '')
     .trim()
     .toLowerCase()
-  if (raw && LANG_NAMES[raw]) return LANG_NAMES[raw]
-  return languageFromLocale(String(ctx.locale || 'en-US'))
+  if (!raw) return languageFromLocale(String(ctx.locale || 'en-US'))
+  if (LANG_NAMES[raw]) return LANG_NAMES[raw]
+  try {
+    const dn = new Intl.DisplayNames(['en'], { type: 'language' })
+    const named = dn.of(raw)
+    if (named) return named
+  } catch {
+    /* fall through */
+  }
+  return raw
 }
 
 function locationFromTimeZone(timeZone: string): string {
@@ -538,6 +546,8 @@ export async function* streamDeepseekChatHarness(
     }
 
     // Final answer: inject `[n]` markers once annotations are available.
+    // Sources emitted here MUST match chip order (`sources[n-1]` ↔ `[n]`).
+    let orderedSources: { url: string; title: string }[] | null = null
     if (assistantContent.trim() && pendingAnnotations) {
       const parsedAnns = parseUrlCitationAnnotations(pendingAnnotations)
       if (parsedAnns.length) {
@@ -552,12 +562,20 @@ export async function* streamDeepseekChatHarness(
         if (marked !== assistantContent) {
           yield { kind: 'content_replace', text: marked }
         }
-        for (const s of sourcesFromInlineCitations(citations)) {
+        orderedSources = sourcesFromInlineCitations(citations)
+        for (const s of orderedSources) {
           if (!allSources.has(s.url)) allSources.set(s.url, s.title)
         }
       }
     }
-    if (allSources.size) {
+    if (orderedSources?.length) {
+      // Append any non-cited search URLs after the numbered citations.
+      const cited = new Set(orderedSources.map((s) => s.url))
+      const extras = [...allSources.entries()]
+        .filter(([url]) => !cited.has(url))
+        .map(([url, title]) => ({ url, title }))
+      yield { kind: 'sources', sources: [...orderedSources, ...extras] }
+    } else if (allSources.size) {
       yield {
         kind: 'sources',
         sources: [...allSources.entries()].map(([url, title]) => ({ url, title })),
@@ -577,6 +595,7 @@ export async function generateDeepseekChatHarnessReply(
   for await (const ev of streamDeepseekChatHarness(messages, opts)) {
     if (ev.kind === 'reasoning') reasoning += ev.text
     if (ev.kind === 'delta') reply += ev.text
+    if (ev.kind === 'content_replace') reply = ev.text
     if (ev.kind === 'title') title = ev.title
   }
   if (!reply.trim()) throw new Error('Empty model reply.')
