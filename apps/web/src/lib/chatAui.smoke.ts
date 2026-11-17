@@ -47,7 +47,14 @@ assert.match(thread, /SpeakButton/, 'keeps SpeakButton')
 assert.match(thread, /DeepThink/, 'DeepThink toggle chrome')
 assert.match(thread, /ChatPluginKeysModal/, 'BYOK keys modal')
 assert.match(thread, /Rich layout/, 'rich layout toggle')
+assert.match(thread, /renderChatMarkdown\(text\)/, 'mid-stream markdown (not plain settle)')
+assert.match(thread, /is-streaming/, 'streaming markdown caret class')
 assert.doesNotMatch(thread, /WebSpeechSynthesisAdapter|speechSynthesis\.speak/, 'no browser TTS adapter')
+assert.doesNotMatch(
+  thread,
+  /streaming \|\| !rich \?[\s\S]*ds-chat-plain/,
+  'AUI does not use classic plain-while-streaming gate',
+)
 
 const pkg = JSON.parse(readFileSync(join(root, '../package.json'), 'utf8')) as {
   dependencies?: Record<string, string>

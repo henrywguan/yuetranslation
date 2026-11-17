@@ -29,10 +29,27 @@ const SUGGESTIONS = [
   'Help me debug this error message',
 ]
 
+/**
+ * Live markdown while the assistant token-stream is open — intentional premium
+ * feel (Henry OK'd mid-stream markdown over the classic plain-text settle path).
+ */
 function MarkdownText() {
   const { text } = useMessagePartText()
-  if (!text.trim()) return <span className="aui-msg-empty" aria-hidden />
-  return <div className="aui-md">{renderChatMarkdown(text)}</div>
+  const streaming = useAuiState((s) => s.message.status?.type === 'running')
+  if (!text.trim()) {
+    return streaming ? (
+      <div className="aui-md is-streaming" aria-busy="true">
+        <span className="aui-md-placeholder"> </span>
+      </div>
+    ) : (
+      <span className="aui-msg-empty" aria-hidden />
+    )
+  }
+  return (
+    <div className={`aui-md${streaming ? ' is-streaming' : ''}`} aria-busy={streaming || undefined}>
+      {renderChatMarkdown(text)}
+    </div>
+  )
 }
 
 function ReasoningText() {

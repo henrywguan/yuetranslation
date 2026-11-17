@@ -265,6 +265,29 @@
   margin-bottom: 0;
 }
 
+/* Mid-stream markdown caret — same pulse language as classic .ds-chat-assistant-body.is-streaming */
+.aui-md.is-streaming :where(p:last-child, li:last-child, pre:last-child, h1:last-child, h2:last-child, h3:last-child)::after,
+.aui-md.is-streaming.aui-md:not(:has(*))::after,
+.aui-md.is-streaming > .aui-md-placeholder::after {
+  content: '|';
+  display: inline-block;
+  margin-left: 0.05em;
+  color: var(--ds-blue);
+  animation: ds-chat-caret 0.9s steps(1) infinite;
+}
+
+.aui-md-placeholder {
+  display: inline-block;
+  min-height: 1.2em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aui-md.is-streaming :where(p:last-child, li:last-child, pre:last-child, h1:last-child, h2:last-child, h3:last-child)::after,
+  .aui-md.is-streaming > .aui-md-placeholder::after {
+    animation: none;
+  }
+}
+
 .aui-reasoning {
   margin: 0 0 0.75rem;
   background: var(--ds-reasoning-bg);
