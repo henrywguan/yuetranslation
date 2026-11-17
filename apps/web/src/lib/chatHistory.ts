@@ -35,6 +35,15 @@ export type ChatFileMeta = {
   mime?: string
 }
 
+export type ChatAlternate = {
+  id: string
+  content: string
+  reasoning?: string
+  thoughtMs?: number
+  sources?: ChatSource[]
+  searchSteps?: ChatSearchStep[]
+}
+
 export type ChatMessage = {
   id: string
   role: ChatRole
@@ -52,6 +61,10 @@ export type ChatMessage = {
   fileIds?: string[]
   /** Filenames / mime for UI chips (optional; fileIds remain source of truth for API). */
   files?: ChatFileMeta[]
+  /** Prior regenerated replies for this assistant turn (branch siblings). */
+  alternates?: ChatAlternate[]
+  /** Index into alternates + live body for ← → branch UI. */
+  activeAlternate?: number
 }
 
 export type ChatThread = {
@@ -188,9 +201,30 @@ function normalizeFiles(raw: unknown, fileIds?: string[]): ChatFileMeta[] | unde
   return out.length ? out : undefined
 }
 
+function normalizeAlternates(raw: unknown): ChatAlternate[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const out: ChatAlternate[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as ChatAlternate
+    const content = String(row.content || '').trim()
+    if (!content) continue
+    out.push({
+      id: typeof row.id === 'string' ? row.id : uid(),
+      content: content.slice(0, MAX_CONTENT_CHARS),
+      reasoning: typeof row.reasoning === 'string' && row.reasoning.trim() ? row.reasoning : undefined,
+      thoughtMs: Number.isFinite(row.thoughtMs) ? Math.max(0, Number(row.thoughtMs)) : undefined,
+      sources: normalizeSources(row.sources),
+      searchSteps: normalizeSearchSteps(row.searchSteps),
+    })
+  }
+  return out.length ? out.slice(-8) : undefined
+}
+
 function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
   if (!m || (m.role !== 'user' && m.role !== 'assistant')) return null
   const fileIds = normalizeFileIds(m.fileIds)
+  const alternates = m.role === 'assistant' ? normalizeAlternates(m.alternates) : undefined
   return {
     id: typeof m.id === 'string' ? m.id : uid(),
     role: m.role,
@@ -202,6 +236,10 @@ function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
     searchSteps: normalizeSearchSteps(m.searchSteps),
     fileIds,
     files: normalizeFiles(m.files, fileIds),
+    ...(alternates ? { alternates } : null),
+    ...(m.role === 'assistant' && Number.isFinite(m.activeAlternate)
+      ? { activeAlternate: Math.max(0, Number(m.activeAlternate)) }
+      : null),
   }
 }
 

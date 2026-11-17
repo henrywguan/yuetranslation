@@ -23,10 +23,15 @@ import {
 } from '../lib/api'
 import { extractChatArtifacts, relatedQuestionsFromReply, type ChatArtifact } from '../lib/chatArtifacts'
 import {
+  cycleAssistantAlternate,
+  forkThreadAt,
+  pushAssistantAlternate,
+} from '../lib/chatBranching'
+import { parseAnyChatImport } from '../lib/chatDeepseekImport'
+import {
   consumeChatPrefill,
   consumeSharedThread,
   downloadTextFile,
-  parseImportedThread,
   safeExportBasename,
   stashSharedThread,
   threadToJson,
@@ -382,6 +387,11 @@ function MessageActions({
   onEdit,
   onSearchReply,
   onOpenArtifacts,
+  onContinue,
+  onBranch,
+  onPrevAlternate,
+  onNextAlternate,
+  alternateLabel,
 }: {
   content: string
   disabled?: boolean
@@ -389,6 +399,11 @@ function MessageActions({
   onEdit?: () => void
   onSearchReply?: () => void
   onOpenArtifacts?: () => void
+  onContinue?: () => void
+  onBranch?: () => void
+  onPrevAlternate?: () => void
+  onNextAlternate?: () => void
+  alternateLabel?: string
 }) {
   const [copied, setCopied] = useState(false)
   const [dsSpeaking, setDsSpeaking] = useState(false)
@@ -461,6 +476,53 @@ function MessageActions({
         {COPY_ICON}
         <span className="ds-chat-action-label">{copied ? 'Copied' : 'Copy'}</span>
       </button>
+      {onPrevAlternate || onNextAlternate ? (
+        <span className="ds-chat-alt-nav">
+          <button
+            type="button"
+            className="ds-chat-action"
+            aria-label="Previous reply branch"
+            disabled={disabled || !onPrevAlternate}
+            onClick={onPrevAlternate}
+          >
+            ←
+          </button>
+          {alternateLabel ? <span className="ds-chat-alt-label">{alternateLabel}</span> : null}
+          <button
+            type="button"
+            className="ds-chat-action"
+            aria-label="Next reply branch"
+            disabled={disabled || !onNextAlternate}
+            onClick={onNextAlternate}
+          >
+            →
+          </button>
+        </span>
+      ) : null}
+      {onContinue ? (
+        <button
+          type="button"
+          className="ds-chat-action"
+          aria-label="Continue"
+          title="Continue this reply"
+          disabled={disabled}
+          onClick={onContinue}
+        >
+          <span className="ds-chat-action-label">Continue</span>
+        </button>
+      ) : null}
+      {onBranch ? (
+        <button
+          type="button"
+          className="ds-chat-action"
+          aria-label="Branch"
+          title="Fork a new chat from here"
+          disabled={disabled}
+          onClick={onBranch}
+        >
+          <span className="ds-chat-action-label">Branch</span>
+        </button>
+      ) : null}
       {onRegenerate ? (
         <button
           type="button"
@@ -904,13 +966,49 @@ export function ChatPage() {
     streamTtsRef.current = null
   }
 
-  const runAssistant = async (baseThread: ChatThread, fileIds?: string[]) => {
+  const runAssistant = async (
+    baseThread: ChatThread,
+    fileIds?: string[],
+    opts?: { continueFromId?: string; seedAlternates?: ChatMessage['alternates'] },
+  ) => {
     let thread = baseThread
-    const assistantStep = appendChatMessage(thread, 'assistant', '')
-    thread = assistantStep.thread
-    const assistantId = assistantStep.message.id
-    persist(thread)
-    setRevealCount((n) => Math.min(MAX_RENDER_MESSAGES, Math.max(n + 2, thread.messages.length)))
+    let assistantId: string
+    let assembled = ''
+    let reasoning = ''
+    let sources: ChatSource[] | undefined
+    let searchSteps: ChatSearchStep[] = []
+    const continueFromId = opts?.continueFromId
+
+    if (continueFromId) {
+      const existing = thread.messages.find((m) => m.id === continueFromId && m.role === 'assistant')
+      if (!existing) return
+      assistantId = existing.id
+      assembled = existing.content
+      reasoning = existing.reasoning || ''
+      sources = existing.sources
+      searchSteps = existing.searchSteps || []
+      persist(thread)
+    } else {
+      const assistantStep = appendChatMessage(thread, 'assistant', '')
+      thread = assistantStep.thread
+      assistantId = assistantStep.message.id
+      if (opts?.seedAlternates?.length) {
+        thread = {
+          ...thread,
+          messages: thread.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  alternates: opts.seedAlternates,
+                  activeAlternate: opts.seedAlternates!.length,
+                }
+              : m,
+          ),
+        }
+      }
+      persist(thread)
+      setRevealCount((n) => Math.min(MAX_RENDER_MESSAGES, Math.max(n + 2, thread.messages.length)))
+    }
     setStreamingId(assistantId)
     setThinking(false)
     setSearching(false)
@@ -920,10 +1018,6 @@ export function ChatPage() {
     const controller = new AbortController()
     abortRef.current = controller
 
-    let assembled = ''
-    let reasoning = ''
-    let sources: ChatSource[] | undefined
-    let searchSteps: ChatSearchStep[] = []
     streamTtsRef.current?.stop()
     streamTtsRef.current = null
     const liveTts =
@@ -970,12 +1064,16 @@ export function ChatPage() {
     })
 
     try {
-      await streamDeepseekChat(apiMessagesFromThread(thread).filter((m) => m.content.trim()), {
+      const wireMessages = continueFromId
+        ? apiMessagesFromThread(thread).filter((m) => m.content.trim())
+        : apiMessagesFromThread(thread).filter((m) => m.content.trim())
+      await streamDeepseekChat(wireMessages, {
         thinking: deepThink,
         search: searchOn,
         fileIds,
         plugins: enabledPlugins,
         primaryLang: primaryLanguage,
+        continueReply: Boolean(continueFromId),
         signal: controller.signal,
         onStatus: (status) => {
           if (status === 'searching') {
@@ -1159,10 +1257,12 @@ export function ChatPage() {
     const idx = active.messages.findIndex((m) => m.id === assistantId)
     if (idx < 1) return
     const prev = active.messages[idx - 1]
-    if (!prev || prev.role !== 'user') return
+    const current = active.messages[idx]
+    if (!prev || prev.role !== 'user' || !current || current.role !== 'assistant') return
 
     setError(null)
     setBusy(true)
+    const stashAlts = pushAssistantAlternate(current).alternates
     const truncated: ChatThread = {
       ...active,
       messages: active.messages.slice(0, idx),
@@ -1170,7 +1270,38 @@ export function ChatPage() {
     }
     persist(truncated)
     setActiveId(truncated.id)
-    await runAssistant(truncated, prev.fileIds)
+    await runAssistant(truncated, prev.fileIds, { seedAlternates: stashAlts })
+  }
+
+  const continueReply = async (assistantId: string) => {
+    if (busy || !unlocked) return
+    const last = active.messages[active.messages.length - 1]
+    if (!last || last.id !== assistantId || last.role !== 'assistant') return
+    setError(null)
+    setBusy(true)
+    await runAssistant(active, undefined, { continueFromId: assistantId })
+  }
+
+  const branchFromMessage = (messageId: string) => {
+    if (busy) return
+    const forked = forkThreadAt(active, messageId)
+    if (!forked) return
+    setThreads((prev) => upsertChatThread(forked, prev))
+    setActiveId(forked.id)
+    beginBatchedReveal(forked.messages.length)
+    setSidebarOpen(false)
+  }
+
+  const cycleAlternate = (assistantId: string, dir: -1 | 1) => {
+    if (busy) return
+    const next: ChatThread = {
+      ...active,
+      messages: active.messages.map((m) =>
+        m.id === assistantId ? cycleAssistantAlternate(m, dir) : m,
+      ),
+      updatedAt: Date.now(),
+    }
+    persist(next)
   }
 
   const editUserMessage = (userId: string) => {
@@ -1368,9 +1499,9 @@ export function ChatPage() {
               if (!file) return
               try {
                 const raw = await file.text()
-                const imported = parseImportedThread(raw)
+                const imported = parseAnyChatImport(raw)
                 if (!imported) {
-                  setError('Could not import that chat JSON.')
+                  setError('Could not import that chat (JSON / DeepSeek session / markdown).')
                   return
                 }
                 setThreads((prev) => upsertChatThread(imported, prev))
@@ -1609,6 +1740,21 @@ export function ChatPage() {
                           disabled={busy}
                           onRegenerate={() => void regenerate(m.id)}
                           onSearchReply={() => searchThisReply(m.content)}
+                          onContinue={
+                            m.id === lastMessageId ? () => void continueReply(m.id) : undefined
+                          }
+                          onBranch={() => branchFromMessage(m.id)}
+                          onPrevAlternate={
+                            m.alternates?.length ? () => cycleAlternate(m.id, -1) : undefined
+                          }
+                          onNextAlternate={
+                            m.alternates?.length ? () => cycleAlternate(m.id, 1) : undefined
+                          }
+                          alternateLabel={
+                            m.alternates?.length
+                              ? `${(m.activeAlternate ?? m.alternates.length) + 1}/${m.alternates.length + 1}`
+                              : undefined
+                          }
                           onOpenArtifacts={
                             arts.length
                               ? () => setArtifact(arts[0]!)

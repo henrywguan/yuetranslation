@@ -803,6 +803,8 @@ export type DeepseekChatStreamHandlers = {
   plugins?: string[]
   /** Account Hub primary language for DeepSeek user metadata. */
   primaryLang?: string
+  /** Continue last assistant (prefix completion). */
+  continueReply?: boolean
   signal?: AbortSignal
 }
 
@@ -962,6 +964,7 @@ export async function streamDeepseekChat(
       ...(primaryLang ? { primaryLang } : null),
       ...(fileIds.length ? { fileIds } : null),
       ...(plugins.length ? { plugins } : null),
+      ...(handlers.continueReply ? { continue: true } : null),
     }),
     headers: { Accept: 'text/event-stream' },
     signal: handlers.signal,

@@ -6,7 +6,7 @@
  * Intentionally omits DeepSeek `safety_check` — #/chat stays uncensored / abliterated.
  */
 import { openaiConfigured } from './env.js'
-import { openaiClient } from './openaiClient.js'
+import { openaiBetaClient, openaiClient } from './openaiClient.js'
 import {
   DEEPSEEK_CHAT_HISTORY_LIMIT,
   DEEPSEEK_CHAT_MAX_TOKENS,
@@ -74,6 +74,8 @@ export type DeepseekChatHarnessOptions = {
   plugins?: string[]
   /** Per-user BYOK secrets for image + MCP presets. */
   pluginCreds?: import('./deepseekChatPluginKeys.js').ChatPluginCredentials
+  /** Continue last assistant via Chat Prefix Completion (`prefix: true` + /beta). */
+  continueReply?: boolean
 }
 
 type ToolCall = {
@@ -94,6 +96,8 @@ type WireMsg =
       content: string | null
       reasoning_content?: string | null
       tool_calls?: ToolCall[]
+      /** Chat Prefix Completion — last assistant only. */
+      prefix?: boolean
     }
   | { role: 'tool'; tool_call_id: string; content: string }
 
@@ -244,6 +248,7 @@ function seedWireMessages(
   searchEnabled: boolean,
   /** Extra ids merged onto the last user turn (composer convenience). */
   lastTurnFileIds?: string[],
+  continueReply = false,
 ): WireMsg[] {
   const recent = recentDeepseekChatMessages(messages, DEEPSEEK_CHAT_HISTORY_LIMIT)
   const system = buildDeepseekChatSystem({
@@ -257,7 +262,7 @@ function seedWireMessages(
     const m = recent[i]!
     const isLast = i === recent.length - 1
     if (m.role === 'user') {
-      if (isLast) out.push(formatLatestReminder(prompt))
+      if (isLast && !continueReply) out.push(formatLatestReminder(prompt))
       const ids = isLast
         ? [...(m.fileIds || []), ...(lastTurnFileIds || [])]
         : m.fileIds
@@ -273,7 +278,10 @@ function seedWireMessages(
         content: m.content,
       }
       if (m.reasoning?.trim()) {
-        ;(row as { reasoning_content?: string }).reasoning_content = m.reasoning.trim()
+        row.reasoning_content = m.reasoning.trim()
+      }
+      if (continueReply && isLast) {
+        row.prefix = true
       }
       out.push(row)
       continue
@@ -365,7 +373,8 @@ export async function* streamDeepseekChatHarness(
   opts: DeepseekChatHarnessOptions,
 ): AsyncGenerator<DeepseekChatHarnessEvent, void, unknown> {
   if (!openaiConfigured()) throw new Error('Chat model is not configured.')
-  const client = openaiClient()
+  const continueReply = opts.continueReply === true
+  const client = continueReply ? openaiBetaClient() : openaiClient()
   if (!client) throw new Error('Chat model is not configured.')
 
   const thinkingEnabled = opts.thinkingEnabled !== false
@@ -375,7 +384,20 @@ export async function* streamDeepseekChatHarness(
   const tools = buildDeepseekChatToolList(searchEnabled, pluginTools)
   const deepseekHost = deepseekChatUsesThinking()
 
-  const msgs: WireMsg[] = seedWireMessages(messages, opts.prompt, searchEnabled, opts.fileIds)
+  if (continueReply) {
+    const last = messages[messages.length - 1]
+    if (!last || last.role !== 'assistant' || !last.content.trim()) {
+      throw new Error('Continue requires a non-empty assistant reply.')
+    }
+  }
+
+  const msgs: WireMsg[] = seedWireMessages(
+    messages,
+    opts.prompt,
+    searchEnabled,
+    opts.fileIds,
+    continueReply,
+  )
 
   let announcedThinking = false
   let announcedSearching = false

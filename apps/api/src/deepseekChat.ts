@@ -46,6 +46,11 @@ export const DeepseekChatBodySchema = z.object({
    * Empty array = no plugin tools.
    */
   plugins: z.array(z.string().trim().min(1).max(64)).max(16).optional(),
+  /**
+   * Continue the last assistant message (Chat Prefix Completion / beta).
+   * When true, the last wire message must be `assistant`.
+   */
+  continue: z.boolean().optional(),
 })
 
 export type DeepseekChatMessage = z.infer<typeof DeepseekChatMessageSchema>
