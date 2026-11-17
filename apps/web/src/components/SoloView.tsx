@@ -580,29 +580,43 @@ export function SoloView() {
     Boolean(enTranslation) ||
     Boolean(yueTranslation)
 
-  /** Icon column extras for a finished pane line (kept vertical so they never clip the border). */
-  const renderPaneIconExtras = (pane: 'upper' | 'lower') => {
+  /** Share lives in the head row under Details / Ask (with Clear + Speak). */
+  const renderPaneShare = (pane: 'upper' | 'lower') => {
+    const lang = pane === 'upper' ? soloUpperLang : soloLowerLang
+    const draft = (pane === 'upper' ? upperDraft : lowerDraft).trim()
+    if (!draft) return null
+    const shareText = lang === 'yue' || lang === 'cmn' ? copyableText(draft, lang) || draft : draft
+    return <ShareButton text={shareText} />
+  }
+
+  /**
+   * Yue-only extras under the translation — kept out of the head so Clear/Speak/Share
+   * stay a short horizontal row and the lower scroll body cannot collapse.
+   */
+  const renderPaneSecondary = (pane: 'upper' | 'lower') => {
     const lang = pane === 'upper' ? soloUpperLang : soloLowerLang
     const draft = (pane === 'upper' ? upperDraft : lowerDraft).trim()
     if (!draft) return null
     const isLatestTarget =
       Boolean(latest) && latest!.to === lang && latest!.translation.trim() === draft
-    const shareText = lang === 'yue' || lang === 'cmn' ? copyableText(draft, lang) || draft : draft
+    const sayItBack = lang === 'yue' ? <SayItBack text={draft} /> : null
+    const star =
+      isLatestTarget && latest ? (
+        <StarPhraseButton
+          source={latest.source}
+          translation={draft}
+          from={latest.from}
+          to={lang}
+          romanization={latest.romanization}
+          origin="solo"
+        />
+      ) : null
+    if (!sayItBack && !star) return null
     return (
-      <>
-        {lang === 'yue' ? <SayItBack text={draft} /> : null}
-        {isLatestTarget && latest ? (
-          <StarPhraseButton
-            source={latest.source}
-            translation={draft}
-            from={latest.from}
-            to={lang}
-            romanization={latest.romanization}
-            origin="solo"
-          />
-        ) : null}
-        <ShareButton text={shareText} />
-      </>
+      <div className="solo-pane-secondary">
+        {sayItBack}
+        {star}
+      </div>
     )
   }
 
@@ -792,7 +806,7 @@ export function SoloView() {
                   {upperDraft.trim() ? (
                     <SpeakButton text={upperDraft} lang={soloUpperLang} />
                   ) : null}
-                  {renderPaneIconExtras('upper')}
+                  {renderPaneShare('upper')}
                 </div>
               </div>
             ) : null}
@@ -814,6 +828,7 @@ export function SoloView() {
               },
               onBlurEdit: () => setUpperEditing(false),
             })}
+            {showUpperResult ? renderPaneSecondary('upper') : null}
           </div>
         </div>
 
@@ -884,7 +899,7 @@ export function SoloView() {
                   {lowerDraft.trim() ? (
                     <SpeakButton text={lowerDraft} lang={soloLowerLang} />
                   ) : null}
-                  {renderPaneIconExtras('lower')}
+                  {renderPaneShare('lower')}
                 </div>
               </div>
             ) : null}
@@ -906,6 +921,7 @@ export function SoloView() {
               },
               onBlurEdit: () => setLowerEditing(false),
             })}
+            {showLowerResult ? renderPaneSecondary('lower') : null}
             {!showLowerRuby && altsLoading && alts.length === 0 && lowerDraft.trim() ? (
               <p className="solo-alts-loading muted" aria-live="polite">
                 <BiText copy={ui.loadingVariations} size="sm" layout="inline" />
