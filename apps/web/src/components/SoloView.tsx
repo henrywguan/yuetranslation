@@ -580,8 +580,12 @@ export function SoloView() {
     Boolean(enTranslation) ||
     Boolean(yueTranslation)
 
-  /** Icon column extras for a finished pane line (kept vertical so they never clip the border). */
-  const renderPaneIconExtras = (pane: 'upper' | 'lower') => {
+  /**
+   * Secondary actions live in the scroll body (horizontal), not the head icon stack.
+   * A tall Clear/Speak/Say-it-back/Star/Share column was collapsing .solo-pane-scroll to 0
+   * and clipping the last button under the dock.
+   */
+  const renderPaneSecondary = (pane: 'upper' | 'lower') => {
     const lang = pane === 'upper' ? soloUpperLang : soloLowerLang
     const draft = (pane === 'upper' ? upperDraft : lowerDraft).trim()
     if (!draft) return null
@@ -589,7 +593,7 @@ export function SoloView() {
       Boolean(latest) && latest!.to === lang && latest!.translation.trim() === draft
     const shareText = lang === 'yue' || lang === 'cmn' ? copyableText(draft, lang) || draft : draft
     return (
-      <>
+      <div className="solo-pane-secondary">
         {lang === 'yue' ? <SayItBack text={draft} /> : null}
         {isLatestTarget && latest ? (
           <StarPhraseButton
@@ -602,7 +606,7 @@ export function SoloView() {
           />
         ) : null}
         <ShareButton text={shareText} />
-      </>
+      </div>
     )
   }
 
@@ -792,7 +796,6 @@ export function SoloView() {
                   {upperDraft.trim() ? (
                     <SpeakButton text={upperDraft} lang={soloUpperLang} />
                   ) : null}
-                  {renderPaneIconExtras('upper')}
                 </div>
               </div>
             ) : null}
@@ -814,6 +817,7 @@ export function SoloView() {
               },
               onBlurEdit: () => setUpperEditing(false),
             })}
+            {showUpperResult ? renderPaneSecondary('upper') : null}
           </div>
         </div>
 
@@ -884,7 +888,6 @@ export function SoloView() {
                   {lowerDraft.trim() ? (
                     <SpeakButton text={lowerDraft} lang={soloLowerLang} />
                   ) : null}
-                  {renderPaneIconExtras('lower')}
                 </div>
               </div>
             ) : null}
@@ -906,6 +909,7 @@ export function SoloView() {
               },
               onBlurEdit: () => setLowerEditing(false),
             })}
+            {showLowerResult ? renderPaneSecondary('lower') : null}
             {!showLowerRuby && altsLoading && alts.length === 0 && lowerDraft.trim() ? (
               <p className="solo-alts-loading muted" aria-live="polite">
                 <BiText copy={ui.loadingVariations} size="sm" layout="inline" />

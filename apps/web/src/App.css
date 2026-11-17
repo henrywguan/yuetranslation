@@ -2277,6 +2277,8 @@
 }
 
 .solo-lower .solo-pane-scroll {
+  /* Never let the head chrome collapse the translation to zero height. */
+  min-height: 3.5rem;
   /* Extra room so Other variations / last line clear the dock visually when scrolling. */
   padding-bottom: 1.25rem;
 }
@@ -2399,10 +2401,33 @@
 
 .solo-pane-actions-leading {
   display: inline-flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
   gap: 0.35rem;
   min-width: 0;
+}
+
+/* Say-it-back / star / share — under the translation, not in the head stack. */
+.solo-pane-secondary {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+  max-width: 100%;
+}
+
+.solo-pane-secondary .copy-btn {
+  width: 1.7rem;
+  height: 1.7rem;
+}
+
+.solo-pane-secondary .copy-btn-icon {
+  width: 0.95rem;
+  height: 0.95rem;
 }
 
 .solo-details-btn {

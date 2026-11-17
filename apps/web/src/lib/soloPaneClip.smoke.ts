@@ -35,10 +35,15 @@ assert.equal(
   'Both upper and lower panes get a scroll region',
 )
 
+assert.doesNotMatch(
+  solo,
+  /solo-pane-actions-stack[\s\S]{0,200}renderPaneSecondary/,
+  'Secondary icons must not live in the head stack (collapses lower scroll + clips)',
+)
 assert.match(
   solo,
-  /solo-pane-actions-stack[\s\S]*renderPaneIconExtras/,
-  'Share/star/say-it-back live in the icon stack (not a wrapping row that clips the border)',
+  /showLowerResult \? renderPaneSecondary\('lower'\)/,
+  'Lower Share/star/say-it-back render in the scroll body under the translation',
 )
 assert.match(
   solo,
@@ -50,8 +55,14 @@ assert.match(solo, /collapsible/, 'Solo Other variations start collapsed (tap to
 assert.match(
   css,
   /\.solo-pane-actions\s*\{[^}]*flex-wrap:\s*nowrap/s,
-  'Pane actions must not wrap icons past the mic-glow border',
+  'Pane head actions must not wrap icons past the mic-glow border',
 )
+assert.match(
+  css,
+  /\.solo-lower\s+\.solo-pane-scroll\s*\{[^}]*min-height:\s*3\.5rem/s,
+  'Lower scroll keeps translation visible even when head chrome is tall',
+)
+assert.match(css, /\.solo-pane-secondary\s*\{/, 'Secondary action row styles exist')
 
 assert.match(
   langBtn,
