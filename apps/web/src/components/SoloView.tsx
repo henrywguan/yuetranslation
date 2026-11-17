@@ -580,10 +580,18 @@ export function SoloView() {
     Boolean(enTranslation) ||
     Boolean(yueTranslation)
 
+  /** Share lives in the head row under Details / Ask (with Clear + Speak). */
+  const renderPaneShare = (pane: 'upper' | 'lower') => {
+    const lang = pane === 'upper' ? soloUpperLang : soloLowerLang
+    const draft = (pane === 'upper' ? upperDraft : lowerDraft).trim()
+    if (!draft) return null
+    const shareText = lang === 'yue' || lang === 'cmn' ? copyableText(draft, lang) || draft : draft
+    return <ShareButton text={shareText} />
+  }
+
   /**
-   * Secondary actions live in the scroll body (horizontal), not the head icon stack.
-   * A tall Clear/Speak/Say-it-back/Star/Share column was collapsing .solo-pane-scroll to 0
-   * and clipping the last button under the dock.
+   * Yue-only extras under the translation — kept out of the head so Clear/Speak/Share
+   * stay a short horizontal row and the lower scroll body cannot collapse.
    */
   const renderPaneSecondary = (pane: 'upper' | 'lower') => {
     const lang = pane === 'upper' ? soloUpperLang : soloLowerLang
@@ -591,21 +599,23 @@ export function SoloView() {
     if (!draft) return null
     const isLatestTarget =
       Boolean(latest) && latest!.to === lang && latest!.translation.trim() === draft
-    const shareText = lang === 'yue' || lang === 'cmn' ? copyableText(draft, lang) || draft : draft
+    const sayItBack = lang === 'yue' ? <SayItBack text={draft} /> : null
+    const star =
+      isLatestTarget && latest ? (
+        <StarPhraseButton
+          source={latest.source}
+          translation={draft}
+          from={latest.from}
+          to={lang}
+          romanization={latest.romanization}
+          origin="solo"
+        />
+      ) : null
+    if (!sayItBack && !star) return null
     return (
       <div className="solo-pane-secondary">
-        {lang === 'yue' ? <SayItBack text={draft} /> : null}
-        {isLatestTarget && latest ? (
-          <StarPhraseButton
-            source={latest.source}
-            translation={draft}
-            from={latest.from}
-            to={lang}
-            romanization={latest.romanization}
-            origin="solo"
-          />
-        ) : null}
-        <ShareButton text={shareText} />
+        {sayItBack}
+        {star}
       </div>
     )
   }
@@ -796,6 +806,7 @@ export function SoloView() {
                   {upperDraft.trim() ? (
                     <SpeakButton text={upperDraft} lang={soloUpperLang} />
                   ) : null}
+                  {renderPaneShare('upper')}
                 </div>
               </div>
             ) : null}
@@ -888,6 +899,7 @@ export function SoloView() {
                   {lowerDraft.trim() ? (
                     <SpeakButton text={lowerDraft} lang={soloLowerLang} />
                   ) : null}
+                  {renderPaneShare('lower')}
                 </div>
               </div>
             ) : null}

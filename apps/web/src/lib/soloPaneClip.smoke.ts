@@ -35,34 +35,39 @@ assert.equal(
   'Both upper and lower panes get a scroll region',
 )
 
-assert.doesNotMatch(
+assert.match(
   solo,
-  /solo-pane-actions-stack[\s\S]{0,200}renderPaneSecondary/,
-  'Secondary icons must not live in the head stack (collapses lower scroll + clips)',
+  /solo-pane-actions-stack[\s\S]*renderPaneShare\('upper'\)/,
+  'Upper Clear/Speak/Share share one head row under Details',
 )
 assert.match(
   solo,
-  /showLowerResult \? renderPaneSecondary\('lower'\)/,
-  'Lower Share/star/say-it-back render in the scroll body under the translation',
+  /solo-pane-actions-stack[\s\S]*renderPaneShare\('lower'\)/,
+  'Lower Clear/Speak/Share share one head row under Ask / Details',
 )
 assert.match(
   solo,
   /solo-pane-actions-leading[\s\S]*solo-ask-chat-btn/,
-  'Ask in Chat sits beside Details, not under Speak',
+  'Ask in Chat sits above the Clear/Speak/Share row',
 )
 assert.match(solo, /collapsible/, 'Solo Other variations start collapsed (tap to expand)')
 
 assert.match(
   css,
-  /\.solo-pane-actions\s*\{[^}]*flex-wrap:\s*nowrap/s,
-  'Pane head actions must not wrap icons past the mic-glow border',
+  /\.solo-pane-actions\s*\{[^}]*flex-direction:\s*column/s,
+  'Details/Ask stack above the Clear/Speak/Share row',
+)
+assert.match(
+  css,
+  /\.solo-pane-actions-stack\s*\{[^}]*flex-direction:\s*row/s,
+  'Clear/Speak/Share are side by side under Details / Ask',
 )
 assert.match(
   css,
   /\.solo-lower\s+\.solo-pane-scroll\s*\{[^}]*min-height:\s*3\.5rem/s,
   'Lower scroll keeps translation visible even when head chrome is tall',
 )
-assert.match(css, /\.solo-pane-secondary\s*\{/, 'Secondary action row styles exist')
+assert.match(css, /\.solo-pane-secondary\s*\{/, 'Yue say-it-back / star stay under the translation')
 
 assert.match(
   langBtn,
