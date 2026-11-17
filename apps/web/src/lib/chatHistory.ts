@@ -10,6 +10,14 @@ export type ChatSource = {
   title: string
 }
 
+export type ChatSearchImage = {
+  imageUrl: string
+  url?: string
+  title?: string
+  siteName?: string
+  siteIcon?: string
+}
+
 export type ChatSearchStep = {
   kind: string
   queries?: string[]
@@ -17,6 +25,7 @@ export type ChatSearchStep = {
   title?: string
   siteName?: string
   snippet?: string
+  images?: ChatSearchImage[]
 }
 
 /** Display metadata for an attached file (ids still drive the API). */
@@ -24,6 +33,15 @@ export type ChatFileMeta = {
   fileId: string
   filename: string
   mime?: string
+}
+
+export type ChatAlternate = {
+  id: string
+  content: string
+  reasoning?: string
+  thoughtMs?: number
+  sources?: ChatSource[]
+  searchSteps?: ChatSearchStep[]
 }
 
 export type ChatMessage = {
@@ -43,6 +61,10 @@ export type ChatMessage = {
   fileIds?: string[]
   /** Filenames / mime for UI chips (optional; fileIds remain source of truth for API). */
   files?: ChatFileMeta[]
+  /** Prior regenerated replies for this assistant turn (branch siblings). */
+  alternates?: ChatAlternate[]
+  /** Index into alternates + live body for ← → branch UI. */
+  activeAlternate?: number
 }
 
 export type ChatThread = {
@@ -116,6 +138,30 @@ function normalizeSearchSteps(raw: unknown): ChatSearchStep[] | undefined {
     const row = item as ChatSearchStep
     const kind = String(row.kind || '').trim()
     if (!kind) continue
+    const images: ChatSearchImage[] | undefined = Array.isArray(row.images)
+      ? row.images
+          .map((img) => {
+            if (!img || typeof img !== 'object') return null
+            const imageUrl = String((img as ChatSearchImage).imageUrl || '').trim()
+            if (!/^https?:\/\//i.test(imageUrl)) return null
+            return {
+              imageUrl,
+              url: typeof (img as ChatSearchImage).url === 'string' ? (img as ChatSearchImage).url : undefined,
+              title:
+                typeof (img as ChatSearchImage).title === 'string' ? (img as ChatSearchImage).title : undefined,
+              siteName:
+                typeof (img as ChatSearchImage).siteName === 'string'
+                  ? (img as ChatSearchImage).siteName
+                  : undefined,
+              siteIcon:
+                typeof (img as ChatSearchImage).siteIcon === 'string'
+                  ? (img as ChatSearchImage).siteIcon
+                  : undefined,
+            } satisfies ChatSearchImage
+          })
+          .filter((img): img is ChatSearchImage => Boolean(img))
+          .slice(0, 12)
+      : undefined
     out.push({
       kind,
       queries: Array.isArray(row.queries) ? row.queries.map(String).filter(Boolean) : undefined,
@@ -123,6 +169,7 @@ function normalizeSearchSteps(raw: unknown): ChatSearchStep[] | undefined {
       title: typeof row.title === 'string' ? row.title : undefined,
       siteName: typeof row.siteName === 'string' ? row.siteName : undefined,
       snippet: typeof row.snippet === 'string' ? row.snippet : undefined,
+      ...(images?.length ? { images } : null),
     })
   }
   return out.length ? out.slice(-24) : undefined
@@ -154,9 +201,30 @@ function normalizeFiles(raw: unknown, fileIds?: string[]): ChatFileMeta[] | unde
   return out.length ? out : undefined
 }
 
+function normalizeAlternates(raw: unknown): ChatAlternate[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const out: ChatAlternate[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as ChatAlternate
+    const content = String(row.content || '').trim()
+    if (!content) continue
+    out.push({
+      id: typeof row.id === 'string' ? row.id : uid(),
+      content: content.slice(0, MAX_CONTENT_CHARS),
+      reasoning: typeof row.reasoning === 'string' && row.reasoning.trim() ? row.reasoning : undefined,
+      thoughtMs: Number.isFinite(row.thoughtMs) ? Math.max(0, Number(row.thoughtMs)) : undefined,
+      sources: normalizeSources(row.sources),
+      searchSteps: normalizeSearchSteps(row.searchSteps),
+    })
+  }
+  return out.length ? out.slice(-8) : undefined
+}
+
 function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
   if (!m || (m.role !== 'user' && m.role !== 'assistant')) return null
   const fileIds = normalizeFileIds(m.fileIds)
+  const alternates = m.role === 'assistant' ? normalizeAlternates(m.alternates) : undefined
   return {
     id: typeof m.id === 'string' ? m.id : uid(),
     role: m.role,
@@ -168,6 +236,10 @@ function normalizeMessage(m: Partial<ChatMessage>): ChatMessage | null {
     searchSteps: normalizeSearchSteps(m.searchSteps),
     fileIds,
     files: normalizeFiles(m.files, fileIds),
+    ...(alternates ? { alternates } : null),
+    ...(m.role === 'assistant' && Number.isFinite(m.activeAlternate)
+      ? { activeAlternate: Math.max(0, Number(m.activeAlternate)) }
+      : null),
   }
 }
 

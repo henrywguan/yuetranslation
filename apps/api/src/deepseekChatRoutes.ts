@@ -61,11 +61,13 @@ async function* chatStreamEvents(
   fileIds?: string[],
   plugins?: string[],
   pluginCreds?: ChatPluginCredentials,
+  continueReply = false,
 ): AsyncGenerator<
   | { kind: 'thinking' }
   | { kind: 'searching' }
   | { kind: 'reasoning'; text: string }
   | { kind: 'delta'; text: string }
+  | { kind: 'content_replace'; text: string }
   | { kind: 'sources'; sources: { url: string; title: string }[] }
   | { kind: 'search_step'; step: unknown }
   | { kind: 'title'; title: string }
@@ -83,6 +85,7 @@ async function* chatStreamEvents(
       fileIds,
       plugins,
       pluginCreds,
+      continueReply,
     })) {
       harnessEmitted = true
       yield event
@@ -163,8 +166,14 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     return
   }
 
+  const continueReply = parsed.data.continue === true
   const last = parsed.data.messages[parsed.data.messages.length - 1]
-  if (!last || last.role !== 'user') {
+  if (continueReply) {
+    if (!last || last.role !== 'assistant' || !last.content.trim()) {
+      res.status(400).json({ message: 'Continue requires a non-empty assistant reply.' })
+      return
+    }
+  } else if (!last || last.role !== 'user') {
     res.status(400).json({ message: 'Last message must be from the user.' })
     return
   }
@@ -187,13 +196,18 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
   const stream = wantsStream(req)
   const thinkingEnabled = parsed.data.thinking !== false
   const userAskedSearch = parsed.data.search === true
-  const searchEnabled =
-    userAskedSearch ||
-    (deepseekChatSupportsSearch() && shouldAutoEnableSearch(last.content))
+  const lastUser =
+    [...parsed.data.messages].reverse().find((m) => m.role === 'user') || last
+  // Prefix continue must not declare native web tools (wrong wire shape on /beta).
+  const searchEnabled = continueReply
+    ? false
+    : userAskedSearch ||
+      (deepseekChatSupportsSearch() && shouldAutoEnableSearch(lastUser.content))
 
   const promptBase: DeepseekChatPromptContext = {
     timeZone: parsed.data.timeZone,
     locale: parsed.data.locale,
+    primaryLang: parsed.data.primaryLang,
     plan: entitlement.isAdmin ? `admin (${entitlement.plan})` : entitlement.plan,
     searchEnabled,
   }
@@ -213,6 +227,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
             fileIds,
             plugins,
             pluginCreds,
+            continueReply,
           },
         )
         void addDeepseekChatTurns(auth.userId, 1)
@@ -224,7 +239,8 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         const hasFiles =
           Boolean(fileIds?.length) ||
           parsed.data.messages.some((m) => Array.isArray(m.fileIds) && m.fileIds.length > 0)
-        if (hasFiles) {
+        if (hasFiles || continueReply) {
+          // Continue is beta-prefix only — do not fall back to a normal agent turn.
           res.status(502).json({ message })
           return
         }
@@ -274,6 +290,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         fileIds,
         plugins,
         pluginCreds,
+        continueReply,
       )) {
         if (upstream.signal.aborted || res.writableEnded) break
         if (event.kind === 'thinking') {
@@ -305,6 +322,11 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
             res,
             `data: ${JSON.stringify({ image: { url: event.url, prompt: event.prompt, id: event.id } })}\n\n`,
           )
+          continue
+        }
+        if (event.kind === 'content_replace') {
+          full = event.text
+          writeSse(res, `data: ${JSON.stringify({ contentReplace: event.text })}\n\n`)
           continue
         }
         if (event.kind === 'delta') {

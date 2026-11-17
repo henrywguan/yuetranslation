@@ -88,6 +88,21 @@ export const env = {
   /** DALL·E 3 returns URLs; gpt-image-* may return b64. */
   chatImageModel: (process.env.YUE_CHAT_IMAGE_MODEL || 'dall-e-3').trim(),
   /**
+   * Google Gemini image generation for #/chat (preferred shared backend).
+   * When set, Family users can generate without pasting an OpenAI key.
+   * Note: Google’s Developer API bills image output (free tier no longer includes images).
+   */
+  geminiApiKey: (
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+    process.env.GOOGLE_AI_API_KEY ||
+    ''
+  ).trim(),
+  /** Nano Banana / Flash image model id. */
+  chatGeminiImageModel: (
+    process.env.YUE_CHAT_GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image'
+  ).trim(),
+  /**
    * JSON array of extra remote MCP servers for #/chat plugins:
    * [{"id":"docs","name":"Docs","url":"https://…/mcp","headers":{"Authorization":"Bearer …"}}]
    * Same `id` as a generation preset (higgsfield/adobe/cursor) overrides that preset.

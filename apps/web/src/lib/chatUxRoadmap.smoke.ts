@@ -74,7 +74,7 @@ assert.equal(imported!.title, 'Imported')
 assert.equal(chatSpeakLang('nei5 hou2 maa3 dim2 gai2'), 'yue')
 assert.equal(chatSpeakLang('Hola gracias por la ayuda con el proyecto también'), 'es')
 
-assert.ok(CHAT_DEFERRED_FEATURES.includes('conversation_branching'))
+assert.ok(!CHAT_DEFERRED_FEATURES.includes('conversation_branching' as never))
 assert.ok(CHAT_DEFERRED_FEATURES.includes('supabase_cloud_thread_sync'))
 
 const chatPage = readFileSync(join(here, '../pages/ChatPage.tsx'), 'utf8')

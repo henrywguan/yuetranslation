@@ -37,6 +37,8 @@ export const DeepseekChatBodySchema = z.object({
   timeZone: z.string().trim().max(80).optional(),
   /** BCP-47 locale hint. */
   locale: z.string().trim().max(32).optional(),
+  /** Account Hub primary language (`yue`, `cmn`, `en`, …). */
+  primaryLang: z.string().trim().max(24).optional(),
   /** Convenience: merge onto the last user message if that row omitted fileIds. */
   fileIds: z.array(z.string().regex(/^file-api-/)).max(5).optional(),
   /**
@@ -44,6 +46,11 @@ export const DeepseekChatBodySchema = z.object({
    * Empty array = no plugin tools.
    */
   plugins: z.array(z.string().trim().min(1).max(64)).max(16).optional(),
+  /**
+   * Continue the last assistant message (Chat Prefix Completion / beta).
+   * When true, the last wire message must be `assistant`.
+   */
+  continue: z.boolean().optional(),
 })
 
 export type DeepseekChatMessage = z.infer<typeof DeepseekChatMessageSchema>

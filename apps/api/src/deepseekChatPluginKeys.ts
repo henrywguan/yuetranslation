@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { env } from './env.js'
 import { getAdmin } from './supabase.js'
 
-export const CHAT_PLUGIN_KEY_IDS = ['image', 'higgsfield', 'adobe', 'cursor'] as const
+export const CHAT_PLUGIN_KEY_IDS = ['gemini', 'image', 'higgsfield', 'adobe', 'cursor'] as const
 export type ChatPluginKeyId = (typeof CHAT_PLUGIN_KEY_IDS)[number]
 
 export type ChatPluginCredentials = Partial<Record<ChatPluginKeyId, string>>
@@ -19,6 +19,7 @@ export type ChatPluginKeyHint = {
 }
 
 const CredsSchema = z.object({
+  gemini: z.string().trim().min(1).max(512).optional(),
   image: z.string().trim().min(1).max(512).optional(),
   higgsfield: z.string().trim().min(1).max(2048).optional(),
   adobe: z.string().trim().min(1).max(2048).optional(),
@@ -108,6 +109,7 @@ export function hintForSecret(secret: string | undefined): ChatPluginKeyHint {
 
 export function credentialsToHints(creds: ChatPluginCredentials): Record<ChatPluginKeyId, ChatPluginKeyHint> {
   return {
+    gemini: hintForSecret(creds.gemini),
     image: hintForSecret(creds.image),
     higgsfield: hintForSecret(creds.higgsfield),
     adobe: hintForSecret(creds.adobe),

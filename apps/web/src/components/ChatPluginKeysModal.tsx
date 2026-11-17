@@ -12,10 +12,16 @@ const FIELDS: Array<{
   help: string
 }> = [
   {
+    id: 'gemini',
+    label: 'Google Gemini (images)',
+    placeholder: 'AIza…',
+    help: 'Preferred for generate_image. When the server has GEMINI_API_KEY, everyone can generate without pasting a key.',
+  },
+  {
     id: 'image',
-    label: 'OpenAI Images',
+    label: 'OpenAI Images (fallback)',
     placeholder: 'sk-…',
-    help: 'For the built-in generate_image tool (DALL·E / gpt-image).',
+    help: 'Optional fallback if Gemini is unavailable (DALL·E / gpt-image).',
   },
   {
     id: 'higgsfield',
@@ -48,6 +54,7 @@ type Props = {
 export function ChatPluginKeysModal({ open, initialHints, focusId, onClose, onSaved }: Props) {
   const titleId = useId()
   const [drafts, setDrafts] = useState<Record<DeepseekChatPluginKeyId, string>>({
+    gemini: '',
     image: '',
     higgsfield: '',
     adobe: '',
@@ -61,7 +68,7 @@ export function ChatPluginKeysModal({ open, initialHints, focusId, onClose, onSa
   useEffect(() => {
     if (!open) return
     setHints(initialHints)
-    setDrafts({ image: '', higgsfield: '', adobe: '', cursor: '' })
+    setDrafts({ gemini: '', image: '', higgsfield: '', adobe: '', cursor: '' })
     setError(null)
     setNote(null)
   }, [open, initialHints])
@@ -90,7 +97,7 @@ export function ChatPluginKeysModal({ open, initialHints, focusId, onClose, onSa
       }
       const next = await saveDeepseekChatPluginKeys({ keys })
       setHints(next)
-      setDrafts({ image: '', higgsfield: '', adobe: '', cursor: '' })
+      setDrafts({ gemini: '', image: '', higgsfield: '', adobe: '', cursor: '' })
       setNote('Keys saved. They stay on your account — not in Vercel env.')
       onSaved(next)
     } catch (err) {

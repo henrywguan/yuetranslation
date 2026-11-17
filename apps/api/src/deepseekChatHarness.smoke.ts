@@ -46,6 +46,14 @@ const reminder = formatLatestReminder({
 assert.equal(reminder.role, 'latest_reminder')
 assert.match(reminder.content, /^2026-11-14,Saturday,Los Angeles,Web,English$/)
 
+const yueReminder = formatLatestReminder({
+  timeZone: 'America/Los_Angeles',
+  locale: 'en-US',
+  primaryLang: 'yue',
+  now: new Date('2026-11-14T18:00:00Z'),
+})
+assert.match(yueReminder.content, /,Web,Cantonese$/)
+
 assert.equal(typeof deepseekChatModel(), 'string')
 assert.ok(deepseekChatModel().length > 0)
 
@@ -53,6 +61,10 @@ const harnessSrc = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatHarness.ts'),
   'utf8',
 )
+assert.match(harnessSrc, /content_replace/, 'Harness rewrites answer with citation chips')
+assert.match(harnessSrc, /image_url/, 'Harness extracts image_search cards')
+assert.match(harnessSrc, /orderedSources/, 'Cited sources emit in chip order')
+assert.match(harnessSrc, /content_replace.*reply = ev\.text|ev\.kind === 'content_replace'/, 'Non-stream reply applies content_replace')
 assert.doesNotMatch(
   harnessSrc,
   /safety_check\s*[:=]/,
@@ -70,6 +82,8 @@ const routes = readFileSync(
 )
 assert.match(routes, /streamDeepseekChatHarness/, 'Routes use unified harness')
 assert.match(routes, /searchStep/, 'Routes forward search step cards')
+assert.match(routes, /contentReplace/, 'Routes forward citation content_replace')
+assert.match(routes, /primaryLang/, 'Routes accept primaryLang metadata')
 assert.doesNotMatch(routes, /chat_refusal/, 'Routes must not surface content-safety refusals')
 assert.match(routes, /harnessEmitted/, 'Partial harness streams do not concatenate fallbacks')
 

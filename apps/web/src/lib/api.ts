@@ -747,6 +747,14 @@ export type DeepseekChatSource = {
   title: string
 }
 
+export type DeepseekChatSearchImage = {
+  imageUrl: string
+  url?: string
+  title?: string
+  siteName?: string
+  siteIcon?: string
+}
+
 export type DeepseekChatSearchStep = {
   kind: string
   queries?: string[]
@@ -754,6 +762,7 @@ export type DeepseekChatSearchStep = {
   title?: string
   siteName?: string
   snippet?: string
+  images?: DeepseekChatSearchImage[]
 }
 
 export type DeepseekChatImageEvent = {
@@ -780,6 +789,8 @@ export type DeepseekChatPlugin = {
 
 export type DeepseekChatStreamHandlers = {
   onDelta: (delta: string) => void
+  /** Final answer rewrite with inline `[n]` citation chips. */
+  onContentReplace?: (text: string) => void
   onReasoning?: (delta: string) => void
   onStatus?: (status: 'thinking' | 'searching') => void
   onSources?: (sources: DeepseekChatSource[]) => void
@@ -790,6 +801,10 @@ export type DeepseekChatStreamHandlers = {
   search?: boolean
   fileIds?: string[]
   plugins?: string[]
+  /** Account Hub primary language for DeepSeek user metadata. */
+  primaryLang?: string
+  /** Continue last assistant (prefix completion). */
+  continueReply?: boolean
   signal?: AbortSignal
 }
 
@@ -826,14 +841,109 @@ function sanitizeDeepseekChatMessages(
     .slice(-CHAT_API_MESSAGES_MAX)
 }
 
-/** Upload a chat attachment; returns DeepSeek file-api-* id. */
-export async function uploadDeepseekChatFile(file: File): Promise<{ fileId: string; filename: string }> {
+export type DeepseekChatFilePurpose =
+  | 'text_recognition'
+  | 'rich_layout_recognition'
+  | 'user_data'
+
+/** Pick a sensible Files API purpose from mime/name + optional rich-layout preference. */
+export function resolveChatFilePurpose(
+  file: Pick<File, 'name' | 'type'>,
+  preferRichLayout = false,
+): DeepseekChatFilePurpose {
+  const name = file.name || ''
+  const mime = file.type || ''
+  if (/^image\//i.test(mime) || /\.(png|jpe?g|gif|webp)$/i.test(name)) return 'user_data'
+  if (preferRichLayout) return 'rich_layout_recognition'
+  return 'text_recognition'
+}
+
+export type ChatTtsVoiceId = 'stella' | 'tide'
+
+/** POST /api/chat/tts — DeepSeek TTS (yue / zh / en / …). */
+export async function fetchDeepseekChatTtsAudio(
+  text: string,
+  opts?: { voiceId?: ChatTtsVoiceId; signal?: AbortSignal },
+): Promise<Blob> {
+  const trimmed = text.trim().slice(0, 10_000)
+  if (!trimmed) throw new Error('Nothing to speak.')
+  const res = await apiFetch('/chat/tts', {
+    method: 'POST',
+    body: JSON.stringify({
+      text: trimmed,
+      voiceId: opts?.voiceId || 'stella',
+      format: 'wav',
+      filterMarkdown: true,
+    }),
+    signal: opts?.signal,
+  })
+  if (!res.ok) await throwApiError(res, 'Chat TTS failed')
+  return await res.blob()
+}
+
+/** POST /api/chat/asr — DeepSeek speech-to-text. */
+export async function transcribeDeepseekChatAudio(
+  blob: Blob,
+  opts?: { filename?: string; signal?: AbortSignal },
+): Promise<string> {
+  const buf = await blob.arrayBuffer()
+  const bytes = new Uint8Array(buf)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]!)
+  const dataBase64 = btoa(binary)
+  const res = await apiFetch('/chat/asr', {
+    method: 'POST',
+    body: JSON.stringify({
+      filename: opts?.filename || 'speech.webm',
+      mime: blob.type || 'audio/webm',
+      dataBase64,
+    }),
+    signal: opts?.signal,
+  })
+  if (!res.ok) await throwApiError(res, 'Chat ASR failed')
+  const data = (await res.json()) as { text?: string }
+  const text = String(data.text || '').trim()
+  if (!text) throw new Error('Empty transcript')
+  return text
+}
+
+/** POST /api/chat/ocr — one-shot OCR text for composer prefill. */
+export async function ocrDeepseekChatFile(
+  file: File,
+  opts?: { purpose?: 'text_recognition' | 'rich_layout_recognition' },
+): Promise<{ text: string; pageCount?: number }> {
   const buf = await file.arrayBuffer()
   const bytes = new Uint8Array(buf)
   let binary = ''
   for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]!)
   const dataBase64 = btoa(binary)
-  const purpose = /\.(png|jpe?g|gif|webp)$/i.test(file.name) ? 'user_data' : 'text_recognition'
+  const res = await apiFetch('/chat/ocr', {
+    method: 'POST',
+    body: JSON.stringify({
+      filename: file.name || 'scan.bin',
+      mime: file.type || undefined,
+      dataBase64,
+      purpose: opts?.purpose || 'text_recognition',
+    }),
+  })
+  if (!res.ok) await throwApiError(res, 'OCR failed')
+  const data = (await res.json()) as { text?: string; pageCount?: number }
+  const text = String(data.text || '').trim()
+  if (!text) throw new Error('OCR returned no text')
+  return { text, pageCount: data.pageCount }
+}
+
+/** Upload a chat attachment; returns DeepSeek file-api-* id. */
+export async function uploadDeepseekChatFile(
+  file: File,
+  opts?: { purpose?: DeepseekChatFilePurpose; preferRichLayout?: boolean },
+): Promise<{ fileId: string; filename: string; purpose: DeepseekChatFilePurpose }> {
+  const buf = await file.arrayBuffer()
+  const bytes = new Uint8Array(buf)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]!)
+  const dataBase64 = btoa(binary)
+  const purpose = opts?.purpose || resolveChatFilePurpose(file, opts?.preferRichLayout === true)
   const res = await apiFetch('/chat/files', {
     method: 'POST',
     body: JSON.stringify({
@@ -846,7 +956,7 @@ export async function uploadDeepseekChatFile(file: File): Promise<{ fileId: stri
   if (!res.ok) await throwApiError(res, 'File upload failed')
   const data = (await res.json()) as { fileId?: string; filename?: string }
   if (!data.fileId) throw new Error('File upload missing id')
-  return { fileId: data.fileId, filename: data.filename || file.name }
+  return { fileId: data.fileId, filename: data.filename || file.name, purpose }
 }
 
 /** Stream DeepSeek Chat tokens (Family/Business). */
@@ -868,6 +978,7 @@ export async function streamDeepseekChat(
   }
   const fileIds = (handlers.fileIds || []).filter((id) => /^file-api-/.test(id)).slice(0, 5)
   const plugins = (handlers.plugins || []).map(String).filter(Boolean).slice(0, 16)
+  const primaryLang = String(handlers.primaryLang || '').trim().slice(0, 24) || undefined
   const res = await apiFetch('/chat?stream=1', {
     method: 'POST',
     body: JSON.stringify({
@@ -876,8 +987,10 @@ export async function streamDeepseekChat(
       search: handlers.search === true,
       timeZone,
       locale,
+      ...(primaryLang ? { primaryLang } : null),
       ...(fileIds.length ? { fileIds } : null),
       ...(plugins.length ? { plugins } : null),
+      ...(handlers.continueReply ? { continue: true } : null),
     }),
     headers: { Accept: 'text/event-stream' },
     signal: handlers.signal,
@@ -907,6 +1020,7 @@ export async function streamDeepseekChat(
       if (!payload || payload === '[DONE]') continue
       let parsed: {
         delta?: string
+        contentReplace?: string
         reasoning?: string
         done?: boolean
         model?: string
@@ -931,6 +1045,9 @@ export async function streamDeepseekChat(
       if (parsed.searchStep) handlers.onSearchStep?.(parsed.searchStep)
       if (parsed.title?.trim()) handlers.onTitle?.(parsed.title.trim())
       if (parsed.image?.url) handlers.onImage?.(parsed.image)
+      if (typeof parsed.contentReplace === 'string') {
+        handlers.onContentReplace?.(parsed.contentReplace)
+      }
       if (parsed.delta) handlers.onDelta(parsed.delta)
       if (parsed.model) model = parsed.model
     }
@@ -939,7 +1056,7 @@ export async function streamDeepseekChat(
   return { model }
 }
 
-export type DeepseekChatPluginKeyId = 'image' | 'higgsfield' | 'adobe' | 'cursor'
+export type DeepseekChatPluginKeyId = 'gemini' | 'image' | 'higgsfield' | 'adobe' | 'cursor'
 
 export type DeepseekChatPluginKeyHint = {
   set: boolean
@@ -959,6 +1076,7 @@ export async function fetchDeepseekChatPlugins(): Promise<{
   }
   const emptyHint = { set: false }
   const keyHints: Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint> = {
+    gemini: data.keyHints?.gemini || emptyHint,
     image: data.keyHints?.image || emptyHint,
     higgsfield: data.keyHints?.higgsfield || emptyHint,
     adobe: data.keyHints?.adobe || emptyHint,
@@ -970,6 +1088,17 @@ export async function fetchDeepseekChatPlugins(): Promise<{
   }
 }
 
+function emptyPluginKeyHints(): Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint> {
+  const emptyHint = { set: false }
+  return {
+    gemini: emptyHint,
+    image: emptyHint,
+    higgsfield: emptyHint,
+    adobe: emptyHint,
+    cursor: emptyHint,
+  }
+}
+
 /** Masked BYOK hints (never raw secrets). */
 export async function fetchDeepseekChatPluginKeys(): Promise<
   Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint>
@@ -977,12 +1106,13 @@ export async function fetchDeepseekChatPluginKeys(): Promise<
   const res = await apiFetch('/chat/plugin-keys')
   if (!res.ok) await throwApiError(res, 'Failed to load plugin keys')
   const data = (await res.json()) as { keys?: Record<string, DeepseekChatPluginKeyHint> }
-  const emptyHint = { set: false }
+  const base = emptyPluginKeyHints()
   return {
-    image: data.keys?.image || emptyHint,
-    higgsfield: data.keys?.higgsfield || emptyHint,
-    adobe: data.keys?.adobe || emptyHint,
-    cursor: data.keys?.cursor || emptyHint,
+    gemini: data.keys?.gemini || base.gemini,
+    image: data.keys?.image || base.image,
+    higgsfield: data.keys?.higgsfield || base.higgsfield,
+    adobe: data.keys?.adobe || base.adobe,
+    cursor: data.keys?.cursor || base.cursor,
   }
 }
 
@@ -1001,11 +1131,12 @@ export async function saveDeepseekChatPluginKeys(opts: {
   })
   if (!res.ok) await throwApiError(res, 'Failed to save plugin keys')
   const data = (await res.json()) as { keys?: Record<string, DeepseekChatPluginKeyHint> }
-  const emptyHint = { set: false }
+  const base = emptyPluginKeyHints()
   return {
-    image: data.keys?.image || emptyHint,
-    higgsfield: data.keys?.higgsfield || emptyHint,
-    adobe: data.keys?.adobe || emptyHint,
-    cursor: data.keys?.cursor || emptyHint,
+    gemini: data.keys?.gemini || base.gemini,
+    image: data.keys?.image || base.image,
+    higgsfield: data.keys?.higgsfield || base.higgsfield,
+    adobe: data.keys?.adobe || base.adobe,
+    cursor: data.keys?.cursor || base.cursor,
   }
 }

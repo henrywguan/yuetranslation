@@ -575,7 +575,9 @@ export async function executeDeepseekChatTool(
         const { markdown, image } = await generateChatImage(prompt, {
           signal: ctx.signal,
           size,
+          pluginCreds: ctx.pluginCreds,
           apiKey: ctx.pluginCreds?.image,
+          geminiApiKey: ctx.pluginCreds?.gemini,
         })
         ctx.onImage?.({ url: image.url, prompt: image.prompt, id: image.id })
         return JSON.stringify({

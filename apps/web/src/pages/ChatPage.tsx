@@ -15,6 +15,7 @@ import { SpeakButton } from '../components/SpeakButton'
 import { ChatPluginKeysModal } from '../components/ChatPluginKeysModal'
 import {
   fetchDeepseekChatPlugins,
+  ocrDeepseekChatFile,
   streamDeepseekChat,
   uploadDeepseekChatFile,
   type DeepseekChatPlugin,
@@ -23,16 +24,22 @@ import {
 } from '../lib/api'
 import { extractChatArtifacts, relatedQuestionsFromReply, type ChatArtifact } from '../lib/chatArtifacts'
 import {
+  cycleAssistantAlternate,
+  forkThreadAt,
+  pushAssistantAlternate,
+} from '../lib/chatBranching'
+import { parseAnyChatImport } from '../lib/chatDeepseekImport'
+import {
   consumeChatPrefill,
   consumeSharedThread,
   downloadTextFile,
-  parseImportedThread,
   safeExportBasename,
   stashSharedThread,
   threadToJson,
   threadToMarkdown,
 } from '../lib/chatExport'
-import { chatSpeakLang } from '../lib/chatVoice'
+import { StreamingDeepseekChatTts, speakDeepseekChatText } from '../lib/chatDeepseekVoice'
+import { chatSpeakLang, mergeDictateText } from '../lib/chatVoice'
 import {
   apiMessagesFromThread,
   appendChatMessage,
@@ -78,6 +85,7 @@ const SUGGESTIONS = [
 
 const THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
 const SEARCH_KEY = 'yue-deepseek-chat-search-v1'
+const RICH_LAYOUT_KEY = 'yue-deepseek-chat-rich-layout-v1'
 const PLUGINS_KEY = 'yue-deepseek-chat-plugins-v1'
 
 function readPluginIds(): string[] | null {
@@ -322,30 +330,60 @@ function ReasoningPanel({
 
 function SearchStepsList({ steps }: { steps: ChatSearchStep[] }) {
   if (!steps.length) return null
+  const imageSteps = steps.filter((s) => s.images?.length)
   return (
-    <ul className="ds-chat-search-steps">
-      {steps.map((step, i) => {
-        const label =
-          step.title ||
-          step.queries?.join(' · ') ||
-          step.url ||
-          step.kind ||
-          'Search'
-        return (
-          <li key={`${step.kind}-${i}`} className="ds-chat-search-step">
-            <span className="ds-chat-search-step-kind">{step.kind}</span>
-            {step.url ? (
-              <a href={step.url} target="_blank" rel="noopener noreferrer">
-                {label}
-              </a>
-            ) : (
-              <span>{label}</span>
-            )}
-            {step.siteName ? <span className="ds-chat-search-step-site">{step.siteName}</span> : null}
-          </li>
-        )
-      })}
-    </ul>
+    <div className="ds-chat-search-wrap">
+      <ul className="ds-chat-search-steps">
+        {steps.map((step, i) => {
+          const label =
+            step.title ||
+            step.queries?.join(' · ') ||
+            step.url ||
+            step.kind ||
+            'Search'
+          return (
+            <li key={`${step.kind}-${i}`} className="ds-chat-search-step">
+              <span className="ds-chat-search-step-kind">{step.kind}</span>
+              {step.url ? (
+                <a href={step.url} target="_blank" rel="noopener noreferrer">
+                  {label}
+                </a>
+              ) : (
+                <span>{label}</span>
+              )}
+              {step.siteName ? <span className="ds-chat-search-step-site">{step.siteName}</span> : null}
+            </li>
+          )
+        })}
+      </ul>
+      {imageSteps.length ? (
+        <div className="ds-chat-image-results" aria-label="Image search results">
+          {imageSteps.flatMap((step, si) =>
+            (step.images || []).map((img, ii) => {
+              const href =
+                img.url && /^https?:\/\//i.test(img.url)
+                  ? img.url
+                  : /^https?:\/\//i.test(img.imageUrl)
+                    ? img.imageUrl
+                    : null
+              if (!href) return null
+              return (
+                <a
+                  key={`${si}-${ii}-${img.imageUrl}`}
+                  className="ds-chat-image-result"
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={img.title || img.siteName || 'Image result'}
+                >
+                  <img src={img.imageUrl} alt={img.title || ''} loading="lazy" />
+                </a>
+              )
+            }),
+          )}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -356,6 +394,11 @@ function MessageActions({
   onEdit,
   onSearchReply,
   onOpenArtifacts,
+  onContinue,
+  onBranch,
+  onPrevAlternate,
+  onNextAlternate,
+  alternateLabel,
 }: {
   content: string
   disabled?: boolean
@@ -363,14 +406,22 @@ function MessageActions({
   onEdit?: () => void
   onSearchReply?: () => void
   onOpenArtifacts?: () => void
+  onContinue?: () => void
+  onBranch?: () => void
+  onPrevAlternate?: () => void
+  onNextAlternate?: () => void
+  alternateLabel?: string
 }) {
   const [copied, setCopied] = useState(false)
+  const [dsSpeaking, setDsSpeaking] = useState(false)
   const timerRef = useRef<number | null>(null)
+  const speakAbortRef = useRef<AbortController | null>(null)
   const speakLang = chatSpeakLang(content)
 
   useEffect(() => {
     return () => {
       if (timerRef.current) window.clearTimeout(timerRef.current)
+      speakAbortRef.current?.abort()
     }
   }, [])
 
@@ -387,8 +438,39 @@ function MessageActions({
     }
   }
 
+  const speakWithDeepseek = async () => {
+    const text = content.trim()
+    if (!text) return
+    if (dsSpeaking) {
+      speakAbortRef.current?.abort()
+      setDsSpeaking(false)
+      return
+    }
+    const controller = new AbortController()
+    speakAbortRef.current = controller
+    setDsSpeaking(true)
+    try {
+      await speakDeepseekChatText(text, { signal: controller.signal })
+    } catch {
+      /* ignore abort / network */
+    } finally {
+      if (speakAbortRef.current === controller) speakAbortRef.current = null
+      setDsSpeaking(false)
+    }
+  }
+
   return (
     <div className="ds-chat-actions">
+      <button
+        type="button"
+        className={`ds-chat-action${dsSpeaking ? ' is-copied' : ''}`}
+        aria-label={dsSpeaking ? 'Stop DeepSeek voice' : 'Speak with DeepSeek (Cantonese-capable)'}
+        title={dsSpeaking ? 'Stop' : 'DeepSeek voice (yue / zh / en…)'}
+        disabled={!content.trim()}
+        onClick={() => void speakWithDeepseek()}
+      >
+        <span className="ds-chat-action-label">{dsSpeaking ? 'Stop' : 'DS Voice'}</span>
+      </button>
       <SpeakButton text={content} lang={speakLang} className="ds-chat-speak" warm={false} />
       <button
         type="button"
@@ -401,6 +483,53 @@ function MessageActions({
         {COPY_ICON}
         <span className="ds-chat-action-label">{copied ? 'Copied' : 'Copy'}</span>
       </button>
+      {onPrevAlternate || onNextAlternate ? (
+        <span className="ds-chat-alt-nav">
+          <button
+            type="button"
+            className="ds-chat-action"
+            aria-label="Previous reply branch"
+            disabled={disabled || !onPrevAlternate}
+            onClick={onPrevAlternate}
+          >
+            ←
+          </button>
+          {alternateLabel ? <span className="ds-chat-alt-label">{alternateLabel}</span> : null}
+          <button
+            type="button"
+            className="ds-chat-action"
+            aria-label="Next reply branch"
+            disabled={disabled || !onNextAlternate}
+            onClick={onNextAlternate}
+          >
+            →
+          </button>
+        </span>
+      ) : null}
+      {onContinue ? (
+        <button
+          type="button"
+          className="ds-chat-action"
+          aria-label="Continue"
+          title="Continue this reply"
+          disabled={disabled}
+          onClick={onContinue}
+        >
+          <span className="ds-chat-action-label">Continue</span>
+        </button>
+      ) : null}
+      {onBranch ? (
+        <button
+          type="button"
+          className="ds-chat-action"
+          aria-label="Branch"
+          title="Fork a new chat from here"
+          disabled={disabled}
+          onClick={onBranch}
+        >
+          <span className="ds-chat-action-label">Branch</span>
+        </button>
+      ) : null}
       {onRegenerate ? (
         <button
           type="button"
@@ -597,9 +726,12 @@ export function ChatPage() {
   const [searching, setSearching] = useState(false)
   const [deepThink, setDeepThink] = useState(() => readFlag(THINK_KEY, true))
   const [searchOn, setSearchOn] = useState(() => readFlag(SEARCH_KEY, false))
+  const [richLayout, setRichLayout] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
   const [thinkClock, setThinkClock] = useState<number | null>(null)
   const [pendingFiles, setPendingFiles] = useState<PendingChatFile[]>([])
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [ocrBusy, setOcrBusy] = useState(false)
+  const ocrInputRef = useRef<HTMLInputElement>(null)
   const [sidebarQuery, setSidebarQuery] = useState('')
   const [artifact, setArtifact] = useState<ChatArtifact | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -610,6 +742,7 @@ export function ChatPage() {
   const [pluginKeyHints, setPluginKeyHints] = useState<
     Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint>
   >({
+    gemini: { set: false },
     image: { set: false },
     higgsfield: { set: false },
     adobe: { set: false },
@@ -622,9 +755,11 @@ export function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const streamTtsRef = useRef<StreamingDeepseekChatTts | null>(null)
   const thinkStartedAt = useRef<number | null>(null)
   const autoSpeak = useYueStore((s) => s.autoSpeak)
   const speakManual = useYueStore((s) => s.speakManual)
+  const primaryLanguage = useYueStore((s) => s.primaryLanguage)
 
   const setDraftAndResize = (next: string) => {
     setDraft(next)
@@ -836,15 +971,53 @@ export function ChatPage() {
 
   const stopGeneration = () => {
     abortRef.current?.abort()
+    streamTtsRef.current?.stop()
+    streamTtsRef.current = null
   }
 
-  const runAssistant = async (baseThread: ChatThread, fileIds?: string[]) => {
+  const runAssistant = async (
+    baseThread: ChatThread,
+    fileIds?: string[],
+    opts?: { continueFromId?: string; seedAlternates?: ChatMessage['alternates'] },
+  ) => {
     let thread = baseThread
-    const assistantStep = appendChatMessage(thread, 'assistant', '')
-    thread = assistantStep.thread
-    const assistantId = assistantStep.message.id
-    persist(thread)
-    setRevealCount((n) => Math.min(MAX_RENDER_MESSAGES, Math.max(n + 2, thread.messages.length)))
+    let assistantId: string
+    let assembled = ''
+    let reasoning = ''
+    let sources: ChatSource[] | undefined
+    let searchSteps: ChatSearchStep[] = []
+    const continueFromId = opts?.continueFromId
+
+    if (continueFromId) {
+      const existing = thread.messages.find((m) => m.id === continueFromId && m.role === 'assistant')
+      if (!existing) return
+      assistantId = existing.id
+      assembled = existing.content
+      reasoning = existing.reasoning || ''
+      sources = existing.sources
+      searchSteps = existing.searchSteps || []
+      persist(thread)
+    } else {
+      const assistantStep = appendChatMessage(thread, 'assistant', '')
+      thread = assistantStep.thread
+      assistantId = assistantStep.message.id
+      if (opts?.seedAlternates?.length) {
+        thread = {
+          ...thread,
+          messages: thread.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  alternates: opts.seedAlternates,
+                  activeAlternate: opts.seedAlternates!.length,
+                }
+              : m,
+          ),
+        }
+      }
+      persist(thread)
+      setRevealCount((n) => Math.min(MAX_RENDER_MESSAGES, Math.max(n + 2, thread.messages.length)))
+    }
     setStreamingId(assistantId)
     setThinking(false)
     setSearching(false)
@@ -854,10 +1027,11 @@ export function ChatPage() {
     const controller = new AbortController()
     abortRef.current = controller
 
-    let assembled = ''
-    let reasoning = ''
-    let sources: ChatSource[] | undefined
-    let searchSteps: ChatSearchStep[] = []
+    streamTtsRef.current?.stop()
+    streamTtsRef.current = null
+    const liveTts =
+      canAutoSpeak && autoSpeak ? new StreamingDeepseekChatTts({ voiceId: 'stella' }) : null
+    streamTtsRef.current = liveTts
 
     // Coalesce stream paints — never persist per token (idle disk write at end).
     let paintTimer: number | null = null
@@ -899,11 +1073,16 @@ export function ChatPage() {
     })
 
     try {
-      await streamDeepseekChat(apiMessagesFromThread(thread).filter((m) => m.content.trim()), {
+      const wireMessages = continueFromId
+        ? apiMessagesFromThread(thread).filter((m) => m.content.trim())
+        : apiMessagesFromThread(thread).filter((m) => m.content.trim())
+      await streamDeepseekChat(wireMessages, {
         thinking: deepThink,
         search: searchOn,
         fileIds,
         plugins: enabledPlugins,
+        primaryLang: primaryLanguage,
+        continueReply: Boolean(continueFromId),
         signal: controller.signal,
         onStatus: (status) => {
           if (status === 'searching') {
@@ -956,6 +1135,15 @@ export function ChatPage() {
             schedulePaint()
           }
         },
+        onContentReplace: (text) => {
+          assembled = text.slice(0, MAX_CONTENT_CHARS)
+          thread = patchAssistantContent(thread, assistantId, assembled, {
+            reasoning: reasoning || undefined,
+            sources,
+            searchSteps: searchSteps.length ? searchSteps : undefined,
+          })
+          schedulePaint()
+        },
         onDelta: (delta) => {
           const firstToken = assembled.length === 0
           if (firstToken) {
@@ -966,6 +1154,7 @@ export function ChatPage() {
           if (assembled.length > MAX_CONTENT_CHARS) {
             assembled = assembled.slice(0, MAX_CONTENT_CHARS)
           }
+          liveTts?.feed(delta)
           thread = firstToken
             ? patchAssistantContent(thread, assistantId, assembled, {
                 reasoning: reasoning || undefined,
@@ -979,17 +1168,24 @@ export function ChatPage() {
       })
       flushPaint()
       if (!assembled.trim()) {
+        liveTts?.stop()
         thread = dropEmptyAssistant(thread)
         persist(thread)
         setError('No reply — try again.')
       } else {
         persist(thread)
-        if (canAutoSpeak && autoSpeak && assembled.trim()) {
+        if (liveTts) {
+          void liveTts.finish().catch(() => {
+            /* ignore */
+          })
+        } else if (canAutoSpeak && autoSpeak && assembled.trim()) {
+          // Fallback: Azure speak when streaming DeepSeek TTS was not armed.
           void speakManual(assembled.trim(), chatSpeakLang(assembled))
         }
       }
     } catch (err) {
       flushPaint()
+      liveTts?.stop()
       if ((err as Error)?.name === 'AbortError') {
         if (!assembled.trim()) thread = dropEmptyAssistant(thread)
         persist(thread)
@@ -1010,6 +1206,7 @@ export function ChatPage() {
       setBusy(false)
       setThinkClock(null)
       abortRef.current = null
+      if (streamTtsRef.current === liveTts) streamTtsRef.current = null
     }
   }
 
@@ -1069,10 +1266,12 @@ export function ChatPage() {
     const idx = active.messages.findIndex((m) => m.id === assistantId)
     if (idx < 1) return
     const prev = active.messages[idx - 1]
-    if (!prev || prev.role !== 'user') return
+    const current = active.messages[idx]
+    if (!prev || prev.role !== 'user' || !current || current.role !== 'assistant') return
 
     setError(null)
     setBusy(true)
+    const stashAlts = pushAssistantAlternate(current).alternates
     const truncated: ChatThread = {
       ...active,
       messages: active.messages.slice(0, idx),
@@ -1080,7 +1279,38 @@ export function ChatPage() {
     }
     persist(truncated)
     setActiveId(truncated.id)
-    await runAssistant(truncated, prev.fileIds)
+    await runAssistant(truncated, prev.fileIds, { seedAlternates: stashAlts })
+  }
+
+  const continueReply = async (assistantId: string) => {
+    if (busy || !unlocked) return
+    const last = active.messages[active.messages.length - 1]
+    if (!last || last.id !== assistantId || last.role !== 'assistant') return
+    setError(null)
+    setBusy(true)
+    await runAssistant(active, undefined, { continueFromId: assistantId })
+  }
+
+  const branchFromMessage = (messageId: string) => {
+    if (busy) return
+    const forked = forkThreadAt(active, messageId)
+    if (!forked) return
+    setThreads((prev) => upsertChatThread(forked, prev))
+    setActiveId(forked.id)
+    beginBatchedReveal(forked.messages.length)
+    setSidebarOpen(false)
+  }
+
+  const cycleAlternate = (assistantId: string, dir: -1 | 1) => {
+    if (busy) return
+    const next: ChatThread = {
+      ...active,
+      messages: active.messages.map((m) =>
+        m.id === assistantId ? cycleAssistantAlternate(m, dir) : m,
+      ),
+      updatedAt: Date.now(),
+    }
+    persist(next)
   }
 
   const editUserMessage = (userId: string) => {
@@ -1118,7 +1348,7 @@ export function ChatPage() {
     setUploadingFile(true)
     setError(null)
     try {
-      const uploaded = await uploadDeepseekChatFile(file)
+      const uploaded = await uploadDeepseekChatFile(file, { preferRichLayout: richLayout })
       const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
       setPendingFiles((prev) =>
         [
@@ -1136,6 +1366,28 @@ export function ChatPage() {
     } finally {
       setUploadingFile(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const onPickOcr = async (file: File | null) => {
+    if (!file || busy || ocrBusy || !unlocked) return
+    if (file.size > 6_000_000) {
+      setError('File too large (max 6 MB).')
+      return
+    }
+    setOcrBusy(true)
+    setError(null)
+    try {
+      const { text } = await ocrDeepseekChatFile(file, {
+        purpose: richLayout ? 'rich_layout_recognition' : 'text_recognition',
+      })
+      setDraftAndResize(mergeDictateText(draft, text))
+      inputRef.current?.focus()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'OCR failed')
+    } finally {
+      setOcrBusy(false)
+      if (ocrInputRef.current) ocrInputRef.current.value = ''
     }
   }
 
@@ -1278,9 +1530,9 @@ export function ChatPage() {
               if (!file) return
               try {
                 const raw = await file.text()
-                const imported = parseImportedThread(raw)
+                const imported = parseAnyChatImport(raw)
                 if (!imported) {
-                  setError('Could not import that chat JSON.')
+                  setError('Could not import that chat (JSON / DeepSeek session / markdown).')
                   return
                 }
                 setThreads((prev) => upsertChatThread(imported, prev))
@@ -1519,6 +1771,21 @@ export function ChatPage() {
                           disabled={busy}
                           onRegenerate={() => void regenerate(m.id)}
                           onSearchReply={() => searchThisReply(m.content)}
+                          onContinue={
+                            m.id === lastMessageId ? () => void continueReply(m.id) : undefined
+                          }
+                          onBranch={() => branchFromMessage(m.id)}
+                          onPrevAlternate={
+                            m.alternates?.length ? () => cycleAlternate(m.id, -1) : undefined
+                          }
+                          onNextAlternate={
+                            m.alternates?.length ? () => cycleAlternate(m.id, 1) : undefined
+                          }
+                          alternateLabel={
+                            m.alternates && m.alternates.length > 1
+                              ? `${(m.activeAlternate ?? m.alternates.length - 1) + 1}/${m.alternates.length}`
+                              : undefined
+                          }
                           onOpenArtifacts={
                             arts.length
                               ? () => setArtifact(arts[0]!)
@@ -1583,6 +1850,21 @@ export function ChatPage() {
               </button>
               <button
                 type="button"
+                className={`ds-chat-toggle${richLayout ? ' is-on' : ''}`}
+                aria-pressed={richLayout}
+                title="Rich layout — keep charts/figures when parsing PDF & Office uploads"
+                onClick={() => {
+                  setRichLayout((v) => {
+                    const next = !v
+                    writeFlag(RICH_LAYOUT_KEY, next)
+                    return next
+                  })
+                }}
+              >
+                Rich layout
+              </button>
+              <button
+                type="button"
                 className={`ds-chat-toggle${pluginsOpen || enabledPlugins.length ? ' is-on' : ''}`}
                 aria-pressed={pluginsOpen}
                 title="Plugins — image generation & MCP"
@@ -1614,7 +1896,7 @@ export function ChatPage() {
                         {
                           id: 'image',
                           name: 'Image generation',
-                          description: 'OpenAI Images — add your key via API keys.',
+                          description: 'Gemini images — set GEMINI_API_KEY or add a key via API keys.',
                           kind: 'builtin' as const,
                           configured: false,
                           category: 'generation' as const,
@@ -1663,7 +1945,7 @@ export function ChatPage() {
                             : 'off'
                     const keyId: DeepseekChatPluginKeyId | null =
                       p.id === 'image'
-                        ? 'image'
+                        ? 'gemini'
                         : p.id === 'mcp:higgsfield'
                           ? 'higgsfield'
                           : p.id === 'mcp:adobe'
@@ -1772,6 +2054,14 @@ export function ChatPage() {
                 disabled={busy || !unlocked || uploadingFile}
                 onChange={(e) => void onPickFile(e.target.files?.[0] || null)}
               />
+              <input
+                ref={ocrInputRef}
+                type="file"
+                className="ds-chat-file-input"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.ppt,.pptx"
+                disabled={busy || !unlocked || ocrBusy}
+                onChange={(e) => void onPickOcr(e.target.files?.[0] || null)}
+              />
               <button
                 type="button"
                 className="ds-chat-attach"
@@ -1782,11 +2072,25 @@ export function ChatPage() {
               >
                 {uploadingFile ? '…' : '+'}
               </button>
+              <button
+                type="button"
+                className="ds-chat-attach ds-chat-ocr"
+                aria-label="OCR into message"
+                title="OCR — paste recognized text into the composer (not stored as a file)"
+                disabled={busy || !unlocked || ocrBusy}
+                onClick={() => ocrInputRef.current?.click()}
+              >
+                {ocrBusy ? '…' : 'OCR'}
+              </button>
               <ChatDictateButton
                 disabled={busy || !unlocked}
                 draft={draft}
                 onDraft={setDraftAndResize}
                 onError={(message) => setError(message)}
+                onBargeIn={() => {
+                  streamTtsRef.current?.stop()
+                  streamTtsRef.current = null
+                }}
               />
               <textarea
                 ref={inputRef}
