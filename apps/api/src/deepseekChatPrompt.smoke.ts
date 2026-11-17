@@ -37,6 +37,7 @@ assert.match(searchSystem, /get_date/, 'Unified prompt keeps client tools catalo
 const webOn = buildDeepseekChatSystem({ searchEnabled: true, now: fixed, mode: 'tools' })
 assert.match(webOn, /deepseek_web_search/)
 assert.match(webOn, /jyut_plan_limits/)
+assert.match(webOn, /Never end the turn with only/, 'Web skills forbid I\'ll-search stopovers')
 
 assert.equal(shouldAutoEnableSearch('what day is today?'), false, 'clock questions use temporal inject')
 assert.equal(shouldAutoEnableSearch("what's the latest news on AI?"), true)

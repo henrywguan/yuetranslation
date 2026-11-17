@@ -33,6 +33,25 @@ export const DEEPSEEK_CHAT_WEB_TOOLS = [
   { type: 'deepseek_read_url' as const },
 ]
 
+/**
+ * True when the model finished with a short "I'll search…" style reply and never
+ * actually invoked web tools — the #/chat "stopped instead of continuing" failure.
+ */
+export function looksLikeDeferredSearch(text: string): boolean {
+  const t = String(text || '').trim()
+  if (!t || t.length > 480) return false
+  // Already delivered substantive content — do not treat as a deferred promise.
+  if ((t.match(/\n/g) || []).length >= 4) return false
+  return (
+    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,60}\b(search|look up|check (?:the )?(?:web|online|news)|find (?:the )?latest)\b/i.test(
+      t,
+    ) || /^(?:i(?:['’]ll| will)|let me)\s+search\b/i.test(t)
+  )
+}
+
+const DEFERRED_SEARCH_NUDGE =
+  'You announced a web search but did not call deepseek_web_search (or deepseek_read_url). Call the web search tool now with concrete queries, then answer from the results. Do not stop after another "I\'ll search" sentence.'
+
 export type DeepseekChatSearchImage = {
   imageUrl: string
   url?: string
@@ -401,6 +420,7 @@ export async function* streamDeepseekChatHarness(
 
   let announcedThinking = false
   let announcedSearching = false
+  let deferredSearchRecovered = false
   const allSources = new Map<string, string>()
   const pendingImages: Array<{ url: string; prompt: string; id: string }> = []
 
@@ -570,6 +590,30 @@ export async function* streamDeepseekChatHarness(
         const image = pendingImages.shift()!
         yield { kind: 'image', ...image }
       }
+      continue
+    }
+
+    // Search was on, but the model only *announced* a search and stopped — nudge
+    // once so the turn actually calls deepseek_web_search instead of RELATED chips.
+    const didServerSearch = announcedSearching || allSources.size > 0
+    if (
+      searchEnabled &&
+      !deferredSearchRecovered &&
+      !didServerSearch &&
+      looksLikeDeferredSearch(assistantContent) &&
+      round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS - 1
+    ) {
+      deferredSearchRecovered = true
+      console.warn('[deepseek-chat] deferred-search recovery: model announced search without tools')
+      msgs.push({
+        role: 'assistant',
+        content: assistantContent || null,
+        reasoning_content: assistantReasoning || null,
+      })
+      msgs.push({ role: 'user', content: DEFERRED_SEARCH_NUDGE })
+      // Clear the empty promise from the UI so the real answer can stream in.
+      yield { kind: 'content_replace', text: '' }
+      assistantContent = ''
       continue
     }
 
