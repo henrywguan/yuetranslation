@@ -138,30 +138,24 @@ function normalizeSearchSteps(raw: unknown): ChatSearchStep[] | undefined {
     const row = item as ChatSearchStep
     const kind = String(row.kind || '').trim()
     if (!kind) continue
-    const images: ChatSearchImage[] | undefined = Array.isArray(row.images)
-      ? row.images
-          .map((img) => {
-            if (!img || typeof img !== 'object') return null
-            const imageUrl = String((img as ChatSearchImage).imageUrl || '').trim()
-            if (!/^https?:\/\//i.test(imageUrl)) return null
-            return {
-              imageUrl,
-              url: typeof (img as ChatSearchImage).url === 'string' ? (img as ChatSearchImage).url : undefined,
-              title:
-                typeof (img as ChatSearchImage).title === 'string' ? (img as ChatSearchImage).title : undefined,
-              siteName:
-                typeof (img as ChatSearchImage).siteName === 'string'
-                  ? (img as ChatSearchImage).siteName
-                  : undefined,
-              siteIcon:
-                typeof (img as ChatSearchImage).siteIcon === 'string'
-                  ? (img as ChatSearchImage).siteIcon
-                  : undefined,
-            } satisfies ChatSearchImage
-          })
-          .filter((img): img is ChatSearchImage => Boolean(img))
-          .slice(0, 12)
-      : undefined
+    let images: ChatSearchImage[] | undefined
+    if (Array.isArray(row.images)) {
+      const parsed: ChatSearchImage[] = []
+      for (const img of row.images) {
+        if (!img || typeof img !== 'object') continue
+        const raw = img as ChatSearchImage
+        const imageUrl = String(raw.imageUrl || '').trim()
+        if (!/^https?:\/\//i.test(imageUrl)) continue
+        const next: ChatSearchImage = { imageUrl }
+        if (typeof raw.url === 'string') next.url = raw.url
+        if (typeof raw.title === 'string') next.title = raw.title
+        if (typeof raw.siteName === 'string') next.siteName = raw.siteName
+        if (typeof raw.siteIcon === 'string') next.siteIcon = raw.siteIcon
+        parsed.push(next)
+        if (parsed.length >= 12) break
+      }
+      if (parsed.length) images = parsed
+    }
     out.push({
       kind,
       queries: Array.isArray(row.queries) ? row.queries.map(String).filter(Boolean) : undefined,
@@ -169,7 +163,7 @@ function normalizeSearchSteps(raw: unknown): ChatSearchStep[] | undefined {
       title: typeof row.title === 'string' ? row.title : undefined,
       siteName: typeof row.siteName === 'string' ? row.siteName : undefined,
       snippet: typeof row.snippet === 'string' ? row.snippet : undefined,
-      ...(images?.length ? { images } : null),
+      ...(images ? { images } : null),
     })
   }
   return out.length ? out.slice(-24) : undefined
