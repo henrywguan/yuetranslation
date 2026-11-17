@@ -37,6 +37,8 @@ export const DeepseekChatBodySchema = z.object({
   timeZone: z.string().trim().max(80).optional(),
   /** BCP-47 locale hint. */
   locale: z.string().trim().max(32).optional(),
+  /** Account Hub primary language (`yue`, `cmn`, `en`, …). */
+  primaryLang: z.string().trim().max(24).optional(),
   /** Convenience: merge onto the last user message if that row omitted fileIds. */
   fileIds: z.array(z.string().regex(/^file-api-/)).max(5).optional(),
   /**

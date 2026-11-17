@@ -9,6 +9,11 @@ export type DeepseekChatPromptContext = {
   timeZone?: string
   /** BCP-47 locale hint (e.g. en-US). */
   locale?: string
+  /**
+   * Account Hub primary language (`yue` / `cmn` / `en` / …).
+   * Feeds DeepSeek `latest_reminder` Language + system grounding.
+   */
+  primaryLang?: string
   /** Plan label for product-skill hints (family / business / admin). */
   plan?: string
   now?: Date
@@ -129,6 +134,12 @@ export function buildDeepseekChatSystem(ctx: DeepseekChatPromptContext = {}): st
   // Legacy search-only callers still get a grounded plan snapshot.
   if (ctx.mode === 'search' && !ctx.searchEnabled) parts.push(formatPlanSnapshot())
   if (ctx.plan) parts.push(`Signed-in plan context: ${ctx.plan}.`)
+  const primary = String(ctx.primaryLang || '').trim().toLowerCase()
+  if (primary) {
+    parts.push(
+      `User primary language preference: ${primary}. Prefer this language for answers when the user does not specify another.`,
+    )
+  }
   return parts.join('\n\n')
 }
 

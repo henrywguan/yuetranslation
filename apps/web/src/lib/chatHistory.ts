@@ -10,6 +10,14 @@ export type ChatSource = {
   title: string
 }
 
+export type ChatSearchImage = {
+  imageUrl: string
+  url?: string
+  title?: string
+  siteName?: string
+  siteIcon?: string
+}
+
 export type ChatSearchStep = {
   kind: string
   queries?: string[]
@@ -17,6 +25,7 @@ export type ChatSearchStep = {
   title?: string
   siteName?: string
   snippet?: string
+  images?: ChatSearchImage[]
 }
 
 /** Display metadata for an attached file (ids still drive the API). */
@@ -116,6 +125,30 @@ function normalizeSearchSteps(raw: unknown): ChatSearchStep[] | undefined {
     const row = item as ChatSearchStep
     const kind = String(row.kind || '').trim()
     if (!kind) continue
+    const images: ChatSearchImage[] | undefined = Array.isArray(row.images)
+      ? row.images
+          .map((img) => {
+            if (!img || typeof img !== 'object') return null
+            const imageUrl = String((img as ChatSearchImage).imageUrl || '').trim()
+            if (!/^https?:\/\//i.test(imageUrl)) return null
+            return {
+              imageUrl,
+              url: typeof (img as ChatSearchImage).url === 'string' ? (img as ChatSearchImage).url : undefined,
+              title:
+                typeof (img as ChatSearchImage).title === 'string' ? (img as ChatSearchImage).title : undefined,
+              siteName:
+                typeof (img as ChatSearchImage).siteName === 'string'
+                  ? (img as ChatSearchImage).siteName
+                  : undefined,
+              siteIcon:
+                typeof (img as ChatSearchImage).siteIcon === 'string'
+                  ? (img as ChatSearchImage).siteIcon
+                  : undefined,
+            } satisfies ChatSearchImage
+          })
+          .filter((img): img is ChatSearchImage => Boolean(img))
+          .slice(0, 12)
+      : undefined
     out.push({
       kind,
       queries: Array.isArray(row.queries) ? row.queries.map(String).filter(Boolean) : undefined,
@@ -123,6 +156,7 @@ function normalizeSearchSteps(raw: unknown): ChatSearchStep[] | undefined {
       title: typeof row.title === 'string' ? row.title : undefined,
       siteName: typeof row.siteName === 'string' ? row.siteName : undefined,
       snippet: typeof row.snippet === 'string' ? row.snippet : undefined,
+      ...(images?.length ? { images } : null),
     })
   }
   return out.length ? out.slice(-24) : undefined

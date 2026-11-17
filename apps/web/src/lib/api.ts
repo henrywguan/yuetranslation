@@ -747,6 +747,14 @@ export type DeepseekChatSource = {
   title: string
 }
 
+export type DeepseekChatSearchImage = {
+  imageUrl: string
+  url?: string
+  title?: string
+  siteName?: string
+  siteIcon?: string
+}
+
 export type DeepseekChatSearchStep = {
   kind: string
   queries?: string[]
@@ -754,6 +762,7 @@ export type DeepseekChatSearchStep = {
   title?: string
   siteName?: string
   snippet?: string
+  images?: DeepseekChatSearchImage[]
 }
 
 export type DeepseekChatImageEvent = {
@@ -780,6 +789,8 @@ export type DeepseekChatPlugin = {
 
 export type DeepseekChatStreamHandlers = {
   onDelta: (delta: string) => void
+  /** Final answer rewrite with inline `[n]` citation chips. */
+  onContentReplace?: (text: string) => void
   onReasoning?: (delta: string) => void
   onStatus?: (status: 'thinking' | 'searching') => void
   onSources?: (sources: DeepseekChatSource[]) => void
@@ -790,6 +801,8 @@ export type DeepseekChatStreamHandlers = {
   search?: boolean
   fileIds?: string[]
   plugins?: string[]
+  /** Account Hub primary language for DeepSeek user metadata. */
+  primaryLang?: string
   signal?: AbortSignal
 }
 
@@ -826,14 +839,34 @@ function sanitizeDeepseekChatMessages(
     .slice(-CHAT_API_MESSAGES_MAX)
 }
 
+export type DeepseekChatFilePurpose =
+  | 'text_recognition'
+  | 'rich_layout_recognition'
+  | 'user_data'
+
+/** Pick a sensible Files API purpose from mime/name + optional rich-layout preference. */
+export function resolveChatFilePurpose(
+  file: Pick<File, 'name' | 'type'>,
+  preferRichLayout = false,
+): DeepseekChatFilePurpose {
+  const name = file.name || ''
+  const mime = file.type || ''
+  if (/^image\//i.test(mime) || /\.(png|jpe?g|gif|webp)$/i.test(name)) return 'user_data'
+  if (preferRichLayout) return 'rich_layout_recognition'
+  return 'text_recognition'
+}
+
 /** Upload a chat attachment; returns DeepSeek file-api-* id. */
-export async function uploadDeepseekChatFile(file: File): Promise<{ fileId: string; filename: string }> {
+export async function uploadDeepseekChatFile(
+  file: File,
+  opts?: { purpose?: DeepseekChatFilePurpose; preferRichLayout?: boolean },
+): Promise<{ fileId: string; filename: string; purpose: DeepseekChatFilePurpose }> {
   const buf = await file.arrayBuffer()
   const bytes = new Uint8Array(buf)
   let binary = ''
   for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]!)
   const dataBase64 = btoa(binary)
-  const purpose = /\.(png|jpe?g|gif|webp)$/i.test(file.name) ? 'user_data' : 'text_recognition'
+  const purpose = opts?.purpose || resolveChatFilePurpose(file, opts?.preferRichLayout === true)
   const res = await apiFetch('/chat/files', {
     method: 'POST',
     body: JSON.stringify({
@@ -846,7 +879,7 @@ export async function uploadDeepseekChatFile(file: File): Promise<{ fileId: stri
   if (!res.ok) await throwApiError(res, 'File upload failed')
   const data = (await res.json()) as { fileId?: string; filename?: string }
   if (!data.fileId) throw new Error('File upload missing id')
-  return { fileId: data.fileId, filename: data.filename || file.name }
+  return { fileId: data.fileId, filename: data.filename || file.name, purpose }
 }
 
 /** Stream DeepSeek Chat tokens (Family/Business). */
@@ -868,6 +901,7 @@ export async function streamDeepseekChat(
   }
   const fileIds = (handlers.fileIds || []).filter((id) => /^file-api-/.test(id)).slice(0, 5)
   const plugins = (handlers.plugins || []).map(String).filter(Boolean).slice(0, 16)
+  const primaryLang = String(handlers.primaryLang || '').trim().slice(0, 24) || undefined
   const res = await apiFetch('/chat?stream=1', {
     method: 'POST',
     body: JSON.stringify({
@@ -876,6 +910,7 @@ export async function streamDeepseekChat(
       search: handlers.search === true,
       timeZone,
       locale,
+      ...(primaryLang ? { primaryLang } : null),
       ...(fileIds.length ? { fileIds } : null),
       ...(plugins.length ? { plugins } : null),
     }),
@@ -907,6 +942,7 @@ export async function streamDeepseekChat(
       if (!payload || payload === '[DONE]') continue
       let parsed: {
         delta?: string
+        contentReplace?: string
         reasoning?: string
         done?: boolean
         model?: string
@@ -931,6 +967,9 @@ export async function streamDeepseekChat(
       if (parsed.searchStep) handlers.onSearchStep?.(parsed.searchStep)
       if (parsed.title?.trim()) handlers.onTitle?.(parsed.title.trim())
       if (parsed.image?.url) handlers.onImage?.(parsed.image)
+      if (typeof parsed.contentReplace === 'string') {
+        handlers.onContentReplace?.(parsed.contentReplace)
+      }
       if (parsed.delta) handlers.onDelta(parsed.delta)
       if (parsed.model) model = parsed.model
     }

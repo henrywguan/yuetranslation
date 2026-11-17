@@ -17,6 +17,11 @@ import {
   recentDeepseekChatMessages,
   type DeepseekChatMessage,
 } from './deepseekChat.js'
+import {
+  applyInlineCitationMarkers,
+  parseUrlCitationAnnotations,
+  sourcesFromInlineCitations,
+} from './deepseekChatCitations.js'
 import { buildDeepseekChatSystem, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
 import { buildPluginTools } from './deepseekChatMcp.js'
 import { DEEPSEEK_CHAT_TOOLS, executeDeepseekChatTool } from './deepseekChatTools.js'
@@ -28,6 +33,14 @@ export const DEEPSEEK_CHAT_WEB_TOOLS = [
   { type: 'deepseek_read_url' as const },
 ]
 
+export type DeepseekChatSearchImage = {
+  imageUrl: string
+  url?: string
+  title?: string
+  siteName?: string
+  siteIcon?: string
+}
+
 export type DeepseekChatSearchStep = {
   kind: string
   queries?: string[]
@@ -35,6 +48,8 @@ export type DeepseekChatSearchStep = {
   title?: string
   siteName?: string
   snippet?: string
+  /** Image-search result cards (`image_search` / `deep_image_search`). */
+  images?: DeepseekChatSearchImage[]
 }
 
 export type DeepseekChatHarnessEvent =
@@ -42,6 +57,8 @@ export type DeepseekChatHarnessEvent =
   | { kind: 'searching' }
   | { kind: 'reasoning'; text: string }
   | { kind: 'delta'; text: string }
+  /** Final answer rewrite with `[n]` citation chips (Completions annotations). */
+  | { kind: 'content_replace'; text: string }
   | { kind: 'sources'; sources: { url: string; title: string }[] }
   | { kind: 'search_step'; step: DeepseekChatSearchStep }
   | { kind: 'title'; title: string }
@@ -92,6 +109,7 @@ export function buildDeepseekChatToolList(searchEnabled: boolean, pluginTools: u
 const LANG_NAMES: Record<string, string> = {
   en: 'English',
   zh: 'Chinese',
+  cmn: 'Mandarin Chinese',
   yue: 'Cantonese',
   ja: 'Japanese',
   ko: 'Korean',
@@ -103,6 +121,8 @@ const LANG_NAMES: Record<string, string> = {
   id: 'Indonesian',
   ms: 'Malay',
   tl: 'Tagalog',
+  wuu: 'Shanghainese',
+  sichuan: 'Sichuanese',
   pt: 'Portuguese',
   hi: 'Hindi',
   ar: 'Arabic',
@@ -119,6 +139,15 @@ function languageFromLocale(locale: string): string {
   } catch {
     return 'English'
   }
+}
+
+/** Prefer Account Hub primary language when the client sent one. */
+function languageFromPrompt(ctx: DeepseekChatPromptContext): string {
+  const raw = String(ctx.primaryLang || '')
+    .trim()
+    .toLowerCase()
+  if (raw && LANG_NAMES[raw]) return LANG_NAMES[raw]
+  return languageFromLocale(String(ctx.locale || 'en-US'))
 }
 
 function locationFromTimeZone(timeZone: string): string {
@@ -169,7 +198,7 @@ export function formatLatestReminder(ctx: DeepseekChatPromptContext = {}): {
   const weekday = get('weekday')
   const date = `${y}-${m}-${d}`
   const location = locationFromTimeZone(timeZone)
-  const language = languageFromLocale(locale)
+  const language = languageFromPrompt({ ...ctx, locale })
   return {
     role: 'latest_reminder',
     content: `${date},${weekday},${location},Web,${language}`,
@@ -290,6 +319,27 @@ function stepFromServerCall(call: Record<string, unknown>): DeepseekChatSearchSt
     if (typeof s0.snippet === 'string') step.snippet = s0.snippet
     if (typeof s0.url === 'string') step.url = s0.url
   }
+  // Image search results carry `image_url` for gallery cards.
+  if (/image_search/i.test(kind) && Array.isArray(sources)) {
+    const images: DeepseekChatSearchImage[] = []
+    for (const raw of sources) {
+      if (!raw || typeof raw !== 'object') continue
+      const row = raw as Record<string, unknown>
+      const imageUrl =
+        (typeof row.image_url === 'string' && row.image_url.trim()) ||
+        (typeof row.imageUrl === 'string' && row.imageUrl.trim()) ||
+        ''
+      if (!/^https?:\/\//i.test(imageUrl)) continue
+      images.push({
+        imageUrl,
+        url: typeof row.url === 'string' ? row.url : undefined,
+        title: typeof row.title === 'string' ? row.title : undefined,
+        siteName: typeof row.site_name === 'string' ? row.site_name : undefined,
+        siteIcon: typeof row.site_icon === 'string' ? row.site_icon : undefined,
+      })
+    }
+    if (images.length) step.images = images.slice(0, 12)
+  }
   return step
 }
 
@@ -354,6 +404,7 @@ export async function* streamDeepseekChatHarness(
     let pendingToolCalls: ToolCall[] = []
     let assistantContent = ''
     let assistantReasoning = ''
+    let pendingAnnotations: unknown = null
     const toolCallBuf = new Map<number, ToolCall>()
 
     for await (const chunk of stream) {
@@ -431,24 +482,18 @@ export async function* streamDeepseekChatHarness(
         }
       }
 
-      // Final chunk may include annotations / server_tool_calls for sources
-      const annotations = delta.annotations
-      if (Array.isArray(annotations)) {
-        for (const a of annotations) {
+      // Final chunk may include annotations (url_citation with start/end indices).
+      if (Array.isArray(delta.annotations) && delta.annotations.length) {
+        pendingAnnotations = delta.annotations
+        for (const a of delta.annotations) {
           if (!a || typeof a !== 'object') continue
           const ann = a as Record<string, unknown>
           const cite = (ann.url_citation || ann) as Record<string, unknown>
           const url = typeof cite.url === 'string' ? cite.url : ''
           if (!/^https?:\/\//i.test(url)) continue
-          const title =
+          const citeTitle =
             (typeof cite.title === 'string' && cite.title.trim()) || url
-          if (!allSources.has(url)) allSources.set(url, title)
-        }
-        if (allSources.size) {
-          yield {
-            kind: 'sources',
-            sources: [...allSources.entries()].map(([url, title]) => ({ url, title })),
-          }
+          if (!allSources.has(url)) allSources.set(url, citeTitle)
         }
       }
     }
@@ -492,9 +537,25 @@ export async function* streamDeepseekChatHarness(
       continue
     }
 
-    // Completed answer (or empty after server tools — should have content)
-    if (!assistantContent.trim() && finishReason !== 'stop') {
-      // fall through to next round only if tools ran; otherwise empty
+    // Final answer: inject `[n]` markers once annotations are available.
+    if (assistantContent.trim() && pendingAnnotations) {
+      const parsedAnns = parseUrlCitationAnnotations(pendingAnnotations)
+      if (parsedAnns.length) {
+        const { text: marked, citations } = applyInlineCitationMarkers(
+          assistantContent,
+          parsedAnns,
+          allSources,
+        )
+        for (const c of citations) {
+          if (!allSources.has(c.url)) allSources.set(c.url, c.title)
+        }
+        if (marked !== assistantContent) {
+          yield { kind: 'content_replace', text: marked }
+        }
+        for (const s of sourcesFromInlineCitations(citations)) {
+          if (!allSources.has(s.url)) allSources.set(s.url, s.title)
+        }
+      }
     }
     if (allSources.size) {
       yield {

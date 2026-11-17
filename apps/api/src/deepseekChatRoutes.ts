@@ -66,6 +66,7 @@ async function* chatStreamEvents(
   | { kind: 'searching' }
   | { kind: 'reasoning'; text: string }
   | { kind: 'delta'; text: string }
+  | { kind: 'content_replace'; text: string }
   | { kind: 'sources'; sources: { url: string; title: string }[] }
   | { kind: 'search_step'; step: unknown }
   | { kind: 'title'; title: string }
@@ -194,6 +195,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
   const promptBase: DeepseekChatPromptContext = {
     timeZone: parsed.data.timeZone,
     locale: parsed.data.locale,
+    primaryLang: parsed.data.primaryLang,
     plan: entitlement.isAdmin ? `admin (${entitlement.plan})` : entitlement.plan,
     searchEnabled,
   }
@@ -305,6 +307,11 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
             res,
             `data: ${JSON.stringify({ image: { url: event.url, prompt: event.prompt, id: event.id } })}\n\n`,
           )
+          continue
+        }
+        if (event.kind === 'content_replace') {
+          full = event.text
+          writeSse(res, `data: ${JSON.stringify({ contentReplace: event.text })}\n\n`)
           continue
         }
         if (event.kind === 'delta') {

@@ -78,6 +78,7 @@ const SUGGESTIONS = [
 
 const THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
 const SEARCH_KEY = 'yue-deepseek-chat-search-v1'
+const RICH_LAYOUT_KEY = 'yue-deepseek-chat-rich-layout-v1'
 const PLUGINS_KEY = 'yue-deepseek-chat-plugins-v1'
 
 function readPluginIds(): string[] | null {
@@ -322,30 +323,54 @@ function ReasoningPanel({
 
 function SearchStepsList({ steps }: { steps: ChatSearchStep[] }) {
   if (!steps.length) return null
+  const imageSteps = steps.filter((s) => s.images?.length)
   return (
-    <ul className="ds-chat-search-steps">
-      {steps.map((step, i) => {
-        const label =
-          step.title ||
-          step.queries?.join(' · ') ||
-          step.url ||
-          step.kind ||
-          'Search'
-        return (
-          <li key={`${step.kind}-${i}`} className="ds-chat-search-step">
-            <span className="ds-chat-search-step-kind">{step.kind}</span>
-            {step.url ? (
-              <a href={step.url} target="_blank" rel="noopener noreferrer">
-                {label}
-              </a>
-            ) : (
-              <span>{label}</span>
-            )}
-            {step.siteName ? <span className="ds-chat-search-step-site">{step.siteName}</span> : null}
-          </li>
-        )
-      })}
-    </ul>
+    <div className="ds-chat-search-wrap">
+      <ul className="ds-chat-search-steps">
+        {steps.map((step, i) => {
+          const label =
+            step.title ||
+            step.queries?.join(' · ') ||
+            step.url ||
+            step.kind ||
+            'Search'
+          return (
+            <li key={`${step.kind}-${i}`} className="ds-chat-search-step">
+              <span className="ds-chat-search-step-kind">{step.kind}</span>
+              {step.url ? (
+                <a href={step.url} target="_blank" rel="noopener noreferrer">
+                  {label}
+                </a>
+              ) : (
+                <span>{label}</span>
+              )}
+              {step.siteName ? <span className="ds-chat-search-step-site">{step.siteName}</span> : null}
+            </li>
+          )
+        })}
+      </ul>
+      {imageSteps.length ? (
+        <div className="ds-chat-image-results" aria-label="Image search results">
+          {imageSteps.flatMap((step, si) =>
+            (step.images || []).map((img, ii) => {
+              const href = img.url || img.imageUrl
+              return (
+                <a
+                  key={`${si}-${ii}-${img.imageUrl}`}
+                  className="ds-chat-image-result"
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={img.title || img.siteName || 'Image result'}
+                >
+                  <img src={img.imageUrl} alt={img.title || ''} loading="lazy" />
+                </a>
+              )
+            }),
+          )}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -597,6 +622,7 @@ export function ChatPage() {
   const [searching, setSearching] = useState(false)
   const [deepThink, setDeepThink] = useState(() => readFlag(THINK_KEY, true))
   const [searchOn, setSearchOn] = useState(() => readFlag(SEARCH_KEY, false))
+  const [richLayout, setRichLayout] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
   const [thinkClock, setThinkClock] = useState<number | null>(null)
   const [pendingFiles, setPendingFiles] = useState<PendingChatFile[]>([])
   const [uploadingFile, setUploadingFile] = useState(false)
@@ -626,6 +652,7 @@ export function ChatPage() {
   const thinkStartedAt = useRef<number | null>(null)
   const autoSpeak = useYueStore((s) => s.autoSpeak)
   const speakManual = useYueStore((s) => s.speakManual)
+  const primaryLanguage = useYueStore((s) => s.primaryLanguage)
 
   const setDraftAndResize = (next: string) => {
     setDraft(next)
@@ -905,6 +932,7 @@ export function ChatPage() {
         search: searchOn,
         fileIds,
         plugins: enabledPlugins,
+        primaryLang: primaryLanguage,
         signal: controller.signal,
         onStatus: (status) => {
           if (status === 'searching') {
@@ -956,6 +984,15 @@ export function ChatPage() {
             })
             schedulePaint()
           }
+        },
+        onContentReplace: (text) => {
+          assembled = text.slice(0, MAX_CONTENT_CHARS)
+          thread = patchAssistantContent(thread, assistantId, assembled, {
+            reasoning: reasoning || undefined,
+            sources,
+            searchSteps: searchSteps.length ? searchSteps : undefined,
+          })
+          schedulePaint()
         },
         onDelta: (delta) => {
           const firstToken = assembled.length === 0
@@ -1119,7 +1156,7 @@ export function ChatPage() {
     setUploadingFile(true)
     setError(null)
     try {
-      const uploaded = await uploadDeepseekChatFile(file)
+      const uploaded = await uploadDeepseekChatFile(file, { preferRichLayout: richLayout })
       const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
       setPendingFiles((prev) =>
         [
@@ -1581,6 +1618,21 @@ export function ChatPage() {
               >
                 {SEARCH_ICON}
                 Search
+              </button>
+              <button
+                type="button"
+                className={`ds-chat-toggle${richLayout ? ' is-on' : ''}`}
+                aria-pressed={richLayout}
+                title="Rich layout — keep charts/figures when parsing PDF & Office uploads"
+                onClick={() => {
+                  setRichLayout((v) => {
+                    const next = !v
+                    writeFlag(RICH_LAYOUT_KEY, next)
+                    return next
+                  })
+                }}
+              >
+                Rich layout
               </button>
               <button
                 type="button"
