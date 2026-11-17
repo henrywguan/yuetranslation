@@ -20,6 +20,14 @@ assert.match(css, /\.solo-pane-scroll\s*\{[^}]*overflow-y:\s*auto/s, 'Body scrol
 assert.match(css, /\.solo-pane-head\s*\{[^}]*flex-shrink:\s*0/s, 'Pane head must not shrink under flex')
 assert.match(css, /\.solo-stage\s*\{[^}]*overflow:\s*visible/s, 'Stage must allow mic highlight bleed')
 
+const upperBlock = css.match(/\.solo-upper\s*\{[^}]+\}/)?.[0] || ''
+assert.match(upperBlock, /flex:\s*0\s+0\s+auto/, 'Upper pane must not flex-shrink under a tall lower pane')
+assert.match(
+  css,
+  /\.solo-upper\s+\.solo-pane-scroll\s*\{[^}]*min-height:\s*2\.75rem/s,
+  'Upper scroll region keeps at least one result line visible',
+)
+
 assert.match(solo, /className="solo-pane-scroll"/, 'SoloView wraps pane body in scroll region')
 assert.equal(
   (solo.match(/className="solo-pane-scroll"/g) || []).length,
