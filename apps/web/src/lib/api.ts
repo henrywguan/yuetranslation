@@ -856,6 +856,55 @@ export function resolveChatFilePurpose(
   return 'text_recognition'
 }
 
+export type ChatTtsVoiceId = 'stella' | 'tide'
+
+/** POST /api/chat/tts — DeepSeek TTS (yue / zh / en / …). */
+export async function fetchDeepseekChatTtsAudio(
+  text: string,
+  opts?: { voiceId?: ChatTtsVoiceId; signal?: AbortSignal },
+): Promise<Blob> {
+  const trimmed = text.trim().slice(0, 10_000)
+  if (!trimmed) throw new Error('Nothing to speak.')
+  const res = await apiFetch('/chat/tts', {
+    method: 'POST',
+    body: JSON.stringify({
+      text: trimmed,
+      voiceId: opts?.voiceId || 'stella',
+      format: 'wav',
+      filterMarkdown: true,
+    }),
+    signal: opts?.signal,
+  })
+  if (!res.ok) await throwApiError(res, 'Chat TTS failed')
+  return await res.blob()
+}
+
+/** POST /api/chat/asr — DeepSeek speech-to-text. */
+export async function transcribeDeepseekChatAudio(
+  blob: Blob,
+  opts?: { filename?: string; signal?: AbortSignal },
+): Promise<string> {
+  const buf = await blob.arrayBuffer()
+  const bytes = new Uint8Array(buf)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]!)
+  const dataBase64 = btoa(binary)
+  const res = await apiFetch('/chat/asr', {
+    method: 'POST',
+    body: JSON.stringify({
+      filename: opts?.filename || 'speech.webm',
+      mime: blob.type || 'audio/webm',
+      dataBase64,
+    }),
+    signal: opts?.signal,
+  })
+  if (!res.ok) await throwApiError(res, 'Chat ASR failed')
+  const data = (await res.json()) as { text?: string }
+  const text = String(data.text || '').trim()
+  if (!text) throw new Error('Empty transcript')
+  return text
+}
+
 /** Upload a chat attachment; returns DeepSeek file-api-* id. */
 export async function uploadDeepseekChatFile(
   file: File,

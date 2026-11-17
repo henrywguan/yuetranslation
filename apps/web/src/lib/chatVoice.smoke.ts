@@ -27,6 +27,20 @@ assert.match(chat, /chatSpeakLang/, 'TTS lang from bubble text')
 const dictate = readFileSync(join(root, '../components/ChatDictateButton.tsx'), 'utf8')
 assert.match(dictate, /createWebSpeechSession/, 'Dictation uses Web Speech helper')
 assert.match(dictate, /preserveSession/, 'Barge-in pauses TTS after STT starts')
+assert.match(dictate, /transcribeDeepseekChatAudio/, 'DeepSeek ASR fallback for chat dictate')
+assert.match(dictate, /MediaRecorder/, 'ASR fallback records via MediaRecorder')
 assert.doesNotMatch(dictate, /\.startHold\b|startHold\(/, 'Chat dictation must not call Solo live hold')
+
+assert.match(chat, /StreamingDeepseekChatTts|speakDeepseekChatText/, 'Chat uses DeepSeek TTS')
+assert.match(chat, /liveTts\?\.feed/, 'Auto-speak streams DeepSeek TTS while answering')
+
+const voiceClient = readFileSync(join(root, './chatDeepseekVoice.ts'), 'utf8')
+assert.match(voiceClient, /fetchDeepseekChatTtsAudio/, 'Client uses chat TTS helper')
+assert.match(voiceClient, /transcribeDeepseekChatAudio/, 'Client uses chat ASR helper')
+assert.match(voiceClient, /StreamingDeepseekChatTts/, 'Streaming TTS class exported')
+
+const api = readFileSync(join(root, './api.ts'), 'utf8')
+assert.match(api, /\/chat\/tts/, 'api hits chat TTS proxy')
+assert.match(api, /\/chat\/asr/, 'api hits chat ASR proxy')
 
 console.log('chatVoice.smoke: ok')

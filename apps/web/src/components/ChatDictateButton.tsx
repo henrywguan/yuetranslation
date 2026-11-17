@@ -1,8 +1,10 @@
 /**
  * DeepSeek Chat composer mic — tap/hold dictation into the draft.
- * Uses createWebSpeechSession directly (not Solo live translate pipeline).
+ * Prefers Web Speech; falls back to DeepSeek ASR (MediaRecorder) when unavailable.
+ * Does not use Solo live translate / startHold.
  */
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
+import { transcribeDeepseekChatAudio } from '../lib/chatDeepseekVoice'
 import { chatDictateLang, mergeDictateText } from '../lib/chatVoice'
 import { isAppleTouchDevice } from '../lib/mediaAccess'
 import { useYueStore } from '../lib/store'
@@ -40,18 +42,71 @@ type Props = {
 export function ChatDictateButton({ disabled, draft, onDraft, onError }: Props) {
   const status = useYueStore((s) => s.status)
   const [listening, setListening] = useState(false)
+  const [asrBusy, setAsrBusy] = useState(false)
   const sessionRef = useRef<LiveSession | null>(null)
+  const mediaRef = useRef<{
+    stream: MediaStream
+    recorder: MediaRecorder
+    chunks: BlobPart[]
+  } | null>(null)
   const draftBaseRef = useRef('')
   const stickyRef = useRef(false)
   const downAtRef = useRef(0)
   const silenceTimerRef = useRef<number | null>(null)
   const activePointerRef = useRef<number | null>(null)
   const listeningRef = useRef(false)
+  const asrModeRef = useRef(false)
 
   const clearSilence = () => {
     if (silenceTimerRef.current != null) {
       window.clearTimeout(silenceTimerRef.current)
       silenceTimerRef.current = null
+    }
+  }
+
+  const stopMediaTracks = (stream: MediaStream) => {
+    for (const track of stream.getTracks()) {
+      try {
+        track.stop()
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  const finishAsrRecording = async () => {
+    const media = mediaRef.current
+    mediaRef.current = null
+    asrModeRef.current = false
+    if (!media) return
+    const { stream, recorder, chunks } = media
+    await new Promise<void>((resolve) => {
+      if (recorder.state === 'inactive') {
+        resolve()
+        return
+      }
+      recorder.onstop = () => resolve()
+      try {
+        recorder.stop()
+      } catch {
+        resolve()
+      }
+    })
+    stopMediaTracks(stream)
+    const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
+    if (blob.size < 256) return
+    setAsrBusy(true)
+    try {
+      const text = await transcribeDeepseekChatAudio(blob, {
+        filename: recorder.mimeType.includes('ogg') ? 'speech.ogg' : 'speech.webm',
+      })
+      const next = mergeDictateText(draftBaseRef.current, text)
+      draftBaseRef.current = next
+      onDraft(next)
+    } catch (err) {
+      onError?.(err instanceof Error ? err.message : 'Dictation failed.')
+    } finally {
+      setAsrBusy(false)
     }
   }
 
@@ -68,6 +123,9 @@ export function ChatDictateButton({ disabled, draft, onDraft, onError }: Props) 
       } catch {
         /* ignore */
       }
+    }
+    if (asrModeRef.current || mediaRef.current) {
+      await finishAsrRecording()
     }
   }
 
@@ -107,8 +165,38 @@ export function ChatDictateButton({ disabled, draft, onDraft, onError }: Props) 
     }, SILENCE_AFTER_SPEECH_MS)
   }
 
+  const startAsrFallback = async () => {
+    if (mediaRef.current || disabled) return
+    unlockTtsPlayback()
+    draftBaseRef.current = draft
+    if (status === 'speaking') stopSpeaking()
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')
+          ? 'audio/ogg;codecs=opus'
+          : ''
+      const recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream)
+      const chunks: BlobPart[] = []
+      recorder.ondataavailable = (ev) => {
+        if (ev.data.size) chunks.push(ev.data)
+      }
+      mediaRef.current = { stream, recorder, chunks }
+      asrModeRef.current = true
+      listeningRef.current = true
+      setListening(true)
+      recorder.start(250)
+    } catch (err) {
+      onError?.(err instanceof Error ? err.message : 'Microphone failed.')
+      asrModeRef.current = false
+      listeningRef.current = false
+      setListening(false)
+    }
+  }
+
   const startSession = async () => {
-    if (sessionRef.current || disabled) return
+    if (sessionRef.current || mediaRef.current || disabled || asrBusy) return
     unlockTtsPlayback()
     draftBaseRef.current = draft
     const apple = isAppleTouchDevice()
@@ -128,9 +216,25 @@ export function ChatDictateButton({ disabled, draft, onDraft, onError }: Props) 
           onDraft(next)
           armSilenceStop()
         },
-        onError: (message) => {
-          onError?.(message)
-          void stopSession()
+        onError: () => {
+          // Fall back to DeepSeek ASR recording instead of hard-failing.
+          void (async () => {
+            const session = sessionRef.current
+            sessionRef.current = null
+            if (session) {
+              try {
+                await session.stop()
+              } catch {
+                /* ignore */
+              }
+            }
+            await startAsrFallback()
+            if (!mediaRef.current) {
+              onError?.('Speech recognition failed.')
+              listeningRef.current = false
+              setListening(false)
+            }
+          })()
         },
         onStatus: (s) => {
           if (s === 'listening') {
@@ -146,7 +250,10 @@ export function ChatDictateButton({ disabled, draft, onDraft, onError }: Props) 
       chatDictateLang(),
     )
     if (!session) {
-      onError?.('Speech recognition is not available in this browser.')
+      await startAsrFallback()
+      if (!mediaRef.current) {
+        onError?.('Speech recognition is not available in this browser.')
+      }
       return
     }
     sessionRef.current = session
@@ -157,8 +264,11 @@ export function ChatDictateButton({ disabled, draft, onDraft, onError }: Props) 
       if (deferTts) stopSpeaking({ preserveSession: true })
       else if (ttsPlaying) stopSpeaking()
     } catch (err) {
-      onError?.(err instanceof Error ? err.message : 'Microphone failed.')
       await stopSession()
+      await startAsrFallback()
+      if (!mediaRef.current) {
+        onError?.(err instanceof Error ? err.message : 'Microphone failed.')
+      }
     }
   }
 
@@ -214,11 +324,19 @@ export function ChatDictateButton({ disabled, draft, onDraft, onError }: Props) 
   return (
     <button
       type="button"
-      className={`ds-chat-dictate${listening ? ' is-listening' : ''}`}
-      aria-label={listening ? 'Stop dictation' : 'Dictate with microphone'}
-      title={listening ? 'Stop dictation' : 'Hold or tap to dictate'}
+      className={`ds-chat-dictate${listening || asrBusy ? ' is-listening' : ''}`}
+      aria-label={
+        asrBusy ? 'Transcribing…' : listening ? 'Stop dictation' : 'Dictate with microphone'
+      }
+      title={
+        asrBusy
+          ? 'Transcribing with DeepSeek ASR…'
+          : listening
+            ? 'Stop dictation'
+            : 'Hold or tap to dictate'
+      }
       aria-pressed={listening}
-      disabled={disabled}
+      disabled={disabled || asrBusy}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}

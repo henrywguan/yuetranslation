@@ -32,6 +32,7 @@ import {
   threadToJson,
   threadToMarkdown,
 } from '../lib/chatExport'
+import { StreamingDeepseekChatTts, speakDeepseekChatText } from '../lib/chatDeepseekVoice'
 import { chatSpeakLang } from '../lib/chatVoice'
 import {
   apiMessagesFromThread,
@@ -390,12 +391,15 @@ function MessageActions({
   onOpenArtifacts?: () => void
 }) {
   const [copied, setCopied] = useState(false)
+  const [dsSpeaking, setDsSpeaking] = useState(false)
   const timerRef = useRef<number | null>(null)
+  const speakAbortRef = useRef<AbortController | null>(null)
   const speakLang = chatSpeakLang(content)
 
   useEffect(() => {
     return () => {
       if (timerRef.current) window.clearTimeout(timerRef.current)
+      speakAbortRef.current?.abort()
     }
   }, [])
 
@@ -412,8 +416,39 @@ function MessageActions({
     }
   }
 
+  const speakWithDeepseek = async () => {
+    const text = content.trim()
+    if (!text) return
+    if (dsSpeaking) {
+      speakAbortRef.current?.abort()
+      setDsSpeaking(false)
+      return
+    }
+    const controller = new AbortController()
+    speakAbortRef.current = controller
+    setDsSpeaking(true)
+    try {
+      await speakDeepseekChatText(text, { signal: controller.signal })
+    } catch {
+      /* ignore abort / network */
+    } finally {
+      if (speakAbortRef.current === controller) speakAbortRef.current = null
+      setDsSpeaking(false)
+    }
+  }
+
   return (
     <div className="ds-chat-actions">
+      <button
+        type="button"
+        className={`ds-chat-action${dsSpeaking ? ' is-copied' : ''}`}
+        aria-label={dsSpeaking ? 'Stop DeepSeek voice' : 'Speak with DeepSeek (Cantonese-capable)'}
+        title={dsSpeaking ? 'Stop' : 'DeepSeek voice (yue / zh / en…)'}
+        disabled={!content.trim()}
+        onClick={() => void speakWithDeepseek()}
+      >
+        <span className="ds-chat-action-label">{dsSpeaking ? 'Stop' : 'DS Voice'}</span>
+      </button>
       <SpeakButton text={content} lang={speakLang} className="ds-chat-speak" warm={false} />
       <button
         type="button"
@@ -649,6 +684,7 @@ export function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const streamTtsRef = useRef<StreamingDeepseekChatTts | null>(null)
   const thinkStartedAt = useRef<number | null>(null)
   const autoSpeak = useYueStore((s) => s.autoSpeak)
   const speakManual = useYueStore((s) => s.speakManual)
@@ -864,6 +900,8 @@ export function ChatPage() {
 
   const stopGeneration = () => {
     abortRef.current?.abort()
+    streamTtsRef.current?.stop()
+    streamTtsRef.current = null
   }
 
   const runAssistant = async (baseThread: ChatThread, fileIds?: string[]) => {
@@ -886,6 +924,11 @@ export function ChatPage() {
     let reasoning = ''
     let sources: ChatSource[] | undefined
     let searchSteps: ChatSearchStep[] = []
+    streamTtsRef.current?.stop()
+    streamTtsRef.current = null
+    const liveTts =
+      canAutoSpeak && autoSpeak ? new StreamingDeepseekChatTts({ voiceId: 'stella' }) : null
+    streamTtsRef.current = liveTts
 
     // Coalesce stream paints — never persist per token (idle disk write at end).
     let paintTimer: number | null = null
@@ -1004,6 +1047,7 @@ export function ChatPage() {
           if (assembled.length > MAX_CONTENT_CHARS) {
             assembled = assembled.slice(0, MAX_CONTENT_CHARS)
           }
+          liveTts?.feed(delta)
           thread = firstToken
             ? patchAssistantContent(thread, assistantId, assembled, {
                 reasoning: reasoning || undefined,
@@ -1017,17 +1061,24 @@ export function ChatPage() {
       })
       flushPaint()
       if (!assembled.trim()) {
+        liveTts?.stop()
         thread = dropEmptyAssistant(thread)
         persist(thread)
         setError('No reply — try again.')
       } else {
         persist(thread)
-        if (canAutoSpeak && autoSpeak && assembled.trim()) {
+        if (liveTts) {
+          void liveTts.finish().catch(() => {
+            /* ignore */
+          })
+        } else if (canAutoSpeak && autoSpeak && assembled.trim()) {
+          // Fallback: Azure speak when streaming DeepSeek TTS was not armed.
           void speakManual(assembled.trim(), chatSpeakLang(assembled))
         }
       }
     } catch (err) {
       flushPaint()
+      liveTts?.stop()
       if ((err as Error)?.name === 'AbortError') {
         if (!assembled.trim()) thread = dropEmptyAssistant(thread)
         persist(thread)
@@ -1048,6 +1099,7 @@ export function ChatPage() {
       setBusy(false)
       setThinkClock(null)
       abortRef.current = null
+      if (streamTtsRef.current === liveTts) streamTtsRef.current = null
     }
   }
 
