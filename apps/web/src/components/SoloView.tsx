@@ -580,8 +580,8 @@ export function SoloView() {
     Boolean(enTranslation) ||
     Boolean(yueTranslation)
 
-  /** Say-it-back, phrasebook star, and share for a finished pane line. */
-  const renderPaneExtras = (pane: 'upper' | 'lower') => {
+  /** Icon column extras for a finished pane line (kept vertical so they never clip the border). */
+  const renderPaneIconExtras = (pane: 'upper' | 'lower') => {
     const lang = pane === 'upper' ? soloUpperLang : soloLowerLang
     const draft = (pane === 'upper' ? upperDraft : lowerDraft).trim()
     if (!draft) return null
@@ -591,19 +591,17 @@ export function SoloView() {
     return (
       <>
         {lang === 'yue' ? <SayItBack text={draft} /> : null}
-        <div className="result-actions-minor">
-          {isLatestTarget && latest ? (
-            <StarPhraseButton
-              source={latest.source}
-              translation={draft}
-              from={latest.from}
-              to={lang}
-              romanization={latest.romanization}
-              origin="solo"
-            />
-          ) : null}
-          <ShareButton text={shareText} />
-        </div>
+        {isLatestTarget && latest ? (
+          <StarPhraseButton
+            source={latest.source}
+            translation={draft}
+            from={latest.from}
+            to={lang}
+            romanization={latest.romanization}
+            origin="solo"
+          />
+        ) : null}
+        <ShareButton text={shareText} />
       </>
     )
   }
@@ -656,6 +654,7 @@ export function SoloView() {
               }
               lang={lang}
               onSelect={selectYueVariation}
+              collapsible
             />
           ) : null}
           <button type="button" className="solo-edit-link" onClick={onEdit} dir={langDir(lang)}>
@@ -777,22 +776,24 @@ export function SoloView() {
             {upperDraft.trim() || canClear ? (
               <div className="solo-pane-actions">
                 {upperDraft.trim() ? (
-                  <button
-                    type="button"
-                    className="solo-details-btn"
-                    onClick={() => openPaneDetails('upper')}
-                    aria-label="Open details"
-                  >
-                    <BiText copy={ui.camOpenDetails} size="sm" layout="inline" />
-                  </button>
+                  <div className="solo-pane-actions-leading">
+                    <button
+                      type="button"
+                      className="solo-details-btn"
+                      onClick={() => openPaneDetails('upper')}
+                      aria-label="Open details"
+                    >
+                      <BiText copy={ui.camOpenDetails} size="sm" layout="inline" />
+                    </button>
+                  </div>
                 ) : null}
                 <div className="solo-pane-actions-stack">
                   {canClear ? <ClearIconButton onClick={clearSolo} /> : null}
                   {upperDraft.trim() ? (
                     <SpeakButton text={upperDraft} lang={soloUpperLang} />
                   ) : null}
+                  {renderPaneIconExtras('upper')}
                 </div>
-                {renderPaneExtras('upper')}
               </div>
             ) : null}
           </div>
@@ -847,42 +848,44 @@ export function SoloView() {
             {lowerDraft.trim() || canClear ? (
               <div className="solo-pane-actions">
                 {lowerDraft.trim() ? (
-                  <button
-                    type="button"
-                    className="solo-details-btn"
-                    onClick={() => openPaneDetails('lower')}
-                    aria-label={biPlain(ui.charDetail)}
-                  >
-                    <BiText copy={ui.camOpenDetails} size="sm" layout="inline" />
-                  </button>
+                  <div className="solo-pane-actions-leading">
+                    <button
+                      type="button"
+                      className="solo-details-btn"
+                      onClick={() => openPaneDetails('lower')}
+                      aria-label={biPlain(ui.charDetail)}
+                    >
+                      <BiText copy={ui.camOpenDetails} size="sm" layout="inline" />
+                    </button>
+                    {canAskChat && upperDraft.trim() ? (
+                      <button
+                        type="button"
+                        className="solo-ask-chat-btn"
+                        aria-label="Ask DeepSeek Chat about this translation"
+                        title="Ask in Chat"
+                        onClick={() =>
+                          openDeepseekChatWithPrefill(
+                            translationChatPrefill({
+                              source: upperDraft,
+                              translation: lowerDraft,
+                              fromLang: soloUpperLang,
+                              toLang: soloLowerLang,
+                            }),
+                          )
+                        }
+                      >
+                        Ask in Chat
+                      </button>
+                    ) : null}
+                  </div>
                 ) : null}
                 <div className="solo-pane-actions-stack">
                   {canClear ? <ClearIconButton onClick={clearSolo} /> : null}
                   {lowerDraft.trim() ? (
                     <SpeakButton text={lowerDraft} lang={soloLowerLang} />
                   ) : null}
-                  {canAskChat && upperDraft.trim() && lowerDraft.trim() ? (
-                    <button
-                      type="button"
-                      className="solo-ask-chat-btn"
-                      aria-label="Ask DeepSeek Chat about this translation"
-                      title="Ask in Chat"
-                      onClick={() =>
-                        openDeepseekChatWithPrefill(
-                          translationChatPrefill({
-                            source: upperDraft,
-                            translation: lowerDraft,
-                            fromLang: soloUpperLang,
-                            toLang: soloLowerLang,
-                          }),
-                        )
-                      }
-                    >
-                      Ask in Chat
-                    </button>
-                  ) : null}
+                  {renderPaneIconExtras('lower')}
                 </div>
-                {renderPaneExtras('lower')}
               </div>
             ) : null}
           </div>
@@ -922,6 +925,7 @@ export function SoloView() {
               soloLowerLang === 'lo') ? (
               <TranslationAlternatives
                 alternatives={alts}
+                collapsible
                 alternativeRomanizations={
                   soloLowerLang === 'wuu' || soloLowerLang === 'sichuan'
                     ? latest?.alternativeRomanizations

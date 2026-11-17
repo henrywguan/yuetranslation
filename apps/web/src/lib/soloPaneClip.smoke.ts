@@ -36,6 +36,24 @@ assert.equal(
 )
 
 assert.match(
+  solo,
+  /solo-pane-actions-stack[\s\S]*renderPaneIconExtras/,
+  'Share/star/say-it-back live in the icon stack (not a wrapping row that clips the border)',
+)
+assert.match(
+  solo,
+  /solo-pane-actions-leading[\s\S]*solo-ask-chat-btn/,
+  'Ask in Chat sits beside Details, not under Speak',
+)
+assert.match(solo, /collapsible/, 'Solo Other variations start collapsed (tap to expand)')
+
+assert.match(
+  css,
+  /\.solo-pane-actions\s*\{[^}]*flex-wrap:\s*nowrap/s,
+  'Pane actions must not wrap icons past the mic-glow border',
+)
+
+assert.match(
   langBtn,
   /variant === 'dropdown'[\s\S]*layout="inline"/,
   'Dropdown lang pill uses inline BiText so primary gloss fits chrome',
