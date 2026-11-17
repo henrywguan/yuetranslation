@@ -18,6 +18,7 @@ import { sanitizePushNavigateUrl } from './lib/safeUrl'
 import { loadSiteConfig } from './lib/siteLinks'
 import { bindMicBackgroundRelease, shouldForceReleaseMicOnBackground } from './lib/micPrivacy'
 import { isAppleTouchDevice } from './lib/mediaAccess'
+import { isChatAuiEnabled } from './lib/chatAuiFlag'
 import { useYueStore } from './lib/store'
 import { hashPath, navigate, useRoute } from './lib/useHashRoute'
 
@@ -40,6 +41,9 @@ const PracticePage = lazy(() =>
   import('./pages/PracticePage').then((m) => ({ default: m.PracticePage })),
 )
 const ChatPage = lazy(() => import('./pages/ChatPage').then((m) => ({ default: m.ChatPage })))
+const ChatAuiPage = lazy(() =>
+  import('./pages/chat/aui/ChatAuiPage').then((m) => ({ default: m.ChatAuiPage })),
+)
 const LegalPage = lazy(() => import('./landing/LegalPage').then((m) => ({ default: m.LegalPage })))
 const NotFoundPage = lazy(() =>
   import('./landing/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
@@ -124,7 +128,7 @@ export default function App() {
   else if (route === 'tones') page = <TonesPage />
   else if (route === 'learn') page = <LearnPage />
   else if (route === 'practice') page = <PracticePage />
-  else if (route === 'chat') page = <ChatPage />
+  else if (route === 'chat') page = isChatAuiEnabled() ? <ChatAuiPage /> : <ChatPage />
   else if (route === 'creators') page = <CreatorsPage />
   else if (route === 'admin') page = <AdminPage />
   else if (route === 'privacy') page = <LegalPage doc="privacy" />

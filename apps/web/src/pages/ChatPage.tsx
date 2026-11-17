@@ -66,6 +66,7 @@ import {
 } from '../lib/chatSkills'
 import { openAuthScreen } from '../lib/auth'
 import { canUseDeepseekChat } from '../lib/chatAccess'
+import { setChatAuiEnabled } from '../lib/chatAuiFlag'
 import { renderChatMarkdown } from '../lib/renderChatMarkdown'
 import { openApp, openPricing } from '../lib/siteLinks'
 import { useYueStore } from '../lib/store'
@@ -1552,6 +1553,16 @@ export function ChatPage() {
             onClick={() => importInputRef.current?.click()}
           >
             Import JSON
+          </button>
+          <button
+            type="button"
+            className="ds-chat-sidebar-link"
+            onClick={() => {
+              setChatAuiEnabled(true)
+              window.location.reload()
+            }}
+          >
+            Back to new chat UI
           </button>
           <button type="button" className="ds-chat-sidebar-link" onClick={() => openApp()}>
             Back to JyutTranslate

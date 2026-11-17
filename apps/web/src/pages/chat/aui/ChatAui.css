@@ -1,0 +1,644 @@
+/* assistant-ui shell — reuses DeepSeek tokens from ChatPage.css */
+
+.aui-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.aui-badge {
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ds-blue);
+  background: var(--ds-blue-soft);
+  border: 1px solid var(--ds-blue-soft-border);
+}
+
+.aui-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.aui-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+}
+
+.aui-sidebar {
+  display: none;
+  flex-direction: column;
+  width: var(--ds-sidebar-w);
+  flex-shrink: 0;
+  border-right: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  padding: 0.75rem;
+  gap: 0.5rem;
+  overflow: auto;
+}
+
+.aui-layout.is-sidebar-open .aui-sidebar {
+  display: flex;
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 5;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+@media (min-width: 900px) {
+  .aui-sidebar {
+    display: flex;
+  }
+  .aui-layout.is-sidebar-open .aui-sidebar {
+    position: relative;
+    inset: auto;
+    box-shadow: none;
+  }
+}
+
+.aui-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--ds-text-2);
+  padding: 0.25rem 0.35rem 0.75rem;
+}
+
+.aui-sidebar-mark {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.aui-thread-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.aui-new-thread {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-canvas);
+  color: var(--ds-text);
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.aui-new-thread:hover {
+  border-color: var(--ds-blue-soft-border);
+  background: var(--ds-blue-soft);
+}
+
+.aui-thread-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 0.2rem;
+  border-radius: 0.55rem;
+  padding: 0.15rem;
+}
+
+.aui-thread-item[data-active],
+.aui-thread-item:has([data-active]) {
+  background: var(--ds-blue-soft);
+}
+
+.aui-thread-trigger {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text);
+  font: inherit;
+  text-align: left;
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aui-thread-archive,
+.aui-thread-delete {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-3);
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.aui-thread-archive:hover,
+.aui-thread-delete:hover {
+  background: var(--ds-surface-2);
+  color: var(--ds-text);
+}
+
+.aui-thread {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.aui-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1rem 0;
+  scroll-behavior: smooth;
+}
+
+.aui-empty {
+  margin: auto;
+  max-width: 28rem;
+  text-align: center;
+  padding: 2rem 1rem 3rem;
+  animation: aui-rise 0.45s ease both;
+}
+
+.aui-empty-mark {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 1rem;
+}
+
+.aui-empty h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+}
+
+.aui-empty p {
+  color: var(--ds-text-2);
+  margin: 0 0 1.25rem;
+}
+
+.aui-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.aui-suggestion {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  color: var(--ds-text);
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  animation: aui-rise 0.4s ease both;
+}
+
+.aui-suggestion:hover:not(:disabled) {
+  border-color: var(--ds-blue-soft-border);
+  background: var(--ds-blue-soft);
+}
+
+.aui-msg {
+  max-width: 46rem;
+  width: 100%;
+  margin: 0 auto 1rem;
+  animation: aui-rise 0.28s ease both;
+}
+
+.aui-msg.is-user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.aui-bubble.is-user {
+  background: var(--ds-blue);
+  color: #fff;
+  border-radius: 1.1rem 1.1rem 0.35rem 1.1rem;
+  padding: 0.7rem 0.95rem;
+  max-width: min(100%, 34rem);
+  white-space: pre-wrap;
+}
+
+.aui-bubble.is-assistant {
+  color: var(--ds-text);
+  padding: 0.15rem 0;
+}
+
+.aui-md {
+  line-height: 1.65;
+}
+
+.aui-md :where(p, ul, ol, pre, blockquote) {
+  margin: 0 0 0.75rem;
+}
+
+.aui-md :where(p:last-child, ul:last-child, ol:last-child, pre:last-child) {
+  margin-bottom: 0;
+}
+
+/* Mid-stream markdown caret — same pulse language as classic .ds-chat-assistant-body.is-streaming */
+.aui-md.is-streaming :where(p:last-child, li:last-child, pre:last-child, h1:last-child, h2:last-child, h3:last-child)::after,
+.aui-md.is-streaming.aui-md:not(:has(*))::after,
+.aui-md.is-streaming > .aui-md-placeholder::after {
+  content: '|';
+  display: inline-block;
+  margin-left: 0.05em;
+  color: var(--ds-blue);
+  animation: ds-chat-caret 0.9s steps(1) infinite;
+}
+
+.aui-md-placeholder {
+  display: inline-block;
+  min-height: 1.2em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aui-md.is-streaming :where(p:last-child, li:last-child, pre:last-child, h1:last-child, h2:last-child, h3:last-child)::after,
+  .aui-md.is-streaming > .aui-md-placeholder::after {
+    animation: none;
+  }
+}
+
+.aui-reasoning {
+  margin: 0 0 0.75rem;
+  background: var(--ds-reasoning-bg);
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  color: var(--ds-reasoning-text);
+  font-size: 0.85rem;
+}
+
+.aui-reasoning summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ds-text-2);
+}
+
+.aui-reasoning pre {
+  margin: 0.5rem 0 0;
+  white-space: pre-wrap;
+  font-family: var(--ds-mono);
+  font-size: 0.8rem;
+}
+
+.aui-source {
+  display: inline-block;
+  margin: 0.25rem 0.35rem 0 0;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--ds-surface-1);
+  border: 1px solid var(--ds-divider);
+  color: var(--ds-blue);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.aui-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  min-height: 1.75rem;
+}
+
+.aui-actions-row {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.aui-action-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-3);
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+
+.aui-action-btn:hover {
+  background: var(--ds-surface-1);
+  color: var(--ds-text);
+}
+
+.aui-footer {
+  position: sticky;
+  bottom: 0;
+  padding: 0.5rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, var(--ds-canvas) 70%, transparent);
+}
+
+.aui-composer {
+  max-width: 46rem;
+  margin: 0 auto;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-canvas);
+  border-radius: 1.15rem;
+  padding: 0.55rem 0.65rem 0.65rem;
+  box-shadow: 0 8px 28px rgba(26, 27, 30, 0.06);
+}
+
+.aui-composer-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.aui-plugins {
+  margin: 0 0 0.5rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.75rem;
+  background: var(--ds-surface-1);
+  border: 1px solid var(--ds-divider);
+}
+
+.aui-keys-open {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-blue);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 0.35rem;
+}
+
+.aui-plugin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.aui-plugin {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-canvas);
+  color: var(--ds-text-2);
+  border-radius: 0.55rem;
+  padding: 0.35rem 0.55rem;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.aui-plugin.is-on {
+  border-color: var(--ds-blue-soft-border);
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
+}
+
+.aui-pending-files {
+  list-style: none;
+  margin: 0 0 0.45rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.aui-pending-files li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.5rem;
+  background: var(--ds-surface-1);
+  border: 1px solid var(--ds-divider);
+  font-size: 0.75rem;
+}
+
+.aui-pending-files button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-3);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.aui-attach {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  color: var(--ds-text-2);
+  border-radius: 0.65rem;
+  min-width: 2.1rem;
+  height: 2.1rem;
+  padding: 0 0.45rem;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.aui-toggle {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  color: var(--ds-text-2);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aui-toggle.is-on {
+  background: var(--ds-blue-soft);
+  border-color: var(--ds-blue-soft-border);
+  color: var(--ds-blue);
+}
+
+.aui-status {
+  font-size: 0.75rem;
+  color: var(--ds-text-3);
+  margin-left: 0.25rem;
+}
+
+.aui-composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.aui-composer-input {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ds-text);
+  font: inherit;
+  line-height: 1.45;
+  max-height: 8.5rem;
+  padding: 0.45rem 0.25rem;
+}
+
+.aui-send {
+  appearance: none;
+  border: 0;
+  background: var(--ds-blue);
+  color: #fff;
+  border-radius: 0.85rem;
+  padding: 0.55rem 0.85rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.aui-send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.aui-send.is-stop {
+  background: var(--ds-surface-2);
+  color: var(--ds-text);
+}
+
+.aui-error {
+  max-width: 46rem;
+  margin: 0 auto 0.5rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--ds-danger) 12%, var(--ds-canvas));
+  color: var(--ds-danger);
+  font-size: 0.875rem;
+}
+
+.aui-error button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aui-scroll-bottom {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 7.5rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-canvas);
+  color: var(--ds-text-2);
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.aui-scroll-bottom:disabled {
+  display: none;
+}
+
+.aui-shell-footer {
+  display: flex;
+  justify-content: center;
+  padding: 0.25rem 1rem 0.5rem;
+}
+
+.aui-classic-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-3);
+  font: inherit;
+  font-size: 0.75rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.aui-edit-composer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.aui-edit-input {
+  width: 100%;
+  min-height: 4rem;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  font: inherit;
+  background: var(--ds-canvas);
+  color: var(--ds-text);
+}
+
+.aui-edit-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+@keyframes aui-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aui-empty,
+  .aui-suggestion,
+  .aui-msg {
+    animation: none;
+  }
+}
