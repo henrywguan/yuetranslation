@@ -4,7 +4,7 @@
  * Does not use Solo live translate / startHold.
  */
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
-import { transcribeDeepseekChatAudio } from '../lib/chatDeepseekVoice'
+import { mediaBlobToWav, transcribeDeepseekChatAudio } from '../lib/chatDeepseekVoice'
 import { chatDictateLang, mergeDictateText } from '../lib/chatVoice'
 import { isAppleTouchDevice } from '../lib/mediaAccess'
 import { useYueStore } from '../lib/store'
@@ -37,9 +37,11 @@ type Props = {
   draft: string
   onDraft: (next: string) => void
   onError?: (message: string) => void
+  /** Stop streaming DeepSeek auto-speak before capture (barge-in). */
+  onBargeIn?: () => void
 }
 
-export function ChatDictateButton({ disabled, draft, onDraft, onError }: Props) {
+export function ChatDictateButton({ disabled, draft, onDraft, onError, onBargeIn }: Props) {
   const status = useYueStore((s) => s.status)
   const [listening, setListening] = useState(false)
   const [asrBusy, setAsrBusy] = useState(false)
@@ -97,8 +99,10 @@ export function ChatDictateButton({ disabled, draft, onDraft, onError }: Props) 
     if (blob.size < 256) return
     setAsrBusy(true)
     try {
-      const text = await transcribeDeepseekChatAudio(blob, {
-        filename: recorder.mimeType.includes('ogg') ? 'speech.ogg' : 'speech.webm',
+      // DeepSeek ASR accepts WAV or Ogg Opus — convert WebM → WAV.
+      const wav = await mediaBlobToWav(blob)
+      const text = await transcribeDeepseekChatAudio(wav, {
+        filename: 'speech.wav',
       })
       const next = mergeDictateText(draftBaseRef.current, text)
       draftBaseRef.current = next
@@ -169,6 +173,7 @@ export function ChatDictateButton({ disabled, draft, onDraft, onError }: Props) 
     if (mediaRef.current || disabled) return
     unlockTtsPlayback()
     draftBaseRef.current = draft
+    onBargeIn?.()
     if (status === 'speaking') stopSpeaking()
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -202,7 +207,9 @@ export function ChatDictateButton({ disabled, draft, onDraft, onError }: Props) 
     const apple = isAppleTouchDevice()
     const ttsPlaying = status === 'speaking'
     // iPhone barge-in: start Web Speech first, then pause TTS (preserveSession).
+    // Also stop streaming DeepSeek auto-speak (not tracked in store status).
     const deferTts = apple && ttsPlaying
+    if (!deferTts) onBargeIn?.()
 
     const session = createWebSpeechSession(
       {
@@ -261,8 +268,12 @@ export function ChatDictateButton({ disabled, draft, onDraft, onError }: Props) 
     setListening(true)
     try {
       await session.start()
-      if (deferTts) stopSpeaking({ preserveSession: true })
-      else if (ttsPlaying) stopSpeaking()
+      if (deferTts) {
+        onBargeIn?.()
+        stopSpeaking({ preserveSession: true })
+      } else if (ttsPlaying) {
+        stopSpeaking()
+      }
     } catch (err) {
       await stopSession()
       await startAsrFallback()

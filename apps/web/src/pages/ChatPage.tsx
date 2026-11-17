@@ -1892,6 +1892,10 @@ export function ChatPage() {
                 draft={draft}
                 onDraft={setDraftAndResize}
                 onError={(message) => setError(message)}
+                onBargeIn={() => {
+                  streamTtsRef.current?.stop()
+                  streamTtsRef.current = null
+                }}
               />
               <textarea
                 ref={inputRef}

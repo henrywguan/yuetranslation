@@ -28,7 +28,9 @@ const dictate = readFileSync(join(root, '../components/ChatDictateButton.tsx'), 
 assert.match(dictate, /createWebSpeechSession/, 'Dictation uses Web Speech helper')
 assert.match(dictate, /preserveSession/, 'Barge-in pauses TTS after STT starts')
 assert.match(dictate, /transcribeDeepseekChatAudio/, 'DeepSeek ASR fallback for chat dictate')
+assert.match(dictate, /mediaBlobToWav/, 'ASR converts recordings to WAV for DeepSeek')
 assert.match(dictate, /MediaRecorder/, 'ASR fallback records via MediaRecorder')
+assert.match(dictate, /onBargeIn/, 'Dictation barges in on streaming DeepSeek TTS')
 assert.doesNotMatch(dictate, /\.startHold\b|startHold\(/, 'Chat dictation must not call Solo live hold')
 
 assert.match(chat, /StreamingDeepseekChatTts|speakDeepseekChatText/, 'Chat uses DeepSeek TTS')
