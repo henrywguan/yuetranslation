@@ -1,5 +1,17 @@
 /* assistant-ui shell — reuses DeepSeek tokens from ChatPage.css */
 
+/* `.ds-chat` is a horizontal flex (sidebar + main). Keep AUI as a single main
+ * column so the top bar never becomes a full-height row sibling on iPhone. */
+.ds-chat.aui-chat {
+  flex-direction: row;
+}
+
+.ds-chat.aui-chat > .ds-chat-main.aui-main {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+}
+
 .aui-sr-only {
   position: absolute;
   width: 1px;
@@ -22,6 +34,12 @@
   color: var(--ds-blue);
   background: var(--ds-blue-soft);
   border: 1px solid var(--ds-blue-soft-border);
+  pointer-events: none;
+}
+
+/* Centered absolute brand (classic) + AUI pill */
+.ds-chat-top-brand .aui-badge {
+  margin-left: 0.35rem;
 }
 
 .aui-main {
@@ -502,11 +520,13 @@
   display: flex;
   align-items: flex-end;
   gap: 0.35rem;
+  width: 100%;
 }
 
 .aui-composer-input {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
   resize: none;
   border: 0;
   outline: none;

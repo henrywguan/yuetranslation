@@ -35,9 +35,9 @@ const PLUS_ICON = (
 
 function TopBrand() {
   return (
-    <div className="ds-chat-brand">
-      <DeepSeekMark className="ds-chat-brand-mark" />
-      <span className="ds-chat-brand-name">
+    <div className="ds-chat-top-brand" aria-hidden="true">
+      <DeepSeekMark className="ds-chat-top-brand-mark" />
+      <span className="ds-chat-top-brand-name">
         Deep<span>Seek</span>
       </span>
       <span className="aui-badge" title="assistant-ui shell">
@@ -66,37 +66,39 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
         />
       ) : null}
 
-      <header className="ds-chat-top">
-        <button
-          type="button"
-          className="ds-chat-icon-btn ds-chat-menu-btn"
-          aria-label="Chat history"
-          aria-expanded={sidebarOpen}
-          onClick={() => setSidebarOpen((v) => !v)}
-        >
-          {MENU_ICON}
-        </button>
-        <button type="button" className="ds-chat-icon-btn" aria-label="Back to app" onClick={() => openApp()}>
-          {BACK_ICON}
-        </button>
-        <TopBrand />
-        <span className="ds-chat-top-spacer" />
-        <button
-          type="button"
-          className="ds-chat-icon-btn"
-          aria-label="New chat"
-          disabled={busy || !unlocked}
-          onClick={() => {
-            startNewChat()
-            setSidebarOpen(false)
-          }}
-        >
-          {PLUS_ICON}
-        </button>
-        <PwaInstallButton />
-      </header>
-
+      {/* Top bar must live inside `.ds-chat-main` — `.ds-chat` is a row flex
+          (sidebar + main). A header sibling stretched full height and shoved
+          the composer into a right-edge sliver on iPhone. */}
       <div className="ds-chat-main aui-main">
+        <header className="ds-chat-top">
+          <button
+            type="button"
+            className="ds-chat-icon-btn ds-chat-menu-btn"
+            aria-label="Chat history"
+            aria-expanded={sidebarOpen}
+            onClick={() => setSidebarOpen((v) => !v)}
+          >
+            {MENU_ICON}
+          </button>
+          <button type="button" className="ds-chat-icon-btn" aria-label="Back to app" onClick={() => openApp()}>
+            {BACK_ICON}
+          </button>
+          <TopBrand />
+          <span className="ds-chat-top-spacer" />
+          <button
+            type="button"
+            className="ds-chat-icon-btn"
+            aria-label="New chat"
+            disabled={busy || !unlocked}
+            onClick={() => {
+              startNewChat()
+              setSidebarOpen(false)
+            }}
+          >
+            {PLUS_ICON}
+          </button>
+          <PwaInstallButton />
+        </header>
         <ChatAuiThread sidebarOpen={sidebarOpen} />
         <div className="aui-shell-footer">
           <button
@@ -128,7 +130,7 @@ function GateShell({
 }) {
   return (
     <div className="ds-chat aui-chat">
-      <div className="ds-chat-main">
+      <div className="ds-chat-main aui-main">
         <header className="ds-chat-top">
           <button type="button" className="ds-chat-icon-btn" aria-label="Back to app" onClick={() => openApp()}>
             {BACK_ICON}
