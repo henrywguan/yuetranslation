@@ -2243,9 +2243,13 @@
  * Content-sized upper: short English (etc.) no longer reserves half the stage,
  * so the jade divider + Solo lower rise and claim the leftover space.
  * Long source still caps ~half the stage and scrolls inside the pane.
+ *
+ * flex-shrink MUST stay 0 — if the upper pane shrinks under a tall lower pane,
+ * .solo-pane-scroll (min-height: 0) collapses and clips the source line
+ * ("Raisin" sheared under the lang pill).
  */
 .solo-upper {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   max-height: 46%;
   min-height: 5.25rem;
 }
@@ -2265,6 +2269,11 @@
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+}
+
+/* Keep at least one result line visible when the upper pane is height-capped. */
+.solo-upper .solo-pane-scroll {
+  min-height: 2.75rem;
 }
 
 .solo-lower .solo-pane-scroll {
