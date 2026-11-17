@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
@@ -38,6 +39,7 @@ export function TranslationAlternatives({
   showSpeak = false,
   lang = 'yue',
   hideLabel = false,
+  collapsible = false,
 }: {
   alternatives: string[]
   /** Wugniu / Sichuanese Pinyin for each alternative (same order). */
@@ -51,15 +53,37 @@ export function TranslationAlternatives({
   lang?: Lang
   /** When Details wraps this in DetailCollapsible, skip the duplicate label. */
   hideLabel?: boolean
+  /** Solo: start collapsed so the primary line stays visible; tap label to expand. */
+  collapsible?: boolean
 }) {
+  const [open, setOpen] = useState(!collapsible)
   if (!alternatives.length) return null
+  const showList = !collapsible || open
   return (
     <div className={['translation-alts', className].filter(Boolean).join(' ')}>
-      {hideLabel ? null : (
+      {hideLabel ? null : collapsible ? (
+        <button
+          type="button"
+          className={`translation-alts-toggle${open ? ' is-open' : ''}`}
+          aria-expanded={open}
+          onClick={(e) => {
+            e.stopPropagation()
+            setOpen((v) => !v)
+          }}
+        >
+          <span className="translation-alts-label">
+            <BiText copy={ui.historyVariations} size="sm" />
+          </span>
+          <span className="translation-alts-meta" aria-hidden="true">
+            {open ? '▾' : `▸ ${alternatives.length}`}
+          </span>
+        </button>
+      ) : (
         <p className="translation-alts-label">
           <BiText copy={ui.historyVariations} size="sm" />
         </p>
       )}
+      {showList ? (
       <ul className="translation-alts-list">
         {alternatives.map((alt, i) => (
           <li key={alt}>
@@ -234,6 +258,7 @@ export function TranslationAlternatives({
           </li>
         ))}
       </ul>
+      ) : null}
     </div>
   )
 }
