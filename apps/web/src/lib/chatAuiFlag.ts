@@ -1,9 +1,10 @@
 /**
- * Feature flag for the assistant-ui (#/chat) shell.
- * Default OFF — classic ChatPage stays until Henry flips this.
+ * #/chat shell cutover — assistant-ui is the default.
  *
- * Enable: localStorage `yue-chat-aui-v1=1`, or `?aui=1` before the hash.
- * Disable: `yue-chat-aui-v1=0`, or `?aui=0`.
+ * Opt out (classic ChatPage): localStorage `yue-chat-aui-v1=0`, or `?aui=0`.
+ * Force AUI: `?aui=1` (also clears a prior opt-out).
+ *
+ * Stock shadcn/Tailwind look is deferred — DeepSeek tokens stay for now.
  */
 
 export const CHAT_AUI_FLAG_KEY = 'yue-chat-aui-v1'
@@ -21,10 +22,10 @@ function readQueryOverride(): boolean | null {
   return null
 }
 
+/** True unless the user explicitly opted back to classic. */
 export function isChatAuiEnabled(): boolean {
   const fromQuery = readQueryOverride()
   if (fromQuery != null) {
-    // Persist query override so subsequent navigations keep the shell.
     try {
       localStorage.setItem(CHAT_AUI_FLAG_KEY, fromQuery ? '1' : '0')
     } catch {
@@ -33,9 +34,10 @@ export function isChatAuiEnabled(): boolean {
     return fromQuery
   }
   try {
-    return localStorage.getItem(CHAT_AUI_FLAG_KEY) === '1'
+    // Missing key → cutover default ON. Only an explicit `0` keeps classic.
+    return localStorage.getItem(CHAT_AUI_FLAG_KEY) !== '0'
   } catch {
-    return false
+    return true
   }
 }
 

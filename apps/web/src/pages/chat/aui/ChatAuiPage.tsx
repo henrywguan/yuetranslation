@@ -40,7 +40,7 @@ function TopBrand() {
       <span className="ds-chat-brand-name">
         Deep<span>Seek</span>
       </span>
-      <span className="aui-badge" title="assistant-ui shell (preview)">
+      <span className="aui-badge" title="assistant-ui shell">
         AUI
       </span>
     </div>
@@ -194,7 +194,7 @@ export function ChatAuiPage() {
     }
   }, [])
 
-  // Ensure flag stays sticky when landing via ?aui=1
+  // Persist cutover default (clears a stale opt-out only when query forced AUI).
   useEffect(() => {
     if (isChatAuiEnabled()) setChatAuiEnabled(true)
   }, [])

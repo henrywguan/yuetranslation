@@ -1562,7 +1562,7 @@ export function ChatPage() {
               window.location.reload()
             }}
           >
-            Try new chat UI
+            Back to new chat UI
           </button>
           <button type="button" className="ds-chat-sidebar-link" onClick={() => openApp()}>
             Back to JyutTranslate

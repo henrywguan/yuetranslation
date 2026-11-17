@@ -1,5 +1,5 @@
 /**
- * Offline smoke: assistant-ui #/chat shell wiring.
+ * Offline smoke: assistant-ui #/chat shell wiring (cutover default ON).
  * Run: npx tsx apps/web/src/lib/chatAui.smoke.ts
  */
 import assert from 'node:assert/strict'
@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { convertChatMessage } from '../pages/chat/aui/convertChatMessage'
 import type { ChatMessage } from './chatHistory'
-import { CHAT_AUI_FLAG_KEY } from './chatAuiFlag'
+import { CHAT_AUI_FLAG_KEY, isChatAuiEnabled, setChatAuiEnabled } from './chatAuiFlag'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
@@ -16,14 +16,40 @@ const root = join(here, '..')
 const flagSrc = readFileSync(join(here, 'chatAuiFlag.ts'), 'utf8')
 assert.match(flagSrc, /yue-chat-aui-v1/, 'flag key constant')
 assert.equal(CHAT_AUI_FLAG_KEY, 'yue-chat-aui-v1')
+assert.match(flagSrc, /!== '0'/, 'cutover defaults ON unless explicit opt-out')
+assert.match(flagSrc, /Stock shadcn/, 'stock look deferred note')
+
+// Node has no localStorage — polyfill for default-ON cutover.
+const mem = new Map<string, string>()
+;(globalThis as { localStorage?: Storage }).localStorage = {
+  getItem: (k) => (mem.has(k) ? mem.get(k)! : null),
+  setItem: (k, v) => {
+    mem.set(k, String(v))
+  },
+  removeItem: (k) => {
+    mem.delete(k)
+  },
+  clear: () => mem.clear(),
+  key: () => null,
+  get length() {
+    return mem.size
+  },
+} as Storage
+
+mem.clear()
+assert.equal(isChatAuiEnabled(), true, 'missing key → AUI on')
+setChatAuiEnabled(false)
+assert.equal(isChatAuiEnabled(), false, 'explicit 0 → classic')
+setChatAuiEnabled(true)
+assert.equal(isChatAuiEnabled(), true, 'explicit 1 → AUI')
 
 const app = readFileSync(join(root, 'App.tsx'), 'utf8')
 assert.match(app, /isChatAuiEnabled/, 'App gates chat on AUI flag')
 assert.match(app, /ChatAuiPage/, 'App lazy-loads ChatAuiPage')
 
 const classic = readFileSync(join(root, 'pages/ChatPage.tsx'), 'utf8')
-assert.match(classic, /Try new chat UI/, 'classic ChatPage can flip to AUI')
-assert.match(classic, /setChatAuiEnabled\(true\)/, 'classic enables AUI flag')
+assert.match(classic, /Back to new chat UI/, 'classic can return to AUI after opt-out')
+assert.match(classic, /setChatAuiEnabled\(true\)/, 'classic re-enables AUI flag')
 
 const page = readFileSync(join(root, 'pages/chat/aui/ChatAuiPage.tsx'), 'utf8')
 assert.match(page, /ChatAuiRuntimeProvider/, 'AUI page wraps runtime')
