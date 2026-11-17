@@ -29,14 +29,17 @@ const pushed = pushAssistantAlternate(thread.messages[1]!)
 assert.ok(pushed.alternates?.length === 1)
 assert.equal(pushed.alternates![0]!.content, 'Hello')
 
-const withTwo = {
+const withTwo = pushAssistantAlternate({
   ...pushed,
+  id: 'a2',
   content: 'Hello again',
-  alternates: pushed.alternates,
-  activeAlternate: 1,
-}
+})
+assert.equal(withTwo.alternates!.length, 2)
 const cycled = cycleAssistantAlternate(withTwo, -1)
 assert.equal(cycled.content, 'Hello')
+const cycledBack = cycleAssistantAlternate(cycled, 1)
+assert.equal(cycledBack.content, 'Hello again')
+assert.equal(cycledBack.activeAlternate, 1)
 
 const forked = forkThreadAt(thread, 'a1')
 assert.ok(forked)

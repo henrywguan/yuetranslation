@@ -1782,8 +1782,8 @@ export function ChatPage() {
                             m.alternates?.length ? () => cycleAlternate(m.id, 1) : undefined
                           }
                           alternateLabel={
-                            m.alternates?.length
-                              ? `${(m.activeAlternate ?? m.alternates.length) + 1}/${m.alternates.length + 1}`
+                            m.alternates && m.alternates.length > 1
+                              ? `${(m.activeAlternate ?? m.alternates.length - 1) + 1}/${m.alternates.length}`
                               : undefined
                           }
                           onOpenArtifacts={
