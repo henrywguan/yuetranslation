@@ -7,6 +7,7 @@ import {
   DEEPSEEK_CHAT_MAX_TOOL_ROUNDS,
   DEEPSEEK_CHAT_WEB_TOOLS,
   formatLatestReminder,
+  looksLikeDeferredSearch,
 } from './deepseekChatHarness.js'
 import { deepseekChatModel, deepseekChatSupportsNativeWebTools } from './deepseekChat.js'
 
@@ -75,6 +76,21 @@ assert.match(harnessSrc, /enabled:\s*true/, 'Harness requests conversation title
 assert.match(harnessSrc, /body\.title/, 'Harness sets title on Completions body')
 assert.match(harnessSrc, /latest_reminder/, 'Harness injects user metadata marker')
 assert.match(harnessSrc, /deepseek_web_search/, 'Harness declares native web search')
+assert.match(harnessSrc, /deferredSearchRecovered|deferred-search recovery/, 'Harness recovers empty search promises')
+assert.match(harnessSrc, /looksLikeDeferredSearch/, 'Harness detects I\'ll-search stopovers')
+
+assert.equal(
+  looksLikeDeferredSearch("I'll search for the latest Warframe news and updates from the past week."),
+  true,
+)
+assert.equal(looksLikeDeferredSearch('Let me search the web for that.'), true)
+assert.equal(
+  looksLikeDeferredSearch(
+    'Warframe got a major update this week with new quests, balance changes, and a weekend platinum sale. Here are the highlights…',
+  ),
+  false,
+  'real answers are not deferred-search',
+)
 
 const routes = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatRoutes.ts'),

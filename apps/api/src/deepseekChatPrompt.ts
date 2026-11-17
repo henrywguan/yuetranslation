@@ -57,6 +57,9 @@ const SKILLS_WEB = [
   '- deepseek_web_search — search the live web (with DeepThink on, deep thinking search).',
   '- deepseek_read_url — read links the user pasted.',
   'Prefer web tools for news, prices, and facts that may have changed after your cutoff.',
+  'Critical: when the user needs live/web info, CALL deepseek_web_search (or deepseek_read_url) in this turn.',
+  'Never end the turn with only "I\'ll search…" / "Let me search…" — that leaves the user with an empty promise.',
+  'Put search intent in tool calls, not in a finished answer that never searched.',
 ].join('\n')
 
 function resolveTimeZone(raw?: string): string {
