@@ -42,7 +42,27 @@ import {
   type ChatThread,
 } from '../../../lib/chatHistory'
 import { StreamingDeepseekChatTts } from '../../../lib/chatDeepseekVoice'
+import {
+  addScheduleJob,
+  claimDueScheduleJobs,
+  jobsForThread,
+  readScheduleJobs,
+  removeScheduleJob,
+  setScheduleJobEnabled,
+  type ChatScheduleCadence,
+  type ChatScheduleJob,
+} from '../../../lib/chatSchedule'
 import { chatSpeakLang } from '../../../lib/chatVoice'
+import {
+  applyWorkspaceWireUpdate,
+  ensureThreadWorkspace,
+  maybeSeedArtifactsIntoWorkspace,
+  patchThreadWorkspace,
+  readHarnessFlag,
+  workspaceWirePayload,
+  writeHarnessFlag,
+  type ChatWorkspace,
+} from '../../../lib/chatWorkspace'
 import { useYueStore } from '../../../lib/store'
 import { convertChatMessage } from './convertChatMessage'
 
@@ -114,6 +134,16 @@ export type ChatAuiSession = {
   setSearchOn: (on: boolean) => void
   richLayout: boolean
   setRichLayout: (on: boolean) => void
+  harnessOn: boolean
+  setHarnessOn: (on: boolean) => void
+  workspaceOpen: boolean
+  setWorkspaceOpen: (on: boolean) => void
+  activeWorkspace: ChatWorkspace | undefined
+  setActiveWorkspace: (ws: ChatWorkspace) => void
+  scheduleJobs: ChatScheduleJob[]
+  addSchedule: (prompt: string, cadence: ChatScheduleCadence) => void
+  removeSchedule: (id: string) => void
+  toggleSchedule: (id: string, enabled: boolean) => void
   thinking: boolean
   searching: boolean
   streamingId: string | null
@@ -133,6 +163,8 @@ export type ChatAuiSession = {
   removeThread: (id: string) => void
   archiveThread: (id: string, archived: boolean) => void
   stopGeneration: () => void
+  /** Enqueue a user prompt as a chat turn (scheduled jobs / Workspace). */
+  enqueuePrompt: (text: string, threadId?: string) => Promise<void>
 }
 
 const ChatAuiSessionContext = createContext<ChatAuiSession | null>(null)
@@ -160,7 +192,14 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [deepThink, setDeepThinkState] = useState(() => readFlag(THINK_KEY, true))
   const [searchOn, setSearchOnState] = useState(() => readFlag(SEARCH_KEY, false))
   const [richLayout, setRichLayoutState] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
+  const [harnessOn, setHarnessOnState] = useState(() => readHarnessFlag(false))
+  const [workspaceOpen, setWorkspaceOpen] = useState(() => readHarnessFlag(false))
+  const [scheduleJobs, setScheduleJobs] = useState<ChatScheduleJob[]>(() => readScheduleJobs())
   const [pendingFiles, setPendingFiles] = useState<PendingChatFile[]>([])
+  const harnessOnRef = useRef(harnessOn)
+  harnessOnRef.current = harnessOn
+  const busyRef = useRef(busy)
+  busyRef.current = busy
   const [uploadingFile, setUploadingFile] = useState(false)
   const [ocrBusy, setOcrBusy] = useState(false)
   const [pluginCatalog, setPluginCatalog] = useState<DeepseekChatPlugin[]>([])
@@ -250,6 +289,61 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     setSearchOnState(on)
     writeFlag(SEARCH_KEY, on)
   }, [])
+
+  const setHarnessOn = useCallback(
+    (on: boolean) => {
+      setHarnessOnState(on)
+      writeHarnessFlag(on)
+      setWorkspaceOpen(on)
+      if (on) {
+        const cur = threadsRef.current.find((t) => t.id === activeIdRef.current)
+        if (cur && cur.id !== BOOT_THREAD.id) {
+          const seeded = ensureThreadWorkspace(cur)
+          if (seeded !== cur) persist(seeded)
+        }
+      }
+    },
+    [persist],
+  )
+
+  const setActiveWorkspace = useCallback(
+    (ws: ChatWorkspace) => {
+      const cur = threadsRef.current.find((t) => t.id === activeIdRef.current)
+      if (!cur || cur.id === BOOT_THREAD.id) return
+      persist(patchThreadWorkspace(cur, ws))
+    },
+    [persist],
+  )
+
+  const refreshSchedules = useCallback(() => {
+    setScheduleJobs(readScheduleJobs())
+  }, [])
+
+  const addSchedule = useCallback(
+    (prompt: string, cadence: ChatScheduleCadence) => {
+      const tid = activeIdRef.current
+      if (!tid || tid === BOOT_THREAD.id) return
+      addScheduleJob({ threadId: tid, prompt, cadence })
+      refreshSchedules()
+    },
+    [refreshSchedules],
+  )
+
+  const removeSchedule = useCallback(
+    (id: string) => {
+      removeScheduleJob(id)
+      refreshSchedules()
+    },
+    [refreshSchedules],
+  )
+
+  const toggleSchedule = useCallback(
+    (id: string, enabled: boolean) => {
+      setScheduleJobEnabled(id, enabled)
+      refreshSchedules()
+    },
+    [refreshSchedules],
+  )
 
   const setRichLayout = useCallback((on: boolean) => {
     setRichLayoutState(on)
@@ -440,10 +534,21 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         await streamDeepseekChat(wireMessages, {
           thinking: deepThink,
           search: searchOn,
+          harness: harnessOnRef.current,
+          workspace: harnessOnRef.current
+            ? workspaceWirePayload(thread.workspace)
+            : undefined,
           fileIds,
           plugins: enabledPluginsRef.current,
           primaryLang: primaryLanguage,
           signal: controller.signal,
+          onWorkspace: (files) => {
+            thread = patchThreadWorkspace(
+              thread,
+              applyWorkspaceWireUpdate(thread.workspace, files),
+            )
+            schedulePaint()
+          },
           onStatus: (status) => {
             if (status === 'searching') {
               setSearching(true)
@@ -535,6 +640,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           persist(thread)
           setError('No reply — try again.')
         } else {
+          if (harnessOnRef.current) {
+            const assistant = thread.messages.find((m) => m.id === assistantId)
+            thread = maybeSeedArtifactsIntoWorkspace(thread, assistant)
+          }
           persist(thread)
           if (liveTts) {
             void liveTts.finish().catch(() => {
@@ -596,6 +705,27 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     [streamingId],
   )
 
+  const enqueuePrompt = useCallback(
+    async (text: string, threadId?: string) => {
+      if (!unlocked || busyRef.current) return
+      const content = text.trim().slice(0, MAX_CONTENT_CHARS)
+      if (!content) return
+      const tid = threadId || activeIdRef.current
+      if (tid !== activeIdRef.current) {
+        setActiveId(tid)
+        activeIdRef.current = tid
+      }
+      setError(null)
+      setBusy(true)
+      let cur = threadsRef.current.find((t) => t.id === tid) || emptyThread()
+      if (harnessOnRef.current) cur = ensureThreadWorkspace(cur)
+      const userStep = appendChatMessage(cur, 'user', content)
+      persist(userStep.thread)
+      await runAssistant(userStep.thread)
+    },
+    [persist, runAssistant, unlocked],
+  )
+
   const onNew = useCallback(
     async (message: AppendMessage) => {
       if (!unlocked || busy) return
@@ -621,8 +751,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         return []
       })
       setBusy(true)
-      const cur =
+      let cur =
         threadsRef.current.find((t) => t.id === activeIdRef.current) || emptyThread()
+      if (harnessOnRef.current) cur = ensureThreadWorkspace(cur)
       const userStep = appendChatMessage(cur, 'user', content || '(attached file)')
       let thread = userStep.thread
       if (fileIds.length) {
@@ -638,6 +769,22 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     },
     [busy, persist, runAssistant, unlocked],
   )
+
+  // In-tab scheduled prompts (Harness Phase 3) — only while tab open + Harness on.
+  useEffect(() => {
+    if (!harnessOn || !unlocked) return
+    const tick = () => {
+      if (busyRef.current || document.visibilityState === 'hidden') return
+      const due = claimDueScheduleJobs()
+      if (!due.length) return
+      refreshSchedules()
+      const job = due[0]!
+      void enqueuePrompt(job.prompt, job.threadId)
+    }
+    const id = window.setInterval(tick, 15_000)
+    tick()
+    return () => window.clearInterval(id)
+  }, [enqueuePrompt, harnessOn, refreshSchedules, unlocked])
 
   const onCancel = useCallback(async () => {
     stopGeneration()
@@ -708,6 +855,16 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     },
   })
 
+  const activeWorkspace = useMemo(() => {
+    const t = threads.find((x) => x.id === activeId)
+    return t?.workspace
+  }, [activeId, threads])
+
+  const threadScheduleJobs = useMemo(
+    () => jobsForThread(activeId, scheduleJobs),
+    [activeId, scheduleJobs],
+  )
+
   const session = useMemo<ChatAuiSession>(
     () => ({
       threads: threads.filter((t) => t.id !== BOOT_THREAD.id),
@@ -723,6 +880,16 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setSearchOn,
       richLayout,
       setRichLayout,
+      harnessOn,
+      setHarnessOn,
+      workspaceOpen,
+      setWorkspaceOpen,
+      activeWorkspace,
+      setActiveWorkspace,
+      scheduleJobs: threadScheduleJobs,
+      addSchedule,
+      removeSchedule,
+      toggleSchedule,
       thinking,
       searching,
       streamingId,
@@ -742,14 +909,19 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       removeThread,
       archiveThread,
       stopGeneration,
+      enqueuePrompt,
     }),
     [
       activeId,
+      activeWorkspace,
+      addSchedule,
       archiveThread,
       busy,
       deepThink,
       enabledPlugins,
+      enqueuePrompt,
       error,
+      harnessOn,
       historyReady,
       ocrBusy,
       pendingFiles,
@@ -759,21 +931,27 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       pluginKeyHints,
       refreshPlugins,
       removePendingFile,
+      removeSchedule,
       removeThread,
       richLayout,
       searchOn,
       searching,
       selectThread,
+      setActiveWorkspace,
       setDeepThink,
+      setHarnessOn,
       setRichLayout,
       setSearchOn,
       startNewChat,
       stopGeneration,
       streamingId,
       thinking,
+      threadScheduleJobs,
       threads,
       togglePlugin,
+      toggleSchedule,
       uploadingFile,
+      workspaceOpen,
     ],
   )
 

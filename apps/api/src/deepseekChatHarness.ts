@@ -24,7 +24,16 @@ import {
 } from './deepseekChatCitations.js'
 import { buildDeepseekChatSystem, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
 import { buildPluginTools } from './deepseekChatMcp.js'
-import { DEEPSEEK_CHAT_TOOLS, executeDeepseekChatTool } from './deepseekChatTools.js'
+import {
+  DEEPSEEK_CHAT_TOOLS,
+  DEEPSEEK_CHAT_WORKSPACE_TOOLS,
+  executeDeepseekChatTool,
+} from './deepseekChatTools.js'
+import {
+  createWorkspaceStore,
+  type ChatWorkspaceFileWire,
+  type ChatWorkspaceStore,
+} from './deepseekChatWorkspace.js'
 
 export const DEEPSEEK_CHAT_MAX_TOOL_ROUNDS = 10
 
@@ -82,10 +91,13 @@ export type DeepseekChatHarnessEvent =
   | { kind: 'search_step'; step: DeepseekChatSearchStep }
   | { kind: 'title'; title: string }
   | { kind: 'image'; url: string; prompt: string; id: string }
+  | { kind: 'workspace'; files: ChatWorkspaceFileWire[] }
 
 export type DeepseekChatHarnessOptions = {
   thinkingEnabled?: boolean
   searchEnabled?: boolean
+  /** Harness UI mode — workspace tools + prompt nudge. */
+  harnessEnabled?: boolean
   prompt: DeepseekChatPromptContext
   signal?: AbortSignal
   fileIds?: string[]
@@ -95,6 +107,8 @@ export type DeepseekChatHarnessOptions = {
   pluginCreds?: import('./deepseekChatPluginKeys.js').ChatPluginCredentials
   /** Continue last assistant via Chat Prefix Completion (`prefix: true` + /beta). */
   continueReply?: boolean
+  /** Incoming thread workspace snapshot (Harness). */
+  workspaceFiles?: ChatWorkspaceFileWire[]
 }
 
 type ToolCall = {
@@ -121,8 +135,13 @@ type WireMsg =
   | { role: 'tool'; tool_call_id: string; content: string }
 
 /** Function tools always; native web tools when Search is on and host supports them. */
-export function buildDeepseekChatToolList(searchEnabled: boolean, pluginTools: unknown[] = []): unknown[] {
+export function buildDeepseekChatToolList(
+  searchEnabled: boolean,
+  pluginTools: unknown[] = [],
+  harnessEnabled = false,
+): unknown[] {
   const tools: unknown[] = [...DEEPSEEK_CHAT_TOOLS, ...pluginTools]
+  if (harnessEnabled) tools.push(...DEEPSEEK_CHAT_WORKSPACE_TOOLS)
   if (searchEnabled && deepseekChatSupportsNativeWebTools()) {
     tools.push(...DEEPSEEK_CHAT_WEB_TOOLS)
   }
@@ -274,6 +293,7 @@ function seedWireMessages(
     ...prompt,
     mode: 'tools',
     searchEnabled,
+    harnessEnabled: prompt.harnessEnabled === true,
   })
   const out: WireMsg[] = [{ role: 'system', content: system }]
 
@@ -398,10 +418,15 @@ export async function* streamDeepseekChatHarness(
 
   const thinkingEnabled = opts.thinkingEnabled !== false
   const searchEnabled = opts.searchEnabled === true
+  const harnessEnabled = opts.harnessEnabled === true
   const useNativeWeb = searchEnabled && deepseekChatSupportsNativeWebTools()
   const pluginTools = await buildPluginTools(opts.plugins, opts.signal, opts.pluginCreds)
-  const tools = buildDeepseekChatToolList(searchEnabled, pluginTools)
+  const tools = buildDeepseekChatToolList(searchEnabled, pluginTools, harnessEnabled)
   const deepseekHost = deepseekChatUsesThinking()
+  const workspaceStore: ChatWorkspaceStore | undefined = harnessEnabled
+    ? createWorkspaceStore(opts.workspaceFiles)
+    : undefined
+  const pendingWorkspaceWrites: ChatWorkspaceFileWire[] = []
 
   if (continueReply) {
     const last = messages[messages.length - 1]
@@ -412,7 +437,7 @@ export async function* streamDeepseekChatHarness(
 
   const msgs: WireMsg[] = seedWireMessages(
     messages,
-    opts.prompt,
+    { ...opts.prompt, harnessEnabled },
     searchEnabled,
     opts.fileIds,
     continueReply,
@@ -576,8 +601,12 @@ export async function* streamDeepseekChatHarness(
           ...opts.prompt,
           signal: opts.signal,
           pluginCreds: opts.pluginCreds,
+          workspace: workspaceStore,
           onImage: (image) => {
             pendingImages.push(image)
+          },
+          onWorkspaceWrite: (file) => {
+            pendingWorkspaceWrites.push(file)
           },
         })
         msgs.push({
@@ -589,6 +618,10 @@ export async function* streamDeepseekChatHarness(
       while (pendingImages.length) {
         const image = pendingImages.shift()!
         yield { kind: 'image', ...image }
+      }
+      if (pendingWorkspaceWrites.length) {
+        const files = pendingWorkspaceWrites.splice(0, pendingWorkspaceWrites.length)
+        yield { kind: 'workspace', files }
       }
       continue
     }

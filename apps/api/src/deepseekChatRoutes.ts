@@ -62,6 +62,8 @@ async function* chatStreamEvents(
   plugins?: string[],
   pluginCreds?: ChatPluginCredentials,
   continueReply = false,
+  harnessEnabled = false,
+  workspaceFiles?: import('./deepseekChatWorkspace.js').ChatWorkspaceFileWire[],
 ): AsyncGenerator<
   | { kind: 'thinking' }
   | { kind: 'searching' }
@@ -71,7 +73,8 @@ async function* chatStreamEvents(
   | { kind: 'sources'; sources: { url: string; title: string }[] }
   | { kind: 'search_step'; step: unknown }
   | { kind: 'title'; title: string }
-  | { kind: 'image'; url: string; prompt: string; id: string },
+  | { kind: 'image'; url: string; prompt: string; id: string }
+  | { kind: 'workspace'; files: import('./deepseekChatWorkspace.js').ChatWorkspaceFileWire[] },
   void,
   unknown
 > {
@@ -80,12 +83,14 @@ async function* chatStreamEvents(
     for await (const event of streamDeepseekChatHarness(messages, {
       thinkingEnabled,
       searchEnabled,
-      prompt: { ...prompt, searchEnabled },
+      harnessEnabled,
+      prompt: { ...prompt, searchEnabled, harnessEnabled },
       signal,
       fileIds,
       plugins,
       pluginCreds,
       continueReply,
+      workspaceFiles,
     })) {
       harnessEmitted = true
       yield event
@@ -204,12 +209,23 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     : userAskedSearch ||
       (deepseekChatSupportsSearch() && shouldAutoEnableSearch(lastUser.content))
 
+  const harnessEnabled = parsed.data.harness === true
+  const workspaceFiles = harnessEnabled
+    ? (parsed.data.workspace?.files || []).map((f) => ({
+        id: f.id || `ws_${f.path}`,
+        path: f.path,
+        mime: f.mime,
+        text: f.text,
+        updatedAt: f.updatedAt || Date.now(),
+      }))
+    : undefined
   const promptBase: DeepseekChatPromptContext = {
     timeZone: parsed.data.timeZone,
     locale: parsed.data.locale,
     primaryLang: parsed.data.primaryLang,
     plan: entitlement.isAdmin ? `admin (${entitlement.plan})` : entitlement.plan,
     searchEnabled,
+    harnessEnabled,
   }
   const fileIds = parsed.data.fileIds
   const plugins = parsed.data.plugins
@@ -223,11 +239,13 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
           {
             thinkingEnabled,
             searchEnabled,
+            harnessEnabled,
             prompt: promptBase,
             fileIds,
             plugins,
             pluginCreds,
             continueReply,
+            workspaceFiles,
           },
         )
         void addDeepseekChatTurns(auth.userId, 1)
@@ -291,6 +309,8 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         plugins,
         pluginCreds,
         continueReply,
+        harnessEnabled,
+        workspaceFiles,
       )) {
         if (upstream.signal.aborted || res.writableEnded) break
         if (event.kind === 'thinking') {
@@ -315,6 +335,10 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         }
         if (event.kind === 'title') {
           writeSse(res, `data: ${JSON.stringify({ title: event.title })}\n\n`)
+          continue
+        }
+        if (event.kind === 'workspace') {
+          writeSse(res, `data: ${JSON.stringify({ workspace: { files: event.files } })}\n\n`)
           continue
         }
         if (event.kind === 'image') {

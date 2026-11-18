@@ -10,6 +10,12 @@ import { randomUUID } from 'node:crypto'
 import { generateChatImage } from './deepseekChatImage.js'
 import { callMcpTool, extractImageUrlsFromMcpResult, parseMcpToolName } from './deepseekChatMcp.js'
 import type { ChatPluginCredentials } from './deepseekChatPluginKeys.js'
+import {
+  workspaceListJson,
+  workspaceReadJson,
+  workspaceWrite,
+  type ChatWorkspaceStore,
+} from './deepseekChatWorkspace.js'
 
 export type ChatToolContext = DeepseekChatPromptContext & {
   signal?: AbortSignal
@@ -17,6 +23,16 @@ export type ChatToolContext = DeepseekChatPromptContext & {
   onImage?: (image: { url: string; prompt: string; id: string }) => void
   /** Per-user BYOK secrets for image + MCP presets. */
   pluginCreds?: ChatPluginCredentials
+  /** Mutable thread workspace when Harness mode is on. */
+  workspace?: ChatWorkspaceStore
+  /** Fired after workspace_write so the harness can SSE the update. */
+  onWorkspaceWrite?: (file: {
+    id: string
+    path: string
+    mime?: string
+    text?: string
+    updatedAt: number
+  }) => void
 }
 
 type OpenAiTool = {
@@ -27,6 +43,50 @@ type OpenAiTool = {
     parameters: Record<string, unknown>
   }
 }
+
+/** Tools only declared when the client sends harness: true. */
+export const DEEPSEEK_CHAT_WORKSPACE_TOOLS: OpenAiTool[] = [
+  {
+    type: 'function',
+    function: {
+      name: 'workspace_list',
+      description:
+        'List files in the thread Workspace (Harness mode). Prefer writing durable notes/code here instead of only chat markdown.',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'workspace_read',
+      description: 'Read a Workspace file by path (text contents).',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'Workspace-relative path, e.g. notes/summary.md' },
+        },
+        required: ['path'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'workspace_write',
+      description:
+        'Create or overwrite a Workspace text file (≤100KB). Use for research notes, outlines, code, OCR dumps.',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string' },
+          text: { type: 'string' },
+          mime: { type: 'string', description: 'Optional mime, default text/plain' },
+        },
+        required: ['path', 'text'],
+      },
+    },
+  },
+]
 
 export const DEEPSEEK_CHAT_TOOLS: OpenAiTool[] = [
   {
@@ -455,6 +515,37 @@ export async function executeDeepseekChatTool(
 
   try {
     switch (name) {
+      case 'workspace_list': {
+        if (!ctx.workspace) {
+          return JSON.stringify({ error: 'Workspace unavailable (enable Harness mode).' })
+        }
+        return workspaceListJson(ctx.workspace)
+      }
+      case 'workspace_read': {
+        if (!ctx.workspace) {
+          return JSON.stringify({ error: 'Workspace unavailable (enable Harness mode).' })
+        }
+        return workspaceReadJson(ctx.workspace, String(args.path || ''))
+      }
+      case 'workspace_write': {
+        if (!ctx.workspace) {
+          return JSON.stringify({ error: 'Workspace unavailable (enable Harness mode).' })
+        }
+        const result = workspaceWrite(
+          ctx.workspace,
+          String(args.path || ''),
+          String(args.text ?? ''),
+          typeof args.mime === 'string' ? args.mime : undefined,
+        )
+        if (!result.ok) return JSON.stringify({ error: result.error })
+        ctx.onWorkspaceWrite?.(result.file)
+        return JSON.stringify({
+          ok: true,
+          path: result.file.path,
+          bytes: result.file.text?.length ?? 0,
+          updatedAt: result.file.updatedAt,
+        })
+      }
       case 'get_date':
         return JSON.stringify({
           date: ymdInZone(now, timeZone),

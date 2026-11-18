@@ -51,6 +51,27 @@ export const DeepseekChatBodySchema = z.object({
    * When true, the last wire message must be `assistant`.
    */
   continue: z.boolean().optional(),
+  /**
+   * Harness mode — enable workspace_list/read/write tools + prompt nudge.
+   * Default off; client sends true when the Harness toggle is on.
+   */
+  harness: z.boolean().optional(),
+  /** Device-local thread workspace snapshot (text files only). */
+  workspace: z
+    .object({
+      files: z
+        .array(
+          z.object({
+            id: z.string().trim().min(1).max(80).optional(),
+            path: z.string().trim().min(1).max(180),
+            mime: z.string().trim().max(120).optional(),
+            text: z.string().max(100_000).optional(),
+            updatedAt: z.number().optional(),
+          }),
+        )
+        .max(20),
+    })
+    .optional(),
 })
 
 export type DeepseekChatMessage = z.infer<typeof DeepseekChatMessageSchema>

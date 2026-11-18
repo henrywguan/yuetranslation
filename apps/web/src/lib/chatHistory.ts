@@ -2,6 +2,7 @@
  * Local DeepSeek Chat threads (device-local).
  * Full Supabase cloud sync is deferred — see `chatDeferred.ts`.
  */
+import { normalizeWorkspace, pruneWorkspace } from './chatWorkspace.js'
 
 export type ChatRole = 'user' | 'assistant'
 
@@ -67,6 +68,20 @@ export type ChatMessage = {
   activeAlternate?: number
 }
 
+/** Per-thread Harness workspace — see chatWorkspace.ts for caps/helpers. */
+export type ChatThreadWorkspaceFile = {
+  id: string
+  path: string
+  mime?: string
+  text?: string
+  updatedAt: number
+}
+
+export type ChatThreadWorkspace = {
+  files: ChatThreadWorkspaceFile[]
+  updatedAt: number
+}
+
 export type ChatThread = {
   id: string
   title: string
@@ -74,6 +89,8 @@ export type ChatThread = {
   messages: ChatMessage[]
   pinned?: boolean
   archived?: boolean
+  /** Harness-mode persistent files (device-local). */
+  workspace?: ChatThreadWorkspace
 }
 
 const STORAGE_KEY = 'yue-deepseek-chat-v1'
@@ -268,19 +285,23 @@ function normalizeChatThreads(parsed: unknown): ChatThread[] {
   return sortThreads(
     parsed
       .filter((t): t is ChatThread => Boolean(t && typeof t === 'object' && typeof (t as ChatThread).id === 'string'))
-      .map((t) => ({
-        id: t.id,
-        title: typeof t.title === 'string' && t.title.trim() ? t.title : 'New chat',
-        updatedAt: Number(t.updatedAt) || Date.now(),
-        pinned: Boolean(t.pinned),
-        archived: Boolean(t.archived),
-        messages: Array.isArray(t.messages)
-          ? t.messages
-              .map((m) => normalizeMessage(m as Partial<ChatMessage>))
-              .filter((m): m is ChatMessage => Boolean(m))
-              .slice(-MAX_MESSAGES)
-          : [],
-      }))
+      .map((t) => {
+        const workspace = normalizeWorkspace((t as ChatThread).workspace)
+        return {
+          id: t.id,
+          title: typeof t.title === 'string' && t.title.trim() ? t.title : 'New chat',
+          updatedAt: Number(t.updatedAt) || Date.now(),
+          pinned: Boolean(t.pinned),
+          archived: Boolean(t.archived),
+          ...(workspace ? { workspace } : null),
+          messages: Array.isArray(t.messages)
+            ? t.messages
+                .map((m) => normalizeMessage(m as Partial<ChatMessage>))
+                .filter((m): m is ChatMessage => Boolean(m))
+                .slice(-MAX_MESSAGES)
+            : [],
+        }
+      })
       .slice(0, MAX_THREADS),
   )
 }
@@ -332,7 +353,9 @@ export function pruneChatThreads(threads: ChatThread[]): { threads: ChatThread[]
       return row
     })
 
-    return { ...t, messages: slimmed }
+    const workspace = pruneWorkspace(t.workspace)
+    if (workspace !== t.workspace) changed = true
+    return { ...t, messages: slimmed, ...(workspace ? { workspace } : { workspace: undefined }) }
   })
   return { threads: next, changed }
 }

@@ -562,6 +562,56 @@
   gap: 0.35rem;
 }
 
+.aui-plugins-section-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-text-3);
+  margin: 0.45rem 0 0.25rem;
+}
+
+.aui-plugins.is-harness-strip {
+  max-height: 9.5rem;
+  overflow: auto;
+}
+
+.aui-harness-trace {
+  margin: 0 0 0.55rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.65rem;
+  background: var(--ds-surface-1);
+  border: 1px solid var(--ds-divider);
+  font-size: 0.75rem;
+}
+
+.aui-harness-trace summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ds-text-2);
+}
+
+.aui-harness-trace-list {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--ds-text-3);
+}
+
+.aui-harness-trace-kind {
+  display: inline-block;
+  margin-right: 0.35rem;
+  color: var(--ds-blue);
+  font-weight: 650;
+}
+
+.aui-harness-trace-snip {
+  display: block;
+  margin-top: 0.15rem;
+}
+
 @keyframes aui-rise {
   from {
     opacity: 0;

@@ -74,6 +74,15 @@ assert.equal(ok.success, true)
 assert.equal(ok.data?.search, true)
 assert.equal(ok.data?.timeZone, 'America/Los_Angeles')
 
+const harnessBody = DeepseekChatBodySchema.safeParse({
+  messages: [{ role: 'user', content: 'Note this' }],
+  harness: true,
+  workspace: { files: [{ path: 'notes/a.md', text: 'hi' }] },
+})
+assert.equal(harnessBody.success, true)
+assert.equal(harnessBody.data?.harness, true)
+assert.equal(harnessBody.data?.workspace?.files[0]?.path, 'notes/a.md')
+
 const routes = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatRoutes.ts'),
   'utf8',

@@ -1792,6 +1792,209 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   }
 }
 
+/* Harness Workspace panel (right pane / mobile sheet) */
+.ds-chat.has-workspace .ds-chat-main {
+  margin-right: min(26rem, 92vw);
+}
+
+.ds-chat-workspace {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(26rem, 92vw);
+  z-index: 9;
+  background: var(--ds-canvas);
+  border-left: 1px solid var(--ds-divider);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.08);
+}
+
+.ds-chat-workspace.is-sheet {
+  width: 100%;
+  z-index: 12;
+}
+
+.ds-chat-workspace-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--ds-divider);
+}
+
+.ds-chat-workspace-kicker {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ds-text-3);
+}
+
+.ds-chat-workspace-title {
+  font-weight: 650;
+}
+
+.ds-chat-workspace-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
+.ds-chat-workspace-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.ds-chat-workspace-btn {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  color: var(--ds-text-2);
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.55rem;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.ds-chat-workspace-btn.is-danger {
+  color: var(--ds-text-3);
+}
+
+.ds-chat-workspace-path,
+.ds-chat-workspace-select {
+  width: 100%;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.5rem;
+  background: var(--ds-canvas);
+  color: var(--ds-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.4rem 0.55rem;
+  margin-bottom: 0.35rem;
+}
+
+.ds-chat-workspace-files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ds-chat-workspace-file {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-2);
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.35rem 0.45rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+}
+
+.ds-chat-workspace-file.is-on {
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
+}
+
+.ds-chat-workspace-preview {
+  flex: 1;
+  min-height: 10rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ds-chat-workspace-preview-meta {
+  font-size: 0.72rem;
+  color: var(--ds-text-3);
+}
+
+.ds-chat-workspace-editor {
+  flex: 1;
+  min-height: 8rem;
+  resize: vertical;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.55rem;
+  background: var(--ds-surface-1);
+  color: var(--ds-text);
+  font-family: var(--ds-mono, ui-monospace, monospace);
+  font-size: 0.78rem;
+  padding: 0.55rem;
+}
+
+.ds-chat-workspace-frame {
+  width: 100%;
+  min-height: 10rem;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.55rem;
+  background: #fff;
+}
+
+.ds-chat-workspace-empty,
+.ds-chat-workspace-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ds-text-3);
+}
+
+.ds-chat-workspace-schedule-form {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ds-chat-workspace-jobs {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ds-chat-workspace-job {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.ds-chat-workspace-job-label {
+  display: flex;
+  gap: 0.4rem;
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--ds-text-2);
+}
+
+.ds-chat-workspace-job-label small {
+  display: block;
+  color: var(--ds-text-3);
+}
+
+@media (max-width: 900px) {
+  .ds-chat.has-workspace .ds-chat-main {
+    margin-right: 0;
+  }
+
+  .ds-chat-workspace {
+    width: 100%;
+  }
+}
+
 .ds-md-img {
   display: block;
   max-width: min(100%, 28rem);

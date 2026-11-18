@@ -22,6 +22,19 @@ assert.ok(
   !noSearch.some((t) => (t as { type?: string }).type === 'deepseek_web_search'),
   'Search off must not declare web tools',
 )
+assert.ok(
+  !noSearch.some(
+    (t) => (t as { function?: { name?: string } }).function?.name === 'workspace_list',
+  ),
+  'Workspace tools only when Harness mode is on',
+)
+const withHarness = buildDeepseekChatToolList(false, [], true)
+assert.ok(
+  withHarness.some(
+    (t) => (t as { function?: { name?: string } }).function?.name === 'workspace_write',
+  ),
+  'Harness mode declares workspace_write',
+)
 
 const withSearch = buildDeepseekChatToolList(true)
 if (deepseekChatSupportsNativeWebTools()) {
@@ -78,6 +91,9 @@ assert.match(harnessSrc, /latest_reminder/, 'Harness injects user metadata marke
 assert.match(harnessSrc, /deepseek_web_search/, 'Harness declares native web search')
 assert.match(harnessSrc, /deferredSearchRecovered|deferred-search recovery/, 'Harness recovers empty search promises')
 assert.match(harnessSrc, /looksLikeDeferredSearch/, 'Harness detects I\'ll-search stopovers')
+assert.match(harnessSrc, /DEEPSEEK_CHAT_WORKSPACE_TOOLS/, 'Harness can attach workspace tools')
+assert.match(harnessSrc, /harnessEnabled/, 'Harness mode flag wired')
+assert.match(harnessSrc, /kind: 'workspace'/, 'Harness yields workspace SSE events')
 
 assert.equal(
   looksLikeDeferredSearch("I'll search for the latest Warframe news and updates from the past week."),
@@ -102,6 +118,7 @@ assert.match(routes, /contentReplace/, 'Routes forward citation content_replace'
 assert.match(routes, /primaryLang/, 'Routes accept primaryLang metadata')
 assert.doesNotMatch(routes, /chat_refusal/, 'Routes must not surface content-safety refusals')
 assert.match(routes, /harnessEmitted/, 'Partial harness streams do not concatenate fallbacks')
+assert.match(routes, /workspace:\s*\{\s*files/, 'Routes forward workspace SSE')
 
 const agentSrc = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatAgent.ts'),

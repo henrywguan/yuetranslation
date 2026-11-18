@@ -39,6 +39,15 @@ assert.match(webOn, /deepseek_web_search/)
 assert.match(webOn, /jyut_plan_limits/)
 assert.match(webOn, /Never end the turn with only/, 'Web skills forbid I\'ll-search stopovers')
 
+const harnessOn = buildDeepseekChatSystem({ harnessEnabled: true, now: fixed, mode: 'tools' })
+assert.match(harnessOn, /workspace_write/)
+assert.match(harnessOn, /Harness mode is ON/)
+assert.doesNotMatch(
+  buildDeepseekChatSystem({ now: fixed, mode: 'tools' }),
+  /Harness mode is ON/,
+  'Harness nudge only when enabled',
+)
+
 assert.equal(shouldAutoEnableSearch('what day is today?'), false, 'clock questions use temporal inject')
 assert.equal(shouldAutoEnableSearch("what's the latest news on AI?"), true)
 assert.equal(shouldAutoEnableSearch('who is the current president of France?'), true)

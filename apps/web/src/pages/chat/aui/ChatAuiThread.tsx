@@ -18,7 +18,11 @@ import { ChatSourcesList } from '../../../components/ChatShellExtras'
 import { DeepSeekMark } from '../../../components/DeepSeekMark'
 import { SpeakButton } from '../../../components/SpeakButton'
 import type { DeepseekChatPluginKeyId } from '../../../lib/api'
-import { LIVE_REASONING_PAINT, type ChatSource } from '../../../lib/chatHistory'
+import {
+  LIVE_REASONING_PAINT,
+  type ChatSearchStep,
+  type ChatSource,
+} from '../../../lib/chatHistory'
 import { chatSpeakLang, mergeDictateText } from '../../../lib/chatVoice'
 import { renderChatMarkdown } from '../../../lib/renderChatMarkdown'
 import { useChatAuiSession } from './ChatAuiRuntime'
@@ -147,6 +151,32 @@ function UserMessage() {
   )
 }
 
+function HarnessSearchTrace() {
+  const { harnessOn } = useChatAuiSession()
+  const steps = useAuiState((s) => {
+    const custom = s.message.metadata?.custom as { searchSteps?: ChatSearchStep[] } | undefined
+    return custom?.searchSteps
+  })
+  if (!harnessOn || !steps?.length) return null
+  return (
+    <details className="aui-harness-trace" open>
+      <summary>Tool / search timeline · {steps.length}</summary>
+      <ol className="aui-harness-trace-list">
+        {steps.map((step, i) => (
+          <li key={`${step.kind}-${i}`}>
+            <span className="aui-harness-trace-kind">{step.kind}</span>
+            {step.queries?.length ? <span>{step.queries.join(' · ')}</span> : null}
+            {step.title || step.url ? (
+              <span>{step.title || step.url}</span>
+            ) : null}
+            {step.snippet ? <span className="aui-harness-trace-snip">{step.snippet}</span> : null}
+          </li>
+        ))}
+      </ol>
+    </details>
+  )
+}
+
 function AssistantMessage() {
   const streaming = useAuiState((s) => s.message.status?.type === 'running')
   const sources = useMessageSources()
@@ -154,6 +184,7 @@ function AssistantMessage() {
   return (
     <MessagePrimitive.Root className="aui-assistant-message-root">
       <div className="aui-assistant-message-content">
+        <HarnessSearchTrace />
         <MessagePrimitive.Parts
           components={{
             Text: MarkdownText,
@@ -234,6 +265,8 @@ function ComposerChrome() {
     setSearchOn,
     richLayout,
     setRichLayout,
+    harnessOn,
+    setHarnessOn,
     busy,
     thinking,
     searching,
@@ -273,8 +306,12 @@ function ComposerChrome() {
     },
   ]
 
+  const catalog = pluginCatalog.length ? pluginCatalog : fallbackPlugins
+  const official = catalog.filter((p) => p.kind === 'builtin' || p.id === 'image')
+  const installed = catalog.filter((p) => !official.includes(p))
+
   return (
-    <ComposerPrimitive.Root className="aui-composer-root">
+    <ComposerPrimitive.Root className={`aui-composer-root${harnessOn ? ' is-harness' : ''}`}>
       <div className="aui-composer-toggles">
         <button
           type="button"
@@ -293,6 +330,16 @@ function ComposerChrome() {
           onClick={() => setSearchOn(!searchOn)}
         >
           Search
+        </button>
+        <button
+          type="button"
+          className={`aui-toggle${harnessOn ? ' is-on' : ''}`}
+          aria-pressed={harnessOn}
+          disabled={busy}
+          title="Harness — Workspace panel + durable file tools"
+          onClick={() => setHarnessOn(!harnessOn)}
+        >
+          Harness
         </button>
         <button
           type="button"
@@ -317,8 +364,8 @@ function ComposerChrome() {
         {searching ? <span className="aui-status">Searching…</span> : null}
       </div>
 
-      {pluginsOpen ? (
-        <div className="aui-plugins">
+      {pluginsOpen || harnessOn ? (
+        <div className={`aui-plugins${harnessOn ? ' is-harness-strip' : ''}`}>
           <button
             type="button"
             className="aui-keys-open"
@@ -329,24 +376,67 @@ function ComposerChrome() {
           >
             API keys
           </button>
-          <ul className="aui-plugin-list">
-            {(pluginCatalog.length ? pluginCatalog : fallbackPlugins).map((p) => {
-              const on = enabledPlugins.includes(p.id)
-              return (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    className={`aui-plugin${on ? ' is-on' : ''}`}
-                    disabled={p.status === 'coming_soon'}
-                    onClick={() => togglePlugin(p.id)}
-                  >
-                    <strong>{p.name}</strong>
-                    <span>{on ? 'on' : 'off'}</span>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
+          {harnessOn ? (
+            <>
+              <div className="aui-plugins-section-label">Official</div>
+              <ul className="aui-plugin-list">
+                {official.map((p) => {
+                  const on = enabledPlugins.includes(p.id)
+                  return (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        className={`aui-plugin${on ? ' is-on' : ''}`}
+                        disabled={p.status === 'coming_soon'}
+                        onClick={() => togglePlugin(p.id)}
+                      >
+                        <span>{p.name}</span>
+                        <small>{p.status === 'ready' ? 'ready' : p.status}</small>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+              <div className="aui-plugins-section-label">Installed</div>
+              <ul className="aui-plugin-list">
+                {(installed.length ? installed : catalog.filter((p) => p.kind === 'mcp')).map((p) => {
+                  const on = enabledPlugins.includes(p.id)
+                  return (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        className={`aui-plugin${on ? ' is-on' : ''}`}
+                        disabled={p.status === 'coming_soon'}
+                        onClick={() => togglePlugin(p.id)}
+                      >
+                        <span>{p.name}</span>
+                        <small>{p.status === 'ready' ? 'ready' : p.status}</small>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </>
+          ) : (
+            <ul className="aui-plugin-list">
+              {catalog.map((p) => {
+                const on = enabledPlugins.includes(p.id)
+                return (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      className={`aui-plugin${on ? ' is-on' : ''}`}
+                      disabled={p.status === 'coming_soon'}
+                      onClick={() => togglePlugin(p.id)}
+                    >
+                      <strong>{p.name}</strong>
+                      <span>{on ? 'on' : 'off'}</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </div>
       ) : null}
 
