@@ -84,6 +84,14 @@ assert.match(
   'sidebar is a sibling of main under ds-chat (flush left)',
 )
 assert.match(auiShellFn, /ChatAuiSidebar/, 'thread list lives in shell sidebar')
+// Classic/new toggle lives in the sidebar footer (pinned under the thread list),
+// not as a page-bottom text link under the composer.
+assert.match(
+  auiShellFn,
+  /ds-chat-sidebar[\s\S]*ds-chat-sidebar-foot[\s\S]*Classic chat UI[\s\S]*ds-chat-main/,
+  'classic toggle is in sidebar foot under thread list',
+)
+assert.doesNotMatch(auiShellFn, /aui-shell-footer|aui-classic-link/, 'no page-bottom classic link')
 assert.doesNotMatch(page, /ChatAuiStock\.css/, 'page does not import stock styles')
 assert.doesNotMatch(auiShellFn, /is-stock/, 'shell does not mark stock look')
 assert.doesNotMatch(page, /Stock/, 'no Stock badge in AUI page')
@@ -96,6 +104,12 @@ assert.match(
   /Top bar must live inside|never becomes a full-height row sibling|flex-row sibling/i,
   'CSS documents the iPhone layout invariant',
 )
+assert.match(
+  auiCss,
+  /\.aui-thread-list[\s\S]*flex:\s*1\s+1\s+auto/,
+  'thread list grows so sidebar foot pins to bottom',
+)
+assert.doesNotMatch(auiCss, /\.aui-shell-footer|\.aui-classic-link/, 'page-bottom classic link CSS removed')
 assert.doesNotMatch(
   auiCss,
   /\.aui-layout\.is-sidebar-open \.aui-sidebar/,
