@@ -55,6 +55,20 @@ const CAMERA_LANG_SET = new Set<string>([
   'ptpt',
   'tr',
   'bn',
+  'te',
+  'gu',
+  'kn',
+  'pl',
+  'ro',
+  'cs',
+  'el',
+  'hu',
+  'sv',
+  'ru',
+  'uk',
+  'he',
+  'fa',
+  'ur',
   'ceb',
   'ilo',
   'bcl',
@@ -98,6 +112,20 @@ export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (l.startsWith('ta')) return 'ta'
   if (l.startsWith('tr')) return 'tr'
   if (l.startsWith('bn')) return 'bn'
+  if (l.startsWith('te')) return 'te'
+  if (l.startsWith('gu')) return 'gu'
+  if (l.startsWith('kn')) return 'kn'
+  if (l.startsWith('pl')) return 'pl'
+  if (l.startsWith('ro')) return 'ro'
+  if (l.startsWith('cs')) return 'cs'
+  if (l.startsWith('el')) return 'el'
+  if (l.startsWith('hu')) return 'hu'
+  if (l.startsWith('sv')) return 'sv'
+  if (l.startsWith('ru')) return 'ru'
+  if (l.startsWith('uk')) return 'uk'
+  if (l.startsWith('he')) return 'he'
+  if (l.startsWith('fa')) return 'fa'
+  if (l.startsWith('ur')) return 'ur'
   if (l.startsWith('en')) return 'en'
   if (l.includes('sichuan')) return 'sichuan'
   if (l.startsWith('wuu')) return 'wuu'

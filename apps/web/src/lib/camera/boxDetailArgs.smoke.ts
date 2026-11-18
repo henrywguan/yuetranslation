@@ -109,6 +109,20 @@ const CAMERA_LANGS: CameraLang[] = [
   'ptpt',
   'tr',
   'bn',
+  'te',
+  'gu',
+  'kn',
+  'pl',
+  'ro',
+  'cs',
+  'el',
+  'hu',
+  'sv',
+  'ru',
+  'uk',
+  'he',
+  'fa',
+  'ur',
   'ceb',
   'ilo',
   'bcl',
@@ -134,6 +148,9 @@ assert.equal(normalizeRegionLang('pt-BR'), 'pt')
 assert.equal(normalizeRegionLang('es-ES'), 'eses')
 assert.equal(normalizeRegionLang('fil-PH'), 'tl')
 assert.equal(normalizeRegionLang('zh'), 'yue')
+assert.equal(normalizeRegionLang('ru-RU'), 'ru')
+assert.equal(normalizeRegionLang('he-IL'), 'he')
+assert.equal(normalizeRegionLang('te-IN'), 'te')
 
 const taWouldHaveBeenYue = regionToEditable({
   id: 'r',
@@ -148,5 +165,19 @@ const taWouldHaveBeenYue = regionToEditable({
 assert.equal(taWouldHaveBeenYue.to, 'ta')
 assert.equal(speakLangForBox(taWouldHaveBeenYue), 'ta')
 assert.equal(boxDetailArgs(taWouldHaveBeenYue).lang, 'ta')
+
+const ruWouldHaveBeenYue = regionToEditable({
+  id: 'r',
+  box: { x: 0, y: 0, w: 0.2, h: 0.1 },
+  text: 'Exit',
+  translated: 'Выход',
+  from: 'en',
+  to: 'ru',
+  script: 'other',
+  cacheHit: false,
+})
+assert.equal(ruWouldHaveBeenYue.to, 'ru')
+assert.equal(speakLangForBox(ruWouldHaveBeenYue), 'ru')
+assert.equal(boxDetailArgs(ruWouldHaveBeenYue).lang, 'ru')
 
 console.log('boxDetailArgs.smoke: ok')
