@@ -66,15 +66,6 @@ export function chatImageProviderLabel(creds?: ChatPluginCredentials): 'gemini' 
   return 'none'
 }
 
-export function chatImageClient(userKey?: string): OpenAI | null {
-  const apiKey = openaiImageApiKey(userKey)
-  if (!apiKey) return null
-  return new OpenAI({
-    apiKey,
-    ...(env.openaiImageBaseUrl ? { baseURL: env.openaiImageBaseUrl } : {}),
-  })
-}
-
 export function getGeneratedChatImage(id: string): GeneratedChatImage | null {
   pruneStore()
   const row = STORE.get(id)

@@ -85,6 +85,16 @@ import {
   filterChatSkills,
   type ChatSkill,
 } from '../lib/chatSkills'
+import {
+  CHAT_EMPTY_SUGGESTIONS,
+  CHAT_RICH_LAYOUT_KEY,
+  CHAT_SEARCH_KEY,
+  CHAT_THINK_KEY,
+  readChatFlag,
+  readChatPluginIds,
+  writeChatFlag,
+  writeChatPluginIds,
+} from '../lib/chatUiPrefs'
 import { openAuthScreen } from '../lib/auth'
 import { canUseDeepseekChat } from '../lib/chatAccess'
 import { setChatAuiEnabled } from '../lib/chatAuiFlag'
@@ -98,37 +108,11 @@ import './ChatPage.css'
 
 type PendingChatFile = ChatFileMeta & { previewUrl?: string }
 
-const SUGGESTIONS = [
-  'Explain quantum computing simply',
-  'Draft a polite follow-up email',
-  'Give me a 3-day city trip outline',
-  'Help me debug this error message',
-]
+const SUGGESTIONS = CHAT_EMPTY_SUGGESTIONS
 
-const THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
-const SEARCH_KEY = 'yue-deepseek-chat-search-v1'
-const RICH_LAYOUT_KEY = 'yue-deepseek-chat-rich-layout-v1'
-const PLUGINS_KEY = 'yue-deepseek-chat-plugins-v1'
-
-function readPluginIds(): string[] | null {
-  try {
-    const raw = localStorage.getItem(PLUGINS_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) return null
-    return parsed.map(String).filter(Boolean).slice(0, 16)
-  } catch {
-    return null
-  }
-}
-
-function writePluginIds(ids: string[]) {
-  try {
-    localStorage.setItem(PLUGINS_KEY, JSON.stringify(ids.slice(0, 16)))
-  } catch {
-    /* ignore */
-  }
-}
+const THINK_KEY = CHAT_THINK_KEY
+const SEARCH_KEY = CHAT_SEARCH_KEY
+const RICH_LAYOUT_KEY = CHAT_RICH_LAYOUT_KEY
 
 /** Stable empty list for the orphan-activeId fallback — a fresh `[]` each render
  *  would retrigger the messages scroll effect forever while entitlement hydrates. */
@@ -148,7 +132,6 @@ const MAX_RENDER_MESSAGES = 12
 /** Paint this many messages per idle slice while leaving "Loading conversation…". */
 const HYDRATE_BATCH = 2
 const HYDRATE_GAP_MS = 48
-
 const MENU_ICON = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
     <path
@@ -243,24 +226,10 @@ const REGEN_ICON = (
   </svg>
 )
 
-function readFlag(key: string, fallback: boolean): boolean {
-  try {
-    const v = localStorage.getItem(key)
-    if (v === '0') return false
-    if (v === '1') return true
-  } catch {
-    /* ignore */
-  }
-  return fallback
-}
-
-function writeFlag(key: string, on: boolean) {
-  try {
-    localStorage.setItem(key, on ? '1' : '0')
-  } catch {
-    /* ignore */
-  }
-}
+const readFlag = readChatFlag
+const writeFlag = writeChatFlag
+const readPluginIds = readChatPluginIds
+const writePluginIds = writeChatPluginIds
 
 function formatThoughtSeconds(ms?: number): string {
   const sec = Math.max(1, Math.round((ms || 0) / 1000))

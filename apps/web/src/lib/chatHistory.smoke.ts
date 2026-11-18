@@ -85,6 +85,20 @@ assert.ok(CHAT_HYDRATE_MAX_RAW_BYTES >= 100_000)
 assert.ok(MAX_REASONING_CHARS > MAX_CONTENT_CHARS, 'DeepThink storage exceeds answer body cap')
 assert.ok(MAX_REASONING_CHARS >= 48_000, 'DeepThink storage fits long research traces')
 
+const withSteps: ChatThread = {
+  ...emptyThread(),
+  messages: Array.from({ length: 8 }, (_, i) => ({
+    id: `s${i}`,
+    role: 'assistant' as const,
+    content: `ans-${i}`,
+    createdAt: i,
+    searchSteps: [{ kind: 'search', queries: [`q${i}`] }],
+  })),
+}
+const { threads: prunedSteps, changed: stepsChanged } = pruneChatThreads([withSteps])
+assert.equal(stepsChanged, true)
+assert.equal(prunedSteps[0]!.messages.filter((m) => m.searchSteps?.length).length, 4)
+
 const hugeReason = {
   ...emptyThread(),
   messages: [

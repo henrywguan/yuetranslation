@@ -161,7 +161,8 @@ export function SoloView() {
   const translateTyped = useYueStore((s) => s.translateTyped)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
-  const history = useYueStore((s) => s.history)
+  // Only the newest turn feeds Solo idle panes — avoid re-render on older history churn.
+  const latest = useYueStore((s) => s.history[0])
   const translating = useYueStore((s) => s.translating)
   const translatingTo = useYueStore((s) => s.translatingTo)
   const entitlement = useYueStore((s) => s.entitlement)
@@ -181,15 +182,13 @@ export function SoloView() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reqId = useRef(0)
   const translateRef = useRef(translateTyped)
-  const historyRef = useRef(history)
+  const latestRef = useRef(latest)
   const upperLangRef = useRef(soloUpperLang)
   const lowerLangRef = useRef(soloLowerLang)
   translateRef.current = translateTyped
-  historyRef.current = history
+  latestRef.current = latest
   upperLangRef.current = soloUpperLang
   lowerLangRef.current = soloLowerLang
-
-  const latest = history[0]
   const turnActive = live || translating || Boolean(enInterim) || Boolean(yueInterim)
 
   // Solo store: en* = upper pane, yue* = lower pane.
@@ -302,7 +301,7 @@ export function SoloView() {
       setTypedBusy(false)
       return
     }
-    const top = historyRef.current[0]
+    const top = latestRef.current
     const target =
       from === upperLangRef.current
         ? lowerLangRef.current

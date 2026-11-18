@@ -7,6 +7,7 @@ import { openaiClient } from './openaiClient.js'
 import {
   DEEPSEEK_CHAT_HISTORY_LIMIT,
   DEEPSEEK_CHAT_MAX_TOKENS,
+  DEEPSEEK_CHAT_MAX_TOOL_ROUNDS,
   deepseekChatLlmExtras,
   deepseekChatModel,
   deepseekChatUsesThinking,
@@ -17,8 +18,7 @@ import {
 import { buildDeepseekChatSystem, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
 import { DEEPSEEK_CHAT_TOOLS, executeDeepseekChatTool } from './deepseekChatTools.js'
 
-/** Prefer harness DEEPSEEK_CHAT_MAX_TOOL_ROUNDS; kept for agent fallback. */
-export const DEEPSEEK_CHAT_MAX_TOOL_ROUNDS = 10
+export { DEEPSEEK_CHAT_MAX_TOOL_ROUNDS }
 
 export type DeepseekChatAgentOptions = {
   thinkingEnabled?: boolean

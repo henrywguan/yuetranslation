@@ -179,11 +179,3 @@ export async function saveChatPluginCredentials(
   return scrubbed
 }
 
-/** Merge request-scoped keys over stored (request wins for non-empty). */
-export function mergeChatPluginCredentials(
-  stored: ChatPluginCredentials,
-  request?: ChatPluginCredentials | null,
-): ChatPluginCredentials {
-  if (!request) return { ...stored }
-  return scrubCreds({ ...stored, ...request })
-}

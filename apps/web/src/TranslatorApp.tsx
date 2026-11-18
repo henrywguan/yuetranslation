@@ -1,8 +1,7 @@
 import { MotionConfig, motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BiText } from './components/BiText'
 import { BrandTag } from './components/BrandTag'
-import { CameraView } from './components/CameraView'
 import { CharacterBreakdownHost } from './components/CharacterBreakdownHost'
 import { Controls } from './components/Controls'
 import { JyutLogo } from './components/JyutLogo'
@@ -18,6 +17,11 @@ import { PushNudgeBanner } from './components/PushNudgeBanner'
 import { SoloView } from './components/SoloView'
 import { ThemeToggle } from './components/ThemeToggle'
 import { TranslationHistory } from './components/TranslationHistory'
+
+/** Cam / docs pull pdf-lib — keep off Solo/Conversation cold path. */
+const CameraView = lazy(() =>
+  import('./components/CameraView').then((m) => ({ default: m.CameraView })),
+)
 import { useYueStore } from './lib/store'
 import { acceptHouseholdInvite } from './lib/api'
 import { openAuthScreen, onAuthChange, getSession } from './lib/auth'
@@ -136,11 +140,13 @@ export function TranslatorApp() {
           {mode === 'solo' || mode === 'text' ? <SoloView /> : null}
           {mode === 'conversation' ? <ConversationView /> : null}
           {mode === 'camera' ? (
-            <CameraView
-              choiceOpen={camChoiceOpen}
-              onChoiceOpenChange={setCamChoiceOpen}
-              onLeaveCamera={() => setMode('solo')}
-            />
+            <Suspense fallback={null}>
+              <CameraView
+                choiceOpen={camChoiceOpen}
+                onChoiceOpenChange={setCamChoiceOpen}
+                onLeaveCamera={() => setMode('solo')}
+              />
+            </Suspense>
           ) : null}
         </main>
 
