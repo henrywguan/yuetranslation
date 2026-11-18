@@ -2,9 +2,8 @@ import { useEffect, useRef, type RefObject } from 'react'
 import { BiText } from './BiText'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
-import type { EditableBox } from '../lib/camera/types'
+import { speakLangForBox, type EditableBox } from '../lib/camera/types'
 import { biPlain, ui } from '../lib/uiCopy'
-import type { Lang } from '../lib/types'
 
 type Props = {
   boxes: EditableBox[]
@@ -13,13 +12,6 @@ type Props = {
   onOpenDetails: (box: EditableBox) => void
   panelRef?: RefObject<HTMLDivElement | null>
   className?: string
-}
-
-function resultLang(box: EditableBox): Lang {
-  if (box.to === 'cmn') return 'cmn'
-  if (box.to === 'yue') return 'yue'
-  if (box.to === 'en') return 'en'
-  return /[\u3400-\u9fff]/.test(box.translated || box.text) ? 'yue' : 'en'
 }
 
 /** Scrollable selectable list of every OCR/translate region with text. */
@@ -52,7 +44,7 @@ export function CamResultsList({
   const selected = results.find((b) => b.id === selectedId) || results[0]!
   const speakText = selected.translated || selected.text
   const copyText = selected.translated || selected.text
-  const lang = resultLang(selected)
+  const lang = speakLangForBox(selected)
 
   return (
     <div
