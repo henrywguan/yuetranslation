@@ -4,8 +4,8 @@
  * Opt out (classic ChatPage): localStorage `yue-chat-aui-v1=0`, or `?aui=0`.
  * Force AUI: `?aui=1` (also clears a prior opt-out).
  *
- * Stock assistant-ui look is on (`@assistant-ui/styles` / former CDN CSS) —
- * DeepSeek shell chrome (header, sidebar, feature toggles) stays.
+ * Visual chrome uses DeepSeek tokens from `ChatPage.css` + `ChatAui.css`
+ * (not `@assistant-ui/styles` stock CDN).
  */
 
 export const CHAT_AUI_FLAG_KEY = 'yue-chat-aui-v1'
