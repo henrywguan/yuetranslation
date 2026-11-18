@@ -1,5 +1,5 @@
 /**
- * Offline token breakdown for Latin-script langs (en / tl / es / vi / id / ms / pt / ptpt / fr / jv / it / de / nl / tr / ceb / ilo / bcl).
+ * Offline token breakdown for Latin-script langs (en / tl / es / vi / id / ms / pt / ptpt / fr / jv / it / de / nl / tr / pl / ro / cs / hu / sv / ceb / ilo / bcl).
  * Used when /api/breakdown is slow, metered, or offline — prevents an empty details panel.
  */
 import type { CharBreakdown } from './jyutping'
@@ -7,7 +7,7 @@ import type { Lang } from './types'
 
 function tokenizeLatin(text: string): string[] {
   const matches = text.match(
-    /[A-Za-zÀ-ÖØ-öø-ÿĀ-ſḀ-ỿ]+(?:['\u2019][A-Za-zÀ-ÖØ-öø-ÿĀ-ſḀ-ỿ]+)?|[0-9]+|[^\sA-Za-zÀ-ÖØ-öø-ÿĀ-ſḀ-ỿ0-9]+/g,
+    /[A-Za-zÀ-ÖØ-öø-ÿĀ-ſƀ-ɏḀ-ỿ]+(?:['\u2019][A-Za-zÀ-ÖØ-öø-ÿĀ-ſƀ-ɏḀ-ỿ]+)?|[0-9]+|[^\sA-Za-zÀ-ÖØ-öø-ÿĀ-ſƀ-ɏḀ-ỿ0-9]+/g,
   )
   return (matches || []).filter((t) => t.trim())
 }
@@ -61,6 +61,11 @@ export function isLatinDetailLang(lang: Lang): boolean {
     lang === 'de' ||
     lang === 'nl' ||
     lang === 'tr' ||
+    lang === 'pl' ||
+    lang === 'ro' ||
+    lang === 'cs' ||
+    lang === 'hu' ||
+    lang === 'sv' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'

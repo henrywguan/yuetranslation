@@ -75,6 +75,34 @@ export function primaryGlossHtmlLang(lang: PrimaryLang): string {
       return 'tr-TR'
     case 'bn':
       return 'bn-IN'
+    case 'te':
+      return 'te-IN'
+    case 'gu':
+      return 'gu-IN'
+    case 'kn':
+      return 'kn-IN'
+    case 'pl':
+      return 'pl-PL'
+    case 'ro':
+      return 'ro-RO'
+    case 'cs':
+      return 'cs-CZ'
+    case 'el':
+      return 'el-GR'
+    case 'hu':
+      return 'hu-HU'
+    case 'sv':
+      return 'sv-SE'
+    case 'ru':
+      return 'ru-RU'
+    case 'uk':
+      return 'uk-UA'
+    case 'he':
+      return 'he-IL'
+    case 'fa':
+      return 'fa-IR'
+    case 'ur':
+      return 'ur-IN'
     case 'cmn':
       return 'zh-Latn'
     case 'wuu':

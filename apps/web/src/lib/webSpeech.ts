@@ -56,6 +56,20 @@ export function createWebSpeechSession(
   let ptptLocaleIndex = 0
   let trLocaleIndex = 0
   let bnLocaleIndex = 0
+  let teLocaleIndex = 0
+  let guLocaleIndex = 0
+  let knLocaleIndex = 0
+  let plLocaleIndex = 0
+  let roLocaleIndex = 0
+  let csLocaleIndex = 0
+  let elLocaleIndex = 0
+  let huLocaleIndex = 0
+  let svLocaleIndex = 0
+  let ruLocaleIndex = 0
+  let ukLocaleIndex = 0
+  let heLocaleIndex = 0
+  let faLocaleIndex = 0
+  let urLocaleIndex = 0
   const bilingualYueEn = Boolean(opts?.bilingualYueEn)
   const echo = createEchoGuard()
   const apple = isAppleTouchDevice()
@@ -92,6 +106,20 @@ export function createWebSpeechSession(
   const ptptLocales = ['pt-PT', 'pt']
   const trLocales = ['tr-TR', 'tr']
   const bnLocales = ['bn-IN', 'bn']
+  const teLocales = ['te-IN', 'te']
+  const guLocales = ['gu-IN', 'gu']
+  const knLocales = ['kn-IN', 'kn']
+  const plLocales = ['pl-PL', 'pl']
+  const roLocales = ['ro-RO', 'ro']
+  const csLocales = ['cs-CZ', 'cs']
+  const elLocales = ['el-GR', 'el']
+  const huLocales = ['hu-HU', 'hu']
+  const svLocales = ['sv-SE', 'sv']
+  const ruLocales = ['ru-RU', 'ru']
+  const ukLocales = ['uk-UA', 'uk']
+  const heLocales = ['he-IL', 'he']
+  const faLocales = ['fa-IR', 'fa']
+  const urLocales = ['ur-IN', 'ur']
 
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
   const cmnLocale = () => cmnLocales[cmnLocaleIndex % cmnLocales.length]
@@ -122,6 +150,20 @@ export function createWebSpeechSession(
   const ptptLocale = () => ptptLocales[ptptLocaleIndex % ptptLocales.length]
   const trLocale = () => trLocales[trLocaleIndex % trLocales.length]
   const bnLocale = () => bnLocales[bnLocaleIndex % bnLocales.length]
+  const teLocale = () => teLocales[teLocaleIndex % teLocales.length]
+  const guLocale = () => guLocales[guLocaleIndex % guLocales.length]
+  const knLocale = () => knLocales[knLocaleIndex % knLocales.length]
+  const plLocale = () => plLocales[plLocaleIndex % plLocales.length]
+  const roLocale = () => roLocales[roLocaleIndex % roLocales.length]
+  const csLocale = () => csLocales[csLocaleIndex % csLocales.length]
+  const elLocale = () => elLocales[elLocaleIndex % elLocales.length]
+  const huLocale = () => huLocales[huLocaleIndex % huLocales.length]
+  const svLocale = () => svLocales[svLocaleIndex % svLocales.length]
+  const ruLocale = () => ruLocales[ruLocaleIndex % ruLocales.length]
+  const ukLocale = () => ukLocales[ukLocaleIndex % ukLocales.length]
+  const heLocale = () => heLocales[heLocaleIndex % heLocales.length]
+  const faLocale = () => faLocales[faLocaleIndex % faLocales.length]
+  const urLocale = () => urLocales[urLocaleIndex % urLocales.length]
 
   const resolveRecLang = (): string => {
     if (bilingualYueEn && activeLang === 'en') return 'en-US'
@@ -154,6 +196,20 @@ export function createWebSpeechSession(
     if (activeLang === 'ptpt') return ptptLocale()
     if (activeLang === 'tr') return trLocale()
     if (activeLang === 'bn') return bnLocale()
+    if (activeLang === 'te') return teLocale()
+    if (activeLang === 'gu') return guLocale()
+    if (activeLang === 'kn') return knLocale()
+    if (activeLang === 'pl') return plLocale()
+    if (activeLang === 'ro') return roLocale()
+    if (activeLang === 'cs') return csLocale()
+    if (activeLang === 'el') return elLocale()
+    if (activeLang === 'hu') return huLocale()
+    if (activeLang === 'sv') return svLocale()
+    if (activeLang === 'ru') return ruLocale()
+    if (activeLang === 'uk') return ukLocale()
+    if (activeLang === 'he') return heLocale()
+    if (activeLang === 'fa') return faLocale()
+    if (activeLang === 'ur') return urLocale()
     return 'en-US'
   }
 
@@ -351,6 +407,76 @@ export function createWebSpeechSession(
         queueMicrotask(() => startOne())
         return
       }
+      if (localeRejected && activeLang === 'te' && teLocaleIndex < teLocales.length - 1) {
+        teLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'gu' && guLocaleIndex < guLocales.length - 1) {
+        guLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'kn' && knLocaleIndex < knLocales.length - 1) {
+        knLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'pl' && plLocaleIndex < plLocales.length - 1) {
+        plLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'ro' && roLocaleIndex < roLocales.length - 1) {
+        roLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'cs' && csLocaleIndex < csLocales.length - 1) {
+        csLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'el' && elLocaleIndex < elLocales.length - 1) {
+        elLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'hu' && huLocaleIndex < huLocales.length - 1) {
+        huLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'sv' && svLocaleIndex < svLocales.length - 1) {
+        svLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'ru' && ruLocaleIndex < ruLocales.length - 1) {
+        ruLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'uk' && ukLocaleIndex < ukLocales.length - 1) {
+        ukLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'he' && heLocaleIndex < heLocales.length - 1) {
+        heLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'fa' && faLocaleIndex < faLocales.length - 1) {
+        faLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'ur' && urLocaleIndex < urLocales.length - 1) {
+        urLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
       if (e.error === 'not-allowed') {
         stopped = true
         handlers.onError('Microphone permission denied. Allow mic access and try again.')
@@ -454,6 +580,20 @@ export function createWebSpeechSession(
       ptptLocaleIndex = 0
       trLocaleIndex = 0
       bnLocaleIndex = 0
+      teLocaleIndex = 0
+      guLocaleIndex = 0
+      knLocaleIndex = 0
+      plLocaleIndex = 0
+      roLocaleIndex = 0
+      csLocaleIndex = 0
+      elLocaleIndex = 0
+      huLocaleIndex = 0
+      svLocaleIndex = 0
+      ruLocaleIndex = 0
+      ukLocaleIndex = 0
+      heLocaleIndex = 0
+      faLocaleIndex = 0
+      urLocaleIndex = 0
       startOne()
     },
     async stop() {

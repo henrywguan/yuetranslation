@@ -4,7 +4,7 @@
 import { translateCameraText, translateCameraBatch, type CameraLang } from '../translateCamera.js'
 import { hasHan } from '../canto/han.js'
 
-export type DocLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'ceb' | 'ilo' | 'bcl'
+export type DocLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ceb' | 'ilo' | 'bcl'
 
 const SKIP_RE =
   /^(https?:\/\/\S+|[\w.+-]+@[\w.-]+\.\w+|[\d mon.,:%€$£¥+\-/=]+)$/i
@@ -14,9 +14,9 @@ export function shouldTranslateSegment(text: string): boolean {
   if (t.length < 2) return false
   if (SKIP_RE.test(t)) return false
   // Mostly punctuation / bullets — require at least one letter-like char from a
-  // supported script (Latin, Thai/Lao, Han, Hangul, kana, Devanagari, Khmer, Myanmar, Arabic, Tamil, Bengali).
+  // supported script (Latin, Thai/Lao, Han, Hangul, kana, Devanagari, Khmer, Myanmar, Arabic/Persian/Urdu, Tamil, Bengali, Telugu, Gujarati, Kannada, Greek, Cyrillic, Hebrew).
   if (
-    !/[A-Za-z\u00C0-\u024F\u0E00-\u0EFF\u3400-\u9fff\uF900-\uFAFF\uAC00-\uD7A3\u3040-\u30FF\uFF66-\uFF9D\u0900-\u097F\u1780-\u17FF\u1000-\u109F\u0600-\u06FF\u0B80-\u0BFF\u0980-\u09FF]/.test(
+    !/[A-Za-z\u00C0-\u024F\u0E00-\u0EFF\u3400-\u9fff\uF900-\uFAFF\uAC00-\uD7A3\u3040-\u30FF\uFF66-\uFF9D\u0900-\u097F\u1780-\u17FF\u1000-\u109F\u0600-\u06FF\u0B80-\u0BFF\u0980-\u09FF\u0C00-\u0C7F\u0A80-\u0AFF\u0C80-\u0CFF\u0370-\u03FF\u1F00-\u1FFF\u0400-\u04FF\u0590-\u05FF]/.test(
       t,
     )
   ) {

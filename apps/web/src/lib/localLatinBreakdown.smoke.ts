@@ -19,6 +19,12 @@ assert.equal(isLatinDetailLang('bcl'), true)
 assert.equal(isLatinDetailLang('ceb'), true)
 assert.equal(isLatinDetailLang('ilo'), true)
 assert.equal(isLatinDetailLang('yue'), false)
+for (const l of ['pl', 'ro', 'cs', 'hu', 'sv'] as const) assert.equal(isLatinDetailLang(l), true, l)
+for (const l of ['te', 'gu', 'kn', 'el', 'ru', 'uk', 'he', 'fa', 'ur'] as const) assert.equal(isLatinDetailLang(l), false, l)
+
+const ro = buildLocalLatinBreakdown('Mulțumesc, științific!', { lang: 'ro' })
+assert.ok(ro.some((r) => r.char === 'Mulțumesc'), 'comma-below ț stays inside the word')
+assert.ok(ro.some((r) => r.char === 'științific'))
 
 const hallo = buildLocalLatinBreakdown('Hallo!', { phraseGloss: 'Hello', lang: 'nl' })
 assert.ok(hallo.some((r) => r.char === 'Hallo'))

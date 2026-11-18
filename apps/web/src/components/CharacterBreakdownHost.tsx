@@ -41,6 +41,8 @@ import { TaText } from './TaText'
 import { PtptText } from './PtptText'
 import { TrText } from './TrText'
 import { BnText } from './BnText'
+import { LangFamilyText } from './LangFamilyText'
+import { isLangFamilyLang } from '../lib/langFamily'
 import { JyutRuby, JyutSyllable } from './JyutRuby'
 import { PinyinRuby, PinyinSyllable } from './PinyinRuby'
 import { JpPop } from './JpPop'
@@ -136,6 +138,20 @@ function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'ptpt') return 'ptpt'
   if (detailLang === 'tr') return 'tr'
   if (detailLang === 'bn') return 'bn'
+  if (detailLang === 'te') return 'te'
+  if (detailLang === 'gu') return 'gu'
+  if (detailLang === 'kn') return 'kn'
+  if (detailLang === 'pl') return 'pl'
+  if (detailLang === 'ro') return 'ro'
+  if (detailLang === 'cs') return 'cs'
+  if (detailLang === 'el') return 'el'
+  if (detailLang === 'hu') return 'hu'
+  if (detailLang === 'sv') return 'sv'
+  if (detailLang === 'ru') return 'ru'
+  if (detailLang === 'uk') return 'uk'
+  if (detailLang === 'he') return 'he'
+  if (detailLang === 'fa') return 'fa'
+  if (detailLang === 'ur') return 'ur'
   if (detailLang === 'ceb') return 'ceb'
   if (detailLang === 'ilo') return 'ilo'
   if (detailLang === 'bcl') return 'bcl'
@@ -476,7 +492,21 @@ export function CharacterBreakdownHost() {
     detailLang === 'ta' ||
     detailLang === 'ptpt' ||
     detailLang === 'tr' ||
-    detailLang === 'bn'
+    detailLang === 'bn' ||
+    detailLang === 'te' ||
+    detailLang === 'gu' ||
+    detailLang === 'kn' ||
+    detailLang === 'pl' ||
+    detailLang === 'ro' ||
+    detailLang === 'cs' ||
+    detailLang === 'el' ||
+    detailLang === 'hu' ||
+    detailLang === 'sv' ||
+    detailLang === 'ru' ||
+    detailLang === 'uk' ||
+    detailLang === 'he' ||
+    detailLang === 'fa' ||
+    detailLang === 'ur'
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
   const isLatinDetail =
@@ -725,6 +755,8 @@ export function CharacterBreakdownHost() {
               <TrText text={topLabel} showDetail />
             ) : detailLang === 'bn' ? (
               <BnText text={topLabel} showDetail />
+            ) : isLangFamilyLang(detailLang) ? (
+              <LangFamilyText lang={detailLang} text={topLabel} showDetail />
             ) : (
               <NlText text={topLabel} showDetail />
             )

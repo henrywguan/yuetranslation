@@ -27,6 +27,8 @@ import { TaText } from './TaText'
 import { PtptText } from './PtptText'
 import { TrText } from './TrText'
 import { BnText } from './BnText'
+import { LangFamilyText } from './LangFamilyText'
+import { isLangFamilyLang } from '../lib/langFamily'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
 import { BiText } from './BiText'
@@ -261,6 +263,13 @@ export function TranslationAlternatives({
                 />
               ) : lang === 'bn' ? (
                 <BnText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : isLangFamilyLang(lang) ? (
+                <LangFamilyText
+                  lang={lang}
                   text={alt}
                   className="result-text"
                   onActivate={onSelect}

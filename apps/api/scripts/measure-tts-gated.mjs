@@ -41,6 +41,20 @@ const SAMPLES = [
   ['ptpt', 'pt-PT-RaquelNeural', 'pt-PT', 'Olá — esta é a sua voz em português de Portugal.'],
   ['tr', 'tr-TR-EmelNeural', 'tr-TR', 'Merhaba — bu sizin Türkçe sesiniz.'],
   ['bn', 'bn-IN-TanishaaNeural', 'bn-IN', 'নমস্কার — এটি আপনার বাংলা কণ্ঠস্বর।'],
+  ['te', 'te-IN-ShrutiNeural', 'te-IN', 'నమస్కారం — ఇది మీ తెలుగు స్వరం.'],
+  ['gu', 'gu-IN-DhwaniNeural', 'gu-IN', 'નમસ્તે — આ તમારો ગુજરાતી અવાજ છે.'],
+  ['kn', 'kn-IN-SapnaNeural', 'kn-IN', 'ನಮಸ್ಕಾರ — ಇದು ನಿಮ್ಮ ಕನ್ನಡ ಧ್ವನಿ.'],
+  ['pl', 'pl-PL-AgnieszkaNeural', 'pl-PL', 'Cześć — to jest Twój polski głos.'],
+  ['ro', 'ro-RO-AlinaNeural', 'ro-RO', 'Bună — aceasta este vocea ta în limba română.'],
+  ['cs', 'cs-CZ-VlastaNeural', 'cs-CZ', 'Ahoj — tohle je tvůj český hlas.'],
+  ['el', 'el-GR-AthinaNeural', 'el-GR', 'Γεια σας — αυτή είναι η ελληνική σας φωνή.'],
+  ['hu', 'hu-HU-NoemiNeural', 'hu-HU', 'Szia — ez a magyar hangod.'],
+  ['sv', 'sv-SE-SofieNeural', 'sv-SE', 'Hej — det här är din svenska röst.'],
+  ['ru', 'ru-RU-SvetlanaNeural', 'ru-RU', 'Привет — это ваш русский голос.'],
+  ['uk', 'uk-UA-PolinaNeural', 'uk-UA', 'Привіт — це ваш український голос.'],
+  ['he', 'he-IL-HilaNeural', 'he-IL', 'שלום — זה הקול שלך בעברית.'],
+  ['fa', 'fa-IR-DilaraNeural', 'fa-IR', 'سلام — این صدای فارسی شماست.'],
+  ['ur', 'ur-IN-GulNeural', 'ur-IN', 'السلام علیکم — یہ آپ کی اردو آواز ہے۔'],
 ]
 
 function escapeXml(s) {

@@ -4,7 +4,7 @@ import type { PartnerPerformance } from './practicePartnerPerformance'
 import { ensureSharedAudioContext } from './audioReactive'
 import { isAppleTouchDevice } from './mediaAccess'
 import type { Lang } from './types'
-import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalEsesVoice, readLocalViVoice, readLocalThVoice, readLocalLoVoice, readLocalKoVoice, readLocalJaVoice, readLocalIdVoice, readLocalMsVoice, readLocalPtVoice, readLocalFrVoice, readLocalHiVoice, readLocalKmVoice, readLocalMyVoice, readLocalJvVoice, readLocalItVoice, readLocalDeVoice, readLocalNlVoice, readLocalArVoice, readLocalArsaVoice, readLocalTaVoice, readLocalPtptVoice, readLocalTrVoice, readLocalBnVoice, readLocalYueVoice } from './ttsVoices'
+import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalEsesVoice, readLocalViVoice, readLocalThVoice, readLocalLoVoice, readLocalKoVoice, readLocalJaVoice, readLocalIdVoice, readLocalMsVoice, readLocalPtVoice, readLocalFrVoice, readLocalHiVoice, readLocalKmVoice, readLocalMyVoice, readLocalJvVoice, readLocalItVoice, readLocalDeVoice, readLocalNlVoice, readLocalArVoice, readLocalArsaVoice, readLocalTaVoice, readLocalPtptVoice, readLocalTrVoice, readLocalBnVoice, readLocalTeVoice, readLocalGuVoice, readLocalKnVoice, readLocalPlVoice, readLocalRoVoice, readLocalCsVoice, readLocalElVoice, readLocalHuVoice, readLocalSvVoice, readLocalRuVoice, readLocalUkVoice, readLocalHeVoice, readLocalFaVoice, readLocalUrVoice, readLocalYueVoice } from './ttsVoices'
 
 /** Practice Partner / fill-the-room — HTML volume caps at 1; Web Audio can go higher. */
 const LOUD_PLAYBACK_GAIN = 1.85
@@ -423,6 +423,20 @@ function browserLangTag(lang: Lang): string {
   if (lang === 'ptpt') return 'pt-PT'
   if (lang === 'tr') return 'tr-TR'
   if (lang === 'bn') return 'bn-IN'
+  if (lang === 'te') return 'te-IN'
+  if (lang === 'gu') return 'gu-IN'
+  if (lang === 'kn') return 'kn-IN'
+  if (lang === 'pl') return 'pl-PL'
+  if (lang === 'ro') return 'ro-RO'
+  if (lang === 'cs') return 'cs-CZ'
+  if (lang === 'el') return 'el-GR'
+  if (lang === 'hu') return 'hu-HU'
+  if (lang === 'sv') return 'sv-SE'
+  if (lang === 'ru') return 'ru-RU'
+  if (lang === 'uk') return 'uk-UA'
+  if (lang === 'he') return 'he-IL'
+  if (lang === 'fa') return 'fa-IR'
+  if (lang === 'ur') return 'ur-IN'
   return 'en-US'
 }
 
@@ -527,6 +541,20 @@ function preferredVoiceFor(lang: Lang, override?: string | null): string | null 
   if (lang === 'ptpt') return readLocalPtptVoice()
   if (lang === 'tr') return readLocalTrVoice()
   if (lang === 'bn') return readLocalBnVoice()
+  if (lang === 'te') return readLocalTeVoice()
+  if (lang === 'gu') return readLocalGuVoice()
+  if (lang === 'kn') return readLocalKnVoice()
+  if (lang === 'pl') return readLocalPlVoice()
+  if (lang === 'ro') return readLocalRoVoice()
+  if (lang === 'cs') return readLocalCsVoice()
+  if (lang === 'el') return readLocalElVoice()
+  if (lang === 'hu') return readLocalHuVoice()
+  if (lang === 'sv') return readLocalSvVoice()
+  if (lang === 'ru') return readLocalRuVoice()
+  if (lang === 'uk') return readLocalUkVoice()
+  if (lang === 'he') return readLocalHeVoice()
+  if (lang === 'fa') return readLocalFaVoice()
+  if (lang === 'ur') return readLocalUrVoice()
   return readLocalYueVoice()
 }
 

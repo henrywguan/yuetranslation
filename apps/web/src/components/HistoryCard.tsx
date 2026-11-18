@@ -28,6 +28,8 @@ import { TaText } from './TaText'
 import { PtptText } from './PtptText'
 import { TrText } from './TrText'
 import { BnText } from './BnText'
+import { LangFamilyText } from './LangFamilyText'
+import { isLangFamilyLang } from '../lib/langFamily'
 import { BiText } from './BiText'
 import { StarPhraseButton } from './StarPhraseButton'
 import type { ConversationTurn, Lang } from '../lib/types'
@@ -63,6 +65,20 @@ export function langShort(lang: Lang): string {
   if (lang === 'ptpt') return 'Pt'
   if (lang === 'tr') return 'Tr'
   if (lang === 'bn') return 'Bn'
+  if (lang === 'te') return 'Te'
+  if (lang === 'gu') return 'Gu'
+  if (lang === 'kn') return 'Kn'
+  if (lang === 'pl') return 'Pl'
+  if (lang === 'ro') return 'Ro'
+  if (lang === 'cs') return 'Cs'
+  if (lang === 'el') return 'El'
+  if (lang === 'hu') return 'Hu'
+  if (lang === 'sv') return 'Sv'
+  if (lang === 'ru') return 'Ru'
+  if (lang === 'uk') return 'Uk'
+  if (lang === 'he') return 'He'
+  if (lang === 'fa') return 'Fa'
+  if (lang === 'ur') return 'Ur'
   if (lang === 'ceb') return 'Cb'
   if (lang === 'ilo') return 'Il'
   if (lang === 'bcl') return 'Bc'
@@ -233,6 +249,9 @@ export function LangLine({
   if (lang === 'bn') {
     return <BnText text={text} className="history-card-line" onActivate={onBreakdown} />
   }
+  if (isLangFamilyLang(lang)) {
+    return <LangFamilyText lang={lang} text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
   if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') {
     if (onBreakdown) {
       return (
@@ -298,6 +317,20 @@ function langLabel(lang: Lang) {
   if (lang === 'ptpt') return <BiText copy={ui.dirEuropeanPortuguese} size="sm" />
   if (lang === 'tr') return <BiText copy={ui.dirTurkish} size="sm" />
   if (lang === 'bn') return <BiText copy={ui.dirBengali} size="sm" />
+  if (lang === 'te') return <BiText copy={ui.dirTelugu} size="sm" />
+  if (lang === 'gu') return <BiText copy={ui.dirGujarati} size="sm" />
+  if (lang === 'kn') return <BiText copy={ui.dirKannada} size="sm" />
+  if (lang === 'pl') return <BiText copy={ui.dirPolish} size="sm" />
+  if (lang === 'ro') return <BiText copy={ui.dirRomanian} size="sm" />
+  if (lang === 'cs') return <BiText copy={ui.dirCzech} size="sm" />
+  if (lang === 'el') return <BiText copy={ui.dirGreek} size="sm" />
+  if (lang === 'hu') return <BiText copy={ui.dirHungarian} size="sm" />
+  if (lang === 'sv') return <BiText copy={ui.dirSwedish} size="sm" />
+  if (lang === 'ru') return <BiText copy={ui.dirRussian} size="sm" />
+  if (lang === 'uk') return <BiText copy={ui.dirUkrainian} size="sm" />
+  if (lang === 'he') return <BiText copy={ui.dirHebrew} size="sm" />
+  if (lang === 'fa') return <BiText copy={ui.dirPersian} size="sm" />
+  if (lang === 'ur') return <BiText copy={ui.dirUrdu} size="sm" />
   if (lang === 'ceb') return <BiText copy={ui.dirCebuano} size="sm" />
   if (lang === 'ilo') return <BiText copy={ui.dirIlocano} size="sm" />
   if (lang === 'bcl') return <BiText copy={ui.dirBikol} size="sm" />
@@ -577,6 +610,8 @@ export function HistoryCard({
                       <TrText text={alt} className="history-card-line" onActivate={onBreakdown} />
                     ) : turn.to === 'bn' ? (
                       <BnText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : isLangFamilyLang(turn.to) ? (
+                      <LangFamilyText lang={turn.to} text={alt} className="history-card-line" onActivate={onBreakdown} />
                     ) : (
                       alt
                     )}

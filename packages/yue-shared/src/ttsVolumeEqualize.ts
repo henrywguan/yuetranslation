@@ -44,6 +44,20 @@ export type TtsEqualizeLang =
   | 'ptpt'
   | 'tr'
   | 'bn'
+  | 'te'
+  | 'gu'
+  | 'kn'
+  | 'pl'
+  | 'ro'
+  | 'cs'
+  | 'el'
+  | 'hu'
+  | 'sv'
+  | 'ru'
+  | 'uk'
+  | 'he'
+  | 'fa'
+  | 'ur'
 
 /**
  * SSML `prosody volume` — Azure’s useful max boost is `+50%`.
@@ -80,6 +94,20 @@ export const TTS_EQUALIZE_VOLUME: Record<TtsEqualizeLang, string | null> = {
   ptpt: '+50%',
   tr: '+50%',
   bn: '+50%',
+  te: '+50%',
+  gu: '+50%',
+  kn: '+50%',
+  pl: '+50%',
+  ro: '+50%',
+  cs: '+50%',
+  el: '+50%',
+  hu: '+50%',
+  sv: '+50%',
+  ru: '+50%',
+  uk: '+50%',
+  he: '+50%',
+  fa: '+50%',
+  ur: '+50%',
 }
 
 /**
@@ -118,6 +146,20 @@ export const TTS_EQUALIZE_PLAYBACK_GAIN: Record<TtsEqualizeLang, number> = {
   ptpt: 1.15,
   tr: 1.9,
   bn: 2.0,
+  te: 2.0,
+  gu: 2.0,
+  kn: 2.0,
+  pl: 2.0,
+  ro: 2.0,
+  cs: 2.0,
+  el: 2.0,
+  hu: 2.0,
+  sv: 2.0,
+  ru: 1.9,
+  uk: 1.9,
+  he: 1.35,
+  fa: 1.15,
+  ur: 1.35,
 }
 
 /** Normalize API / client lang codes to an equalize key. */
@@ -153,6 +195,20 @@ export function equalizeLangKey(lang: string): TtsEqualizeLang | null {
   if (l === 'ta' || l === 'ta-in') return 'ta'
   if (l === 'tr' || l === 'tr-tr') return 'tr'
   if (l === 'bn' || l === 'bn-in') return 'bn'
+  if (l === 'te' || l === 'te-in') return 'te'
+  if (l === 'gu' || l === 'gu-in') return 'gu'
+  if (l === 'kn' || l === 'kn-in') return 'kn'
+  if (l === 'pl' || l === 'pl-pl') return 'pl'
+  if (l === 'ro' || l === 'ro-ro') return 'ro'
+  if (l === 'cs' || l === 'cs-cz') return 'cs'
+  if (l === 'el' || l === 'el-gr') return 'el'
+  if (l === 'hu' || l === 'hu-hu') return 'hu'
+  if (l === 'sv' || l === 'sv-se') return 'sv'
+  if (l === 'ru' || l === 'ru-ru') return 'ru'
+  if (l === 'uk' || l === 'uk-ua') return 'uk'
+  if (l === 'he' || l === 'he-il') return 'he'
+  if (l === 'fa' || l === 'fa-ir') return 'fa'
+  if (l === 'ur' || l === 'ur-in') return 'ur'
   return null
 }
 

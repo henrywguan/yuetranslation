@@ -63,6 +63,20 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'ptpt') return 'Escreva ou fale em português (Portugal)…'
   if (lang === 'tr') return 'Türkçe yazın ya da konuşun…'
   if (lang === 'bn') return 'বাংলায় টাইপ করুন বা বলুন…'
+  if (lang === 'te') return 'తెలుగులో టైప్ చేయండి లేదా మాట్లాడండి…'
+  if (lang === 'gu') return 'ગુજરાતીમાં ટાઇપ કરો અથવા બોલો…'
+  if (lang === 'kn') return 'ಕನ್ನಡದಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ ಅಥವಾ ಮಾತನಾಡಿ…'
+  if (lang === 'pl') return 'Pisz lub mów po polsku…'
+  if (lang === 'ro') return 'Scrie sau vorbește în română…'
+  if (lang === 'cs') return 'Pište nebo mluvte česky…'
+  if (lang === 'el') return 'Πληκτρολογήστε ή μιλήστε στα ελληνικά…'
+  if (lang === 'hu') return 'Írj vagy beszélj magyarul…'
+  if (lang === 'sv') return 'Skriv eller tala på svenska…'
+  if (lang === 'ru') return 'Пишите или говорите по-русски…'
+  if (lang === 'uk') return 'Пишіть або говоріть українською…'
+  if (lang === 'he') return 'הקלידו או דברו בעברית…'
+  if (lang === 'fa') return 'به فارسی تایپ کنید یا صحبت کنید…'
+  if (lang === 'ur') return 'اردو میں ٹائپ کریں یا بولیں…'
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
   if (lang === 'bcl') return 'I-type nin Bikol…'
@@ -101,6 +115,20 @@ function isRubyDisplayLang(lang: Lang): boolean {
     lang === 'ptpt' ||
     lang === 'tr' ||
     lang === 'bn' ||
+    lang === 'te' ||
+    lang === 'gu' ||
+    lang === 'kn' ||
+    lang === 'pl' ||
+    lang === 'ro' ||
+    lang === 'cs' ||
+    lang === 'el' ||
+    lang === 'hu' ||
+    lang === 'sv' ||
+    lang === 'ru' ||
+    lang === 'uk' ||
+    lang === 'he' ||
+    lang === 'fa' ||
+    lang === 'ur' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'
@@ -144,6 +172,20 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'ptpt') return 'Speak European Portuguese with the mic'
   if (lang === 'tr') return 'Speak Turkish with the mic'
   if (lang === 'bn') return 'Speak Bengali with the mic'
+  if (lang === 'te') return 'Speak Telugu with the mic'
+  if (lang === 'gu') return 'Speak Gujarati with the mic'
+  if (lang === 'kn') return 'Speak Kannada with the mic'
+  if (lang === 'pl') return 'Speak Polish with the mic'
+  if (lang === 'ro') return 'Speak Romanian with the mic'
+  if (lang === 'cs') return 'Speak Czech with the mic'
+  if (lang === 'el') return 'Speak Greek with the mic'
+  if (lang === 'hu') return 'Speak Hungarian with the mic'
+  if (lang === 'sv') return 'Speak Swedish with the mic'
+  if (lang === 'ru') return 'Speak Russian with the mic'
+  if (lang === 'uk') return 'Speak Ukrainian with the mic'
+  if (lang === 'he') return 'Speak Hebrew with the mic'
+  if (lang === 'fa') return 'Speak Persian with the mic'
+  if (lang === 'ur') return 'Speak Urdu with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
   if (lang === 'sichuan') return 'Speak Sichuanese with the mic'
