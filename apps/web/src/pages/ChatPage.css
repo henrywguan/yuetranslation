@@ -917,6 +917,12 @@ html[data-theme='light'] .ds-chat {
   font-weight: 700;
   text-decoration: none !important;
   vertical-align: 0.05em;
+  /* Tap opens the source — avoid iOS text-selection handles on the chip. */
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  cursor: pointer;
 }
 
 .ds-md-cite:hover {

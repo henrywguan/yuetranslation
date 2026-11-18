@@ -288,16 +288,11 @@
   font-size: 0.8rem;
 }
 
-.aui-source {
-  display: inline-block;
-  margin: 0.25rem 0.35rem 0 0;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  background: var(--ds-surface-1);
-  border: 1px solid var(--ds-divider);
-  color: var(--ds-blue);
-  font-size: 0.75rem;
-  text-decoration: none;
+/* Sources use classic `.ds-chat-sources` (collapsible) under the assistant bubble. */
+.aui-msg.is-assistant > .ds-chat-sources {
+  max-width: 46rem;
+  width: 100%;
+  margin: 0.15rem auto 0.35rem;
 }
 
 .aui-actions {

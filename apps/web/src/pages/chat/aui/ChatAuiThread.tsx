@@ -9,15 +9,16 @@ import {
   useAui,
   useAuiState,
   useMessagePartReasoning,
-  useMessagePartSource,
   useMessagePartText,
 } from '@assistant-ui/react'
 import { useRef, useState } from 'react'
 import { ChatDictateButton } from '../../../components/ChatDictateButton'
 import { ChatPluginKeysModal } from '../../../components/ChatPluginKeysModal'
+import { ChatSourcesList } from '../../../components/ChatShellExtras'
 import { DeepSeekMark } from '../../../components/DeepSeekMark'
 import { SpeakButton } from '../../../components/SpeakButton'
 import type { DeepseekChatPluginKeyId } from '../../../lib/api'
+import type { ChatSource } from '../../../lib/chatHistory'
 import { chatSpeakLang, mergeDictateText } from '../../../lib/chatVoice'
 import { renderChatMarkdown } from '../../../lib/renderChatMarkdown'
 import { useChatAuiSession } from './ChatAuiRuntime'
@@ -29,6 +30,23 @@ const SUGGESTIONS = [
   'Help me debug this error message',
 ]
 
+/** URL source parts on the current assistant message (1-indexed `[n]` chips). */
+function useMessageSources(): ChatSource[] {
+  return useAuiState((s) => {
+    const content = s.message.content
+    if (!Array.isArray(content)) return []
+    const out: ChatSource[] = []
+    for (const part of content) {
+      if (part.type !== 'source') continue
+      if (part.sourceType !== 'url') continue
+      const url = typeof part.url === 'string' ? part.url : ''
+      if (!url) continue
+      out.push({ url, title: (part.title || url).trim() || url })
+    }
+    return out
+  })
+}
+
 /**
  * Live markdown while the assistant token-stream is open — intentional premium
  * feel (Henry OK'd mid-stream markdown over the classic plain-text settle path).
@@ -36,6 +54,7 @@ const SUGGESTIONS = [
 function MarkdownText() {
   const { text } = useMessagePartText()
   const streaming = useAuiState((s) => s.message.status?.type === 'running')
+  const sources = useMessageSources()
   if (!text.trim()) {
     return streaming ? (
       <div className="aui-md is-streaming" aria-busy="true">
@@ -47,7 +66,7 @@ function MarkdownText() {
   }
   return (
     <div className={`aui-md${streaming ? ' is-streaming' : ''}`} aria-busy={streaming || undefined}>
-      {renderChatMarkdown(text)}
+      {renderChatMarkdown(text, { sources })}
     </div>
   )
 }
@@ -63,14 +82,9 @@ function ReasoningText() {
   )
 }
 
-function SourceChip() {
-  const part = useMessagePartSource()
-  if (part.sourceType !== 'url') return null
-  return (
-    <a className="aui-source" href={part.url} target="_blank" rel="noreferrer">
-      {part.title || part.url}
-    </a>
-  )
+/** Source parts are listed via ChatSourcesList — skip inline chip spam. */
+function SourcePartSilent() {
+  return null
 }
 
 function AssistantSpeakSlot() {
@@ -101,6 +115,9 @@ function UserMessage() {
 }
 
 function AssistantMessage() {
+  const streaming = useAuiState((s) => s.message.status?.type === 'running')
+  const sources = useMessageSources()
+
   return (
     <MessagePrimitive.Root className="aui-msg is-assistant">
       <div className="aui-bubble is-assistant">
@@ -108,10 +125,13 @@ function AssistantMessage() {
           components={{
             Text: MarkdownText,
             Reasoning: ReasoningText,
-            Source: SourceChip,
+            Source: SourcePartSilent,
           }}
         />
       </div>
+      {!streaming && sources.length ? (
+        <ChatSourcesList sources={sources} defaultOpen={sources.length <= 4} />
+      ) : null}
       <div className="aui-actions">
         <ActionBarPrimitive.Root hideWhenRunning autohide="not-last" className="aui-actions-row">
           <ActionBarPrimitive.Copy className="aui-action-btn">Copy</ActionBarPrimitive.Copy>

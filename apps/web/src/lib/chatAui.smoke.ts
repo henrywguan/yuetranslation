@@ -110,7 +110,8 @@ assert.match(thread, /SpeakButton/, 'keeps SpeakButton')
 assert.match(thread, /DeepThink/, 'DeepThink toggle chrome')
 assert.match(thread, /ChatPluginKeysModal/, 'BYOK keys modal')
 assert.match(thread, /Rich layout/, 'rich layout toggle')
-assert.match(thread, /renderChatMarkdown\(text\)/, 'mid-stream markdown (not plain settle)')
+assert.match(thread, /renderChatMarkdown\(text,\s*\{\s*sources\s*\}\)/, 'citation chips get source hrefs')
+assert.match(thread, /ChatSourcesList/, 'collapsible sources list under assistant')
 assert.match(thread, /is-streaming/, 'streaming markdown caret class')
 assert.doesNotMatch(thread, /WebSpeechSynthesisAdapter|speechSynthesis\.speak/, 'no browser TTS adapter')
 assert.doesNotMatch(
@@ -118,6 +119,7 @@ assert.doesNotMatch(
   /streaming \|\| !rich \?[\s\S]*ds-chat-plain/,
   'AUI does not use classic plain-while-streaming gate',
 )
+assert.doesNotMatch(thread, /aui-source/, 'no always-on inline source chip spam')
 
 const pkg = JSON.parse(readFileSync(join(root, '../package.json'), 'utf8')) as {
   dependencies?: Record<string, string>
@@ -154,5 +156,13 @@ assert.ok(parts.some((p) => p.type === 'source'))
 
 const live = convertChatMessage(assistant, { streamingId: 'a1' })
 assert.equal(live.status?.type, 'running')
+
+// Citation rewriter: bare [n] → <a class="ds-md-cite" href=…> when sources[n-1] exists.
+const mdSrc = readFileSync(join(here, 'renderChatMarkdown.tsx'), 'utf8')
+assert.match(
+  mdSrc,
+  /citationChipHtml[\s\S]*class="ds-md-cite"[\s\S]*sources\[n - 1\]/,
+  'markdown maps [n] chips to source URLs',
+)
 
 console.log('chatAui.smoke: ok')

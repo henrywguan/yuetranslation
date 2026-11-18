@@ -648,7 +648,9 @@ function AssistantBody({
           '…'
         )}
       </div>
-      {!streaming && message.sources?.length ? <ChatSourcesList sources={message.sources} /> : null}
+      {!streaming && message.sources?.length ? (
+        <ChatSourcesList sources={message.sources} defaultOpen={message.sources.length <= 4} />
+      ) : null}
     </>
   )
 }
