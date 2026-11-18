@@ -13,6 +13,7 @@ const history = readFileSync(join(root, './chatHistory.ts'), 'utf8')
 assert.match(chat, /schedulePaint/, 'Stream tokens coalesce React paints')
 assert.match(chat, /paintThread/, 'Live stream skips localStorage per token')
 assert.match(chat, /LIVE_REASONING_KEEP/, 'Live reasoning buffer is capped mid-stream')
+assert.match(chat, /LIVE_REASONING_PAINT/, 'Live reasoning panel paints a tail only')
 assert.match(chat, /MAX_CONTENT_CHARS/, 'Live answer buffer respects content cap')
 assert.match(chat, /beginBatchedReveal/, 'Thread switch uses batched reveal')
 assert.match(chat, /selectThread[\s\S]*beginBatchedReveal/, 'selectThread calls batched reveal')
@@ -21,7 +22,7 @@ assert.match(chat, /ds-chat-plain/, 'Live stream stays plain text')
 assert.doesNotMatch(chat, /sawLiveRef/, 'No sawLiveRef gate — visible settled rows render markdown')
 assert.match(chat, /canUseDeepseekChat/, 'Chat gate shares canUseDeepseekChat helper')
 assert.match(chat, /requestAnimationFrame\(stickMessagesToBottom\)/, 'Stream paints stick scroll via rAF')
-assert.match(chat, /slice\(-8_000\)/, 'Live reasoning panel paints a tail only')
+assert.match(chat, /slice\(-LIVE_REASONING_PAINT\)/, 'Live reasoning panel paints a shared tail only')
 assert.match(chat, /dropEmptyAssistant/, 'Empty assistant cleanup is shared on abort/empty reply')
 
 // No persist inside onDelta / onReasoning bodies (disk only at stream end / abort).
@@ -32,8 +33,17 @@ const onDeltaBlock = chat.match(/onDelta:\s*\([^)]*\)\s*=>\s*\{[\s\S]*?\n\s*\},/
 assert.ok(onDeltaBlock, 'onDelta handler present')
 assert.doesNotMatch(onDeltaBlock![0], /\bpersist\s*\(/, 'onDelta must not persist')
 
-assert.match(history, /MAX_REASONING_CHARS\s*=\s*12_000/, 'Stored reasoning is capped')
+assert.match(history, /MAX_REASONING_CHARS\s*=\s*48_000/, 'Stored reasoning raised for research CoT')
+assert.match(history, /LIVE_REASONING_KEEP\s*=\s*96_000/, 'Live reasoning buffer raised for long thinks')
+assert.match(history, /LIVE_REASONING_PAINT\s*=\s*16_000/, 'Paint tail raised but still capped')
+assert.match(history, /CHAT_HYDRATE_MAX_RAW_BYTES\s*=\s*512_000/, 'Hydrate budget raised with reasoning')
 assert.match(history, /requestIdleCallback/, 'writeChatThreads uses idle coalesce')
 assert.match(history, /pendingDiskWrite/, 'Disk writes coalesce via pending payload')
+
+const auiThread = readFileSync(join(root, '../pages/chat/aui/ChatAuiThread.tsx'), 'utf8')
+assert.match(auiThread, /LIVE_REASONING_PAINT/, 'AUI DeepThink paints a live tail (no full-pre freeze)')
+
+const apiChat = readFileSync(join(root, '../../../../apps/api/src/deepseekChat.ts'), 'utf8')
+assert.match(apiChat, /DEEPSEEK_CHAT_MAX_TOKENS\s*=\s*16_384/, 'API max_tokens raised for long DeepThink')
 
 console.log('chatStream.smoke: ok')

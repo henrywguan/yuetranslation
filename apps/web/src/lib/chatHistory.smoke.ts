@@ -82,7 +82,8 @@ assert.ok(
     .every((m) => (m.reasoning?.length || 0) <= MAX_REASONING_CHARS + 10),
 )
 assert.ok(CHAT_HYDRATE_MAX_RAW_BYTES >= 100_000)
-assert.equal(MAX_REASONING_CHARS, MAX_CONTENT_CHARS)
+assert.ok(MAX_REASONING_CHARS > MAX_CONTENT_CHARS, 'DeepThink storage exceeds answer body cap')
+assert.ok(MAX_REASONING_CHARS >= 48_000, 'DeepThink storage fits long research traces')
 
 const hugeReason = {
   ...emptyThread(),

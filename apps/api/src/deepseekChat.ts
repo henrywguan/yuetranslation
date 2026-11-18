@@ -105,8 +105,8 @@ export type DeepseekChatStreamEvent =
 /** Keep last N turns so prompts stay bounded. */
 export const DEEPSEEK_CHAT_HISTORY_LIMIT = 24
 
-/** Room for chain-of-thought + a long structured answer. */
-export const DEEPSEEK_CHAT_MAX_TOKENS = 8192
+/** Room for long DeepThink research CoT + a structured answer. */
+export const DEEPSEEK_CHAT_MAX_TOKENS = 16_384
 
 /** Timeless base — prefer buildDeepseekChatSystem() for live requests. */
 export const DEEPSEEK_CHAT_SYSTEM = DEEPSEEK_CHAT_SYSTEM_BASE

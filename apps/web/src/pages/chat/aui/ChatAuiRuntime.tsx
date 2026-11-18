@@ -29,6 +29,7 @@ import {
   deleteChatThread,
   emptyThread,
   hydrateChatThreadsAsync,
+  LIVE_REASONING_KEEP,
   MAX_CONTENT_CHARS,
   patchAssistantContent,
   renameChatThread,
@@ -56,8 +57,7 @@ const THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
 const SEARCH_KEY = 'yue-deepseek-chat-search-v1'
 const RICH_LAYOUT_KEY = 'yue-deepseek-chat-rich-layout-v1'
 const PLUGINS_KEY = 'yue-deepseek-chat-plugins-v1'
-const LIVE_REASONING_KEEP = 24_000
-const STREAM_PAINT_MS = 80
+const STREAM_PAINT_MS = 100
 
 export type PendingChatFile = ChatFileMeta & { previewUrl?: string }
 
