@@ -364,7 +364,8 @@ function ComposerChrome() {
         {searching ? <span className="aui-status">Searching…</span> : null}
       </div>
 
-      {pluginsOpen || harnessOn ? (
+      {/* Plugins strip is Plugins-toggle only — Harness must not force it open. */}
+      {pluginsOpen ? (
         <div className={`aui-plugins${harnessOn ? ' is-harness-strip' : ''}`}>
           <button
             type="button"

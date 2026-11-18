@@ -144,6 +144,16 @@ assert.doesNotMatch(
   'no stock class bridge',
 )
 assert.match(auiCss, /\.aui-scroll-bottom:disabled/, 'disabled scroll button is display:none')
+assert.doesNotMatch(
+  thread,
+  /pluginsOpen \|\| harnessOn/,
+  'Harness must not force-open the plugins strip',
+)
+assert.match(
+  thread,
+  /\{\/\* Plugins strip is Plugins-toggle only[\s\S]*\{pluginsOpen \?/,
+  'plugins strip gated on pluginsOpen alone',
+)
 assert.match(thread, /is-streaming/, 'streaming markdown caret class')
 assert.match(auiCss, /\.aui-composer\b/, 'DeepSeek composer card styles')
 assert.match(auiCss, /\.aui-send\b/, 'DeepSeek send styles restored')
