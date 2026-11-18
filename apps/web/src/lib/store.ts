@@ -533,7 +533,7 @@ async function speakFinal(
   const ent = get().entitlement
   // Auto-speak only when the user opted in (default is off).
   const autoSpeakFlag = get().autoSpeak
-  const entAuto = Boolean(ent?.allowed.autoSpeak)
+  const entAuto = Boolean(ent?.allowed?.autoSpeak)
   const allowed = Boolean(entAuto && autoSpeakFlag)
   if (!allowed) return
   if (micTurnIsLive(get)) return

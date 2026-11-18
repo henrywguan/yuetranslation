@@ -206,7 +206,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const speakManual = useYueStore((s) => s.speakManual)
   const primaryLanguage = useYueStore((s) => s.primaryLanguage)
   const entitlement = useYueStore((s) => s.entitlement)
-  const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
+  // Optional-chain `allowed` too — Family unlock can mount before `allowed` hydrates;
+  // reading `.autoSpeak` off a missing `allowed` throws and blanks #root (no error boundary).
+  const canAutoSpeak = Boolean(entitlement?.allowed?.autoSpeak)
 
   useEffect(() => {
     let cancelled = false
