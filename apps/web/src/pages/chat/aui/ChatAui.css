@@ -478,44 +478,7 @@
   width: 100%;
 }
 
-.aui-composer-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  width: 100%;
-  resize: none;
-  border: 0;
-  outline: none;
-  background: transparent;
-  color: var(--ds-text);
-  font: inherit;
-  line-height: 1.45;
-  max-height: 8.5rem;
-  padding: 0.45rem 0.25rem;
-}
-
-.aui-send {
-  appearance: none;
-  border: 0;
-  background: var(--ds-blue);
-  color: #fff;
-  border-radius: 0.85rem;
-  padding: 0.55rem 0.85rem;
-  font: inherit;
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.aui-send:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.aui-send.is-stop {
-  background: var(--ds-surface-2);
-  color: var(--ds-text);
-}
+/* Composer input / send: stock look (`ChatAuiStock.css` + aui-composer-*) owns these. */
 
 .aui-error {
   max-width: 46rem;
