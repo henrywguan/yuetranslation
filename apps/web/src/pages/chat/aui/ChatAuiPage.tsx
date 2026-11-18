@@ -13,10 +13,8 @@ import { useDocumentMeta } from '../../../lib/useDocumentMeta'
 import { safeShellViewportHeight } from '../../../lib/visualViewportHeight'
 import '../../ChatPage.css'
 import './ChatAui.css'
-import './ChatAuiStock.css'
 import { ChatAuiRuntimeProvider, useChatAuiSession } from './ChatAuiRuntime'
 import { ChatAuiSidebar, ChatAuiThread } from './ChatAuiThread'
-import { useAuiStockDark } from './useAuiStockDark'
 
 const MENU_ICON = (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
@@ -43,9 +41,6 @@ function TopBrand() {
       <span className="ds-chat-top-brand-name">
         Deep<span>Seek</span>
       </span>
-      <span className="aui-badge" title="assistant-ui stock look">
-        Stock
-      </span>
     </div>
   )
 }
@@ -66,12 +61,11 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
     removeSchedule,
     toggleSchedule,
   } = useChatAuiSession()
-  const dark = useAuiStockDark()
   const showWorkspace = harnessOn && workspaceOpen
 
   return (
     <div
-      className={`ds-chat aui-chat is-stock${dark ? ' dark' : ''}${showWorkspace ? ' has-workspace' : ''}${harnessOn ? ' is-harness' : ''}`}
+      className={`ds-chat aui-chat${showWorkspace ? ' has-workspace' : ''}${harnessOn ? ' is-harness' : ''}`}
       aria-labelledby={titleId}
     >
       <h1 id={titleId} className="aui-sr-only">

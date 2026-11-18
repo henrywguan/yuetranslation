@@ -17,7 +17,7 @@ const flagSrc = readFileSync(join(here, 'chatAuiFlag.ts'), 'utf8')
 assert.match(flagSrc, /yue-chat-aui-v1/, 'flag key constant')
 assert.equal(CHAT_AUI_FLAG_KEY, 'yue-chat-aui-v1')
 assert.match(flagSrc, /!== '0'/, 'cutover defaults ON unless explicit opt-out')
-assert.match(flagSrc, /Stock assistant-ui look is on/, 'stock look enabled note')
+assert.match(flagSrc, /not `@assistant-ui\/styles` stock CDN/, 'stock CDN look is off')
 
 // Node has no localStorage — polyfill for default-ON cutover.
 const mem = new Map<string, string>()
@@ -84,8 +84,10 @@ assert.match(
   'sidebar is a sibling of main under ds-chat (flush left)',
 )
 assert.match(auiShellFn, /ChatAuiSidebar/, 'thread list lives in shell sidebar')
-assert.match(page, /ChatAuiStock\.css/, 'page imports stock styles')
-assert.match(auiShellFn, /is-stock/, 'shell marks stock look')
+assert.doesNotMatch(page, /ChatAuiStock\.css/, 'page does not import stock styles')
+assert.doesNotMatch(auiShellFn, /is-stock/, 'shell does not mark stock look')
+assert.doesNotMatch(page, /Stock/, 'no Stock badge in AUI page')
+assert.doesNotMatch(page, /useAuiStockDark/, 'no stock dark bridge')
 
 const auiCss = readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8')
 assert.match(auiCss, /\.ds-chat\.aui-chat/, 'AUI shell scoped under .aui-chat')
@@ -129,12 +131,17 @@ assert.match(thread, /ChatPluginKeysModal/, 'BYOK keys modal')
 assert.match(thread, /Rich layout/, 'rich layout toggle')
 assert.match(thread, /renderChatMarkdown\(text,\s*\{\s*sources\s*\}\)/, 'citation chips get source hrefs')
 assert.match(thread, /ChatSourcesList/, 'collapsible sources list under assistant')
-assert.match(thread, /aui-thread-root/, 'stock thread root class')
-assert.match(thread, /aui-composer-root/, 'stock composer root class')
-assert.match(thread, /aui-user-message-root/, 'stock user message class')
-assert.match(thread, /aui-assistant-message-root/, 'stock assistant message class')
-assert.match(thread, /useAuiStockDark/, 'stock dark token bridge')
+assert.match(thread, /className="aui-thread"/, 'DeepSeek thread root class')
+assert.match(thread, /className=\{`aui-composer/, 'DeepSeek composer class')
+assert.match(thread, /aui-msg is-user/, 'DeepSeek user message class')
+assert.match(thread, /aui-msg is-assistant/, 'DeepSeek assistant message class')
+assert.match(thread, /aui-send/, 'DeepSeek send button class')
+assert.match(thread, /\+ New chat/, 'sidebar new-chat CTA matches classic tone')
+assert.doesNotMatch(thread, /useAuiStockDark|aui-thread-root|aui-composer-root|aui-user-message-root/, 'no stock class bridge')
 assert.match(thread, /is-streaming/, 'streaming markdown caret class')
+assert.match(auiCss, /\.aui-composer\b/, 'DeepSeek composer card styles')
+assert.match(auiCss, /\.aui-send\b/, 'DeepSeek send styles restored')
+assert.match(auiCss, /\.aui-empty\b/, 'DeepSeek empty-state styles')
 assert.doesNotMatch(thread, /WebSpeechSynthesisAdapter|speechSynthesis\.speak/, 'no browser TTS adapter')
 assert.doesNotMatch(
   thread,
@@ -147,7 +154,7 @@ const pkg = JSON.parse(readFileSync(join(root, '../package.json'), 'utf8')) as {
   dependencies?: Record<string, string>
 }
 assert.ok(pkg.dependencies?.['@assistant-ui/react'], '@assistant-ui/react dependency')
-assert.ok(pkg.dependencies?.['@assistant-ui/styles'], '@assistant-ui/styles stock CSS')
+assert.equal(pkg.dependencies?.['@assistant-ui/styles'], undefined, 'no @assistant-ui/styles stock CSS')
 
 const user: ChatMessage = {
   id: 'u1',
