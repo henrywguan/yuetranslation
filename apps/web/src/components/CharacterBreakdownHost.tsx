@@ -11,6 +11,7 @@ import { glossForChar, hasHan, isHanChar, pickCharGloss } from '../lib/charGloss
 import { rememberBreakdownRows } from '../lib/learnedGloss'
 import { buildLocalBreakdown, type CharBreakdown, type JyutSeg } from '../lib/jyutping'
 import { buildLocalLatinBreakdown, isLatinDetailLang } from '../lib/localLatinBreakdown'
+import { buildLocalScriptBreakdown, isScriptDetailLang } from '../lib/localScriptBreakdown'
 import { detailPedagogy } from '../lib/detailPedagogy'
 import { tagalogStressClass, tagalogStressLabel } from '../lib/tagalogPronunciation'
 import {
@@ -281,7 +282,9 @@ export function CharacterBreakdownHost() {
               ? await buildLocalPinyinBreakdown(phrase)
               : isLatinDetailLang(detailLang)
                 ? buildLocalLatinBreakdown(phrase, { phraseGloss, lang: detailLang })
-                : []
+                : isScriptDetailLang(detailLang)
+                  ? buildLocalScriptBreakdown(phrase, detailLang, { phraseGloss })
+                  : []
         if (cancelled) return
         setRows(local)
         try {
