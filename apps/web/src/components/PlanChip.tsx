@@ -819,7 +819,7 @@ export function PlanChip() {
     },
   ]
 
-  const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
+  const canAutoSpeak = Boolean(entitlement?.allowed?.autoSpeak)
   const speakOn = Boolean(autoSpeak && canAutoSpeak)
 
   const panel = (

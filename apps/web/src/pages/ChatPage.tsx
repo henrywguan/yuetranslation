@@ -911,7 +911,7 @@ export function ChatPage() {
 
   const unlocked = canUseDeepseekChat(entitlement)
   const loggedIn = Boolean(entitlement?.loggedIn)
-  const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
+  const canAutoSpeak = Boolean(entitlement?.allowed?.autoSpeak)
   const skillSuggestions = filterChatSkills(draft)
   const visibleThreads = searchChatThreads(
     threads.filter((t) => t.id !== BOOT_THREAD.id),

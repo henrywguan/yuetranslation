@@ -35,8 +35,8 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
   const fileRef = useRef<HTMLInputElement>(null)
 
   const loggedIn = Boolean(entitlement?.loggedIn)
-  const canCamera = Boolean(entitlement?.allowed.camera)
-  const canDocs = Boolean(entitlement?.allowed.docs)
+  const canCamera = Boolean(entitlement?.allowed?.camera)
+  const canDocs = Boolean(entitlement?.allowed?.docs)
 
   const meter = useMemo(
     () =>

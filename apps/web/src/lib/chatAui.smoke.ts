@@ -50,6 +50,11 @@ assert.match(app, /ChatAuiPage/, 'App lazy-loads ChatAuiPage')
 const classic = readFileSync(join(root, 'pages/ChatPage.tsx'), 'utf8')
 assert.match(classic, /Back to new chat UI/, 'classic can return to AUI after opt-out')
 assert.match(classic, /setChatAuiEnabled\(true\)/, 'classic re-enables AUI flag')
+assert.match(
+  classic,
+  /entitlement\?\.allowed\?\.autoSpeak/,
+  'classic optional-chains allowed before autoSpeak (blank-#root crash)',
+)
 
 const page = readFileSync(join(root, 'pages/chat/aui/ChatAuiPage.tsx'), 'utf8')
 assert.match(page, /ChatAuiRuntimeProvider/, 'AUI page wraps runtime')
@@ -103,6 +108,16 @@ assert.match(runtime, /adapters:\s*\{[\s\S]*threadList/, 'thread list adapter')
 assert.match(runtime, /plugins: enabledPluginsRef/, 'plugins forwarded to SSE')
 assert.match(runtime, /uploadDeepseekChatFile/, 'file attach upload')
 assert.match(runtime, /ocrDeepseekChatFile/, 'OCR helper')
+assert.match(
+  runtime,
+  /entitlement\?\.allowed\?\.autoSpeak/,
+  'AUI optional-chains allowed before autoSpeak (blank-#root crash)',
+)
+assert.doesNotMatch(
+  runtime,
+  /entitlement\?\.allowed\.autoSpeak/,
+  'AUI must not use entitlement?.allowed.autoSpeak (throws when allowed missing)',
+)
 
 const thread = readFileSync(join(root, 'pages/chat/aui/ChatAuiThread.tsx'), 'utf8')
 assert.match(thread, /ThreadPrimitive/, 'Thread primitives')

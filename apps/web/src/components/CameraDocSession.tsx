@@ -57,7 +57,7 @@ export function CameraDocSession({
     note: string
   } | null>(null)
 
-  const canDocs = Boolean(entitlement?.allowed.docs)
+  const canDocs = Boolean(entitlement?.allowed?.docs)
   const remainingHint = docsRemainingLabel(entitlement)
 
   const swap = () => {
