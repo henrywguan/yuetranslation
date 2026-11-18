@@ -1,3 +1,4 @@
+import { stashChatPrefill } from './chatExport'
 import { navigate } from './useHashRoute'
 import { sanitizeLeaveUrl } from './safeUrl'
 
@@ -143,14 +144,7 @@ export function openDeepseekChat() {
 
 /** Open `#/chat` with a composer prefill (Solo / Conversation handoff). */
 export function openDeepseekChatWithPrefill(text: string) {
-  const t = text.trim().slice(0, 12_000)
-  if (t) {
-    try {
-      sessionStorage.setItem('yue-deepseek-chat-prefill-v1', t)
-    } catch {
-      /* ignore */
-    }
-  }
+  stashChatPrefill(text)
   navigate('chat')
 }
 

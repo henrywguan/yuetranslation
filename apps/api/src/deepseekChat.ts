@@ -8,7 +8,6 @@
 import { z } from 'zod'
 import { DEEPSEEK_CHAT_SYSTEM_BASE } from './deepseekChatPrompt.js'
 import { env, openaiConfigured } from './env.js'
-import { openaiClient } from './openaiClient.js'
 import { getAdmin } from './supabase.js'
 import { currentMonthKey } from './usage.js'
 
@@ -129,6 +128,9 @@ export const DEEPSEEK_CHAT_HISTORY_LIMIT = 24
 /** Room for long DeepThink research CoT + a structured answer. */
 export const DEEPSEEK_CHAT_MAX_TOKENS = 16_384
 
+/** Max tool rounds per Completions harness / agent fallback turn. */
+export const DEEPSEEK_CHAT_MAX_TOOL_ROUNDS = 10
+
 /** Timeless base — prefer buildDeepseekChatSystem() for live requests. */
 export const DEEPSEEK_CHAT_SYSTEM = DEEPSEEK_CHAT_SYSTEM_BASE
 
@@ -231,90 +233,4 @@ export async function addDeepseekChatTurns(userId: string, turns = 1): Promise<n
     return current
   }
   return next
-}
-
-function chatMessagesPayload(messages: DeepseekChatMessage[]) {
-  const recent = recentDeepseekChatMessages(messages)
-  return [
-    { role: 'system' as const, content: DEEPSEEK_CHAT_SYSTEM },
-    ...recent.map((m) => ({ role: m.role, content: m.content })),
-  ]
-}
-
-function chatBaseParams(thinkingEnabled = true) {
-  const thinking = deepseekChatUsesThinking() && thinkingEnabled
-  return {
-    model: deepseekChatModel(),
-    // Thinking mode ignores temperature; omit it there so we match DeepSeek docs.
-    ...(thinking ? {} : { temperature: 0.7 as const }),
-    max_tokens: DEEPSEEK_CHAT_MAX_TOKENS,
-    ...deepseekChatLlmExtras(thinkingEnabled),
-  }
-}
-
-export async function generateDeepseekChatReply(
-  messages: DeepseekChatMessage[],
-  thinkingEnabled = true,
-): Promise<{ reply: string; model: string; reasoning?: string }> {
-  if (!openaiConfigured()) {
-    throw new Error('Chat model is not configured.')
-  }
-  const client = openaiClient()
-  if (!client) throw new Error('Chat model is not configured.')
-
-  const completion = await client.chat.completions.create({
-    ...chatBaseParams(thinkingEnabled),
-    stream: false,
-    messages: chatMessagesPayload(messages),
-  })
-
-  const message = completion.choices[0]?.message as
-    | { content?: string | null; reasoning_content?: string | null }
-    | undefined
-  const reply = message?.content?.trim() || ''
-  if (!reply) throw new Error('Empty model reply.')
-  const reasoning = message?.reasoning_content?.trim() || undefined
-  return { reply, model: deepseekChatModel(), reasoning }
-}
-
-/**
- * Stream assistant tokens. Yields reasoning deltas for the DeepSeek-style trace panel,
- * then answer `delta` events.
- */
-export async function* streamDeepseekChatReply(
-  messages: DeepseekChatMessage[],
-  thinkingEnabled = true,
-  signal?: AbortSignal,
-): AsyncGenerator<DeepseekChatStreamEvent, void, unknown> {
-  if (!openaiConfigured()) {
-    throw new Error('Chat model is not configured.')
-  }
-  const client = openaiClient()
-  if (!client) throw new Error('Chat model is not configured.')
-
-  const stream = await client.chat.completions.create(
-    {
-      ...chatBaseParams(thinkingEnabled),
-      stream: true,
-      messages: chatMessagesPayload(messages),
-    },
-    signal ? { signal } : undefined,
-  )
-
-  let announcedThinking = false
-  for await (const chunk of stream) {
-    const delta = chunk.choices[0]?.delta as
-      | { content?: string | null; reasoning_content?: string | null }
-      | undefined
-    if (!delta) continue
-    if (delta.reasoning_content) {
-      if (!announcedThinking) {
-        announcedThinking = true
-        yield { kind: 'thinking' }
-      }
-      yield { kind: 'reasoning', text: delta.reasoning_content }
-      continue
-    }
-    if (delta.content) yield { kind: 'delta', text: delta.content }
-  }
 }

@@ -98,6 +98,8 @@ const MAX_THREADS = 40
 const MAX_MESSAGES = 80
 /** Drop DeepThink traces except on the newest N assistant rows per thread. */
 const KEEP_REASONING_TAIL = 4
+/** Keep searchSteps / heavy media only on the newest N assistants. */
+const KEEP_SEARCH_STEPS_TAIL = 4
 /** Cap a single message body so one thread cannot OOM the tab on open. */
 export const MAX_CONTENT_CHARS = 12_000
 /**
@@ -310,6 +312,11 @@ export function readChatThreads(): ChatThread[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
+    // Same hard cap as async hydrate — avoid main-thread freeze / OOM on sync reads.
+    if (raw.length > CHAT_HYDRATE_MAX_RAW_BYTES) {
+      localStorage.removeItem(STORAGE_KEY)
+      return []
+    }
     return normalizeChatThreads(JSON.parse(raw) as unknown)
   } catch {
     return []
@@ -324,11 +331,15 @@ export function pruneChatThreads(threads: ChatThread[]): { threads: ChatThread[]
     if (messages.length !== t.messages.length) changed = true
 
     const keepReasoning = new Set<string>()
+    const keepSearchSteps = new Set<string>()
     let assistantsFromEnd = 0
     for (let i = messages.length - 1; i >= 0; i -= 1) {
       const m = messages[i]!
       if (m.role !== 'assistant') continue
       if (assistantsFromEnd < KEEP_REASONING_TAIL && m.reasoning) keepReasoning.add(m.id)
+      if (assistantsFromEnd < KEEP_SEARCH_STEPS_TAIL && m.searchSteps?.length) {
+        keepSearchSteps.add(m.id)
+      }
       assistantsFromEnd += 1
     }
 
@@ -337,6 +348,10 @@ export function pruneChatThreads(threads: ChatThread[]): { threads: ChatThread[]
       if (m.reasoning && !keepReasoning.has(m.id)) {
         changed = true
         row = { ...row, reasoning: undefined }
+      }
+      if (row.searchSteps?.length && !keepSearchSteps.has(row.id)) {
+        changed = true
+        row = { ...row, searchSteps: undefined }
       }
       if (row.reasoning && row.reasoning.length > MAX_REASONING_CHARS) {
         changed = true
@@ -349,6 +364,11 @@ export function pruneChatThreads(threads: ChatThread[]): { threads: ChatThread[]
       if (row.content.length > MAX_CONTENT_CHARS) {
         changed = true
         row = { ...row, content: `${row.content.slice(0, MAX_CONTENT_CHARS)}\n\n…` }
+      }
+      // Cap alternate branches on older turns — keep at most 2 siblings.
+      if (row.alternates && row.alternates.length > 2 && !keepReasoning.has(row.id)) {
+        changed = true
+        row = { ...row, alternates: row.alternates.slice(-2) }
       }
       return row
     })
@@ -559,7 +579,8 @@ export function setChatThreadArchived(thread: ChatThread, archived: boolean): Ch
 /** Case-insensitive search over titles + recent message text. */
 export function searchChatThreads(threads: ChatThread[], query: string): ChatThread[] {
   const q = query.trim().toLowerCase()
-  if (!q) return sortThreads(threads)
+  // Threads are already kept sorted on write/hydrate — avoid re-alloc when browsing.
+  if (!q) return threads
   return sortThreads(
     threads.filter((t) => {
       if (t.title.toLowerCase().includes(q)) return true

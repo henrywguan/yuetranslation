@@ -53,16 +53,6 @@ export const CHAT_SKILLS: ChatSkill[] = [
   },
 ]
 
-/** Match `/skill` or `/skill rest` at the start of the draft. */
-export function matchChatSkillDraft(draft: string): { skill: ChatSkill; rest: string } | null {
-  const m = draft.match(/^\/([a-z]+)(?:\s+(.*))?$/i)
-  if (!m) return null
-  const key = `/${(m[1] || '').toLowerCase()}`
-  const skill = CHAT_SKILLS.find((s) => s.slash === key)
-  if (!skill) return null
-  return { skill, rest: (m[2] || '').trim() }
-}
-
 export function filterChatSkills(draft: string): ChatSkill[] {
   if (!draft.startsWith('/')) return []
   const q = draft.toLowerCase()

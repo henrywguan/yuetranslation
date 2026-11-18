@@ -52,6 +52,15 @@ import {
   type ChatScheduleCadence,
   type ChatScheduleJob,
 } from '../../../lib/chatSchedule'
+import {
+  CHAT_RICH_LAYOUT_KEY,
+  CHAT_SEARCH_KEY,
+  CHAT_THINK_KEY,
+  readChatFlag,
+  readChatPluginIds,
+  writeChatFlag,
+  writeChatPluginIds,
+} from '../../../lib/chatUiPrefs'
 import { chatSpeakLang } from '../../../lib/chatVoice'
 import {
   applyWorkspaceWireUpdate,
@@ -73,52 +82,17 @@ const BOOT_THREAD: ChatThread = {
   messages: [],
 }
 
-const THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
-const SEARCH_KEY = 'yue-deepseek-chat-search-v1'
-const RICH_LAYOUT_KEY = 'yue-deepseek-chat-rich-layout-v1'
-const PLUGINS_KEY = 'yue-deepseek-chat-plugins-v1'
+const THINK_KEY = CHAT_THINK_KEY
+const SEARCH_KEY = CHAT_SEARCH_KEY
+const RICH_LAYOUT_KEY = CHAT_RICH_LAYOUT_KEY
 const STREAM_PAINT_MS = 100
 
 export type PendingChatFile = ChatFileMeta & { previewUrl?: string }
 
-function readFlag(key: string, fallback: boolean): boolean {
-  try {
-    const v = localStorage.getItem(key)
-    if (v === '0') return false
-    if (v === '1') return true
-  } catch {
-    /* ignore */
-  }
-  return fallback
-}
-
-function writeFlag(key: string, on: boolean) {
-  try {
-    localStorage.setItem(key, on ? '1' : '0')
-  } catch {
-    /* ignore */
-  }
-}
-
-function readPluginIds(): string[] | null {
-  try {
-    const raw = localStorage.getItem(PLUGINS_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) return null
-    return parsed.map(String).filter(Boolean).slice(0, 16)
-  } catch {
-    return null
-  }
-}
-
-function writePluginIds(ids: string[]) {
-  try {
-    localStorage.setItem(PLUGINS_KEY, JSON.stringify(ids.slice(0, 16)))
-  } catch {
-    /* ignore */
-  }
-}
+const readFlag = readChatFlag
+const writeFlag = writeChatFlag
+const readPluginIds = readChatPluginIds
+const writePluginIds = writeChatPluginIds
 
 export type ChatAuiSession = {
   threads: ChatThread[]

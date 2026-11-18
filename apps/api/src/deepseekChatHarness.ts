@@ -10,6 +10,7 @@ import { openaiBetaClient, openaiClient } from './openaiClient.js'
 import {
   DEEPSEEK_CHAT_HISTORY_LIMIT,
   DEEPSEEK_CHAT_MAX_TOKENS,
+  DEEPSEEK_CHAT_MAX_TOOL_ROUNDS,
   deepseekChatLlmExtras,
   deepseekChatModel,
   deepseekChatSupportsNativeWebTools,
@@ -35,7 +36,7 @@ import {
   type ChatWorkspaceStore,
 } from './deepseekChatWorkspace.js'
 
-export const DEEPSEEK_CHAT_MAX_TOOL_ROUNDS = 10
+export { DEEPSEEK_CHAT_MAX_TOOL_ROUNDS }
 
 export const DEEPSEEK_CHAT_WEB_TOOLS = [
   { type: 'deepseek_web_search' as const },

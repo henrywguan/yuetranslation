@@ -96,12 +96,56 @@ export function readLocalHistory(): ConversationTurn[] {
   }
 }
 
-export function writeLocalHistory(turns: ConversationTurn[]) {
+let pendingLocalWrite: ConversationTurn[] | null = null
+let localWriteHandle: number | null = null
+
+function commitLocalHistory(turns: ConversationTurn[]) {
   if (typeof window === 'undefined') return
   try {
     window.localStorage.setItem(LOCAL_KEY, JSON.stringify(turns.slice(0, MAX_TURNS)))
   } catch {
     /* quota */
+  }
+}
+
+/** Immediate local write (hydrate / tests). Prefer `persistHistory` for turn updates. */
+export function writeLocalHistory(turns: ConversationTurn[]) {
+  pendingLocalWrite = null
+  if (localWriteHandle != null && typeof window !== 'undefined') {
+    const ric = (
+      window as Window & { cancelIdleCallback?: (id: number) => void }
+    ).cancelIdleCallback
+    if (typeof ric === 'function') ric(localWriteHandle)
+    else window.clearTimeout(localWriteHandle)
+    localWriteHandle = null
+  }
+  commitLocalHistory(turns)
+}
+
+function scheduleLocalHistoryWrite(turns: ConversationTurn[]) {
+  pendingLocalWrite = turns
+  if (typeof window === 'undefined') {
+    commitLocalHistory(turns)
+    pendingLocalWrite = null
+    return
+  }
+  if (localWriteHandle != null) return
+  const run = () => {
+    localWriteHandle = null
+    const payload = pendingLocalWrite
+    pendingLocalWrite = null
+    if (!payload) return
+    commitLocalHistory(payload)
+  }
+  const ric = (
+    window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
+    }
+  ).requestIdleCallback
+  if (typeof ric === 'function') {
+    localWriteHandle = ric(run, { timeout: 400 })
+  } else {
+    localWriteHandle = window.setTimeout(run, 0)
   }
 }
 
@@ -112,10 +156,10 @@ export function setHistoryPersistLoggedIn(loggedIn: boolean) {
   persistLoggedIn = loggedIn
 }
 
-/** Write local always; debounce account sync when signed in. */
+/** Coalesce local disk writes; debounce account sync when signed in. */
 export function persistHistory(turns: ConversationTurn[]) {
   const next = expireHistoryTurns(turns).slice(0, MAX_TURNS)
-  writeLocalHistory(next)
+  scheduleLocalHistoryWrite(next)
   if (!persistLoggedIn) return
   if (persistTimer) clearTimeout(persistTimer)
   persistTimer = setTimeout(() => {

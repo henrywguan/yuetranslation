@@ -18,22 +18,19 @@ import { ChatSourcesList } from '../../../components/ChatShellExtras'
 import { DeepSeekMark } from '../../../components/DeepSeekMark'
 import { SpeakButton } from '../../../components/SpeakButton'
 import type { DeepseekChatPluginKeyId } from '../../../lib/api'
+import { consumeChatPrefill } from '../../../lib/chatExport'
 import {
   LIVE_REASONING_PAINT,
   type ChatSearchStep,
   type ChatSource,
 } from '../../../lib/chatHistory'
+import { CHAT_EMPTY_SUGGESTIONS } from '../../../lib/chatUiPrefs'
 import { chatSpeakLang, mergeDictateText } from '../../../lib/chatVoice'
 import { renderChatMarkdown } from '../../../lib/renderChatMarkdown'
 import { useChatAuiSession } from './ChatAuiRuntime'
 import { useAuiStockDark } from './useAuiStockDark'
 
-const SUGGESTIONS = [
-  'Explain quantum computing simply',
-  'Draft a polite follow-up email',
-  'Give me a 3-day city trip outline',
-  'Help me debug this error message',
-]
+const SUGGESTIONS = CHAT_EMPTY_SUGGESTIONS
 
 /** URL source parts on the current assistant message (1-indexed `[n]` chips). */
 function useMessageSources(): ChatSource[] {
@@ -284,6 +281,12 @@ function ComposerChrome() {
     refreshPlugins,
     setError,
   } = useChatAuiSession()
+
+  // Solo / Conversation handoff — classic ChatPage already consumed this; AUI is default.
+  useEffect(() => {
+    const prefill = consumeChatPrefill()
+    if (prefill) aui.composer.setText(prefill)
+  }, [aui.composer])
 
   const fallbackPlugins = [
     {
