@@ -55,6 +55,9 @@ assert.match(helpers, /entitlement\.allowed\?\.live/, 'canShowMetric optional-ch
 const store = readFileSync(join(here, 'store.ts'), 'utf8')
 assert.match(store, /normalizeEntitlement/, 'bootstrap normalizes entitlement')
 
+const meter = readFileSync(join(here, 'storeLiveMeter.ts'), 'utf8')
+assert.match(meter, /ctl\?\.get\(\)\.entitlement/, 'live meter catch optional-chains ctl (Vercel tsc)')
+
 const main = readFileSync(join(root, 'main.tsx'), 'utf8')
 assert.match(main, /AppErrorBoundary/, 'root wraps AppErrorBoundary so throws do not empty #root')
 
