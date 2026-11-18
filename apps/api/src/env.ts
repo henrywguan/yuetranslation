@@ -3,23 +3,31 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import dotenv from 'dotenv'
 
-const envPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.env')
+const apiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const envPath = path.join(apiDir, '.env')
+const envLocalPath = path.join(apiDir, '.env.local')
 
-/** Load apps/api/.env, overriding empty shell vars and stripping a UTF-8 BOM if present. */
-function loadApiEnv() {
-  if (!fs.existsSync(envPath)) {
-    dotenv.config({ path: envPath })
+/** Load one env file, overriding empty shell vars and stripping a UTF-8 BOM if present. */
+function loadEnvFile(filePath: string) {
+  if (!fs.existsSync(filePath)) {
+    dotenv.config({ path: filePath })
     return
   }
-  const raw = fs.readFileSync(envPath)
+  const raw = fs.readFileSync(filePath)
   // Windows editors sometimes save with a BOM; dotenv then misses OPENAI_API_KEY.
   const text = raw.toString('utf8').replace(/^\uFEFF/, '')
-  dotenv.config({ path: envPath, override: true })
+  dotenv.config({ path: filePath, override: true })
   // Re-parse BOM-stripped contents so keys always win over empty system env.
   const parsed = dotenv.parse(text)
   for (const [key, value] of Object.entries(parsed)) {
     process.env[key] = value
   }
+}
+
+/** Load apps/api/.env then apps/api/.env.local (local overrides; both gitignored). */
+function loadApiEnv() {
+  loadEnvFile(envPath)
+  loadEnvFile(envLocalPath)
 }
 
 loadApiEnv()
@@ -108,6 +116,11 @@ export const env = {
    * Same `id` as a generation preset (higgsfield/adobe/cursor) overrides that preset.
    */
   chatMcpServersJson: (process.env.YUE_CHAT_MCP_SERVERS || '').trim(),
+  /**
+   * Higgsfield platform API credentials (`KEY_ID:KEY_SECRET`) for Seedance / SDK.
+   * Server-side only — never expose as VITE_*. Prefer apps/api/.env.local.
+   */
+  hfCredentials: (process.env.HF_CREDENTIALS || '').trim(),
   /** Higgsfield MCP — default URL; Bearer required to enable the plugin. */
   chatMcpHiggsfieldUrl: trimUrl(
     process.env.YUE_CHAT_MCP_HIGGSFIELD_URL || 'https://mcp.higgsfield.ai/mcp',

@@ -2004,6 +2004,17 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   border: 1px solid var(--ds-divider);
 }
 
+.ds-md-video {
+  display: block;
+  max-width: min(100%, 28rem);
+  width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 0.65rem 0;
+  border: 1px solid var(--ds-divider);
+  background: #0b0b0b;
+}
+
 .ds-md-figure {
   margin: 0.75rem 0;
 }

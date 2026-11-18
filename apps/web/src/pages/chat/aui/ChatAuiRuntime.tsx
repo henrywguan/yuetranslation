@@ -574,6 +574,19 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
               schedulePaint()
             }
           },
+          onVideo: (video) => {
+            const alt = `Video · ${video.prompt.slice(0, 80)}`.replace(/[\[\]]/g, '')
+            const md = `\n\n![${alt}](${video.url})`
+            if (!assembled.includes(video.url)) {
+              assembled = `${assembled}${md}`.slice(0, MAX_CONTENT_CHARS)
+              thread = patchAssistantContent(thread, assistantId, assembled, {
+                reasoning: reasoning || undefined,
+                sources,
+                searchSteps: searchSteps.length ? searchSteps : undefined,
+              })
+              schedulePaint()
+            }
+          },
           onContentReplace: (text) => {
             assembled = text.slice(0, MAX_CONTENT_CHARS)
             thread = patchAssistantContent(thread, assistantId, assembled, {

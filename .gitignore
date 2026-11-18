@@ -4,7 +4,9 @@ dist-marketing/
 apps/web/dist/
 apps/api/dist/
 .env
+.env.local
 apps/api/.env
+apps/api/.env.local
 .DS_Store
 *.log
 .vite/

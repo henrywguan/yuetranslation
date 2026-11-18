@@ -92,6 +92,7 @@ export type DeepseekChatHarnessEvent =
   | { kind: 'search_step'; step: DeepseekChatSearchStep }
   | { kind: 'title'; title: string }
   | { kind: 'image'; url: string; prompt: string; id: string }
+  | { kind: 'video'; url: string; prompt: string; id: string }
   | { kind: 'workspace'; files: ChatWorkspaceFileWire[] }
 
 export type DeepseekChatHarnessOptions = {
@@ -449,6 +450,7 @@ export async function* streamDeepseekChatHarness(
   let deferredSearchRecovered = false
   const allSources = new Map<string, string>()
   const pendingImages: Array<{ url: string; prompt: string; id: string }> = []
+  const pendingVideos: Array<{ url: string; prompt: string; id: string }> = []
 
   for (let round = 0; round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS; round += 1) {
     if (opts.signal?.aborted) {
@@ -606,6 +608,9 @@ export async function* streamDeepseekChatHarness(
           onImage: (image) => {
             pendingImages.push(image)
           },
+          onVideo: (video) => {
+            pendingVideos.push(video)
+          },
           onWorkspaceWrite: (file) => {
             pendingWorkspaceWrites.push(file)
           },
@@ -619,6 +624,10 @@ export async function* streamDeepseekChatHarness(
       while (pendingImages.length) {
         const image = pendingImages.shift()!
         yield { kind: 'image', ...image }
+      }
+      while (pendingVideos.length) {
+        const video = pendingVideos.shift()!
+        yield { kind: 'video', ...video }
       }
       if (pendingWorkspaceWrites.length) {
         const files = pendingWorkspaceWrites.splice(0, pendingWorkspaceWrites.length)

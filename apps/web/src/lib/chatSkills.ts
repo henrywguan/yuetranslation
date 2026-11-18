@@ -51,6 +51,12 @@ export const CHAT_SKILLS: ChatSkill[] = [
     label: 'Generate image',
     prompt: 'Generate an image of: ',
   },
+  {
+    id: 'video',
+    slash: '/video',
+    label: 'Generate video',
+    prompt: 'Generate a short Seedance video of: ',
+  },
 ]
 
 export function filterChatSkills(draft: string): ChatSkill[] {

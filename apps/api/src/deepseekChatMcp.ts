@@ -12,6 +12,7 @@
  */
 import { env } from './env.js'
 import { chatImageConfiguredWith, chatImageProviderLabel } from './deepseekChatImage.js'
+import { chatVideoConfigured } from './deepseekChatVideo.js'
 import type { ChatPluginCredentials } from './deepseekChatPluginKeys.js'
 
 export type ChatPluginKind = 'builtin' | 'mcp'
@@ -207,6 +208,7 @@ export function listChatPlugins(creds?: ChatPluginCredentials): ChatPluginInfo[]
       : provider === 'openai'
         ? 'Create images with OpenAI Images (DALL·E / gpt-image) via generate_image.'
         : 'Create images via generate_image. Set GEMINI_API_KEY on the API (preferred) or add Gemini/OpenAI in Plugins → API keys.'
+  const videoOk = chatVideoConfigured()
   const builtins: ChatPluginInfo[] = [
     {
       id: 'image',
@@ -219,6 +221,20 @@ export function listChatPlugins(creds?: ChatPluginCredentials): ChatPluginInfo[]
       category: 'generation',
       auth: 'bearer',
       status: imageOk ? 'ready' : 'needs_token',
+    },
+    {
+      id: 'video',
+      name: 'Video generation (Seedance 2.5)',
+      description: videoOk
+        ? 'Create short videos with Higgsfield Seedance 2.5 via generate_video (server HF_CREDENTIALS).'
+        : 'Create short videos via generate_video. Set HF_CREDENTIALS (KEY_ID:KEY_SECRET) on the API.',
+      kind: 'builtin',
+      defaultEnabled: true,
+      configured: videoOk,
+      toolCount: 1,
+      category: 'generation',
+      auth: 'bearer',
+      status: videoOk ? 'ready' : 'needs_token',
     },
   ]
 
@@ -413,6 +429,40 @@ const IMAGE_TOOL: OpenAiTool = {
   },
 }
 
+const VIDEO_TOOL: OpenAiTool = {
+  type: 'function',
+  function: {
+    name: 'generate_video',
+    description:
+      'Generate a short video from a text prompt with Higgsfield Seedance 2.5 (billed). Return the video by including the provided markdown in your reply. Prefer for motion / cinematic clips; use generate_image for stills.',
+    parameters: {
+      type: 'object',
+      properties: {
+        prompt: { type: 'string', description: 'Detailed video prompt' },
+        duration: {
+          type: 'integer',
+          description: 'Seconds (4–15 in chat; default 5).',
+        },
+        resolution: {
+          type: 'string',
+          enum: ['480p', '720p', '1080p'],
+          description: 'Default 720p.',
+        },
+        aspect_ratio: {
+          type: 'string',
+          enum: ['16:9', '4:3', '1:1', '3:4', '9:16', '21:9'],
+          description: 'Default 16:9.',
+        },
+        generate_audio: {
+          type: 'boolean',
+          description: 'Include generated audio (default true).',
+        },
+      },
+      required: ['prompt'],
+    },
+  },
+}
+
 /**
  * Resolve enabled plugin ids → OpenAI function tools to merge into the harness.
  * `undefined` → default-enabled configured builtins; `[]` → explicitly none.
@@ -433,6 +483,9 @@ export async function buildPluginTools(
 
   if (enabled.has('image') && chatImageConfiguredWith(creds)) {
     tools.push(IMAGE_TOOL)
+  }
+  if (enabled.has('video') && chatVideoConfigured()) {
+    tools.push(VIDEO_TOOL)
   }
 
   for (const plugin of catalog) {

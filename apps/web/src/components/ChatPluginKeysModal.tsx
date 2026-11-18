@@ -27,7 +27,7 @@ const FIELDS: Array<{
     id: 'higgsfield',
     label: 'Higgsfield MCP',
     placeholder: 'Bearer token from Higgsfield MCP OAuth',
-    help: 'Paste a Bearer from your Higgsfield MCP session — bills your Higgsfield credits.',
+    help: 'Optional MCP Bearer for advanced Higgsfield tools. Seedance generate_video uses the server HF_CREDENTIALS key (not this field).',
   },
   {
     id: 'adobe',
