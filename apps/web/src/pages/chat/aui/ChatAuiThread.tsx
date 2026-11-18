@@ -590,7 +590,7 @@ export function ChatAuiThread() {
           </ThreadPrimitive.ViewportFooter>
         </ThreadPrimitive.Viewport>
 
-        <ThreadPrimitive.ScrollToBottom className="aui-thread-scroll-to-bottom">↓</ThreadPrimitive.ScrollToBottom>
+        <ThreadPrimitive.ScrollToBottom className="aui-scroll-bottom">↓</ThreadPrimitive.ScrollToBottom>
       </ThreadPrimitive.Root>
     </div>
   )
