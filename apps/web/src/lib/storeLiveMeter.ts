@@ -45,7 +45,7 @@ function flushLiveMeter() {
       }
       if (err?.code === 401 || err?.code === 402) {
         void ctl?.get().stopLive()
-        const raw = err.entitlement || ctl.get().entitlement
+        const raw = err.entitlement || ctl?.get().entitlement
         ctl?.set({
           error: err.message,
           entitlement: raw ? normalizeEntitlement(raw) : raw,
