@@ -45,6 +45,10 @@ const SAMPLES = [
   { lang: 'nl', voice: 'nl-NL-FennaNeural', xmlLang: 'nl-NL', text: 'Hallo — dit is je Nederlandse stem.' },
   { lang: 'ar', voice: 'ar-EG-SalmaNeural', xmlLang: 'ar-EG', text: 'أهلاً — ده صوتك بالعامية المصرية.' },
   { lang: 'arsa', voice: 'ar-SA-ZariyahNeural', xmlLang: 'ar-SA', text: 'مرحباً — هذا صوتك باللغة العربية الفصحى.' },
+  { lang: 'ta', voice: 'ta-IN-PallaviNeural', xmlLang: 'ta-IN', text: 'வணக்கம் — இது உங்கள் தமிழ்க் குரல்.' },
+  { lang: 'ptpt', voice: 'pt-PT-RaquelNeural', xmlLang: 'pt-PT', text: 'Olá — esta é a sua voz em português de Portugal.' },
+  { lang: 'tr', voice: 'tr-TR-EmelNeural', xmlLang: 'tr-TR', text: 'Merhaba — bu sizin Türkçe sesiniz.' },
+  { lang: 'bn', voice: 'bn-IN-TanishaaNeural', xmlLang: 'bn-IN', text: 'নমস্কার — এটি আপনার বাংলা কণ্ঠস্বর।' },
 ]
 
 function escapeXml(s) {

@@ -67,7 +67,7 @@ import {
   isViVoice,
   isThVoice,
   isLoVoice,
-  isKoVoice, isJaVoice, isIdVoice, isMsVoice, isPtVoice, isFrVoice, isHiVoice, isKmVoice, isMyVoice, isJvVoice, isItVoice, isDeVoice, isNlVoice, isArVoice, isArsaVoice,
+  isKoVoice, isJaVoice, isIdVoice, isMsVoice, isPtVoice, isFrVoice, isHiVoice, isKmVoice, isMyVoice, isJvVoice, isItVoice, isDeVoice, isNlVoice, isArVoice, isArsaVoice, isTaVoice, isPtptVoice, isTrVoice, isBnVoice,
   isYueVoice,
 } from './ttsVoices.js'
 import {
@@ -442,6 +442,8 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
                             ? 'id-ID'
                           : lang === 'ms' || lang === 'ms-MY' || lang === 'ms-my'
                             ? 'ms-MY'
+                          : lang === 'ptpt' || lang === 'pt-PT' || lang === 'pt-pt'
+                            ? 'pt-PT'
                           : lang === 'pt' || lang === 'pt-BR' || lang === 'pt-br'
                             ? 'pt-BR'
                           : lang === 'fr' || lang === 'fr-FR' || lang === 'fr-fr'
@@ -464,6 +466,12 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
                             ? 'ar-EG'
                           : lang === 'arsa' || lang === 'ar-SA' || lang === 'ar-sa'
                             ? 'ar-SA'
+                          : lang === 'ta' || lang === 'ta-IN' || lang === 'ta-in'
+                            ? 'ta-IN'
+                          : lang === 'tr' || lang === 'tr-TR' || lang === 'tr-tr'
+                            ? 'tr-TR'
+                          : lang === 'bn' || lang === 'bn-IN' || lang === 'bn-in'
+                            ? 'bn-IN'
                           : 'zh-HK'
     const audio = await synthesize(text, azureLang, {
       voice: voiceOverride,
@@ -493,6 +501,10 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredNl: ent.prefs?.ttsVoiceNl,
       preferredAr: ent.prefs?.ttsVoiceAr,
       preferredArsa: ent.prefs?.ttsVoiceArsa,
+      preferredTa: ent.prefs?.ttsVoiceTa,
+      preferredPtpt: ent.prefs?.ttsVoicePtpt,
+      preferredTr: ent.prefs?.ttsVoiceTr,
+      preferredBn: ent.prefs?.ttsVoiceBn,
       loud,
       performance,
     })
@@ -543,6 +555,10 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     tts_voice_nl?: string
     tts_voice_ar?: string
     tts_voice_arsa?: string
+    tts_voice_ta?: string
+    tts_voice_ptpt?: string
+    tts_voice_tr?: string
+    tts_voice_bn?: string
   } = {}
   if (body.ttsVoiceYue != null) {
     const v = String(body.ttsVoiceYue).trim()
@@ -736,6 +752,38 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     }
     patch.tts_voice_arsa = v
   }
+  if (body.ttsVoiceTa != null) {
+    const v = String(body.ttsVoiceTa).trim()
+    if (!isTaVoice(v)) {
+      res.status(400).json({ message: 'Invalid Tamil voice.' })
+      return
+    }
+    patch.tts_voice_ta = v
+  }
+  if (body.ttsVoicePtpt != null) {
+    const v = String(body.ttsVoicePtpt).trim()
+    if (!isPtptVoice(v)) {
+      res.status(400).json({ message: 'Invalid European Portuguese voice.' })
+      return
+    }
+    patch.tts_voice_ptpt = v
+  }
+  if (body.ttsVoiceTr != null) {
+    const v = String(body.ttsVoiceTr).trim()
+    if (!isTrVoice(v)) {
+      res.status(400).json({ message: 'Invalid Turkish voice.' })
+      return
+    }
+    patch.tts_voice_tr = v
+  }
+  if (body.ttsVoiceBn != null) {
+    const v = String(body.ttsVoiceBn).trim()
+    if (!isBnVoice(v)) {
+      res.status(400).json({ message: 'Invalid Bengali voice.' })
+      return
+    }
+    patch.tts_voice_bn = v
+  }
   if (!Object.keys(patch).length) {
     res.status(400).json({ message: 'No voice preferences provided.' })
     return
@@ -773,6 +821,10 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
         ttsVoiceNl: patch.tts_voice_nl || ent.prefs.ttsVoiceNl,
         ttsVoiceAr: patch.tts_voice_ar || ent.prefs.ttsVoiceAr,
         ttsVoiceArsa: patch.tts_voice_arsa || ent.prefs.ttsVoiceArsa,
+        ttsVoiceTa: patch.tts_voice_ta || ent.prefs.ttsVoiceTa,
+        ttsVoicePtpt: patch.tts_voice_ptpt || ent.prefs.ttsVoicePtpt,
+        ttsVoiceTr: patch.tts_voice_tr || ent.prefs.ttsVoiceTr,
+        ttsVoiceBn: patch.tts_voice_bn || ent.prefs.ttsVoiceBn,
         autoSpeak: ent.prefs.autoSpeak,
         primaryLang: ent.prefs.primaryLang,
         username: ent.prefs.username,

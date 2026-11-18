@@ -4,7 +4,7 @@ import type { PartnerPerformance } from './practicePartnerPerformance'
 import { ensureSharedAudioContext } from './audioReactive'
 import { isAppleTouchDevice } from './mediaAccess'
 import type { Lang } from './types'
-import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalEsesVoice, readLocalViVoice, readLocalThVoice, readLocalLoVoice, readLocalKoVoice, readLocalJaVoice, readLocalIdVoice, readLocalMsVoice, readLocalPtVoice, readLocalFrVoice, readLocalHiVoice, readLocalKmVoice, readLocalMyVoice, readLocalJvVoice, readLocalItVoice, readLocalDeVoice, readLocalNlVoice, readLocalArVoice, readLocalArsaVoice, readLocalYueVoice } from './ttsVoices'
+import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalEsesVoice, readLocalViVoice, readLocalThVoice, readLocalLoVoice, readLocalKoVoice, readLocalJaVoice, readLocalIdVoice, readLocalMsVoice, readLocalPtVoice, readLocalFrVoice, readLocalHiVoice, readLocalKmVoice, readLocalMyVoice, readLocalJvVoice, readLocalItVoice, readLocalDeVoice, readLocalNlVoice, readLocalArVoice, readLocalArsaVoice, readLocalTaVoice, readLocalPtptVoice, readLocalTrVoice, readLocalBnVoice, readLocalYueVoice } from './ttsVoices'
 
 /** Practice Partner / fill-the-room — HTML volume caps at 1; Web Audio can go higher. */
 const LOUD_PLAYBACK_GAIN = 1.85
@@ -419,6 +419,10 @@ function browserLangTag(lang: Lang): string {
   if (lang === 'nl') return 'nl-NL'
   if (lang === 'ar') return 'ar-EG'
   if (lang === 'arsa') return 'ar-SA'
+  if (lang === 'ta') return 'ta-IN'
+  if (lang === 'ptpt') return 'pt-PT'
+  if (lang === 'tr') return 'tr-TR'
+  if (lang === 'bn') return 'bn-IN'
   return 'en-US'
 }
 
@@ -519,6 +523,10 @@ function preferredVoiceFor(lang: Lang, override?: string | null): string | null 
   if (lang === 'nl') return readLocalNlVoice()
   if (lang === 'ar') return readLocalArVoice()
   if (lang === 'arsa') return readLocalArsaVoice()
+  if (lang === 'ta') return readLocalTaVoice()
+  if (lang === 'ptpt') return readLocalPtptVoice()
+  if (lang === 'tr') return readLocalTrVoice()
+  if (lang === 'bn') return readLocalBnVoice()
   return readLocalYueVoice()
 }
 

@@ -50,6 +50,10 @@ assert.equal(appleNeedsAzureStt('arsa'), false, 'arsa stays on Web Speech on iPh
 assert.equal(appleLiveUsesWebSpeech('nl'), true, 'nl mic on iPhone uses Web Speech')
 assert.equal(appleLiveUsesWebSpeech('ar'), true, 'ar mic on iPhone uses Web Speech')
 assert.equal(appleLiveUsesWebSpeech('arsa'), true, 'arsa mic on iPhone uses Web Speech')
+for (const lang of ['ta', 'ptpt', 'tr', 'bn'] as const) {
+  assert.equal(appleNeedsAzureStt(lang), false, `${lang} stays on Web Speech on iPhone`)
+  assert.equal(appleLiveUsesWebSpeech(lang), true, `${lang} mic on iPhone uses Web Speech`)
+}
 assert.equal(appleNeedsAzureStt('ja'), false, 'ja stays on Web Speech on iPhone')
 assert.equal(appleLiveUsesWebSpeech('ja'), true, 'ja mic on iPhone uses Web Speech')
 assert.equal(appleNeedsAzureStt('wuu'), true)

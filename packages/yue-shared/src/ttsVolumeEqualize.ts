@@ -40,6 +40,10 @@ export type TtsEqualizeLang =
   | 'nl'
   | 'ar'
   | 'arsa'
+  | 'ta'
+  | 'ptpt'
+  | 'tr'
+  | 'bn'
 
 /**
  * SSML `prosody volume` — Azure’s useful max boost is `+50%`.
@@ -72,6 +76,10 @@ export const TTS_EQUALIZE_VOLUME: Record<TtsEqualizeLang, string | null> = {
   nl: '+50%',
   ar: '+50%',
   arsa: '+50%',
+  ta: '+50%',
+  ptpt: '+50%',
+  tr: '+50%',
+  bn: '+50%',
 }
 
 /**
@@ -106,6 +114,10 @@ export const TTS_EQUALIZE_PLAYBACK_GAIN: Record<TtsEqualizeLang, number> = {
   nl: 2.25,
   ar: 1.15,
   arsa: 1.35,
+  ta: 2.0,
+  ptpt: 1.15,
+  tr: 1.9,
+  bn: 2.0,
 }
 
 /** Normalize API / client lang codes to an equalize key. */
@@ -126,6 +138,7 @@ export function equalizeLangKey(lang: string): TtsEqualizeLang | null {
   if (l === 'ja' || l === 'ja-jp') return 'ja'
   if (l === 'id' || l === 'id-id') return 'id'
   if (l === 'ms' || l === 'ms-my') return 'ms'
+  if (l === 'ptpt' || l === 'pt-pt') return 'ptpt'
   if (l === 'pt' || l === 'pt-br') return 'pt'
   if (l === 'fr' || l === 'fr-fr') return 'fr'
   if (l === 'hi' || l === 'hi-in') return 'hi'
@@ -137,6 +150,9 @@ export function equalizeLangKey(lang: string): TtsEqualizeLang | null {
   if (l === 'nl' || l === 'nl-nl') return 'nl'
   if (l === 'ar' || l === 'ar-eg') return 'ar'
   if (l === 'arsa' || l === 'ar-sa') return 'arsa'
+  if (l === 'ta' || l === 'ta-in') return 'ta'
+  if (l === 'tr' || l === 'tr-tr') return 'tr'
+  if (l === 'bn' || l === 'bn-in') return 'bn'
   return null
 }
 

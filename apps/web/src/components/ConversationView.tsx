@@ -25,6 +25,10 @@ import { ItText } from './ItText'
 import { DeText } from './DeText'
 import { NlText } from './NlText'
 import { ArText } from './ArText'
+import { TaText } from './TaText'
+import { PtptText } from './PtptText'
+import { TrText } from './TrText'
+import { BnText } from './BnText'
 import { InkSettle } from './InkSettle'
 import { LangLabelButton } from './LangLabelButton'
 import { LiveHoldButton } from './LiveHoldButton'
@@ -63,6 +67,10 @@ function langPlaceholder(lang: Lang): string {
   if (lang === 'nl') return ui.dirDutch.en
   if (lang === 'ar') return ui.dirEgyptianArabic.en
   if (lang === 'arsa') return ui.dirModernStandardArabic.en
+  if (lang === 'ta') return ui.dirTamil.en
+  if (lang === 'ptpt') return ui.dirEuropeanPortuguese.en
+  if (lang === 'tr') return ui.dirTurkish.en
+  if (lang === 'bn') return ui.dirBengali.en
   if (lang === 'cmn') return ui.dirMandarin.zh
   if (lang === 'wuu') return ui.dirShanghainese.zh
   if (lang === 'sichuan') return ui.dirSichuanese.zh
@@ -279,6 +287,18 @@ export function ConversationView() {
     }
     if (lang === 'arsa') {
       return <ArText variant="arsa" text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'ta') {
+      return <TaText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'ptpt') {
+      return <PtptText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'tr') {
+      return <TrText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'bn') {
+      return <BnText text={text} className={className} onActivate={onActivate} />
     }
     if (lang === 'cmn') {
       return (

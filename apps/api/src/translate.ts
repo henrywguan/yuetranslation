@@ -34,6 +34,10 @@ import { translateGerman } from './translateGerman.js'
 import { translateDutch } from './translateDutch.js'
 import { translateEgyptianArabic } from './translateEgyptianArabic.js'
 import { translateModernStandardArabic } from './translateModernStandardArabic.js'
+import { translateTamil } from './translateTamil.js'
+import { translateEuropeanPortuguese } from './translateEuropeanPortuguese.js'
+import { translateTurkish } from './translateTurkish.js'
+import { translateBengali } from './translateBengali.js'
 import { translateCebuano, translateIlocano, translateBikol } from './translatePhilippineRegional.js'
 
 /** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
@@ -56,7 +60,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ceb', 'ilo', 'bcl'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'ceb', 'ilo', 'bcl'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -96,7 +100,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ceb' | 'ilo' | 'bcl'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'ceb' | 'ilo' | 'bcl'
 
 type TranslateResult = {
   text: string
@@ -3520,6 +3524,62 @@ export async function translate(input: unknown) {
       await translateModernStandardArabic({
         from: from as 'en' | 'arsa',
         to: to as 'en' | 'arsa',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'ta' || (from === 'ta' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateTamil({
+        from: from as 'en' | 'ta',
+        to: to as 'en' | 'ta',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'ptpt' || (from === 'ptpt' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateEuropeanPortuguese({
+        from: from as 'en' | 'ptpt',
+        to: to as 'en' | 'ptpt',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'tr' || (from === 'tr' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateTurkish({
+        from: from as 'en' | 'tr',
+        to: to as 'en' | 'tr',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+
+  if (to === 'bn' || (from === 'bn' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateBengali({
+        from: from as 'en' | 'bn',
+        to: to as 'en' | 'bn',
         text,
         stage,
         wantAlts,

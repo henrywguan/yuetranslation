@@ -3,6 +3,10 @@ import { buildLocalLatinBreakdown, isLatinDetailLang } from './localLatinBreakdo
 
 assert.equal(isLatinDetailLang('en'), true)
 assert.equal(isLatinDetailLang('nl'), true)
+assert.equal(isLatinDetailLang('ptpt'), true)
+assert.equal(isLatinDetailLang('tr'), true)
+assert.equal(isLatinDetailLang('ta'), false)
+assert.equal(isLatinDetailLang('bn'), false)
 assert.equal(isLatinDetailLang('fr'), true)
 assert.equal(isLatinDetailLang('id'), true)
 assert.equal(isLatinDetailLang('pt'), true)

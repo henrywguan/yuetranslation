@@ -31,7 +31,11 @@ export function isVoiceLang(lang: string | null | undefined): lang is VoiceLang 
     lang === 'de' ||
     lang === 'nl' ||
     lang === 'ar' ||
-    lang === 'arsa'
+    lang === 'arsa' ||
+    lang === 'ta' ||
+    lang === 'ptpt' ||
+    lang === 'tr' ||
+    lang === 'bn'
   )
 }
 

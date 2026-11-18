@@ -36,6 +36,10 @@ import { ItText } from './ItText'
 import { DeText } from './DeText'
 import { NlText } from './NlText'
 import { ArText } from './ArText'
+import { TaText } from './TaText'
+import { PtptText } from './PtptText'
+import { TrText } from './TrText'
+import { BnText } from './BnText'
 import { JyutRuby, JyutSyllable } from './JyutRuby'
 import { PinyinRuby, PinyinSyllable } from './PinyinRuby'
 import { JpPop } from './JpPop'
@@ -127,6 +131,10 @@ function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'nl') return 'nl'
   if (detailLang === 'ar') return 'ar'
   if (detailLang === 'arsa') return 'arsa'
+  if (detailLang === 'ta') return 'ta'
+  if (detailLang === 'ptpt') return 'ptpt'
+  if (detailLang === 'tr') return 'tr'
+  if (detailLang === 'bn') return 'bn'
   if (detailLang === 'ceb') return 'ceb'
   if (detailLang === 'ilo') return 'ilo'
   if (detailLang === 'bcl') return 'bcl'
@@ -461,7 +469,11 @@ export function CharacterBreakdownHost() {
     detailLang === 'de' ||
     detailLang === 'nl' ||
     detailLang === 'ar' ||
-    detailLang === 'arsa'
+    detailLang === 'arsa' ||
+    detailLang === 'ta' ||
+    detailLang === 'ptpt' ||
+    detailLang === 'tr' ||
+    detailLang === 'bn'
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
   const isLatinDetail =
@@ -702,6 +714,14 @@ export function CharacterBreakdownHost() {
               <DeText text={topLabel} showDetail />
             ) : detailLang === 'ar' || detailLang === 'arsa' ? (
               <ArText variant={detailLang} text={topLabel} showDetail />
+            ) : detailLang === 'ta' ? (
+              <TaText text={topLabel} showDetail />
+            ) : detailLang === 'ptpt' ? (
+              <PtptText text={topLabel} showDetail />
+            ) : detailLang === 'tr' ? (
+              <TrText text={topLabel} showDetail />
+            ) : detailLang === 'bn' ? (
+              <BnText text={topLabel} showDetail />
             ) : (
               <NlText text={topLabel} showDetail />
             )

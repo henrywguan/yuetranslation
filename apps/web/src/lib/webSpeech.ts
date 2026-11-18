@@ -52,6 +52,10 @@ export function createWebSpeechSession(
   let nlLocaleIndex = 0
   let arLocaleIndex = 0
   let arsaLocaleIndex = 0
+  let taLocaleIndex = 0
+  let ptptLocaleIndex = 0
+  let trLocaleIndex = 0
+  let bnLocaleIndex = 0
   const bilingualYueEn = Boolean(opts?.bilingualYueEn)
   const echo = createEchoGuard()
   const apple = isAppleTouchDevice()
@@ -83,6 +87,11 @@ export function createWebSpeechSession(
   // Bare `ar` is a generic Web Speech tag fallback only; ar-EG and ar-SA never swap.
   const arLocales = ['ar-EG', 'ar']
   const arsaLocales = ['ar-SA', 'ar']
+  const taLocales = ['ta-IN', 'ta']
+  // European Portuguese pane stays `ptpt`; bare `pt` is only a Web Speech tag fallback (never pt-BR).
+  const ptptLocales = ['pt-PT', 'pt']
+  const trLocales = ['tr-TR', 'tr']
+  const bnLocales = ['bn-IN', 'bn']
 
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
   const cmnLocale = () => cmnLocales[cmnLocaleIndex % cmnLocales.length]
@@ -109,6 +118,10 @@ export function createWebSpeechSession(
   const nlLocale = () => nlLocales[nlLocaleIndex % nlLocales.length]
   const arLocale = () => arLocales[arLocaleIndex % arLocales.length]
   const arsaLocale = () => arsaLocales[arsaLocaleIndex % arsaLocales.length]
+  const taLocale = () => taLocales[taLocaleIndex % taLocales.length]
+  const ptptLocale = () => ptptLocales[ptptLocaleIndex % ptptLocales.length]
+  const trLocale = () => trLocales[trLocaleIndex % trLocales.length]
+  const bnLocale = () => bnLocales[bnLocaleIndex % bnLocales.length]
 
   const resolveRecLang = (): string => {
     if (bilingualYueEn && activeLang === 'en') return 'en-US'
@@ -137,6 +150,10 @@ export function createWebSpeechSession(
     if (activeLang === 'nl') return nlLocale()
     if (activeLang === 'ar') return arLocale()
     if (activeLang === 'arsa') return arsaLocale()
+    if (activeLang === 'ta') return taLocale()
+    if (activeLang === 'ptpt') return ptptLocale()
+    if (activeLang === 'tr') return trLocale()
+    if (activeLang === 'bn') return bnLocale()
     return 'en-US'
   }
 
@@ -314,6 +331,26 @@ export function createWebSpeechSession(
         queueMicrotask(() => startOne())
         return
       }
+      if (localeRejected && activeLang === 'ta' && taLocaleIndex < taLocales.length - 1) {
+        taLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'ptpt' && ptptLocaleIndex < ptptLocales.length - 1) {
+        ptptLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'tr' && trLocaleIndex < trLocales.length - 1) {
+        trLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'bn' && bnLocaleIndex < bnLocales.length - 1) {
+        bnLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
       if (e.error === 'not-allowed') {
         stopped = true
         handlers.onError('Microphone permission denied. Allow mic access and try again.')
@@ -413,6 +450,10 @@ export function createWebSpeechSession(
       nlLocaleIndex = 0
       arLocaleIndex = 0
       arsaLocaleIndex = 0
+      taLocaleIndex = 0
+      ptptLocaleIndex = 0
+      trLocaleIndex = 0
+      bnLocaleIndex = 0
       startOne()
     },
     async stop() {

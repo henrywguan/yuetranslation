@@ -29,6 +29,13 @@ export const DEFAULT_DE_VOICE = 'de-DE-KatjaNeural';
 export const DEFAULT_NL_VOICE = 'nl-NL-FennaNeural';
 export const DEFAULT_AR_VOICE = 'ar-EG-SalmaNeural';
 export const DEFAULT_ARSA_VOICE = 'ar-SA-ZariyahNeural';
+/** Tamil (India) — Azure locale ta-IN. */
+export const DEFAULT_TA_VOICE = 'ta-IN-PallaviNeural';
+/** European Portuguese (Portugal) — always the `ptpt` code. Never Brazil. */
+export const DEFAULT_PTPT_VOICE = 'pt-PT-RaquelNeural';
+export const DEFAULT_TR_VOICE = 'tr-TR-EmelNeural';
+/** Bengali (India) — Azure locale bn-IN. */
+export const DEFAULT_BN_VOICE = 'bn-IN-TanishaaNeural';
 export const YUE_VOICES = [
     {
         id: 'zh-HK-HiuMaanNeural',
@@ -483,6 +490,78 @@ export const ARSA_VOICES = [
         gender: 'male',
     },
 ];
+export const TA_VOICES = [
+    {
+        id: 'ta-IN-PallaviNeural',
+        lang: 'ta',
+        xmlLang: 'ta-IN',
+        labelEn: 'Pallavi · Female',
+        labelZh: 'Pallavi · 女聲',
+        gender: 'female',
+    },
+    {
+        id: 'ta-IN-ValluvarNeural',
+        lang: 'ta',
+        xmlLang: 'ta-IN',
+        labelEn: 'Valluvar · Male',
+        labelZh: 'Valluvar · 男聲',
+        gender: 'male',
+    },
+];
+export const PTPT_VOICES = [
+    {
+        id: 'pt-PT-RaquelNeural',
+        lang: 'ptpt',
+        xmlLang: 'pt-PT',
+        labelEn: 'Raquel · Female',
+        labelZh: 'Raquel · 女聲',
+        gender: 'female',
+    },
+    {
+        id: 'pt-PT-DuarteNeural',
+        lang: 'ptpt',
+        xmlLang: 'pt-PT',
+        labelEn: 'Duarte · Male',
+        labelZh: 'Duarte · 男聲',
+        gender: 'male',
+    },
+];
+export const TR_VOICES = [
+    {
+        id: 'tr-TR-EmelNeural',
+        lang: 'tr',
+        xmlLang: 'tr-TR',
+        labelEn: 'Emel · Female',
+        labelZh: 'Emel · 女聲',
+        gender: 'female',
+    },
+    {
+        id: 'tr-TR-AhmetNeural',
+        lang: 'tr',
+        xmlLang: 'tr-TR',
+        labelEn: 'Ahmet · Male',
+        labelZh: 'Ahmet · 男聲',
+        gender: 'male',
+    },
+];
+export const BN_VOICES = [
+    {
+        id: 'bn-IN-TanishaaNeural',
+        lang: 'bn',
+        xmlLang: 'bn-IN',
+        labelEn: 'Tanishaa · Female',
+        labelZh: 'Tanishaa · 女聲',
+        gender: 'female',
+    },
+    {
+        id: 'bn-IN-BashkarNeural',
+        lang: 'bn',
+        xmlLang: 'bn-IN',
+        labelEn: 'Bashkar · Male',
+        labelZh: 'Bashkar · 男聲',
+        gender: 'male',
+    },
+];
 export const CMN_VOICES = [
     {
         id: 'zh-CN-XiaoxiaoNeural',
@@ -555,6 +634,10 @@ const DE_SET = new Set(DE_VOICES.map((v) => v.id));
 const NL_SET = new Set(NL_VOICES.map((v) => v.id));
 const AR_SET = new Set(AR_VOICES.map((v) => v.id));
 const ARSA_SET = new Set(ARSA_VOICES.map((v) => v.id));
+const TA_SET = new Set(TA_VOICES.map((v) => v.id));
+const PTPT_SET = new Set(PTPT_VOICES.map((v) => v.id));
+const TR_SET = new Set(TR_VOICES.map((v) => v.id));
+const BN_SET = new Set(BN_VOICES.map((v) => v.id));
 const ALL = new Map([
     ...YUE_VOICES,
     ...EN_VOICES,
@@ -582,6 +665,10 @@ const ALL = new Map([
     ...NL_VOICES,
     ...AR_VOICES,
     ...ARSA_VOICES,
+    ...TA_VOICES,
+    ...PTPT_VOICES,
+    ...TR_VOICES,
+    ...BN_VOICES,
 ].map((v) => [v.id, v]));
 export function isYueVoice(id) {
     return YUE_SET.has(id);
@@ -739,11 +826,35 @@ export function resolveArVoice(id) {
 export function resolveArsaVoice(id) {
     return id && isArsaVoice(id) ? id : DEFAULT_ARSA_VOICE;
 }
+export function isTaVoice(id) {
+    return TA_SET.has(id);
+}
+export function resolveTaVoice(id) {
+    return id && isTaVoice(id) ? id : DEFAULT_TA_VOICE;
+}
+export function isPtptVoice(id) {
+    return PTPT_SET.has(id);
+}
+export function resolvePtptVoice(id) {
+    return id && isPtptVoice(id) ? id : DEFAULT_PTPT_VOICE;
+}
+export function isTrVoice(id) {
+    return TR_SET.has(id);
+}
+export function resolveTrVoice(id) {
+    return id && isTrVoice(id) ? id : DEFAULT_TR_VOICE;
+}
+export function isBnVoice(id) {
+    return BN_SET.has(id);
+}
+export function resolveBnVoice(id) {
+    return id && isBnVoice(id) ? id : DEFAULT_BN_VOICE;
+}
 export function voiceMeta(id) {
     return ALL.get(id);
 }
 /** Pick Azure voice + xml:lang for a speak request. */
-export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, preferredWuu, preferredSichuan, preferredTl, preferredEs, override, preferredVi, preferredEses, preferredTh, preferredLo, preferredKo, preferredJa, preferredId, preferredMs, preferredPt, preferredFr, preferredHi, preferredKm, preferredMy, preferredJv, preferredIt, preferredDe, preferredNl, preferredAr, preferredArsa) {
+export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, preferredWuu, preferredSichuan, preferredTl, preferredEs, override, preferredVi, preferredEses, preferredTh, preferredLo, preferredKo, preferredJa, preferredId, preferredMs, preferredPt, preferredFr, preferredHi, preferredKm, preferredMy, preferredJv, preferredIt, preferredDe, preferredNl, preferredAr, preferredArsa, preferredTa, preferredPtpt, preferredTr, preferredBn) {
     const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU';
     const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans';
     const isWuu = lang === 'wuu' || lang === 'wuu-CN';
@@ -771,6 +882,11 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
     const isNl = lang === 'nl' || lang === 'nl-NL' || lang === 'nl-nl';
     const isAr = lang === 'ar' || lang === 'ar-EG' || lang === 'ar-eg';
     const isArsa = lang === 'arsa' || lang === 'ar-SA' || lang === 'ar-sa';
+    const isTa = lang === 'ta' || lang === 'ta-IN' || lang === 'ta-in';
+    /** European Portuguese only — pt-BR belongs to `isPt`, never here. */
+    const isPtpt = lang === 'ptpt' || lang === 'pt-PT' || lang === 'pt-pt';
+    const isTr = lang === 'tr' || lang === 'tr-TR' || lang === 'tr-tr';
+    const isBn = lang === 'bn' || lang === 'bn-IN' || lang === 'bn-in';
     if (override) {
         const meta = voiceMeta(override);
         if (meta) {
@@ -824,6 +940,14 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
                 return { voice: meta.id, xmlLang: meta.xmlLang };
             if (isArsa && meta.lang === 'arsa')
                 return { voice: meta.id, xmlLang: meta.xmlLang };
+            if (isTa && meta.lang === 'ta')
+                return { voice: meta.id, xmlLang: meta.xmlLang };
+            if (isPtpt && meta.lang === 'ptpt')
+                return { voice: meta.id, xmlLang: meta.xmlLang };
+            if (isTr && meta.lang === 'tr')
+                return { voice: meta.id, xmlLang: meta.xmlLang };
+            if (isBn && meta.lang === 'bn')
+                return { voice: meta.id, xmlLang: meta.xmlLang };
             if (!isEn &&
                 !isCmn &&
                 !isWuu &&
@@ -849,6 +973,10 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
                 !isNl &&
                 !isAr &&
                 !isArsa &&
+                !isTa &&
+                !isPtpt &&
+                !isTr &&
+                !isBn &&
                 meta.lang === 'yue') {
                 return { voice: meta.id, xmlLang: meta.xmlLang };
             }
@@ -954,6 +1082,22 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
         const id = resolveArsaVoice(preferredArsa);
         return { voice: id, xmlLang: voiceMeta(id).xmlLang };
     }
+    if (isTa) {
+        const id = resolveTaVoice(preferredTa);
+        return { voice: id, xmlLang: voiceMeta(id).xmlLang };
+    }
+    if (isPtpt) {
+        const id = resolvePtptVoice(preferredPtpt);
+        return { voice: id, xmlLang: voiceMeta(id).xmlLang };
+    }
+    if (isTr) {
+        const id = resolveTrVoice(preferredTr);
+        return { voice: id, xmlLang: voiceMeta(id).xmlLang };
+    }
+    if (isBn) {
+        const id = resolveBnVoice(preferredBn);
+        return { voice: id, xmlLang: voiceMeta(id).xmlLang };
+    }
     const id = resolveYueVoice(preferredYue);
     return { voice: id, xmlLang: voiceMeta(id).xmlLang };
 }
@@ -983,3 +1127,7 @@ export const PREVIEW_DE = 'Hallo — das ist Ihre deutsche Stimme.';
 export const PREVIEW_NL = 'Hallo — dit is je Nederlandse stem.';
 export const PREVIEW_AR = 'أهلاً — ده صوتك بالعامية المصرية.';
 export const PREVIEW_ARSA = 'مرحباً — هذا صوتك باللغة العربية الفصحى.';
+export const PREVIEW_TA = 'வணக்கம் — இது உங்கள் தமிழ்க் குரல்.';
+export const PREVIEW_PTPT = 'Olá — esta é a sua voz em português de Portugal.';
+export const PREVIEW_TR = 'Merhaba — bu sizin Türkçe sesiniz.';
+export const PREVIEW_BN = 'নমস্কার — এটি আপনার বাংলা কণ্ঠস্বর।';

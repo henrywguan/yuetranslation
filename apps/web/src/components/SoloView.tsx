@@ -59,6 +59,10 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'nl') return 'Typ of spreek Nederlands…'
   if (lang === 'ar') return 'اكتب أو اتكلم بالمصري…'
   if (lang === 'arsa') return 'اكتب أو تحدّث بالعربية الفصحى…'
+  if (lang === 'ta') return 'தமிழில் தட்டச்சு செய்யுங்கள் அல்லது பேசுங்கள்…'
+  if (lang === 'ptpt') return 'Escreva ou fale em português (Portugal)…'
+  if (lang === 'tr') return 'Türkçe yazın ya da konuşun…'
+  if (lang === 'bn') return 'বাংলায় টাইপ করুন বা বলুন…'
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
   if (lang === 'bcl') return 'I-type nin Bikol…'
@@ -93,6 +97,10 @@ function isRubyDisplayLang(lang: Lang): boolean {
     lang === 'nl' ||
     lang === 'ar' ||
     lang === 'arsa' ||
+    lang === 'ta' ||
+    lang === 'ptpt' ||
+    lang === 'tr' ||
+    lang === 'bn' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'
@@ -132,6 +140,10 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'nl') return 'Speak Dutch with the mic'
   if (lang === 'ar') return 'Speak Egyptian Arabic with the mic'
   if (lang === 'arsa') return 'Speak Modern Standard Arabic with the mic'
+  if (lang === 'ta') return 'Speak Tamil with the mic'
+  if (lang === 'ptpt') return 'Speak European Portuguese with the mic'
+  if (lang === 'tr') return 'Speak Turkish with the mic'
+  if (lang === 'bn') return 'Speak Bengali with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
   if (lang === 'sichuan') return 'Speak Sichuanese with the mic'

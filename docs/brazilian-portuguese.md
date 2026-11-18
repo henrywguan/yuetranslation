@@ -1,6 +1,6 @@
 # Brazilian Portuguese / Português (Brasil)
 
-Target variety for JyutTranslate when lang code is **`pt`**: colloquial **Brazilian Portuguese** (pt-BR), not European Portuguese (pt-PT).
+Target variety for JyutTranslate when lang code is **`pt`**: colloquial **Brazilian Portuguese** (pt-BR), not European Portuguese (pt-PT) — that is the separate peer code **`ptpt`** ([european-portuguese.md](european-portuguese.md)).
 
 Azure Speech locale: **`pt-BR`** (TTS `pt-BR-FranciscaNeural`, `pt-BR-AntonioNeural`).
 

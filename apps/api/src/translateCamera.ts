@@ -9,7 +9,7 @@ import {
 } from './canto/opencc.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'ceb' | 'ilo' | 'bcl'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -194,6 +194,26 @@ function isModernStandardArabicTarget(to: CameraLang): boolean {
 
 const ARABIC_SCRIPT = /[\u0600-\u06FF]/
 
+function isTamilTarget(to: CameraLang): boolean {
+  return to === 'ta'
+}
+
+/** European Portuguese only — Brazilian stays `isBrazilianPortugueseTarget`. */
+function isEuropeanPortugueseTarget(to: CameraLang): boolean {
+  return to === 'ptpt'
+}
+
+function isTurkishTarget(to: CameraLang): boolean {
+  return to === 'tr'
+}
+
+function isBengaliTarget(to: CameraLang): boolean {
+  return to === 'bn'
+}
+
+const TAMIL_SCRIPT = /[\u0B80-\u0BFF]/
+const BENGALI_SCRIPT = /[\u0980-\u09FF]/
+
 /** Camera Japanese: kana, or short kanji compounds (not long Chinese-only lines). */
 function looksLikeCameraJapanese(t: string): boolean {
   if (/[\u3040-\u309F\u30A0-\u30FF\uFF66-\uFF9D]/.test(t)) return true
@@ -247,6 +267,10 @@ function sanitizeCameraTranslation(to: CameraLang, translated: string, source: s
   if (isDutchTarget(to) && hasHan(t)) return null
   if (isEgyptianArabicTarget(to) && (hasHan(t) || !ARABIC_SCRIPT.test(t))) return null
   if (isModernStandardArabicTarget(to) && (hasHan(t) || !ARABIC_SCRIPT.test(t))) return null
+  if (isTamilTarget(to) && (hasHan(t) || !TAMIL_SCRIPT.test(t))) return null
+  if (isEuropeanPortugueseTarget(to) && hasHan(t)) return null
+  if (isTurkishTarget(to) && hasHan(t)) return null
+  if (isBengaliTarget(to) && (hasHan(t) || !BENGALI_SCRIPT.test(t))) return null
   if (isLatinPhilippineRegionalTarget(to) && hasHan(t)) return null
   return t
 }
@@ -726,6 +750,93 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .join('\n')
   }
 
+  if (to === 'ta') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Tamil (தமிழ், ta-IN).',
+      'Write for Tamil readers in Tamil Nadu / India: everyday readable Tamil as on friendly shop signs and notices — not stiff literary செந்தமிழ் unless the source is official.',
+      'Use Tamil script only. Never Latin/Tanglish as the main line, never ISO 15919 or other romanization, never Chinese characters, never invented ASCII tone digits, never IPA.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → செக்-இன்; Luggage → பயணப் பைகள்.',
+      '- Safety: Wet floor → ஈரமான தரை; Caution → கவனம்.',
+      '- Food/menus: keep dish names natural (இட்லி, தோசை, சாம்பார்); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Tamil output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Tamil>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'ptpt') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural European Portuguese (Portugal, pt-PT).',
+      'Write for readers in Portugal: everyday Portugal wording — NOT Brazilian Portuguese (never ônibus, celular, trem, banheiro, café da manhã).',
+      'Use European lexicon (autocarro, telemóvel, comboio, casa de banho, pequeno-almoço) and modern AO90 Portugal spelling.',
+      'Use Latin script only. ALWAYS include correct Portuguese accents (á à â ã é ê í ó ô õ ú ç).',
+      'Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Check-in / Registo de entrada; Luggage → Bagagem.',
+      '- Safety: Wet floor → Piso molhado; Caution → Atenção / Cuidado.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Portuguese output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<European Portuguese>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'tr') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Turkish (Türkçe, tr-TR).',
+      'Write for readers in Türkiye: everyday Istanbul Turkish as on shop signs and notices, not stiff Ottoman-flavoured wording.',
+      'Use Latin script only. ALWAYS use correct Turkish orthography — ı vs i, İ vs I, ğ, ş, ç, ö, ü — never ASCII-fold. Respect vowel harmony in suffixes.',
+      'Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Giriş / Check-in; Luggage → Bagaj.',
+      '- Safety: Wet floor → Islak zemin; Caution → Dikkat.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Turkish output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Turkish>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'bn') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Bengali (বাংলা, bn-IN).',
+      'Write for Bengali readers in India / West Bengal: everyday readable চলিত বাংলা as on shop signs and notices — not archaic সাধু ভাষা.',
+      'Use Bangla script only. Never Devanagari, never Latin/Banglish as the main line, never ISO 15919 or other romanization, never Chinese characters, never invented ASCII tone digits, never IPA.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → চেক-ইন; Luggage → মালপত্র.',
+      '- Safety: Wet floor → মেঝে ভেজা; Caution → সাবধান.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Bengali output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Bengali>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
   if (to === 'ko') {
     return [
       'You translate signs, menus, forms, and short labels into natural colloquial Korean (한국어).',
@@ -926,6 +1037,18 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isModernStandardArabicTarget(to)) {
     return hasHan(source) ? `(demo AR-SA) ${source}` : `(demo) ${source}`
   }
+  if (isTamilTarget(to)) {
+    return hasHan(source) ? `(demo TA) ${source}` : `(demo) ${source}`
+  }
+  if (isEuropeanPortugueseTarget(to)) {
+    return hasHan(source) ? `(demo PT-PT) ${source}` : `(demo) ${source}`
+  }
+  if (isTurkishTarget(to)) {
+    return hasHan(source) ? `(demo TR) ${source}` : `(demo) ${source}`
+  }
+  if (isBengaliTarget(to)) {
+    return hasHan(source) ? `(demo BN) ${source}` : `(demo) ${source}`
+  }
   if (isCebuanoTarget(to)) {
     return hasHan(source) ? `(demo CEB) ${source}` : `(demo) ${source}`
   }
@@ -1034,6 +1157,14 @@ export async function translateCameraText(
                 ? `(tr AR-EG) ${source}`
               : isModernStandardArabicTarget(to)
                 ? `(tr AR-SA) ${source}`
+              : isTamilTarget(to)
+                ? `(tr TA) ${source}`
+              : isEuropeanPortugueseTarget(to)
+                ? `(tr PT-PT) ${source}`
+              : isTurkishTarget(to)
+                ? `(tr TR) ${source}`
+              : isBengaliTarget(to)
+                ? `(tr BN) ${source}`
               : isKoreanTarget(to)
                 ? `(tr KO) ${source}`
               : isCebuanoTarget(to)
@@ -1083,6 +1214,10 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'nl') return 'Standard Dutch (Latin script, nl-NL)'
   if (lang === 'ar') return 'Egyptian Arabic colloquial (Arabic script, ar-EG)'
   if (lang === 'arsa') return 'Modern Standard Arabic / فصحى (Arabic script, ar-SA)'
+  if (lang === 'ta') return 'Tamil (Tamil script, ta-IN)'
+  if (lang === 'ptpt') return 'European Portuguese (Latin script, pt-PT — not Brazilian)'
+  if (lang === 'tr') return 'Turkish (Latin script, tr-TR)'
+  if (lang === 'bn') return 'Bengali / Bangla (Bangla script, bn-IN)'
   if (lang === 'ceb') return 'Cebuano / Binisaya (Latin script)'
   if (lang === 'ilo') return 'Ilocano / Ilokano (Latin script)'
   if (lang === 'bcl') return 'Central Bikol / Bikol Naga (Latin script)'
@@ -1176,6 +1311,14 @@ export async function translateCameraBatch(
                     ? `(tr AR-EG) ${s}`
                   : isModernStandardArabicTarget(to)
                     ? `(tr AR-SA) ${s}`
+                  : isTamilTarget(to)
+                    ? `(tr TA) ${s}`
+                  : isEuropeanPortugueseTarget(to)
+                    ? `(tr PT-PT) ${s}`
+                  : isTurkishTarget(to)
+                    ? `(tr TR) ${s}`
+                  : isBengaliTarget(to)
+                    ? `(tr BN) ${s}`
                   : isKoreanTarget(to)
                     ? `(tr KO) ${s}`
                   : isCebuanoTarget(to)
@@ -1218,6 +1361,7 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (lang === 'ja' || lang === 'ja-JP' || lang === 'ja-jp') return 'ja'
   if (lang === 'id' || lang === 'id-ID' || lang === 'id-id') return 'id'
   if (lang === 'ms' || lang === 'ms-MY' || lang === 'ms-my') return 'ms'
+  if (lang === 'ptpt' || lang === 'pt-PT' || lang === 'pt-pt') return 'ptpt'
   if (lang === 'pt' || lang === 'pt-BR' || lang === 'pt-br') return 'pt'
   if (lang === 'fr' || lang === 'fr-FR' || lang === 'fr-fr') return 'fr'
   if (lang === 'hi' || lang === 'hi-IN' || lang === 'hi-in') return 'hi'
@@ -1229,6 +1373,9 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (lang === 'nl' || lang === 'nl-NL' || lang === 'nl-nl') return 'nl'
   if (lang === 'ar' || lang === 'ar-EG' || lang === 'ar-eg') return 'ar'
   if (lang === 'arsa' || lang === 'ar-SA' || lang === 'ar-sa') return 'arsa'
+  if (lang === 'ta' || lang === 'ta-IN' || lang === 'ta-in') return 'ta'
+  if (lang === 'tr' || lang === 'tr-TR' || lang === 'tr-tr') return 'tr'
+  if (lang === 'bn' || lang === 'bn-IN' || lang === 'bn-in') return 'bn'
   if (lang === 'ceb' || lang === 'ceb-PH' || lang === 'ceb-ph') return 'ceb'
   if (lang === 'ilo' || lang === 'ilo-PH' || lang === 'ilo-ph') return 'ilo'
   if (lang === 'bcl' || lang === 'bcl-PH' || lang === 'bcl-ph') return 'bcl'

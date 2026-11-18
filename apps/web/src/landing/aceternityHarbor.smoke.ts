@@ -15,6 +15,27 @@ const ALL: Lang[] = [
   'es',
   'eses',
   'vi',
+  'th',
+  'lo',
+  'ko',
+  'ja',
+  'id',
+  'ms',
+  'pt',
+  'fr',
+  'hi',
+  'km',
+  'my',
+  'jv',
+  'it',
+  'de',
+  'nl',
+  'ar',
+  'arsa',
+  'ta',
+  'ptpt',
+  'tr',
+  'bn',
   'ceb',
   'ilo',
   'bcl',
@@ -32,7 +53,7 @@ const creatorsCss = readFileSync(join(here, 'creators.css'), 'utf8')
 const planChip = readFileSync(join(here, '../components/PlanChip.tsx'), 'utf8')
 const stateful = readFileSync(join(here, '../components/StatefulButton.tsx'), 'utf8')
 
-assert.equal(SUPPORTED_LANG_CARDS.length, 12, 'All 12 Solo/Cam langs on the marquee')
+assert.equal(SUPPORTED_LANG_CARDS.length, ALL.length, `All ${ALL.length} Solo/Cam langs on the marquee`)
 assert.deepEqual(
   [...SUPPORTED_LANG_CARDS.map((c) => c.id)].sort(),
   [...ALL].sort(),
@@ -41,7 +62,7 @@ assert.deepEqual(
 assert.equal(SUPPORTED_LANG_CARDS.filter((c) => !c.voice).length, 3, 'Cebuano / Ilocano / Bikol are Type chips')
 
 assert.match(landing, /<LangMarquee/, 'Home hosts the infinite language strip')
-assert.match(tip, /SUPPORTED_LANG_CARDS/, 'Hero tip cycles the same 12 langs')
+assert.match(tip, /SUPPORTED_LANG_CARDS/, 'Hero tip cycles the same marquee langs')
 assert.match(css, /ln-lang-marquee-scroll/, 'Marquee uses Harbor CSS motion, not Tailwind')
 assert.match(css, /prefers-reduced-motion: reduce/, 'Marquee stills for reduced motion')
 

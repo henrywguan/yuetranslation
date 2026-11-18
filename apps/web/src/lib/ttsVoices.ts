@@ -29,6 +29,10 @@ export {
   DEFAULT_NL_VOICE,
   DEFAULT_AR_VOICE,
   DEFAULT_ARSA_VOICE,
+  DEFAULT_TA_VOICE,
+  DEFAULT_PTPT_VOICE,
+  DEFAULT_TR_VOICE,
+  DEFAULT_BN_VOICE,
   YUE_VOICES,
   EN_VOICES,
   CMN_VOICES,
@@ -55,6 +59,10 @@ export {
   NL_VOICES,
   AR_VOICES,
   ARSA_VOICES,
+  TA_VOICES,
+  PTPT_VOICES,
+  TR_VOICES,
+  BN_VOICES,
   PREVIEW_YUE,
   PREVIEW_EN,
   PREVIEW_CMN,
@@ -81,6 +89,10 @@ export {
   PREVIEW_NL,
   PREVIEW_AR,
   PREVIEW_ARSA,
+  PREVIEW_TA,
+  PREVIEW_PTPT,
+  PREVIEW_TR,
+  PREVIEW_BN,
   resolveYueVoice,
   resolveEnVoice,
   resolveCmnVoice,
@@ -107,6 +119,10 @@ export {
   resolveNlVoice,
   resolveArVoice,
   resolveArsaVoice,
+  resolveTaVoice,
+  resolvePtptVoice,
+  resolveTrVoice,
+  resolveBnVoice,
   isYueVoice,
   isEnVoice,
   isCmnVoice,
@@ -133,6 +149,10 @@ export {
   isNlVoice,
   isArVoice,
   isArsaVoice,
+  isTaVoice,
+  isPtptVoice,
+  isTrVoice,
+  isBnVoice,
   voiceMeta,
   type YueVoiceId,
   type EnVoiceId,
@@ -160,6 +180,10 @@ export {
   type NlVoiceId,
   type ArVoiceId,
   type ArsaVoiceId,
+  type TaVoiceId,
+  type PtptVoiceId,
+  type TrVoiceId,
+  type BnVoiceId,
   type TtsVoiceId,
   type TtsVoiceOption,
 } from '@jyut/shared/ttsVoices'
@@ -187,6 +211,10 @@ import {
   DEFAULT_NL_VOICE,
   DEFAULT_AR_VOICE,
   DEFAULT_ARSA_VOICE,
+  DEFAULT_TA_VOICE,
+  DEFAULT_PTPT_VOICE,
+  DEFAULT_TR_VOICE,
+  DEFAULT_BN_VOICE,
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
   DEFAULT_WUU_VOICE,
@@ -213,6 +241,10 @@ import {
   resolveNlVoice,
   resolveArVoice,
   resolveArsaVoice,
+  resolveTaVoice,
+  resolvePtptVoice,
+  resolveTrVoice,
+  resolveBnVoice,
   resolveEnVoice,
   resolveYueVoice,
   resolveWuuVoice,
@@ -240,6 +272,10 @@ import {
   type NlVoiceId,
   type ArVoiceId,
   type ArsaVoiceId,
+  type TaVoiceId,
+  type PtptVoiceId,
+  type TrVoiceId,
+  type BnVoiceId,
   type EnVoiceId,
   type YueVoiceId,
   type WuuVoiceId,
@@ -272,6 +308,10 @@ const STORAGE_DE = 'yue-tts-voice-de'
 const STORAGE_NL = 'yue-tts-voice-nl'
 const STORAGE_AR = 'yue-tts-voice-ar'
 const STORAGE_ARSA = 'yue-tts-voice-arsa'
+const STORAGE_TA = 'yue-tts-voice-ta'
+const STORAGE_PTPT = 'yue-tts-voice-ptpt'
+const STORAGE_TR = 'yue-tts-voice-tr'
+const STORAGE_BN = 'yue-tts-voice-bn'
 
 
 export function readLocalYueVoice(): YueVoiceId {
@@ -720,6 +760,74 @@ export function readLocalSichuanVoice(): SichuanVoiceId {
 export function writeLocalSichuanVoice(id: SichuanVoiceId) {
   try {
     localStorage.setItem(STORAGE_SICHUAN, resolveSichuanVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalTaVoice(): TaVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_TA_VOICE
+  try {
+    return resolveTaVoice(localStorage.getItem(STORAGE_TA))
+  } catch {
+    return DEFAULT_TA_VOICE
+  }
+}
+
+export function writeLocalTaVoice(id: TaVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_TA, resolveTaVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalPtptVoice(): PtptVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_PTPT_VOICE
+  try {
+    return resolvePtptVoice(localStorage.getItem(STORAGE_PTPT))
+  } catch {
+    return DEFAULT_PTPT_VOICE
+  }
+}
+
+export function writeLocalPtptVoice(id: PtptVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_PTPT, resolvePtptVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalTrVoice(): TrVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_TR_VOICE
+  try {
+    return resolveTrVoice(localStorage.getItem(STORAGE_TR))
+  } catch {
+    return DEFAULT_TR_VOICE
+  }
+}
+
+export function writeLocalTrVoice(id: TrVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_TR, resolveTrVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalBnVoice(): BnVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_BN_VOICE
+  try {
+    return resolveBnVoice(localStorage.getItem(STORAGE_BN))
+  } catch {
+    return DEFAULT_BN_VOICE
+  }
+}
+
+export function writeLocalBnVoice(id: BnVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_BN, resolveBnVoice(id))
   } catch {
     /* ignore */
   }

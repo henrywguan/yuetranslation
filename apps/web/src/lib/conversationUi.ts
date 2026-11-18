@@ -330,6 +330,54 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     friendLooksHere: 'ينظر صديقك من هذه الجهة',
     holdFacingYou: 'أمسك الهاتف باتجاهك',
   },
+  ta: {
+    htmlLang: 'ta-IN',
+    mic: {
+      holdOrTapToSpeak: 'பேச அழுத்திப் பிடிக்கவும் அல்லது தட்டவும்',
+      releaseWhenDone: 'கேட்கிறது — முடிந்ததும் விடுங்கள்',
+      tapListening: 'கேட்கிறது — நிறுத்த இடைநிறுத்தவும் அல்லது மீண்டும் தட்டவும்',
+      speaking: 'பேசுகிறது…',
+      translating: 'மொழிபெயர்க்கிறது…',
+    },
+    friendLooksHere: 'உங்கள் நண்பர் இந்தப் பக்கம் பார்க்கிறார்',
+    holdFacingYou: 'போனை உங்கள் பக்கம் திருப்பிப் பிடிக்கவும்',
+  },
+  ptpt: {
+    htmlLang: 'pt-PT',
+    mic: {
+      holdOrTapToSpeak: 'Mantenha premido ou toque para falar',
+      releaseWhenDone: 'A ouvir — solte quando terminar',
+      tapListening: 'A ouvir — faça uma pausa ou toque para parar',
+      speaking: 'A falar…',
+      translating: 'A traduzir…',
+    },
+    friendLooksHere: 'O seu amigo olha para este lado',
+    holdFacingYou: 'Segure o telemóvel virado para si',
+  },
+  tr: {
+    htmlLang: 'tr-TR',
+    mic: {
+      holdOrTapToSpeak: 'Konuşmak için basılı tutun veya dokunun',
+      releaseWhenDone: 'Dinleniyor — bitince bırakın',
+      tapListening: 'Dinleniyor — durdurmak için duraklayın veya dokunun',
+      speaking: 'Konuşuluyor…',
+      translating: 'Çevriliyor…',
+    },
+    friendLooksHere: 'Arkadaşınız bu taraftan bakıyor',
+    holdFacingYou: 'Telefonu kendinize doğru tutun',
+  },
+  bn: {
+    htmlLang: 'bn-IN',
+    mic: {
+      holdOrTapToSpeak: 'কথা বলতে চেপে ধরুন বা ট্যাপ করুন',
+      releaseWhenDone: 'শুনছি — শেষ হলে ছেড়ে দিন',
+      tapListening: 'শুনছি — থামাতে বিরতি দিন বা আবার ট্যাপ করুন',
+      speaking: 'বলছি…',
+      translating: 'অনুবাদ হচ্ছে…',
+    },
+    friendLooksHere: 'আপনার বন্ধু এই দিকে তাকাবেন',
+    holdFacingYou: 'ফোনটি নিজের দিকে ধরে রাখুন',
+  },
 }
 
 

@@ -195,6 +195,34 @@ export function sanitizeArTranslation(text: string | null | undefined): string |
   return t
 }
 
+/** Reject EN→Tamil payloads that are empty, glossy, Han, or missing Tamil script (no Tanglish main line). */
+export function sanitizeTaTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\u0B80-\u0BFF]/.test(t)) return null
+  return t
+}
+
+/** Reject EN→Bengali payloads that are empty, glossy, Han, or missing Bangla script (no Banglish main line). */
+export function sanitizeBnTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\u0980-\u09FF]/.test(t)) return null
+  return t
+}
+
+/** Reject EN→Turkish Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeTrTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→European Portuguese payloads that are empty, glossy, or still Chinese. */
+export function sanitizePtptTranslation(text: string | null | undefined): string | null {
+  return sanitizePtTranslation(text)
+}
+
 export function sanitizeScaffoldLatinTranslation(text: string | null | undefined): string | null {
   return sanitizeViTranslation(text)
 }
