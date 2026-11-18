@@ -11,6 +11,7 @@ import { createCameraHeartbeat } from '../lib/camera/heartbeat'
 import type { CameraTarget, CamPath } from '../lib/camera/types'
 import { openAuthScreen } from '../lib/auth'
 import { consumePendingLaunchFile } from '../lib/pwaLaunch'
+import { normalizeEntitlement } from '../lib/normalizeEntitlement'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import './camera.css'
@@ -25,7 +26,7 @@ type Props = {
 export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Props) {
   const entitlement = useYueStore((s) => s.entitlement)
   const setEntitlement = useCallback((ent: NonNullable<typeof entitlement>) => {
-    useYueStore.setState({ entitlement: ent })
+    useYueStore.setState({ entitlement: normalizeEntitlement(ent) })
   }, [])
 
   const [path, setPath] = useState<CamPath>('choice')

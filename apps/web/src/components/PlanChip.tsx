@@ -25,6 +25,7 @@ import {
 function HubSep() {
   return <div className="account-hub-sep" role="separator" aria-hidden="true" />
 }
+import { normalizeEntitlement } from '../lib/normalizeEntitlement'
 import { useYueStore } from '../lib/store'
 import { getSession, openAuthScreen, signOut } from '../lib/auth'
 import { openBillingPortal, openUpgrade, type BillingError } from '../lib/billing'
@@ -669,13 +670,13 @@ export function PlanChip() {
         ttsVoiceJa: ja,
       })
       if (data.entitlement) {
-        useYueStore.setState({ entitlement: data.entitlement })
+        useYueStore.setState({ entitlement: normalizeEntitlement(data.entitlement) })
       } else {
         useYueStore.setState({
-          entitlement: {
+          entitlement: normalizeEntitlement({
             ...entitlement,
             prefs: data.prefs,
-          },
+          }),
         })
       }
     } catch (err) {
@@ -758,10 +759,10 @@ export function PlanChip() {
       setUsername(saved)
       setUsernameDraft(saved)
       if (data.entitlement) {
-        useYueStore.setState({ entitlement: data.entitlement })
+        useYueStore.setState({ entitlement: normalizeEntitlement(data.entitlement) })
       } else {
         useYueStore.setState({
-          entitlement: {
+          entitlement: normalizeEntitlement({
             ...entitlement,
             prefs: {
               ttsVoiceYue: entitlement.prefs?.ttsVoiceYue || yueVoice,
@@ -790,7 +791,7 @@ export function PlanChip() {
               ttsVoiceJa: entitlement.prefs?.ttsVoiceJa || jaVoice,
               ...data.prefs,
             },
-          },
+          }),
         })
       }
       setUsernamePhase('success')

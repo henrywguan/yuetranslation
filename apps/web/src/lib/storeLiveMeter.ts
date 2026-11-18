@@ -1,4 +1,5 @@
 import { postHeartbeat } from './api'
+import { normalizeEntitlement } from './normalizeEntitlement'
 import type { Entitlement } from './types'
 
 /** Minimal store surface used by live metering. */
@@ -31,8 +32,9 @@ function flushLiveMeter() {
   const ctl = liveMeterCtl
   void postHeartbeat(delta)
     .then((ent) => {
-      ctl?.set({ entitlement: ent })
-      if (!ent.allowed.live) {
+      const next = normalizeEntitlement(ent)
+      ctl?.set({ entitlement: next })
+      if (!next.allowed?.live) {
         void ctl?.get().stopLive()
         ctl?.set({ error: 'Live minutes exhausted for this month.' })
       }
@@ -43,9 +45,10 @@ function flushLiveMeter() {
       }
       if (err?.code === 401 || err?.code === 402) {
         void ctl?.get().stopLive()
+        const raw = err.entitlement || ctl.get().entitlement
         ctl?.set({
           error: err.message,
-          entitlement: err.entitlement || ctl.get().entitlement,
+          entitlement: raw ? normalizeEntitlement(raw) : raw,
         })
       }
     })

@@ -30,12 +30,20 @@ import { renderChatMarkdown } from '../../../lib/renderChatMarkdown'
 import { useChatAuiSession } from './ChatAuiRuntime'
 
 const SUGGESTIONS = CHAT_EMPTY_SUGGESTIONS
+const EMPTY_SOURCES: ChatSource[] = []
 
-/** URL source parts on the current assistant message (1-indexed `[n]` chips). */
+/**
+ * URL source parts on the current assistant message (1-indexed `[n]` chips).
+ *
+ * `useAuiState` compares with `Object.is` — returning a fresh `[]` / mapped array
+ * every call re-renders forever (max update depth → blank `#root`) whenever an
+ * assistant message is on screen. Keep a stable empty sentinel + memoize by key.
+ */
 function useMessageSources(): ChatSource[] {
+  const cacheRef = useRef<{ key: string; value: ChatSource[] }>({ key: '', value: EMPTY_SOURCES })
   return useAuiState((s) => {
     const content = s.message.content
-    if (!Array.isArray(content)) return []
+    if (!Array.isArray(content)) return EMPTY_SOURCES
     const out: ChatSource[] = []
     for (const part of content) {
       if (part.type !== 'source') continue
@@ -44,6 +52,10 @@ function useMessageSources(): ChatSource[] {
       if (!url) continue
       out.push({ url, title: (part.title || url).trim() || url })
     }
+    if (!out.length) return EMPTY_SOURCES
+    const key = out.map((x) => `${x.url}\0${x.title || ''}`).join('\n')
+    if (cacheRef.current.key === key) return cacheRef.current.value
+    cacheRef.current = { key, value: out }
     return out
   })
 }

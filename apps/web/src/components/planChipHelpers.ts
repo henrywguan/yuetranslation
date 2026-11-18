@@ -50,9 +50,10 @@ export function displayNameFromSession(meta: Record<string, unknown> | undefined
 }
 
 export function canShowMetric(metric: BadgeUsageMetric, entitlement: Entitlement, showVoiceQuota: boolean): boolean {
-  if (metric === 'live') return Boolean(entitlement.allowed.live) || entitlement.loggedIn
+  // Optional-chain `allowed` — missing during Family unlock races blanks #root via PlanChip.
+  if (metric === 'live') return Boolean(entitlement.allowed?.live) || entitlement.loggedIn
   if (metric === 'voice') return showVoiceQuota
-  if (metric === 'camera') return Boolean(entitlement.limits.can_camera) || entitlement.loggedIn
+  if (metric === 'camera') return Boolean(entitlement.limits?.can_camera) || entitlement.loggedIn
   return false
 }
 
