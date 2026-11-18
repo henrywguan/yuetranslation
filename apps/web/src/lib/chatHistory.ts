@@ -88,13 +88,27 @@ export const MAX_CONTENT_CHARS = 12_000
  * `DEEPSEEK_CHAT_MESSAGES_MAX` (model window is smaller).
  */
 export const API_CHAT_MESSAGES_MAX = 48
-/** Cap a single DeepThink trace in storage / expanded panels. */
-export const MAX_REASONING_CHARS = 12_000
+/**
+ * Cap a single DeepThink trace in storage / settled panels.
+ * Higher than answer content — long research CoT is the product for #/chat.
+ * Still pruned to KEEP_REASONING_TAIL assistants per thread.
+ */
+export const MAX_REASONING_CHARS = 48_000
+/**
+ * Bound live DeepThink buffer mid-stream (disk prune still applies on write).
+ * Keep the *tail* so the latest research steps survive long thinks.
+ */
+export const LIVE_REASONING_KEEP = 96_000
+/**
+ * While streaming, only paint this many chars of the trace — rewriting a
+ * 50k+ `<pre>` every paint freezes the tab even with coalesced React updates.
+ */
+export const LIVE_REASONING_PAINT = 16_000
 /**
  * Raw localStorage payload above this is cleared on hydrate — JSON.parse of
  * multi‑MB DeepThink history freezes Chrome on "Loading conversation…".
  */
-export const CHAT_HYDRATE_MAX_RAW_BYTES = 256_000
+export const CHAT_HYDRATE_MAX_RAW_BYTES = 512_000
 
 /** Coalesce disk writes so stream-end stringify does not fight first markdown paint. */
 let pendingDiskWrite: ChatThread[] | null = null
@@ -305,9 +319,10 @@ export function pruneChatThreads(threads: ChatThread[]): { threads: ChatThread[]
       }
       if (row.reasoning && row.reasoning.length > MAX_REASONING_CHARS) {
         changed = true
+        // Keep the *tail* (latest research steps), matching LIVE_REASONING_KEEP.
         row = {
           ...row,
-          reasoning: `${row.reasoning.slice(0, MAX_REASONING_CHARS)}\n\n…`,
+          reasoning: `…\n${row.reasoning.slice(-MAX_REASONING_CHARS)}`,
         }
       }
       if (row.content.length > MAX_CONTENT_CHARS) {
@@ -541,9 +556,10 @@ export function apiMessagesFromThread(
     .map((m) => {
       const content = m.content.trim().slice(0, MAX_CONTENT_CHARS)
       if (!content) return null
+      // Wire/API still capped at MAX_CONTENT_CHARS (Zod); storage may keep more.
       const reasoning =
         m.role === 'assistant' && m.reasoning?.trim()
-          ? m.reasoning.trim().slice(0, MAX_REASONING_CHARS)
+          ? m.reasoning.trim().slice(-MAX_CONTENT_CHARS)
           : undefined
       const fileIds =
         m.role === 'user' && m.fileIds?.length

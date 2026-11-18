@@ -46,6 +46,8 @@ import {
   deleteChatThread,
   emptyThread,
   hydrateChatThreadsAsync,
+  LIVE_REASONING_KEEP,
+  LIVE_REASONING_PAINT,
   MAX_CONTENT_CHARS,
   patchAssistantContent,
   renameChatThread,
@@ -127,8 +129,6 @@ const MAX_RENDER_MESSAGES = 12
 /** Paint this many messages per idle slice while leaving "Loading conversation…". */
 const HYDRATE_BATCH = 2
 const HYDRATE_GAP_MS = 48
-/** Bound live DeepThink buffer mid-stream (full prune still runs on disk write). */
-const LIVE_REASONING_KEEP = 24_000
 
 const MENU_ICON = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -301,7 +301,9 @@ function ReasoningPanel({
   // While streaming, only paint the tail of the trace — a 50k+ <pre> rewrite every
   // paint still freezes the tab even with coalesced React updates.
   const liveReasoning =
-    streaming && reasoning.length > 8_000 ? `…\n${reasoning.slice(-8_000)}` : reasoning
+    streaming && reasoning.length > LIVE_REASONING_PAINT
+      ? `…\n${reasoning.slice(-LIVE_REASONING_PAINT)}`
+      : reasoning
 
   return (
     <div className={`ds-chat-reasoning${streaming ? ' is-streaming' : ''}${open ? ' is-open' : ''}`}>

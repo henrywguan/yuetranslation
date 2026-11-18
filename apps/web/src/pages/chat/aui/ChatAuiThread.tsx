@@ -11,14 +11,14 @@ import {
   useMessagePartReasoning,
   useMessagePartText,
 } from '@assistant-ui/react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChatDictateButton } from '../../../components/ChatDictateButton'
 import { ChatPluginKeysModal } from '../../../components/ChatPluginKeysModal'
 import { ChatSourcesList } from '../../../components/ChatShellExtras'
 import { DeepSeekMark } from '../../../components/DeepSeekMark'
 import { SpeakButton } from '../../../components/SpeakButton'
 import type { DeepseekChatPluginKeyId } from '../../../lib/api'
-import type { ChatSource } from '../../../lib/chatHistory'
+import { LIVE_REASONING_PAINT, type ChatSource } from '../../../lib/chatHistory'
 import { chatSpeakLang, mergeDictateText } from '../../../lib/chatVoice'
 import { renderChatMarkdown } from '../../../lib/renderChatMarkdown'
 import { useChatAuiSession } from './ChatAuiRuntime'
@@ -73,11 +73,41 @@ function MarkdownText() {
 
 function ReasoningText() {
   const { text } = useMessagePartReasoning()
-  if (!text?.trim()) return null
+  const streaming = useAuiState((s) => s.message.status?.type === 'running')
+  const [open, setOpen] = useState(true)
+  const didAutoCollapse = useRef(false)
+
+  useEffect(() => {
+    if (streaming) {
+      didAutoCollapse.current = false
+      setOpen(true)
+      return
+    }
+    // Long research traces: collapse after settle so the answer stays usable.
+    if (!didAutoCollapse.current && (text?.length || 0) > 420) {
+      didAutoCollapse.current = true
+      setOpen(false)
+    }
+  }, [streaming, text?.length])
+
+  if (!text?.trim() && !streaming) return null
+
+  // Paint only the live tail while streaming — full `<pre>` rewrites freeze iPhone.
+  const shown =
+    streaming && text.length > LIVE_REASONING_PAINT
+      ? `…\n${text.slice(-LIVE_REASONING_PAINT)}`
+      : text
+
   return (
-    <details className="aui-reasoning" open>
-      <summary>DeepThink</summary>
-      <pre>{text}</pre>
+    <details
+      className={`aui-reasoning${streaming ? ' is-streaming' : ''}`}
+      open={open}
+      onToggle={(e) => {
+        setOpen((e.target as HTMLDetailsElement).open)
+      }}
+    >
+      <summary>DeepThink{streaming ? ' · live' : ''}</summary>
+      {open || streaming ? <pre>{shown || (streaming ? '…' : '')}</pre> : null}
     </details>
   )
 }

@@ -1,7 +1,6 @@
 import type { ThreadMessageLike } from '@assistant-ui/react'
 import type { ChatMessage } from '../../../lib/chatHistory'
-
-const LIVE_REASONING_KEEP = 24_000
+import { LIVE_REASONING_KEEP } from '../../../lib/chatHistory'
 
 /**
  * Map device-local ChatMessage → assistant-ui ThreadMessageLike.
@@ -48,6 +47,7 @@ export function convertChatMessage(
   if (message.reasoning?.trim()) {
     parts.push({
       type: 'reasoning',
+      // Keep the latest research steps (same tail window as the live buffer).
       text: message.reasoning.slice(-LIVE_REASONING_KEEP),
     })
   }
