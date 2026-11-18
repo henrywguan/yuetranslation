@@ -69,6 +69,16 @@ assert.doesNotMatch(
   /<header className="ds-chat-top"[\s\S]*ds-chat-main aui-main/,
   'top bar must not precede ds-chat-main in AuiShell',
 )
+// History drawer flush left: classic absolute sidebar + absolute backdrop under
+// `.ds-chat` — never an unstyled in-flow scrim (that shoved main right).
+assert.match(auiShellFn, /ds-chat-sidebar-backdrop/, 'mobile history uses classic absolute backdrop')
+assert.doesNotMatch(auiShellFn, /ds-chat-sidebar-scrim/, 'no unstyled in-flow scrim')
+assert.match(
+  auiShellFn,
+  /ds-chat-sidebar[\s\S]*ds-chat-main aui-main/,
+  'sidebar is a sibling of main under ds-chat (flush left)',
+)
+assert.match(auiShellFn, /ChatAuiSidebar/, 'thread list lives in shell sidebar')
 
 const auiCss = readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8')
 assert.match(auiCss, /\.ds-chat\.aui-chat/, 'AUI shell scoped under .aui-chat')
@@ -76,6 +86,11 @@ assert.match(
   auiCss,
   /Top bar must live inside|never becomes a full-height row sibling|flex-row sibling/i,
   'CSS documents the iPhone layout invariant',
+)
+assert.doesNotMatch(
+  auiCss,
+  /\.aui-layout\.is-sidebar-open \.aui-sidebar/,
+  'no nested absolute aui-sidebar under aui-layout (left gap)',
 )
 
 const runtime = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')

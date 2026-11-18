@@ -134,14 +134,27 @@ function EditComposer() {
   )
 }
 
-function ThreadSidebar() {
+/** History list for the shell sidebar (sibling of main under `.ds-chat`). */
+export function ChatAuiSidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <ThreadListPrimitive.Root className="aui-thread-list">
-      <ThreadListPrimitive.New className="aui-new-thread">New chat</ThreadListPrimitive.New>
+      <ThreadListPrimitive.New
+        className="aui-new-thread"
+        onClick={() => {
+          onNavigate?.()
+        }}
+      >
+        New chat
+      </ThreadListPrimitive.New>
       <ThreadListPrimitive.Items>
         {() => (
           <ThreadListItemPrimitive.Root className="aui-thread-item">
-            <ThreadListItemPrimitive.Trigger className="aui-thread-trigger">
+            <ThreadListItemPrimitive.Trigger
+              className="aui-thread-trigger"
+              onClick={() => {
+                onNavigate?.()
+              }}
+            >
               <ThreadListItemPrimitive.Title />
             </ThreadListItemPrimitive.Trigger>
             <ThreadListItemPrimitive.Archive className="aui-thread-archive" title="Archive" />
@@ -375,19 +388,11 @@ function ComposerChrome() {
   )
 }
 
-export function ChatAuiThread({ sidebarOpen }: { sidebarOpen: boolean }) {
+export function ChatAuiThread() {
   const { historyReady, error, clearError, busy } = useChatAuiSession()
 
   return (
-    <div className={`aui-layout${sidebarOpen ? ' is-sidebar-open' : ''}`}>
-      <aside className="aui-sidebar" aria-label="Chat history">
-        <div className="aui-sidebar-brand">
-          <DeepSeekMark className="aui-sidebar-mark" />
-          <span>History</span>
-        </div>
-        <ThreadSidebar />
-      </aside>
-
+    <div className="aui-layout">
       <ThreadPrimitive.Root className="aui-thread">
         <ThreadPrimitive.Viewport className="aui-viewport" autoScroll>
           {!historyReady ? (

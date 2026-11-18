@@ -13,7 +13,7 @@ import { safeShellViewportHeight } from '../../../lib/visualViewportHeight'
 import '../../ChatPage.css'
 import './ChatAui.css'
 import { ChatAuiRuntimeProvider, useChatAuiSession } from './ChatAuiRuntime'
-import { ChatAuiThread } from './ChatAuiThread'
+import { ChatAuiSidebar, ChatAuiThread } from './ChatAuiThread'
 
 const MENU_ICON = (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
@@ -57,14 +57,25 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
       <h1 id={titleId} className="aui-sr-only">
         DeepSeek Chat
       </h1>
+      {/* Backdrop + drawer are siblings of main under `.ds-chat` (classic). An
+          unstyled in-flow scrim pushed main right and left a black gap. */}
       {sidebarOpen ? (
         <button
           type="button"
-          className="ds-chat-sidebar-scrim"
+          className="ds-chat-sidebar-backdrop"
           aria-label="Close history"
           onClick={() => setSidebarOpen(false)}
         />
       ) : null}
+      <aside className={`ds-chat-sidebar${sidebarOpen ? ' is-open' : ''}`} aria-label="Chat history">
+        <div className="ds-chat-sidebar-brand">
+          <DeepSeekMark className="ds-chat-sidebar-brand-mark" />
+          <span className="ds-chat-sidebar-brand-name">
+            Deep<span>Seek</span>
+          </span>
+        </div>
+        <ChatAuiSidebar onNavigate={() => setSidebarOpen(false)} />
+      </aside>
 
       {/* Top bar must live inside `.ds-chat-main` — `.ds-chat` is a row flex
           (sidebar + main). A header sibling stretched full height and shoved
@@ -99,7 +110,7 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           </button>
           <PwaInstallButton />
         </header>
-        <ChatAuiThread sidebarOpen={sidebarOpen} />
+        <ChatAuiThread />
         <div className="aui-shell-footer">
           <button
             type="button"
