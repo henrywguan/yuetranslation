@@ -771,12 +771,6 @@ export type DeepseekChatImageEvent = {
   id: string
 }
 
-export type DeepseekChatVideoEvent = {
-  url: string
-  prompt: string
-  id: string
-}
-
 export type DeepseekChatPlugin = {
   id: string
   name: string
@@ -803,7 +797,6 @@ export type DeepseekChatStreamHandlers = {
   onSearchStep?: (step: DeepseekChatSearchStep) => void
   onTitle?: (title: string) => void
   onImage?: (image: DeepseekChatImageEvent) => void
-  onVideo?: (video: DeepseekChatVideoEvent) => void
   thinking?: boolean
   search?: boolean
   /** Harness mode — workspace tools + prompt nudge. */
@@ -1054,7 +1047,6 @@ export async function streamDeepseekChat(
         searchStep?: DeepseekChatSearchStep
         title?: string
         image?: DeepseekChatImageEvent
-        video?: DeepseekChatVideoEvent
         workspace?: {
           files?: Array<{
             id: string
@@ -1079,7 +1071,6 @@ export async function streamDeepseekChat(
       if (parsed.searchStep) handlers.onSearchStep?.(parsed.searchStep)
       if (parsed.title?.trim()) handlers.onTitle?.(parsed.title.trim())
       if (parsed.image?.url) handlers.onImage?.(parsed.image)
-      if (parsed.video?.url) handlers.onVideo?.(parsed.video)
       if (parsed.workspace?.files?.length) handlers.onWorkspace?.(parsed.workspace.files)
       if (typeof parsed.contentReplace === 'string') {
         handlers.onContentReplace?.(parsed.contentReplace)

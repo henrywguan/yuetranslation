@@ -116,11 +116,6 @@ export const env = {
    * Same `id` as a generation preset (higgsfield/adobe/cursor) overrides that preset.
    */
   chatMcpServersJson: (process.env.YUE_CHAT_MCP_SERVERS || '').trim(),
-  /**
-   * Higgsfield platform API credentials (`KEY_ID:KEY_SECRET`) for Seedance / SDK.
-   * Server-side only — never expose as VITE_*. Prefer apps/api/.env.local.
-   */
-  hfCredentials: (process.env.HF_CREDENTIALS || '').trim(),
   /** Higgsfield MCP — default URL; Bearer required to enable the plugin. */
   chatMcpHiggsfieldUrl: trimUrl(
     process.env.YUE_CHAT_MCP_HIGGSFIELD_URL || 'https://mcp.higgsfield.ai/mcp',

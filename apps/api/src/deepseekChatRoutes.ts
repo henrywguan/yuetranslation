@@ -348,13 +348,6 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
           )
           continue
         }
-        if (event.kind === 'video') {
-          writeSse(
-            res,
-            `data: ${JSON.stringify({ video: { url: event.url, prompt: event.prompt, id: event.id } })}\n\n`,
-          )
-          continue
-        }
         if (event.kind === 'content_replace') {
           full = event.text
           writeSse(res, `data: ${JSON.stringify({ contentReplace: event.text })}\n\n`)

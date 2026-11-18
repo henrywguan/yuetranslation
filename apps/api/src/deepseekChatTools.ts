@@ -8,7 +8,6 @@ import { env } from './env.js'
 import { resolveTimeZone, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
 import { randomUUID } from 'node:crypto'
 import { generateChatImage } from './deepseekChatImage.js'
-import { generateChatVideo } from './deepseekChatVideo.js'
 import { callMcpTool, extractImageUrlsFromMcpResult, parseMcpToolName } from './deepseekChatMcp.js'
 import type { ChatPluginCredentials } from './deepseekChatPluginKeys.js'
 import {
@@ -22,8 +21,6 @@ export type ChatToolContext = DeepseekChatPromptContext & {
   signal?: AbortSignal
   /** Optional sink so the harness can emit SSE image events. */
   onImage?: (image: { url: string; prompt: string; id: string }) => void
-  /** Optional sink so the harness can emit SSE video events (Seedance). */
-  onVideo?: (video: { url: string; prompt: string; id: string }) => void
   /** Per-user BYOK secrets for image + MCP presets. */
   pluginCreds?: ChatPluginCredentials
   /** Mutable thread workspace when Harness mode is on. */
@@ -680,34 +677,6 @@ export async function executeDeepseekChatTool(
           url: image.url,
           prompt: image.prompt,
           note: 'Include the markdown string in your assistant reply so the user sees the image.',
-        })
-      }
-      case 'generate_video': {
-        const prompt = String(args.prompt || '').trim()
-        const { markdown, video } = await generateChatVideo(prompt, {
-          signal: ctx.signal,
-          duration: args.duration as number | undefined,
-          resolution: args.resolution as '480p' | '720p' | '1080p' | undefined,
-          aspectRatio: args.aspect_ratio as
-            | '16:9'
-            | '4:3'
-            | '1:1'
-            | '3:4'
-            | '9:16'
-            | '21:9'
-            | undefined,
-          generateAudio: args.generate_audio !== false,
-        })
-        ctx.onVideo?.({ url: video.url, prompt: video.prompt, id: video.id })
-        return JSON.stringify({
-          ok: true,
-          markdown,
-          url: video.url,
-          prompt: video.prompt,
-          duration: video.duration,
-          resolution: video.resolution,
-          aspectRatio: video.aspectRatio,
-          note: 'Include the markdown string in your assistant reply so the user sees the video player.',
         })
       }
       default: {

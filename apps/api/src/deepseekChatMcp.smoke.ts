@@ -39,7 +39,6 @@ for (const preset of GENERATION_MCP_PRESETS) {
 
 assert.deepEqual(parseMcpToolName('mcp__docs__search'), { serverId: 'docs', toolName: 'search' })
 assert.equal(parseMcpToolName('generate_image'), null)
-assert.equal(parseMcpToolName('generate_video'), null)
 
 assert.deepEqual(
   extractImageUrlsFromMcpResult('See ![cat](https://cdn.example/a.png) and https://cdn.example/b.jpg'),
@@ -93,20 +92,6 @@ if (chatImageConfigured()) {
   assert.ok(toolsImage.some((t) => t.function.name === 'generate_image'))
 }
 
-const { chatVideoConfigured } = await import('./deepseekChatVideo.js')
-const toolsVideo = await buildPluginTools(['video'])
-if (chatVideoConfigured()) {
-  assert.ok(
-    toolsVideo.some((t) => t.function.name === 'generate_video'),
-    'video plugin exposes generate_video when HF_CREDENTIALS is set',
-  )
-} else {
-  assert.ok(
-    !toolsVideo.some((t) => t.function.name === 'generate_video'),
-    'No generate_video when HF_CREDENTIALS is missing',
-  )
-}
-
 // Without tokens, enabling MCP presets must not throw / must yield no MCP tools
 const toolsMcp = await buildPluginTools(['mcp:higgsfield', 'mcp:adobe', 'mcp:cursor'])
 assert.ok(
@@ -120,14 +105,12 @@ const harnessSrc = readFileSync(
 )
 assert.match(harnessSrc, /buildPluginTools/, 'Harness merges plugin tools')
 assert.match(harnessSrc, /kind: 'image'/, 'Harness yields image SSE events')
-assert.match(harnessSrc, /kind: 'video'/, 'Harness yields video SSE events')
 
 const routes = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatRoutes.ts'),
   'utf8',
 )
 assert.match(routes, /event\.kind === 'image'/, 'Routes forward image SSE')
-assert.match(routes, /event\.kind === 'video'/, 'Routes forward video SSE')
 
 const appSrc = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './app.ts'),

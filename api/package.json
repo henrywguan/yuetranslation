@@ -2,7 +2,6 @@
   "type": "module",
   "_comment": "Keep dependencies in sync with apps/api/package.json.",
   "dependencies": {
-    "@higgsfield/client": "^0.2.6",
     "@jyut/shared": "file:../packages/yue-shared",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^1.4.0",

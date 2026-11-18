@@ -27,24 +27,12 @@ function safeImageSrc(href: string): string | null {
   return null
 }
 
-function looksLikeVideo(alt: string, href: string): boolean {
-  if (/^video\b/i.test(alt.trim())) return true
-  return /\.(mp4|mov|webm)(?:\?|#|$)/i.test(href.trim())
-}
-
-function videoPlayerHtml(alt: string, src: string): string {
-  return `<video class="ds-md-video" src="${escapeHtml(src)}" controls playsinline preload="metadata"${
-    alt ? ` title="${escapeHtml(alt)}"` : ''
-  }></video>`
-}
-
 function inlineFormat(raw: string, sources?: ChatSource[]): string {
   let s = escapeHtml(raw)
-  // Images / videos first so they are not eaten by the link rewriter.
+  // Images first so they are not eaten by the link rewriter.
   s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_m, alt: string, href: string) => {
     const src = safeImageSrc(href)
     if (!src) return escapeHtml(`![${alt}](${href})`)
-    if (looksLikeVideo(alt, src)) return videoPlayerHtml(alt, src)
     return `<img class="ds-md-img" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy" />`
   })
   s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, (_m, label: string, href: string) => {
@@ -70,7 +58,6 @@ type Block =
   | { type: 'table'; headers: string[]; rows: string[][] }
   | { type: 'code'; lang: string; text: string }
   | { type: 'image'; alt: string; src: string }
-  | { type: 'video'; alt: string; src: string }
   | { type: 'hr' }
 
 function parseBlocks(md: string): Block[] {
@@ -104,12 +91,7 @@ function parseBlocks(md: string): Block[] {
     if (aloneImage) {
       const src = safeImageSrc(aloneImage[2]!)
       if (src) {
-        const alt = aloneImage[1] || ''
-        blocks.push(
-          looksLikeVideo(alt, src)
-            ? { type: 'video', alt, src }
-            : { type: 'image', alt, src },
-        )
+        blocks.push({ type: 'image', alt: aloneImage[1] || '', src })
         i += 1
         continue
       }
@@ -467,20 +449,6 @@ export function renderChatMarkdown(md: string, options?: RenderChatMarkdownOptio
         return (
           <figure key={key} className="ds-md-figure">
             <img className="ds-md-img" src={block.src} alt={block.alt || ''} loading="lazy" />
-            {block.alt ? <figcaption className="ds-md-figcaption">{block.alt}</figcaption> : null}
-          </figure>
-        )
-      case 'video':
-        return (
-          <figure key={key} className="ds-md-figure">
-            <video
-              className="ds-md-video"
-              src={block.src}
-              controls
-              playsInline
-              preload="metadata"
-              title={block.alt || undefined}
-            />
             {block.alt ? <figcaption className="ds-md-figcaption">{block.alt}</figcaption> : null}
           </figure>
         )

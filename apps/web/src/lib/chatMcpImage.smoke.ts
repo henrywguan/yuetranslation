@@ -8,19 +8,16 @@ import { CHAT_SKILLS } from './chatSkills.js'
 assert.ok(!CHAT_DEFERRED_FEATURES.includes('mcp_plugin_marketplace' as never))
 assert.ok(!CHAT_DEFERRED_FEATURES.includes('image_generation' as never))
 assert.ok(CHAT_SKILLS.some((s) => s.slash === '/image'))
-assert.ok(CHAT_SKILLS.some((s) => s.slash === '/video'))
 
 const here = dirname(fileURLToPath(import.meta.url))
 const md = readFileSync(join(here, './renderChatMarkdown.tsx'), 'utf8')
 assert.match(md, /safeImageSrc|ds-md-img/, 'Markdown renders images')
 assert.match(md, /type: 'image'/, 'Standalone image blocks parsed')
-assert.match(md, /type: 'video'|ds-md-video/, 'Markdown renders Seedance videos')
 
 const api = readFileSync(join(here, './api.ts'), 'utf8')
 assert.match(api, /fetchDeepseekChatPlugins/, 'Client loads plugin catalog')
 assert.match(api, /saveDeepseekChatPluginKeys/, 'Client saves BYOK plugin keys')
 assert.match(api, /onImage/, 'Client handles image SSE')
-assert.match(api, /onVideo/, 'Client handles video SSE')
 assert.match(api, /plugins/, 'Client sends plugins in chat body')
 
 const page = readFileSync(join(here, '../pages/ChatPage.tsx'), 'utf8')
@@ -28,7 +25,6 @@ assert.match(page, /enabledPlugins/, 'ChatPage plugin toggles')
 assert.match(page, /ds-chat-plugins/, 'Plugins panel markup')
 assert.match(page, /ChatPluginKeysModal|API keys/, 'BYOK keys modal entry')
 assert.match(page, /onImage:/, 'ChatPage appends image markdown')
-assert.match(page, /onVideo:/, 'ChatPage appends video markdown')
 assert.match(page, /coming soon|needs key|is-gen/, 'Generation MCP status UI')
 
 const modal = readFileSync(join(here, '../components/ChatPluginKeysModal.tsx'), 'utf8')
