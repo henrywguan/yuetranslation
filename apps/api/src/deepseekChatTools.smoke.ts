@@ -2,13 +2,18 @@ import assert from 'node:assert/strict'
 import {
   convertUnits,
   DEEPSEEK_CHAT_TOOLS,
+  DEEPSEEK_CHAT_WORKSPACE_TOOLS,
   executeDeepseekChatTool,
   safeCalc,
 } from './deepseekChatTools.js'
+import { createWorkspaceStore } from './deepseekChatWorkspace.js'
 
 assert.ok(DEEPSEEK_CHAT_TOOLS.some((t) => t.function.name === 'get_date'))
 assert.ok(DEEPSEEK_CHAT_TOOLS.some((t) => t.function.name === 'jyut_plan_limits'))
 assert.ok(DEEPSEEK_CHAT_TOOLS.some((t) => t.function.name === 'fetch_url'))
+assert.ok(DEEPSEEK_CHAT_WORKSPACE_TOOLS.some((t) => t.function.name === 'workspace_list'))
+assert.ok(DEEPSEEK_CHAT_WORKSPACE_TOOLS.some((t) => t.function.name === 'workspace_read'))
+assert.ok(DEEPSEEK_CHAT_WORKSPACE_TOOLS.some((t) => t.function.name === 'workspace_write'))
 
 assert.equal(safeCalc('2+3*4'), 14)
 assert.equal(safeCalc('(10-4)/2'), 3)
@@ -68,5 +73,35 @@ const toolsSrc = await import('node:fs').then((fs) =>
 assert.match(toolsSrc, /redirect: 'manual'/)
 assert.match(toolsSrc, /FETCH_MAX_BYTES/)
 void fetchPublicHttpsText
+
+const store = createWorkspaceStore([])
+const noWs = JSON.parse(await executeDeepseekChatTool('workspace_list', '{}', {})) as {
+  error?: string
+}
+assert.match(String(noWs.error || ''), /Harness|unavailable/i)
+
+const listed = JSON.parse(
+  await executeDeepseekChatTool('workspace_list', '{}', { workspace: store }),
+) as { count: number }
+assert.equal(listed.count, 0)
+
+const wrote = JSON.parse(
+  await executeDeepseekChatTool(
+    'workspace_write',
+    JSON.stringify({ path: 'notes/a.md', text: 'hello harness' }),
+    { workspace: store },
+  ),
+) as { ok?: boolean; path?: string }
+assert.equal(wrote.ok, true)
+assert.equal(wrote.path, 'notes/a.md')
+
+const read = JSON.parse(
+  await executeDeepseekChatTool(
+    'workspace_read',
+    JSON.stringify({ path: 'notes/a.md' }),
+    { workspace: store },
+  ),
+) as { text?: string }
+assert.equal(read.text, 'hello harness')
 
 console.log('deepseekChatTools.smoke: ok')

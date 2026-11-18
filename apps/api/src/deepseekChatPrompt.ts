@@ -24,6 +24,8 @@ export type DeepseekChatPromptContext = {
   mode?: 'tools' | 'search'
   /** When true, native deepseek_web_search / deepseek_read_url are declared. */
   searchEnabled?: boolean
+  /** When true, workspace_* tools are available and durable file writes are preferred. */
+  harnessEnabled?: boolean
 }
 
 const BASE = [
@@ -60,6 +62,13 @@ const SKILLS_WEB = [
   'Critical: when the user needs live/web info, CALL deepseek_web_search (or deepseek_read_url) in this turn.',
   'Never end the turn with only "I\'ll search…" / "Let me search…" — that leaves the user with an empty promise.',
   'Put search intent in tool calls, not in a finished answer that never searched.',
+].join('\n')
+
+const SKILLS_HARNESS = [
+  'Harness mode is ON — a persistent Workspace panel is open for this thread.',
+  'Tools: workspace_list, workspace_read, workspace_write (text files, ≤100KB each, ≤20 files).',
+  'Prefer writing durable results (notes, outlines, code, OCR dumps, research digests) into Workspace files instead of only chat markdown.',
+  'After substantial research or multi-step work, call workspace_write so the user keeps a file they can reopen.',
 ].join('\n')
 
 function resolveTimeZone(raw?: string): string {
@@ -134,6 +143,7 @@ export function buildDeepseekChatSystem(ctx: DeepseekChatPromptContext = {}): st
   if (ctx.searchEnabled && /deepseek/i.test(`${env.openaiBaseUrl} ${env.openaiModel} ${env.chatModel}`)) {
     parts.push(SKILLS_WEB)
   }
+  if (ctx.harnessEnabled) parts.push(SKILLS_HARNESS)
   // Legacy search-only callers still get a grounded plan snapshot.
   if (ctx.mode === 'search' && !ctx.searchEnabled) parts.push(formatPlanSnapshot())
   if (ctx.plan) parts.push(`Signed-in plan context: ${ctx.plan}.`)

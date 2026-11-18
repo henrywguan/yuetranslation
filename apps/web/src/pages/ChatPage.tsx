@@ -8,6 +8,7 @@ import {
   ChatThreadRow,
   ChatUserFiles,
 } from '../components/ChatShellExtras'
+import { ChatWorkspacePanel } from '../components/ChatWorkspacePanel'
 import { DeepSeekMark } from '../components/DeepSeekMark'
 import { IosHomescreenTip } from '../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../components/PwaInstallButton'
@@ -23,6 +24,24 @@ import {
   type DeepseekChatPluginKeyId,
 } from '../lib/api'
 import { extractChatArtifacts, relatedQuestionsFromReply, type ChatArtifact } from '../lib/chatArtifacts'
+import {
+  addScheduleJob,
+  claimDueScheduleJobs,
+  jobsForThread,
+  readScheduleJobs,
+  removeScheduleJob,
+  setScheduleJobEnabled,
+  type ChatScheduleJob,
+} from '../lib/chatSchedule'
+import {
+  applyWorkspaceWireUpdate,
+  ensureThreadWorkspace,
+  maybeSeedArtifactsIntoWorkspace,
+  patchThreadWorkspace,
+  readHarnessFlag,
+  workspaceWirePayload,
+  writeHarnessFlag,
+} from '../lib/chatWorkspace'
 import {
   cycleAssistantAlternate,
   forkThreadAt,
@@ -732,6 +751,12 @@ export function ChatPage() {
   const [deepThink, setDeepThink] = useState(() => readFlag(THINK_KEY, true))
   const [searchOn, setSearchOn] = useState(() => readFlag(SEARCH_KEY, false))
   const [richLayout, setRichLayout] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
+  const [harnessOn, setHarnessOn] = useState(() => readHarnessFlag(false))
+  const [workspaceOpen, setWorkspaceOpen] = useState(() => readHarnessFlag(false))
+  const [scheduleJobs, setScheduleJobs] = useState<ChatScheduleJob[]>(() => readScheduleJobs())
+  const harnessOnRef = useRef(harnessOn)
+  harnessOnRef.current = harnessOn
+  const busyRef = useRef(false)
   const [thinkClock, setThinkClock] = useState<number | null>(null)
   const [pendingFiles, setPendingFiles] = useState<PendingChatFile[]>([])
   const [uploadingFile, setUploadingFile] = useState(false)
@@ -1084,11 +1109,22 @@ export function ChatPage() {
       await streamDeepseekChat(wireMessages, {
         thinking: deepThink,
         search: searchOn,
+        harness: harnessOnRef.current,
+        workspace: harnessOnRef.current
+          ? workspaceWirePayload(thread.workspace)
+          : undefined,
         fileIds,
         plugins: enabledPlugins,
         primaryLang: primaryLanguage,
         continueReply: Boolean(continueFromId),
         signal: controller.signal,
+        onWorkspace: (files) => {
+          thread = patchThreadWorkspace(
+            thread,
+            applyWorkspaceWireUpdate(thread.workspace, files),
+          )
+          schedulePaint()
+        },
         onStatus: (status) => {
           if (status === 'searching') {
             setSearching(true)
@@ -1178,6 +1214,10 @@ export function ChatPage() {
         persist(thread)
         setError('No reply — try again.')
       } else {
+        if (harnessOnRef.current) {
+          const assistant = thread.messages.find((m) => m.id === assistantId)
+          thread = maybeSeedArtifactsIntoWorkspace(thread, assistant)
+        }
         persist(thread)
         if (liveTts) {
           void liveTts.finish().catch(() => {
@@ -1209,6 +1249,7 @@ export function ChatPage() {
       setThinking(false)
       setSearching(false)
       setBusy(false)
+      busyRef.current = false
       setThinkClock(null)
       abortRef.current = null
       if (streamTtsRef.current === liveTts) streamTtsRef.current = null
@@ -1243,11 +1284,13 @@ export function ChatPage() {
       return []
     })
     setBusy(true)
+    busyRef.current = true
 
     let thread = active
     if (!threads.some((t) => t.id === thread.id)) {
       thread = { ...thread, id: activeId }
     }
+    if (harnessOnRef.current) thread = ensureThreadWorkspace(thread)
 
     const userStep = appendChatMessage(thread, 'user', content || '(attached file)')
     thread = userStep.thread
@@ -1265,6 +1308,21 @@ export function ChatPage() {
 
     await runAssistant(thread, fileIds)
   }
+
+  useEffect(() => {
+    if (!harnessOn) return
+    const tick = () => {
+      if (busyRef.current || document.visibilityState === 'hidden') return
+      const due = claimDueScheduleJobs()
+      if (!due.length) return
+      setScheduleJobs(readScheduleJobs())
+      const job = due[0]!
+      if (job.threadId !== activeId) setActiveId(job.threadId)
+      void send(job.prompt)
+    }
+    const id = window.setInterval(tick, 15_000)
+    return () => window.clearInterval(id)
+  }, [harnessOn, activeId])
 
   const regenerate = async (assistantId: string) => {
     if (busy || !unlocked) return
@@ -1654,7 +1712,7 @@ export function ChatPage() {
 
   return (
     <div
-      className={`ds-chat${artifact ? ' has-artifact' : ''}${dragOver ? ' is-dragover' : ''}`}
+      className={`ds-chat${artifact ? ' has-artifact' : ''}${harnessOn && workspaceOpen ? ' has-workspace' : ''}${harnessOn ? ' is-harness' : ''}${dragOver ? ' is-dragover' : ''}`}
       onDragEnter={(e) => {
         if (!unlocked || busy) return
         if ([...e.dataTransfer.types].includes('Files')) setDragOver(true)
@@ -1862,6 +1920,26 @@ export function ChatPage() {
               >
                 {SEARCH_ICON}
                 Search
+              </button>
+              <button
+                type="button"
+                className={`ds-chat-toggle${harnessOn ? ' is-on' : ''}`}
+                aria-pressed={harnessOn}
+                title="Harness — Workspace panel + durable file tools"
+                onClick={() => {
+                  setHarnessOn((v) => {
+                    const next = !v
+                    writeHarnessFlag(next)
+                    setWorkspaceOpen(next)
+                    if (next) {
+                      const seeded = ensureThreadWorkspace(active)
+                      if (seeded !== active) persist(seeded)
+                    }
+                    return next
+                  })
+                }}
+              >
+                Harness
               </button>
               <button
                 type="button"
@@ -2154,6 +2232,26 @@ export function ChatPage() {
       </div>
 
       <ChatArtifactPanel artifact={artifact} onClose={() => setArtifact(null)} />
+      {harnessOn && workspaceOpen ? (
+        <ChatWorkspacePanel
+          workspace={active.workspace}
+          onChange={(ws) => persist(patchThreadWorkspace(active, ws))}
+          onClose={() => setWorkspaceOpen(false)}
+          scheduleJobs={jobsForThread(active.id, scheduleJobs)}
+          onAddSchedule={(prompt, cadence) => {
+            addScheduleJob({ threadId: active.id, prompt, cadence })
+            setScheduleJobs(readScheduleJobs())
+          }}
+          onRemoveSchedule={(id) => {
+            removeScheduleJob(id)
+            setScheduleJobs(readScheduleJobs())
+          }}
+          onToggleSchedule={(id, enabled) => {
+            setScheduleJobEnabled(id, enabled)
+            setScheduleJobs(readScheduleJobs())
+          }}
+        />
+      ) : null}
       <IosHomescreenTip />
     </div>
   )

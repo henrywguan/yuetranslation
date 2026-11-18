@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from 'react'
+import { ChatWorkspacePanel } from '../../../components/ChatWorkspacePanel'
 import { DeepSeekMark } from '../../../components/DeepSeekMark'
 import { IosHomescreenTip } from '../../../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../../../components/PwaInstallButton'
@@ -52,11 +53,27 @@ function TopBrand() {
 function AuiShell({ unlocked }: { unlocked: boolean }) {
   const titleId = useId()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { startNewChat, busy } = useChatAuiSession()
+  const {
+    startNewChat,
+    busy,
+    harnessOn,
+    workspaceOpen,
+    setWorkspaceOpen,
+    activeWorkspace,
+    setActiveWorkspace,
+    scheduleJobs,
+    addSchedule,
+    removeSchedule,
+    toggleSchedule,
+  } = useChatAuiSession()
   const dark = useAuiStockDark()
+  const showWorkspace = harnessOn && workspaceOpen
 
   return (
-    <div className={`ds-chat aui-chat is-stock${dark ? ' dark' : ''}`} aria-labelledby={titleId}>
+    <div
+      className={`ds-chat aui-chat is-stock${dark ? ' dark' : ''}${showWorkspace ? ' has-workspace' : ''}${harnessOn ? ' is-harness' : ''}`}
+      aria-labelledby={titleId}
+    >
       <h1 id={titleId} className="aui-sr-only">
         DeepSeek Chat
       </h1>
@@ -99,6 +116,17 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           </button>
           <TopBrand />
           <span className="ds-chat-top-spacer" />
+          {harnessOn ? (
+            <button
+              type="button"
+              className={`ds-chat-icon-btn${workspaceOpen ? ' is-on' : ''}`}
+              aria-label={workspaceOpen ? 'Hide workspace' : 'Show workspace'}
+              aria-pressed={workspaceOpen}
+              onClick={() => setWorkspaceOpen(!workspaceOpen)}
+            >
+              WS
+            </button>
+          ) : null}
           <button
             type="button"
             className="ds-chat-icon-btn"
@@ -127,6 +155,18 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           </button>
         </div>
       </div>
+      {showWorkspace ? (
+        <ChatWorkspacePanel
+          workspace={activeWorkspace}
+          onChange={setActiveWorkspace}
+          onClose={() => setWorkspaceOpen(false)}
+          sheet={typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches}
+          scheduleJobs={scheduleJobs}
+          onAddSchedule={addSchedule}
+          onRemoveSchedule={removeSchedule}
+          onToggleSchedule={toggleSchedule}
+        />
+      ) : null}
     </div>
   )
 }

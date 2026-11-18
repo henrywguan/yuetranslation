@@ -799,12 +799,25 @@ export type DeepseekChatStreamHandlers = {
   onImage?: (image: DeepseekChatImageEvent) => void
   thinking?: boolean
   search?: boolean
+  /** Harness mode — workspace tools + prompt nudge. */
+  harness?: boolean
+  /** Thread workspace snapshot when harness is on. */
+  workspace?: {
+    files: Array<{ id?: string; path: string; mime?: string; text?: string; updatedAt?: number }>
+  }
   fileIds?: string[]
   plugins?: string[]
   /** Account Hub primary language for DeepSeek user metadata. */
   primaryLang?: string
   /** Continue last assistant (prefix completion). */
   continueReply?: boolean
+  onWorkspace?: (files: Array<{
+    id: string
+    path: string
+    mime?: string
+    text?: string
+    updatedAt: number
+  }>) => void
   signal?: AbortSignal
 }
 
@@ -985,6 +998,10 @@ export async function streamDeepseekChat(
       messages: safeMessages,
       thinking: handlers.thinking !== false,
       search: handlers.search === true,
+      ...(handlers.harness === true ? { harness: true } : null),
+      ...(handlers.harness === true && handlers.workspace?.files?.length
+        ? { workspace: handlers.workspace }
+        : null),
       timeZone,
       locale,
       ...(primaryLang ? { primaryLang } : null),
@@ -1030,6 +1047,15 @@ export async function streamDeepseekChat(
         searchStep?: DeepseekChatSearchStep
         title?: string
         image?: DeepseekChatImageEvent
+        workspace?: {
+          files?: Array<{
+            id: string
+            path: string
+            mime?: string
+            text?: string
+            updatedAt: number
+          }>
+        }
       }
       try {
         parsed = JSON.parse(payload) as typeof parsed
@@ -1045,6 +1071,7 @@ export async function streamDeepseekChat(
       if (parsed.searchStep) handlers.onSearchStep?.(parsed.searchStep)
       if (parsed.title?.trim()) handlers.onTitle?.(parsed.title.trim())
       if (parsed.image?.url) handlers.onImage?.(parsed.image)
+      if (parsed.workspace?.files?.length) handlers.onWorkspace?.(parsed.workspace.files)
       if (typeof parsed.contentReplace === 'string') {
         handlers.onContentReplace?.(parsed.contentReplace)
       }
