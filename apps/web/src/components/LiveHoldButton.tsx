@@ -103,9 +103,9 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
 
   useEffect(() => () => clearWinListeners(), [])
 
-  const canLive = !entitlement || entitlement.allowed.live
+  const canLive = !entitlement || Boolean(entitlement.allowed?.live)
   // Guests may use metered live trial; lock only when live is not allowed (exhausted / disabled).
-  const needsLogin = Boolean(entitlement && !entitlement.loggedIn && !entitlement.allowed.live)
+  const needsLogin = Boolean(entitlement && !entitlement.loggedIn && !entitlement.allowed?.live)
   const isThisSide = !side || !liveSide || liveSide === side
   const otherSideBusy = Boolean(side && live && liveSide && liveSide !== side)
   // Keep the button “on” while sticky tap is armed even before `live` flips true.

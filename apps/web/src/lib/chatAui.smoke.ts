@@ -155,6 +155,9 @@ assert.match(
   'plugins strip gated on pluginsOpen alone',
 )
 assert.match(thread, /is-streaming/, 'streaming markdown caret class')
+assert.match(thread, /EMPTY_SOURCES/, 'stable empty sources sentinel (Object.is loop guard)')
+assert.match(thread, /Object\.is/, 'documents Object.is array trap for useMessageSources')
+assert.match(thread, /blank `#root`|blank #root/, 'documents blank-#root failure mode')
 assert.match(auiCss, /\.aui-composer\b/, 'DeepSeek composer card styles')
 assert.match(auiCss, /\.aui-send\b/, 'DeepSeek send styles restored')
 assert.match(auiCss, /\.aui-empty\b/, 'DeepSeek empty-state styles')

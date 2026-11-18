@@ -29,7 +29,7 @@ export function SpeakButton({
   const status = useYueStore((s) => s.status)
   const speakingText = useYueStore((s) => s.speakingText)
   const entitlement = useYueStore((s) => s.entitlement)
-  const canTts = (!entitlement || entitlement.allowed.tts) && supportsTts(lang)
+  const canTts = (!entitlement || Boolean(entitlement.allowed?.tts)) && supportsTts(lang)
   const speaking = status === 'speaking' && speakingText === trimmed
   const play = playText ?? speakManual
 

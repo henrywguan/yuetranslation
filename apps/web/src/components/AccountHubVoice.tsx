@@ -205,7 +205,7 @@ export function AccountHubVoice({
   }, [modalOpen])
 
   const close = () => setModalOpen(false)
-  const ttsOk = entitlement.allowed.tts
+  const ttsOk = Boolean(entitlement.allowed?.tts)
 
   const markSelectInteraction = () => {
     // Cover picker dismiss + delayed ghost click after choosing an option.

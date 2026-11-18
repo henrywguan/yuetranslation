@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/react'
 import './index.css'
 import './bi.css'
 import App from './App.tsx'
+import { AppErrorBoundary } from './components/AppErrorBoundary'
 import { initDiagnostics, setDiagnosticError } from './lib/diagnostics'
 import { useYueStore } from './lib/store'
 import { ThemeProvider } from './lib/theme'
@@ -21,8 +22,10 @@ useYueStore.subscribe((state) => {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
-      <App />
-      <Analytics />
+      <AppErrorBoundary>
+        <App />
+        <Analytics />
+      </AppErrorBoundary>
     </ThemeProvider>
   </StrictMode>,
 )

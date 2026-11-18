@@ -46,6 +46,7 @@ import {
 } from './langCapabilities'
 import { humanizeThrownError } from './apiError'
 import { bootstrapRetryDelayMs } from './bootstrapRetry'
+import { normalizeEntitlement } from './normalizeEntitlement'
 import { prefetchSpeechToken } from './speechToken'
 import type { DetailLayer } from './detailTypes'
 import type {
@@ -943,7 +944,7 @@ export const useYueStore = create<State>((set, get) => {
     if (!loggedIn) return
     void saveAutoSpeakPref(autoSpeak)
       .then((data) => {
-        if (data.entitlement) set({ entitlement: data.entitlement })
+        if (data.entitlement) set({ entitlement: normalizeEntitlement(data.entitlement) })
       })
       .catch(() => {
         /* Keep local preference; next bootstrap will reconcile if save failed. */
@@ -971,7 +972,7 @@ export const useYueStore = create<State>((set, get) => {
     void savePrimaryLangPref(primary)
       .then((data) => {
         writeSyncedPrimaryLang(primary)
-        if (data.entitlement) set({ entitlement: data.entitlement })
+        if (data.entitlement) set({ entitlement: normalizeEntitlement(data.entitlement) })
       })
       .catch(() => {
         /* Keep local preference; bootstrap will retry push while unsynced. */
@@ -986,7 +987,7 @@ export const useYueStore = create<State>((set, get) => {
       return
     }
     const ent = get().entitlement
-    if (ent && !ent.allowed.tts) {
+    if (ent && !ent.allowed?.tts) {
       set({
         error:
           ent.reason === 'account_disabled'
@@ -1021,7 +1022,7 @@ export const useYueStore = create<State>((set, get) => {
     bootstrapInflight = (async () => {
     try {
       const data = await fetchHealth()
-      const ent = data.entitlement
+      const ent = normalizeEntitlement(data.entitlement)
       if (!ent.upgradeUrl && getUpgradeUrl()) {
         ent.upgradeUrl = getUpgradeUrl()
       }
@@ -1073,7 +1074,7 @@ export const useYueStore = create<State>((set, get) => {
         void savePrimaryLangPref(nextPrimary)
           .then((saved) => {
             writeSyncedPrimaryLang(nextPrimary)
-            if (saved.entitlement) set({ entitlement: saved.entitlement })
+            if (saved.entitlement) set({ entitlement: normalizeEntitlement(saved.entitlement) })
           })
           .catch(() => {
             /* Stay unsynced so the next visible bootstrap retries. */
@@ -1288,7 +1289,7 @@ export const useYueStore = create<State>((set, get) => {
       return
     }
     const { entitlement } = get()
-    if (entitlement && !entitlement.allowed.live) {
+    if (entitlement && !entitlement.allowed?.live) {
       const msg =
         entitlement.reason === 'login_required'
           ? 'Log in to use live translation.'

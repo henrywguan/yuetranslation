@@ -169,7 +169,7 @@ export function TranslatorApp() {
                 <BiText copy={ui.signIn} size="sm" layout="inline" />
               </GlowRotateButton>
             ) : null}
-            {entitlement && !entitlement.allowed.live && entitlement.upgradeUrl ? (
+            {entitlement && !entitlement.allowed?.live && entitlement.upgradeUrl ? (
               <button type="button" onClick={() => void openUpgrade('family', 'month')}>
                 <BiText copy={ui.upgrade} size="sm" />
               </button>
