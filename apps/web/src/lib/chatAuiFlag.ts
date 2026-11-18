@@ -4,7 +4,8 @@
  * Opt out (classic ChatPage): localStorage `yue-chat-aui-v1=0`, or `?aui=0`.
  * Force AUI: `?aui=1` (also clears a prior opt-out).
  *
- * Stock shadcn/Tailwind look is deferred — DeepSeek tokens stay for now.
+ * Stock assistant-ui look is on (`@assistant-ui/styles` / former CDN CSS) —
+ * DeepSeek shell chrome (header, sidebar, feature toggles) stays.
  */
 
 export const CHAT_AUI_FLAG_KEY = 'yue-chat-aui-v1'

@@ -22,6 +22,7 @@ import { LIVE_REASONING_PAINT, type ChatSource } from '../../../lib/chatHistory'
 import { chatSpeakLang, mergeDictateText } from '../../../lib/chatVoice'
 import { renderChatMarkdown } from '../../../lib/renderChatMarkdown'
 import { useChatAuiSession } from './ChatAuiRuntime'
+import { useAuiStockDark } from './useAuiStockDark'
 
 const SUGGESTIONS = [
   'Explain quantum computing simply',
@@ -132,13 +133,15 @@ function AssistantSpeakSlot() {
 
 function UserMessage() {
   return (
-    <MessagePrimitive.Root className="aui-msg is-user">
-      <div className="aui-bubble is-user">
-        <MessagePrimitive.Parts components={{ Text: MarkdownText }} />
+    <MessagePrimitive.Root className="aui-user-message-root">
+      <div className="aui-user-message-content-wrapper">
+        <div className="aui-user-message-content">
+          <MessagePrimitive.Parts components={{ Text: MarkdownText }} />
+        </div>
       </div>
-      <ActionBarPrimitive.Root hideWhenRunning className="aui-actions">
-        <ActionBarPrimitive.Copy className="aui-action-btn">Copy</ActionBarPrimitive.Copy>
-        <ActionBarPrimitive.Edit className="aui-action-btn">Edit</ActionBarPrimitive.Edit>
+      <ActionBarPrimitive.Root hideWhenRunning className="aui-user-action-bar-root">
+        <ActionBarPrimitive.Copy className="aui-user-action-edit">Copy</ActionBarPrimitive.Copy>
+        <ActionBarPrimitive.Edit className="aui-user-action-edit">Edit</ActionBarPrimitive.Edit>
       </ActionBarPrimitive.Root>
     </MessagePrimitive.Root>
   )
@@ -149,8 +152,8 @@ function AssistantMessage() {
   const sources = useMessageSources()
 
   return (
-    <MessagePrimitive.Root className="aui-msg is-assistant">
-      <div className="aui-bubble is-assistant">
+    <MessagePrimitive.Root className="aui-assistant-message-root">
+      <div className="aui-assistant-message-content">
         <MessagePrimitive.Parts
           components={{
             Text: MarkdownText,
@@ -162,9 +165,9 @@ function AssistantMessage() {
       {!streaming && sources.length ? (
         <ChatSourcesList sources={sources} defaultOpen={sources.length <= 4} />
       ) : null}
-      <div className="aui-actions">
-        <ActionBarPrimitive.Root hideWhenRunning autohide="not-last" className="aui-actions-row">
-          <ActionBarPrimitive.Copy className="aui-action-btn">Copy</ActionBarPrimitive.Copy>
+      <div className="aui-assistant-message-footer">
+        <ActionBarPrimitive.Root hideWhenRunning autohide="not-last" className="aui-assistant-action-bar-root">
+          <ActionBarPrimitive.Copy className="aui-user-action-edit">Copy</ActionBarPrimitive.Copy>
         </ActionBarPrimitive.Root>
         <AssistantSpeakSlot />
       </div>
@@ -174,11 +177,11 @@ function AssistantMessage() {
 
 function EditComposer() {
   return (
-    <ComposerPrimitive.Root className="aui-edit-composer">
-      <ComposerPrimitive.Input className="aui-edit-input" />
-      <div className="aui-edit-actions">
-        <ComposerPrimitive.Send className="aui-action-btn">Save</ComposerPrimitive.Send>
-        <ComposerPrimitive.Cancel className="aui-action-btn">Cancel</ComposerPrimitive.Cancel>
+    <ComposerPrimitive.Root className="aui-edit-composer-root">
+      <ComposerPrimitive.Input className="aui-edit-composer-input" />
+      <div className="aui-edit-composer-footer">
+        <ComposerPrimitive.Send className="aui-user-action-edit">Save</ComposerPrimitive.Send>
+        <ComposerPrimitive.Cancel className="aui-user-action-edit">Cancel</ComposerPrimitive.Cancel>
       </div>
     </ComposerPrimitive.Root>
   )
@@ -271,7 +274,7 @@ function ComposerChrome() {
   ]
 
   return (
-    <ComposerPrimitive.Root className="aui-composer">
+    <ComposerPrimitive.Root className="aui-composer-root">
       <div className="aui-composer-toggles">
         <button
           type="button"
@@ -360,7 +363,15 @@ function ComposerChrome() {
         </ul>
       ) : null}
 
-      <div className="aui-composer-row">
+      <ComposerPrimitive.Input
+        className="aui-composer-input"
+        placeholder="Message DeepSeek…"
+        rows={1}
+        submitMode="enter"
+        unstable_insertNewlineOnTouchEnter
+      />
+
+      <div className="aui-composer-actions">
         <input
           ref={fileInputRef}
           type="file"
@@ -396,13 +407,6 @@ function ComposerChrome() {
         >
           {ocrBusy ? '…' : 'OCR'}
         </button>
-        <ComposerPrimitive.Input
-          className="aui-composer-input"
-          placeholder="Message DeepSeek…"
-          rows={1}
-          submitMode="enter"
-          unstable_insertNewlineOnTouchEnter
-        />
         <ChatDictateButton
           disabled={busy}
           draft={draft}
@@ -411,15 +415,12 @@ function ComposerChrome() {
           onError={(message) => setError(message)}
         />
         <AuiIf condition={(s) => s.thread.isRunning}>
-          <ComposerPrimitive.Cancel
-            className="aui-send is-stop"
-            onClick={() => stopGeneration()}
-          >
+          <ComposerPrimitive.Cancel className="aui-composer-send is-stop" onClick={() => stopGeneration()}>
             Stop
           </ComposerPrimitive.Cancel>
         </AuiIf>
         <AuiIf condition={(s) => !s.thread.isRunning}>
-          <ComposerPrimitive.Send className="aui-send">Send</ComposerPrimitive.Send>
+          <ComposerPrimitive.Send className="aui-composer-send">Send</ComposerPrimitive.Send>
         </AuiIf>
       </div>
 
@@ -440,39 +441,47 @@ function ComposerChrome() {
 
 export function ChatAuiThread() {
   const { historyReady, error, clearError, busy } = useChatAuiSession()
+  const dark = useAuiStockDark()
 
   return (
     <div className="aui-layout">
-      <ThreadPrimitive.Root className="aui-thread">
-        <ThreadPrimitive.Viewport className="aui-viewport" autoScroll>
+      <ThreadPrimitive.Root className={`aui-thread-root${dark ? ' dark' : ''}`}>
+        <ThreadPrimitive.Viewport className="aui-thread-viewport" autoScroll>
           {!historyReady ? (
-            <div className="aui-empty" aria-busy="true">
-              <DeepSeekMark className="aui-empty-mark" />
-              <h1>DeepSeek</h1>
-              <p>Loading conversation…</p>
+            <div className="aui-thread-welcome-root" aria-busy="true">
+              <div className="aui-thread-welcome-center">
+                <DeepSeekMark className="aui-empty-mark" />
+                <div className="aui-thread-welcome-message">
+                  <h1>DeepSeek</h1>
+                  <p>Loading conversation…</p>
+                </div>
+              </div>
             </div>
           ) : (
             <>
               <AuiIf condition={(s) => s.thread.isEmpty}>
-                <div className="aui-empty">
-                  <DeepSeekMark className="aui-empty-mark" />
-                  <h1>
-                    Hi, I&apos;m <strong>DeepSeek</strong>.
-                  </h1>
-                  <p>How can I help you today?</p>
-                  <div className="aui-suggestions">
-                    {SUGGESTIONS.map((s, i) => (
-                      <ThreadPrimitive.Suggestion
-                        key={s}
-                        prompt={s}
-                        send
-                        className="aui-suggestion"
-                        style={{ animationDelay: `${i * 40}ms` }}
-                        disabled={busy}
-                      >
-                        {s}
-                      </ThreadPrimitive.Suggestion>
-                    ))}
+                <div className="aui-thread-welcome-root">
+                  <div className="aui-thread-welcome-center">
+                    <DeepSeekMark className="aui-empty-mark" />
+                    <div className="aui-thread-welcome-message">
+                      <h1>
+                        Hi, I&apos;m <strong>DeepSeek</strong>.
+                      </h1>
+                      <p>How can I help you today?</p>
+                    </div>
+                    <div className="aui-thread-welcome-suggestions">
+                      {SUGGESTIONS.map((s) => (
+                        <ThreadPrimitive.Suggestion
+                          key={s}
+                          prompt={s}
+                          send
+                          className="aui-thread-welcome-suggestion"
+                          disabled={busy}
+                        >
+                          {s}
+                        </ThreadPrimitive.Suggestion>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </AuiIf>
@@ -487,7 +496,7 @@ export function ChatAuiThread() {
             </>
           )}
 
-          <ThreadPrimitive.ViewportFooter className="aui-footer">
+          <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer">
             {error ? (
               <div className="aui-error" role="alert">
                 <span>{error}</span>
@@ -500,7 +509,7 @@ export function ChatAuiThread() {
           </ThreadPrimitive.ViewportFooter>
         </ThreadPrimitive.Viewport>
 
-        <ThreadPrimitive.ScrollToBottom className="aui-scroll-bottom">↓</ThreadPrimitive.ScrollToBottom>
+        <ThreadPrimitive.ScrollToBottom className="aui-thread-scroll-to-bottom">↓</ThreadPrimitive.ScrollToBottom>
       </ThreadPrimitive.Root>
     </div>
   )
