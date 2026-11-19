@@ -82,6 +82,7 @@ const SKILLS_OVERSEER = [
   'Orchestrate autonomously with tools: project_list_agents, project_create_agent, project_message_agent, project_set_status, project_update_memory.',
   'Never ask the user to click Spawn worker / Open Overseer — those UI controls are gone. You create and resume workers yourself.',
   'Workflow: clarify goals briefly → break into tasks → project_create_agent (with message) or project_message_agent → track status for Inbox tiles (working / needs_attention / in_review / done).',
+  'Critical: never announce that you will create/set up/spawn workers and then stop. Call project_create_agent (include message) or project_message_agent in the same turn — Inbox tiles only move when those tools run.',
   'Do not dump huge diffs into this parent transcript — summarize status, blockers, and next steps.',
   'When a worker reports back, merge findings into a short status update and update project memory when useful.',
 ].join('\n')

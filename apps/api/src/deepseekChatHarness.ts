@@ -70,6 +70,28 @@ export function looksLikeDeferredSearch(text: string): boolean {
 const DEFERRED_SEARCH_NUDGE =
   'You announced a web search but did not call deepseek_web_search (or deepseek_read_url). Call the web search tool now with concrete queries, then answer from the results. Do not stop after another "I\'ll search" sentence.'
 
+/**
+ * True when the Overseer finished with a short "I'll set up workers…" reply and never
+ * called project_create_agent / project_message_agent — silent Needs Attention stall.
+ */
+export function looksLikeDeferredOrchestration(text: string): boolean {
+  const t = String(text || '').trim()
+  if (!t || t.length > 600) return false
+  if ((t.match(/\n/g) || []).length >= 4) return false
+  return (
+    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to|i(?:['’]m| am) about to)\b[\s\S]{0,120}\b(set up|create|spawn|spin up|launch|start|stand up|orchestrat(?:e|ing)?|build)\b[\s\S]{0,120}\b(workers?|agents?|knowledge[- ]?base|project)\b/i.test(
+      t,
+    ) ||
+    /\b(then|next|after that)\b[\s\S]{0,80}\b(set up|create|spawn|spin up|launch|start)\b[\s\S]{0,100}\b(workers?|agents?)\b/i.test(
+      t,
+    ) ||
+    /\b(project_create_agent|project_message_agent)\b/i.test(t)
+  )
+}
+
+const DEFERRED_ORCHESTRATION_NUDGE =
+  'You announced creating or messaging Project workers but did not call project_create_agent (with a message) or project_message_agent. Call those tools now to spawn/resume workers. Do not stop after another "I\'ll set up workers" sentence — the Inbox only updates when tools run.'
+
 export type DeepseekChatSearchImage = {
   imageUrl: string
   url?: string
@@ -544,6 +566,8 @@ export async function* streamDeepseekChatHarness(
   let announcedThinking = false
   let announcedSearching = false
   let deferredSearchRecovered = false
+  let deferredOrchestrationRecovered = false
+  let projectOrchestrationUsed = false
   const allSources = new Map<string, string>()
   const pendingImages: Array<{ url: string; prompt: string; id: string }> = []
 
@@ -695,7 +719,11 @@ export async function* streamDeepseekChatHarness(
         yield { kind: 'searching' }
       }
       for (const call of pendingToolCalls) {
-        const result = await executeDeepseekChatTool(call.function.name, call.function.arguments || '{}', {
+        const toolName = call.function.name
+        if (toolName === 'project_create_agent' || toolName === 'project_message_agent') {
+          projectOrchestrationUsed = true
+        }
+        const result = await executeDeepseekChatTool(toolName, call.function.arguments || '{}', {
           ...opts.prompt,
           signal: opts.signal,
           pluginCreds: opts.pluginCreds,
@@ -755,6 +783,29 @@ export async function* streamDeepseekChatHarness(
       })
       msgs.push({ role: 'user', content: DEFERRED_SEARCH_NUDGE })
       // Clear the empty promise from the UI so the real answer can stream in.
+      yield { kind: 'content_replace', text: '' }
+      assistantContent = ''
+      continue
+    }
+
+    // Overseer announced worker setup but never called project_* spawn/message tools.
+    if (
+      projectAttached &&
+      !deferredOrchestrationRecovered &&
+      !projectOrchestrationUsed &&
+      looksLikeDeferredOrchestration(assistantContent) &&
+      round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS - 1
+    ) {
+      deferredOrchestrationRecovered = true
+      console.warn(
+        '[deepseek-chat] deferred-orchestration recovery: Overseer announced workers without project_* tools',
+      )
+      msgs.push({
+        role: 'assistant',
+        content: assistantContent || null,
+        reasoning_content: assistantReasoning || null,
+      })
+      msgs.push({ role: 'user', content: DEFERRED_ORCHESTRATION_NUDGE })
       yield { kind: 'content_replace', text: '' }
       assistantContent = ''
       continue

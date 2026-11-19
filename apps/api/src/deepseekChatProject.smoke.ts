@@ -16,7 +16,10 @@ import {
   projectUpdateMemory,
 } from './deepseekChatProject.js'
 import { DEEPSEEK_CHAT_PROJECT_TOOLS, executeDeepseekChatTool } from './deepseekChatTools.js'
-import { buildDeepseekChatToolList } from './deepseekChatHarness.js'
+import {
+  buildDeepseekChatToolList,
+  looksLikeDeferredOrchestration,
+} from './deepseekChatHarness.js'
 import { buildDeepseekChatSystem } from './deepseekChatPrompt.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -99,11 +102,28 @@ const overseerPrompt = buildDeepseekChatSystem({
 })
 assert.match(overseerPrompt, /project_create_agent/)
 assert.match(overseerPrompt, /Never ask the user to click Spawn/)
+assert.match(overseerPrompt, /never announce that you will create/)
 assert.doesNotMatch(overseerPrompt, /ask the user to spawn/)
+
+const createTool = DEEPSEEK_CHAT_PROJECT_TOOLS.find((t) => t.function.name === 'project_create_agent')
+assert.ok(createTool)
+assert.deepEqual(
+  (createTool!.function.parameters as { required?: string[] }).required,
+  ['title', 'message'],
+  'create_agent requires message so workers auto-start',
+)
+
+assert.equal(
+  looksLikeDeferredOrchestration(
+    "I'll get grounded… then set up the knowledge-base project with workers.",
+  ),
+  true,
+)
 
 const harness = readFileSync(join(here, 'deepseekChatHarness.ts'), 'utf8')
 assert.match(harness, /DEEPSEEK_CHAT_PROJECT_TOOLS/)
 assert.match(harness, /kind: 'project'/)
+assert.match(harness, /deferred-orchestration recovery/)
 
 const routes = readFileSync(join(here, 'deepseekChatRoutes.ts'), 'utf8')
 assert.match(routes, /projectId/)

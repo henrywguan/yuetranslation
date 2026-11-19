@@ -7,6 +7,7 @@ import {
   DEEPSEEK_CHAT_MAX_TOOL_ROUNDS,
   DEEPSEEK_CHAT_WEB_TOOLS,
   formatLatestReminder,
+  looksLikeDeferredOrchestration,
   looksLikeDeferredSearch,
 } from './deepseekChatHarness.js'
 import { deepseekChatModel, deepseekChatSupportsNativeWebTools } from './deepseekChat.js'
@@ -91,6 +92,12 @@ assert.match(harnessSrc, /latest_reminder/, 'Harness injects user metadata marke
 assert.match(harnessSrc, /deepseek_web_search/, 'Harness declares native web search')
 assert.match(harnessSrc, /deferredSearchRecovered|deferred-search recovery/, 'Harness recovers empty search promises')
 assert.match(harnessSrc, /looksLikeDeferredSearch/, 'Harness detects I\'ll-search stopovers')
+assert.match(
+  harnessSrc,
+  /deferredOrchestrationRecovered|deferred-orchestration recovery/,
+  'Harness recovers empty Overseer worker promises',
+)
+assert.match(harnessSrc, /looksLikeDeferredOrchestration/, 'Harness detects I\'ll-set-up-workers stopovers')
 assert.match(harnessSrc, /DEEPSEEK_CHAT_WORKSPACE_TOOLS/, 'Harness can attach workspace tools')
 assert.match(harnessSrc, /harnessEnabled/, 'Harness mode flag wired')
 assert.match(harnessSrc, /kind: 'workspace'/, 'Harness yields workspace SSE events')
@@ -106,6 +113,25 @@ assert.equal(
   ),
   false,
   'real answers are not deferred-search',
+)
+
+assert.equal(
+  looksLikeDeferredOrchestration(
+    "I'll get grounded in the RuneScape Dragonwilds docs and mechanics, then set up the knowledge-base project with workers.",
+  ),
+  true,
+  'Henry stall phrase is deferred orchestration',
+)
+assert.equal(
+  looksLikeDeferredOrchestration('Let me create a worker for the knowledge base.'),
+  true,
+)
+assert.equal(
+  looksLikeDeferredOrchestration(
+    'Created worker · Dragonwilds KB and queued the first research pass. Watch Needs Attention when it reports back.',
+  ),
+  false,
+  'real orchestration status is not deferred',
 )
 
 const routes = readFileSync(

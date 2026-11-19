@@ -85,17 +85,17 @@ export const DEEPSEEK_CHAT_PROJECT_TOOLS: OpenAiTool[] = [
     function: {
       name: 'project_create_agent',
       description:
-        'Create a worker agent in this Project. Optionally include an initial task message; the client starts/resumes that worker chat.',
+        'Create a worker agent in this Project and start it. Always include message (first task prompt) so the client runs that worker chat immediately — creating without message leaves a silent queued row.',
       parameters: {
         type: 'object',
         properties: {
           title: { type: 'string', description: 'Short worker label' },
           message: {
             type: 'string',
-            description: 'Optional first task prompt for the worker',
+            description: 'First task prompt for the worker (required for auto-start)',
           },
         },
-        required: ['title'],
+        required: ['title', 'message'],
       },
     },
   },

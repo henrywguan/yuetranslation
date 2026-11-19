@@ -594,3 +594,25 @@ export function matchesSearch(title: string, query: string): boolean {
   if (!q) return true
   return title.toLowerCase().includes(q)
 }
+
+/**
+ * Overseer replied with "I'll set up workers…" without project_* tool follow-through.
+ * Keep in sync with apps/api `looksLikeDeferredOrchestration`.
+ */
+export function looksLikeDeferredOrchestration(text: string): boolean {
+  const t = String(text || '').trim()
+  if (!t || t.length > 600) return false
+  if ((t.match(/\n/g) || []).length >= 4) return false
+  return (
+    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to|i(?:['’]m| am) about to)\b[\s\S]{0,120}\b(set up|create|spawn|spin up|launch|start|stand up|orchestrat(?:e|ing)?|build)\b[\s\S]{0,120}\b(workers?|agents?|knowledge[- ]?base|project)\b/i.test(
+      t,
+    ) ||
+    /\b(then|next|after that)\b[\s\S]{0,80}\b(set up|create|spawn|spin up|launch|start)\b[\s\S]{0,100}\b(workers?|agents?)\b/i.test(
+      t,
+    ) ||
+    /\b(project_create_agent|project_message_agent)\b/i.test(t)
+  )
+}
+
+export const ORCHESTRATION_STALL_ERROR =
+  'Overseer announced worker setup but did not create or message any agents. Say “continue” or rephrase so it calls project tools — Inbox ATTENTION with no workers means orchestration stalled.'

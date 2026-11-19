@@ -16,8 +16,10 @@ import {
   deleteProject,
   emptyInboxState,
   filterAgentViews,
+  looksLikeDeferredOrchestration,
   matchesSearch,
   normalizeInboxState,
+  ORCHESTRATION_STALL_ERROR,
   renameProject,
   setProjectMemory,
 } from './chatInbox'
@@ -180,11 +182,23 @@ assert.match(runtime, /projectId/, 'runtime forwards project id for Overseer too
 assert.match(runtime, /projectAgents/, 'runtime forwards agent snapshot')
 assert.match(runtime, /onProject|applyProjectActions/, 'runtime applies project_* actions')
 assert.match(runtime, /needs_attention/, 'turn end marks Needs Attention')
+assert.match(runtime, /looksLikeDeferredOrchestration/, 'runtime detects stalled Overseer promises')
+assert.match(runtime, /ORCHESTRATION_STALL_ERROR/, 'runtime surfaces orchestration stall error')
+assert.match(runtime, /hasPendingWorkers/, 'Overseer stays Working while workers are queued')
 assert.match(
   runtime,
   /!live\.length[\s\S]*emptyThread\(\)/,
   'clearing last live agents opens a fresh empty thread',
 )
+
+assert.equal(
+  looksLikeDeferredOrchestration(
+    "I'll get grounded in the RuneScape Dragonwilds docs and mechanics, then set up the knowledge-base project with workers.",
+  ),
+  true,
+  'Henry stall phrase flagged on client',
+)
+assert.match(ORCHESTRATION_STALL_ERROR, /did not create or message/)
 
 const api = readFileSync(join(here, 'api.ts'), 'utf8')
 assert.match(api, /inboxRole/, 'web API client sends inboxRole')
