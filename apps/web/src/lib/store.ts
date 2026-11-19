@@ -209,7 +209,7 @@ type State = {
   openBreakdown: (
     phrase: string,
     opts?: {
-      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'ceb' | 'ilo' | 'bcl'
+      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'ps' | 'hy' | 'ka' | 'am' | 'ceb' | 'ilo' | 'bcl'
       translation?: string
       definition?: string
       definitions?: string[]
@@ -522,6 +522,26 @@ function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'sr') return 'sr'
   if (direction === 'sw') return 'sw'
   if (direction === 'af') return 'af'
+  if (direction === 'et') return 'et'
+  if (direction === 'lv') return 'lv'
+  if (direction === 'lt') return 'lt'
+  if (direction === 'ga') return 'ga'
+  if (direction === 'cy') return 'cy'
+  if (direction === 'eu') return 'eu'
+  if (direction === 'gl') return 'gl'
+  if (direction === 'mt') return 'mt'
+  if (direction === 'is') return 'is'
+  if (direction === 'bs') return 'bs'
+  if (direction === 'sq') return 'sq'
+  if (direction === 'zu') return 'zu'
+  if (direction === 'so') return 'so'
+  if (direction === 'as') return 'as'
+  if (direction === 'mk') return 'mk'
+  if (direction === 'mn') return 'mn'
+  if (direction === 'ps') return 'ps'
+  if (direction === 'hy') return 'hy'
+  if (direction === 'ka') return 'ka'
+  if (direction === 'am') return 'am'
   return detected
 }
 
@@ -892,7 +912,7 @@ export const useYueStore = create<State>((set, get) => {
       nextLower = lang
     }
     const chinesePatch =
-      lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'eses' || lang === 'vi' || lang === 'th' || lang === 'lo' || lang === 'ko' || lang === 'ja' || lang === 'id' || lang === 'ms' || lang === 'pt' || lang === 'fr' || lang === 'hi' || lang === 'km' || lang === 'my' || lang === 'jv' || lang === 'it' || lang === 'de' || lang === 'nl' || lang === 'ar' || lang === 'arsa' || lang === 'ta' || lang === 'ptpt' || lang === 'tr' || lang === 'bn' || lang === 'te' || lang === 'gu' || lang === 'kn' || lang === 'pl' || lang === 'ro' || lang === 'cs' || lang === 'el' || lang === 'hu' || lang === 'sv' || lang === 'ru' || lang === 'uk' || lang === 'he' || lang === 'fa' || lang === 'ur' || lang === 'ml' || lang === 'mr' || lang === 'pa' || lang === 'or' || lang === 'si' || lang === 'ne' || lang === 'da' || lang === 'nb' || lang === 'fi' || lang === 'sk' || lang === 'hr' || lang === 'ca' || lang === 'az' || lang === 'kk' || lang === 'uz' || lang === 'bg' || lang === 'sr' || lang === 'sw' || lang === 'af'
+      lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'eses' || lang === 'vi' || lang === 'th' || lang === 'lo' || lang === 'ko' || lang === 'ja' || lang === 'id' || lang === 'ms' || lang === 'pt' || lang === 'fr' || lang === 'hi' || lang === 'km' || lang === 'my' || lang === 'jv' || lang === 'it' || lang === 'de' || lang === 'nl' || lang === 'ar' || lang === 'arsa' || lang === 'ta' || lang === 'ptpt' || lang === 'tr' || lang === 'bn' || lang === 'te' || lang === 'gu' || lang === 'kn' || lang === 'pl' || lang === 'ro' || lang === 'cs' || lang === 'el' || lang === 'hu' || lang === 'sv' || lang === 'ru' || lang === 'uk' || lang === 'he' || lang === 'fa' || lang === 'ur' || lang === 'ml' || lang === 'mr' || lang === 'pa' || lang === 'or' || lang === 'si' || lang === 'ne' || lang === 'da' || lang === 'nb' || lang === 'fi' || lang === 'sk' || lang === 'hr' || lang === 'ca' || lang === 'az' || lang === 'kk' || lang === 'uz' || lang === 'bg' || lang === 'sr' || lang === 'sw' || lang === 'af' || lang === 'et' || lang === 'lv' || lang === 'lt' || lang === 'ga' || lang === 'cy' || lang === 'eu' || lang === 'gl' || lang === 'mt' || lang === 'is' || lang === 'bs' || lang === 'sq' || lang === 'zu' || lang === 'so' || lang === 'as' || lang === 'mk' || lang === 'mn' || lang === 'ps' || lang === 'hy' || lang === 'ka' || lang === 'am'
         ? { chineseLang: lang }
         : {}
     const nextSpeak = resolveSpeakDirectionForSolo({
@@ -1145,7 +1165,7 @@ export const useYueStore = create<State>((set, get) => {
           writeLocalThVoice,
           writeLocalLoVoice,
           writeLocalKoVoice, writeLocalJaVoice, writeLocalIdVoice, writeLocalMsVoice, writeLocalPtVoice, writeLocalFrVoice, writeLocalHiVoice, writeLocalKmVoice, writeLocalMyVoice, writeLocalJvVoice, writeLocalItVoice, writeLocalDeVoice, writeLocalNlVoice, writeLocalArVoice, writeLocalArsaVoice,
-          writeLocalTaVoice, writeLocalPtptVoice, writeLocalTrVoice, writeLocalBnVoice, writeLocalTeVoice, writeLocalGuVoice, writeLocalKnVoice, writeLocalPlVoice, writeLocalRoVoice, writeLocalCsVoice, writeLocalElVoice, writeLocalHuVoice, writeLocalSvVoice, writeLocalRuVoice, writeLocalUkVoice, writeLocalHeVoice, writeLocalFaVoice, writeLocalUrVoice, writeLocalMlVoice, writeLocalMrVoice, writeLocalPaVoice, writeLocalOrVoice, writeLocalSiVoice, writeLocalNeVoice, writeLocalDaVoice, writeLocalNbVoice, writeLocalFiVoice, writeLocalSkVoice, writeLocalHrVoice, writeLocalCaVoice, writeLocalAzVoice, writeLocalKkVoice, writeLocalUzVoice, writeLocalBgVoice, writeLocalSrVoice, writeLocalSwVoice, writeLocalAfVoice,
+          writeLocalTaVoice, writeLocalPtptVoice, writeLocalTrVoice, writeLocalBnVoice, writeLocalTeVoice, writeLocalGuVoice, writeLocalKnVoice, writeLocalPlVoice, writeLocalRoVoice, writeLocalCsVoice, writeLocalElVoice, writeLocalHuVoice, writeLocalSvVoice, writeLocalRuVoice, writeLocalUkVoice, writeLocalHeVoice, writeLocalFaVoice, writeLocalUrVoice, writeLocalMlVoice, writeLocalMrVoice, writeLocalPaVoice, writeLocalOrVoice, writeLocalSiVoice, writeLocalNeVoice, writeLocalDaVoice, writeLocalNbVoice, writeLocalFiVoice, writeLocalSkVoice, writeLocalHrVoice, writeLocalCaVoice, writeLocalAzVoice, writeLocalKkVoice, writeLocalUzVoice, writeLocalBgVoice, writeLocalSrVoice, writeLocalSwVoice, writeLocalAfVoice, writeLocalEtVoice, writeLocalLvVoice, writeLocalLtVoice, writeLocalGaVoice, writeLocalCyVoice, writeLocalEuVoice, writeLocalGlVoice, writeLocalMtVoice, writeLocalIsVoice, writeLocalBsVoice, writeLocalSqVoice, writeLocalZuVoice, writeLocalSoVoice, writeLocalAsVoice, writeLocalMkVoice, writeLocalMnVoice, writeLocalPsVoice, writeLocalHyVoice, writeLocalKaVoice, writeLocalAmVoice,
           resolveCmnVoice,
           resolveEnVoice,
           resolveTlVoice,
@@ -1156,7 +1176,7 @@ export const useYueStore = create<State>((set, get) => {
           resolveThVoice,
           resolveLoVoice,
           resolveKoVoice, resolveJaVoice, resolveIdVoice, resolveMsVoice, resolvePtVoice, resolveFrVoice, resolveHiVoice, resolveKmVoice, resolveMyVoice, resolveJvVoice, resolveItVoice, resolveDeVoice, resolveNlVoice, resolveArVoice, resolveArsaVoice,
-          resolveTaVoice, resolvePtptVoice, resolveTrVoice, resolveBnVoice, resolveTeVoice, resolveGuVoice, resolveKnVoice, resolvePlVoice, resolveRoVoice, resolveCsVoice, resolveElVoice, resolveHuVoice, resolveSvVoice, resolveRuVoice, resolveUkVoice, resolveHeVoice, resolveFaVoice, resolveUrVoice, resolveMlVoice, resolveMrVoice, resolvePaVoice, resolveOrVoice, resolveSiVoice, resolveNeVoice, resolveDaVoice, resolveNbVoice, resolveFiVoice, resolveSkVoice, resolveHrVoice, resolveCaVoice, resolveAzVoice, resolveKkVoice, resolveUzVoice, resolveBgVoice, resolveSrVoice, resolveSwVoice, resolveAfVoice,
+          resolveTaVoice, resolvePtptVoice, resolveTrVoice, resolveBnVoice, resolveTeVoice, resolveGuVoice, resolveKnVoice, resolvePlVoice, resolveRoVoice, resolveCsVoice, resolveElVoice, resolveHuVoice, resolveSvVoice, resolveRuVoice, resolveUkVoice, resolveHeVoice, resolveFaVoice, resolveUrVoice, resolveMlVoice, resolveMrVoice, resolvePaVoice, resolveOrVoice, resolveSiVoice, resolveNeVoice, resolveDaVoice, resolveNbVoice, resolveFiVoice, resolveSkVoice, resolveHrVoice, resolveCaVoice, resolveAzVoice, resolveKkVoice, resolveUzVoice, resolveBgVoice, resolveSrVoice, resolveSwVoice, resolveAfVoice, resolveEtVoice, resolveLvVoice, resolveLtVoice, resolveGaVoice, resolveCyVoice, resolveEuVoice, resolveGlVoice, resolveMtVoice, resolveIsVoice, resolveBsVoice, resolveSqVoice, resolveZuVoice, resolveSoVoice, resolveAsVoice, resolveMkVoice, resolveMnVoice, resolvePsVoice, resolveHyVoice, resolveKaVoice, resolveAmVoice,
         } = await import('./ttsVoices')
         if (ent.prefs?.ttsVoiceYue) writeLocalYueVoice(resolveYueVoice(ent.prefs.ttsVoiceYue))
         if (ent.prefs?.ttsVoiceEn) writeLocalEnVoice(resolveEnVoice(ent.prefs.ttsVoiceEn))
@@ -1219,6 +1239,26 @@ export const useYueStore = create<State>((set, get) => {
         if (ent.prefs?.ttsVoiceSr) writeLocalSrVoice(resolveSrVoice(ent.prefs.ttsVoiceSr))
         if (ent.prefs?.ttsVoiceSw) writeLocalSwVoice(resolveSwVoice(ent.prefs.ttsVoiceSw))
         if (ent.prefs?.ttsVoiceAf) writeLocalAfVoice(resolveAfVoice(ent.prefs.ttsVoiceAf))
+        if (ent.prefs?.ttsVoiceEt) writeLocalEtVoice(resolveEtVoice(ent.prefs.ttsVoiceEt))
+        if (ent.prefs?.ttsVoiceLv) writeLocalLvVoice(resolveLvVoice(ent.prefs.ttsVoiceLv))
+        if (ent.prefs?.ttsVoiceLt) writeLocalLtVoice(resolveLtVoice(ent.prefs.ttsVoiceLt))
+        if (ent.prefs?.ttsVoiceGa) writeLocalGaVoice(resolveGaVoice(ent.prefs.ttsVoiceGa))
+        if (ent.prefs?.ttsVoiceCy) writeLocalCyVoice(resolveCyVoice(ent.prefs.ttsVoiceCy))
+        if (ent.prefs?.ttsVoiceEu) writeLocalEuVoice(resolveEuVoice(ent.prefs.ttsVoiceEu))
+        if (ent.prefs?.ttsVoiceGl) writeLocalGlVoice(resolveGlVoice(ent.prefs.ttsVoiceGl))
+        if (ent.prefs?.ttsVoiceMt) writeLocalMtVoice(resolveMtVoice(ent.prefs.ttsVoiceMt))
+        if (ent.prefs?.ttsVoiceIs) writeLocalIsVoice(resolveIsVoice(ent.prefs.ttsVoiceIs))
+        if (ent.prefs?.ttsVoiceBs) writeLocalBsVoice(resolveBsVoice(ent.prefs.ttsVoiceBs))
+        if (ent.prefs?.ttsVoiceSq) writeLocalSqVoice(resolveSqVoice(ent.prefs.ttsVoiceSq))
+        if (ent.prefs?.ttsVoiceZu) writeLocalZuVoice(resolveZuVoice(ent.prefs.ttsVoiceZu))
+        if (ent.prefs?.ttsVoiceSo) writeLocalSoVoice(resolveSoVoice(ent.prefs.ttsVoiceSo))
+        if (ent.prefs?.ttsVoiceAs) writeLocalAsVoice(resolveAsVoice(ent.prefs.ttsVoiceAs))
+        if (ent.prefs?.ttsVoiceMk) writeLocalMkVoice(resolveMkVoice(ent.prefs.ttsVoiceMk))
+        if (ent.prefs?.ttsVoiceMn) writeLocalMnVoice(resolveMnVoice(ent.prefs.ttsVoiceMn))
+        if (ent.prefs?.ttsVoicePs) writeLocalPsVoice(resolvePsVoice(ent.prefs.ttsVoicePs))
+        if (ent.prefs?.ttsVoiceHy) writeLocalHyVoice(resolveHyVoice(ent.prefs.ttsVoiceHy))
+        if (ent.prefs?.ttsVoiceKa) writeLocalKaVoice(resolveKaVoice(ent.prefs.ttsVoiceKa))
+        if (ent.prefs?.ttsVoiceAm) writeLocalAmVoice(resolveAmVoice(ent.prefs.ttsVoiceAm))
       } catch {
         /* ignore */
       }

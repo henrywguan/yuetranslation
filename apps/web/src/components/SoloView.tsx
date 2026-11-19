@@ -96,6 +96,26 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'sr') return 'Пишите или говорите на српском…'
   if (lang === 'sw') return 'Andika au sema kwa Kiswahili…'
   if (lang === 'af') return 'Tik of praat in Afrikaans…'
+  if (lang === 'et') return 'Kirjuta või räägi eesti keeles…'
+  if (lang === 'lv') return 'Rakstiet vai runājiet latviski…'
+  if (lang === 'lt') return 'Rašykite arba kalbėkite lietuviškai…'
+  if (lang === 'ga') return 'Clóscríobh nó labhair as Gaeilge…'
+  if (lang === 'cy') return 'Teipiwch neu siaradwch Gymraeg…'
+  if (lang === 'eu') return 'Idatzi edo hitz egin euskaraz…'
+  if (lang === 'gl') return 'Escribe ou fala en galego…'
+  if (lang === 'mt') return 'Ikteb jew kellem bil-Malti…'
+  if (lang === 'is') return 'Skrifaðu eða talaðu á íslensku…'
+  if (lang === 'bs') return 'Pišite ili govorite bosanski…'
+  if (lang === 'sq') return 'Shkruaj ose fol shqip…'
+  if (lang === 'zu') return 'Bhala noma ukhulume ngesiZulu…'
+  if (lang === 'so') return 'Ku qor ama ku hadal af Soomaali…'
+  if (lang === 'as') return 'অসমীয়াত লিখক বা কওক…'
+  if (lang === 'mk') return 'Пишувајте или зборувајте на македонски…'
+  if (lang === 'mn') return 'Монголоор бичнэ үү эсвэл ярина уу…'
+  if (lang === 'ps') return 'په پښتو ولیکئ یا خبرې وکړئ…'
+  if (lang === 'hy') return 'Գրեք կամ խոսեք հայերեն…'
+  if (lang === 'ka') return 'დაწერეთ ან ისაუბრეთ ქართულად…'
+  if (lang === 'am') return 'በአማርኛ ይጻፉ ወይም ይናገሩ…'
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
   if (lang === 'bcl') return 'I-type nin Bikol…'
@@ -167,6 +187,26 @@ function isRubyDisplayLang(lang: Lang): boolean {
     lang === 'sr' ||
     lang === 'sw' ||
     lang === 'af' ||
+    lang === 'et' ||
+    lang === 'lv' ||
+    lang === 'lt' ||
+    lang === 'ga' ||
+    lang === 'cy' ||
+    lang === 'eu' ||
+    lang === 'gl' ||
+    lang === 'mt' ||
+    lang === 'is' ||
+    lang === 'bs' ||
+    lang === 'sq' ||
+    lang === 'zu' ||
+    lang === 'so' ||
+    lang === 'as' ||
+    lang === 'mk' ||
+    lang === 'mn' ||
+    lang === 'ps' ||
+    lang === 'hy' ||
+    lang === 'ka' ||
+    lang === 'am' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'
@@ -243,6 +283,26 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'sr') return 'Speak Serbian with the mic'
   if (lang === 'sw') return 'Speak Swahili with the mic'
   if (lang === 'af') return 'Speak Afrikaans with the mic'
+  if (lang === 'et') return 'Speak Estonian with the mic'
+  if (lang === 'lv') return 'Speak Latvian with the mic'
+  if (lang === 'lt') return 'Speak Lithuanian with the mic'
+  if (lang === 'ga') return 'Speak Irish with the mic'
+  if (lang === 'cy') return 'Speak Welsh with the mic'
+  if (lang === 'eu') return 'Speak Basque with the mic'
+  if (lang === 'gl') return 'Speak Galician with the mic'
+  if (lang === 'mt') return 'Speak Maltese with the mic'
+  if (lang === 'is') return 'Speak Icelandic with the mic'
+  if (lang === 'bs') return 'Speak Bosnian with the mic'
+  if (lang === 'sq') return 'Speak Albanian with the mic'
+  if (lang === 'zu') return 'Speak Zulu with the mic'
+  if (lang === 'so') return 'Speak Somali with the mic'
+  if (lang === 'as') return 'Speak Assamese with the mic'
+  if (lang === 'mk') return 'Speak Macedonian with the mic'
+  if (lang === 'mn') return 'Speak Mongolian with the mic'
+  if (lang === 'ps') return 'Speak Pashto with the mic'
+  if (lang === 'hy') return 'Speak Armenian with the mic'
+  if (lang === 'ka') return 'Speak Georgian with the mic'
+  if (lang === 'am') return 'Speak Amharic with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
   if (lang === 'sichuan') return 'Speak Sichuanese with the mic'

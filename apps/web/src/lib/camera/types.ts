@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'ps' | 'hy' | 'ka' | 'am' | 'ceb' | 'ilo' | 'bcl'
 
 export type EditableBox = {
   id: string
@@ -21,7 +21,7 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'ceb' | 'ilo' | 'bcl'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'ps' | 'hy' | 'ka' | 'am' | 'ceb' | 'ilo' | 'bcl'
 
 /** Product CameraLang codes — identity map for server `to` / `from` values. */
 const CAMERA_LANG_SET = new Set<string>([
@@ -88,6 +88,26 @@ const CAMERA_LANG_SET = new Set<string>([
   'sr',
   'sw',
   'af',
+  'et',
+  'lv',
+  'lt',
+  'ga',
+  'cy',
+  'eu',
+  'gl',
+  'mt',
+  'is',
+  'bs',
+  'sq',
+  'zu',
+  'so',
+  'as',
+  'mk',
+  'mn',
+  'ps',
+  'hy',
+  'ka',
+  'am',
   'ceb',
   'ilo',
   'bcl',
@@ -166,6 +186,26 @@ export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (l === 'sr' || l.startsWith('sr-')) return 'sr'
   if (l === 'sw' || l.startsWith('sw-')) return 'sw'
   if (l === 'af' || l.startsWith('af-')) return 'af'
+  if (l === 'et' || l.startsWith('et-')) return 'et'
+  if (l === 'lv' || l.startsWith('lv-')) return 'lv'
+  if (l === 'lt' || l.startsWith('lt-')) return 'lt'
+  if (l === 'ga' || l.startsWith('ga-')) return 'ga'
+  if (l === 'cy' || l.startsWith('cy-')) return 'cy'
+  if (l === 'eu' || l.startsWith('eu-')) return 'eu'
+  if (l === 'gl' || l.startsWith('gl-')) return 'gl'
+  if (l === 'mt' || l.startsWith('mt-')) return 'mt'
+  if (l === 'is' || l.startsWith('is-')) return 'is'
+  if (l === 'bs' || l.startsWith('bs-')) return 'bs'
+  if (l === 'sq' || l.startsWith('sq-')) return 'sq'
+  if (l === 'zu' || l.startsWith('zu-')) return 'zu'
+  if (l === 'so' || l.startsWith('so-')) return 'so'
+  if (l === 'as' || l.startsWith('as-')) return 'as'
+  if (l === 'mk' || l.startsWith('mk-')) return 'mk'
+  if (l === 'mn' || l.startsWith('mn-')) return 'mn'
+  if (l === 'ps' || l.startsWith('ps-')) return 'ps'
+  if (l === 'hy' || l.startsWith('hy-')) return 'hy'
+  if (l === 'ka' || l.startsWith('ka-')) return 'ka'
+  if (l === 'am' || l.startsWith('am-')) return 'am'
   if (l.startsWith('en')) return 'en'
   if (l.startsWith('wuu')) return 'wuu'
   if (l.startsWith('zh-cn') || l.includes('cmn') || l.includes('hans')) return 'cmn'
@@ -250,6 +290,19 @@ const LATIN_DETAIL_CAM_LANGS = [
   'uz',
   'sw',
   'af',
+  'et',
+  'lv',
+  'lt',
+  'ga',
+  'cy',
+  'eu',
+  'gl',
+  'mt',
+  'is',
+  'bs',
+  'sq',
+  'zu',
+  'so',
   'ceb',
   'ilo',
   'bcl',
@@ -261,7 +314,7 @@ function isLatinDetailCam(lang: CameraLang): lang is LatinDetailCamLang {
 }
 
 /** Own-script Cam targets (not Latin, not Han primary) — same detail dispatch shape. */
-const SCRIPT_DETAIL_CAM_LANGS = ['th', 'lo', 'ko', 'ja', 'hi', 'km', 'my', 'ar', 'arsa', 'ta', 'bn', 'te', 'gu', 'kn', 'el', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'kk', 'bg', 'sr'] as const
+const SCRIPT_DETAIL_CAM_LANGS = ['th', 'lo', 'ko', 'ja', 'hi', 'km', 'my', 'ar', 'arsa', 'ta', 'bn', 'te', 'gu', 'kn', 'el', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'kk', 'bg', 'sr', 'as', 'mk', 'mn', 'hy', 'ka', 'am', 'ps'] as const
 type ScriptDetailCamLang = (typeof SCRIPT_DETAIL_CAM_LANGS)[number]
 
 function isScriptDetailCam(lang: CameraLang): lang is ScriptDetailCamLang {
@@ -390,6 +443,26 @@ export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'sr') return 'sr'
   if (box.to === 'sw') return 'sw'
   if (box.to === 'af') return 'af'
+  if (box.to === 'et') return 'et'
+  if (box.to === 'lv') return 'lv'
+  if (box.to === 'lt') return 'lt'
+  if (box.to === 'ga') return 'ga'
+  if (box.to === 'cy') return 'cy'
+  if (box.to === 'eu') return 'eu'
+  if (box.to === 'gl') return 'gl'
+  if (box.to === 'mt') return 'mt'
+  if (box.to === 'is') return 'is'
+  if (box.to === 'bs') return 'bs'
+  if (box.to === 'sq') return 'sq'
+  if (box.to === 'zu') return 'zu'
+  if (box.to === 'so') return 'so'
+  if (box.to === 'as') return 'as'
+  if (box.to === 'mk') return 'mk'
+  if (box.to === 'mn') return 'mn'
+  if (box.to === 'ps') return 'ps'
+  if (box.to === 'hy') return 'hy'
+  if (box.to === 'ka') return 'ka'
+  if (box.to === 'am') return 'am'
   if (box.to === 'ceb') return 'ceb'
   if (box.to === 'ilo') return 'ilo'
   if (box.to === 'bcl') return 'bcl'

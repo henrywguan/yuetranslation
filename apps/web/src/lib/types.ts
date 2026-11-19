@@ -1,4 +1,4 @@
-export type VoiceLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af'
+export type VoiceLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'ps' | 'hy' | 'ka' | 'am'
 /** Solo + Cam text translate only — no STT/TTS (Azure has no locales). */
 export type TextOnlyLang = 'ceb' | 'ilo' | 'bcl'
 export type Lang = VoiceLang | TextOnlyLang
@@ -166,6 +166,26 @@ export type Entitlement = {
     ttsVoiceSr?: string
     ttsVoiceSw?: string
     ttsVoiceAf?: string
+    ttsVoiceEt?: string
+    ttsVoiceLv?: string
+    ttsVoiceLt?: string
+    ttsVoiceGa?: string
+    ttsVoiceCy?: string
+    ttsVoiceEu?: string
+    ttsVoiceGl?: string
+    ttsVoiceMt?: string
+    ttsVoiceIs?: string
+    ttsVoiceBs?: string
+    ttsVoiceSq?: string
+    ttsVoiceZu?: string
+    ttsVoiceSo?: string
+    ttsVoiceAs?: string
+    ttsVoiceMk?: string
+    ttsVoiceMn?: string
+    ttsVoicePs?: string
+    ttsVoiceHy?: string
+    ttsVoiceKa?: string
+    ttsVoiceAm?: string
     /** Cross-device Auto-speak preference. */
     autoSpeak?: boolean
     /** Primary language (Solo / Conversation / Cam / brand) — voice langs only. */

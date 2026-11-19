@@ -1,6 +1,6 @@
 /**
  * Optional ISO 15919 reading for Telugu / Gujarati / Kannada / Malayalam / Marathi /
- * Punjabi (Gurmukhi) / Odia / Sinhala / Nepali Details.
+ * Punjabi (Gurmukhi) / Odia / Sinhala / Nepali / Assamese Details.
  * Compact UI stays native script only — no Latin dump on every line.
  *
  * The Brahmic Unicode blocks (all but Sinhala) share the offset layout (vowels
@@ -11,7 +11,7 @@
  * and table. Follows spelling (inherent-a deletion is not modelled). Learner aid, not phonetics.
  */
 
-export type IndicIsoLang = 'te' | 'gu' | 'kn' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne'
+export type IndicIsoLang = 'te' | 'gu' | 'kn' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'as'
 
 type BrahmicLang = Exclude<IndicIsoLang, 'si'>
 
@@ -24,6 +24,7 @@ const BASE: Record<BrahmicLang, number> = {
   pa: 0x0a00,
   or: 0x0b00,
   ne: 0x0900,
+  as: 0x0980,
 }
 
 const SCRIPT_RE: Record<IndicIsoLang, RegExp> = {
@@ -36,6 +37,7 @@ const SCRIPT_RE: Record<IndicIsoLang, RegExp> = {
   or: /[\u0B00-\u0B7F]/,
   si: /[\u0D80-\u0DFF]/,
   ne: /[\u0900-\u097F]/,
+  as: /[\u0980-\u09FF]/,
 }
 
 const SHARED_VOWEL: Record<number, string> = {
@@ -128,15 +130,19 @@ const NUKTA_CONSONANT: Partial<Record<BrahmicLang, Record<number, string>>> = {
   ne: { 0x15: 'q', 0x16: 'ḵh', 0x17: 'ġ', 0x1c: 'z', 0x21: 'ṛ', 0x22: 'ṛh', 0x2b: 'f', 0x2f: 'ẏ' },
   pa: { 0x16: 'x', 0x17: 'ġ', 0x1c: 'z', 0x2b: 'f', 0x38: 'ś' },
   or: { 0x21: 'ṛ', 0x22: 'ṛh' },
+  as: { 0x21: 'ṛ', 0x22: 'ṛh', 0x2f: 'ẏ' },
 }
 
 /** Script-specific extra consonants. */
 const EXTRA_CONSONANT: Partial<Record<BrahmicLang, Record<number, string>>> = {
   pa: { 0x5c: 'ṛ' },
   or: { 0x5f: 'ẏ', 0x71: 'w' },
+  as: { 0x70: 'r', 0x71: 'w' },
 }
 
 const VIRAMA = 0x4d
+/** Bengali–Assamese khanda ta ৎ (U+09CE) — a bare t with no inherent vowel. */
+const KHANDA_TA = 0x4e
 const NUKTA = 0x3c
 const AVAGRAHA = 0x3d
 const ANUSVARA = 0x02
@@ -245,7 +251,7 @@ export function romanizeIndicIso15919(text: string, lang: IndicIsoLang): string 
       ? GUJARATI_VOWEL
       : lang === 'mr' || lang === 'ne'
         ? DEVANAGARI_VOWEL
-        : lang === 'or'
+        : lang === 'or' || lang === 'as'
           ? ODIA_VOWEL
           : lang === 'pa'
             ? GURMUKHI_VOWEL
@@ -255,7 +261,7 @@ export function romanizeIndicIso15919(text: string, lang: IndicIsoLang): string 
       ? GUJARATI_SIGN
       : lang === 'mr' || lang === 'ne'
         ? DEVANAGARI_SIGN
-        : lang === 'or'
+        : lang === 'or' || lang === 'as'
           ? ODIA_SIGN
           : lang === 'pa'
             ? GURMUKHI_SIGN
@@ -342,6 +348,11 @@ export function romanizeIndicIso15919(text: string, lang: IndicIsoLang): string 
       const m = marks(i + 1)
       out += m.text
       i = m.next
+      continue
+    }
+    if (lang === 'as' && off === KHANDA_TA) {
+      out += 't'
+      i += 1
       continue
     }
     let stem = consonants[off]

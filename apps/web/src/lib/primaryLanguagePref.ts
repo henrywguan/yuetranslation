@@ -72,6 +72,26 @@ export const PRIMARY_LANGS = [
   'sr',
   'sw',
   'af',
+  'et',
+  'lv',
+  'lt',
+  'ga',
+  'cy',
+  'eu',
+  'gl',
+  'mt',
+  'is',
+  'bs',
+  'sq',
+  'zu',
+  'so',
+  'as',
+  'mk',
+  'mn',
+  'ps',
+  'hy',
+  'ka',
+  'am',
 ] as const satisfies readonly VoiceLang[]
 export type PrimaryLang = (typeof PRIMARY_LANGS)[number]
 
@@ -572,6 +592,126 @@ export function primaryLangLabel(lang: PrimaryLang): {
         zh: '南非荷蘭文語言工具',
         gloss: 'Taalgereedskap',
       }
+    case 'et':
+      return {
+        en: 'Estonian Language Tool',
+        zh: '愛沙尼亞文語言工具',
+        gloss: 'Keelevahend',
+      }
+    case 'lv':
+      return {
+        en: 'Latvian Language Tool',
+        zh: '拉脫維亞文語言工具',
+        gloss: 'Valodas rīks',
+      }
+    case 'lt':
+      return {
+        en: 'Lithuanian Language Tool',
+        zh: '立陶宛文語言工具',
+        gloss: 'Kalbos įrankis',
+      }
+    case 'ga':
+      return {
+        en: 'Irish Language Tool',
+        zh: '愛爾蘭文語言工具',
+        gloss: 'Uirlis Teanga',
+      }
+    case 'cy':
+      return {
+        en: 'Welsh Language Tool',
+        zh: '威爾斯文語言工具',
+        gloss: 'Offeryn Iaith',
+      }
+    case 'eu':
+      return {
+        en: 'Basque Language Tool',
+        zh: '巴斯克文語言工具',
+        gloss: 'Hizkuntza tresna',
+      }
+    case 'gl':
+      return {
+        en: 'Galician Language Tool',
+        zh: '加利西亞文語言工具',
+        gloss: 'Ferramenta de idiomas',
+      }
+    case 'mt':
+      return {
+        en: 'Maltese Language Tool',
+        zh: '馬爾他文語言工具',
+        gloss: 'Għodda tal-Lingwa',
+      }
+    case 'is':
+      return {
+        en: 'Icelandic Language Tool',
+        zh: '冰島文語言工具',
+        gloss: 'Tungumálatól',
+      }
+    case 'bs':
+      return {
+        en: 'Bosnian Language Tool',
+        zh: '波斯尼亞文語言工具',
+        gloss: 'Jezički alat',
+      }
+    case 'sq':
+      return {
+        en: 'Albanian Language Tool',
+        zh: '阿爾巴尼亞文語言工具',
+        gloss: 'Mjet gjuhësor',
+      }
+    case 'zu':
+      return {
+        en: 'Zulu Language Tool',
+        zh: '祖魯文語言工具',
+        gloss: 'Insiza yolimi',
+      }
+    case 'so':
+      return {
+        en: 'Somali Language Tool',
+        zh: '索馬里文語言工具',
+        gloss: 'Qalab Luuqadeed',
+      }
+    case 'as':
+      return {
+        en: 'Assamese Language Tool',
+        zh: '阿薩姆文語言工具',
+        gloss: 'ভাষা সঁজুলি',
+      }
+    case 'mk':
+      return {
+        en: 'Macedonian Language Tool',
+        zh: '馬其頓文語言工具',
+        gloss: 'Јазична алатка',
+      }
+    case 'mn':
+      return {
+        en: 'Mongolian Language Tool',
+        zh: '蒙古文語言工具',
+        gloss: 'Хэлний хэрэгсэл',
+      }
+    case 'ps':
+      return {
+        en: 'Pashto Language Tool',
+        zh: '普什圖文語言工具',
+        gloss: 'د ژبې وسیله',
+      }
+    case 'hy':
+      return {
+        en: 'Armenian Language Tool',
+        zh: '亞美尼亞文語言工具',
+        gloss: 'Լեզվի գործիք',
+      }
+    case 'ka':
+      return {
+        en: 'Georgian Language Tool',
+        zh: '喬治亞文語言工具',
+        gloss: 'ენის ხელსაწყო',
+      }
+    case 'am':
+      return {
+        en: 'Amharic Language Tool',
+        zh: '阿姆哈拉文語言工具',
+        gloss: 'የቋንቋ መሣሪያ',
+      }
     case 'yue':
     default:
       return {
@@ -708,6 +848,46 @@ export function primaryLangShortCopy(lang: PrimaryLang): { en: string; zh: strin
       return { en: 'Swahili', zh: '斯瓦希里文' }
     case 'af':
       return { en: 'Afrikaans', zh: '南非荷蘭文' }
+    case 'et':
+      return { en: 'Estonian', zh: '愛沙尼亞文' }
+    case 'lv':
+      return { en: 'Latvian', zh: '拉脫維亞文' }
+    case 'lt':
+      return { en: 'Lithuanian', zh: '立陶宛文' }
+    case 'ga':
+      return { en: 'Irish', zh: '愛爾蘭文' }
+    case 'cy':
+      return { en: 'Welsh', zh: '威爾斯文' }
+    case 'eu':
+      return { en: 'Basque', zh: '巴斯克文' }
+    case 'gl':
+      return { en: 'Galician', zh: '加利西亞文' }
+    case 'mt':
+      return { en: 'Maltese', zh: '馬爾他文' }
+    case 'is':
+      return { en: 'Icelandic', zh: '冰島文' }
+    case 'bs':
+      return { en: 'Bosnian', zh: '波斯尼亞文' }
+    case 'sq':
+      return { en: 'Albanian', zh: '阿爾巴尼亞文' }
+    case 'zu':
+      return { en: 'Zulu', zh: '祖魯文' }
+    case 'so':
+      return { en: 'Somali', zh: '索馬里文' }
+    case 'as':
+      return { en: 'Assamese', zh: '阿薩姆文' }
+    case 'mk':
+      return { en: 'Macedonian', zh: '馬其頓文' }
+    case 'mn':
+      return { en: 'Mongolian', zh: '蒙古文' }
+    case 'ps':
+      return { en: 'Pashto', zh: '普什圖文' }
+    case 'hy':
+      return { en: 'Armenian', zh: '亞美尼亞文' }
+    case 'ka':
+      return { en: 'Georgian', zh: '喬治亞文' }
+    case 'am':
+      return { en: 'Amharic', zh: '阿姆哈拉文' }
     case 'yue':
     default:
       return { en: 'Cantonese', zh: '粵語' }

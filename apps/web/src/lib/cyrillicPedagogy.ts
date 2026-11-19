@@ -1,11 +1,11 @@
 /**
- * Russian / Ukrainian / Kazakh / Bulgarian / Serbian Details helpers — ты/Вы · ти/Ви · сен/сіз · ти/Вие chips,
+ * Russian / Ukrainian / Kazakh / Bulgarian / Serbian / Macedonian / Mongolian Details helpers — ты/Вы · ти/Ви · сен/сіз · ти/Вие chips,
  * optional Latin reading (not Serbian — Cyrillic only), honesty.
  * Compact panes stay Cyrillic only. Each language keeps its own tables — never shared.
  */
 import { detectAddress, type AddressHit, type AddressRule } from './langFamilyAddress'
 
-export type CyrillicLang = 'ru' | 'uk' | 'kk' | 'bg' | 'sr'
+export type CyrillicLang = 'ru' | 'uk' | 'kk' | 'bg' | 'sr' | 'mk' | 'mn'
 
 export const CYRILLIC_HTML_LANG: Record<CyrillicLang, string> = {
   ru: 'ru-RU',
@@ -13,6 +13,8 @@ export const CYRILLIC_HTML_LANG: Record<CyrillicLang, string> = {
   kk: 'kk-KZ',
   bg: 'bg-BG',
   sr: 'sr-Cyrl-RS',
+  mk: 'mk-MK',
+  mn: 'mn-MN',
 }
 
 export const CYRILLIC_READING_LABEL: Record<CyrillicLang, string> = {
@@ -21,6 +23,8 @@ export const CYRILLIC_READING_LABEL: Record<CyrillicLang, string> = {
   kk: 'BGN/PCGN',
   bg: 'Streamlined System',
   sr: 'Cyrillic only',
+  mk: 'BGN/PCGN',
+  mn: 'MNS 5217 (approx.)',
 }
 
 export const CYRILLIC_HONESTY_NOTE: Record<CyrillicLang, string> = {
@@ -29,6 +33,8 @@ export const CYRILLIC_HONESTY_NOTE: Record<CyrillicLang, string> = {
   kk: 'Kazakh is written in Cyrillic with extra letters ә ғ қ ң ө ұ ү һ і. It has vowel harmony and Turkic suffixes, and stress usually falls on the last syllable. Kazakhstan is moving toward a Latin alphabet, but this app shows Cyrillic. Kazakh is not Russian and is not tonal. The Latin reading is a learner aid, not pronunciation.',
   bg: 'Bulgarian is written in Cyrillic but has no noun cases and uses a postfixed article (-ът, -та, -то, -те). ъ is a vowel (like “u” in “but”), not a hard sign, and stress is free and not marked in spelling. Bulgarian is not Russian and is not tonal. The Latin reading is a learner aid, not pronunciation.',
   sr: 'Serbian is shown in Cyrillic only here (it also has an official Latin alphabet, which this app does not use). Spelling is phonetic — one letter, one sound — and ј љ њ ђ ћ џ are separate letters. It has a pitch accent that spelling does not mark — not lexical tone like Cantonese. Serbian is not Russian and not Bulgarian.',
+  mk: 'Macedonian is written in Cyrillic with its own letters ѓ ќ ѕ љ њ џ ј. Stress is fixed on the third-from-last syllable in most words, it has a postfixed article (-от, -та, -то, -те) and no noun cases. Macedonian is not Bulgarian or Serbian and is not tonal. The Latin reading is a learner aid, not pronunciation.',
+  mn: 'Mongolian is written here in Mongolian Cyrillic (Khalkha) — not traditional vertical Mongolian script. ө and ү are separate vowels, long vowels are written double (аа, ээ), and suffixes follow vowel harmony. Mongolian is not Russian or Kazakh and is not tonal. The Latin reading is an approximate learner aid, not pronunciation.',
 }
 
 const CYRILLIC = /[\u0400-\u04FF]/
@@ -53,6 +59,14 @@ const RULES: Record<CyrillicLang, AddressRule[]> = {
   sr: [
     { kind: 'ti', chip: 'ти', label: 'ти (informal)', forms: ['ти', 'тебе', 'теби', 'тобом', 'твој', 'твоја', 'твоје', 'твоји'] },
     { kind: 'vi', chip: 'Ви', label: 'Ви (formal / plural)', forms: ['ви', 'вас', 'вама', 'ваш', 'ваша', 'ваше', 'ваши'] },
+  ],
+  mk: [
+    { kind: 'ti', chip: 'ти', label: 'ти (informal)', forms: ['ти', 'тебе', 'твој', 'твоја', 'твоето', 'твои', 'твоите'] },
+    { kind: 'vie', chip: 'Вие', label: 'Вие (formal / plural)', forms: ['вие', 'вас', 'ваш', 'ваша', 'вашето', 'ваши', 'вашите'] },
+  ],
+  mn: [
+    { kind: 'chi', chip: 'чи', label: 'чи (informal)', forms: ['чи', 'чамайг', 'чамд', 'чиний', 'чамаас', 'чамтай'] },
+    { kind: 'ta', chip: 'та', label: 'та (formal / plural)', forms: ['та', 'таныг', 'танд', 'таны', 'танаас', 'тантай'] },
   ],
 }
 
@@ -95,6 +109,20 @@ const BG: Record<string, string> = {
   щ: 'sht', ъ: 'a', ь: 'y', ю: 'yu', я: 'ya',
 }
 
+/** Macedonian BGN/PCGN. */
+const MK: Record<string, string> = {
+  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', ѓ: 'gj', е: 'e', ж: 'zh', з: 'z', ѕ: 'dz', и: 'i', ј: 'j',
+  к: 'k', л: 'l', љ: 'lj', м: 'm', н: 'n', њ: 'nj', о: 'o', п: 'p', р: 'r', с: 's', т: 't', ќ: 'kj',
+  у: 'u', ф: 'f', х: 'h', ц: 'ts', ч: 'ch', џ: 'dzh', ш: 'sh',
+}
+
+/** Mongolian Cyrillic → Latin (MNS 5217-style, approximate). */
+const MN: Record<string, string> = {
+  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'ye', ё: 'yo', ж: 'j', з: 'z', и: 'i', й: 'i', к: 'k',
+  л: 'l', м: 'm', н: 'n', о: 'o', ө: 'ö', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ү: 'ü', ф: 'f',
+  х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya',
+}
+
 const RU_VOWELS = 'аеёиоуыэюяъь'
 
 function matchCase(src: string, out: string): string {
@@ -105,7 +133,7 @@ function matchCase(src: string, out: string): string {
 
 /**
  * Optional Latin reading for Details (BGN/PCGN-style for Russian, Ukrainian national
- * system for Ukrainian, BGN/PCGN-style for Kazakh, Streamlined System for Bulgarian). Null when there is
+ * system for Ukrainian, BGN/PCGN-style for Kazakh, Streamlined System for Bulgarian, BGN/PCGN for Macedonian, MNS 5217-style for Mongolian). Null when there is
  * no Cyrillic, and always null for Serbian (Cyrillic only — never a Latin line). Never shown on compact lines.
  */
 export function romanizeCyrillic(text: string, lang: CyrillicLang): string | null {
@@ -127,6 +155,10 @@ export function romanizeCyrillic(text: string, lang: CyrillicLang): string | nul
       piece = KK[ch]
     } else if (lang === 'bg') {
       piece = BG[ch]
+    } else if (lang === 'mk') {
+      piece = MK[ch]
+    } else if (lang === 'mn') {
+      piece = MN[ch]
     } else {
       const initial = UK_INITIAL[ch]
       if (initial) piece = wordStart ? initial[0] : initial[1]

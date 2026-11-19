@@ -5,6 +5,7 @@
  *
  * Batch 1: ta, bn · Batch 2: te, gu, kn, el, ru, uk, he, fa, ur
  * Batch 3a: ml, mr, pa, or, si, ne · Batch 3b (Cyrillic): kk, bg, sr
+ * Batch 4: as (Bengali-Assamese), mk, mn (Cyrillic), hy (Armenian), ka (Georgian), am (Ethiopic), ps (Pashto)
  * (Latin Batch langs use `localLatinBreakdown` instead.)
  */
 import type { CharBreakdown } from './jyutping'
@@ -31,6 +32,13 @@ export type ScriptDetailLang =
   | 'kk'
   | 'bg'
   | 'sr'
+  | 'as'
+  | 'mk'
+  | 'mn'
+  | 'hy'
+  | 'ka'
+  | 'am'
+  | 'ps'
 
 const TOKEN_RE: Record<ScriptDetailLang, RegExp> = {
   ta: /[\u0B80-\u0BFF]+|[0-9]+|[^\s\u0B80-\u0BFF0-9]+/g,
@@ -53,13 +61,22 @@ const TOKEN_RE: Record<ScriptDetailLang, RegExp> = {
   kk: /[\u0400-\u04FF]+|[0-9]+|[^\s\u0400-\u04FF0-9]+/g,
   bg: /[\u0400-\u04FF]+|[0-9]+|[^\s\u0400-\u04FF0-9]+/g,
   sr: /[\u0400-\u04FF]+|[0-9]+|[^\s\u0400-\u04FF0-9]+/g,
+  as: /[\u0980-\u09FF]+|[0-9]+|[^\s\u0980-\u09FF0-9]+/g,
+  mk: /[\u0400-\u04FF]+|[0-9]+|[^\s\u0400-\u04FF0-9]+/g,
+  mn: /[\u0400-\u04FF]+|[0-9]+|[^\s\u0400-\u04FF0-9]+/g,
+  hy: /[\u0531-\u0556\u0559\u055B-\u055F\u0561-\u0587\uFB13-\uFB17]+|[0-9]+|[^\s\u0531-\u0556\u0559\u055B-\u055F\u0561-\u0587\uFB13-\uFB170-9]+/g,
+  ka: /[\u10A0-\u10CF\u10D0-\u10FA\u10FC-\u10FF\u1C90-\u1CBF]+|[0-9]+|[^\s\u10A0-\u10CF\u10D0-\u10FA\u10FC-\u10FF\u1C90-\u1CBF0-9]+/g,
+  am: /[\u1200-\u135F\u1380-\u139F\u2D80-\u2DDF]+|[0-9]+|[^\s\u1200-\u135F\u1380-\u139F\u2D80-\u2DDF0-9]+/g,
+  ps: /[\u0610-\u061A\u0620-\u065F\u066E-\u06D3\u06D5-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]+|[0-9]+|[^\s\u0610-\u061A\u0620-\u065F\u066E-\u06D3\u06D5-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF0-9]+/g,
 }
 
 function punctMeaning(tok: string): string {
   if (tok === '?' || tok === '？') return 'question mark'
   if (tok === '!' || tok === '！') return 'exclamation mark'
-  if (tok === '.' || tok === '।' || tok === '。') return 'full stop'
-  if (tok === ',' || tok === '，') return 'comma'
+  if (tok === '.' || tok === '।' || tok === '。' || tok === '։' || tok === '።') return 'full stop'
+  if (tok === ',' || tok === '，' || tok === '،' || tok === '፣') return 'comma'
+  if (tok === '؟' || tok === '፧') return 'question mark'
+  if (tok === '፡') return 'word separator'
   return 'punctuation'
 }
 
@@ -84,7 +101,14 @@ export function isScriptDetailLang(lang: Lang | string | null | undefined): lang
     lang === 'ne' ||
     lang === 'kk' ||
     lang === 'bg' ||
-    lang === 'sr'
+    lang === 'sr' ||
+    lang === 'as' ||
+    lang === 'mk' ||
+    lang === 'mn' ||
+    lang === 'hy' ||
+    lang === 'ka' ||
+    lang === 'am' ||
+    lang === 'ps'
   )
 }
 

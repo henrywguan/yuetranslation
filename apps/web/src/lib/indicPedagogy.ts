@@ -1,5 +1,5 @@
 /**
- * Telugu / Gujarati / Kannada / Malayalam / Marathi / Punjabi / Odia / Sinhala / Nepali
+ * Telugu / Gujarati / Kannada / Malayalam / Marathi / Punjabi / Odia / Sinhala / Nepali / Assamese
  * Details helpers — address chips + honesty.
  * Compact panes stay native script only (no ISO 15919 / Latin).
  * Each language keeps its own pronouns; never folded into Tamil / Bengali / Hindi.
@@ -19,6 +19,7 @@ export const INDIC_HTML_LANG: Record<IndicLang, string> = {
   or: 'or-IN',
   si: 'si-LK',
   ne: 'ne-NP',
+  as: 'as-IN',
 }
 
 export const INDIC_HONESTY_NOTE: Record<IndicLang, string> = {
@@ -31,6 +32,7 @@ export const INDIC_HONESTY_NOTE: Record<IndicLang, string> = {
   or: 'Odia spelling follows speech closely; the ISO 15919 reading marks long vowels (ā ī ū), retroflexes (ṭ ḍ ṇ ḷ) and ṛ for ଡ଼ ଢ଼. Compact shows Odia script only — not Latin, Bengali, or Devanagari. Odia is not tonal.',
   si: 'Sinhala is diglossic — written (literary) forms differ from spoken Sinhala — so the ISO 15919 reading follows spelling, not speech. It marks long vowels (ā ī ū ē ō) and æ ǣ. Compact shows Sinhala script only — not Latin (Singlish), Tamil, or Devanagari. Sinhala is not tonal.',
   ne: 'Nepali uses Devanagari but is not Hindi: honorific levels (तँ / तिमी / तपाईं / हजुर) are grammatical and verbs agree with them. The ISO 15919 reading follows spelling, not speech. Compact shows Devanagari script only — not Latin, Hindi, or Marathi. Nepali is not tonal.',
+  as: 'Assamese uses the Bengali–Assamese script with its own letters ৰ (r) and ৱ (w) — it is not Bengali. The ISO 15919 reading follows spelling, not speech: অ is read “a” but often sounds like “o”, and শ ষ স are all pronounced as a soft “kh / h” in speech. Compact shows Assamese script only — not Latin, Bengali, or Devanagari. Assamese is not tonal.',
 }
 
 const SCRIPT: Record<IndicLang, RegExp> = {
@@ -43,6 +45,7 @@ const SCRIPT: Record<IndicLang, RegExp> = {
   or: /[\u0B00-\u0B7F]/,
   si: /[\u0D80-\u0DFF]/,
   ne: /[\u0900-\u097F]/,
+  as: /[\u0980-\u09FF]/,
 }
 
 const RULES: Record<IndicLang, AddressRule[]> = {
@@ -89,6 +92,11 @@ const RULES: Record<IndicLang, AddressRule[]> = {
     { kind: 'tapai', chip: 'तपाईं', label: 'तपाईं (respectful)', forms: ['तपाईं', 'तपाई', 'तपाईंलाई', 'तपाईंको', 'तपाईंहरू'] },
     { kind: 'timi', chip: 'तिमी', label: 'तिमी (familiar)', forms: ['तिमी', 'तिमीलाई', 'तिम्रो', 'तिम्रा', 'तिम्री', 'तिमीहरू'] },
     { kind: 'ta', chip: 'तँ', label: 'तँ (intimate / rude to strangers)', forms: ['तँ', 'तँलाई', 'तेरो'] },
+  ],
+  as: [
+    { kind: 'apuni', chip: 'আপুনি', label: 'আপুনি (respectful / formal)', forms: ['আপুনি', 'আপোনাৰ', 'আপোনাক', 'আপোনালোক'] },
+    { kind: 'tumi', chip: 'তুমি', label: 'তুমি (familiar)', forms: ['তুমি', 'তোমাৰ', 'তোমাক', 'তোমালোক'] },
+    { kind: 'toi', chip: 'তই', label: 'তই (intimate / rude to strangers)', forms: ['তই', 'তোৰ', 'তোক'] },
   ],
 }
 

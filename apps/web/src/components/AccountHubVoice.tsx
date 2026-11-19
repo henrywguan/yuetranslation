@@ -63,6 +63,26 @@ import {
   SR_VOICES,
   SW_VOICES,
   AF_VOICES,
+  ET_VOICES,
+  LV_VOICES,
+  LT_VOICES,
+  GA_VOICES,
+  CY_VOICES,
+  EU_VOICES,
+  GL_VOICES,
+  MT_VOICES,
+  IS_VOICES,
+  BS_VOICES,
+  SQ_VOICES,
+  ZU_VOICES,
+  SO_VOICES,
+  AS_VOICES,
+  MK_VOICES,
+  MN_VOICES,
+  PS_VOICES,
+  HY_VOICES,
+  KA_VOICES,
+  AM_VOICES,
   WUU_VOICES,
   YUE_VOICES,
   resolveCmnVoice,
@@ -126,6 +146,26 @@ import {
   resolveSrVoice,
   resolveSwVoice,
   resolveAfVoice,
+  resolveEtVoice,
+  resolveLvVoice,
+  resolveLtVoice,
+  resolveGaVoice,
+  resolveCyVoice,
+  resolveEuVoice,
+  resolveGlVoice,
+  resolveMtVoice,
+  resolveIsVoice,
+  resolveBsVoice,
+  resolveSqVoice,
+  resolveZuVoice,
+  resolveSoVoice,
+  resolveAsVoice,
+  resolveMkVoice,
+  resolveMnVoice,
+  resolvePsVoice,
+  resolveHyVoice,
+  resolveKaVoice,
+  resolveAmVoice,
   resolveWuuVoice,
   resolveYueVoice,
   voiceShortLabel,
@@ -190,6 +230,26 @@ import {
   type SrVoiceId,
   type SwVoiceId,
   type AfVoiceId,
+  type EtVoiceId,
+  type LvVoiceId,
+  type LtVoiceId,
+  type GaVoiceId,
+  type CyVoiceId,
+  type EuVoiceId,
+  type GlVoiceId,
+  type MtVoiceId,
+  type IsVoiceId,
+  type BsVoiceId,
+  type SqVoiceId,
+  type ZuVoiceId,
+  type SoVoiceId,
+  type AsVoiceId,
+  type MkVoiceId,
+  type MnVoiceId,
+  type PsVoiceId,
+  type HyVoiceId,
+  type KaVoiceId,
+  type AmVoiceId,
   type WuuVoiceId,
   type YueVoiceId,
 } from '../lib/ttsVoices'
@@ -261,10 +321,30 @@ type Props = {
   srVoice: SrVoiceId
   swVoice: SwVoiceId
   afVoice: AfVoiceId
+  etVoice: EtVoiceId
+  lvVoice: LvVoiceId
+  ltVoice: LtVoiceId
+  gaVoice: GaVoiceId
+  cyVoice: CyVoiceId
+  euVoice: EuVoiceId
+  glVoice: GlVoiceId
+  mtVoice: MtVoiceId
+  isVoice: IsVoiceId
+  bsVoice: BsVoiceId
+  sqVoice: SqVoiceId
+  zuVoice: ZuVoiceId
+  soVoice: SoVoiceId
+  asVoice: AsVoiceId
+  mkVoice: MkVoiceId
+  mnVoice: MnVoiceId
+  psVoice: PsVoiceId
+  hyVoice: HyVoiceId
+  kaVoice: KaVoiceId
+  amVoice: AmVoiceId
   wuuVoice: WuuVoiceId
   sichuanVoice: SichuanVoiceId
   voiceBusy: boolean
-  previewBusy: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'wuu' | 'sichuan' | null
+  previewBusy: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'ps' | 'hy' | 'ka' | 'am' | 'wuu' | 'sichuan' | null
   persistVoices: (next: {
     yue?: YueVoiceId
     en?: EnVoiceId
@@ -327,11 +407,31 @@ type Props = {
     sr?: SrVoiceId
     sw?: SwVoiceId
     af?: AfVoiceId
+    et?: EtVoiceId
+    lv?: LvVoiceId
+    lt?: LtVoiceId
+    ga?: GaVoiceId
+    cy?: CyVoiceId
+    eu?: EuVoiceId
+    gl?: GlVoiceId
+    mt?: MtVoiceId
+    is?: IsVoiceId
+    bs?: BsVoiceId
+    sq?: SqVoiceId
+    zu?: ZuVoiceId
+    so?: SoVoiceId
+    as?: AsVoiceId
+    mk?: MkVoiceId
+    mn?: MnVoiceId
+    ps?: PsVoiceId
+    hy?: HyVoiceId
+    ka?: KaVoiceId
+    am?: AmVoiceId
     wuu?: WuuVoiceId
     sichuan?: SichuanVoiceId
   }) => Promise<void>
   onPreview: (
-    kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'wuu' | 'sichuan',
+    kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'ps' | 'hy' | 'ka' | 'am' | 'wuu' | 'sichuan',
   ) => Promise<void>
 }
 
@@ -400,6 +500,26 @@ export function AccountHubVoice({
   srVoice,
   swVoice,
   afVoice,
+  etVoice,
+  lvVoice,
+  ltVoice,
+  gaVoice,
+  cyVoice,
+  euVoice,
+  glVoice,
+  mtVoice,
+  isVoice,
+  bsVoice,
+  sqVoice,
+  zuVoice,
+  soVoice,
+  asVoice,
+  mkVoice,
+  mnVoice,
+  psVoice,
+  hyVoice,
+  kaVoice,
+  amVoice,
   wuuVoice,
   sichuanVoice,
   voiceBusy,
@@ -2603,6 +2723,666 @@ export function AccountHubVoice({
                     className="account-hub-voice-preview"
                     disabled={previewBusy !== null || !ttsOk}
                     onClick={() => void onPreview('af')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsEt} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={etVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ et: resolveEtVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsEt)}
+                    >
+                      {ET_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('et')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsLv} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={lvVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ lv: resolveLvVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsLv)}
+                    >
+                      {LV_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('lv')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsLt} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={ltVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ lt: resolveLtVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsLt)}
+                    >
+                      {LT_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('lt')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsGa} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={gaVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ ga: resolveGaVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsGa)}
+                    >
+                      {GA_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('ga')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsCy} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={cyVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ cy: resolveCyVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsCy)}
+                    >
+                      {CY_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('cy')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsEu} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={euVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ eu: resolveEuVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsEu)}
+                    >
+                      {EU_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('eu')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsGl} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={glVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ gl: resolveGlVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsGl)}
+                    >
+                      {GL_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('gl')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsMt} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={mtVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ mt: resolveMtVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsMt)}
+                    >
+                      {MT_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('mt')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsIs} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={isVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ is: resolveIsVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsIs)}
+                    >
+                      {IS_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('is')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsBs} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={bsVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ bs: resolveBsVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsBs)}
+                    >
+                      {BS_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('bs')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsSq} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={sqVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ sq: resolveSqVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsSq)}
+                    >
+                      {SQ_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('sq')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsZu} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={zuVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ zu: resolveZuVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsZu)}
+                    >
+                      {ZU_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('zu')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsSo} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={soVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ so: resolveSoVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsSo)}
+                    >
+                      {SO_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('so')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsAs} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={asVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ as: resolveAsVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsAs)}
+                    >
+                      {AS_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('as')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsMk} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={mkVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ mk: resolveMkVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsMk)}
+                    >
+                      {MK_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('mk')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsMn} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={mnVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ mn: resolveMnVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsMn)}
+                    >
+                      {MN_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('mn')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsPs} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={psVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ ps: resolvePsVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsPs)}
+                    >
+                      {PS_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('ps')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsHy} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={hyVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ hy: resolveHyVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsHy)}
+                    >
+                      {HY_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('hy')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsKa} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={kaVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ ka: resolveKaVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsKa)}
+                    >
+                      {KA_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('ka')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsAm} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={amVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ am: resolveAmVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsAm)}
+                    >
+                      {AM_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('am')}
                   >
                     <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
                   </button>
