@@ -478,18 +478,23 @@ export function setProjectMemory(
 export function createWorker(
   state: ChatInboxState,
   projectId: string,
-  opts?: { title?: string; threadId?: string },
+  opts?: { id?: string; title?: string; threadId?: string; status?: InboxAgentStatus },
 ): { state: ChatInboxState; worker: ChatInboxAgent } {
   const project = state.projects.find((p) => p.id === projectId)
   if (!project) {
     throw new Error('Project not found')
   }
+  const requestedId = opts?.id?.trim()
+  if (requestedId) {
+    const existing = state.agents.find((a) => a.id === requestedId)
+    if (existing) return { state, worker: existing }
+  }
   const now = Date.now()
   const worker: ChatInboxAgent = {
-    id: uid('agent'),
+    id: requestedId || uid('agent'),
     projectId,
     title: (opts?.title || `Worker · ${project.title}`).trim(),
-    status: 'queued',
+    status: opts?.status || 'queued',
     role: 'worker',
     threadId: opts?.threadId,
     updatedAt: now,

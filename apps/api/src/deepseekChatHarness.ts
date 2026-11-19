@@ -26,6 +26,13 @@ import {
 import { buildDeepseekChatSystem, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
 import { buildPluginTools } from './deepseekChatMcp.js'
 import {
+  createProjectStore,
+  drainProjectActions,
+  type ProjectAction,
+  type ProjectAgentWire,
+} from './deepseekChatProject.js'
+import {
+  DEEPSEEK_CHAT_PROJECT_TOOLS,
   DEEPSEEK_CHAT_SANDBOX_TOOLS,
   DEEPSEEK_CHAT_TOOLS,
   DEEPSEEK_CHAT_WORKSPACE_TOOLS,
@@ -94,6 +101,7 @@ export type DeepseekChatHarnessEvent =
   | { kind: 'title'; title: string }
   | { kind: 'image'; url: string; prompt: string; id: string }
   | { kind: 'workspace'; files: ChatWorkspaceFileWire[] }
+  | { kind: 'project'; actions: ProjectAction[] }
 
 export type DeepseekChatHarnessOptions = {
   thinkingEnabled?: boolean
@@ -115,6 +123,10 @@ export type DeepseekChatHarnessOptions = {
   userId?: string
   /** Attached Chat Inbox sandbox session. */
   sandboxSessionId?: string
+  /** Project id when Overseer turn (enables project_* tools). */
+  projectId?: string
+  /** Snapshot of Project agents for orchestration tools. */
+  projectAgents?: ProjectAgentWire[]
 }
 
 type ToolCall = {
@@ -146,10 +158,12 @@ export function buildDeepseekChatToolList(
   pluginTools: unknown[] = [],
   harnessEnabled = false,
   sandboxAttached = false,
+  projectAttached = false,
 ): unknown[] {
   const tools: unknown[] = [...DEEPSEEK_CHAT_TOOLS, ...pluginTools]
   if (harnessEnabled) tools.push(...DEEPSEEK_CHAT_WORKSPACE_TOOLS)
   if (sandboxAttached) tools.push(...DEEPSEEK_CHAT_SANDBOX_TOOLS)
+  if (projectAttached) tools.push(...DEEPSEEK_CHAT_PROJECT_TOOLS)
   if (searchEnabled && deepseekChatSupportsNativeWebTools()) {
     tools.push(...DEEPSEEK_CHAT_WEB_TOOLS)
   }
@@ -486,6 +500,9 @@ export async function* streamDeepseekChatHarness(
   const harnessEnabled = opts.harnessEnabled === true
   const sandboxSessionId = opts.sandboxSessionId || opts.prompt.sandboxSessionId
   const sandboxAttached = Boolean(sandboxSessionId && opts.userId)
+  const projectId = String(opts.projectId || '').trim()
+  const projectAttached =
+    opts.prompt.inboxRole === 'overseer' && Boolean(projectId)
   const useNativeWeb = searchEnabled && deepseekChatSupportsNativeWebTools()
   const pluginTools = await buildPluginTools(opts.plugins, opts.signal, opts.pluginCreds)
   const tools = buildDeepseekChatToolList(
@@ -493,12 +510,21 @@ export async function* streamDeepseekChatHarness(
     pluginTools,
     harnessEnabled,
     sandboxAttached,
+    projectAttached,
   )
   const deepseekHost = deepseekChatUsesThinking()
   const workspaceStore: ChatWorkspaceStore | undefined = harnessEnabled
     ? createWorkspaceStore(opts.workspaceFiles)
     : undefined
   const pendingWorkspaceWrites: ChatWorkspaceFileWire[] = []
+  const projectStore = projectAttached
+    ? createProjectStore({
+        projectId,
+        memory: opts.prompt.projectMemory,
+        agents: opts.projectAgents,
+      })
+    : undefined
+  const pendingProjectActions: ProjectAction[] = []
 
   if (continueReply) {
     const last = messages[messages.length - 1]
@@ -674,6 +700,7 @@ export async function* streamDeepseekChatHarness(
           signal: opts.signal,
           pluginCreds: opts.pluginCreds,
           workspace: workspaceStore,
+          project: projectStore,
           userId: opts.userId,
           sandboxSessionId,
           onImage: (image) => {
@@ -681,6 +708,9 @@ export async function* streamDeepseekChatHarness(
           },
           onWorkspaceWrite: (file) => {
             pendingWorkspaceWrites.push(file)
+          },
+          onProjectActions: (actions) => {
+            pendingProjectActions.push(...actions)
           },
         })
         msgs.push({
@@ -696,6 +726,12 @@ export async function* streamDeepseekChatHarness(
       if (pendingWorkspaceWrites.length) {
         const files = pendingWorkspaceWrites.splice(0, pendingWorkspaceWrites.length)
         yield { kind: 'workspace', files }
+      }
+      if (pendingProjectActions.length) {
+        const actions = pendingProjectActions.splice(0, pendingProjectActions.length)
+        // Keep store drain in sync so list_agents stays consistent mid-turn.
+        if (projectStore) drainProjectActions(projectStore)
+        yield { kind: 'project', actions }
       }
       continue
     }

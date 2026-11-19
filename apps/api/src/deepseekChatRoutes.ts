@@ -66,6 +66,8 @@ async function* chatStreamEvents(
   workspaceFiles?: import('./deepseekChatWorkspace.js').ChatWorkspaceFileWire[],
   userId?: string,
   sandboxSessionId?: string,
+  projectId?: string,
+  projectAgents?: import('./deepseekChatProject.js').ProjectAgentWire[],
 ): AsyncGenerator<
   | { kind: 'thinking' }
   | { kind: 'searching' }
@@ -76,7 +78,8 @@ async function* chatStreamEvents(
   | { kind: 'search_step'; step: unknown }
   | { kind: 'title'; title: string }
   | { kind: 'image'; url: string; prompt: string; id: string }
-  | { kind: 'workspace'; files: import('./deepseekChatWorkspace.js').ChatWorkspaceFileWire[] },
+  | { kind: 'workspace'; files: import('./deepseekChatWorkspace.js').ChatWorkspaceFileWire[] }
+  | { kind: 'project'; actions: import('./deepseekChatProject.js').ProjectAction[] },
   void,
   unknown
 > {
@@ -95,6 +98,8 @@ async function* chatStreamEvents(
       workspaceFiles,
       userId,
       sandboxSessionId,
+      projectId,
+      projectAgents,
     })) {
       harnessEmitted = true
       yield event
@@ -224,6 +229,8 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
       }))
     : undefined
   const sandboxSessionId = parsed.data.sandboxSessionId
+  const projectId = parsed.data.projectId
+  const projectAgents = parsed.data.projectAgents
   const promptBase: DeepseekChatPromptContext = {
     timeZone: parsed.data.timeZone,
     locale: parsed.data.locale,
@@ -256,6 +263,8 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
             workspaceFiles,
             userId: auth.userId,
             sandboxSessionId,
+            projectId,
+            projectAgents,
           },
         )
         void addDeepseekChatTurns(auth.userId, 1)
@@ -323,6 +332,8 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         workspaceFiles,
         auth.userId,
         sandboxSessionId,
+        projectId,
+        projectAgents,
       )) {
         if (upstream.signal.aborted || res.writableEnded) break
         if (event.kind === 'thinking') {
@@ -351,6 +362,10 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         }
         if (event.kind === 'workspace') {
           writeSse(res, `data: ${JSON.stringify({ workspace: { files: event.files } })}\n\n`)
+          continue
+        }
+        if (event.kind === 'project') {
+          writeSse(res, `data: ${JSON.stringify({ project: { actions: event.actions } })}\n\n`)
           continue
         }
         if (event.kind === 'image') {

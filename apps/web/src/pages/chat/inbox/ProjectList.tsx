@@ -70,7 +70,7 @@ export function ProjectList({
             })}
           </ul>
         ) : (
-          <p className="inbox-empty">Create a Project to group chats and spawn agents.</p>
+          <p className="inbox-empty">Create a Project to open an Overseer that orchestrates workers.</p>
         )
       ) : null}
     </section>

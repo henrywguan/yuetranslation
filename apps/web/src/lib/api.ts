@@ -872,6 +872,16 @@ export type DeepseekChatStreamHandlers = {
   projectMemory?: string
   /** Attached internal sandbox session (Phase C). */
   sandboxSessionId?: string
+  /** Project id for Overseer project_* tools. */
+  projectId?: string
+  /** Snapshot of Project agents for orchestration. */
+  projectAgents?: Array<{
+    id: string
+    title: string
+    status: string
+    role: 'overseer' | 'worker' | 'thread'
+    threadId?: string
+  }>
   /** Continue last assistant (prefix completion). */
   continueReply?: boolean
   onWorkspace?: (files: Array<{
@@ -881,6 +891,8 @@ export type DeepseekChatStreamHandlers = {
     text?: string
     updatedAt: number
   }>) => void
+  /** Overseer project_* actions for the client to apply. */
+  onProject?: (actions: Array<Record<string, unknown>>) => void
   signal?: AbortSignal
 }
 
@@ -1077,6 +1089,25 @@ export async function streamDeepseekChat(
       ...(handlers.sandboxSessionId && /^sbx_[a-zA-Z0-9]+$/.test(handlers.sandboxSessionId)
         ? { sandboxSessionId: handlers.sandboxSessionId }
         : null),
+      ...(handlers.inboxRole === 'overseer' && handlers.projectId?.trim()
+        ? {
+            projectId: handlers.projectId.trim().slice(0, 80),
+            ...(handlers.projectAgents?.length
+              ? {
+                  projectAgents: handlers.projectAgents.slice(0, 80).map((a) => ({
+                    id: String(a.id).slice(0, 80),
+                    title: String(a.title || 'Agent').slice(0, 120),
+                    status: String(a.status || 'idle').slice(0, 32),
+                    role:
+                      a.role === 'overseer' || a.role === 'worker' || a.role === 'thread'
+                        ? a.role
+                        : 'thread',
+                    ...(a.threadId ? { threadId: String(a.threadId).slice(0, 80) } : null),
+                  })),
+                }
+              : null),
+          }
+        : null),
       ...(fileIds.length ? { fileIds } : null),
       ...(plugins.length ? { plugins } : null),
       ...(handlers.continueReply ? { continue: true } : null),
@@ -1128,6 +1159,7 @@ export async function streamDeepseekChat(
             updatedAt: number
           }>
         }
+        project?: { actions?: Array<Record<string, unknown>> }
       }
       try {
         parsed = JSON.parse(payload) as typeof parsed
@@ -1144,6 +1176,7 @@ export async function streamDeepseekChat(
       if (parsed.title?.trim()) handlers.onTitle?.(parsed.title.trim())
       if (parsed.image?.url) handlers.onImage?.(parsed.image)
       if (parsed.workspace?.files?.length) handlers.onWorkspace?.(parsed.workspace.files)
+      if (parsed.project?.actions?.length) handlers.onProject?.(parsed.project.actions)
       if (typeof parsed.contentReplace === 'string') {
         handlers.onContentReplace?.(parsed.contentReplace)
       }
