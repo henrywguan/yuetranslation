@@ -69,4 +69,28 @@ assert.ok(sw.some((r) => r.char === 'Habari') && sw.some((r) => r.char === 'rafi
 const af = buildLocalLatinBreakdown('Goeie môre, vriend!', { lang: 'af' })
 assert.ok(af.some((r) => r.char === 'môre'), 'ô stays inside the word')
 
+const latin4 = ['et', 'lv', 'lt', 'ga', 'cy', 'eu', 'gl', 'mt', 'is', 'bs', 'sq', 'zu', 'so'] as const
+for (const l of latin4) assert.equal(isLatinDetailLang(l), true, l)
+for (const l of ['as', 'mk', 'mn', 'ps', 'hy', 'ka', 'am'] as const) {
+  assert.equal(isLatinDetailLang(l), false, `${l}: script langs use script breakdown`)
+}
+const et = buildLocalLatinBreakdown('Tere hommikust, õpilane!', { lang: 'et' })
+assert.ok(et.some((r) => r.char === 'õpilane'), 'õ stays inside the word')
+const lv = buildLocalLatinBreakdown('Labrīt, draugs!', { lang: 'lv' })
+assert.ok(lv.some((r) => r.char === 'Labrīt'), 'ī stays inside the word')
+const ga = buildLocalLatinBreakdown('Dia duit, a chara!', { lang: 'ga' })
+assert.ok(ga.some((r) => r.char === 'duit') && ga.some((r) => r.char === 'chara'))
+const mt = buildLocalLatinBreakdown('Bonġu, ħabib!', { lang: 'mt' })
+assert.ok(mt.some((r) => r.char === 'Bonġu') && mt.some((r) => r.char === 'ħabib'), 'ġ / ħ stay inside the word')
+const is = buildLocalLatinBreakdown('Góðan daginn, þú!', { lang: 'is' })
+assert.ok(is.some((r) => r.char === 'Góðan') && is.some((r) => r.char === 'þú'), 'ð þ stay inside the word')
+const cy = buildLocalLatinBreakdown('Bore da, ŵyr!', { lang: 'cy' })
+assert.ok(cy.some((r) => r.char === 'ŵyr'), 'ŵ stays inside the word')
+const bs = buildLocalLatinBreakdown('Dobar dan, čuješ?', { lang: 'bs' })
+assert.ok(bs.some((r) => r.char === 'čuješ'))
+const sq = buildLocalLatinBreakdown('Përshëndetje, çfarë?', { lang: 'sq' })
+assert.ok(sq.some((r) => r.char === 'Përshëndetje') && sq.some((r) => r.char === 'çfarë'), 'ë ç stay inside the word')
+const zu = buildLocalLatinBreakdown('Sawubona, baba!', { lang: 'zu' })
+assert.ok(zu.some((r) => r.char === 'Sawubona'))
+
 console.log('localLatinBreakdown.smoke: ok')

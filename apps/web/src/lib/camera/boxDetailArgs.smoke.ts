@@ -142,6 +142,26 @@ const CAMERA_LANGS: CameraLang[] = [
   'sr',
   'sw',
   'af',
+  'et',
+  'lv',
+  'lt',
+  'ga',
+  'cy',
+  'eu',
+  'gl',
+  'mt',
+  'is',
+  'bs',
+  'sq',
+  'zu',
+  'so',
+  'as',
+  'mk',
+  'mn',
+  'ps',
+  'hy',
+  'ka',
+  'am',
   'ceb',
   'ilo',
   'bcl',
@@ -202,6 +222,46 @@ assert.equal(normalizeRegionLang('sw-KE'), 'sw')
 assert.equal(normalizeRegionLang('af-ZA'), 'af')
 assert.equal(normalizeRegionLang('sv-SE'), 'sv', 'sw / sr never swallow sv')
 assert.equal(normalizeRegionLang('fa-IR'), 'fa', 'af never swallows fa')
+assert.equal(normalizeRegionLang('et-EE'), 'et')
+assert.equal(normalizeRegionLang('lv-LV'), 'lv')
+assert.equal(normalizeRegionLang('lt-LT'), 'lt')
+assert.equal(normalizeRegionLang('ga-IE'), 'ga')
+assert.equal(normalizeRegionLang('cy-GB'), 'cy')
+assert.equal(normalizeRegionLang('eu-ES'), 'eu')
+assert.equal(normalizeRegionLang('gl-ES'), 'gl')
+assert.equal(normalizeRegionLang('mt-MT'), 'mt')
+assert.equal(normalizeRegionLang('is-IS'), 'is')
+assert.equal(normalizeRegionLang('bs-BA'), 'bs')
+assert.equal(normalizeRegionLang('bs-Latn-BA'), 'bs')
+assert.equal(normalizeRegionLang('sq-AL'), 'sq')
+assert.equal(normalizeRegionLang('zu-ZA'), 'zu')
+assert.equal(normalizeRegionLang('so-SO'), 'so')
+assert.equal(normalizeRegionLang('as-IN'), 'as')
+assert.equal(normalizeRegionLang('mk-MK'), 'mk')
+assert.equal(normalizeRegionLang('mn-MN'), 'mn')
+assert.equal(normalizeRegionLang('ps-AF'), 'ps')
+assert.equal(normalizeRegionLang('hy-AM'), 'hy')
+assert.equal(normalizeRegionLang('ka-GE'), 'ka')
+assert.equal(normalizeRegionLang('am-ET'), 'am')
+assert.equal(normalizeRegionLang('it-IT'), 'it', 'is never swallows it')
+assert.equal(normalizeRegionLang('id-ID'), 'id', 'is never swallows id')
+assert.equal(normalizeRegionLang('ar-SA'), 'arsa', 'as / am never swallow ar')
+assert.equal(normalizeRegionLang('es-ES'), 'eses', 'et / eu never swallow es')
+assert.equal(normalizeRegionLang('el-GR'), 'el', 'eu never swallows el')
+assert.equal(normalizeRegionLang('ms-MY'), 'ms', 'mt / mn / mk never swallow ms')
+assert.equal(normalizeRegionLang('mr-IN'), 'mr', 'mn / mk never swallow mr')
+assert.equal(normalizeRegionLang('ml-IN'), 'ml', 'mt / mn / mk never swallow ml')
+assert.equal(normalizeRegionLang('pa-IN'), 'pa', 'ps never swallows pa')
+assert.equal(normalizeRegionLang('pt-PT'), 'ptpt', 'ps never swallows pt')
+assert.equal(normalizeRegionLang('sv-SE'), 'sv', 'so / sq never swallow sv')
+assert.equal(normalizeRegionLang('si-LK'), 'si', 'so never swallows si')
+assert.equal(normalizeRegionLang('he-IL'), 'he', 'hy never swallows he')
+assert.equal(normalizeRegionLang('hu-HU'), 'hu', 'hy never swallows hu')
+assert.equal(normalizeRegionLang('kn-IN'), 'kn', 'ka never swallows kn')
+assert.equal(normalizeRegionLang('km-KH'), 'km', 'ka never swallows km')
+assert.equal(normalizeRegionLang('bn-IN'), 'bn', 'bs never swallows bn')
+assert.equal(normalizeRegionLang('lo-LA'), 'lo', 'lt / lv never swallow lo')
+assert.equal(normalizeRegionLang('cs-CZ'), 'cs', 'cy never swallows cs')
 
 const taWouldHaveBeenYue = regionToEditable({
   id: 'r',
@@ -243,6 +303,26 @@ for (const [to, translated] of [
   ['sr', 'Здраво'],
   ['sw', 'Habari'],
   ['af', 'Hallo'],
+  ['et', 'Tere'],
+  ['lv', 'Sveiki'],
+  ['lt', 'Labas'],
+  ['ga', 'Dia duit'],
+  ['cy', 'Helo'],
+  ['eu', 'Kaixo'],
+  ['gl', 'Ola'],
+  ['mt', 'Bongu'],
+  ['is', 'Halló'],
+  ['bs', 'Zdravo'],
+  ['sq', 'Përshëndetje'],
+  ['zu', 'Sawubona'],
+  ['so', 'Salaan'],
+  ['as', 'নমস্কাৰ'],
+  ['mk', 'Здраво'],
+  ['mn', 'Сайн уу'],
+  ['ps', 'سلام'],
+  ['hy', 'Բարև'],
+  ['ka', 'გამარჯობა'],
+  ['am', 'ሰላም'],
 ] as const) {
   const box = regionToEditable({
     id: 'r',
