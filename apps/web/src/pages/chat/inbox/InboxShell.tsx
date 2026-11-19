@@ -19,6 +19,7 @@ import { useChatAuiSession } from '../aui/ChatAuiRuntime'
 import { useChatInboxContext } from './ChatInboxContext'
 import { FilterTiles } from './FilterTiles'
 import './Inbox.css'
+import { GithubBind } from './GithubBind'
 import { LocalFolderBind } from './LocalFolderBind'
 import { ProjectList } from './ProjectList'
 import { ProjectPanel } from './ProjectPanel'
@@ -50,6 +51,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   const [sandboxBusy, setSandboxBusy] = useState(false)
   const [sandboxNote, setSandboxNote] = useState<string | null>(null)
   const [localBindWorkspaceId, setLocalBindWorkspaceId] = useState<string | null>(null)
+  const [githubBindWorkspaceId, setGithubBindWorkspaceId] = useState<string | null>(null)
 
   const [filter, setFilter] = useState<InboxFilter>('all')
   const [query, setQuery] = useState('')
@@ -120,9 +122,22 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
       setWorkspacesOpen(true)
       return
     }
+    if (kind === 'github') {
+      const ws = addWorkspace('github', 'GitHub repo', activeProjectId || undefined)
+      setGithubBindWorkspaceId(ws.id)
+      setWorkspacesOpen(true)
+      return
+    }
     addWorkspace(kind, undefined, activeProjectId || undefined)
     setWorkspacesOpen(true)
   }
+
+  const activeSandboxSessionId = (() => {
+    const internal = state.workspaces.find(
+      (w) => w.kind === 'internal' && w.ref?.startsWith('sbx_'),
+    )
+    return internal?.ref
+  })()
 
   const views = useMemo(
     () =>
@@ -242,6 +257,21 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
             setLocalBindWorkspaceId(null)
           }}
           onCancel={() => setLocalBindWorkspaceId(null)}
+        />
+      ) : null}
+      {githubBindWorkspaceId ? (
+        <GithubBind
+          sandboxSessionId={activeSandboxSessionId}
+          onBound={({ repo, note, sandboxSessionId }) => {
+            bindWorkspaceRef(
+              githubBindWorkspaceId,
+              sandboxSessionId || repo,
+              activeProjectId || undefined,
+            )
+            setSandboxNote(note)
+            setGithubBindWorkspaceId(null)
+          }}
+          onCancel={() => setGithubBindWorkspaceId(null)}
         />
       ) : null}
 

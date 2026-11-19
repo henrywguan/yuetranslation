@@ -9,6 +9,7 @@ import {
   emptyInboxState,
   loadChatInbox,
   saveChatInbox,
+  markAgentInReview,
   setAgentStatus,
   setAgentThread,
   setProjectDefaultWorkspace,
@@ -136,8 +137,15 @@ export function useChatInbox() {
   )
 
   const updateAgentStatus = useCallback(
-    (agentId: string, status: InboxAgentStatus) => {
-      commit(setAgentStatus(stateRef.current, agentId, status))
+    (agentId: string, status: InboxAgentStatus, reviewUrl?: string) => {
+      commit(setAgentStatus(stateRef.current, agentId, status, reviewUrl))
+    },
+    [commit],
+  )
+
+  const markInReview = useCallback(
+    (agentId: string, reviewUrl: string) => {
+      commit(markAgentInReview(stateRef.current, agentId, reviewUrl))
     },
     [commit],
   )
@@ -161,6 +169,7 @@ export function useChatInbox() {
     spawnWorker,
     bindAgentThread,
     updateAgentStatus,
+    markInReview,
     updateProjectMemory,
   }
 }

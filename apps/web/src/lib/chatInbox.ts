@@ -412,13 +412,31 @@ export function setAgentStatus(
   state: ChatInboxState,
   agentId: string,
   status: InboxAgentStatus,
+  reviewUrl?: string,
 ): ChatInboxState {
   const now = Date.now()
   return {
     ...state,
     updatedAt: now,
-    agents: state.agents.map((a) => (a.id === agentId ? { ...a, status, updatedAt: now } : a)),
+    agents: state.agents.map((a) =>
+      a.id === agentId
+        ? {
+            ...a,
+            status,
+            updatedAt: now,
+            ...(reviewUrl !== undefined ? { reviewUrl } : null),
+          }
+        : a,
+    ),
   }
+}
+
+export function markAgentInReview(
+  state: ChatInboxState,
+  agentId: string,
+  reviewUrl: string,
+): ChatInboxState {
+  return setAgentStatus(state, agentId, 'in_review', reviewUrl)
 }
 
 export function setAgentThread(

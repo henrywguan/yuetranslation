@@ -219,6 +219,13 @@ export const env = {
   flyApp: (process.env.FLY_APP || '').trim(),
   flyRegion: (process.env.FLY_REGION || '').trim(),
   flyImage: (process.env.FLY_IMAGE || 'node:22-bookworm-slim').trim(),
+  /**
+   * GitHub App for Chat Inbox clone/PR (Phase E). All three required.
+   * NEEDS_HUMAN: Henry creates the App + installation.
+   */
+  githubAppId: (process.env.GITHUB_APP_ID || '').trim(),
+  githubAppPrivateKey: (process.env.GITHUB_APP_PRIVATE_KEY || '').trim(),
+  githubAppInstallationId: (process.env.GITHUB_APP_INSTALLATION_ID || '').trim(),
   /** Monthly DeepSeek Chat turns. 0 = unlimited. Family/Business only. */
   familyChatTurns: Number(process.env.YUE_FAMILY_CHAT_TURNS || 3000),
   businessChatTurns: Number(process.env.YUE_BUSINESS_CHAT_TURNS || 0),
