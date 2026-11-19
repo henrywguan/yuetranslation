@@ -152,6 +152,18 @@ function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'he') return 'he'
   if (detailLang === 'fa') return 'fa'
   if (detailLang === 'ur') return 'ur'
+  if (detailLang === 'ml') return 'ml'
+  if (detailLang === 'mr') return 'mr'
+  if (detailLang === 'pa') return 'pa'
+  if (detailLang === 'or') return 'or'
+  if (detailLang === 'si') return 'si'
+  if (detailLang === 'ne') return 'ne'
+  if (detailLang === 'da') return 'da'
+  if (detailLang === 'nb') return 'nb'
+  if (detailLang === 'fi') return 'fi'
+  if (detailLang === 'sk') return 'sk'
+  if (detailLang === 'hr') return 'hr'
+  if (detailLang === 'ca') return 'ca'
   if (detailLang === 'ceb') return 'ceb'
   if (detailLang === 'ilo') return 'ilo'
   if (detailLang === 'bcl') return 'bcl'
@@ -506,7 +518,19 @@ export function CharacterBreakdownHost() {
     detailLang === 'uk' ||
     detailLang === 'he' ||
     detailLang === 'fa' ||
-    detailLang === 'ur'
+    detailLang === 'ur' ||
+    detailLang === 'ml' ||
+    detailLang === 'mr' ||
+    detailLang === 'pa' ||
+    detailLang === 'or' ||
+    detailLang === 'si' ||
+    detailLang === 'ne' ||
+    detailLang === 'da' ||
+    detailLang === 'nb' ||
+    detailLang === 'fi' ||
+    detailLang === 'sk' ||
+    detailLang === 'hr' ||
+    detailLang === 'ca'
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
   const isLatinDetail =

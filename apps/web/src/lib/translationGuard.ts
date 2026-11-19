@@ -291,6 +291,60 @@ export function sanitizeUrTranslation(text: string | null | undefined): string |
   return sanitizeScriptGated(text, /[\u0600-\u06FF]/, /[\u0900-\u097F]/)
 }
 
+/** Reject EN→Malayalam payloads missing Malayalam script (no Latin / Tamil main line). */
+export function sanitizeMlTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0D00-\u0D7F]/)
+}
+
+/** Reject EN→Marathi payloads missing Devanagari. */
+export function sanitizeMrTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0900-\u097F]/)
+}
+
+/** Reject EN→Punjabi (India) payloads missing Gurmukhi or written in Shahmukhi (Perso-Arabic). */
+export function sanitizePaTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0A00-\u0A7F]/, /[\u0600-\u06FF]/)
+}
+
+/** Reject EN→Odia payloads missing Odia script. */
+export function sanitizeOrTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0B00-\u0B7F]/)
+}
+
+/** Reject EN→Sinhala payloads missing Sinhala script. */
+export function sanitizeSiTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0D80-\u0DFF]/)
+}
+
+/** Reject EN→Nepali payloads missing Devanagari. */
+export function sanitizeNeTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0900-\u097F]/)
+}
+
+export function sanitizeDaTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+export function sanitizeNbTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+export function sanitizeFiTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+export function sanitizeSkTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+export function sanitizeHrTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+export function sanitizeCaTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
 /** Reject EN→Turkish Latin payloads that are empty, glossy, or still Chinese. */
 export function sanitizeTrTranslation(text: string | null | undefined): string | null {
   return sanitizeViTranslation(text)

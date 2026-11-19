@@ -87,6 +87,18 @@ function langPlaceholder(lang: Lang): string {
   if (lang === 'he') return ui.dirHebrew.en
   if (lang === 'fa') return ui.dirPersian.en
   if (lang === 'ur') return ui.dirUrdu.en
+  if (lang === 'ml') return ui.dirMalayalam.en
+  if (lang === 'mr') return ui.dirMarathi.en
+  if (lang === 'pa') return ui.dirPunjabi.en
+  if (lang === 'or') return ui.dirOdia.en
+  if (lang === 'si') return ui.dirSinhala.en
+  if (lang === 'ne') return ui.dirNepali.en
+  if (lang === 'da') return ui.dirDanish.en
+  if (lang === 'nb') return ui.dirNorwegian.en
+  if (lang === 'fi') return ui.dirFinnish.en
+  if (lang === 'sk') return ui.dirSlovak.en
+  if (lang === 'hr') return ui.dirCroatian.en
+  if (lang === 'ca') return ui.dirCatalan.en
   if (lang === 'cmn') return ui.dirMandarin.zh
   if (lang === 'wuu') return ui.dirShanghainese.zh
   if (lang === 'sichuan') return ui.dirSichuanese.zh

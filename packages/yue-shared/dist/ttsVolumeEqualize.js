@@ -61,6 +61,18 @@ export const TTS_EQUALIZE_VOLUME = {
     he: '+50%',
     fa: '+50%',
     ur: '+50%',
+    ml: '+50%',
+    mr: '+50%',
+    pa: '+50%',
+    or: '+50%',
+    si: '+50%',
+    ne: '+50%',
+    da: '+50%',
+    nb: '+50%',
+    fi: '+50%',
+    sk: '+50%',
+    hr: '+50%',
+    ca: '+50%',
 };
 /**
  * Extra Web Audio playback gain on top of SSML (1 = unity).
@@ -112,6 +124,18 @@ export const TTS_EQUALIZE_PLAYBACK_GAIN = {
     he: 1.35,
     fa: 1.15,
     ur: 1.35,
+    ml: 2.0,
+    mr: 2.0,
+    pa: 2.0,
+    or: 2.0,
+    si: 2.0,
+    ne: 2.0,
+    da: 2.0,
+    nb: 2.0,
+    fi: 2.0,
+    sk: 2.0,
+    hr: 2.0,
+    ca: 2.0,
 };
 /** Normalize API / client lang codes to an equalize key. */
 export function equalizeLangKey(lang) {
@@ -204,6 +228,30 @@ export function equalizeLangKey(lang) {
         return 'fa';
     if (l === 'ur' || l === 'ur-in')
         return 'ur';
+    if (l === 'ml' || l === 'ml-in')
+        return 'ml';
+    if (l === 'mr' || l === 'mr-in')
+        return 'mr';
+    if (l === 'pa' || l === 'pa-in')
+        return 'pa';
+    if (l === 'or' || l === 'or-in')
+        return 'or';
+    if (l === 'si' || l === 'si-lk')
+        return 'si';
+    if (l === 'ne' || l === 'ne-np')
+        return 'ne';
+    if (l === 'da' || l === 'da-dk')
+        return 'da';
+    if (l === 'nb' || l === 'nb-no')
+        return 'nb';
+    if (l === 'fi' || l === 'fi-fi')
+        return 'fi';
+    if (l === 'sk' || l === 'sk-sk')
+        return 'sk';
+    if (l === 'hr' || l === 'hr-hr')
+        return 'hr';
+    if (l === 'ca' || l === 'ca-es')
+        return 'ca';
     return null;
 }
 /** Azure SSML volume for normal (non–Practice-Partner) speak. */

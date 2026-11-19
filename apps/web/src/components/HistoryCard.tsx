@@ -79,6 +79,18 @@ export function langShort(lang: Lang): string {
   if (lang === 'he') return 'He'
   if (lang === 'fa') return 'Fa'
   if (lang === 'ur') return 'Ur'
+  if (lang === 'ml') return 'Ml'
+  if (lang === 'mr') return 'Mr'
+  if (lang === 'pa') return 'Pa'
+  if (lang === 'or') return 'Or'
+  if (lang === 'si') return 'Si'
+  if (lang === 'ne') return 'Ne'
+  if (lang === 'da') return 'Da'
+  if (lang === 'nb') return 'Nb'
+  if (lang === 'fi') return 'Fi'
+  if (lang === 'sk') return 'Sk'
+  if (lang === 'hr') return 'Hr'
+  if (lang === 'ca') return 'Ca'
   if (lang === 'ceb') return 'Cb'
   if (lang === 'ilo') return 'Il'
   if (lang === 'bcl') return 'Bc'
@@ -331,6 +343,18 @@ function langLabel(lang: Lang) {
   if (lang === 'he') return <BiText copy={ui.dirHebrew} size="sm" />
   if (lang === 'fa') return <BiText copy={ui.dirPersian} size="sm" />
   if (lang === 'ur') return <BiText copy={ui.dirUrdu} size="sm" />
+  if (lang === 'ml') return <BiText copy={ui.dirMalayalam} size="sm" />
+  if (lang === 'mr') return <BiText copy={ui.dirMarathi} size="sm" />
+  if (lang === 'pa') return <BiText copy={ui.dirPunjabi} size="sm" />
+  if (lang === 'or') return <BiText copy={ui.dirOdia} size="sm" />
+  if (lang === 'si') return <BiText copy={ui.dirSinhala} size="sm" />
+  if (lang === 'ne') return <BiText copy={ui.dirNepali} size="sm" />
+  if (lang === 'da') return <BiText copy={ui.dirDanish} size="sm" />
+  if (lang === 'nb') return <BiText copy={ui.dirNorwegian} size="sm" />
+  if (lang === 'fi') return <BiText copy={ui.dirFinnish} size="sm" />
+  if (lang === 'sk') return <BiText copy={ui.dirSlovak} size="sm" />
+  if (lang === 'hr') return <BiText copy={ui.dirCroatian} size="sm" />
+  if (lang === 'ca') return <BiText copy={ui.dirCatalan} size="sm" />
   if (lang === 'ceb') return <BiText copy={ui.dirCebuano} size="sm" />
   if (lang === 'ilo') return <BiText copy={ui.dirIlocano} size="sm" />
   if (lang === 'bcl') return <BiText copy={ui.dirBikol} size="sm" />

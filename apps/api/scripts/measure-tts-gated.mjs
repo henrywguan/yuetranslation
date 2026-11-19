@@ -55,6 +55,18 @@ const SAMPLES = [
   ['he', 'he-IL-HilaNeural', 'he-IL', 'שלום — זה הקול שלך בעברית.'],
   ['fa', 'fa-IR-DilaraNeural', 'fa-IR', 'سلام — این صدای فارسی شماست.'],
   ['ur', 'ur-IN-GulNeural', 'ur-IN', 'السلام علیکم — یہ آپ کی اردو آواز ہے۔'],
+  ['ml', 'ml-IN-SobhanaNeural', 'ml-IN', 'നമസ്കാരം — ഇത് നിങ്ങളുടെ മലയാളം ശബ്ദമാണ്.'],
+  ['mr', 'mr-IN-AarohiNeural', 'mr-IN', 'नमस्कार — हा तुमचा मराठी आवाज आहे.'],
+  ['pa', 'pa-IN-VaaniNeural', 'pa-IN', 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ — ਇਹ ਤੁਹਾਡੀ ਪੰਜਾਬੀ ਆਵਾਜ਼ ਹੈ।'],
+  ['or', 'or-IN-SubhasiniNeural', 'or-IN', 'ନମସ୍କାର — ଏହା ଆପଣଙ୍କ ଓଡ଼ିଆ ସ୍ୱର।'],
+  ['si', 'si-LK-ThiliniNeural', 'si-LK', 'ආයුබෝවන් — මෙය ඔබේ සිංහල හඬයි.'],
+  ['ne', 'ne-NP-HemkalaNeural', 'ne-NP', 'नमस्ते — यो तपाईंको नेपाली आवाज हो।'],
+  ['da', 'da-DK-ChristelNeural', 'da-DK', 'Hej — det her er din danske stemme.'],
+  ['nb', 'nb-NO-PernilleNeural', 'nb-NO', 'Hei — dette er din norske stemme.'],
+  ['fi', 'fi-FI-SelmaNeural', 'fi-FI', 'Hei — tämä on suomenkielinen äänesi.'],
+  ['sk', 'sk-SK-ViktoriaNeural', 'sk-SK', 'Ahoj — toto je tvoj slovenský hlas.'],
+  ['hr', 'hr-HR-GabrijelaNeural', 'hr-HR', 'Bok — ovo je tvoj hrvatski glas.'],
+  ['ca', 'ca-ES-JoanaNeural', 'ca-ES', 'Hola — aquesta és la teva veu en català.'],
 ]
 
 function escapeXml(s) {

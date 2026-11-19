@@ -13,16 +13,21 @@ import {
   DEVANAGARI_RE,
   GREEK_SCRIPT_RE,
   GUJARATI_SCRIPT_RE,
+  GURMUKHI_SCRIPT_RE,
   HEBREW_SCRIPT_RE,
   KANNADA_SCRIPT_RE,
+  MALAYALAM_SCRIPT_RE,
+  ODIA_SCRIPT_RE,
   RUSSIAN_ONLY_RE,
+  SINHALA_SCRIPT_RE,
   TELUGU_SCRIPT_RE,
   UKRAINIAN_ONLY_RE,
   URDU_ONLY_RE,
+  rejectOtherIndic,
 } from './voiceLangRegister.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'ceb' | 'ilo' | 'bcl'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -265,6 +270,42 @@ function isPersianTarget(to: CameraLang): boolean {
 function isUrduTarget(to: CameraLang): boolean {
   return to === 'ur'
 }
+function isMalayalamTarget(to: CameraLang): boolean {
+  return to === 'ml'
+}
+function isMarathiTarget(to: CameraLang): boolean {
+  return to === 'mr'
+}
+function isPunjabiTarget(to: CameraLang): boolean {
+  return to === 'pa'
+}
+function isOdiaTarget(to: CameraLang): boolean {
+  return to === 'or'
+}
+function isSinhalaTarget(to: CameraLang): boolean {
+  return to === 'si'
+}
+function isNepaliTarget(to: CameraLang): boolean {
+  return to === 'ne'
+}
+function isDanishTarget(to: CameraLang): boolean {
+  return to === 'da'
+}
+function isNorwegianTarget(to: CameraLang): boolean {
+  return to === 'nb'
+}
+function isFinnishTarget(to: CameraLang): boolean {
+  return to === 'fi'
+}
+function isSlovakTarget(to: CameraLang): boolean {
+  return to === 'sk'
+}
+function isCroatianTarget(to: CameraLang): boolean {
+  return to === 'hr'
+}
+function isCatalanTarget(to: CameraLang): boolean {
+  return to === 'ca'
+}
 
 const TAMIL_SCRIPT = /[\u0B80-\u0BFF]/
 const BENGALI_SCRIPT = /[\u0980-\u09FF]/
@@ -340,6 +381,18 @@ function sanitizeCameraTranslation(to: CameraLang, translated: string, source: s
   if (isHebrewTarget(to) && (hasHan(t) || !HEBREW_SCRIPT_RE.test(t))) return null
   if (isPersianTarget(to) && (hasHan(t) || !ARABIC_SCRIPT_RE.test(t) || URDU_ONLY_RE.test(t))) return null
   if (isUrduTarget(to) && (hasHan(t) || !ARABIC_SCRIPT_RE.test(t) || DEVANAGARI_RE.test(t))) return null
+  if (isMalayalamTarget(to) && (hasHan(t) || !MALAYALAM_SCRIPT_RE.test(t) || rejectOtherIndic('malayalam').test(t))) return null
+  if (isMarathiTarget(to) && (hasHan(t) || !DEVANAGARI_RE.test(t) || rejectOtherIndic('devanagari').test(t))) return null
+  if (isPunjabiTarget(to) && (hasHan(t) || !GURMUKHI_SCRIPT_RE.test(t) || rejectOtherIndic('gurmukhi').test(t))) return null
+  if (isOdiaTarget(to) && (hasHan(t) || !ODIA_SCRIPT_RE.test(t) || rejectOtherIndic('odia').test(t))) return null
+  if (isSinhalaTarget(to) && (hasHan(t) || !SINHALA_SCRIPT_RE.test(t) || rejectOtherIndic('sinhala').test(t))) return null
+  if (isNepaliTarget(to) && (hasHan(t) || !DEVANAGARI_RE.test(t) || rejectOtherIndic('devanagari').test(t))) return null
+  if (isDanishTarget(to) && hasHan(t)) return null
+  if (isNorwegianTarget(to) && hasHan(t)) return null
+  if (isFinnishTarget(to) && hasHan(t)) return null
+  if (isSlovakTarget(to) && hasHan(t)) return null
+  if (isCroatianTarget(to) && hasHan(t)) return null
+  if (isCatalanTarget(to) && hasHan(t)) return null
   if (isLatinPhilippineRegionalTarget(to) && hasHan(t)) return null
   return t
 }
@@ -1200,6 +1253,258 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .join('\n')
   }
 
+  if (to === 'ml') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Malayalam (മലയാളം, ml-IN).',
+      'Write for Malayalam readers in Kerala: everyday readable Malayalam as on shop signs and notices.',
+      'Use Malayalam script only. Never Latin transliteration as the main line, never ISO 15919 or other romanization, never Tamil / Telugu / Kannada / Devanagari letters, never Chinese characters, never invented ASCII tone digits, never IPA.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → ചെക്ക്-ഇൻ; Luggage → ലഗേജ്.',
+      '- Safety: Wet floor → നനഞ്ഞ തറ; Caution → ജാഗ്രത.',
+      '- Food/menus: keep dish names natural (ഇഡ്ഡലി, ദോശ, പുട്ട്); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Malayalam output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Malayalam>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'mr') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Marathi (मराठी, mr-IN).',
+      'Write for Marathi readers in Maharashtra: everyday readable Marathi as on shop signs and notices. This is Marathi — NOT Hindi.',
+      'Use Devanagari with Marathi spelling and grammar only. Never Latin transliteration as the main line, never ISO 15919 or other romanization, never Hindi or Nepali wording, never Chinese characters, never invented ASCII tone digits, never IPA.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → चेक-इन; Luggage → सामान.',
+      '- Safety: Wet floor → ओली फरशी; Caution → सावधान.',
+      '- Food/menus: keep dish names natural (वडा पाव, मिसळ, पुरणपोळी); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Marathi output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Marathi>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'pa') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Punjabi (ਪੰਜਾਬੀ, pa-IN).',
+      'Write for Punjabi readers in Indian Punjab: everyday readable Punjabi as on shop signs and notices.',
+      'Use Gurmukhi script only. Never Latin transliteration as the main line, never ISO 15919 or other romanization, never Shahmukhi / Arabic script, never Devanagari / Hindi, never Chinese characters, never invented ASCII tone digits, never IPA.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → ਚੈੱਕ-ਇਨ; Luggage → ਸਮਾਨ.',
+      '- Safety: Wet floor → ਗਿੱਲਾ ਫ਼ਰਸ਼; Caution → ਸਾਵਧਾਨ.',
+      '- Food/menus: keep dish names natural (ਸਰੋਂ ਦਾ ਸਾਗ, ਮੱਕੀ ਦੀ ਰੋਟੀ, ਲੱਸੀ); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Punjabi output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Punjabi>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'or') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Odia (ଓଡ଼ିଆ, or-IN).',
+      'Write for Odia readers in Odisha: everyday readable Odia as on shop signs and notices.',
+      'Use Odia script only. Never Latin transliteration as the main line, never ISO 15919 or other romanization, never Bengali / Devanagari / Telugu letters, never Chinese characters, never invented ASCII tone digits, never IPA.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → ଚେକ୍-ଇନ୍; Luggage → ମାଲପତ୍ର.',
+      '- Safety: Wet floor → ଓଦା ଚଟାଣ; Caution → ସାବଧାନ.',
+      '- Food/menus: keep dish names natural (ପଖାଳ, ଦାଲମା, ଛେନାପୋଡ଼); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Odia output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Odia>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'si') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Sinhala (සිංහල, si-LK).',
+      'Write for Sinhala readers in Sri Lanka: everyday readable Sinhala as on shop signs and notices.',
+      'Use Sinhala script only. Never Latin transliteration as the main line, never ISO 15919 or other romanization, never Tamil / Devanagari letters, never Chinese characters, never invented ASCII tone digits, never IPA.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → චෙක්-ඉන්; Luggage → ගමන් මලු.',
+      '- Safety: Wet floor → තෙත් බිම; Caution → ප්‍රවේශම් වන්න.',
+      '- Food/menus: keep dish names natural (කිරිබත්, ලම්ප්‍රයිස්, කොත්තු); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Sinhala output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Sinhala>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'ne') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Nepali (नेपाली, ne-NP).',
+      'Write for Nepali readers in Nepal: everyday readable Nepali as on shop signs and notices. This is Nepali — NOT Hindi.',
+      'Use Devanagari with Nepali spelling and grammar only. Never Latin transliteration as the main line, never ISO 15919 or other romanization, never Hindi or Marathi wording, never Chinese characters, never invented ASCII tone digits, never IPA.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → चेक-इन; Luggage → सामान.',
+      '- Safety: Wet floor → भिजेको भुइँ; Caution → सावधान.',
+      '- Food/menus: keep dish names natural (मोमो, दाल भात, सेल रोटी); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Nepali output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Nepali>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'da') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Danish (dansk, da-DK).',
+      'Write for readers in Denmark: everyday Danish as on shop signs and notices, not bureaucratic wording.',
+      'Use Latin script only. ALWAYS use correct Danish diacritics (æ ø å) — never ASCII-fold. Never Norwegian or Swedish wording. Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Indtjekning; Luggage → Bagage.',
+      '- Safety: Wet floor → Glat gulv; Caution → Pas på.',
+      '- Food/menus: keep dish names natural (smørrebrød, frikadeller); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Danish output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Danish>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'nb') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Norwegian Bokmål (norsk bokmål, nb-NO).',
+      'Write for readers in Norway: everyday Norwegian Bokmål as on shop signs and notices, not bureaucratic wording.',
+      'Use Latin script only. ALWAYS use correct Norwegian Bokmål diacritics (æ ø å) — never ASCII-fold. Never Nynorsk, Danish, or Swedish wording. Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Innsjekking; Luggage → Bagasje.',
+      '- Safety: Wet floor → Vått gulv; Caution → Forsiktig.',
+      '- Food/menus: keep dish names natural (brunost, kjøttkaker, lefse); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Norwegian Bokmål output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Norwegian Bokmål>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'fi') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Finnish (suomi, fi-FI).',
+      'Write for readers in Finland: everyday Finnish as on shop signs and notices, not bureaucratic wording.',
+      'Use Latin script only. ALWAYS use correct Finnish diacritics (ä ö) — never ASCII-fold. Never Swedish or Estonian wording. Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Sisäänkirjautuminen; Luggage → Matkatavarat.',
+      '- Safety: Wet floor → Liukas lattia; Caution → Varo.',
+      '- Food/menus: keep dish names natural (karjalanpiirakka, lohikeitto); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Finnish output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Finnish>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'sk') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Slovak (slovenčina, sk-SK).',
+      'Write for readers in Slovakia: everyday Slovak as on shop signs and notices, not bureaucratic wording.',
+      'Use Latin script only. ALWAYS use correct Slovak diacritics (á ä č ď é í ĺ ľ ň ó ô ŕ š ť ú ý ž) — never ASCII-fold. Never Czech (no ě ř ů) wording. Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Prihlásenie; Luggage → Batožina.',
+      '- Safety: Wet floor → Šmykľavá podlaha; Caution → Pozor.',
+      '- Food/menus: keep dish names natural (bryndzové halušky, kapustnica); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Slovak output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Slovak>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'hr') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Croatian (hrvatski, hr-HR).',
+      'Write for readers in Croatia: everyday Croatian as on shop signs and notices, not bureaucratic wording.',
+      'Use Latin script only. ALWAYS use correct Croatian diacritics (č ć đ š ž) — never ASCII-fold. Never Cyrillic, Serbian ekavian, or Bosnian-specific wording wording. Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Prijava; Luggage → Prtljaga.',
+      '- Safety: Wet floor → Mokar pod; Caution → Oprez.',
+      '- Food/menus: keep dish names natural (ćevapi, štrukli, sarma); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Croatian output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Croatian>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'ca') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Catalan (català, ca-ES).',
+      'Write for readers in Catalonia: everyday Central Catalan as on shop signs and notices, not bureaucratic wording.',
+      'Use Latin script only. ALWAYS use correct Catalan diacritics (à è é í ï ò ó ú ü ç and l·l) — never ASCII-fold. Never Spanish (Castilian), French, or Occitan wording. Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Entrada (check-in); Luggage → Equipatge.',
+      '- Safety: Wet floor → Terra mullat; Caution → Compte.',
+      '- Food/menus: keep dish names natural (pa amb tomàquet, escalivada, crema catalana); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Catalan output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Catalan>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
   if (to === 'ko') {
     return [
       'You translate signs, menus, forms, and short labels into natural colloquial Korean (한국어).',
@@ -1454,6 +1759,42 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isUrduTarget(to)) {
     return hasHan(source) ? `(demo UR) ${source}` : `(demo) ${source}`
   }
+  if (isMalayalamTarget(to)) {
+    return hasHan(source) ? `(demo ML) ${source}` : `(demo) ${source}`
+  }
+  if (isMarathiTarget(to)) {
+    return hasHan(source) ? `(demo MR) ${source}` : `(demo) ${source}`
+  }
+  if (isPunjabiTarget(to)) {
+    return hasHan(source) ? `(demo PA) ${source}` : `(demo) ${source}`
+  }
+  if (isOdiaTarget(to)) {
+    return hasHan(source) ? `(demo OR) ${source}` : `(demo) ${source}`
+  }
+  if (isSinhalaTarget(to)) {
+    return hasHan(source) ? `(demo SI) ${source}` : `(demo) ${source}`
+  }
+  if (isNepaliTarget(to)) {
+    return hasHan(source) ? `(demo NE) ${source}` : `(demo) ${source}`
+  }
+  if (isDanishTarget(to)) {
+    return hasHan(source) ? `(demo DA) ${source}` : `(demo) ${source}`
+  }
+  if (isNorwegianTarget(to)) {
+    return hasHan(source) ? `(demo NB) ${source}` : `(demo) ${source}`
+  }
+  if (isFinnishTarget(to)) {
+    return hasHan(source) ? `(demo FI) ${source}` : `(demo) ${source}`
+  }
+  if (isSlovakTarget(to)) {
+    return hasHan(source) ? `(demo SK) ${source}` : `(demo) ${source}`
+  }
+  if (isCroatianTarget(to)) {
+    return hasHan(source) ? `(demo HR) ${source}` : `(demo) ${source}`
+  }
+  if (isCatalanTarget(to)) {
+    return hasHan(source) ? `(demo CA) ${source}` : `(demo) ${source}`
+  }
   if (isCebuanoTarget(to)) {
     return hasHan(source) ? `(demo CEB) ${source}` : `(demo) ${source}`
   }
@@ -1598,6 +1939,30 @@ export async function translateCameraText(
                 ? `(tr FA) ${source}`
               : isUrduTarget(to)
                 ? `(tr UR) ${source}`
+              : isMalayalamTarget(to)
+                ? `(tr ML) ${source}`
+              : isMarathiTarget(to)
+                ? `(tr MR) ${source}`
+              : isPunjabiTarget(to)
+                ? `(tr PA) ${source}`
+              : isOdiaTarget(to)
+                ? `(tr OR) ${source}`
+              : isSinhalaTarget(to)
+                ? `(tr SI) ${source}`
+              : isNepaliTarget(to)
+                ? `(tr NE) ${source}`
+              : isDanishTarget(to)
+                ? `(tr DA) ${source}`
+              : isNorwegianTarget(to)
+                ? `(tr NB) ${source}`
+              : isFinnishTarget(to)
+                ? `(tr FI) ${source}`
+              : isSlovakTarget(to)
+                ? `(tr SK) ${source}`
+              : isCroatianTarget(to)
+                ? `(tr HR) ${source}`
+              : isCatalanTarget(to)
+                ? `(tr CA) ${source}`
               : isKoreanTarget(to)
                 ? `(tr KO) ${source}`
               : isCebuanoTarget(to)
@@ -1665,6 +2030,18 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'he') return 'Modern Hebrew (Hebrew script, he-IL)'
   if (lang === 'fa') return 'Persian / Farsi (Persian script, fa-IR — not Arabic)'
   if (lang === 'ur') return 'Urdu (Perso-Arabic Nastaliq script, ur-IN — not Hindi)'
+  if (lang === 'ml') return 'Malayalam (Malayalam script, ml-IN)'
+  if (lang === 'mr') return 'Marathi (Devanagari, mr-IN — not Hindi)'
+  if (lang === 'pa') return 'Punjabi (Gurmukhi script, pa-IN — not Shahmukhi)'
+  if (lang === 'or') return 'Odia (Odia script, or-IN)'
+  if (lang === 'si') return 'Sinhala (Sinhala script, si-LK — not Sichuanese)'
+  if (lang === 'ne') return 'Nepali (Devanagari, ne-NP — not Hindi)'
+  if (lang === 'da') return 'Danish (Latin script, da-DK — not Norwegian)'
+  if (lang === 'nb') return 'Norwegian Bokmål (Latin script, nb-NO — not Nynorsk or Danish)'
+  if (lang === 'fi') return 'Finnish (Latin script, fi-FI)'
+  if (lang === 'sk') return 'Slovak (Latin script, sk-SK — not Czech)'
+  if (lang === 'hr') return 'Croatian (Latin script, hr-HR — not Serbian)'
+  if (lang === 'ca') return 'Catalan (Latin script, ca-ES — not Spanish)'
   if (lang === 'ceb') return 'Cebuano / Binisaya (Latin script)'
   if (lang === 'ilo') return 'Ilocano / Ilokano (Latin script)'
   if (lang === 'bcl') return 'Central Bikol / Bikol Naga (Latin script)'
@@ -1794,6 +2171,30 @@ export async function translateCameraBatch(
                     ? `(tr FA) ${s}`
                   : isUrduTarget(to)
                     ? `(tr UR) ${s}`
+                  : isMalayalamTarget(to)
+                    ? `(tr ML) ${s}`
+                  : isMarathiTarget(to)
+                    ? `(tr MR) ${s}`
+                  : isPunjabiTarget(to)
+                    ? `(tr PA) ${s}`
+                  : isOdiaTarget(to)
+                    ? `(tr OR) ${s}`
+                  : isSinhalaTarget(to)
+                    ? `(tr SI) ${s}`
+                  : isNepaliTarget(to)
+                    ? `(tr NE) ${s}`
+                  : isDanishTarget(to)
+                    ? `(tr DA) ${s}`
+                  : isNorwegianTarget(to)
+                    ? `(tr NB) ${s}`
+                  : isFinnishTarget(to)
+                    ? `(tr FI) ${s}`
+                  : isSlovakTarget(to)
+                    ? `(tr SK) ${s}`
+                  : isCroatianTarget(to)
+                    ? `(tr HR) ${s}`
+                  : isCatalanTarget(to)
+                    ? `(tr CA) ${s}`
                   : isKoreanTarget(to)
                     ? `(tr KO) ${s}`
                   : isCebuanoTarget(to)
@@ -1865,6 +2266,18 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (lang === 'he' || lang === 'he-IL' || lang === 'he-il') return 'he'
   if (lang === 'fa' || lang === 'fa-IR' || lang === 'fa-ir') return 'fa'
   if (lang === 'ur' || lang === 'ur-IN' || lang === 'ur-in') return 'ur'
+  if (lang === 'ml' || lang === 'ml-IN' || lang === 'ml-in') return 'ml'
+  if (lang === 'mr' || lang === 'mr-IN' || lang === 'mr-in') return 'mr'
+  if (lang === 'pa' || lang === 'pa-IN' || lang === 'pa-in') return 'pa'
+  if (lang === 'or' || lang === 'or-IN' || lang === 'or-in') return 'or'
+  if (lang === 'si' || lang === 'si-LK' || lang === 'si-lk') return 'si'
+  if (lang === 'ne' || lang === 'ne-NP' || lang === 'ne-np') return 'ne'
+  if (lang === 'da' || lang === 'da-DK' || lang === 'da-dk') return 'da'
+  if (lang === 'nb' || lang === 'nb-NO' || lang === 'nb-no') return 'nb'
+  if (lang === 'fi' || lang === 'fi-FI' || lang === 'fi-fi') return 'fi'
+  if (lang === 'sk' || lang === 'sk-SK' || lang === 'sk-sk') return 'sk'
+  if (lang === 'hr' || lang === 'hr-HR' || lang === 'hr-hr') return 'hr'
+  if (lang === 'ca' || lang === 'ca-ES' || lang === 'ca-es') return 'ca'
   if (lang === 'ceb' || lang === 'ceb-PH' || lang === 'ceb-ph') return 'ceb'
   if (lang === 'ilo' || lang === 'ilo-PH' || lang === 'ilo-ph') return 'ilo'
   if (lang === 'bcl' || lang === 'bcl-PH' || lang === 'bcl-ph') return 'bcl'

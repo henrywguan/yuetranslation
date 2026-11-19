@@ -64,6 +64,30 @@ export declare const DEFAULT_HE_VOICE = "he-IL-HilaNeural";
 export declare const DEFAULT_FA_VOICE = "fa-IR-DilaraNeural";
 /** Urdu (India) — Nastaliq / Perso-Arabic RTL, never a Hindi (`hi`) voice. */
 export declare const DEFAULT_UR_VOICE = "ur-IN-GulNeural";
+/** Malayalam — Azure locale ml-IN. */
+export declare const DEFAULT_ML_VOICE = "ml-IN-SobhanaNeural";
+/** Marathi — Azure locale mr-IN. */
+export declare const DEFAULT_MR_VOICE = "mr-IN-AarohiNeural";
+/** Punjabi — Azure locale pa-IN. */
+export declare const DEFAULT_PA_VOICE = "pa-IN-VaaniNeural";
+/** Odia — Azure locale or-IN. */
+export declare const DEFAULT_OR_VOICE = "or-IN-SubhasiniNeural";
+/** Sinhala — Azure locale si-LK. */
+export declare const DEFAULT_SI_VOICE = "si-LK-ThiliniNeural";
+/** Nepali — Azure locale ne-NP. */
+export declare const DEFAULT_NE_VOICE = "ne-NP-HemkalaNeural";
+/** Danish — Azure locale da-DK. */
+export declare const DEFAULT_DA_VOICE = "da-DK-ChristelNeural";
+/** Norwegian Bokmål — Azure locale nb-NO. */
+export declare const DEFAULT_NB_VOICE = "nb-NO-PernilleNeural";
+/** Finnish — Azure locale fi-FI. */
+export declare const DEFAULT_FI_VOICE = "fi-FI-SelmaNeural";
+/** Slovak — Azure locale sk-SK. */
+export declare const DEFAULT_SK_VOICE = "sk-SK-ViktoriaNeural";
+/** Croatian — Azure locale hr-HR. */
+export declare const DEFAULT_HR_VOICE = "hr-HR-GabrijelaNeural";
+/** Catalan — Azure locale ca-ES. */
+export declare const DEFAULT_CA_VOICE = "ca-ES-JoanaNeural";
 export type YueVoiceId = 'zh-HK-HiuMaanNeural' | 'zh-HK-HiuGaaiNeural' | 'zh-HK-WanLungNeural';
 export type EnVoiceId = 'en-US-JennyNeural' | 'en-US-GuyNeural' | 'en-US-AriaNeural' | 'en-GB-SoniaNeural' | 'en-GB-RyanNeural' | 'en-AU-NatashaNeural';
 export type CmnVoiceId = 'zh-CN-XiaoxiaoNeural' | 'zh-CN-YunxiNeural';
@@ -111,10 +135,22 @@ export type UkVoiceId = 'uk-UA-PolinaNeural' | 'uk-UA-OstapNeural';
 export type HeVoiceId = 'he-IL-HilaNeural' | 'he-IL-AvriNeural';
 export type FaVoiceId = 'fa-IR-DilaraNeural' | 'fa-IR-FaridNeural';
 export type UrVoiceId = 'ur-IN-GulNeural' | 'ur-IN-SalmanNeural';
-export type TtsVoiceId = YueVoiceId | EnVoiceId | CmnVoiceId | WuuVoiceId | SichuanVoiceId | TlVoiceId | EsVoiceId | EsesVoiceId | ViVoiceId | ThVoiceId | LoVoiceId | KoVoiceId | JaVoiceId | IdVoiceId | MsVoiceId | PtVoiceId | FrVoiceId | HiVoiceId | KmVoiceId | MyVoiceId | JvVoiceId | ItVoiceId | DeVoiceId | NlVoiceId | ArVoiceId | ArsaVoiceId | TaVoiceId | PtptVoiceId | TrVoiceId | BnVoiceId | TeVoiceId | GuVoiceId | KnVoiceId | PlVoiceId | RoVoiceId | CsVoiceId | ElVoiceId | HuVoiceId | SvVoiceId | RuVoiceId | UkVoiceId | HeVoiceId | FaVoiceId | UrVoiceId;
+export type MlVoiceId = 'ml-IN-SobhanaNeural' | 'ml-IN-MidhunNeural';
+export type MrVoiceId = 'mr-IN-AarohiNeural' | 'mr-IN-ManoharNeural';
+export type PaVoiceId = 'pa-IN-VaaniNeural' | 'pa-IN-OjasNeural';
+export type OrVoiceId = 'or-IN-SubhasiniNeural' | 'or-IN-SukantNeural';
+export type SiVoiceId = 'si-LK-ThiliniNeural' | 'si-LK-SameeraNeural';
+export type NeVoiceId = 'ne-NP-HemkalaNeural' | 'ne-NP-SagarNeural';
+export type DaVoiceId = 'da-DK-ChristelNeural' | 'da-DK-JeppeNeural';
+export type NbVoiceId = 'nb-NO-PernilleNeural' | 'nb-NO-FinnNeural';
+export type FiVoiceId = 'fi-FI-SelmaNeural' | 'fi-FI-HarriNeural';
+export type SkVoiceId = 'sk-SK-ViktoriaNeural' | 'sk-SK-LukasNeural';
+export type HrVoiceId = 'hr-HR-GabrijelaNeural' | 'hr-HR-SreckoNeural';
+export type CaVoiceId = 'ca-ES-JoanaNeural' | 'ca-ES-EnricNeural';
+export type TtsVoiceId = YueVoiceId | EnVoiceId | CmnVoiceId | WuuVoiceId | SichuanVoiceId | TlVoiceId | EsVoiceId | EsesVoiceId | ViVoiceId | ThVoiceId | LoVoiceId | KoVoiceId | JaVoiceId | IdVoiceId | MsVoiceId | PtVoiceId | FrVoiceId | HiVoiceId | KmVoiceId | MyVoiceId | JvVoiceId | ItVoiceId | DeVoiceId | NlVoiceId | ArVoiceId | ArsaVoiceId | TaVoiceId | PtptVoiceId | TrVoiceId | BnVoiceId | TeVoiceId | GuVoiceId | KnVoiceId | PlVoiceId | RoVoiceId | CsVoiceId | ElVoiceId | HuVoiceId | SvVoiceId | RuVoiceId | UkVoiceId | HeVoiceId | FaVoiceId | UrVoiceId | MlVoiceId | MrVoiceId | PaVoiceId | OrVoiceId | SiVoiceId | NeVoiceId | DaVoiceId | NbVoiceId | FiVoiceId | SkVoiceId | HrVoiceId | CaVoiceId;
 export type TtsVoiceOption = {
     id: TtsVoiceId;
-    lang: 'yue' | 'en' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur';
+    lang: 'yue' | 'en' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca';
     /** Azure SSML xml:lang */
     xmlLang: string;
     labelEn: string;
@@ -162,6 +198,18 @@ export declare const UK_VOICES: TtsVoiceOption[];
 export declare const HE_VOICES: TtsVoiceOption[];
 export declare const FA_VOICES: TtsVoiceOption[];
 export declare const UR_VOICES: TtsVoiceOption[];
+export declare const ML_VOICES: TtsVoiceOption[];
+export declare const MR_VOICES: TtsVoiceOption[];
+export declare const PA_VOICES: TtsVoiceOption[];
+export declare const OR_VOICES: TtsVoiceOption[];
+export declare const SI_VOICES: TtsVoiceOption[];
+export declare const NE_VOICES: TtsVoiceOption[];
+export declare const DA_VOICES: TtsVoiceOption[];
+export declare const NB_VOICES: TtsVoiceOption[];
+export declare const FI_VOICES: TtsVoiceOption[];
+export declare const SK_VOICES: TtsVoiceOption[];
+export declare const HR_VOICES: TtsVoiceOption[];
+export declare const CA_VOICES: TtsVoiceOption[];
 export declare const CMN_VOICES: TtsVoiceOption[];
 export declare const WUU_VOICES: TtsVoiceOption[];
 export declare const SICHUAN_VOICES: TtsVoiceOption[];
@@ -253,9 +301,33 @@ export declare function resolveUkVoice(id: string | null | undefined): UkVoiceId
 export declare function resolveHeVoice(id: string | null | undefined): HeVoiceId;
 export declare function resolveFaVoice(id: string | null | undefined): FaVoiceId;
 export declare function resolveUrVoice(id: string | null | undefined): UrVoiceId;
+export declare function isMlVoice(id: string): id is MlVoiceId;
+export declare function resolveMlVoice(id: string | null | undefined): MlVoiceId;
+export declare function isMrVoice(id: string): id is MrVoiceId;
+export declare function resolveMrVoice(id: string | null | undefined): MrVoiceId;
+export declare function isPaVoice(id: string): id is PaVoiceId;
+export declare function resolvePaVoice(id: string | null | undefined): PaVoiceId;
+export declare function isOrVoice(id: string): id is OrVoiceId;
+export declare function resolveOrVoice(id: string | null | undefined): OrVoiceId;
+export declare function isSiVoice(id: string): id is SiVoiceId;
+export declare function resolveSiVoice(id: string | null | undefined): SiVoiceId;
+export declare function isNeVoice(id: string): id is NeVoiceId;
+export declare function resolveNeVoice(id: string | null | undefined): NeVoiceId;
+export declare function isDaVoice(id: string): id is DaVoiceId;
+export declare function resolveDaVoice(id: string | null | undefined): DaVoiceId;
+export declare function isNbVoice(id: string): id is NbVoiceId;
+export declare function resolveNbVoice(id: string | null | undefined): NbVoiceId;
+export declare function isFiVoice(id: string): id is FiVoiceId;
+export declare function resolveFiVoice(id: string | null | undefined): FiVoiceId;
+export declare function isSkVoice(id: string): id is SkVoiceId;
+export declare function resolveSkVoice(id: string | null | undefined): SkVoiceId;
+export declare function isHrVoice(id: string): id is HrVoiceId;
+export declare function resolveHrVoice(id: string | null | undefined): HrVoiceId;
+export declare function isCaVoice(id: string): id is CaVoiceId;
+export declare function resolveCaVoice(id: string | null | undefined): CaVoiceId;
 export declare function voiceMeta(id: string): TtsVoiceOption | undefined;
 /** Pick Azure voice + xml:lang for a speak request. */
-export declare function resolveSpeakVoice(lang: string, preferredYue?: string | null, preferredEn?: string | null, preferredCmn?: string | null, preferredWuu?: string | null, preferredSichuan?: string | null, preferredTl?: string | null, preferredEs?: string | null, override?: string | null, preferredVi?: string | null, preferredEses?: string | null, preferredTh?: string | null, preferredLo?: string | null, preferredKo?: string | null, preferredJa?: string | null, preferredId?: string | null, preferredMs?: string | null, preferredPt?: string | null, preferredFr?: string | null, preferredHi?: string | null, preferredKm?: string | null, preferredMy?: string | null, preferredJv?: string | null, preferredIt?: string | null, preferredDe?: string | null, preferredNl?: string | null, preferredAr?: string | null, preferredArsa?: string | null, preferredTa?: string | null, preferredPtpt?: string | null, preferredTr?: string | null, preferredBn?: string | null, preferredTe?: string | null, preferredGu?: string | null, preferredKn?: string | null, preferredPl?: string | null, preferredRo?: string | null, preferredCs?: string | null, preferredEl?: string | null, preferredHu?: string | null, preferredSv?: string | null, preferredRu?: string | null, preferredUk?: string | null, preferredHe?: string | null, preferredFa?: string | null, preferredUr?: string | null): {
+export declare function resolveSpeakVoice(lang: string, preferredYue?: string | null, preferredEn?: string | null, preferredCmn?: string | null, preferredWuu?: string | null, preferredSichuan?: string | null, preferredTl?: string | null, preferredEs?: string | null, override?: string | null, preferredVi?: string | null, preferredEses?: string | null, preferredTh?: string | null, preferredLo?: string | null, preferredKo?: string | null, preferredJa?: string | null, preferredId?: string | null, preferredMs?: string | null, preferredPt?: string | null, preferredFr?: string | null, preferredHi?: string | null, preferredKm?: string | null, preferredMy?: string | null, preferredJv?: string | null, preferredIt?: string | null, preferredDe?: string | null, preferredNl?: string | null, preferredAr?: string | null, preferredArsa?: string | null, preferredTa?: string | null, preferredPtpt?: string | null, preferredTr?: string | null, preferredBn?: string | null, preferredTe?: string | null, preferredGu?: string | null, preferredKn?: string | null, preferredPl?: string | null, preferredRo?: string | null, preferredCs?: string | null, preferredEl?: string | null, preferredHu?: string | null, preferredSv?: string | null, preferredRu?: string | null, preferredUk?: string | null, preferredHe?: string | null, preferredFa?: string | null, preferredUr?: string | null, preferredMl?: string | null, preferredMr?: string | null, preferredPa?: string | null, preferredOr?: string | null, preferredSi?: string | null, preferredNe?: string | null, preferredDa?: string | null, preferredNb?: string | null, preferredFi?: string | null, preferredSk?: string | null, preferredHr?: string | null, preferredCa?: string | null): {
     voice: string;
     xmlLang: string;
 };
@@ -303,4 +375,16 @@ export declare const PREVIEW_UK = "\u041F\u0440\u0438\u0432\u0456\u0442 \u2014 \
 export declare const PREVIEW_HE = "\u05E9\u05DC\u05D5\u05DD \u2014 \u05D6\u05D4 \u05D4\u05E7\u05D5\u05DC \u05E9\u05DC\u05DA \u05D1\u05E2\u05D1\u05E8\u05D9\u05EA.";
 export declare const PREVIEW_FA = "\u0633\u0644\u0627\u0645 \u2014 \u0627\u06CC\u0646 \u0635\u062F\u0627\u06CC \u0641\u0627\u0631\u0633\u06CC \u0634\u0645\u0627\u0633\u062A.";
 export declare const PREVIEW_UR = "\u0627\u0644\u0633\u0644\u0627\u0645 \u0639\u0644\u06CC\u06A9\u0645 \u2014 \u06CC\u06C1 \u0622\u067E \u06A9\u06CC \u0627\u0631\u062F\u0648 \u0622\u0648\u0627\u0632 \u06C1\u06D2\u06D4";
+export declare const PREVIEW_ML = "\u0D28\u0D2E\u0D38\u0D4D\u0D15\u0D3E\u0D30\u0D02 \u2014 \u0D07\u0D24\u0D4D \u0D28\u0D3F\u0D19\u0D4D\u0D19\u0D33\u0D41\u0D1F\u0D46 \u0D2E\u0D32\u0D2F\u0D3E\u0D33\u0D02 \u0D36\u0D2C\u0D4D\u0D26\u0D2E\u0D3E\u0D23\u0D4D.";
+export declare const PREVIEW_MR = "\u0928\u092E\u0938\u094D\u0915\u093E\u0930 \u2014 \u0939\u093E \u0924\u0941\u092E\u091A\u093E \u092E\u0930\u093E\u0920\u0940 \u0906\u0935\u093E\u091C \u0906\u0939\u0947.";
+export declare const PREVIEW_PA = "\u0A38\u0A24 \u0A38\u0A4D\u0A30\u0A40 \u0A05\u0A15\u0A3E\u0A32 \u2014 \u0A07\u0A39 \u0A24\u0A41\u0A39\u0A3E\u0A21\u0A40 \u0A2A\u0A70\u0A1C\u0A3E\u0A2C\u0A40 \u0A06\u0A35\u0A3E\u0A1C\u0A3C \u0A39\u0A48\u0964";
+export declare const PREVIEW_OR = "\u0B28\u0B2E\u0B38\u0B4D\u0B15\u0B3E\u0B30 \u2014 \u0B0F\u0B39\u0B3E \u0B06\u0B2A\u0B23\u0B19\u0B4D\u0B15 \u0B13\u0B21\u0B3C\u0B3F\u0B06 \u0B38\u0B4D\u0B71\u0B30\u0964";
+export declare const PREVIEW_SI = "\u0D86\u0DBA\u0DD4\u0DB6\u0DDD\u0DC0\u0DB1\u0DCA \u2014 \u0DB8\u0DD9\u0DBA \u0D94\u0DB6\u0DDA \u0DC3\u0DD2\u0D82\u0DC4\u0DBD \u0DC4\u0DAC\u0DBA\u0DD2.";
+export declare const PREVIEW_NE = "\u0928\u092E\u0938\u094D\u0924\u0947 \u2014 \u092F\u094B \u0924\u092A\u093E\u0908\u0902\u0915\u094B \u0928\u0947\u092A\u093E\u0932\u0940 \u0906\u0935\u093E\u091C \u0939\u094B\u0964";
+export declare const PREVIEW_DA = "Hej \u2014 det her er din danske stemme.";
+export declare const PREVIEW_NB = "Hei \u2014 dette er din norske stemme.";
+export declare const PREVIEW_FI = "Hei \u2014 t\u00E4m\u00E4 on suomenkielinen \u00E4\u00E4nesi.";
+export declare const PREVIEW_SK = "Ahoj \u2014 toto je tvoj slovensk\u00FD hlas.";
+export declare const PREVIEW_HR = "Bok \u2014 ovo je tvoj hrvatski glas.";
+export declare const PREVIEW_CA = "Hola \u2014 aquesta \u00E9s la teva veu en catal\u00E0.";
 //# sourceMappingURL=ttsVoices.d.ts.map

@@ -15,6 +15,7 @@ assert.ok(langs.includes('ar'))
 assert.ok(langs.includes('arsa'))
 assert.ok(langs.includes('nl'))
 for (const code of ['ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur']) assert.ok(langs.includes(code), code)
+for (const code of ['ml', 'mr', 'pa', 'or', 'si', 'ne', 'da', 'nb', 'fi', 'sk', 'hr', 'ca']) assert.ok(langs.includes(code), code)
 assert.equal(equalizeLangKey('pt-PT'), 'ptpt', 'European Portuguese never folds into pt-BR')
 assert.equal(equalizeLangKey('pt-BR'), 'pt')
 assert.equal(equalizeLangKey('ta-IN'), 'ta')
@@ -34,6 +35,20 @@ assert.equal(equalizeLangKey('uk-UA'), 'uk')
 assert.equal(equalizeLangKey('he-IL'), 'he')
 assert.equal(equalizeLangKey('fa-IR'), 'fa')
 assert.equal(equalizeLangKey('ur-IN'), 'ur')
+assert.equal(equalizeLangKey('ml-IN'), 'ml')
+assert.equal(equalizeLangKey('mr-IN'), 'mr')
+assert.equal(equalizeLangKey('pa-IN'), 'pa')
+assert.equal(equalizeLangKey('or-IN'), 'or')
+assert.equal(equalizeLangKey('si-LK'), 'si')
+assert.equal(equalizeLangKey('ne-NP'), 'ne')
+assert.equal(equalizeLangKey('da-DK'), 'da')
+assert.equal(equalizeLangKey('nb-NO'), 'nb')
+assert.equal(equalizeLangKey('fi-FI'), 'fi')
+assert.equal(equalizeLangKey('sk-SK'), 'sk')
+assert.equal(equalizeLangKey('hr-HR'), 'hr')
+assert.equal(equalizeLangKey('ca-ES'), 'ca')
+assert.equal(equalizeLangKey('sichuan'), 'sichuan', 'Sichuanese never folds into Sinhala (si)')
+assert.equal(equalizeLangKey('si'), 'si')
 
 assert.equal(ttsEqualizeVolumeAttr('yue'), null, 'Cantonese is the reference — no SSML boost')
 assert.equal(ttsEqualizeVolumeAttr('zh-HK'), null)
@@ -58,9 +73,9 @@ for (const lang of langs) {
   const g = TTS_EQUALIZE_PLAYBACK_GAIN[lang as keyof typeof TTS_EQUALIZE_PLAYBACK_GAIN]
   assert.ok(g >= 1 && g <= 2.5, `${lang} playback gain in range: ${g}`)
   if (lang === 'yue') {
-    assert.equal(TTS_EQUALIZE_VOLUME[lang], null)
+    assert.equal(TTS_EQUALIZE_VOLUME[lang as keyof typeof TTS_EQUALIZE_VOLUME], null)
   } else {
-    assert.equal(TTS_EQUALIZE_VOLUME[lang], '+50%')
+    assert.equal(TTS_EQUALIZE_VOLUME[lang as keyof typeof TTS_EQUALIZE_VOLUME], '+50%')
   }
 }
 

@@ -39,6 +39,18 @@ function main() {
   assert.equal(primaryGlossHtmlLang('he'), 'he-IL')
   assert.equal(primaryGlossHtmlLang('fa'), 'fa-IR')
   assert.equal(primaryGlossHtmlLang('ur'), 'ur-IN')
+  assert.equal(primaryGlossHtmlLang('ml'), 'ml-IN')
+  assert.equal(primaryGlossHtmlLang('mr'), 'mr-IN')
+  assert.equal(primaryGlossHtmlLang('pa'), 'pa-IN')
+  assert.equal(primaryGlossHtmlLang('or'), 'or-IN')
+  assert.equal(primaryGlossHtmlLang('si'), 'si-LK')
+  assert.equal(primaryGlossHtmlLang('ne'), 'ne-NP')
+  assert.equal(primaryGlossHtmlLang('da'), 'da-DK')
+  assert.equal(primaryGlossHtmlLang('nb'), 'nb-NO')
+  assert.equal(primaryGlossHtmlLang('fi'), 'fi-FI')
+  assert.equal(primaryGlossHtmlLang('sk'), 'sk-SK')
+  assert.equal(primaryGlossHtmlLang('hr'), 'hr-HR')
+  assert.equal(primaryGlossHtmlLang('ca'), 'ca-ES')
   assert.equal(resolvePrimaryUiGloss(ui.modeSolo, 'ta'), undefined)
 
   const solo = ui.modeSolo

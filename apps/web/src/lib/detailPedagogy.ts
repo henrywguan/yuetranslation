@@ -405,6 +405,114 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     localOffline: true,
     extraPanels: [],
   },
+  ml: {
+    // Malayalam script title via LangFamilyText; optional ISO 15919 + താങ്കൾ/നിങ്ങൾ/നീ in Details only. Not tonal.
+    htmlLang: 'ml-IN',
+    pronField: 'accented',
+    defaultGlossLang: 'ml',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  mr: {
+    // Marathi Devanagari title (not Hindi); optional ISO 15919 + आपण/तुम्ही/तू in Details only. Not tonal.
+    htmlLang: 'mr-IN',
+    pronField: 'accented',
+    defaultGlossLang: 'mr',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  pa: {
+    // Punjabi Gurmukhi title (never Shahmukhi); optional ISO 15919 + ਆਪ/ਤੁਸੀਂ/ਤੂੰ in Details only. Punjabi is tonal — tone is not marked in the reading.
+    htmlLang: 'pa-IN',
+    pronField: 'accented',
+    defaultGlossLang: 'pa',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  or: {
+    // Odia script title; optional ISO 15919 + ଆପଣ/ତୁମେ/ତୁ in Details only. Not tonal.
+    htmlLang: 'or-IN',
+    pronField: 'accented',
+    defaultGlossLang: 'or',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  si: {
+    // Sinhala script title; optional ISO 15919 + ඔබතුමා/ඔබ/ඔයා in Details only. Not tonal; written vs spoken Sinhala differ.
+    htmlLang: 'si-LK',
+    pronField: 'accented',
+    defaultGlossLang: 'si',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  ne: {
+    // Nepali Devanagari title (not Hindi); optional ISO 15919 + हजुर/तपाईं/तिमी/तँ in Details only. Not tonal.
+    htmlLang: 'ne-NP',
+    pronField: 'accented',
+    defaultGlossLang: 'ne',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  da: {
+    // Danish orthography; du chip + stød / silent-letter honesty in Details.
+    htmlLang: 'da-DK',
+    pronField: 'accented',
+    defaultGlossLang: 'da',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  nb: {
+    // Norwegian Bokmål orthography; du / dere chip + pitch-accent honesty in Details.
+    htmlLang: 'nb-NO',
+    pronField: 'accented',
+    defaultGlossLang: 'nb',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  fi: {
+    // Finnish orthography; sinä / te chip + vowel-length honesty in Details.
+    htmlLang: 'fi-FI',
+    pronField: 'accented',
+    defaultGlossLang: 'fi',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  sk: {
+    // Slovak orthography (dĺžeň ä ô ľ); ty / Vy chip in Details.
+    htmlLang: 'sk-SK',
+    pronField: 'accented',
+    defaultGlossLang: 'sk',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  hr: {
+    // Croatian Latin orthography (č ć đ š ž); ti / Vi chip in Details.
+    htmlLang: 'hr-HR',
+    pronField: 'accented',
+    defaultGlossLang: 'hr',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  ca: {
+    // Catalan orthography (ç l·l ny); tu / vostè chip in Details.
+    htmlLang: 'ca-ES',
+    pronField: 'accented',
+    defaultGlossLang: 'ca',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
   ceb: {
     htmlLang: 'ceb',
     pronField: 'accented',

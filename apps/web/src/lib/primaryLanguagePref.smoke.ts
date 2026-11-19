@@ -86,9 +86,9 @@ assert.deepEqual(
 )
 
 // All voice langs are selectable primaries (migrations 039 + 040).
-assert.equal(PRIMARY_LANGS.length, 44)
+assert.equal(PRIMARY_LANGS.length, 56)
 assert.ok(PRIMARY_LANGS.includes('ar') && PRIMARY_LANGS.includes('arsa'))
-assert.ok(['ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur'].every((l) => (PRIMARY_LANGS as readonly string[]).includes(l)))
+assert.ok(['ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'da', 'nb', 'fi', 'sk', 'hr', 'ca'].every((l) => (PRIMARY_LANGS as readonly string[]).includes(l)))
 assert.ok(PRIMARY_LANGS.includes('pt') && PRIMARY_LANGS.includes('ptpt'))
 for (const id of PRIMARY_LANGS) {
   assert.equal(isPrimaryLang(id), true)

@@ -49,7 +49,19 @@ export function isVoiceLang(lang: string | null | undefined): lang is VoiceLang 
     lang === 'uk' ||
     lang === 'he' ||
     lang === 'fa' ||
-    lang === 'ur'
+    lang === 'ur' ||
+    lang === 'ml' ||
+    lang === 'mr' ||
+    lang === 'pa' ||
+    lang === 'or' ||
+    lang === 'si' ||
+    lang === 'ne' ||
+    lang === 'da' ||
+    lang === 'nb' ||
+    lang === 'fi' ||
+    lang === 'sk' ||
+    lang === 'hr' ||
+    lang === 'ca'
   )
 }
 

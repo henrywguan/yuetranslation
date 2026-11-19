@@ -66,6 +66,12 @@ export function isLatinDetailLang(lang: Lang): boolean {
     lang === 'cs' ||
     lang === 'hu' ||
     lang === 'sv' ||
+    lang === 'da' ||
+    lang === 'nb' ||
+    lang === 'fi' ||
+    lang === 'sk' ||
+    lang === 'hr' ||
+    lang === 'ca' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'

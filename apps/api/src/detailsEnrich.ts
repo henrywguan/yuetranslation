@@ -53,6 +53,18 @@ export const DetailLangSchema = z.enum([
   'he',
   'fa',
   'ur',
+  'ml',
+  'mr',
+  'pa',
+  'or',
+  'si',
+  'ne',
+  'da',
+  'nb',
+  'fi',
+  'sk',
+  'hr',
+  'ca',
   'ceb',
   'ilo',
   'bcl',
@@ -361,6 +373,78 @@ const ENRICH_META: Record<
     glossLangHint:
       'colloquial Urdu (ur-IN / ur-PK) — Perso-Arabic Nastaliq script only; note آپ vs تم vs تو when relevant; this is Urdu, NOT Hindi — never Devanagari or Roman Urdu',
     exampleIn: 'natural everyday Urdu (Urdu script)',
+  },
+  ml: {
+    label: 'Malayalam (മലയാളം)',
+    glossLangHint:
+      'colloquial spoken Malayalam (ml-IN) — Malayalam script only; romanization is added by the client in Details; note നീ vs നിങ്ങൾ address when relevant — never Latin, Tamil, Telugu, Kannada, or Devanagari as the main line',
+    exampleIn: 'natural colloquial Malayalam (Malayalam script)',
+  },
+  mr: {
+    label: 'Marathi (मराठी)',
+    glossLangHint:
+      'colloquial spoken Marathi (mr-IN) — Devanagari script with Marathi spelling and grammar; romanization is added by the client in Details; note तू vs तुम्ही vs आपण when relevant; this is Marathi, NOT Hindi — never Hindi or Nepali wording, never Latin as the main line',
+    exampleIn: 'natural colloquial Marathi (Devanagari)',
+  },
+  pa: {
+    label: 'Punjabi (ਪੰਜਾਬੀ)',
+    glossLangHint:
+      'colloquial spoken Punjabi (pa-IN) — Gurmukhi script only; romanization is added by the client in Details; note ਤੂੰ vs ਤੁਸੀਂ vs ਆਪ when relevant — never Shahmukhi (Arabic script), Devanagari / Hindi, or Latin as the main line',
+    exampleIn: 'natural colloquial Punjabi (Gurmukhi)',
+  },
+  or: {
+    label: 'Odia (ଓଡ଼ିଆ)',
+    glossLangHint:
+      'colloquial spoken Odia (or-IN) — Odia script only; romanization is added by the client in Details; note ତୁ vs ତୁମେ vs ଆପଣ when relevant — never Latin, Bengali, Devanagari, or Telugu as the main line',
+    exampleIn: 'natural colloquial Odia (Odia script)',
+  },
+  si: {
+    label: 'Sinhala (සිංහල)',
+    glossLangHint:
+      'colloquial spoken Sinhala (si-LK) — Sinhala script only; romanization is added by the client in Details; prefer spoken කතා සිංහල over stiff literary written Sinhala; note ඔයා vs ඔබ when relevant — never Latin, Tamil, or Devanagari as the main line',
+    exampleIn: 'natural colloquial Sinhala (Sinhala script)',
+  },
+  ne: {
+    label: 'Nepali (नेपाली)',
+    glossLangHint:
+      'colloquial spoken Nepali (ne-NP) — Devanagari script with Nepali spelling and grammar; romanization is added by the client in Details; note तँ vs तिमी vs तपाईं when relevant; this is Nepali, NOT Hindi — never Hindi or Marathi wording, never Latin as the main line',
+    exampleIn: 'natural colloquial Nepali (Devanagari)',
+  },
+  da: {
+    label: 'Danish (dansk)',
+    glossLangHint:
+      'Standard Danish (da-DK) — correct orthography with æ ø å; note du vs De address when relevant; never Norwegian or Swedish wording; never ASCII-folded',
+    exampleIn: 'natural everyday Danish',
+  },
+  nb: {
+    label: 'Norwegian Bokmål (norsk bokmål)',
+    glossLangHint:
+      'Norwegian Bokmål (nb-NO) — correct orthography with æ ø å; note du vs De address when relevant; never Nynorsk, Danish, or Swedish wording; never ASCII-folded',
+    exampleIn: 'natural everyday Norwegian Bokmål',
+  },
+  fi: {
+    label: 'Finnish (suomi)',
+    glossLangHint:
+      'Standard Finnish (fi-FI) — correct orthography with ä ö; note sinä vs te address and relevant case endings when helpful; never Swedish or Estonian wording; never ASCII-folded',
+    exampleIn: 'natural everyday Finnish',
+  },
+  sk: {
+    label: 'Slovak (slovenčina)',
+    glossLangHint:
+      'Standard Slovak (sk-SK) — correct orthography with á ä č ď é í ĺ ľ ň ó ô ŕ š ť ú ý ž; note ty vs vy address when relevant; never Czech wording or letters (ě ř ů); never ASCII-folded',
+    exampleIn: 'natural everyday Slovak',
+  },
+  hr: {
+    label: 'Croatian (hrvatski)',
+    glossLangHint:
+      'Standard Croatian (hr-HR) — Latin script with č ć đ š ž; note ti vs Vi address when relevant; standard ijekavian — never Cyrillic, Serbian ekavian, or Bosnian-specific wording; never ASCII-folded',
+    exampleIn: 'natural everyday Croatian',
+  },
+  ca: {
+    label: 'Catalan (català)',
+    glossLangHint:
+      'Standard Central Catalan (ca-ES) — correct orthography with à è é í ï ò ó ú ü ç and l·l; note tu vs vostè address when relevant; never Spanish (Castilian), French, or Occitan wording; never ASCII-folded',
+    exampleIn: 'natural everyday Catalan',
   },
   ceb: {
     label: 'Cebuano / Bisaya',

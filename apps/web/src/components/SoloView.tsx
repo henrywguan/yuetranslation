@@ -77,6 +77,18 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'he') return 'הקלידו או דברו בעברית…'
   if (lang === 'fa') return 'به فارسی تایپ کنید یا صحبت کنید…'
   if (lang === 'ur') return 'اردو میں ٹائپ کریں یا بولیں…'
+  if (lang === 'ml') return 'മലയാളത്തിൽ ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ സംസാരിക്കുക…'
+  if (lang === 'mr') return 'मराठीत टाइप करा किंवा बोला…'
+  if (lang === 'pa') return 'ਪੰਜਾਬੀ ਵਿੱਚ ਟਾਈਪ ਕਰੋ ਜਾਂ ਬੋਲੋ…'
+  if (lang === 'or') return 'ଓଡ଼ିଆରେ ଟାଇପ୍ କରନ୍ତୁ କିମ୍ବା କୁହନ୍ତୁ…'
+  if (lang === 'si') return 'සිංහලෙන් ටයිප් කරන්න හෝ කතා කරන්න…'
+  if (lang === 'ne') return 'नेपालीमा टाइप गर्नुहोस् वा बोल्नुहोस्…'
+  if (lang === 'da') return 'Skriv eller tal dansk…'
+  if (lang === 'nb') return 'Skriv eller snakk norsk…'
+  if (lang === 'fi') return 'Kirjoita tai puhu suomeksi…'
+  if (lang === 'sk') return 'Píšte alebo hovorte po slovensky…'
+  if (lang === 'hr') return 'Pišite ili govorite hrvatski…'
+  if (lang === 'ca') return 'Escriu o parla en català…'
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
   if (lang === 'bcl') return 'I-type nin Bikol…'
@@ -129,6 +141,18 @@ function isRubyDisplayLang(lang: Lang): boolean {
     lang === 'he' ||
     lang === 'fa' ||
     lang === 'ur' ||
+    lang === 'ml' ||
+    lang === 'mr' ||
+    lang === 'pa' ||
+    lang === 'or' ||
+    lang === 'si' ||
+    lang === 'ne' ||
+    lang === 'da' ||
+    lang === 'nb' ||
+    lang === 'fi' ||
+    lang === 'sk' ||
+    lang === 'hr' ||
+    lang === 'ca' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'
@@ -186,6 +210,18 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'he') return 'Speak Hebrew with the mic'
   if (lang === 'fa') return 'Speak Persian with the mic'
   if (lang === 'ur') return 'Speak Urdu with the mic'
+  if (lang === 'ml') return 'Speak Malayalam with the mic'
+  if (lang === 'mr') return 'Speak Marathi with the mic'
+  if (lang === 'pa') return 'Speak Punjabi with the mic'
+  if (lang === 'or') return 'Speak Odia with the mic'
+  if (lang === 'si') return 'Speak Sinhala with the mic'
+  if (lang === 'ne') return 'Speak Nepali with the mic'
+  if (lang === 'da') return 'Speak Danish with the mic'
+  if (lang === 'nb') return 'Speak Norwegian with the mic'
+  if (lang === 'fi') return 'Speak Finnish with the mic'
+  if (lang === 'sk') return 'Speak Slovak with the mic'
+  if (lang === 'hr') return 'Speak Croatian with the mic'
+  if (lang === 'ca') return 'Speak Catalan with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
   if (lang === 'sichuan') return 'Speak Sichuanese with the mic'

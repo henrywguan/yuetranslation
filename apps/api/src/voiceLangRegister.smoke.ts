@@ -5,14 +5,19 @@ import {
   DEVANAGARI_RE,
   GREEK_SCRIPT_RE,
   GUJARATI_SCRIPT_RE,
+  GURMUKHI_SCRIPT_RE,
   HEBREW_SCRIPT_RE,
   KANNADA_SCRIPT_RE,
+  MALAYALAM_SCRIPT_RE,
+  ODIA_SCRIPT_RE,
   RUSSIAN_ONLY_RE,
+  SINHALA_SCRIPT_RE,
   TAMIL_BENGALI_DEVANAGARI_RE,
   TELUGU_SCRIPT_RE,
   UKRAINIAN_ONLY_RE,
   URDU_ONLY_RE,
   inferSourceRegister,
+  rejectOtherIndic,
 } from './voiceLangRegister.js'
 
 assert.equal(inferSourceRegister('Hey, how are you?'), 'colloquial')
@@ -47,5 +52,25 @@ assert.ok(URDU_ONLY_RE.test('آپ کیسے ہیں؟ شکریہ، ٹھیک ہوں
 assert.ok(!URDU_ONLY_RE.test('حال شما چطور است؟ می‌خواهم بروم.'), 'Persian sentence has no Urdu-only letters')
 assert.ok(DEVANAGARI_RE.test('आप कैसे हैं'))
 assert.ok(!DEVANAGARI_RE.test('آپ کیسے ہیں'))
+
+assert.ok(MALAYALAM_SCRIPT_RE.test('നമസ്കാരം'))
+assert.ok(!MALAYALAM_SCRIPT_RE.test('தமிழ்') && !MALAYALAM_SCRIPT_RE.test('తెలుగు'), 'Tamil / Telugu are not Malayalam')
+assert.ok(GURMUKHI_SCRIPT_RE.test('ਸਤ ਸ੍ਰੀ ਅਕਾਲ'))
+assert.ok(!GURMUKHI_SCRIPT_RE.test('نمستے') && !GURMUKHI_SCRIPT_RE.test('नमस्ते'), 'Shahmukhi / Devanagari are not Gurmukhi')
+assert.ok(ODIA_SCRIPT_RE.test('ନମସ୍କାର'))
+assert.ok(!ODIA_SCRIPT_RE.test('নমস্কার'), 'Bengali is not Odia')
+assert.ok(SINHALA_SCRIPT_RE.test('ආයුබෝවන්'))
+assert.ok(!SINHALA_SCRIPT_RE.test('வணக்கம்') && !SINHALA_SCRIPT_RE.test('മലയാളം'), 'Tamil / Malayalam are not Sinhala')
+
+const rejectMl = rejectOtherIndic('malayalam')
+assert.ok(!rejectMl.test('നമസ്കാരം'), 'own script passes')
+assert.ok(rejectMl.test('வணக்கம்') && rejectMl.test('नमस्ते') && rejectMl.test('తెలుగు'), 'neighbouring Indic scripts rejected')
+const rejectMr = rejectOtherIndic('devanagari')
+assert.ok(!rejectMr.test('नमस्कार, तुम्ही कसे आहात?'), 'Marathi / Nepali Devanagari passes')
+assert.ok(rejectMr.test('નમસ્તે') && rejectMr.test('নমস্কার'), 'Gujarati / Bengali rejected for Devanagari langs')
+assert.ok(!rejectOtherIndic('sinhala').test('ආයුබෝවන්'))
+assert.ok(rejectOtherIndic('sinhala').test('வணக்கம்'))
+assert.ok(!rejectOtherIndic('gurmukhi').test('ਸਤ ਸ੍ਰੀ ਅਕਾਲ'))
+assert.ok(!rejectOtherIndic('odia').test('ନମସ୍କାର'))
 
 console.log('voiceLangRegister.smoke: ok')

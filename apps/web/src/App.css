@@ -5295,7 +5295,7 @@ button.turkish-activate {
 }
 
 /* Batch 2 families (LangFamilyText) — native script / orthography on compact; Details add reading + address + honesty.
-   Indic te/gu/kn · Euro pl/ro/cs/el/hu/sv · Cyrillic ru/uk · RTL he/fa/ur (Arabic-style chrome). */
+   Indic te/gu/kn (+3a ml/mr/pa/or/si/ne) · Euro pl/ro/cs/el/hu/sv (+3a da/nb/fi/sk/hr/ca) · Cyrillic ru/uk · RTL he/fa/ur (Arabic-style chrome). */
 .lang-family-block {
   display: inline-flex;
   flex-direction: column;
@@ -5314,6 +5314,22 @@ button.turkish-activate {
 }
 .lang-family-block--kn {
   font-family: 'Noto Sans Kannada', 'Kannada Sangam MN', 'Tunga', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--ml {
+  font-family: 'Noto Sans Malayalam', 'Malayalam Sangam MN', 'Kartika', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--mr,
+.lang-family-block--ne {
+  font-family: 'Noto Sans Devanagari', 'Devanagari Sangam MN', 'Nirmala UI', 'Mangal', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--pa {
+  font-family: 'Noto Sans Gurmukhi', 'Gurmukhi Sangam MN', 'Raavi', 'Nirmala UI', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--or {
+  font-family: 'Noto Sans Oriya', 'Oriya Sangam MN', 'Kalinga', 'Nirmala UI', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--si {
+  font-family: 'Noto Sans Sinhala', 'Sinhala Sangam MN', 'Iskoola Pota', 'Nirmala UI', 'Segoe UI', system-ui, sans-serif;
 }
 .lang-family-block--he {
   font-family: 'Noto Sans Hebrew', 'Arial Hebrew', 'Segoe UI', system-ui, sans-serif;
@@ -5364,6 +5380,12 @@ button.turkish-activate {
 .lang-family-block--te .lang-family-address-chip,
 .lang-family-block--gu .lang-family-address-chip,
 .lang-family-block--kn .lang-family-address-chip,
+.lang-family-block--ml .lang-family-address-chip,
+.lang-family-block--mr .lang-family-address-chip,
+.lang-family-block--pa .lang-family-address-chip,
+.lang-family-block--or .lang-family-address-chip,
+.lang-family-block--si .lang-family-address-chip,
+.lang-family-block--ne .lang-family-address-chip,
 .lang-family-block--rtl .lang-family-address-chip {
   font-family: inherit;
 }
