@@ -118,6 +118,12 @@ import {
   postChatSandboxFsWrite,
 } from './chatSandboxRoutes.js'
 import {
+  getChatGithubRepos,
+  getChatGithubStatus,
+  postChatGithubClone,
+  postChatGithubPr,
+} from './chatGithubRoutes.js'
+import {
   getDeepseekChatGeneratedImage,
   getDeepseekChatPluginKeys,
   getDeepseekChatPlugins,
@@ -1687,6 +1693,10 @@ app.post('/api/chat/sandbox/:id/exec', postChatSandboxExec)
 app.post('/api/chat/sandbox/:id/fs/list', postChatSandboxFsList)
 app.post('/api/chat/sandbox/:id/fs/read', postChatSandboxFsRead)
 app.post('/api/chat/sandbox/:id/fs/write', postChatSandboxFsWrite)
+app.get('/api/chat/github/status', getChatGithubStatus)
+app.get('/api/chat/github/repos', getChatGithubRepos)
+app.post('/api/chat/github/clone', postChatGithubClone)
+app.post('/api/chat/github/pr', postChatGithubPr)
 app.get('/api/chat/plugins', getDeepseekChatPlugins)
 app.get('/api/chat/plugin-keys', getDeepseekChatPluginKeys)
 app.put('/api/chat/plugin-keys', putDeepseekChatPluginKeys)

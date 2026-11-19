@@ -1268,3 +1268,67 @@ export async function writeChatSandboxFile(
   if (!res.ok) await throwApiError(res, 'Sandbox write failed')
   return (await res.json()) as { path: string; bytes: number }
 }
+
+export async function fetchChatGithubStatus(): Promise<{
+  configured: boolean
+  needsHuman?: boolean
+  message?: string
+}> {
+  const res = await apiFetch('/chat/github/status')
+  if (!res.ok) await throwApiError(res, 'GitHub status failed')
+  return (await res.json()) as { configured: boolean; needsHuman?: boolean; message?: string }
+}
+
+export async function fetchChatGithubRepos(): Promise<
+  Array<{ fullName: string; private: boolean; defaultBranch: string; htmlUrl: string }>
+> {
+  const res = await apiFetch('/chat/github/repos')
+  if (res.status === 501) {
+    const data = (await res.json()) as { message?: string }
+    throw new Error(data.message || 'GitHub App not configured')
+  }
+  if (!res.ok) await throwApiError(res, 'List repos failed')
+  const data = (await res.json()) as {
+    repos?: Array<{ fullName: string; private: boolean; defaultBranch: string; htmlUrl: string }>
+  }
+  return data.repos || []
+}
+
+export async function cloneChatGithubRepo(opts: {
+  repo: string
+  sandboxSessionId: string
+  branch?: string
+}): Promise<{ ok: boolean; repo: string; suggestedBranch?: string }> {
+  const res = await apiFetch('/chat/github/clone', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(opts),
+  })
+  if (res.status === 501) {
+    const data = (await res.json()) as { message?: string }
+    throw new Error(data.message || 'GitHub App not configured')
+  }
+  if (!res.ok) await throwApiError(res, 'Clone failed')
+  return (await res.json()) as { ok: boolean; repo: string; suggestedBranch?: string }
+}
+
+export async function openChatGithubPr(opts: {
+  repo: string
+  title: string
+  head: string
+  base?: string
+  body?: string
+}): Promise<{ number: number; htmlUrl: string; title: string }> {
+  const res = await apiFetch('/chat/github/pr', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(opts),
+  })
+  if (res.status === 501) {
+    const data = (await res.json()) as { message?: string }
+    throw new Error(data.message || 'GitHub App not configured')
+  }
+  if (!res.ok) await throwApiError(res, 'Open PR failed')
+  const data = (await res.json()) as { pr: { number: number; htmlUrl: string; title: string } }
+  return data.pr
+}

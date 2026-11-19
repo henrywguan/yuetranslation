@@ -18,6 +18,12 @@ import {
 } from './deepseekChatWorkspace.js'
 import { getSandboxSession } from './chatSandbox.js'
 import { execSandbox, listSandboxFs, readSandboxFs, writeSandboxFs } from './chatSandboxService.js'
+import {
+  GithubNotConfiguredError,
+  githubConfigured,
+  openGithubPullRequest,
+  parseGithubRepo,
+} from './chatGithub.js'
 
 export type ChatToolContext = DeepseekChatPromptContext & {
   signal?: AbortSignal
@@ -108,6 +114,25 @@ export const DEEPSEEK_CHAT_SANDBOX_TOOLS: OpenAiTool[] = [
           },
         },
         required: ['argv'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'github_open_pr',
+      description:
+        'Open a GitHub pull request on a repo the JyutTranslate GitHub App can access. Returns html_url for In Review.',
+      parameters: {
+        type: 'object',
+        properties: {
+          repo: { type: 'string', description: 'owner/name' },
+          title: { type: 'string' },
+          head: { type: 'string', description: 'branch with commits' },
+          base: { type: 'string', description: 'default main' },
+          body: { type: 'string' },
+        },
+        required: ['repo', 'title', 'head'],
       },
     },
   },
@@ -652,6 +677,35 @@ export async function executeDeepseekChatTool(
           : []
         const result = await execSandbox(session, argv)
         return JSON.stringify(result)
+      }
+      case 'github_open_pr': {
+        if (!githubConfigured()) {
+          return JSON.stringify({
+            error: new GithubNotConfiguredError().message,
+            code: 'github_not_configured',
+            fixability: 'NEEDS_HUMAN',
+          })
+        }
+        const parsed = parseGithubRepo(String(args.repo || ''))
+        if (!parsed) return JSON.stringify({ error: 'repo must be owner/name' })
+        const title = String(args.title || '').trim()
+        const head = String(args.head || '').trim()
+        if (!title || !head) return JSON.stringify({ error: 'title and head required' })
+        try {
+          const pr = await openGithubPullRequest({
+            owner: parsed.owner,
+            repo: parsed.repo,
+            title,
+            head,
+            base: typeof args.base === 'string' ? args.base : undefined,
+            body: typeof args.body === 'string' ? args.body : undefined,
+          })
+          return JSON.stringify({ ok: true, pr, inboxHint: 'Mark agent In Review with pr.htmlUrl' })
+        } catch (err) {
+          return JSON.stringify({
+            error: err instanceof Error ? err.message : 'Open PR failed',
+          })
+        }
       }
       case 'get_date':
         return JSON.stringify({
