@@ -108,6 +108,16 @@ import { postDeepseekChatFile } from './deepseekChatFiles.js'
 import { postDeepseekChatOcr } from './deepseekChatOcr.js'
 import { postDeepseekChatAsr, postDeepseekChatTts } from './deepseekChatVoice.js'
 import {
+  deleteChatSandbox,
+  getChatSandbox,
+  getChatSandboxes,
+  postChatSandbox,
+  postChatSandboxExec,
+  postChatSandboxFsList,
+  postChatSandboxFsRead,
+  postChatSandboxFsWrite,
+} from './chatSandboxRoutes.js'
+import {
   getDeepseekChatGeneratedImage,
   getDeepseekChatPluginKeys,
   getDeepseekChatPlugins,
@@ -1669,6 +1679,14 @@ app.post('/api/chat/files', postDeepseekChatFile)
 app.post('/api/chat/tts', postDeepseekChatTts)
 app.post('/api/chat/asr', postDeepseekChatAsr)
 app.post('/api/chat/ocr', postDeepseekChatOcr)
+app.get('/api/chat/sandbox', getChatSandboxes)
+app.post('/api/chat/sandbox', postChatSandbox)
+app.get('/api/chat/sandbox/:id', getChatSandbox)
+app.delete('/api/chat/sandbox/:id', deleteChatSandbox)
+app.post('/api/chat/sandbox/:id/exec', postChatSandboxExec)
+app.post('/api/chat/sandbox/:id/fs/list', postChatSandboxFsList)
+app.post('/api/chat/sandbox/:id/fs/read', postChatSandboxFsRead)
+app.post('/api/chat/sandbox/:id/fs/write', postChatSandboxFsWrite)
 app.get('/api/chat/plugins', getDeepseekChatPlugins)
 app.get('/api/chat/plugin-keys', getDeepseekChatPluginKeys)
 app.put('/api/chat/plugin-keys', putDeepseekChatPluginKeys)

@@ -11,7 +11,9 @@ import {
   saveChatInbox,
   setAgentStatus,
   setAgentThread,
+  setProjectDefaultWorkspace,
   setProjectMemory,
+  setWorkspaceRef,
   type ChatInboxAgent,
   type ChatInboxProject,
   type ChatInboxState,
@@ -108,6 +110,15 @@ export function useChatInbox() {
     [commit],
   )
 
+  const bindWorkspaceRef = useCallback(
+    (workspaceId: string, ref: string, projectId?: string) => {
+      let next = setWorkspaceRef(stateRef.current, workspaceId, ref)
+      if (projectId) next = setProjectDefaultWorkspace(next, projectId, workspaceId)
+      commit(next)
+    },
+    [commit],
+  )
+
   const spawnWorker = useCallback(
     (projectId: string, opts?: { title?: string; threadId?: string }): ChatInboxAgent => {
       const { state: next, worker } = createWorker(stateRef.current, projectId, opts)
@@ -146,6 +157,7 @@ export function useChatInbox() {
     linkThread,
     addWorkspace,
     removeWorkspace,
+    bindWorkspaceRef,
     spawnWorker,
     bindAgentThread,
     updateAgentStatus,

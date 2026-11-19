@@ -16,6 +16,8 @@ import {
   workspaceWrite,
   type ChatWorkspaceStore,
 } from './deepseekChatWorkspace.js'
+import { getSandboxSession } from './chatSandbox.js'
+import { execSandbox, listSandboxFs, readSandboxFs, writeSandboxFs } from './chatSandboxService.js'
 
 export type ChatToolContext = DeepseekChatPromptContext & {
   signal?: AbortSignal
@@ -33,6 +35,10 @@ export type ChatToolContext = DeepseekChatPromptContext & {
     text?: string
     updatedAt: number
   }) => void
+  /** Signed-in user id — required for sandbox_* tools. */
+  userId?: string
+  /** Attached Chat Inbox sandbox session id. */
+  sandboxSessionId?: string
 }
 
 type OpenAiTool = {
@@ -43,6 +49,69 @@ type OpenAiTool = {
     parameters: Record<string, unknown>
   }
 }
+
+/** Coding sandbox tools — declared when a sandboxSessionId is attached (Phase C). */
+export const DEEPSEEK_CHAT_SANDBOX_TOOLS: OpenAiTool[] = [
+  {
+    type: 'function',
+    function: {
+      name: 'sandbox_list',
+      description: 'List files in the attached internal sandbox (coding VM / stub temp dir).',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'Relative directory, default .' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'sandbox_read',
+      description: 'Read a text file from the attached sandbox.',
+      parameters: {
+        type: 'object',
+        properties: { path: { type: 'string' } },
+        required: ['path'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'sandbox_write',
+      description: 'Write a text file in the attached sandbox (≤200KB).',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string' },
+          text: { type: 'string' },
+        },
+        required: ['path', 'text'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'sandbox_exec',
+      description:
+        'Run an allowlisted command in the sandbox (argv array, no shell). Stub driver: node/npm/git/python3/…',
+      parameters: {
+        type: 'object',
+        properties: {
+          argv: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'e.g. ["node","-e","console.log(1)"]',
+          },
+        },
+        required: ['argv'],
+      },
+    },
+  },
+]
 
 /** Tools only declared when the client sends harness: true. */
 export const DEEPSEEK_CHAT_WORKSPACE_TOOLS: OpenAiTool[] = [
@@ -545,6 +614,44 @@ export async function executeDeepseekChatTool(
           bytes: result.file.text?.length ?? 0,
           updatedAt: result.file.updatedAt,
         })
+      }
+      case 'sandbox_list':
+      case 'sandbox_read':
+      case 'sandbox_write':
+      case 'sandbox_exec': {
+        if (!ctx.userId || !ctx.sandboxSessionId) {
+          return JSON.stringify({
+            error: 'No sandbox attached. Create an Internal sandbox in Inbox → Workspaces.',
+          })
+        }
+        const session = getSandboxSession(ctx.sandboxSessionId, ctx.userId)
+        if (!session || session.status === 'destroyed') {
+          return JSON.stringify({ error: 'Sandbox session missing or destroyed.' })
+        }
+        if (name === 'sandbox_list') {
+          const entries = await listSandboxFs(
+            session,
+            typeof args.path === 'string' ? args.path : '.',
+          )
+          return JSON.stringify({ entries, driver: session.driver })
+        }
+        if (name === 'sandbox_read') {
+          const text = await readSandboxFs(session, String(args.path || ''))
+          return JSON.stringify({ path: args.path, text, driver: session.driver })
+        }
+        if (name === 'sandbox_write') {
+          const written = await writeSandboxFs(
+            session,
+            String(args.path || ''),
+            String(args.text ?? ''),
+          )
+          return JSON.stringify({ ok: true, ...written, driver: session.driver })
+        }
+        const argv = Array.isArray(args.argv)
+          ? args.argv.map((a) => String(a)).slice(0, 32)
+          : []
+        const result = await execSandbox(session, argv)
+        return JSON.stringify(result)
       }
       case 'get_date':
         return JSON.stringify({

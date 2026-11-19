@@ -360,6 +360,54 @@ export function deleteWorkspace(state: ChatInboxState, workspaceId: string): Cha
   }
 }
 
+export function setWorkspaceRef(
+  state: ChatInboxState,
+  workspaceId: string,
+  ref: string,
+): ChatInboxState {
+  const now = Date.now()
+  return {
+    ...state,
+    updatedAt: now,
+    workspaces: state.workspaces.map((w) =>
+      w.id === workspaceId ? { ...w, ref, updatedAt: now } : w,
+    ),
+  }
+}
+
+export function setProjectDefaultWorkspace(
+  state: ChatInboxState,
+  projectId: string,
+  workspaceId: string,
+): ChatInboxState {
+  const now = Date.now()
+  return {
+    ...state,
+    updatedAt: now,
+    projects: state.projects.map((p) =>
+      p.id === projectId ? { ...p, defaultWorkspaceId: workspaceId, updatedAt: now } : p,
+    ),
+  }
+}
+
+/** Prefer project default internal sandbox, else newest internal with a session ref. */
+export function resolveActiveSandboxSessionId(
+  state: ChatInboxState,
+  projectId?: string | null,
+): string | undefined {
+  if (projectId) {
+    const project = state.projects.find((p) => p.id === projectId)
+    if (project?.defaultWorkspaceId) {
+      const ws = state.workspaces.find((w) => w.id === project.defaultWorkspaceId)
+      if (ws?.kind === 'internal' && ws.ref?.startsWith('sbx_')) return ws.ref
+    }
+  }
+  const internal = state.workspaces.find(
+    (w) => w.kind === 'internal' && w.ref?.startsWith('sbx_'),
+  )
+  return internal?.ref
+}
+
 export function setAgentStatus(
   state: ChatInboxState,
   agentId: string,

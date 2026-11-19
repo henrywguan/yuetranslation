@@ -4,12 +4,14 @@ import {
   useAuiState,
 } from '@assistant-ui/react'
 import { useMemo, useState } from 'react'
+import { createChatSandbox } from '../../../lib/api'
 import {
   buildAgentViews,
   countByFilter,
   filterAgentViews,
   matchesSearch,
   type ChatInboxAgent,
+  type ChatInboxWorkspaceKind,
   type InboxFilter,
   type ThreadAgentView,
 } from '../../../lib/chatInbox'
@@ -39,10 +41,13 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     linkThread,
     addWorkspace,
     removeWorkspace,
+    bindWorkspaceRef,
     spawnWorker,
     bindAgentThread,
     updateProjectMemory,
   } = useChatInboxContext()
+  const [sandboxBusy, setSandboxBusy] = useState(false)
+  const [sandboxNote, setSandboxNote] = useState<string | null>(null)
 
   const [filter, setFilter] = useState<InboxFilter>('all')
   const [query, setQuery] = useState('')
@@ -78,6 +83,37 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     bindAgentThread(worker.id, threadId)
     setActiveProjectId(projectId)
     onNavigate?.()
+  }
+
+  const createWorkspaceKind = async (kind: ChatInboxWorkspaceKind) => {
+    if (kind === 'internal') {
+      if (sandboxBusy) return
+      setSandboxBusy(true)
+      setSandboxNote(null)
+      try {
+        const ws = addWorkspace('internal', 'Internal sandbox', activeProjectId || undefined)
+        const { session, note, fallbackFromFly } = await createChatSandbox({
+          title: ws.title,
+          projectId: activeProjectId || undefined,
+          driver: 'stub',
+        })
+        bindWorkspaceRef(ws.id, session.id, activeProjectId || undefined)
+        setSandboxNote(
+          note ||
+            (fallbackFromFly
+              ? 'Fly not configured — using stub sandbox.'
+              : `Sandbox ready (${session.driver}).`),
+        )
+      } catch (err) {
+        setSandboxNote(err instanceof Error ? err.message : 'Sandbox create failed')
+      } finally {
+        setSandboxBusy(false)
+        setWorkspacesOpen(true)
+      }
+      return
+    }
+    addWorkspace(kind, undefined, activeProjectId || undefined)
+    setWorkspacesOpen(true)
   }
 
   const views = useMemo(
@@ -182,11 +218,12 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
         open={workspacesOpen}
         onToggle={() => setWorkspacesOpen((v) => !v)}
         onCreate={(kind) => {
-          addWorkspace(kind, undefined, activeProjectId || undefined)
-          setWorkspacesOpen(true)
+          void createWorkspaceKind(kind)
         }}
         onDelete={removeWorkspace}
       />
+      {sandboxBusy ? <p className="inbox-empty">Starting sandbox…</p> : null}
+      {sandboxNote ? <p className="inbox-empty">{sandboxNote}</p> : null}
 
       <button
         type="button"

@@ -26,6 +26,7 @@ import {
 import { buildDeepseekChatSystem, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
 import { buildPluginTools } from './deepseekChatMcp.js'
 import {
+  DEEPSEEK_CHAT_SANDBOX_TOOLS,
   DEEPSEEK_CHAT_TOOLS,
   DEEPSEEK_CHAT_WORKSPACE_TOOLS,
   executeDeepseekChatTool,
@@ -110,6 +111,10 @@ export type DeepseekChatHarnessOptions = {
   continueReply?: boolean
   /** Incoming thread workspace snapshot (Harness). */
   workspaceFiles?: ChatWorkspaceFileWire[]
+  /** Signed-in user for sandbox tools. */
+  userId?: string
+  /** Attached Chat Inbox sandbox session. */
+  sandboxSessionId?: string
 }
 
 type ToolCall = {
@@ -140,9 +145,11 @@ export function buildDeepseekChatToolList(
   searchEnabled: boolean,
   pluginTools: unknown[] = [],
   harnessEnabled = false,
+  sandboxAttached = false,
 ): unknown[] {
   const tools: unknown[] = [...DEEPSEEK_CHAT_TOOLS, ...pluginTools]
   if (harnessEnabled) tools.push(...DEEPSEEK_CHAT_WORKSPACE_TOOLS)
+  if (sandboxAttached) tools.push(...DEEPSEEK_CHAT_SANDBOX_TOOLS)
   if (searchEnabled && deepseekChatSupportsNativeWebTools()) {
     tools.push(...DEEPSEEK_CHAT_WEB_TOOLS)
   }
@@ -450,9 +457,16 @@ export async function* streamDeepseekChatHarness(
   const thinkingEnabled = opts.thinkingEnabled !== false
   const searchEnabled = opts.searchEnabled === true
   const harnessEnabled = opts.harnessEnabled === true
+  const sandboxSessionId = opts.sandboxSessionId || opts.prompt.sandboxSessionId
+  const sandboxAttached = Boolean(sandboxSessionId && opts.userId)
   const useNativeWeb = searchEnabled && deepseekChatSupportsNativeWebTools()
   const pluginTools = await buildPluginTools(opts.plugins, opts.signal, opts.pluginCreds)
-  const tools = buildDeepseekChatToolList(searchEnabled, pluginTools, harnessEnabled)
+  const tools = buildDeepseekChatToolList(
+    searchEnabled,
+    pluginTools,
+    harnessEnabled,
+    sandboxAttached,
+  )
   const deepseekHost = deepseekChatUsesThinking()
   const workspaceStore: ChatWorkspaceStore | undefined = harnessEnabled
     ? createWorkspaceStore(opts.workspaceFiles)
@@ -468,7 +482,7 @@ export async function* streamDeepseekChatHarness(
 
   const msgs: WireMsg[] = seedWireMessages(
     messages,
-    { ...opts.prompt, harnessEnabled },
+    { ...opts.prompt, harnessEnabled, sandboxSessionId },
     searchEnabled,
     opts.fileIds,
     continueReply,
@@ -633,6 +647,8 @@ export async function* streamDeepseekChatHarness(
           signal: opts.signal,
           pluginCreds: opts.pluginCreds,
           workspace: workspaceStore,
+          userId: opts.userId,
+          sandboxSessionId,
           onImage: (image) => {
             pendingImages.push(image)
           },

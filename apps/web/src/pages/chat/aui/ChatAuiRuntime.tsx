@@ -41,7 +41,7 @@ import {
   type ChatSource,
   type ChatThread,
 } from '../../../lib/chatHistory'
-import { agentForThread } from '../../../lib/chatInbox'
+import { agentForThread, resolveActiveSandboxSessionId } from '../../../lib/chatInbox'
 import { StreamingDeepseekChatTts } from '../../../lib/chatDeepseekVoice'
 import { useChatInboxContextOptional } from '../inbox/ChatInboxContext'
 import {
@@ -522,6 +522,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         const projectMemory = linkedAgent?.projectId
           ? inboxState?.projects.find((p) => p.id === linkedAgent.projectId)?.memory
           : undefined
+        const sandboxSessionId = inboxState
+          ? resolveActiveSandboxSessionId(inboxState, linkedAgent?.projectId)
+          : undefined
         if (linkedAgent && inboxRef.current) {
           inboxRef.current.updateAgentStatus(linkedAgent.id, 'working')
         }
@@ -537,6 +540,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           primaryLang: primaryLanguage,
           inboxRole,
           projectMemory,
+          sandboxSessionId,
           signal: controller.signal,
           onWorkspace: (files) => {
             thread = patchThreadWorkspace(

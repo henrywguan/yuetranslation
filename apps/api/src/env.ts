@@ -210,6 +210,15 @@ export const env = {
   harborGiftRlPerMin: Number(process.env.YUE_HARBOR_GIFT_RL_PER_MIN || 30),
   /** DeepSeek general chat (#/chat) — per signed-in user. Set 0 to disable. */
   chatRlPerMin: Number(process.env.YUE_CHAT_RL_PER_MIN || 40),
+  /**
+   * Chat Inbox sandbox driver: `stub` (default, in-process temp dir) or `fly`.
+   * Fly requires FLY_API_TOKEN + FLY_APP — NEEDS_HUMAN secrets/billing.
+   */
+  sandboxDriver: (process.env.YUE_SANDBOX_DRIVER || 'stub').trim().toLowerCase(),
+  flyApiToken: (process.env.FLY_API_TOKEN || '').trim(),
+  flyApp: (process.env.FLY_APP || '').trim(),
+  flyRegion: (process.env.FLY_REGION || '').trim(),
+  flyImage: (process.env.FLY_IMAGE || 'node:22-bookworm-slim').trim(),
   /** Monthly DeepSeek Chat turns. 0 = unlimited. Family/Business only. */
   familyChatTurns: Number(process.env.YUE_FAMILY_CHAT_TURNS || 3000),
   businessChatTurns: Number(process.env.YUE_BUSINESS_CHAT_TURNS || 0),
