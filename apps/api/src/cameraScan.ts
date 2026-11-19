@@ -26,7 +26,7 @@ const Body = z.object({
   boxes: z.array(BoxSchema).max(64).optional(),
   /** Preferred output language. Auto flips per-region from script when omitted. */
   target: z
-    .enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'da', 'nb', 'fi', 'sk', 'hr', 'ca', 'az', 'kk', 'uz', 'bg', 'sr', 'sw', 'af', 'ceb', 'ilo', 'bcl'])
+    .enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'da', 'nb', 'fi', 'sk', 'hr', 'ca', 'az', 'kk', 'uz', 'bg', 'sr', 'sw', 'af', 'et', 'lv', 'lt', 'ga', 'cy', 'eu', 'gl', 'mt', 'is', 'bs', 'sq', 'zu', 'so', 'as', 'mk', 'mn', 'hy', 'ka', 'am', 'ps', 'ceb', 'ilo', 'bcl'])
     .optional(),
   /** When true, skip translation and only return OCR regions. */
   ocrOnly: z.boolean().optional().default(false),
@@ -251,6 +251,66 @@ function pickTarget(
   }
   if (preferred === 'af') {
     return looksChinese ? { from: 'yue', to: 'af' } : { from: 'en', to: 'af' }
+  }
+  if (preferred === 'et') {
+    return looksChinese ? { from: 'yue', to: 'et' } : { from: 'en', to: 'et' }
+  }
+  if (preferred === 'lv') {
+    return looksChinese ? { from: 'yue', to: 'lv' } : { from: 'en', to: 'lv' }
+  }
+  if (preferred === 'lt') {
+    return looksChinese ? { from: 'yue', to: 'lt' } : { from: 'en', to: 'lt' }
+  }
+  if (preferred === 'ga') {
+    return looksChinese ? { from: 'yue', to: 'ga' } : { from: 'en', to: 'ga' }
+  }
+  if (preferred === 'cy') {
+    return looksChinese ? { from: 'yue', to: 'cy' } : { from: 'en', to: 'cy' }
+  }
+  if (preferred === 'eu') {
+    return looksChinese ? { from: 'yue', to: 'eu' } : { from: 'en', to: 'eu' }
+  }
+  if (preferred === 'gl') {
+    return looksChinese ? { from: 'yue', to: 'gl' } : { from: 'en', to: 'gl' }
+  }
+  if (preferred === 'mt') {
+    return looksChinese ? { from: 'yue', to: 'mt' } : { from: 'en', to: 'mt' }
+  }
+  if (preferred === 'is') {
+    return looksChinese ? { from: 'yue', to: 'is' } : { from: 'en', to: 'is' }
+  }
+  if (preferred === 'bs') {
+    return looksChinese ? { from: 'yue', to: 'bs' } : { from: 'en', to: 'bs' }
+  }
+  if (preferred === 'sq') {
+    return looksChinese ? { from: 'yue', to: 'sq' } : { from: 'en', to: 'sq' }
+  }
+  if (preferred === 'zu') {
+    return looksChinese ? { from: 'yue', to: 'zu' } : { from: 'en', to: 'zu' }
+  }
+  if (preferred === 'so') {
+    return looksChinese ? { from: 'yue', to: 'so' } : { from: 'en', to: 'so' }
+  }
+  if (preferred === 'as') {
+    return looksChinese ? { from: 'yue', to: 'as' } : { from: 'en', to: 'as' }
+  }
+  if (preferred === 'mk') {
+    return looksChinese ? { from: 'yue', to: 'mk' } : { from: 'en', to: 'mk' }
+  }
+  if (preferred === 'mn') {
+    return looksChinese ? { from: 'yue', to: 'mn' } : { from: 'en', to: 'mn' }
+  }
+  if (preferred === 'hy') {
+    return looksChinese ? { from: 'yue', to: 'hy' } : { from: 'en', to: 'hy' }
+  }
+  if (preferred === 'ka') {
+    return looksChinese ? { from: 'yue', to: 'ka' } : { from: 'en', to: 'ka' }
+  }
+  if (preferred === 'am') {
+    return looksChinese ? { from: 'yue', to: 'am' } : { from: 'en', to: 'am' }
+  }
+  if (preferred === 'ps') {
+    return looksChinese ? { from: 'yue', to: 'ps' } : { from: 'en', to: 'ps' }
   }
   if (preferred === 'ceb') {
     return looksChinese ? { from: 'yue', to: 'ceb' } : { from: 'en', to: 'ceb' }

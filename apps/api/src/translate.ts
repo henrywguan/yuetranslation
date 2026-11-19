@@ -71,6 +71,26 @@ import { translateBulgarian } from './translateBulgarian.js'
 import { translateSerbian } from './translateSerbian.js'
 import { translateSwahili } from './translateSwahili.js'
 import { translateAfrikaans } from './translateAfrikaans.js'
+import { translateEstonian } from './translateEstonian.js'
+import { translateLatvian } from './translateLatvian.js'
+import { translateLithuanian } from './translateLithuanian.js'
+import { translateIrish } from './translateIrish.js'
+import { translateWelsh } from './translateWelsh.js'
+import { translateBasque } from './translateBasque.js'
+import { translateGalician } from './translateGalician.js'
+import { translateMaltese } from './translateMaltese.js'
+import { translateIcelandic } from './translateIcelandic.js'
+import { translateBosnian } from './translateBosnian.js'
+import { translateAlbanian } from './translateAlbanian.js'
+import { translateZulu } from './translateZulu.js'
+import { translateSomali } from './translateSomali.js'
+import { translateAssamese } from './translateAssamese.js'
+import { translateMacedonian } from './translateMacedonian.js'
+import { translateMongolian } from './translateMongolian.js'
+import { translateArmenian } from './translateArmenian.js'
+import { translateGeorgian } from './translateGeorgian.js'
+import { translateAmharic } from './translateAmharic.js'
+import { translatePashto } from './translatePashto.js'
 import { translateCebuano, translateIlocano, translateBikol } from './translatePhilippineRegional.js'
 
 /** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
@@ -93,7 +113,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'da', 'nb', 'fi', 'sk', 'hr', 'ca', 'az', 'kk', 'uz', 'bg', 'sr', 'sw', 'af', 'ceb', 'ilo', 'bcl'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'da', 'nb', 'fi', 'sk', 'hr', 'ca', 'az', 'kk', 'uz', 'bg', 'sr', 'sw', 'af', 'et', 'lv', 'lt', 'ga', 'cy', 'eu', 'gl', 'mt', 'is', 'bs', 'sq', 'zu', 'so', 'as', 'mk', 'mn', 'hy', 'ka', 'am', 'ps', 'ceb', 'ilo', 'bcl'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -133,7 +153,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'ceb' | 'ilo' | 'bcl'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'hy' | 'ka' | 'am' | 'ps' | 'ceb' | 'ilo' | 'bcl'
 
 type TranslateResult = {
   text: string
@@ -4042,6 +4062,266 @@ export async function translate(input: unknown) {
       await translateAfrikaans({
         from: from as 'en' | 'af',
         to: to as 'en' | 'af',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'et' || (from === 'et' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateEstonian({
+        from: from as 'en' | 'et',
+        to: to as 'en' | 'et',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'lv' || (from === 'lv' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateLatvian({
+        from: from as 'en' | 'lv',
+        to: to as 'en' | 'lv',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'lt' || (from === 'lt' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateLithuanian({
+        from: from as 'en' | 'lt',
+        to: to as 'en' | 'lt',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'ga' || (from === 'ga' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateIrish({
+        from: from as 'en' | 'ga',
+        to: to as 'en' | 'ga',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'cy' || (from === 'cy' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateWelsh({
+        from: from as 'en' | 'cy',
+        to: to as 'en' | 'cy',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'eu' || (from === 'eu' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateBasque({
+        from: from as 'en' | 'eu',
+        to: to as 'en' | 'eu',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'gl' || (from === 'gl' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateGalician({
+        from: from as 'en' | 'gl',
+        to: to as 'en' | 'gl',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'mt' || (from === 'mt' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateMaltese({
+        from: from as 'en' | 'mt',
+        to: to as 'en' | 'mt',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'is' || (from === 'is' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateIcelandic({
+        from: from as 'en' | 'is',
+        to: to as 'en' | 'is',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'bs' || (from === 'bs' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateBosnian({
+        from: from as 'en' | 'bs',
+        to: to as 'en' | 'bs',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'sq' || (from === 'sq' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateAlbanian({
+        from: from as 'en' | 'sq',
+        to: to as 'en' | 'sq',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'zu' || (from === 'zu' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateZulu({
+        from: from as 'en' | 'zu',
+        to: to as 'en' | 'zu',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'so' || (from === 'so' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateSomali({
+        from: from as 'en' | 'so',
+        to: to as 'en' | 'so',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'as' || (from === 'as' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateAssamese({
+        from: from as 'en' | 'as',
+        to: to as 'en' | 'as',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'mk' || (from === 'mk' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateMacedonian({
+        from: from as 'en' | 'mk',
+        to: to as 'en' | 'mk',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'mn' || (from === 'mn' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateMongolian({
+        from: from as 'en' | 'mn',
+        to: to as 'en' | 'mn',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'hy' || (from === 'hy' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateArmenian({
+        from: from as 'en' | 'hy',
+        to: to as 'en' | 'hy',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'ka' || (from === 'ka' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateGeorgian({
+        from: from as 'en' | 'ka',
+        to: to as 'en' | 'ka',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'am' || (from === 'am' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateAmharic({
+        from: from as 'en' | 'am',
+        to: to as 'en' | 'am',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }) as TranslateResult,
+      text,
+    )
+  }
+  if (to === 'ps' || (from === 'ps' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translatePashto({
+        from: from as 'en' | 'ps',
+        to: to as 'en' | 'ps',
         text,
         stage,
         wantAlts,

@@ -5,7 +5,8 @@
  * official, legal, medical, or ceremonial. Shared by the Batch 2 voice langs
  * (te / gu / kn / pl / ro / cs / el / hu / sv / ru / uk / he / fa / ur) and
  * Batch 3a (ml / mr / pa / or / si / ne / da / nb / fi / sk / hr / ca) and
- * Batch 3b (az / kk / uz / bg / sr / sw / af); each
+ * Batch 3b (az / kk / uz / bg / sr / sw / af) and Batch 4 (et / lv / lt / ga / cy / eu / gl / mt / is /
+ * bs / sq / zu / so / as / mk / mn / hy / ka / am / ps); each
  * language module decides what "formal" means for its own address system.
  */
 export type SourceRegister = 'colloquial' | 'formal'
@@ -89,3 +90,27 @@ export const SERBIAN_REJECT_RE = /[ЫыЭэЪъЁёЩщ]/
 export const BULGARIAN_REJECT_RE = /[ЫыЭэЁёЂђЈјЉљЊњЋћЏџ]/
 /** Ukrainian ї є ґ and Serbian ђ ј љ њ ћ џ — Kazakh Cyrillic uses none of them. */
 export const KAZAKH_REJECT_RE = /[ЇїЄєҐґЂђЈјЉљЊњЋћЏџ]/
+
+/** Bengali-Assamese block (U+0980–U+09FF) — includes Assamese ৰ (U+09F0) and ৱ (U+09F1). */
+export const BENGALI_ASSAMESE_SCRIPT_RE = /[\u0980-\u09FF]/
+/**
+ * Other Indic blocks, Cyrillic and Arabic — an Assamese line must stay in Bengali-Assamese script.
+ * Excludes U+0964 / U+0965 (danda / double danda), which Assamese uses as its full stop.
+ */
+export const ASSAMESE_REJECT_RE = /[\u0400-\u04FF\u0600-\u06FF\u0900-\u0963\u0966-\u097F\u0A00-\u0DFF]/
+/** Bulgarian ъ щ ю я, Serbian ђ ћ, Russian ы э ё, Ukrainian ї є ґ — Macedonian Cyrillic uses none of them. */
+export const MACEDONIAN_REJECT_RE = /[ЫыЭэЪъЁёЩщЬьЮюЯяЂђЋћЇїЄєҐґ]/
+/** Kazakh ә ғ қ ң ұ һ і, Ukrainian ї є ґ, Serbian ђ ј љ њ ћ џ and traditional Mongol script — Khalkha Cyrillic uses none. */
+export const MONGOLIAN_REJECT_RE = /[ӘәҒғҚқҢңҰұҺһІіЇїЄєҐґЂђЈјЉљЊњЋћЏџ\u1800-\u18AF]/
+/** Armenian block incl. punctuation (U+0530–U+058F). */
+export const ARMENIAN_SCRIPT_RE = /[\u0530-\u058F]/
+/** Cyrillic, Georgian, Arabic, Hebrew — an Armenian line contains none. */
+export const ARMENIAN_REJECT_RE = /[\u0400-\u04FF\u0590-\u06FF\u10A0-\u10FF\u1C90-\u1CBF]/
+/** Georgian Mkhedruli / Asomtavruli / Mtavruli / Nuskhuri. */
+export const GEORGIAN_SCRIPT_RE = /[\u10A0-\u10FF\u1C90-\u1CBF\u2D00-\u2D2F]/
+/** Cyrillic, Armenian, Arabic, Hebrew — a Georgian line contains none. */
+export const GEORGIAN_REJECT_RE = /[\u0400-\u04FF\u0530-\u058F\u0590-\u06FF]/
+/** Ethiopic, Ethiopic Supplement / Extended (Amharic fidel). */
+export const ETHIOPIC_SCRIPT_RE = /[\u1200-\u139F\u2D80-\u2DDF\uAB00-\uAB2F]/
+/** Cyrillic, Arabic, Hebrew, Armenian, Georgian — an Amharic line contains none. */
+export const ETHIOPIC_REJECT_RE = /[\u0400-\u04FF\u0530-\u06FF\u10A0-\u10FF]/

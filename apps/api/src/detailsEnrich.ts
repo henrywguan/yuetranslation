@@ -72,6 +72,26 @@ export const DetailLangSchema = z.enum([
   'sr',
   'sw',
   'af',
+  'et',
+  'lv',
+  'lt',
+  'ga',
+  'cy',
+  'eu',
+  'gl',
+  'mt',
+  'is',
+  'bs',
+  'sq',
+  'zu',
+  'so',
+  'as',
+  'mk',
+  'mn',
+  'hy',
+  'ka',
+  'am',
+  'ps',
   'ceb',
   'ilo',
   'bcl',
@@ -494,6 +514,126 @@ const ENRICH_META: Record<
     glossLangHint:
       'Standard Afrikaans (af-ZA) in Latin script — correct diacritics ê é è ë ï ô ö û ü; note jy vs u address when relevant; never Dutch (Nederlands) spelling or wording, never German; never ASCII-folded',
     exampleIn: 'natural everyday Afrikaans',
+  },
+  et: {
+    label: 'Estonian (eesti keel)',
+    glossLangHint:
+      'Standard Estonian (et-EE) in Latin script — correct letters ä ö õ ü š ž; note sina vs teie address when relevant; agglutinative with 14 cases and no grammatical gender; never Finnish wording, never ASCII-folded',
+    exampleIn: 'natural everyday Estonian',
+  },
+  lv: {
+    label: 'Latvian (latviešu valoda)',
+    glossLangHint:
+      'Standard Latvian (lv-LV) in Latin script — correct diacritics ā č ē ģ ī ķ ļ ņ š ū ž; note tu vs jūs address when relevant; never Lithuanian or Russian wording, never ASCII-folded',
+    exampleIn: 'natural everyday Latvian',
+  },
+  lt: {
+    label: 'Lithuanian (lietuvių kalba)',
+    glossLangHint:
+      'Standard Lithuanian (lt-LT) in Latin script — correct letters ą č ę ė į š ų ū ž; note tu vs jūs address when relevant; never Latvian, Polish, or Russian wording, never ASCII-folded',
+    exampleIn: 'natural everyday Lithuanian',
+  },
+  ga: {
+    label: 'Irish (Gaeilge)',
+    glossLangHint:
+      'Standard Irish (ga-IE, An Caighdeán Oifigiúil) in Latin script — correct síneadh fada á é í ó ú; note initial mutations (lenition, eclipsis) and the tú vs sibh address when helpful; never Scottish Gaelic (Gàidhlig) or Manx',
+    exampleIn: 'natural everyday Irish',
+  },
+  cy: {
+    label: 'Welsh (Cymraeg)',
+    glossLangHint:
+      'Standard Welsh (cy-GB) in Latin script — correct circumflexes â ê î ô û ŵ ŷ; note soft / nasal / aspirate mutations and the ti vs chi address when helpful; never Breton or Cornish',
+    exampleIn: 'natural everyday Welsh',
+  },
+  eu: {
+    label: 'Basque (euskara)',
+    glossLangHint:
+      'Standard Basque (eu-ES, Euskara Batua) in Latin script — correct ñ ç ü; note ergative-absolutive case marking and the zu vs hi address when helpful; never Spanish or French wording where Basque has a word',
+    exampleIn: 'natural everyday Basque',
+  },
+  gl: {
+    label: 'Galician (galego)',
+    glossLangHint:
+      'Standard Galician (gl-ES, RAG norm) in Latin script — correct accents á é í ó ú ñ ü; note ti vs vostede address when relevant; never Portuguese spelling, never Castilian Spanish wording where Galician differs',
+    exampleIn: 'natural everyday Galician',
+  },
+  mt: {
+    label: 'Maltese (Malti)',
+    glossLangHint:
+      'Standard Maltese (mt-MT) in Latin script — correct letters ċ ġ ħ ż and the digraph għ; Semitic roots with Romance and English loans; never Arabic script, never Italian or English wording where a Maltese word exists',
+    exampleIn: 'natural everyday Maltese',
+  },
+  is: {
+    label: 'Icelandic (íslenska)',
+    glossLangHint:
+      'Standard Icelandic (is-IS) in Latin script — correct letters á é í ó ú ý þ ð æ ö; note noun gender and four cases when helpful; þú is used universally (þér is archaic); never Faroese, Norwegian, or Danish wording',
+    exampleIn: 'natural everyday Icelandic',
+  },
+  bs: {
+    label: 'Bosnian (bosanski)',
+    glossLangHint:
+      'Standard Bosnian (bs-BA) in Latin script only — correct letters č ć dž đ š ž; ijekavian reflex and Bosnian lexicon (hiljada, sedmica, historija); note ti vs Vi address when relevant; never Cyrillic, never Serbian ekavian or Croatian-purist wording',
+    exampleIn: 'natural everyday Bosnian',
+  },
+  sq: {
+    label: 'Albanian (shqip)',
+    glossLangHint:
+      'Standard Albanian (sq-AL, Tosk-based standard) in Latin script — correct ë ç; note ti vs ju address when relevant; postfixed definite article and five cases when helpful; never Greek script or Cyrillic',
+    exampleIn: 'natural everyday Albanian',
+  },
+  zu: {
+    label: 'Zulu (isiZulu)',
+    glossLangHint:
+      'Standard isiZulu (zu-ZA) in Latin script — note noun classes, concords and verb prefixes when helpful; polite forms (ngiyacela, ngicela) when relevant; tone is not written; never Xhosa, Ndebele, or Swati wording',
+    exampleIn: 'natural everyday Zulu',
+  },
+  so: {
+    label: 'Somali (Soomaali)',
+    glossLangHint:
+      'Standard Somali (so-SO) in official Latin orthography — c, x, kh, dh, sh and the apostrophe for the glottal stop; note gender-marked article suffixes and polite fadlan when relevant; never Arabic or Osmanya script',
+    exampleIn: 'natural everyday Somali',
+  },
+  as: {
+    label: 'Assamese (অসমীয়া)',
+    glossLangHint:
+      'Standard Assamese (as-IN) in Assamese script (Bengali-Assamese script) — keep Assamese ৰ and ৱ; note তুমি vs আপুনি address when relevant; never Bengali (Bangla) spelling or wording, never Hindi / Devanagari; romanization is added by the client',
+    exampleIn: 'natural everyday Assamese',
+  },
+  mk: {
+    label: 'Macedonian (македонски)',
+    glossLangHint:
+      'Standard Macedonian (mk-MK) in Cyrillic — includes ѓ ќ ѕ љ њ џ ј; postfixed definite article, no noun cases; note ти vs Вие address when relevant; never Bulgarian or Serbian letters or wording, never Latin transliteration',
+    exampleIn: 'natural everyday Macedonian',
+  },
+  mn: {
+    label: 'Mongolian (монгол хэл)',
+    glossLangHint:
+      'Standard Khalkha Mongolian (mn-MN) in Mongolian Cyrillic — includes ө and ү; vowel harmony and agglutinative case suffixes when helpful; note чи vs та address when relevant; never traditional Mongolian script, never Kazakh, Buryat, or Russian wording',
+    exampleIn: 'natural everyday Mongolian',
+  },
+  hy: {
+    label: 'Armenian (հայերեն)',
+    glossLangHint:
+      'Standard Eastern Armenian (hy-AM) in Armenian script — note դու vs Դուք address when relevant; never Latin transliteration, never Western Armenian forms where Eastern differs, never Cyrillic',
+    exampleIn: 'natural everyday Armenian',
+  },
+  ka: {
+    label: 'Georgian (ქართული)',
+    glossLangHint:
+      'Standard Georgian (ka-GE) in Mkhedruli script — note შენ vs თქვენ address and polyvalent verb morphology when helpful; never Latin transliteration, never Cyrillic, never Russian wording',
+    exampleIn: 'natural everyday Georgian',
+  },
+  am: {
+    label: 'Amharic (አማርኛ)',
+    glossLangHint:
+      'Standard Amharic (am-ET) in Ethiopic fidel script — note አንተ / አንቺ vs እርስዎ address and verb conjugation patterns when helpful; never Latin transliteration as the main line, never Tigrinya',
+    exampleIn: 'natural everyday Amharic',
+  },
+  ps: {
+    label: 'Pashto (پښتو)',
+    glossLangHint:
+      'Standard Pashto (ps-AF) in Perso-Arabic script, right-to-left — correct Pashto letters ټ ډ ړ ږ ښ ڼ ې ۍ ځ څ ګ; note ته vs تاسو address and split ergativity when helpful; never Dari / Persian or Urdu wording, never Latin transliteration',
+    exampleIn: 'natural everyday Pashto',
   },
   ceb: {
     label: 'Cebuano / Bisaya',
