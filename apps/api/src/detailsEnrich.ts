@@ -65,6 +65,13 @@ export const DetailLangSchema = z.enum([
   'sk',
   'hr',
   'ca',
+  'az',
+  'kk',
+  'uz',
+  'bg',
+  'sr',
+  'sw',
+  'af',
   'ceb',
   'ilo',
   'bcl',
@@ -445,6 +452,48 @@ const ENRICH_META: Record<
     glossLangHint:
       'Standard Central Catalan (ca-ES) — correct orthography with à è é í ï ò ó ú ü ç and l·l; note tu vs vostè address when relevant; never Spanish (Castilian), French, or Occitan wording; never ASCII-folded',
     exampleIn: 'natural everyday Catalan',
+  },
+  az: {
+    label: 'Azerbaijani (Azərbaycan dili)',
+    glossLangHint:
+      'Standard Azerbaijani (az-AZ) in Latin script — correct letters ə ç ş ğ ı ö ü (capital Ə İ); note sən vs siz address when relevant; never Turkish (Türkiye), Cyrillic, or Arabic-script wording; never ASCII-folded',
+    exampleIn: 'natural everyday Azerbaijani',
+  },
+  kk: {
+    label: 'Kazakh (қазақ тілі)',
+    glossLangHint:
+      'Standard Kazakh (kk-KZ) in Cyrillic — correct letters ә ғ қ ң ө ұ ү һ і; note сен vs сіз address and vowel harmony when helpful; never Russian wording where a Kazakh word exists; never Latin transliteration',
+    exampleIn: 'natural everyday Kazakh',
+  },
+  uz: {
+    label: 'Uzbek (oʻzbek tili)',
+    glossLangHint:
+      'Standard Uzbek (uz-UZ) in Latin script — oʻ gʻ sh ch with tutuq belgisi ʼ; note sen vs siz address when relevant; never Cyrillic or Arabic-script Uzbek; never Kazakh, Kyrgyz, or Turkish wording',
+    exampleIn: 'natural everyday Uzbek',
+  },
+  bg: {
+    label: 'Bulgarian (български)',
+    glossLangHint:
+      'Standard Bulgarian (bg-BG) in Cyrillic — postfixed definite article (-ът, -та, -то, -те), no noun cases; note ти vs Вие address when relevant; never Russian wording or letters (ы э ё), never Serbian or Macedonian letters; never Latin transliteration',
+    exampleIn: 'natural everyday Bulgarian',
+  },
+  sr: {
+    label: 'Serbian (српски)',
+    glossLangHint:
+      'Standard Serbian (sr-RS) in Cyrillic only — includes ђ ј љ њ ћ џ; note ти vs Ви address when relevant; standard ekavian — never Latin script (Latinica), Croatian or Bosnian wording, nor Russian or Bulgarian letters',
+    exampleIn: 'natural everyday Serbian',
+  },
+  sw: {
+    label: 'Swahili (Kiswahili)',
+    glossLangHint:
+      'Standard Kiswahili (sw-KE) in Latin script — note noun classes and verb prefixes when helpful; polite forms (tafadhali, naomba) when relevant; never Arabic script, Sheng slang as the main line, or other Bantu wording',
+    exampleIn: 'natural everyday Swahili',
+  },
+  af: {
+    label: 'Afrikaans',
+    glossLangHint:
+      'Standard Afrikaans (af-ZA) in Latin script — correct diacritics ê é è ë ï ô ö û ü; note jy vs u address when relevant; never Dutch (Nederlands) spelling or wording, never German; never ASCII-folded',
+    exampleIn: 'natural everyday Afrikaans',
   },
   ceb: {
     label: 'Cebuano / Bisaya',

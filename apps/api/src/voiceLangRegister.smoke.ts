@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict'
 import {
   ARABIC_SCRIPT_RE,
+  BULGARIAN_REJECT_RE,
+  CYRILLIC_OR_ARABIC_RE,
+  KAZAKH_REJECT_RE,
+  SERBIAN_REJECT_RE,
   CYRILLIC_SCRIPT_RE,
   DEVANAGARI_RE,
   GREEK_SCRIPT_RE,
@@ -72,5 +76,15 @@ assert.ok(!rejectOtherIndic('sinhala').test('ආයුබෝවන්'))
 assert.ok(rejectOtherIndic('sinhala').test('வணக்கம்'))
 assert.ok(!rejectOtherIndic('gurmukhi').test('ਸਤ ਸ੍ਰੀ ਅਕਾਲ'))
 assert.ok(!rejectOtherIndic('odia').test('ନମସ୍କାର'))
+
+assert.ok(!SERBIAN_REJECT_RE.test('Здраво, како сте? Ђорђе је ту.'), 'Serbian Cyrillic passes')
+assert.ok(SERBIAN_REJECT_RE.test('Съешь ещё этих мягких булок') && SERBIAN_REJECT_RE.test('щи'), 'Russian-only letters rejected for Serbian')
+assert.ok(!BULGARIAN_REJECT_RE.test('Здравей, как си? Щастлив съм, ъгъл.'), 'Bulgarian Cyrillic passes (ъ щ allowed)')
+assert.ok(BULGARIAN_REJECT_RE.test('Ђорђе је ту') && BULGARIAN_REJECT_RE.test('ёлка'), 'Serbian / Russian-only letters rejected for Bulgarian')
+assert.ok(!KAZAKH_REJECT_RE.test('Сәлем, қалайсың? Менің атым Айгүл, ұл, һәм ың.'), 'Kazakh Cyrillic passes')
+assert.ok(KAZAKH_REJECT_RE.test('їжак') && KAZAKH_REJECT_RE.test('Ђорђе'), 'Ukrainian / Serbian-only letters rejected for Kazakh')
+assert.ok(CYRILLIC_OR_ARABIC_RE.test('Салом') && CYRILLIC_OR_ARABIC_RE.test('سلام'), 'Cyrillic / Arabic flagged for Latin Azerbaijani / Uzbek')
+assert.ok(!CYRILLIC_OR_ARABIC_RE.test('Salam, necəsən? Salom, qalaysiz? oʻzbek'), 'Latin Azerbaijani / Uzbek passes')
+assert.ok(!CYRILLIC_SCRIPT_RE.test('Zdravo, kako ste?'), 'Latin-only Serbian is not Cyrillic (rejected by requireScript)')
 
 console.log('voiceLangRegister.smoke: ok')

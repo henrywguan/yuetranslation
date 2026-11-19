@@ -9,6 +9,10 @@ import {
 } from './canto/opencc.js'
 import {
   ARABIC_SCRIPT_RE,
+  BULGARIAN_REJECT_RE,
+  CYRILLIC_OR_ARABIC_RE,
+  KAZAKH_REJECT_RE,
+  SERBIAN_REJECT_RE,
   CYRILLIC_SCRIPT_RE,
   DEVANAGARI_RE,
   GREEK_SCRIPT_RE,
@@ -27,7 +31,7 @@ import {
 } from './voiceLangRegister.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'ceb' | 'ilo' | 'bcl'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -306,6 +310,27 @@ function isCroatianTarget(to: CameraLang): boolean {
 function isCatalanTarget(to: CameraLang): boolean {
   return to === 'ca'
 }
+function isAzerbaijaniTarget(to: CameraLang): boolean {
+  return to === 'az'
+}
+function isKazakhTarget(to: CameraLang): boolean {
+  return to === 'kk'
+}
+function isUzbekTarget(to: CameraLang): boolean {
+  return to === 'uz'
+}
+function isBulgarianTarget(to: CameraLang): boolean {
+  return to === 'bg'
+}
+function isSerbianTarget(to: CameraLang): boolean {
+  return to === 'sr'
+}
+function isSwahiliTarget(to: CameraLang): boolean {
+  return to === 'sw'
+}
+function isAfrikaansTarget(to: CameraLang): boolean {
+  return to === 'af'
+}
 
 const TAMIL_SCRIPT = /[\u0B80-\u0BFF]/
 const BENGALI_SCRIPT = /[\u0980-\u09FF]/
@@ -393,6 +418,13 @@ function sanitizeCameraTranslation(to: CameraLang, translated: string, source: s
   if (isSlovakTarget(to) && hasHan(t)) return null
   if (isCroatianTarget(to) && hasHan(t)) return null
   if (isCatalanTarget(to) && hasHan(t)) return null
+  if (isAzerbaijaniTarget(to) && (hasHan(t) || CYRILLIC_OR_ARABIC_RE.test(t))) return null
+  if (isKazakhTarget(to) && (hasHan(t) || !CYRILLIC_SCRIPT_RE.test(t) || KAZAKH_REJECT_RE.test(t))) return null
+  if (isUzbekTarget(to) && (hasHan(t) || CYRILLIC_OR_ARABIC_RE.test(t))) return null
+  if (isBulgarianTarget(to) && (hasHan(t) || !CYRILLIC_SCRIPT_RE.test(t) || BULGARIAN_REJECT_RE.test(t))) return null
+  if (isSerbianTarget(to) && (hasHan(t) || !CYRILLIC_SCRIPT_RE.test(t) || SERBIAN_REJECT_RE.test(t))) return null
+  if (isSwahiliTarget(to) && hasHan(t)) return null
+  if (isAfrikaansTarget(to) && hasHan(t)) return null
   if (isLatinPhilippineRegionalTarget(to) && hasHan(t)) return null
   return t
 }
@@ -1505,6 +1537,153 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .join('\n')
   }
 
+  if (to === 'az') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Azerbaijani (Azərbaycan dili, az-AZ).',
+      'Write for readers in Azerbaijan: everyday Azerbaijani as on shop signs and notices, not bureaucratic wording.',
+      'Use Latin script only. ALWAYS use correct Azerbaijani letters (ə ç ş ğ ı ö ü) — never ASCII-fold, never Cyrillic or Arabic script. Never Turkish wording. Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Qeydiyyat (check-in); Luggage → Baqaj.',
+      '- Safety: Wet floor → Döşəmə islaqdır; Caution → Diqqət.',
+      '- Food/menus: keep dish names natural (plov, dolma, qutab, dönər); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Azerbaijani output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Azerbaijani>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'kk') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Kazakh (қазақ тілі, kk-KZ).',
+      'Write for readers in Kazakhstan: everyday Kazakh as on shop signs and notices, not bureaucratic wording.',
+      'Use Kazakh Cyrillic only (including ә ғ қ ң ө ұ ү һ і). Never Latin transliteration as the main line, never Russian wording where a Kazakh word exists. Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Тіркелу; Luggage → Жүк.',
+      '- Safety: Wet floor → Еден дымқыл; Caution → Абайлаңыз.',
+      '- Food/menus: keep dish names natural (бешбармақ, баурсақ, қазы, мәнті); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Kazakh output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Kazakh>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'uz') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Uzbek (oʻzbek tili, uz-UZ).',
+      'Write for readers in Uzbekistan: everyday Uzbek as on shop signs and notices, not bureaucratic wording.',
+      'Use Uzbek Latin script only (oʻ gʻ sh ch, tutuq belgisi ʼ). Never Cyrillic or Arabic script, never Kazakh, Kyrgyz, or Turkish wording. Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Roʻyxatdan oʻtish; Luggage → Yuk.',
+      '- Safety: Wet floor → Pol nam; Caution → Ehtiyot boʻling.',
+      '- Food/menus: keep dish names natural (plov, somsa, lagʻmon, manti); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Uzbek output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Uzbek>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'bg') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Bulgarian (български, bg-BG).',
+      'Write for readers in Bulgaria: everyday Bulgarian as on shop signs and notices, not bureaucratic wording.',
+      'Use Bulgarian Cyrillic only. Never Latin transliteration as the main line, never Russian wording or letters (ы э ё), never Serbian or Macedonian letters (ђ ј љ њ ћ џ). Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Настаняване; Luggage → Багаж.',
+      '- Safety: Wet floor → Мокър под; Caution → Внимание.',
+      '- Food/menus: keep dish names natural (шопска салата, баница, таратор, кебапче); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Bulgarian output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Bulgarian>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'sr') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Serbian (српски, sr-RS).',
+      'Write for readers in Serbia: everyday Serbian as on shop signs and notices, not bureaucratic wording.',
+      'Use Serbian Cyrillic only (including ђ ј љ њ ћ џ). Never Latin script (Latinica), never Croatian or Bosnian wording, never Russian or Bulgarian letters (ы э ё щ ъ). Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Пријава; Luggage → Пртљаг.',
+      '- Safety: Wet floor → Клизав под; Caution → Опрез.',
+      '- Food/menus: keep dish names natural (ћевапи, пљескавица, сарма, проја); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Serbian output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Serbian>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'sw') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Swahili (Kiswahili, sw-KE).',
+      'Write for readers in Kenya: everyday Kiswahili as on shop signs and notices, not bureaucratic wording.',
+      'Use Latin script only. Keep noun-class agreement correct. Never Arabic script, never Sheng or English code-switching as the main line, never Lingala, Zulu, or other Bantu wording. Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Kuingia (check-in); Luggage → Mizigo.',
+      '- Safety: Wet floor → Sakafu ni mvua; Caution → Tahadhari.',
+      '- Food/menus: keep dish names natural (ugali, nyama choma, sukuma wiki, pilau); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Swahili output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Swahili>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (to === 'af') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural Afrikaans (Afrikaans, af-ZA).',
+      'Write for readers in South Africa: everyday Afrikaans as on shop signs and notices, not bureaucratic wording.',
+      'Use Latin script only. ALWAYS use correct Afrikaans diacritics (ê é è ë ï ô ö û ü) — never ASCII-fold. Never Dutch (Nederlands) spelling or wording, never German. Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Inklok; Luggage → Bagasie.',
+      '- Safety: Wet floor → Nat vloer; Caution → Wees versigtig.',
+      '- Food/menus: keep dish names natural (boerewors, bobotie, koeksisters, biltong); translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate (Latin brand names may stay Latin).',
+      'Never leave the translation empty. Never copy Chinese characters into the Afrikaans output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Afrikaans>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
   if (to === 'ko') {
     return [
       'You translate signs, menus, forms, and short labels into natural colloquial Korean (한국어).',
@@ -1795,6 +1974,27 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isCatalanTarget(to)) {
     return hasHan(source) ? `(demo CA) ${source}` : `(demo) ${source}`
   }
+  if (isAzerbaijaniTarget(to)) {
+    return hasHan(source) ? `(demo AZ) ${source}` : `(demo) ${source}`
+  }
+  if (isKazakhTarget(to)) {
+    return hasHan(source) ? `(demo KK) ${source}` : `(demo) ${source}`
+  }
+  if (isUzbekTarget(to)) {
+    return hasHan(source) ? `(demo UZ) ${source}` : `(demo) ${source}`
+  }
+  if (isBulgarianTarget(to)) {
+    return hasHan(source) ? `(demo BG) ${source}` : `(demo) ${source}`
+  }
+  if (isSerbianTarget(to)) {
+    return hasHan(source) ? `(demo SR) ${source}` : `(demo) ${source}`
+  }
+  if (isSwahiliTarget(to)) {
+    return hasHan(source) ? `(demo SW) ${source}` : `(demo) ${source}`
+  }
+  if (isAfrikaansTarget(to)) {
+    return hasHan(source) ? `(demo AF) ${source}` : `(demo) ${source}`
+  }
   if (isCebuanoTarget(to)) {
     return hasHan(source) ? `(demo CEB) ${source}` : `(demo) ${source}`
   }
@@ -1963,6 +2163,20 @@ export async function translateCameraText(
                 ? `(tr HR) ${source}`
               : isCatalanTarget(to)
                 ? `(tr CA) ${source}`
+              : isAzerbaijaniTarget(to)
+                ? `(tr AZ) ${source}`
+              : isKazakhTarget(to)
+                ? `(tr KK) ${source}`
+              : isUzbekTarget(to)
+                ? `(tr UZ) ${source}`
+              : isBulgarianTarget(to)
+                ? `(tr BG) ${source}`
+              : isSerbianTarget(to)
+                ? `(tr SR) ${source}`
+              : isSwahiliTarget(to)
+                ? `(tr SW) ${source}`
+              : isAfrikaansTarget(to)
+                ? `(tr AF) ${source}`
               : isKoreanTarget(to)
                 ? `(tr KO) ${source}`
               : isCebuanoTarget(to)
@@ -2042,6 +2256,13 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'sk') return 'Slovak (Latin script, sk-SK — not Czech)'
   if (lang === 'hr') return 'Croatian (Latin script, hr-HR — not Serbian)'
   if (lang === 'ca') return 'Catalan (Latin script, ca-ES — not Spanish)'
+  if (lang === 'az') return 'Azerbaijani (Latin script, az-AZ — not Turkish)'
+  if (lang === 'kk') return 'Kazakh (Cyrillic, kk-KZ — not Russian)'
+  if (lang === 'uz') return 'Uzbek (Latin script, uz-UZ — not Cyrillic)'
+  if (lang === 'bg') return 'Bulgarian (Cyrillic, bg-BG — not Russian)'
+  if (lang === 'sr') return 'Serbian (Cyrillic only, sr-RS — never Latin)'
+  if (lang === 'sw') return 'Swahili (Latin script, sw-KE)'
+  if (lang === 'af') return 'Afrikaans (Latin script, af-ZA — not Dutch)'
   if (lang === 'ceb') return 'Cebuano / Binisaya (Latin script)'
   if (lang === 'ilo') return 'Ilocano / Ilokano (Latin script)'
   if (lang === 'bcl') return 'Central Bikol / Bikol Naga (Latin script)'
@@ -2195,6 +2416,20 @@ export async function translateCameraBatch(
                     ? `(tr HR) ${s}`
                   : isCatalanTarget(to)
                     ? `(tr CA) ${s}`
+                  : isAzerbaijaniTarget(to)
+                    ? `(tr AZ) ${s}`
+                  : isKazakhTarget(to)
+                    ? `(tr KK) ${s}`
+                  : isUzbekTarget(to)
+                    ? `(tr UZ) ${s}`
+                  : isBulgarianTarget(to)
+                    ? `(tr BG) ${s}`
+                  : isSerbianTarget(to)
+                    ? `(tr SR) ${s}`
+                  : isSwahiliTarget(to)
+                    ? `(tr SW) ${s}`
+                  : isAfrikaansTarget(to)
+                    ? `(tr AF) ${s}`
                   : isKoreanTarget(to)
                     ? `(tr KO) ${s}`
                   : isCebuanoTarget(to)
@@ -2278,6 +2513,13 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (lang === 'sk' || lang === 'sk-SK' || lang === 'sk-sk') return 'sk'
   if (lang === 'hr' || lang === 'hr-HR' || lang === 'hr-hr') return 'hr'
   if (lang === 'ca' || lang === 'ca-ES' || lang === 'ca-es') return 'ca'
+  if (lang === 'az' || lang === 'az-AZ' || lang === 'az-az') return 'az'
+  if (lang === 'kk' || lang === 'kk-KZ' || lang === 'kk-kz') return 'kk'
+  if (lang === 'uz' || lang === 'uz-UZ' || lang === 'uz-uz') return 'uz'
+  if (lang === 'bg' || lang === 'bg-BG' || lang === 'bg-bg') return 'bg'
+  if (lang === 'sr' || lang === 'sr-RS' || lang === 'sr-rs') return 'sr'
+  if (lang === 'sw' || lang === 'sw-KE' || lang === 'sw-ke') return 'sw'
+  if (lang === 'af' || lang === 'af-ZA' || lang === 'af-za') return 'af'
   if (lang === 'ceb' || lang === 'ceb-PH' || lang === 'ceb-ph') return 'ceb'
   if (lang === 'ilo' || lang === 'ilo-PH' || lang === 'ilo-ph') return 'ilo'
   if (lang === 'bcl' || lang === 'bcl-PH' || lang === 'bcl-ph') return 'bcl'

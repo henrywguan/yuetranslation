@@ -67,6 +67,13 @@ const SAMPLES = [
   ['sk', 'sk-SK-ViktoriaNeural', 'sk-SK', 'Ahoj — toto je tvoj slovenský hlas.'],
   ['hr', 'hr-HR-GabrijelaNeural', 'hr-HR', 'Bok — ovo je tvoj hrvatski glas.'],
   ['ca', 'ca-ES-JoanaNeural', 'ca-ES', 'Hola — aquesta és la teva veu en català.'],
+  ['az', 'az-AZ-BanuNeural', 'az-AZ', 'Salam — bu sənin Azərbaycan səsindir.'],
+  ['kk', 'kk-KZ-AigulNeural', 'kk-KZ', 'Сәлем — бұл сіздің қазақ тіліндегі дауысыңыз.'],
+  ['uz', 'uz-UZ-MadinaNeural', 'uz-UZ', 'Salom — bu sizning o‘zbek tilidagi ovozingiz.'],
+  ['bg', 'bg-BG-KalinaNeural', 'bg-BG', 'Здравей — това е твоят български глас.'],
+  ['sr', 'sr-RS-SophieNeural', 'sr-RS', 'Здраво — ово је ваш српски глас.'],
+  ['sw', 'sw-KE-ZuriNeural', 'sw-KE', 'Habari — hii ni sauti yako ya Kiswahili.'],
+  ['af', 'af-ZA-AdriNeural', 'af-ZA', 'Hallo — dit is jou Afrikaanse stem.'],
 ]
 
 function escapeXml(s) {

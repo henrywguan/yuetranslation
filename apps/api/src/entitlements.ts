@@ -64,6 +64,13 @@ import {
   DEFAULT_SK_VOICE,
   DEFAULT_HR_VOICE,
   DEFAULT_CA_VOICE,
+  DEFAULT_AZ_VOICE,
+  DEFAULT_KK_VOICE,
+  DEFAULT_UZ_VOICE,
+  DEFAULT_BG_VOICE,
+  DEFAULT_SR_VOICE,
+  DEFAULT_SW_VOICE,
+  DEFAULT_AF_VOICE,
   DEFAULT_YUE_VOICE,
   resolveCmnVoice,
   resolveEnVoice,
@@ -118,6 +125,13 @@ import {
   resolveSkVoice,
   resolveHrVoice,
   resolveCaVoice,
+  resolveAzVoice,
+  resolveKkVoice,
+  resolveUzVoice,
+  resolveBgVoice,
+  resolveSrVoice,
+  resolveSwVoice,
+  resolveAfVoice,
   resolveYueVoice,
 } from './ttsVoices.js'
 
@@ -179,6 +193,13 @@ export const PRIMARY_LANGS = [
   'sk',
   'hr',
   'ca',
+  'az',
+  'kk',
+  'uz',
+  'bg',
+  'sr',
+  'sw',
+  'af',
 ] as const
 
 export type PrimaryLang = (typeof PRIMARY_LANGS)[number]
@@ -344,6 +365,13 @@ export type Entitlement = {
     ttsVoiceSk: string
     ttsVoiceHr: string
     ttsVoiceCa: string
+    ttsVoiceAz: string
+    ttsVoiceKk: string
+    ttsVoiceUz: string
+    ttsVoiceBg: string
+    ttsVoiceSr: string
+    ttsVoiceSw: string
+    ttsVoiceAf: string
     /** Cross-device Auto-speak preference (playback still gated by plan). */
     autoSpeak: boolean
     /** Primary language for Solo / Conversation / Cam / brand. */
@@ -548,6 +576,13 @@ function buildSnapshot(
     ttsVoiceSk?: string | null
     ttsVoiceHr?: string | null
     ttsVoiceCa?: string | null
+    ttsVoiceAz?: string | null
+    ttsVoiceKk?: string | null
+    ttsVoiceUz?: string | null
+    ttsVoiceBg?: string | null
+    ttsVoiceSr?: string | null
+    ttsVoiceSw?: string | null
+    ttsVoiceAf?: string | null
     autoSpeak?: boolean | null
     primaryLang?: string | null
     household?: HouseholdSummary | null
@@ -616,6 +651,13 @@ function buildSnapshot(
     ttsVoiceSk: resolveSkVoice(opts.ttsVoiceSk),
     ttsVoiceHr: resolveHrVoice(opts.ttsVoiceHr),
     ttsVoiceCa: resolveCaVoice(opts.ttsVoiceCa),
+    ttsVoiceAz: resolveAzVoice(opts.ttsVoiceAz),
+    ttsVoiceKk: resolveKkVoice(opts.ttsVoiceKk),
+    ttsVoiceUz: resolveUzVoice(opts.ttsVoiceUz),
+    ttsVoiceBg: resolveBgVoice(opts.ttsVoiceBg),
+    ttsVoiceSr: resolveSrVoice(opts.ttsVoiceSr),
+    ttsVoiceSw: resolveSwVoice(opts.ttsVoiceSw),
+    ttsVoiceAf: resolveAfVoice(opts.ttsVoiceAf),
     autoSpeak: Boolean(opts.autoSpeak),
     primaryLang: normalizePrimaryLang(opts.primaryLang),
     username: opts.username?.trim() || null,
@@ -778,6 +820,13 @@ function buildSnapshot(
         ttsVoiceSk: DEFAULT_SK_VOICE,
         ttsVoiceHr: DEFAULT_HR_VOICE,
         ttsVoiceCa: DEFAULT_CA_VOICE,
+        ttsVoiceAz: DEFAULT_AZ_VOICE,
+        ttsVoiceKk: DEFAULT_KK_VOICE,
+        ttsVoiceUz: DEFAULT_UZ_VOICE,
+        ttsVoiceBg: DEFAULT_BG_VOICE,
+        ttsVoiceSr: DEFAULT_SR_VOICE,
+        ttsVoiceSw: DEFAULT_SW_VOICE,
+        ttsVoiceAf: DEFAULT_AF_VOICE,
         autoSpeak: false,
         primaryLang: 'yue',
         username: null,
@@ -968,6 +1017,13 @@ function localEntitlement(): Entitlement {
         ttsVoiceSk: DEFAULT_SK_VOICE,
         ttsVoiceHr: DEFAULT_HR_VOICE,
         ttsVoiceCa: DEFAULT_CA_VOICE,
+        ttsVoiceAz: DEFAULT_AZ_VOICE,
+        ttsVoiceKk: DEFAULT_KK_VOICE,
+        ttsVoiceUz: DEFAULT_UZ_VOICE,
+        ttsVoiceBg: DEFAULT_BG_VOICE,
+        ttsVoiceSr: DEFAULT_SR_VOICE,
+        ttsVoiceSw: DEFAULT_SW_VOICE,
+        ttsVoiceAf: DEFAULT_AF_VOICE,
         autoSpeak: false,
         primaryLang: 'yue',
         username: null,
@@ -1097,6 +1153,13 @@ export async function resolveEntitlement(
     ttsVoiceSk: profile?.tts_voice_sk,
     ttsVoiceHr: profile?.tts_voice_hr,
     ttsVoiceCa: profile?.tts_voice_ca,
+    ttsVoiceAz: profile?.tts_voice_az,
+    ttsVoiceKk: profile?.tts_voice_kk,
+    ttsVoiceUz: profile?.tts_voice_uz,
+    ttsVoiceBg: profile?.tts_voice_bg,
+    ttsVoiceSr: profile?.tts_voice_sr,
+    ttsVoiceSw: profile?.tts_voice_sw,
+    ttsVoiceAf: profile?.tts_voice_af,
     autoSpeak: profile?.auto_speak,
     primaryLang: profile?.primary_lang,
     household,

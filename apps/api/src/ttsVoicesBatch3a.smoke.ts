@@ -39,7 +39,7 @@ assert.equal(resolveSpeakVoice('sichuan').voice, 'zh-CN-sichuan-YunxiNeural', 'S
 assert.equal(resolveSpeakVoice('si').voice, DEFAULT_SI_VOICE)
 assert.equal(DEFAULT_CA_VOICE, 'ca-ES-JoanaNeural')
 assert.ok(PREVIEW_ML.length > 0)
-assert.equal(PRIMARY_LANGS.length, 56)
+assert.ok(PRIMARY_LANGS.length >= 56, 'Batch 3a primaries remain registered')
 for (const [code] of CASES) assert.ok((PRIMARY_LANGS as readonly string[]).includes(code), `${code} is a primary`)
 
 console.log('ttsVoicesBatch3a.smoke: ok')

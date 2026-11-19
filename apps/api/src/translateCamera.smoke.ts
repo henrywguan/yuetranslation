@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { parseBatchTranslations, stripLeadingListNumber } from './translateCamera.js'
+import { normalizeCameraLang, parseBatchTranslations, stripLeadingListNumber } from './translateCamera.js'
 
 assert.equal(stripLeadingListNumber('1. 在一所過渡性居所協助殘疾人士。'), '在一所過渡性居所協助殘疾人士。')
 assert.equal(stripLeadingListNumber('12) Hello world'), 'Hello world')
@@ -22,5 +22,11 @@ const parsed = parseBatchTranslations(
 assert.equal(parsed[0], '曼尼一直是UCM投資/交易俱樂部的積極成員；')
 assert.equal(parsed[1], '即使畢業後，')
 assert.equal(parsed[2], '50g 或以上')
+
+for (const [alias, code] of [
+  ['az', 'az'], ['az-AZ', 'az'], ['kk-kz', 'kk'], ['uz-UZ', 'uz'], ['bg-BG', 'bg'], ['sr-RS', 'sr'], ['sw-KE', 'sw'], ['af-ZA', 'af'],
+] as const) {
+  assert.equal(normalizeCameraLang(alias), code, `${alias} normalizes to ${code}`)
+}
 
 console.log('translateCamera.smoke: ok')
