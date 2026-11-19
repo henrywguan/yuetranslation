@@ -26,7 +26,7 @@ const Body = z.object({
   boxes: z.array(BoxSchema).max(64).optional(),
   /** Preferred output language. Auto flips per-region from script when omitted. */
   target: z
-    .enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'da', 'nb', 'fi', 'sk', 'hr', 'ca', 'az', 'kk', 'uz', 'bg', 'sr', 'sw', 'af', 'et', 'lv', 'lt', 'ga', 'cy', 'eu', 'gl', 'mt', 'is', 'bs', 'sq', 'zu', 'so', 'as', 'mk', 'mn', 'hy', 'ka', 'am', 'ps', 'ceb', 'ilo', 'bcl'])
+    .enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'da', 'nb', 'fi', 'sk', 'hr', 'ca', 'az', 'kk', 'uz', 'bg', 'sr', 'sw', 'af', 'et', 'lv', 'lt', 'ga', 'cy', 'eu', 'gl', 'mt', 'is', 'bs', 'sq', 'zu', 'so', 'as', 'mk', 'mn', 'hy', 'ka', 'am', 'ps', 'ceb', 'ilo', 'bcl', 'hak', 'teo', 'nan'])
     .optional(),
   /** When true, skip translation and only return OCR regions. */
   ocrOnly: z.boolean().optional().default(false),
@@ -320,6 +320,18 @@ function pickTarget(
   }
   if (preferred === 'bcl') {
     return looksChinese ? { from: 'yue', to: 'bcl' } : { from: 'en', to: 'bcl' }
+  }
+  if (preferred === 'hak') {
+    return looksChinese ? { from: 'hak', to: 'hak' } : { from: 'en', to: 'hak' }
+  }
+  if (preferred === 'teo') {
+    return looksChinese ? { from: 'teo', to: 'teo' } : { from: 'en', to: 'teo' }
+  }
+  if (preferred === 'nan') {
+    return looksChinese ? { from: 'nan', to: 'nan' } : { from: 'en', to: 'nan' }
+  }
+  if (preferred === 'sichuan') {
+    return looksChinese ? { from: 'sichuan', to: 'sichuan' } : { from: 'en', to: 'sichuan' }
   }
   if (preferred === 'wuu') {
     return looksChinese ? { from: 'wuu', to: 'wuu' } : { from: 'en', to: 'wuu' }

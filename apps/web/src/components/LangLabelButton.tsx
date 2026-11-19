@@ -96,6 +96,9 @@ const OPTIONS: LangOption[] = [
   { id: 'ceb', copy: ui.dirCebuano, mark: 'Cb' },
   { id: 'ilo', copy: ui.dirIlocano, mark: 'Il' },
   { id: 'bcl', copy: ui.dirBikol, mark: 'Bc' },
+  { id: 'hak', copy: ui.dirHakka, mark: '客' },
+  { id: 'teo', copy: ui.dirTeochew, mark: '潮' },
+  { id: 'nan', copy: ui.dirHokkien, mark: '閩' },
 ]
 
 type MenuPlacement = 'top' | 'bottom'
@@ -205,7 +208,10 @@ export function LangLabelButton({
             current.id === 'yue' ||
             current.id === 'cmn' ||
             current.id === 'wuu' ||
-            current.id === 'sichuan'
+            current.id === 'sichuan' ||
+            current.id === 'hak' ||
+            current.id === 'teo' ||
+            current.id === 'nan'
           ? 'zh'
           : undefined
 

@@ -42,13 +42,19 @@ assert.doesNotMatch(docs, /<select/, 'Documents no longer use a native language 
 assert.match(cam, /PLAIN_OPTIONS/, 'Cam picker has plain-name catalog for Documents')
 assert.match(
   readFileSync(join(here, '../lib/docsApi.ts'), 'utf8'),
-  /'th'[\s\S]*'lo'[\s\S]*'ko'[\s\S]*'ja'[\s\S]*'nl'[\s\S]*'ceb'/,
-  'DocLang includes Thai / Lao / text-only langs',
+  /'th'[\s\S]*'lo'[\s\S]*'ko'[\s\S]*'ja'[\s\S]*'nl'[\s\S]*'ceb'[\s\S]*'hak'[\s\S]*'teo'[\s\S]*'nan'/,
+  'DocLang includes Thai / Lao / text-only langs incl. Hakka / Teochew / Hokkien',
 )
 assert.match(
   readFileSync(join(here, '../../../api/src/docs/handler.ts'), 'utf8'),
-  /'tl'[\s\S]*'es'[\s\S]*'vi'[\s\S]*'ceb'/,
+  /'tl'[\s\S]*'es'[\s\S]*'vi'[\s\S]*'ceb'[\s\S]*'hak'[\s\S]*'teo'[\s\S]*'nan'/,
   'API DocLang Zod accepts the full Cam language set',
 )
+assert.match(btn, /dirHakka/, 'Solo picker lists Hakka')
+assert.match(btn, /dirTeochew/, 'Solo picker lists Teochew')
+assert.match(btn, /dirHokkien/, 'Solo picker lists Hokkien')
+assert.match(cam, /camTargetHak/, 'Cam picker lists Hakka target')
+assert.match(cam, /camTargetTeo/, 'Cam picker lists Teochew target')
+assert.match(cam, /camTargetNan/, 'Cam picker lists Hokkien target')
 
 console.log('langPickerModal.smoke: ok')

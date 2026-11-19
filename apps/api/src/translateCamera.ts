@@ -41,7 +41,7 @@ import {
 } from './voiceLangRegister.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'hy' | 'ka' | 'am' | 'ps' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'hy' | 'ka' | 'am' | 'ps' | 'ceb' | 'ilo' | 'bcl' | 'hak' | 'teo' | 'nan'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -137,7 +137,27 @@ export function parseBatchTranslations(raw: string, fallbacks: string[]): string
 }
 
 function isChineseTarget(to: CameraLang): boolean {
-  return to === 'yue' || to === 'cmn' || to === 'wuu'
+  return (
+    to === 'yue' ||
+    to === 'cmn' ||
+    to === 'wuu' ||
+    to === 'sichuan' ||
+    to === 'hak' ||
+    to === 'teo' ||
+    to === 'nan'
+  )
+}
+
+function isHakkaTarget(to: CameraLang): boolean {
+  return to === 'hak'
+}
+
+function isTeochewTarget(to: CameraLang): boolean {
+  return to === 'teo'
+}
+
+function isHokkienTarget(to: CameraLang): boolean {
+  return to === 'nan'
 }
 
 function isTagalogTarget(to: CameraLang): boolean {
@@ -559,6 +579,56 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       docBatch
         ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
         : 'Return ONLY valid JSON: {"translation":"<Shanghainese Han>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+  if (to === 'hak') {
+    return [
+      'You translate signs, menus, forms, and short labels into colloquial Hakka (客家話).',
+      'Use Chinese characters as the primary line — NOT Latin-only output.',
+      'Prefer everyday Hakka wording. Dialectal Han spellings OK. Do NOT rewrite into Mandarin textbook 普通话 or Cantonese particles (係/唔/喺/咗).',
+      'Learners may see Pha̍k-fa-sṳ romanization separately — do NOT put romanization in the translation field.',
+      'Never label anything as zh-TW.',
+      docHint,
+      'Keep brand names and codes when appropriate.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Hakka Han>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+  if (to === 'teo') {
+    return [
+      'You translate signs, menus, forms, and short labels into colloquial Teochew / Chaoshan (潮州話).',
+      'Use Chinese characters as the primary line — NOT Latin-only output.',
+      'Prefer everyday Teochew wording. Do NOT rewrite into Mandarin textbook or Hokkien / Taiwanese Min Nan forms.',
+      'Learners may see Peng’im romanization separately — do NOT put romanization in the translation field.',
+      'Never label anything as zh-TW.',
+      docHint,
+      'Keep brand names and codes when appropriate.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Teochew Han>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+  if (to === 'nan') {
+    return [
+      'You translate signs, menus, forms, and short labels into colloquial Hokkien / Min Nan (閩南語 / 福建話).',
+      'Use Chinese characters as the primary line — NOT Latin-only output.',
+      'CRITICAL: zh-TW is Taiwanese Mandarin (國語), NOT Hokkien — never output Mandarin-only textbook 国语/國語 as Hokkien.',
+      'Prefer everyday Hokkien wording. Learners may see Tâi-lô / POJ romanization separately — do NOT put romanization in the translation field.',
+      docHint,
+      'Keep brand names and codes when appropriate.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Hokkien Han>"}',
       'No markdown, no explanation.',
     ]
       .filter(Boolean)
@@ -2565,6 +2635,15 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isPashtoTarget(to)) {
     return hasHan(source) ? `(demo PS) ${source}` : `(demo) ${source}`
   }
+  if (isHakkaTarget(to)) {
+    return hasHan(source) ? `（示范·HAK）${source}` : `（示范·HAK）${source}`
+  }
+  if (isTeochewTarget(to)) {
+    return hasHan(source) ? `（示范·TEO）${source}` : `（示范·TEO）${source}`
+  }
+  if (isHokkienTarget(to)) {
+    return hasHan(source) ? `（示范·NAN）${source}` : `（示范·NAN）${source}`
+  }
   if (isCebuanoTarget(to)) {
     return hasHan(source) ? `(demo CEB) ${source}` : `(demo) ${source}`
   }
@@ -2815,6 +2894,11 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'en') return 'English'
   if (lang === 'cmn') return 'Mandarin Chinese 普通话 (简体 OK)'
   if (lang === 'wuu') return 'Shanghainese 上海话 / 沪语'
+  if (lang === 'sichuan') return 'Sichuanese / Chengdu (四川话)'
+  if (lang === 'hak') return 'Hakka (客家話) — Chinese characters; Pha̍k-fa-sṳ separate'
+  if (lang === 'teo') return 'Teochew (潮州話) — Chinese characters; Peng’im separate'
+  if (lang === 'nan')
+    return 'Hokkien / Min Nan (閩南語) — Chinese characters; Tâi-lô/POJ separate — never zh-TW Mandarin'
   if (lang === 'tl') return 'Tagalog / Filipino (Latin script)'
   if (lang === 'es') return 'Mexican Spanish (Latin script, es-MX)'
   if (lang === 'eses') return 'Peninsular Spanish (Latin script, es-ES)'
@@ -3213,6 +3297,11 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (lang === 'ceb' || lang === 'ceb-PH' || lang === 'ceb-ph') return 'ceb'
   if (lang === 'ilo' || lang === 'ilo-PH' || lang === 'ilo-ph') return 'ilo'
   if (lang === 'bcl' || lang === 'bcl-PH' || lang === 'bcl-ph') return 'bcl'
+  if (lang === 'hak' || lang === 'hak-CN' || lang === 'hak-cn') return 'hak'
+  if (lang === 'teo' || lang === 'zh-CN-teo') return 'teo'
+  if (lang === 'nan' || lang === 'nan-CN' || lang === 'nan-cn' || lang === 'nan-TW' || lang === 'nan-tw')
+    return 'nan'
+  if (lang === 'sichuan') return 'sichuan'
   if (lang === 'cmn' || lang === 'en' || lang === 'wuu') return lang
   return undefined
 }

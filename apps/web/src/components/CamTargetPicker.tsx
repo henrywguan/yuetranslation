@@ -98,6 +98,9 @@ const TARGET_OPTIONS: CamOption[] = [
   { id: 'ceb', copy: ui.camTargetCeb, mark: 'Cb' },
   { id: 'ilo', copy: ui.camTargetIlo, mark: 'Il' },
   { id: 'bcl', copy: ui.camTargetBcl, mark: 'Bc' },
+  { id: 'hak', copy: ui.camTargetHak, mark: '客' },
+  { id: 'teo', copy: ui.camTargetTeo, mark: '潮' },
+  { id: 'nan', copy: ui.camTargetNan, mark: '閩' },
 ]
 
 /** Documents From/To — plain names (From/To labels already sit above). */
@@ -188,6 +191,9 @@ const PLAIN_OPTIONS: CamOption[] = [
   { id: 'ceb', copy: ui.dirCebuano, mark: 'Cb' },
   { id: 'ilo', copy: ui.dirIlocano, mark: 'Il' },
   { id: 'bcl', copy: ui.dirBikol, mark: 'Bc' },
+  { id: 'hak', copy: ui.dirHakka, mark: '客' },
+  { id: 'teo', copy: ui.dirTeochew, mark: '潮' },
+  { id: 'nan', copy: ui.dirHokkien, mark: '閩' },
 ]
 
 type Props = {

@@ -131,8 +131,16 @@ function nextHistory(
   )
 }
 
-function isChineseLang(lang: Lang): lang is 'yue' | 'cmn' | 'wuu' | 'sichuan' {
-  return lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan'
+function isChineseLang(lang: Lang): lang is 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'hak' | 'teo' | 'nan' {
+  return (
+    lang === 'yue' ||
+    lang === 'cmn' ||
+    lang === 'wuu' ||
+    lang === 'sichuan' ||
+    lang === 'hak' ||
+    lang === 'teo' ||
+    lang === 'nan'
+  )
 }
 
 /** Solo stores upper pane in en* fields and lower pane in yue* fields. */
@@ -225,7 +233,17 @@ function sanitizeTranslation(to: Lang, text: string, source?: string): string | 
   if (to === 'ceb') return sanitizeCebTranslation(text)
   if (to === 'ilo') return sanitizeIloTranslation(text)
   if (to === 'bcl') return sanitizeBclTranslation(text)
-  if (to === 'yue' || to === 'cmn' || to === 'wuu' || to === 'sichuan') return sanitizeYueTranslation(text)
+  if (
+    to === 'yue' ||
+    to === 'cmn' ||
+    to === 'wuu' ||
+    to === 'sichuan' ||
+    to === 'hak' ||
+    to === 'teo' ||
+    to === 'nan'
+  ) {
+    return sanitizeYueTranslation(text)
+  }
   return sanitizeEnTranslation(text, source)
 }
 
@@ -238,7 +256,7 @@ async function enrichTextAlternatives(
   set: Set,
   sourceEn: string,
   primaryZh: string,
-  toZh: 'yue' | 'cmn' | 'wuu' | 'sichuan',
+  toZh: 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'hak' | 'teo' | 'nan',
   seq: number,
   signal: AbortSignal,
 ) {
@@ -407,7 +425,13 @@ export async function runTranslation(
                   ? 'Could not produce Ilocano for this phrase. Try again or rephrase.'
                   : to === 'bcl'
                     ? 'Could not produce Bikol (Central) for this phrase. Try again or rephrase.'
-                    : to === 'sichuan'
+                    : to === 'hak'
+                      ? 'Could not produce Hakka for this phrase. Try again or rephrase.'
+                      : to === 'teo'
+                        ? 'Could not produce Teochew for this phrase. Try again or rephrase.'
+                        : to === 'nan'
+                          ? 'Could not produce Hokkien for this phrase. Try again or rephrase.'
+                          : to === 'sichuan'
                     ? 'Could not produce Sichuanese for this phrase. Try again or rephrase.'
                     : to === 'tl'
                       ? 'Could not produce Tagalog for this phrase. Try again or rephrase.'

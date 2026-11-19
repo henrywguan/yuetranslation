@@ -58,6 +58,7 @@ import { SpeakButton } from './SpeakButton'
 import { ResultActions } from './ResultActions'
 import { ShanghaineseText } from './ShanghaineseText'
 import { SichuaneseText } from './SichuaneseText'
+import { TopolectHanText, topolectHtmlLang, topolectSchemeLabel } from './TopolectHanText'
 import { MexicanSpanishRegisterPanel } from './MexicanSpanishRegisterPanel'
 import { CantoneseRegisterPanel } from './CantoneseRegisterPanel'
 import { HandwritingLookup } from './HandwritingLookup'
@@ -194,6 +195,9 @@ function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'ceb') return 'ceb'
   if (detailLang === 'ilo') return 'ilo'
   if (detailLang === 'bcl') return 'bcl'
+  if (detailLang === 'hak') return 'hak'
+  if (detailLang === 'teo') return 'teo'
+  if (detailLang === 'nan') return 'nan'
   if (detailLang === 'en') return 'en'
   if (detailLang === 'yue') return 'yue'
   return hasHan(text) ? 'yue' : 'en'
@@ -434,11 +438,15 @@ export function CharacterBreakdownHost() {
       detailLang === 'yue' ||
       detailLang === 'cmn' ||
       detailLang === 'wuu' ||
-      detailLang === 'sichuan'
+      detailLang === 'sichuan' ||
+      detailLang === 'hak' ||
+      detailLang === 'teo' ||
+      detailLang === 'nan'
     ) {
       // Yue: Jyutping + Chao tone letters on the title (not IPA / AI pinyin).
       // Cmn: pinyin is tone-marked in jp. Wuu: citation Wugniu lives in jp but is not IPA.
       // Sichuan: 四川话拼音 lives in jp; not Yue Jyutping for IPA lookup.
+      // hak/teo/nan: Pha̍k-fa-sṳ / Peng’im / Tâi-lô live in jp.
       setIpa('')
       return
     }
@@ -466,14 +474,17 @@ export function CharacterBreakdownHost() {
       detailLang === 'yue' ||
       detailLang === 'cmn' ||
       detailLang === 'wuu' ||
-      detailLang === 'sichuan'
+      detailLang === 'sichuan' ||
+      detailLang === 'hak' ||
+      detailLang === 'teo' ||
+      detailLang === 'nan'
         ? pickCharGloss(row.meaning, glossForChar(row.char))
         : row.meaning.trim()
     if (!sense && !row.jyutping) return
     pushDetail({
       kind: 'char',
       char: row.char,
-      // Wuu / Sichuan: jyutping field carries romanization (Wugniu / 四川话拼音).
+      // Wuu / Sichuan / topolects: jyutping field carries romanization.
       jp: row.jyutping,
       phrase: top?.kind === 'phrase' ? top.phrase : row.char,
       lang: detailLang,
@@ -506,6 +517,8 @@ export function CharacterBreakdownHost() {
   const isCmnDetail = detailLang === 'cmn'
   const isWuuDetail = detailLang === 'wuu'
   const isSichuanDetail = detailLang === 'sichuan'
+  const isTopolectDetail =
+    detailLang === 'hak' || detailLang === 'teo' || detailLang === 'nan'
   const isTlDetail = detailLang === 'tl'
   const isEsDetail = detailLang === 'es'
   const isEsesDetail = detailLang === 'eses'
@@ -596,15 +609,18 @@ export function CharacterBreakdownHost() {
   const phraseSandhi = top.kind === 'phrase' ? top.sandhiHint?.trim() || '' : ''
   const phraseWuuIpa = top.kind === 'phrase' ? top.ipa?.trim() || '' : ''
   const phraseSichuanRom = top.kind === 'phrase' ? top.romanization?.trim() || '' : ''
-  // Sichuanese title uses SichuaneseText (Han + 四川话拼音), not Yue JyutRuby.
+  const phraseTopolectRom = top.kind === 'phrase' ? top.romanization?.trim() || '' : ''
+  // Sichuanese / topolect titles use Han + romanization components, not Yue JyutRuby.
   const showRubyTitle =
     !isEnglishDetail &&
     !isWuuDetail &&
     !isSichuanDetail &&
+    !isTopolectDetail &&
     !isLatinDetail &&
     hasHan(topLabel)
   const showWuuTitle = isWuuDetail && hasHan(topLabel)
   const showSichuanTitle = isSichuanDetail && hasHan(topLabel)
+  const showTopolectTitle = isTopolectDetail && hasHan(topLabel)
   const phraseIpa =
     isEnglishDetail && top.kind === 'phrase'
       ? rows
@@ -620,7 +636,7 @@ export function CharacterBreakdownHost() {
           .join(' ')
       : ''
   const titleSegs: JyutSeg[] | PinyinSeg[] | undefined =
-    isWuuDetail || isSichuanDetail
+    isWuuDetail || isSichuanDetail || isTopolectDetail
       ? undefined
       : top.kind === 'char' && top.jp
         ? isCmnDetail
@@ -715,14 +731,20 @@ export function CharacterBreakdownHost() {
                         ? 'lo'
                         : isKoDetail
                           ? 'ko'
-                        : top.kind === 'char' || showRubyTitle || showWuuTitle || showSichuanTitle
+                        : top.kind === 'char' ||
+                            showRubyTitle ||
+                            showWuuTitle ||
+                            showSichuanTitle ||
+                            showTopolectTitle
                       ? isWuuDetail
                         ? 'wuu-CN'
                         : isSichuanDetail
                           ? 'zh-CN-sichuan'
-                          : isCmnDetail
-                            ? 'zh-CN'
-                            : 'zh-HK'
+                          : isTopolectDetail
+                            ? topolectHtmlLang(detailLang as 'hak' | 'teo' | 'nan')
+                            : isCmnDetail
+                              ? 'zh-CN'
+                              : 'zh-HK'
                       : 'en'
               }
             >
@@ -738,6 +760,14 @@ export function CharacterBreakdownHost() {
                 <SichuaneseText
                   text={topLabel}
                   romanization={phraseSichuanRom || undefined}
+                  className="detail-panel-title-han"
+                />
+              ) : showTopolectTitle ? (
+                <TopolectHanText
+                  text={topLabel}
+                  romanization={phraseTopolectRom || undefined}
+                  schemeLabel={topolectSchemeLabel(detailLang as 'hak' | 'teo' | 'nan')}
+                  htmlLang={topolectHtmlLang(detailLang as 'hak' | 'teo' | 'nan')}
                   className="detail-panel-title-han"
                 />
               ) : showRubyTitle ? (
@@ -1080,9 +1110,17 @@ export function CharacterBreakdownHost() {
                   const meaning = pickCharGloss(row.meaning)
                   const canDrill = Boolean(meaning || glossForChar(row.char) || row.jyutping)
                   const canSpeak =
-                    isEnglishDetail || isLatinDetail || isThDetail || isLoDetail || isKoDetail || isScaffoldDetail || isHanChar(row.char)
+                    !isTopolectDetail &&
+                    (isEnglishDetail ||
+                      isLatinDetail ||
+                      isThDetail ||
+                      isLoDetail ||
+                      isKoDetail ||
+                      isScaffoldDetail ||
+                      isHanChar(row.char))
                   // Prefer the Details pane language for word TTS — scaffold langs
                   // (incl. ar / arsa) must not fall through to Cantonese.
+                  // Text-only topolects (hak/teo/nan) have no TTS — canSpeak is false above.
                   const rowSpeakLang: Lang = isEnglishDetail
                     ? 'en'
                     : isScaffoldDetail ||
@@ -1241,6 +1279,14 @@ export function CharacterBreakdownHost() {
                                   className="detail-panel-ipa"
                                   lang="zh-Latn-CN-sichuan"
                                   title="四川话拼音"
+                                >
+                                  {row.jyutping}
+                                </span>
+                              ) : isTopolectDetail ? (
+                                <span
+                                  className="detail-panel-ipa"
+                                  lang="en"
+                                  title={topolectSchemeLabel(detailLang as 'hak' | 'teo' | 'nan')}
                                 >
                                   {row.jyutping}
                                 </span>

@@ -2,6 +2,7 @@ import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
 import { SichuaneseText } from './SichuaneseText'
+import { TopolectHanText, topolectHtmlLang, topolectSchemeLabel } from './TopolectHanText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
 import { PeninsularSpanishText } from './PeninsularSpanishText'
@@ -121,6 +122,9 @@ export function langShort(lang: Lang): string {
   if (lang === 'ceb') return 'Cb'
   if (lang === 'ilo') return 'Il'
   if (lang === 'bcl') return 'Bc'
+  if (lang === 'hak') return '客'
+  if (lang === 'teo') return '潮'
+  if (lang === 'nan') return '閩'
   return '粵'
 }
 
@@ -176,6 +180,18 @@ export function LangLine({
       <SichuaneseText
         text={text}
         romanization={romanization}
+        className="history-card-line"
+        onActivate={onBreakdown}
+      />
+    )
+  }
+  if (lang === 'hak' || lang === 'teo' || lang === 'nan') {
+    return (
+      <TopolectHanText
+        text={text}
+        romanization={romanization}
+        schemeLabel={topolectSchemeLabel(lang)}
+        htmlLang={topolectHtmlLang(lang)}
         className="history-card-line"
         onActivate={onBreakdown}
       />
@@ -412,6 +428,9 @@ function langLabel(lang: Lang) {
   if (lang === 'ceb') return <BiText copy={ui.dirCebuano} size="sm" />
   if (lang === 'ilo') return <BiText copy={ui.dirIlocano} size="sm" />
   if (lang === 'bcl') return <BiText copy={ui.dirBikol} size="sm" />
+  if (lang === 'hak') return <BiText copy={ui.dirHakka} size="sm" only="zh" />
+  if (lang === 'teo') return <BiText copy={ui.dirTeochew} size="sm" only="zh" />
+  if (lang === 'nan') return <BiText copy={ui.dirHokkien} size="sm" only="zh" />
   return <BiText copy={ui.cantonese} size="sm" only="zh" />
 }
 
@@ -529,12 +548,21 @@ export function HistoryCard({
                   turn.from === 'yue' ||
                   turn.from === 'cmn' ||
                   turn.from === 'wuu' ||
-                  turn.from === 'sichuan'
+                  turn.from === 'sichuan' ||
+                  turn.from === 'hak' ||
+                  turn.from === 'teo' ||
+                  turn.from === 'nan'
                     ? yueDefs
                     : undefined
                 }
                 romanization={
-                  turn.from === 'wuu' || turn.from === 'sichuan' ? turn.romanization : undefined
+                  turn.from === 'wuu' ||
+                  turn.from === 'sichuan' ||
+                  turn.from === 'hak' ||
+                  turn.from === 'teo' ||
+                  turn.from === 'nan'
+                    ? turn.romanization
+                    : undefined
                 }
                 onBreakdown={onBreakdown}
               />
@@ -555,12 +583,21 @@ export function HistoryCard({
                   turn.to === 'yue' ||
                   turn.to === 'cmn' ||
                   turn.to === 'wuu' ||
-                  turn.to === 'sichuan'
+                  turn.to === 'sichuan' ||
+                  turn.to === 'hak' ||
+                  turn.to === 'teo' ||
+                  turn.to === 'nan'
                     ? yueDefs
                     : undefined
                 }
                 romanization={
-                  turn.to === 'wuu' || turn.to === 'sichuan' ? turn.romanization : undefined
+                  turn.to === 'wuu' ||
+                  turn.to === 'sichuan' ||
+                  turn.to === 'hak' ||
+                  turn.to === 'teo' ||
+                  turn.to === 'nan'
+                    ? turn.romanization
+                    : undefined
                 }
                 onBreakdown={onBreakdown}
               />
@@ -617,6 +654,16 @@ export function HistoryCard({
                       <SichuaneseText
                         text={alt}
                         romanization={turn.alternativeRomanizations?.[i]}
+                        showSchemeLabel={false}
+                        className="history-card-line"
+                        onActivate={onBreakdown}
+                      />
+                    ) : turn.to === 'hak' || turn.to === 'teo' || turn.to === 'nan' ? (
+                      <TopolectHanText
+                        text={alt}
+                        romanization={turn.alternativeRomanizations?.[i]}
+                        schemeLabel={topolectSchemeLabel(turn.to)}
+                        htmlLang={topolectHtmlLang(turn.to)}
                         showSchemeLabel={false}
                         className="history-card-line"
                         onActivate={onBreakdown}

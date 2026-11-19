@@ -95,6 +95,9 @@ export const DetailLangSchema = z.enum([
   'ceb',
   'ilo',
   'bcl',
+  'hak',
+  'teo',
+  'nan',
 ])
 export type DetailLang = z.infer<typeof DetailLangSchema>
 
@@ -649,6 +652,24 @@ const ENRICH_META: Record<
     label: 'Central Bikol / Bikol Naga',
     glossLangHint: 'Central Bikol',
     exampleIn: 'natural Central Bikol',
+  },
+  hak: {
+    label: 'Hakka (客家話)',
+    glossLangHint:
+      'Hakka (客家話) — Chinese characters primary; Pha̍k-fa-sṳ romanization is added by the client. Never Mandarin-only textbook style, never Cantonese, never label as zh-TW',
+    exampleIn: 'natural Hakka (Chinese characters)',
+  },
+  teo: {
+    label: 'Teochew / Chaoshan (潮州話)',
+    glossLangHint:
+      'Teochew / Chaoshan (潮州話) — Chinese characters primary; Peng’im romanization is added by the client. Never Mandarin textbook, never Hokkien / Min Nan forms, never zh-TW',
+    exampleIn: 'natural Teochew (Chinese characters)',
+  },
+  nan: {
+    label: 'Hokkien / Min Nan (閩南語)',
+    glossLangHint:
+      'Hokkien / Min Nan (閩南語 / 福建話) — Chinese characters primary; Tâi-lô / POJ romanization is added by the client. CRITICAL: zh-TW is Taiwanese Mandarin, NOT Hokkien — never use 國語/国语 as Hokkien',
+    exampleIn: 'natural Hokkien (Chinese characters)',
   },
 }
 

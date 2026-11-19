@@ -275,6 +275,9 @@ export const ui = {
   camTargetCeb: { en: 'To Cebuano', zh: '譯成宿霧話', jp: 'jik6 sing4 suk1 mou6 waa2' },
   camTargetIlo: { en: 'To Ilocano', zh: '譯成伊洛卡诺話', jp: 'jik6 sing4 ji1 lok6 kaa1 nok3 waa2' },
   camTargetBcl: { en: 'To Bikol (Central)', zh: '譯成中比科爾話', jp: 'jik6 sing4 zung1 bei2 ho1 ji5 waa2' },
+  camTargetHak: { en: 'To Hakka', zh: '譯成客家話', jp: 'jik6 sing4 haak3 gaa1 waa2' },
+  camTargetTeo: { en: 'To Teochew', zh: '譯成潮州話', jp: 'jik6 sing4 ciu4 zau1 waa2' },
+  camTargetNan: { en: 'To Hokkien', zh: '譯成閩南語', jp: 'jik6 sing4 man5 naam4 jyu5' },
   camTargetAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
   camScanning: { en: 'Scanning…', zh: '掃描中…', jp: 'siu2 miu4 zung1…' },
   camNoVision: {
@@ -502,6 +505,9 @@ export const ui = {
   dirCebuano: { en: 'Cebuano', zh: '宿霧話', jp: 'suk1 mou6 waa2' },
   dirIlocano: { en: 'Ilocano', zh: '伊洛卡诺話', jp: 'ji1 lok6 kaa1 nok3 waa2' },
   dirBikol: { en: 'Bikol (Central)', zh: '中比科爾話', jp: 'zung1 bei2 ho1 ji5 waa2' },
+  dirHakka: { en: 'Hakka', zh: '客家話', jp: 'haak3 gaa1 waa2' },
+  dirTeochew: { en: 'Teochew', zh: '潮州話', jp: 'ciu4 zau1 waa2' },
+  dirHokkien: { en: 'Hokkien (Fujianese)', zh: '閩南語', jp: 'man5 naam4 jyu5' },
   textOnlyLangTip: {
     en: 'Text only — type to translate. Speech isn’t available for this language yet.',
     zh: '純文字——請打字翻譯。此語言暫未支援語音。',

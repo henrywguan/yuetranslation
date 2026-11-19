@@ -98,7 +98,10 @@ function isLang(v: unknown): v is Lang {
     v === 'am' ||
     v === 'ceb' ||
     v === 'ilo' ||
-    v === 'bcl'
+    v === 'bcl' ||
+    v === 'hak' ||
+    v === 'teo' ||
+    v === 'nan'
   )
 }
 

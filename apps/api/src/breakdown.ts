@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'da', 'nb', 'fi', 'sk', 'hr', 'ca', 'az', 'kk', 'uz', 'bg', 'sr', 'sw', 'af', 'et', 'lv', 'lt', 'ga', 'cy', 'eu', 'gl', 'mt', 'is', 'bs', 'sq', 'zu', 'so', 'as', 'mk', 'mn', 'hy', 'ka', 'am', 'ps', 'ceb', 'ilo', 'bcl']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'da', 'nb', 'fi', 'sk', 'hr', 'ca', 'az', 'kk', 'uz', 'bg', 'sr', 'sw', 'af', 'et', 'lv', 'lt', 'ga', 'cy', 'eu', 'gl', 'mt', 'is', 'bs', 'sq', 'zu', 'so', 'as', 'mk', 'mn', 'hy', 'ka', 'am', 'ps', 'ceb', 'ilo', 'bcl', 'hak', 'teo', 'nan']).optional(),
 })
 
 export type BreakdownChar = {
@@ -203,8 +203,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'hy' | 'ka' | 'am' | 'ps' | 'ceb' | 'ilo' | 'bcl',
-): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'hy' | 'ka' | 'am' | 'ps' | 'ceb' | 'ilo' | 'bcl' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'hy' | 'ka' | 'am' | 'ps' | 'ceb' | 'ilo' | 'bcl' | 'hak' | 'teo' | 'nan',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'hy' | 'ka' | 'am' | 'ps' | 'ceb' | 'ilo' | 'bcl' | 'hak' | 'teo' | 'nan' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -1502,6 +1502,29 @@ async function wuuBreakdown(text: string) {
  * Never scrub into Yue; never prefer CC-Canto Jyutping over model Sichuanese Pinyin.
  */
 async function sichuanBreakdown(text: string) {
+  return hanTopolectBreakdown(text, {
+    lang: 'sichuan',
+    englishName: 'Chengdu Sichuanese (四川话)',
+    schemeName: '四川话拼音',
+    schemeExample: 'ni3, yao4',
+    neverHint: 'NOT Mandarin pinyin and NOT Cantonese Jyutping',
+    preferHint: 'Prefer Chengdu colloquial readings when they differ from Mandarin.',
+  })
+}
+
+type HanTopolectBreakdownLang = 'sichuan' | 'hak' | 'teo' | 'nan'
+
+async function hanTopolectBreakdown(
+  text: string,
+  profile: {
+    lang: HanTopolectBreakdownLang
+    englishName: string
+    schemeName: string
+    schemeExample: string
+    neverHint: string
+    preferHint: string
+  },
+) {
   const trimmed = text.trim()
   const fallback = localYueBreakdown(trimmed).map((row) => ({
     ...row,
@@ -1509,20 +1532,20 @@ async function sichuanBreakdown(text: string) {
   }))
 
   if (!env.openaiApiKey) {
-    return { characters: fallback, engine: 'dictionary' as const, lang: 'sichuan' as const }
+    return { characters: fallback, engine: 'dictionary' as const, lang: profile.lang }
   }
 
   const client = openaiClientWithKey()
   const system = [
-    'You explain Chengdu Sichuanese (四川话) character-by-character for language learners.',
-    'Given a Sichuanese phrase, return ONLY valid JSON:',
-    '{"characters":[{"char":"<one character>","jyutping":"<四川话拼音 syllable+tone or null>","meaning":"<short English gloss in this phrase>"}]}',
+    `You explain ${profile.englishName} character-by-character for language learners.`,
+    `Given a ${profile.englishName} phrase, return ONLY valid JSON:`,
+    `{"characters":[{"char":"<one character>","jyutping":"<${profile.schemeName} syllable or null>","meaning":"<short English gloss in this phrase>"}]}`,
     'Rules:',
     '- Include every character in order (skip spaces).',
     '- For punctuation, jyutping null and a brief meaning like “question mark”.',
     '- Meanings must fit THIS phrase (particles, aspect markers, dialectal uses).',
-    '- The jyutping field holds 四川话拼音 with tone numbers (e.g. ni3, yao4) — NOT Mandarin pinyin and NOT Cantonese Jyutping.',
-    '- Prefer Chengdu colloquial readings when they differ from Mandarin.',
+    `- The jyutping field holds ${profile.schemeName} (e.g. ${profile.schemeExample}) — ${profile.neverHint}.`,
+    `- ${profile.preferHint}`,
     '- No markdown.',
   ].join('\n')
 
@@ -1553,7 +1576,7 @@ async function sichuanBreakdown(text: string) {
           const row = item as Record<string, unknown>
           const char = typeof row.char === 'string' ? row.char : ''
           if (!char) continue
-          // Never fill from Yue lexicon — jyutping must be 四川话拼音 from the model.
+          // Never fill from Yue lexicon — jyutping must be the topolect romanization from the model.
           const jyutping =
             typeof row.jyutping === 'string' && row.jyutping.trim()
               ? row.jyutping.trim()
@@ -1580,7 +1603,7 @@ async function sichuanBreakdown(text: string) {
       if (!fb || fb.char !== row.char) return row
       return {
         ...row,
-        // Prefer model 四川话拼音; do not fall back to Yue Jyutping from local gloss.
+        // Prefer model romanization; do not fall back to Yue Jyutping from local gloss.
         jyutping: row.jyutping || null,
         meaning: pickMeaning(row.meaning, fb.meaning),
         glossSource:
@@ -1592,11 +1615,48 @@ async function sichuanBreakdown(text: string) {
     return {
       characters: merged,
       engine: 'openai' as const,
-      lang: 'sichuan' as const,
+      lang: profile.lang,
     }
   } catch {
-    return { characters: fallback, engine: 'dictionary' as const, lang: 'sichuan' as const }
+    return { characters: fallback, engine: 'dictionary' as const, lang: profile.lang }
   }
+}
+
+async function hakBreakdown(text: string) {
+  return hanTopolectBreakdown(text, {
+    lang: 'hak',
+    englishName: 'Hakka (客家話)',
+    schemeName: 'Pha̍k-fa-sṳ',
+    schemeExample: 'ngài, ngì',
+    neverHint:
+      'NOT Mandarin pinyin, NOT Cantonese Jyutping, NOT POJ/Tâi-lô, and never label as zh-TW',
+    preferHint: 'Prefer everyday Hakka readings when they differ from Mandarin.',
+  })
+}
+
+async function teoBreakdown(text: string) {
+  return hanTopolectBreakdown(text, {
+    lang: 'teo',
+    englishName: 'Teochew / Chaoshan (潮州話)',
+    schemeName: 'Peng’im',
+    schemeExample: 'ua2, le2',
+    neverHint:
+      'NOT Mandarin pinyin, NOT Cantonese Jyutping, NOT POJ/Tâi-lô, and never confuse with Hokkien',
+    preferHint: 'Prefer everyday Teochew readings when they differ from Mandarin or Hokkien.',
+  })
+}
+
+async function nanBreakdown(text: string) {
+  return hanTopolectBreakdown(text, {
+    lang: 'nan',
+    englishName: 'Hokkien / Min Nan (閩南語)',
+    schemeName: 'Tâi-lô / POJ',
+    schemeExample: 'lí, góa',
+    neverHint:
+      'NOT Mandarin pinyin, NOT zh-TW Mandarin (國語), NOT Cantonese Jyutping, NOT Peng’im',
+    preferHint:
+      'Prefer everyday Hokkien readings. CRITICAL: zh-TW is Taiwanese Mandarin, NOT Hokkien.',
+  })
 }
 
 type LatinVoiceBreakdownLang =
@@ -2217,5 +2277,8 @@ export async function breakdown(input: unknown) {
   if (lang === 'cmn') return cmnBreakdown(text)
   if (lang === 'wuu') return wuuBreakdown(text)
   if (lang === 'sichuan') return sichuanBreakdown(text)
+  if (lang === 'hak') return hakBreakdown(text)
+  if (lang === 'teo') return teoBreakdown(text)
+  if (lang === 'nan') return nanBreakdown(text)
   return yueBreakdown(text)
 }
