@@ -1,5 +1,5 @@
 /**
- * Chat Inbox GitHub REST — Family/Business; App secrets NEEDS_HUMAN when missing.
+ * Chat Inbox GitHub REST — Family/Business; App secrets via BYO plugin keys or server env.
  */
 import type { Response } from 'express'
 import type { AuthedRequest } from './auth.js'
@@ -18,6 +18,7 @@ import {
 } from './chatGithub.js'
 import { requireUserSession } from './chatSandboxService.js'
 import { execSandbox } from './chatSandboxService.js'
+import { loadChatPluginCredentials } from './deepseekChatPluginKeys.js'
 
 async function gate(req: AuthedRequest, res: Response): Promise<{ userId: string } | null> {
   const auth = req.auth
@@ -46,7 +47,8 @@ async function gate(req: AuthedRequest, res: Response): Promise<{ userId: string
 export async function getChatGithubStatus(req: AuthedRequest, res: Response) {
   const g = await gate(req, res)
   if (!g) return
-  res.json({ ok: true, ...githubStatus() })
+  const creds = await loadChatPluginCredentials(g.userId)
+  res.json({ ok: true, ...githubStatus(creds) })
 }
 
 /** GET /api/chat/github/repos */
@@ -54,7 +56,8 @@ export async function getChatGithubRepos(req: AuthedRequest, res: Response) {
   const g = await gate(req, res)
   if (!g) return
   try {
-    const repos = await listGithubRepos(40)
+    const creds = await loadChatPluginCredentials(g.userId)
+    const repos = await listGithubRepos(40, creds)
     res.json({ ok: true, repos })
   } catch (err) {
     if (err instanceof GithubNotConfiguredError) {
@@ -95,7 +98,8 @@ export async function postChatGithubClone(req: AuthedRequest, res: Response) {
   }
   try {
     const session = requireUserSession(body.sandboxSessionId, g.userId)
-    const token = await getGithubInstallationToken()
+    const creds = await loadChatPluginCredentials(g.userId)
+    const token = await getGithubInstallationToken(creds)
     const url = `https://x-access-token:${token}@github.com/${parsed.owner}/${parsed.repo}.git`
     const branch = typeof body.branch === 'string' && body.branch.trim() ? body.branch.trim() : undefined
     const argv = branch
@@ -152,6 +156,7 @@ export async function postChatGithubPr(req: AuthedRequest, res: Response) {
     return
   }
   try {
+    const creds = await loadChatPluginCredentials(g.userId)
     const pr = await openGithubPullRequest({
       owner: parsed.owner,
       repo: parsed.repo,
@@ -159,6 +164,7 @@ export async function postChatGithubPr(req: AuthedRequest, res: Response) {
       body: typeof body.body === 'string' ? body.body : undefined,
       head: body.head.trim(),
       base: typeof body.base === 'string' ? body.base : undefined,
+      creds,
     })
     res.status(201).json({ ok: true, pr })
   } catch (err) {

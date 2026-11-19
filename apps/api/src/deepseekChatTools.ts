@@ -679,7 +679,7 @@ export async function executeDeepseekChatTool(
         return JSON.stringify(result)
       }
       case 'github_open_pr': {
-        if (!githubConfigured()) {
+        if (!githubConfigured(ctx.pluginCreds)) {
           return JSON.stringify({
             error: new GithubNotConfiguredError().message,
             code: 'github_not_configured',
@@ -699,6 +699,7 @@ export async function executeDeepseekChatTool(
             head,
             base: typeof args.base === 'string' ? args.base : undefined,
             body: typeof args.body === 'string' ? args.body : undefined,
+            creds: ctx.pluginCreds,
           })
           return JSON.stringify({ ok: true, pr, inboxHint: 'Mark agent In Review with pr.htmlUrl' })
         } catch (err) {

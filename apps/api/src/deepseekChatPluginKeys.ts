@@ -1,13 +1,29 @@
 /**
- * Per-user BYOK secrets for #/chat generation plugins.
+ * Per-user BYOK secrets for #/chat generation plugins + inbox sandboxes/GitHub.
  * Stored AES-256-GCM encrypted (service-role only). GET never returns raw keys.
+ *
+ * Key IDs (Plugins → API keys UI):
+ *   gemini, image, higgsfield, adobe, cursor
+ *   fly, fly_app
+ *   github_app_id, github_app_private_key, github_app_installation_id
  */
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto'
 import { z } from 'zod'
 import { env } from './env.js'
 import { getAdmin } from './supabase.js'
 
-export const CHAT_PLUGIN_KEY_IDS = ['gemini', 'image', 'higgsfield', 'adobe', 'cursor'] as const
+export const CHAT_PLUGIN_KEY_IDS = [
+  'gemini',
+  'image',
+  'higgsfield',
+  'adobe',
+  'cursor',
+  'fly',
+  'fly_app',
+  'github_app_id',
+  'github_app_private_key',
+  'github_app_installation_id',
+] as const
 export type ChatPluginKeyId = (typeof CHAT_PLUGIN_KEY_IDS)[number]
 
 export type ChatPluginCredentials = Partial<Record<ChatPluginKeyId, string>>
@@ -24,6 +40,14 @@ const CredsSchema = z.object({
   higgsfield: z.string().trim().min(1).max(2048).optional(),
   adobe: z.string().trim().min(1).max(2048).optional(),
   cursor: z.string().trim().min(1).max(2048).optional(),
+  /** Fly Machines API token (BYO). */
+  fly: z.string().trim().min(1).max(512).optional(),
+  /** Fly app name hosting Machines (BYO; paired with `fly`). */
+  fly_app: z.string().trim().min(1).max(128).optional(),
+  github_app_id: z.string().trim().min(1).max(64).optional(),
+  /** PEM private key; newlines may be literal or `\n`. */
+  github_app_private_key: z.string().trim().min(1).max(16_384).optional(),
+  github_app_installation_id: z.string().trim().min(1).max(64).optional(),
 })
 
 /** In-memory fallback when Supabase is unavailable (openMode / local). */
@@ -107,14 +131,56 @@ export function hintForSecret(secret: string | undefined): ChatPluginKeyHint {
   return { set: true, hint }
 }
 
+export function emptyChatPluginKeyHints(): Record<ChatPluginKeyId, ChatPluginKeyHint> {
+  const out = {} as Record<ChatPluginKeyId, ChatPluginKeyHint>
+  for (const id of CHAT_PLUGIN_KEY_IDS) out[id] = { set: false }
+  return out
+}
+
 export function credentialsToHints(creds: ChatPluginCredentials): Record<ChatPluginKeyId, ChatPluginKeyHint> {
-  return {
-    gemini: hintForSecret(creds.gemini),
-    image: hintForSecret(creds.image),
-    higgsfield: hintForSecret(creds.higgsfield),
-    adobe: hintForSecret(creds.adobe),
-    cursor: hintForSecret(creds.cursor),
+  const out = emptyChatPluginKeyHints()
+  for (const id of CHAT_PLUGIN_KEY_IDS) {
+    out[id] = hintForSecret(creds[id])
   }
+  return out
+}
+
+/** Resolve Fly Machines auth: per-user plugin keys first, then server env. */
+export function resolveFlyCreds(creds?: ChatPluginCredentials | null): {
+  token: string
+  app: string
+  source: 'byo' | 'env'
+} | null {
+  const byoToken = creds?.fly?.trim() || ''
+  const byoApp = creds?.fly_app?.trim() || ''
+  if (byoToken && byoApp) return { token: byoToken, app: byoApp, source: 'byo' }
+  const envToken = env.flyApiToken.trim()
+  const envApp = env.flyApp.trim()
+  if (envToken && envApp) return { token: envToken, app: envApp, source: 'env' }
+  // Allow mixing BYO token with env app name (or vice versa) for convenience.
+  const token = byoToken || envToken
+  const app = byoApp || envApp
+  if (token && app) return { token, app, source: byoToken || byoApp ? 'byo' : 'env' }
+  return null
+}
+
+/** Resolve GitHub App auth: per-user plugin keys first, then server env (field-wise fill). */
+export function resolveGithubAppCreds(creds?: ChatPluginCredentials | null): {
+  appId: string
+  privateKey: string
+  installationId: string
+  source: 'byo' | 'env' | 'mixed'
+} | null {
+  const byoId = creds?.github_app_id?.trim() || ''
+  const byoKey = creds?.github_app_private_key?.trim() || ''
+  const byoInst = creds?.github_app_installation_id?.trim() || ''
+  const appId = byoId || env.githubAppId.trim()
+  const privateKey = byoKey || env.githubAppPrivateKey.trim()
+  const installationId = byoInst || env.githubAppInstallationId.trim()
+  if (!appId || !privateKey || !installationId) return null
+  const byoCount = [byoId, byoKey, byoInst].filter(Boolean).length
+  const source = byoCount === 3 ? 'byo' : byoCount === 0 ? 'env' : 'mixed'
+  return { appId, privateKey, installationId, source }
 }
 
 export async function loadChatPluginCredentials(userId: string): Promise<ChatPluginCredentials> {
@@ -178,4 +244,3 @@ export async function saveChatPluginCredentials(
   }
   return scrubbed
 }
-

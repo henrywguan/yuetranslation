@@ -1,20 +1,25 @@
 /**
- * Fly Machines sandbox driver (Phase C).
+ * Fly Machines sandbox driver (Phase C + BYO keys).
  *
- * Real Machines need Henry secrets/billing:
- *   FLY_API_TOKEN, FLY_APP (optional FLY_REGION, FLY_IMAGE)
+ * Auth preference:
+ *   1. Per-user Plugin API keys: `fly` + `fly_app`
+ *   2. Server env: FLY_API_TOKEN + FLY_APP (optional FLY_REGION / FLY_IMAGE)
  *
  * Until configured, createFlySandbox returns a clear NEEDS_HUMAN error and callers
  * should fall back to the stub driver.
  */
 import {
-  flyConfigured,
   newSandboxId,
   putSession,
   touchSession,
   type SandboxExecResult,
   type SandboxSession,
 } from './chatSandbox.js'
+import {
+  loadChatPluginCredentials,
+  resolveFlyCreds,
+  type ChatPluginCredentials,
+} from './deepseekChatPluginKeys.js'
 import { env } from './env.js'
 
 export class FlySandboxNotConfiguredError extends Error {
@@ -22,19 +27,32 @@ export class FlySandboxNotConfiguredError extends Error {
   readonly fixability = 'NEEDS_HUMAN' as const
   constructor() {
     super(
-      'Fly sandbox not configured. Set FLY_API_TOKEN + FLY_APP (and billing on the Fly org). Until then the API uses the in-process stub driver.',
+      'Fly sandbox not configured. Add `fly` + `fly_app` under Plugins → API keys (or set FLY_API_TOKEN + FLY_APP). Until then the API uses the in-process stub driver.',
     )
     this.name = 'FlySandboxNotConfiguredError'
   }
 }
 
-async function flyFetch(pathname: string, init?: RequestInit): Promise<Response> {
-  if (!flyConfigured()) throw new FlySandboxNotConfiguredError()
-  const url = `https://api.machines.dev/v1/apps/${encodeURIComponent(env.flyApp)}${pathname}`
+async function resolveAuth(
+  userId?: string,
+  creds?: ChatPluginCredentials | null,
+): Promise<NonNullable<ReturnType<typeof resolveFlyCreds>>> {
+  const loaded = creds ?? (userId ? await loadChatPluginCredentials(userId) : null)
+  const resolved = resolveFlyCreds(loaded)
+  if (!resolved) throw new FlySandboxNotConfiguredError()
+  return resolved
+}
+
+async function flyFetch(
+  pathname: string,
+  auth: { token: string; app: string },
+  init?: RequestInit,
+): Promise<Response> {
+  const url = `https://api.machines.dev/v1/apps/${encodeURIComponent(auth.app)}${pathname}`
   return fetch(url, {
     ...init,
     headers: {
-      Authorization: `Bearer ${env.flyApiToken}`,
+      Authorization: `Bearer ${auth.token}`,
       'Content-Type': 'application/json',
       ...(init?.headers || {}),
     },
@@ -49,8 +67,10 @@ export async function createFlySandbox(opts: {
   userId: string
   title?: string
   projectId?: string
+  /** Optional preloaded plugin credentials (avoids a second vault read). */
+  creds?: ChatPluginCredentials | null
 }): Promise<SandboxSession> {
-  if (!flyConfigured()) throw new FlySandboxNotConfiguredError()
+  const auth = await resolveAuth(opts.userId, opts.creds)
 
   const now = Date.now()
   const session: SandboxSession = {
@@ -84,7 +104,7 @@ export async function createFlySandbox(opts: {
   }
 
   try {
-    const res = await flyFetch('/machines', { method: 'POST', body: JSON.stringify(body) })
+    const res = await flyFetch('/machines', auth, { method: 'POST', body: JSON.stringify(body) })
     if (!res.ok) {
       const text = await res.text().catch(() => '')
       throw new Error(`Fly Machines create failed (${res.status}): ${text.slice(0, 400)}`)
@@ -118,8 +138,22 @@ export async function flyExec(
       driver: 'fly',
     }
   }
+  let auth: { token: string; app: string }
+  try {
+    auth = await resolveAuth(session.userId)
+  } catch {
+    return {
+      ok: false,
+      code: 1,
+      stdout: '',
+      stderr: new FlySandboxNotConfiguredError().message,
+      argv,
+      cwd: '/workspace',
+      driver: 'fly',
+    }
+  }
   // Exec API — Machines exec endpoint. Keep payload bounded.
-  const res = await flyFetch(`/machines/${encodeURIComponent(session.flyMachineId)}/exec`, {
+  const res = await flyFetch(`/machines/${encodeURIComponent(session.flyMachineId)}/exec`, auth, {
     method: 'POST',
     body: JSON.stringify({
       cmd: argv,
@@ -147,13 +181,14 @@ export async function flyExec(
 }
 
 export async function destroyFlySandbox(session: SandboxSession): Promise<void> {
-  if (session.flyMachineId && flyConfigured()) {
+  if (session.flyMachineId) {
     try {
-      await flyFetch(`/machines/${encodeURIComponent(session.flyMachineId)}`, {
+      const auth = await resolveAuth(session.userId)
+      await flyFetch(`/machines/${encodeURIComponent(session.flyMachineId)}`, auth, {
         method: 'DELETE',
       })
     } catch {
-      /* ignore */
+      /* ignore — stub/env may be gone; mark destroyed locally */
     }
   }
   session.status = 'destroyed'

@@ -15,6 +15,7 @@ import {
 } from './chatSandbox.js'
 import { createSandboxSession, execSandbox, listSandboxFs, readSandboxFs, writeSandboxFs } from './chatSandboxService.js'
 import { createStubSandbox, destroyStubSandbox, stubExec } from './chatSandboxStub.js'
+import { resolveFlyCreds, saveChatPluginCredentials } from './deepseekChatPluginKeys.js'
 
 __resetSandboxSessionsForTests()
 
@@ -73,5 +74,22 @@ assert.match(tools, /DEEPSEEK_CHAT_SANDBOX_TOOLS/)
 const envEx = readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '../.env.example'), 'utf8')
 assert.match(envEx, /YUE_SANDBOX_DRIVER/)
 assert.match(envEx, /FLY_API_TOKEN/)
+assert.match(envEx, /fly_app/)
+
+const byoFly = await saveChatPluginCredentials('smoke-fly-byo', {
+  fly: 'fo1_smoke_token',
+  fly_app: 'smoke-app',
+})
+const flyRes = resolveFlyCreds(byoFly)
+assert.ok(flyRes)
+assert.equal(flyRes?.source, 'byo')
+assert.equal(flyConfigured(byoFly), true)
+
+const keysSrc = readFileSync(
+  path.join(path.dirname(fileURLToPath(import.meta.url)), 'deepseekChatPluginKeys.ts'),
+  'utf8',
+)
+assert.match(keysSrc, /'fly'/)
+assert.match(keysSrc, /'fly_app'/)
 
 console.log('chatSandbox.smoke: ok')

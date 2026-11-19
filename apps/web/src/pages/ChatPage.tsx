@@ -746,6 +746,11 @@ export function ChatPage() {
     higgsfield: { set: false },
     adobe: { set: false },
     cursor: { set: false },
+    fly: { set: false },
+    fly_app: { set: false },
+    github_app_id: { set: false },
+    github_app_private_key: { set: false },
+    github_app_installation_id: { set: false },
   })
   const [keysModalOpen, setKeysModalOpen] = useState(false)
   const [keysFocusId, setKeysFocusId] = useState<DeepseekChatPluginKeyId | null>(null)

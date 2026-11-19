@@ -12,6 +12,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
+import { resolveFlyCreds, type ChatPluginCredentials } from './deepseekChatPluginKeys.js'
 import { env } from './env.js'
 
 export type SandboxDriver = 'stub' | 'fly'
@@ -92,8 +93,9 @@ export function resolveSandboxDriver(requested?: string): SandboxDriver {
   return 'stub'
 }
 
-export function flyConfigured(): boolean {
-  return Boolean(env.flyApiToken && env.flyApp)
+/** True when Fly auth is available via BYO plugin keys and/or server env. */
+export function flyConfigured(creds?: ChatPluginCredentials | null): boolean {
+  return Boolean(resolveFlyCreds(creds))
 }
 
 export function sandboxBaseDir(): string {
@@ -148,7 +150,10 @@ export async function ensureStubRoot(session: SandboxSession): Promise<string> {
   return root
 }
 
-export function publicSessionView(session: SandboxSession) {
+export function publicSessionView(
+  session: SandboxSession,
+  creds?: ChatPluginCredentials | null,
+) {
   return {
     id: session.id,
     driver: session.driver,
@@ -159,7 +164,7 @@ export function publicSessionView(session: SandboxSession) {
     error: session.error,
     createdAt: session.createdAt,
     lastUsedAt: session.lastUsedAt,
-    flyReady: flyConfigured(),
+    flyReady: flyConfigured(creds),
   }
 }
 

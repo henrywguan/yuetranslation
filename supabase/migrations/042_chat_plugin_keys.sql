@@ -13,4 +13,4 @@ alter table public.chat_plugin_keys enable row level security;
 -- No policies for authenticated/anon — API uses service role only.
 
 comment on table public.chat_plugin_keys is
-  'Encrypted BYOK secrets for #/chat plugins (OpenAI Images, Higgsfield/Adobe/Cursor MCP).';
+  'Encrypted BYOK secrets for #/chat plugins (Gemini/OpenAI Images, Higgsfield/Adobe/Cursor MCP, Fly fly+fly_app, GitHub App id/key/installation).';

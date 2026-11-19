@@ -68,8 +68,18 @@ if (parsedKeys.ok) {
 const hints = credentialsToHints({ image: 'sk-abcdefgh' })
 assert.equal(hints.image.set, true)
 assert.equal(hints.image.hint, 'efgh')
-const savedMem = await saveChatPluginCredentials('smoke-user-byok', { adobe: 'adobe-tok' })
+assert.equal(hints.fly.set, false)
+assert.equal(hints.github_app_id.set, false)
+const savedMem = await saveChatPluginCredentials('smoke-user-byok', {
+  adobe: 'adobe-tok',
+  fly: 'fo1_x',
+  fly_app: 'app-x',
+  github_app_id: '42',
+})
 assert.equal(savedMem.adobe, 'adobe-tok')
+assert.equal(savedMem.fly, 'fo1_x')
+assert.equal(savedMem.fly_app, 'app-x')
+assert.equal(savedMem.github_app_id, '42')
 
 const toolsOff = await buildPluginTools([])
 assert.equal(toolsOff.length, 0, 'Empty plugins array disables plugin tools')
