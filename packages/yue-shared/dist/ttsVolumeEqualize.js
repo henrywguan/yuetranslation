@@ -73,6 +73,13 @@ export const TTS_EQUALIZE_VOLUME = {
     sk: '+50%',
     hr: '+50%',
     ca: '+50%',
+    az: '+50%',
+    kk: '+50%',
+    uz: '+50%',
+    bg: '+50%',
+    sr: '+50%',
+    sw: '+50%',
+    af: '+50%',
 };
 /**
  * Extra Web Audio playback gain on top of SSML (1 = unity).
@@ -136,6 +143,13 @@ export const TTS_EQUALIZE_PLAYBACK_GAIN = {
     sk: 2.0,
     hr: 2.0,
     ca: 2.0,
+    az: 2.0,
+    kk: 2.0,
+    uz: 2.0,
+    bg: 2.0,
+    sr: 2.0,
+    sw: 2.0,
+    af: 2.0,
 };
 /** Normalize API / client lang codes to an equalize key. */
 export function equalizeLangKey(lang) {
@@ -252,6 +266,20 @@ export function equalizeLangKey(lang) {
         return 'hr';
     if (l === 'ca' || l === 'ca-es')
         return 'ca';
+    if (l === 'az' || l === 'az-az')
+        return 'az';
+    if (l === 'kk' || l === 'kk-kz')
+        return 'kk';
+    if (l === 'uz' || l === 'uz-uz')
+        return 'uz';
+    if (l === 'bg' || l === 'bg-bg')
+        return 'bg';
+    if (l === 'sr' || l === 'sr-rs')
+        return 'sr';
+    if (l === 'sw' || l === 'sw-ke')
+        return 'sw';
+    if (l === 'af' || l === 'af-za')
+        return 'af';
     return null;
 }
 /** Azure SSML volume for normal (non–Practice-Partner) speak. */
