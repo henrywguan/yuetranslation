@@ -803,7 +803,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           ) {
             setError(ORCHESTRATION_STALL_ERROR)
           } else {
-            const hadSearchChrome = Boolean(sources.length || searchSteps.length)
+            const hadSearchChrome = Boolean(sources?.length || searchSteps.length)
             if (
               searchOn &&
               !hadSearchChrome &&
