@@ -7,7 +7,7 @@ Azure Speech locale: **`ml-IN`** (TTS `ml-IN-SobhanaNeural` default, `ml-IN-Midh
 ## Product rules
 
 - **Not a tone language.** No Cantonese-style tone digits, Chao tone letters, tone chips, or IPA dumps on Solo / Conversation / Cam lines.
-- **Writing:** Malayalam script (\\u0D00-\\u0D7F). No Han; keep this language distinct from peers.
+- **Writing:** Malayalam script (U+0D00–U+0D7F). No Han; keep this language distinct from peers.
 - **Register:** colloquial by default (നിങ്ങൾ / നീ); formal English (`voiceLangRegister.ts`) gets the respectful address forms.
 - **Cam:** natural Malayalam signage wording, same script rules.
 

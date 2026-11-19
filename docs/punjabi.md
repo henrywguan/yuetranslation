@@ -7,7 +7,7 @@ Azure Speech locale: **`pa-IN`** (TTS `pa-IN-VaaniNeural` default, `pa-IN-OjasNe
 ## Product rules
 
 - **Not a tone language.** No Cantonese-style tone digits, Chao tone letters, tone chips, or IPA dumps on Solo / Conversation / Cam lines.
-- **Writing:** Gurmukhi (\\u0A00-\\u0A7F). No Han; keep this language distinct from peers.
+- **Writing:** Gurmukhi (U+0A00–U+0A7F). No Han; keep this language distinct from peers.
 - **Register:** colloquial by default (ਤੁਸੀਂ / ਤੂੰ); formal English (`voiceLangRegister.ts`) gets the respectful address forms.
 - **Cam:** natural Punjabi signage wording, same script rules.
 

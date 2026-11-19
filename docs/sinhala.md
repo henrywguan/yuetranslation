@@ -7,7 +7,7 @@ Azure Speech locale: **`si-LK`** (TTS `si-LK-ThiliniNeural` default, `si-LK-Same
 ## Product rules
 
 - **Not a tone language.** No Cantonese-style tone digits, Chao tone letters, tone chips, or IPA dumps on Solo / Conversation / Cam lines.
-- **Writing:** Sinhala script (\\u0D80-\\u0DFF). No Han; keep this language distinct from peers.
+- **Writing:** Sinhala script (U+0D80–U+0DFF). No Han; keep this language distinct from peers.
 - **Register:** colloquial by default (ඔබ / තෝ); formal English (`voiceLangRegister.ts`) gets the respectful address forms.
 - **Cam:** natural Sinhala signage wording, same script rules.
 - **Code collision:** product code `si` is Sinhala — never confuse with `sichuan`.

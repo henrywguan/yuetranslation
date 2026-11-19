@@ -7,7 +7,7 @@ Azure Speech locale: **`ne-NP`** (TTS `ne-NP-HemkalaNeural` default, `ne-NP-Saga
 ## Product rules
 
 - **Not a tone language.** No Cantonese-style tone digits, Chao tone letters, tone chips, or IPA dumps on Solo / Conversation / Cam lines.
-- **Writing:** Devanagari (\\u0900-\\u097F). No Han; keep this language distinct from peers.
+- **Writing:** Devanagari (U+0900–U+097F). No Han; keep this language distinct from peers.
 - **Register:** colloquial by default (तपाईं / तिमी); formal English (`voiceLangRegister.ts`) gets the respectful address forms.
 - **Cam:** natural Nepali signage wording, same script rules.
 

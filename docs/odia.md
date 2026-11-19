@@ -7,7 +7,7 @@ Azure Speech locale: **`or-IN`** (TTS `or-IN-SubhasiniNeural` default, `or-IN-Su
 ## Product rules
 
 - **Not a tone language.** No Cantonese-style tone digits, Chao tone letters, tone chips, or IPA dumps on Solo / Conversation / Cam lines.
-- **Writing:** Odia script (\\u0B00-\\u0B7F). No Han; keep this language distinct from peers.
+- **Writing:** Odia script (U+0B00–U+0B7F). No Han; keep this language distinct from peers.
 - **Register:** colloquial by default (ଆପଣ / ତୁମ); formal English (`voiceLangRegister.ts`) gets the respectful address forms.
 - **Cam:** natural Odia signage wording, same script rules.
 
