@@ -5,14 +5,18 @@ import { fileURLToPath } from 'node:url'
 import {
   CHAT_EMPTY_SUGGESTIONS,
   CHAT_LIVE_REASONING_KEEP,
+  CHAT_MODE_KEY,
   CHAT_SEARCH_KEY,
   CHAT_THINK_KEY,
+  readChatComposerMode,
   readChatFlag,
+  writeChatComposerMode,
   writeChatFlag,
 } from './chatUiPrefs.js'
 
 assert.equal(CHAT_THINK_KEY, 'yue-deepseek-chat-deepthink-v1')
 assert.equal(CHAT_SEARCH_KEY, 'yue-deepseek-chat-search-v1')
+assert.equal(CHAT_MODE_KEY, 'yue-deepseek-chat-mode-v1')
 assert.ok(CHAT_LIVE_REASONING_KEEP >= 12_000)
 assert.ok(CHAT_EMPTY_SUGGESTIONS.length >= 3)
 
@@ -34,6 +38,10 @@ writeChatFlag(CHAT_THINK_KEY, false)
 assert.equal(readChatFlag(CHAT_THINK_KEY, true), false)
 writeChatFlag(CHAT_THINK_KEY, true)
 assert.equal(readChatFlag(CHAT_THINK_KEY, false), true)
+writeChatComposerMode('ask')
+assert.equal(readChatComposerMode(), 'ask')
+writeChatComposerMode('agent')
+assert.equal(readChatComposerMode('plan'), 'agent')
 
 const here = dirname(fileURLToPath(import.meta.url))
 const chatPage = readFileSync(join(here, '../pages/ChatPage.tsx'), 'utf8')

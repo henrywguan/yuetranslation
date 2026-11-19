@@ -422,12 +422,227 @@
   box-sizing: border-box;
 }
 
+.aui-agent-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin: 0 0 0.45rem;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.aui-agent-chip {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  color: var(--ds-text-2);
+  border-radius: 0.65rem;
+  padding: 0.28rem 0.5rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.aui-agent-chip.is-active {
+  border-color: var(--ds-blue-soft-border);
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
+}
+
+.aui-agent-chip.is-overseer:not(.is-active) {
+  border-color: color-mix(in srgb, var(--ds-blue) 28%, var(--ds-divider));
+}
+
+.aui-agent-chip-role {
+  flex-shrink: 0;
+  opacity: 0.75;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.aui-agent-chip-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aui-agent-chip .inbox-agent-status {
+  flex-shrink: 0;
+}
+
+.aui-composer-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.aui-mode {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-canvas);
+  color: var(--ds-text-2);
+  border-radius: 0.55rem;
+  padding: 0.28rem 0.7rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.aui-mode.is-on {
+  background: var(--ds-text);
+  border-color: var(--ds-text);
+  color: var(--ds-canvas);
+}
+
+.aui-mode-build {
+  appearance: none;
+  border: 1px solid var(--ds-blue-soft-border);
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
+  border-radius: 0.55rem;
+  padding: 0.28rem 0.75rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 0.15rem;
+}
+
+.aui-mode-build:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .aui-composer-toggles {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
   align-items: center;
   margin-bottom: 0.35rem;
+}
+
+.aui-tools-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-text-3);
+  margin-right: 0.1rem;
+}
+
+.aui-composer-row-wrap {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.aui-at-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 0.35rem);
+  z-index: 5;
+  max-height: 14rem;
+  overflow: auto;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.85rem;
+  background: var(--ds-canvas);
+  box-shadow: 0 12px 32px rgba(26, 27, 30, 0.12);
+}
+
+.aui-at-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--ds-text-3);
+  border-bottom: 1px solid var(--ds-divider);
+}
+
+.aui-at-menu-close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-3);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.aui-at-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem;
+}
+
+.aui-at-item {
+  appearance: none;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text);
+  text-align: left;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 0.45rem;
+  row-gap: 0.05rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.55rem;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.aui-at-item:hover,
+.aui-at-item:focus-visible {
+  background: var(--ds-surface-1);
+}
+
+.aui-at-kind {
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ds-blue);
+  background: var(--ds-blue-soft);
+  border-radius: 0.35rem;
+  padding: 0.15rem 0.35rem;
+}
+
+.aui-at-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.aui-at-item small {
+  color: var(--ds-text-3);
+  font-size: 0.68rem;
+}
+
+.aui-attach.is-on {
+  border-color: var(--ds-blue-soft-border);
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
 }
 
 .aui-plugins {

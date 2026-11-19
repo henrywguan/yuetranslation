@@ -1,12 +1,48 @@
 /**
- * Shared `#/chat` composer prefs (DeepThink / Search / Rich layout / Plugins).
+ * Shared `#/chat` composer prefs (mode / DeepThink / Search / Rich layout / Plugins).
  * Used by classic ChatPage and AUI ChatAuiRuntime.
  */
 
+/** Cursor-like Agent / Ask / Plan — capabilities (DeepThink/Search) stay under modes. */
+export type ChatComposerMode = 'agent' | 'ask' | 'plan'
+
+export const CHAT_MODE_KEY = 'yue-deepseek-chat-mode-v1'
 export const CHAT_THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
 export const CHAT_SEARCH_KEY = 'yue-deepseek-chat-search-v1'
 export const CHAT_RICH_LAYOUT_KEY = 'yue-deepseek-chat-rich-layout-v1'
 export const CHAT_PLUGINS_KEY = 'yue-deepseek-chat-plugins-v1'
+
+export const CHAT_COMPOSER_MODES: readonly ChatComposerMode[] = ['agent', 'ask', 'plan'] as const
+
+export const CHAT_COMPOSER_MODE_LABEL: Record<ChatComposerMode, string> = {
+  agent: 'Agent',
+  ask: 'Ask',
+  plan: 'Plan',
+}
+
+export function normalizeChatComposerMode(raw: unknown): ChatComposerMode {
+  const v = String(raw || '')
+    .trim()
+    .toLowerCase()
+  if (v === 'ask' || v === 'plan' || v === 'agent') return v
+  return 'agent'
+}
+
+export function readChatComposerMode(fallback: ChatComposerMode = 'agent'): ChatComposerMode {
+  try {
+    return normalizeChatComposerMode(localStorage.getItem(CHAT_MODE_KEY) || fallback)
+  } catch {
+    return fallback
+  }
+}
+
+export function writeChatComposerMode(mode: ChatComposerMode) {
+  try {
+    localStorage.setItem(CHAT_MODE_KEY, normalizeChatComposerMode(mode))
+  } catch {
+    /* ignore */
+  }
+}
 
 /** Bound live DeepThink buffer mid-stream (full prune still runs on disk write). */
 export const CHAT_LIVE_REASONING_KEEP = 24_000

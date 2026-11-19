@@ -36,6 +36,7 @@ import {
   DEEPSEEK_CHAT_SANDBOX_TOOLS,
   DEEPSEEK_CHAT_TOOLS,
   DEEPSEEK_CHAT_WORKSPACE_TOOLS,
+  filterToolsForChatMode,
   executeDeepseekChatTool,
 } from './deepseekChatTools.js'
 import {
@@ -174,6 +175,8 @@ export type DeepseekChatHarnessOptions = {
   searchEnabled?: boolean
   /** Harness UI mode — workspace tools + prompt nudge. */
   harnessEnabled?: boolean
+  /** Agent / Ask / Plan — Ask & Plan strip mutating tools. */
+  chatMode?: 'agent' | 'ask' | 'plan'
   prompt: DeepseekChatPromptContext
   signal?: AbortSignal
   fileIds?: string[]
@@ -225,15 +228,20 @@ export function buildDeepseekChatToolList(
   harnessEnabled = false,
   sandboxAttached = false,
   projectAttached = false,
+  chatMode: 'agent' | 'ask' | 'plan' = 'agent',
 ): unknown[] {
-  const tools: unknown[] = [...DEEPSEEK_CHAT_TOOLS, ...pluginTools]
+  const readOnly = chatMode === 'ask' || chatMode === 'plan'
+  // Ask/Plan: skip generation plugins; keep core + read tools.
+  const plugins = readOnly ? [] : pluginTools
+  const tools: unknown[] = [...DEEPSEEK_CHAT_TOOLS, ...plugins]
   if (harnessEnabled) tools.push(...DEEPSEEK_CHAT_WORKSPACE_TOOLS)
   if (sandboxAttached) tools.push(...DEEPSEEK_CHAT_SANDBOX_TOOLS)
+  // Plan/Ask may still list agents (read) via project_* — filter strips mutators.
   if (projectAttached) tools.push(...DEEPSEEK_CHAT_PROJECT_TOOLS)
   if (searchEnabled && deepseekChatSupportsNativeWebTools()) {
     tools.push(...DEEPSEEK_CHAT_WEB_TOOLS)
   }
-  return tools
+  return filterToolsForChatMode(tools, chatMode)
 }
 
 const LANG_NAMES: Record<string, string> = {
@@ -564,11 +572,16 @@ export async function* streamDeepseekChatHarness(
   const thinkingEnabled = opts.thinkingEnabled !== false
   const searchEnabled = opts.searchEnabled === true
   const harnessEnabled = opts.harnessEnabled === true
+  const chatMode =
+    opts.chatMode === 'ask' || opts.chatMode === 'plan'
+      ? opts.chatMode
+      : opts.prompt.chatMode === 'ask' || opts.prompt.chatMode === 'plan'
+        ? opts.prompt.chatMode
+        : 'agent'
   const sandboxSessionId = opts.sandboxSessionId || opts.prompt.sandboxSessionId
   const sandboxAttached = Boolean(sandboxSessionId && opts.userId)
   const projectId = String(opts.projectId || '').trim()
-  const projectAttached =
-    opts.prompt.inboxRole === 'overseer' && Boolean(projectId)
+  const projectAttached = opts.prompt.inboxRole === 'overseer' && Boolean(projectId)
   const useNativeWeb = searchEnabled && deepseekChatSupportsNativeWebTools()
   const pluginTools = await buildPluginTools(opts.plugins, opts.signal, opts.pluginCreds)
   const tools = buildDeepseekChatToolList(
@@ -577,6 +590,7 @@ export async function* streamDeepseekChatHarness(
     harnessEnabled,
     sandboxAttached,
     projectAttached,
+    chatMode,
   )
   const deepseekHost = deepseekChatUsesThinking()
   const workspaceStore: ChatWorkspaceStore | undefined = harnessEnabled
@@ -601,7 +615,7 @@ export async function* streamDeepseekChatHarness(
 
   const msgs: WireMsg[] = seedWireMessages(
     messages,
-    { ...opts.prompt, harnessEnabled, sandboxSessionId },
+    { ...opts.prompt, harnessEnabled, sandboxSessionId, chatMode },
     searchEnabled,
     opts.fileIds,
     continueReply,
@@ -772,6 +786,7 @@ export async function* streamDeepseekChatHarness(
         }
         const result = await executeDeepseekChatTool(toolName, call.function.arguments || '{}', {
           ...opts.prompt,
+          chatMode,
           signal: opts.signal,
           pluginCreds: opts.pluginCreds,
           workspace: workspaceStore,

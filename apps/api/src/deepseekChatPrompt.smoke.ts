@@ -68,6 +68,29 @@ assert.match(
   /coding sandbox/i,
 )
 
+const askMode = buildDeepseekChatSystem({
+  chatMode: 'ask',
+  harnessEnabled: true,
+  sandboxSessionId: 'sbx_abc',
+  inboxRole: 'overseer',
+  now: fixed,
+  mode: 'tools',
+})
+assert.match(askMode, /Ask mode is ON/)
+assert.match(askMode, /read-only/)
+assert.doesNotMatch(askMode, /Project Overseer for JyutTranslate/, 'Ask skips Overseer spawn skills')
+assert.match(askMode, /workspace_list, workspace_read only/)
+
+const planMode = buildDeepseekChatSystem({
+  chatMode: 'plan',
+  inboxRole: 'overseer',
+  now: fixed,
+  mode: 'tools',
+})
+assert.match(planMode, /Plan mode is ON/)
+assert.match(planMode, /Ready to Build/)
+assert.match(planMode, /do not create or message workers until the user clicks Build/i)
+
 assert.equal(shouldAutoEnableSearch('what day is today?'), false, 'clock questions use temporal inject')
 assert.equal(shouldAutoEnableSearch("what's the latest news on AI?"), true)
 assert.equal(shouldAutoEnableSearch('who is the current president of France?'), true)
