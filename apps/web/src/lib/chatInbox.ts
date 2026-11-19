@@ -318,6 +318,75 @@ export function attachThreadToProject(
   return { ...state, projects, updatedAt: now }
 }
 
+/**
+ * Nest a chat under a Project (Cursor Add to Project).
+ * Updates project.threadIds and moves chat-role agents; does not rehome Overseer/worker of another project.
+ */
+export function linkChatToProject(
+  state: ChatInboxState,
+  projectId: string,
+  threadId: string,
+): ChatInboxState {
+  if (!state.projects.some((p) => p.id === projectId)) return state
+  let next = attachThreadToProject(state, projectId, threadId)
+  const now = Date.now()
+  next = {
+    ...next,
+    updatedAt: now,
+    agents: next.agents.map((a) => {
+      if (a.threadId !== threadId) return a
+      if ((a.role === 'overseer' || a.role === 'worker') && a.projectId && a.projectId !== projectId) {
+        return a
+      }
+      if (a.projectId === projectId) return a
+      return { ...a, projectId, updatedAt: now }
+    }),
+  }
+  return next
+}
+
+/** Remove a chat from every Project folder (Cursor Remove from Project). */
+export function detachThreadFromProject(
+  state: ChatInboxState,
+  threadId: string,
+): ChatInboxState {
+  const now = Date.now()
+  const projects = state.projects.map((p) => {
+    if (!p.threadIds.includes(threadId)) return p
+    return {
+      ...p,
+      threadIds: p.threadIds.filter((id) => id !== threadId),
+      updatedAt: now,
+    }
+  })
+  const agents = state.agents.map((a) => {
+    if (a.threadId !== threadId) return a
+    // Overseer / workers stay project-owned; only chat threads unlink.
+    if (a.role !== 'thread') return a
+    if (!a.projectId) return a
+    return { ...a, projectId: null, updatedAt: now }
+  })
+  return { ...state, projects, agents, updatedAt: now }
+}
+
+/** Compact status chip labels (dot + short word). */
+export const STATUS_CHIP_LABEL: Record<InboxAgentStatus, string> = {
+  idle: 'Idle',
+  queued: 'Queue',
+  working: 'Work',
+  needs_attention: 'You',
+  in_review: 'Review',
+  done: 'Done',
+}
+
+export function statusChipLabel(status: InboxAgentStatus | string): string {
+  return STATUS_CHIP_LABEL[status as InboxAgentStatus] || String(status)
+}
+
+export function isIdleStatus(status: InboxAgentStatus | string): boolean {
+  return status === 'idle'
+}
+
 export function createWorkspace(
   state: ChatInboxState,
   kind: ChatInboxWorkspaceKind,

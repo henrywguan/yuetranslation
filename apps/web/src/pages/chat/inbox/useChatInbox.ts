@@ -6,7 +6,9 @@ import {
   createWorkspace,
   deleteProject,
   deleteWorkspace,
+  detachThreadFromProject,
   emptyInboxState,
+  linkChatToProject,
   loadChatInbox,
   saveChatInbox,
   markAgentInReview,
@@ -93,7 +95,14 @@ export function useChatInbox() {
 
   const linkThread = useCallback(
     (projectId: string, threadId: string) => {
-      commit(attachThreadToProject(stateRef.current, projectId, threadId))
+      commit(linkChatToProject(stateRef.current, projectId, threadId))
+    },
+    [commit],
+  )
+
+  const unlinkThread = useCallback(
+    (threadId: string) => {
+      commit(detachThreadFromProject(stateRef.current, threadId))
     },
     [commit],
   )
@@ -179,6 +188,7 @@ export function useChatInbox() {
     removeProject,
     renameProjectTitle,
     linkThread,
+    unlinkThread,
     addWorkspace,
     removeWorkspace,
     bindWorkspaceRef,
