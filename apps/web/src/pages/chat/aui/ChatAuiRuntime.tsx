@@ -15,6 +15,7 @@ import {
   type ReactNode,
 } from 'react'
 import {
+  execChatSandbox,
   fetchDeepseekChatPlugins,
   ocrDeepseekChatFile,
   streamDeepseekChat,
@@ -23,6 +24,13 @@ import {
   type DeepseekChatPluginKeyHint,
   type DeepseekChatPluginKeyId,
 } from '../../../lib/api'
+import {
+  applySandboxActivity,
+  applyWorkspaceFilesToDiffs,
+  emptyReviewActivity,
+  mergeGitDiffs,
+  type ChatReviewActivity,
+} from '../../../lib/chatReviewActivity'
 import {
   apiMessagesFromThread,
   appendChatMessage,
@@ -162,6 +170,12 @@ export type ChatAuiSession = {
   stopGeneration: () => void
   /** Enqueue a user prompt as a chat turn (scheduled jobs / Workspace). */
   enqueuePrompt: (text: string, threadId?: string) => Promise<void>
+  /** Diffs + Runs activity from sandbox/workspace tools. */
+  reviewActivity: ChatReviewActivity
+  reviewOpen: boolean
+  setReviewOpen: (on: boolean) => void
+  refreshGitDiff: () => Promise<void>
+  gitDiffBusy: boolean
 }
 
 const ChatAuiSessionContext = createContext<ChatAuiSession | null>(null)
@@ -197,6 +211,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const composerModeRef = useRef(composerMode)
   composerModeRef.current = composerMode
   const [richLayout, setRichLayoutState] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
+  const [reviewActivity, setReviewActivity] = useState<ChatReviewActivity>(() => emptyReviewActivity())
+  const [reviewOpen, setReviewOpen] = useState(false)
+  const [gitDiffBusy, setGitDiffBusy] = useState(false)
   const [harnessOn, setHarnessOnState] = useState(() => readHarnessFlag(false))
   const [workspaceOpen, setWorkspaceOpen] = useState(() => readHarnessFlag(false))
   const [scheduleJobs, setScheduleJobs] = useState<ChatScheduleJob[]>(() => readScheduleJobs())
@@ -298,8 +315,13 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             typeof raw.reviewUrl === 'string' ? raw.reviewUrl.trim() : undefined
           if (status === 'in_review' && reviewUrl) {
             api.markInReview(agentId, reviewUrl)
+            setReviewActivity((prev) =>
+              applySandboxActivity(prev, { kind: 'pr', reviewUrl, at: Date.now() }),
+            )
+            setReviewOpen(true)
           } else {
             api.updateAgentStatus(agentId, status, reviewUrl)
+            if (status === 'in_review') setReviewOpen(true)
           }
           continue
         }
@@ -716,7 +738,18 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
               thread,
               applyWorkspaceWireUpdate(thread.workspace, files),
             )
+            setReviewActivity((prev) => applyWorkspaceFilesToDiffs(prev, files))
+            setReviewOpen(true)
             schedulePaint()
+          },
+          onSandbox: (activity) => {
+            setReviewActivity((prev) => applySandboxActivity(prev, activity))
+            setReviewOpen(true)
+            const reviewUrl =
+              typeof activity.reviewUrl === 'string' ? activity.reviewUrl.trim() : ''
+            if (reviewUrl && linkedAgent && inboxRef.current) {
+              inboxRef.current.markInReview(linkedAgent.id, reviewUrl)
+            }
           },
           onProject: (actions) => {
             projectActionsThisTurn += actions.length
@@ -941,6 +974,39 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     },
     [persist, runAssistant, unlocked],
   )
+
+  const refreshGitDiff = useCallback(async () => {
+    const inboxState = inboxRef.current?.state
+    if (!inboxState) return
+    const thread = threadsRef.current.find((t) => t.id === activeIdRef.current)
+    const linked = thread ? agentForThread(inboxState, thread.id) : undefined
+    const sessionId = resolveActiveSandboxSessionId(inboxState, linked?.projectId)
+    if (!sessionId) {
+      setError('No sandbox session — create an Internal sandbox in Workspaces first.')
+      return
+    }
+    setGitDiffBusy(true)
+    try {
+      const result = await execChatSandbox(sessionId, ['git', 'diff', '--no-color'])
+      setReviewActivity((prev) => {
+        const withRun = applySandboxActivity(prev, {
+          kind: 'run',
+          argv: result.argv?.length ? result.argv : ['git', 'diff', '--no-color'],
+          stdout: result.stdout,
+          stderr: result.stderr,
+          exitCode: result.code ?? undefined,
+          ok: result.ok,
+          at: Date.now(),
+        })
+        return mergeGitDiffs(withRun, result.stdout || result.stderr || '')
+      })
+      setReviewOpen(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'git diff failed')
+    } finally {
+      setGitDiffBusy(false)
+    }
+  }, [])
 
   const buildFromPlan = useCallback(async () => {
     if (!unlocked || busyRef.current) return
@@ -1182,6 +1248,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       archiveThread,
       stopGeneration,
       enqueuePrompt,
+      reviewActivity,
+      reviewOpen,
+      setReviewOpen,
+      refreshGitDiff,
+      gitDiffBusy,
     }),
     [
       activeId,
@@ -1195,6 +1266,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       enabledPlugins,
       enqueuePrompt,
       error,
+      gitDiffBusy,
       harnessOn,
       historyReady,
       ocrBusy,
@@ -1203,10 +1275,13 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       pickOcr,
       pluginCatalog,
       pluginKeyHints,
+      refreshGitDiff,
       refreshPlugins,
       removePendingFile,
       removeSchedule,
       removeThread,
+      reviewActivity,
+      reviewOpen,
       richLayout,
       searchOn,
       searching,

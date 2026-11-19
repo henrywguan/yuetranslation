@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { ChatWorkspacePanel } from '../../../components/ChatWorkspacePanel'
 import { DeepSeekMark } from '../../../components/DeepSeekMark'
 import { IosHomescreenTip } from '../../../components/IosHomescreenGuide'
@@ -6,6 +6,8 @@ import { PwaInstallButton } from '../../../components/PwaInstallButton'
 import { openAuthScreen } from '../../../lib/auth'
 import { canUseDeepseekChat } from '../../../lib/chatAccess'
 import { isChatAuiEnabled, setChatAuiEnabled } from '../../../lib/chatAuiFlag'
+import { resolveActiveSandboxSessionId } from '../../../lib/chatInbox'
+import { shouldShowReviewRail } from '../../../lib/chatReviewActivity'
 import { openApp, openPricing } from '../../../lib/siteLinks'
 import { useYueStore } from '../../../lib/store'
 import { useAppViewportLock } from '../../../lib/useAppViewportLock'
@@ -13,10 +15,11 @@ import { useDocumentMeta } from '../../../lib/useDocumentMeta'
 import { safeShellViewportHeight } from '../../../lib/visualViewportHeight'
 import '../../ChatPage.css'
 import './ChatAui.css'
-import { ChatInboxProvider } from '../inbox/ChatInboxContext'
+import { ChatInboxProvider, useChatInboxContext } from '../inbox/ChatInboxContext'
 import { InboxShell } from '../inbox/InboxShell'
 import { ChatAuiRuntimeProvider, useChatAuiSession } from './ChatAuiRuntime'
 import { ChatAuiThread } from './ChatAuiThread'
+import { ChatReviewRail } from './ChatReviewRail'
 
 const MENU_ICON = (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
@@ -65,12 +68,38 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
     addSchedule,
     removeSchedule,
     toggleSchedule,
+    reviewActivity,
+    reviewOpen,
+    setReviewOpen,
+    refreshGitDiff,
+    gitDiffBusy,
+    activeId,
   } = useChatAuiSession()
+  const inbox = useChatInboxContext()
   const showWorkspace = harnessOn && workspaceOpen
+
+  const sandboxSessionId = useMemo(
+    () => resolveActiveSandboxSessionId(inbox.state),
+    [inbox.state],
+  )
+  const hasBoundWorkspace = inbox.state.workspaces.some((w) => Boolean(w.ref?.trim()))
+  const inReviewAgent = inbox.state.agents.find(
+    (a) => a.status === 'in_review' || Boolean(a.reviewUrl?.trim()),
+  )
+  const showReview = shouldShowReviewRail({
+    activity: reviewActivity,
+    hasBoundWorkspace,
+    hasInReview: Boolean(inReviewAgent),
+  })
+  const reviewVisible = showReview && reviewOpen
+  const reviewUrl =
+    reviewActivity.reviewUrl ||
+    inReviewAgent?.reviewUrl ||
+    inbox.state.agents.find((a) => a.threadId === activeId)?.reviewUrl
 
   return (
     <div
-      className={`ds-chat aui-chat${showWorkspace ? ' has-workspace' : ''}${harnessOn ? ' is-harness' : ''}${sidebarOpen ? ' is-inbox-open' : ' is-inbox-collapsed'}`}
+      className={`ds-chat aui-chat${showWorkspace ? ' has-workspace' : ''}${reviewVisible ? ' has-review' : ''}${harnessOn ? ' is-harness' : ''}${sidebarOpen ? ' is-inbox-open' : ' is-inbox-collapsed'}`}
       aria-labelledby={titleId}
     >
       <h1 id={titleId} className="aui-sr-only">
@@ -134,6 +163,17 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           </button>
           <TopBrand />
           <span className="ds-chat-top-spacer" />
+          {showReview ? (
+            <button
+              type="button"
+              className={`ds-chat-icon-btn${reviewOpen ? ' is-on' : ''}`}
+              aria-label={reviewOpen ? 'Hide review pane' : 'Show diffs and runs'}
+              aria-pressed={reviewOpen}
+              onClick={() => setReviewOpen(!reviewOpen)}
+            >
+              Δ
+            </button>
+          ) : null}
           {harnessOn ? (
             <button
               type="button"
@@ -163,6 +203,19 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
         </header>
         <ChatAuiThread />
       </div>
+      {reviewVisible ? (
+        <ChatReviewRail
+          activity={reviewActivity}
+          reviewUrl={reviewUrl}
+          sandboxSessionId={sandboxSessionId}
+          refreshing={gitDiffBusy}
+          sheet={typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches}
+          onRefreshGit={() => {
+            void refreshGitDiff()
+          }}
+          onClose={() => setReviewOpen(false)}
+        />
+      ) : null}
       {showWorkspace ? (
         <ChatWorkspacePanel
           workspace={activeWorkspace}

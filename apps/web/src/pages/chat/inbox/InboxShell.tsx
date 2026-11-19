@@ -27,6 +27,7 @@ import './Inbox.css'
 import { ArchiveIcon, DeleteIcon } from './InboxIcons'
 import { GithubBind } from './GithubBind'
 import { LocalFolderBind } from './LocalFolderBind'
+import { ProjectCreateWizard, type ProjectWizardWorkspace } from './ProjectCreateWizard'
 import { ProjectList } from './ProjectList'
 import { ProjectPanel } from './ProjectPanel'
 import { StatusChip } from './StatusChip'
@@ -71,6 +72,9 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   const [sandboxNote, setSandboxNote] = useState<string | null>(null)
   const [localBindWorkspaceId, setLocalBindWorkspaceId] = useState<string | null>(null)
   const [githubBindWorkspaceId, setGithubBindWorkspaceId] = useState<string | null>(null)
+  const [wizardOpen, setWizardOpen] = useState(false)
+  const [wizardBusy, setWizardBusy] = useState(false)
+  const [wizardError, setWizardError] = useState<string | null>(null)
 
   const [filter, setFilter] = useState<InboxFilter>('all')
   const [query, setQuery] = useState('')
@@ -136,17 +140,62 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     }
   }
 
-  /** New Project → Overseer chat only (no manual spawn UI). */
-  const createAndFocusProject = () => {
-    const { project, overseer } = addProject()
-    const threadId = startNewChat()
-    bindAgentThread(overseer.id, threadId)
-    linkThread(project.id, threadId)
-    setActiveProjectId(project.id)
-    expandProject(project.id)
+  /** Open name + workspace wizard (not name-only draft). */
+  const openProjectWizard = () => {
+    setWizardError(null)
+    setWizardOpen(true)
     setProjectsOpen(true)
-    onNavigate?.()
-    return project
+  }
+
+  /** New Project → Overseer chat + optional workspace bind (no manual spawn UI). */
+  const createAndFocusProject = async (opts: {
+    title: string
+    workspace: ProjectWizardWorkspace
+  }) => {
+    if (wizardBusy) return
+    setWizardBusy(true)
+    setWizardError(null)
+    try {
+      const { project, overseer } = addProject(opts.title)
+      const threadId = startNewChat()
+      bindAgentThread(overseer.id, threadId)
+      linkThread(project.id, threadId)
+      setActiveProjectId(project.id)
+      expandProject(project.id)
+      setProjectsOpen(true)
+
+      if (opts.workspace === 'internal') {
+        const ws = addWorkspace('internal', 'Internal sandbox', project.id)
+        const { session, note, fallbackFromFly } = await createChatSandbox({
+          title: `${opts.title} sandbox`,
+          projectId: project.id,
+          driver: 'stub',
+        })
+        bindWorkspaceRef(ws.id, session.id, project.id)
+        setSandboxNote(
+          note ||
+            (fallbackFromFly
+              ? 'Fly not configured — using stub sandbox.'
+              : `Sandbox ready (${session.driver}).`),
+        )
+        setWorkspacesOpen(true)
+      } else if (opts.workspace === 'local') {
+        const ws = addWorkspace('local', 'Local folder', project.id)
+        setLocalBindWorkspaceId(ws.id)
+        setWorkspacesOpen(true)
+      } else if (opts.workspace === 'github') {
+        const ws = addWorkspace('github', 'GitHub repo', project.id)
+        setGithubBindWorkspaceId(ws.id)
+        setWorkspacesOpen(true)
+      }
+
+      setWizardOpen(false)
+      onNavigate?.()
+    } catch (err) {
+      setWizardError(err instanceof Error ? err.message : 'Project create failed')
+    } finally {
+      setWizardBusy(false)
+    }
   }
 
   const selectProject = (projectId: string | null) => {
@@ -330,8 +379,9 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
           className="inbox-header-new"
           aria-label="New project"
           title="New project"
+          disabled={wizardOpen}
           onClick={() => {
-            createAndFocusProject()
+            openProjectWizard()
           }}
         >
           +
@@ -354,7 +404,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
         {inboxZero ? (
           <div className="inbox-empty inbox-empty--hero" role="status">
             <p>Your Inbox is empty — start a Project so Overseer can nest agents, or open a loose chat.</p>
-            <button type="button" className="inbox-empty-cta" onClick={() => createAndFocusProject()}>
+            <button type="button" className="inbox-empty-cta" onClick={() => openProjectWizard()}>
               New project
             </button>
           </div>
@@ -370,6 +420,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
             activeThreadId={activeId}
             open={projectsOpen}
             dimEmpty={filterActive}
+            createDisabled={wizardOpen}
             onToggle={toggleProjects}
             onSelect={(id) => {
               selectProject(id)
@@ -382,7 +433,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
             onAddChatToProject={addChatToProject}
             onRemoveChatFromProject={removeChatFromProject}
             onCreate={() => {
-              createAndFocusProject()
+              openProjectWizard()
             }}
             onRename={renameProjectTitle}
             onDelete={(id) => {
@@ -397,7 +448,19 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
             }}
           />
 
-          {projectsOpen && activeProject ? (
+          {wizardOpen ? (
+            <ProjectCreateWizard
+              busy={wizardBusy}
+              error={wizardError}
+              onConfirm={(opts) => {
+                void createAndFocusProject(opts)
+              }}
+              onCancel={() => {
+                setWizardOpen(false)
+                setWizardError(null)
+              }}
+            />
+          ) : projectsOpen && activeProject ? (
             <ProjectPanel
               project={activeProject}
               agents={state.agents}

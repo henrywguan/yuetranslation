@@ -217,6 +217,27 @@
   text-align: center;
   padding: 2rem 1rem 3rem;
   animation: aui-rise 0.45s ease both;
+  position: relative;
+}
+
+.aui-empty::before {
+  content: '';
+  position: absolute;
+  inset: 10% 18% auto;
+  height: 6rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--ds-blue) 16%, transparent),
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.aui-empty > * {
+  position: relative;
+  z-index: 1;
 }
 
 .aui-empty-mark {
@@ -414,12 +435,28 @@
   width: 100%;
   min-width: 0;
   margin: 0 auto;
-  border: 1px solid var(--ds-divider);
-  background: var(--ds-canvas);
-  border-radius: 1.15rem;
-  padding: 0.55rem 0.65rem 0.65rem;
-  box-shadow: 0 8px 28px rgba(26, 27, 30, 0.06);
+  border: 1px solid color-mix(in srgb, var(--ds-blue-soft-border) 55%, var(--ds-divider));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ds-blue-soft) 35%, var(--ds-canvas)) 0%, var(--ds-canvas) 42%),
+    var(--ds-canvas);
+  border-radius: 1.25rem;
+  padding: 0.6rem 0.7rem 0.7rem;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 55%, transparent),
+    0 12px 36px rgba(26, 27, 30, 0.08),
+    0 0 0 1px color-mix(in srgb, var(--ds-blue) 6%, transparent);
   box-sizing: border-box;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.25s ease;
+}
+
+.aui-composer:focus-within {
+  border-color: var(--ds-blue-soft-border);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 55%, transparent),
+    0 16px 40px rgba(77, 107, 254, 0.12),
+    0 0 0 1px color-mix(in srgb, var(--ds-blue) 14%, transparent);
 }
 
 .aui-agent-strip {
@@ -448,6 +485,14 @@
   gap: 0.35rem;
   max-width: 100%;
   min-width: 0;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.aui-agent-chip:hover {
+  transform: translateY(-1px);
 }
 
 .aui-agent-chip.is-active {
@@ -498,12 +543,23 @@
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.15s ease;
+}
+
+.aui-mode:hover:not(.is-on) {
+  border-color: var(--ds-blue-soft-border);
+  color: var(--ds-blue);
 }
 
 .aui-mode.is-on {
   background: var(--ds-text);
   border-color: var(--ds-text);
   color: var(--ds-canvas);
+  transform: translateY(-1px);
 }
 
 .aui-mode-build {
@@ -945,10 +1001,371 @@
   }
 }
 
+@keyframes aui-rail-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes aui-count-pop {
+  0% {
+    transform: scale(0.85);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* —— Phase 3 review rail (Diffs + Runs) —— */
+.ds-chat.aui-chat.has-review > .ds-chat-main.aui-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.aui-review-rail {
+  flex: 0 0 min(22rem, 38vw);
+  width: min(22rem, 38vw);
+  max-width: 24rem;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--ds-divider);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--ds-blue-soft) 40%, var(--ds-canvas)) 0%, var(--ds-canvas) 28%),
+    var(--ds-canvas);
+  animation: aui-rail-in 0.28s ease both;
+  z-index: 2;
+}
+
+.aui-review-rail.is-sheet {
+  position: absolute;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: none;
+  flex: none;
+  height: min(48dvh, 22rem);
+  border-left: 0;
+  border-top: 1px solid var(--ds-divider);
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -12px 40px rgba(26, 27, 30, 0.14);
+  animation: aui-rise 0.3s ease both;
+}
+
+.aui-review-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.55rem 0.65rem 0.35rem;
+  flex-shrink: 0;
+}
+
+.aui-review-tab {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ds-text-2);
+  border-radius: 0.55rem;
+  padding: 0.32rem 0.65rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.aui-review-tab.is-on {
+  background: var(--ds-blue-soft);
+  border-color: var(--ds-blue-soft-border);
+  color: var(--ds-blue);
+}
+
+.aui-review-tab-count,
+.aui-review-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ds-blue) 14%, transparent);
+  color: var(--ds-blue);
+  font-size: 0.65rem;
+  font-weight: 700;
+  animation: aui-count-pop 0.35s ease both;
+}
+
+.aui-review-rail-close {
+  margin-left: auto;
+}
+
+.aui-review-rail-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 0.55rem 0.75rem;
+}
+
+.aui-review-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 0;
+}
+
+.aui-review-head {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.aui-review-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ds-text);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.aui-review-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.aui-review-btn {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-canvas);
+  color: var(--ds-text-2);
+  border-radius: 0.5rem;
+  padding: 0.22rem 0.55rem;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 650;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.aui-review-btn:hover:not(:disabled) {
+  border-color: var(--ds-blue-soft-border);
+  color: var(--ds-blue);
+  background: var(--ds-blue-soft);
+}
+
+.aui-review-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.aui-review-btn--pr {
+  border-color: var(--ds-blue-soft-border);
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
+}
+
+.aui-review-btn--quiet {
+  border-color: transparent;
+  background: transparent;
+  width: 1.6rem;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.aui-review-empty {
+  margin: 0.35rem 0 0;
+  padding: 0.75rem 0.55rem;
+  color: var(--ds-text-3);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.aui-review-empty code {
+  font-family: var(--ds-mono);
+  font-size: 0.75rem;
+}
+
+.aui-diffs-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 0;
+}
+
+.aui-diffs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-height: 8.5rem;
+  overflow: auto;
+}
+
+.aui-diffs-file {
+  appearance: none;
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ds-text);
+  text-align: left;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.35rem 0.45rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+.aui-diffs-file:hover,
+.aui-diffs-file.is-on {
+  background: var(--ds-blue-soft);
+  border-color: var(--ds-blue-soft-border);
+}
+
+.aui-diffs-source {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-text-3);
+  opacity: 0.9;
+}
+
+.aui-diffs-source[data-source='git'] {
+  color: var(--ds-blue);
+}
+
+.aui-diffs-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--ds-mono);
+}
+
+.aui-diffs-preview,
+.aui-run-out,
+.aui-run-err {
+  margin: 0;
+  padding: 0.65rem 0.7rem;
+  border-radius: 0.75rem;
+  background: var(--ds-surface-1);
+  border: 1px solid var(--ds-divider);
+  color: var(--ds-text-2);
+  font-family: var(--ds-mono);
+  font-size: 0.68rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-height: 18rem;
+  overflow: auto;
+}
+
+.aui-runs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.aui-run {
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.75rem;
+  background: var(--ds-canvas);
+  padding: 0.45rem 0.5rem 0.55rem;
+  animation: aui-rise 0.25s ease both;
+}
+
+.aui-run.is-fail {
+  border-color: color-mix(in srgb, var(--ds-danger) 35%, var(--ds-divider));
+}
+
+.aui-run-cmd {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.aui-run-prompt {
+  color: var(--ds-blue);
+  font-weight: 700;
+  font-family: var(--ds-mono);
+}
+
+.aui-run-cmd code {
+  font-family: var(--ds-mono);
+  font-size: 0.72rem;
+  color: var(--ds-text);
+  overflow-wrap: anywhere;
+}
+
+.aui-run-code {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 650;
+  color: var(--ds-text-3);
+}
+
+.aui-run.is-fail .aui-run-code {
+  color: var(--ds-danger);
+}
+
+.aui-run-err {
+  margin-top: 0.35rem;
+  border-color: color-mix(in srgb, var(--ds-danger) 28%, var(--ds-divider));
+  color: color-mix(in srgb, var(--ds-danger) 75%, var(--ds-text));
+}
+
+@media (max-width: 899px) {
+  .ds-chat.aui-chat.has-review {
+    position: relative;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .aui-empty,
   .aui-suggestion,
-  .aui-msg {
+  .aui-msg,
+  .aui-review-rail,
+  .aui-run,
+  .aui-review-tab-count,
+  .aui-review-count {
     animation: none;
+  }
+
+  .aui-mode.is-on {
+    transform: none;
   }
 }

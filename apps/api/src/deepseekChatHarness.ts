@@ -169,6 +169,22 @@ export type DeepseekChatHarnessEvent =
   | { kind: 'image'; url: string; prompt: string; id: string }
   | { kind: 'workspace'; files: ChatWorkspaceFileWire[] }
   | { kind: 'project'; actions: ProjectAction[] }
+  | {
+      kind: 'sandbox'
+      activity: {
+        kind: 'diff' | 'run' | 'pr'
+        path?: string
+        text?: string
+        argv?: string[]
+        stdout?: string
+        stderr?: string
+        exitCode?: number
+        ok?: boolean
+        reviewUrl?: string
+        source?: 'sandbox' | 'workspace' | 'git'
+        at?: number
+      }
+    }
 
 export type DeepseekChatHarnessOptions = {
   thinkingEnabled?: boolean
@@ -605,6 +621,19 @@ export async function* streamDeepseekChatHarness(
       })
     : undefined
   const pendingProjectActions: ProjectAction[] = []
+  const pendingSandboxActivity: Array<{
+    kind: 'diff' | 'run' | 'pr'
+    path?: string
+    text?: string
+    argv?: string[]
+    stdout?: string
+    stderr?: string
+    exitCode?: number
+    ok?: boolean
+    reviewUrl?: string
+    source?: 'sandbox' | 'workspace' | 'git'
+    at?: number
+  }> = []
 
   if (continueReply) {
     const last = messages[messages.length - 1]
@@ -802,6 +831,9 @@ export async function* streamDeepseekChatHarness(
           onProjectActions: (actions) => {
             pendingProjectActions.push(...actions)
           },
+          onSandboxActivity: (activity) => {
+            pendingSandboxActivity.push(activity)
+          },
         })
         msgs.push({
           role: 'tool',
@@ -822,6 +854,10 @@ export async function* streamDeepseekChatHarness(
         // Keep store drain in sync so list_agents stays consistent mid-turn.
         if (projectStore) drainProjectActions(projectStore)
         yield { kind: 'project', actions }
+      }
+      while (pendingSandboxActivity.length) {
+        const activity = pendingSandboxActivity.shift()!
+        yield { kind: 'sandbox', activity }
       }
       continue
     }

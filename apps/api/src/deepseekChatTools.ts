@@ -58,6 +58,20 @@ export type ChatToolContext = DeepseekChatPromptContext & {
   project?: ChatProjectStore
   /** Fired when project_* tools enqueue client-side actions. */
   onProjectActions?: (actions: ProjectAction[]) => void
+  /** Fired for sandbox / GitHub tool results so the client can paint Diffs + Runs panes. */
+  onSandboxActivity?: (activity: {
+    kind: 'diff' | 'run' | 'pr'
+    path?: string
+    text?: string
+    argv?: string[]
+    stdout?: string
+    stderr?: string
+    exitCode?: number
+    ok?: boolean
+    reviewUrl?: string
+    source?: 'sandbox' | 'workspace' | 'git'
+    at?: number
+  }) => void
 }
 
 /** Tools that mutate files / sandboxes / projects / generation — blocked in Ask & Plan. */
@@ -768,6 +782,13 @@ export async function executeDeepseekChatTool(
         )
         if (!result.ok) return JSON.stringify({ error: result.error })
         ctx.onWorkspaceWrite?.(result.file)
+        ctx.onSandboxActivity?.({
+          kind: 'diff',
+          path: result.file.path,
+          text: result.file.text,
+          source: 'workspace',
+          at: Date.now(),
+        })
         return JSON.stringify({
           ok: true,
           path: result.file.path,
@@ -875,17 +896,31 @@ export async function executeDeepseekChatTool(
           return JSON.stringify({ path: args.path, text, driver: session.driver })
         }
         if (name === 'sandbox_write') {
-          const written = await writeSandboxFs(
-            session,
-            String(args.path || ''),
-            String(args.text ?? ''),
-          )
+          const path = String(args.path || '')
+          const text = String(args.text ?? '')
+          const written = await writeSandboxFs(session, path, text)
+          ctx.onSandboxActivity?.({
+            kind: 'diff',
+            path: written.path || path,
+            text,
+            source: 'sandbox',
+            at: Date.now(),
+          })
           return JSON.stringify({ ok: true, ...written, driver: session.driver })
         }
         const argv = Array.isArray(args.argv)
           ? args.argv.map((a) => String(a)).slice(0, 32)
           : []
         const result = await execSandbox(session, argv)
+        ctx.onSandboxActivity?.({
+          kind: 'run',
+          argv,
+          stdout: result.stdout,
+          stderr: result.stderr,
+          exitCode: result.code ?? undefined,
+          ok: result.ok,
+          at: Date.now(),
+        })
         return JSON.stringify(result)
       }
       case 'github_open_pr': {
@@ -911,6 +946,13 @@ export async function executeDeepseekChatTool(
             body: typeof args.body === 'string' ? args.body : undefined,
             creds: ctx.pluginCreds,
           })
+          if (pr?.htmlUrl) {
+            ctx.onSandboxActivity?.({
+              kind: 'pr',
+              reviewUrl: pr.htmlUrl,
+              at: Date.now(),
+            })
+          }
           return JSON.stringify({ ok: true, pr, inboxHint: 'Mark agent In Review with pr.htmlUrl' })
         } catch (err) {
           return JSON.stringify({
