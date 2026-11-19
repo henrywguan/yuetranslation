@@ -3,7 +3,8 @@
  * Default: colloquial everyday speech with the familiar / natural address form.
  * Switch to formal (respectful address, careful wording) when the source looks
  * official, legal, medical, or ceremonial. Shared by the Batch 2 voice langs
- * (te / gu / kn / pl / ro / cs / el / hu / sv / ru / uk / he / fa / ur); each
+ * (te / gu / kn / pl / ro / cs / el / hu / sv / ru / uk / he / fa / ur) and
+ * Batch 3a (ml / mr / pa / or / si / ne / da / nb / fi / sk / hr / ca); each
  * language module decides what "formal" means for its own address system.
  */
 export type SourceRegister = 'colloquial' | 'formal'
@@ -41,3 +42,40 @@ export const URDU_ONLY_RE = /[\u0679\u0688\u0691\u06BA\u06D2\u06D3\u06BE]/
 export const DEVANAGARI_RE = /[\u0900-\u097F]/
 /** Other Indic blocks a Telugu / Gujarati / Kannada line must not fall back to. */
 export const TAMIL_BENGALI_DEVANAGARI_RE = /[\u0900-\u09FF\u0B80-\u0BFF]/
+
+/** Malayalam block (U+0D00–U+0D7F). */
+export const MALAYALAM_SCRIPT_RE = /[\u0D00-\u0D7F]/
+/** Gurmukhi (Punjabi) block (U+0A00–U+0A7F). */
+export const GURMUKHI_SCRIPT_RE = /[\u0A00-\u0A7F]/
+/** Odia block (U+0B00–U+0B7F). */
+export const ODIA_SCRIPT_RE = /[\u0B00-\u0B7F]/
+/** Sinhala block (U+0D80–U+0DFF). */
+export const SINHALA_SCRIPT_RE = /[\u0D80-\u0DFF]/
+
+const INDIC_BLOCKS = {
+  devanagari: '\\u0900-\\u097F',
+  bengali: '\\u0980-\\u09FF',
+  gurmukhi: '\\u0A00-\\u0A7F',
+  gujarati: '\\u0A80-\\u0AFF',
+  odia: '\\u0B00-\\u0B7F',
+  tamil: '\\u0B80-\\u0BFF',
+  telugu: '\\u0C00-\\u0C7F',
+  kannada: '\\u0C80-\\u0CFF',
+  malayalam: '\\u0D00-\\u0D7F',
+  sinhala: '\\u0D80-\\u0DFF',
+} as const
+
+export type IndicBlock = keyof typeof INDIC_BLOCKS
+
+/**
+ * Every Indic block except `own` — Batch 3a Indic langs reject output that falls back to a
+ * neighbouring script. Marathi / Nepali share Devanagari with Hindi, so script alone cannot
+ * tell them apart; their prompts carry that distinction.
+ */
+export function rejectOtherIndic(own: IndicBlock): RegExp {
+  const ranges = (Object.keys(INDIC_BLOCKS) as IndicBlock[])
+    .filter((k) => k !== own)
+    .map((k) => INDIC_BLOCKS[k])
+    .join('')
+  return new RegExp(`[${ranges}]`)
+}

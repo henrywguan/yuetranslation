@@ -63,6 +63,18 @@ const SAMPLES = [
   { lang: 'he', voice: 'he-IL-HilaNeural', xmlLang: 'he-IL', text: 'שלום — זה הקול שלך בעברית.' },
   { lang: 'fa', voice: 'fa-IR-DilaraNeural', xmlLang: 'fa-IR', text: 'سلام — این صدای فارسی شماست.' },
   { lang: 'ur', voice: 'ur-IN-GulNeural', xmlLang: 'ur-IN', text: 'السلام علیکم — یہ آپ کی اردو آواز ہے۔' },
+  { lang: 'ml', voice: 'ml-IN-SobhanaNeural', xmlLang: 'ml-IN', text: 'നമസ്കാരം — ഇത് നിങ്ങളുടെ മലയാളം ശബ്ദമാണ്.' },
+  { lang: 'mr', voice: 'mr-IN-AarohiNeural', xmlLang: 'mr-IN', text: 'नमस्कार — हा तुमचा मराठी आवाज आहे.' },
+  { lang: 'pa', voice: 'pa-IN-VaaniNeural', xmlLang: 'pa-IN', text: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ — ਇਹ ਤੁਹਾਡੀ ਪੰਜਾਬੀ ਆਵਾਜ਼ ਹੈ।' },
+  { lang: 'or', voice: 'or-IN-SubhasiniNeural', xmlLang: 'or-IN', text: 'ନମସ୍କାର — ଏହା ଆପଣଙ୍କ ଓଡ଼ିଆ ସ୍ୱର।' },
+  { lang: 'si', voice: 'si-LK-ThiliniNeural', xmlLang: 'si-LK', text: 'ආයුබෝවන් — මෙය ඔබේ සිංහල හඬයි.' },
+  { lang: 'ne', voice: 'ne-NP-HemkalaNeural', xmlLang: 'ne-NP', text: 'नमस्ते — यो तपाईंको नेपाली आवाज हो।' },
+  { lang: 'da', voice: 'da-DK-ChristelNeural', xmlLang: 'da-DK', text: 'Hej — det her er din danske stemme.' },
+  { lang: 'nb', voice: 'nb-NO-PernilleNeural', xmlLang: 'nb-NO', text: 'Hei — dette er din norske stemme.' },
+  { lang: 'fi', voice: 'fi-FI-SelmaNeural', xmlLang: 'fi-FI', text: 'Hei — tämä on suomenkielinen äänesi.' },
+  { lang: 'sk', voice: 'sk-SK-ViktoriaNeural', xmlLang: 'sk-SK', text: 'Ahoj — toto je tvoj slovenský hlas.' },
+  { lang: 'hr', voice: 'hr-HR-GabrijelaNeural', xmlLang: 'hr-HR', text: 'Bok — ovo je tvoj hrvatski glas.' },
+  { lang: 'ca', voice: 'ca-ES-JoanaNeural', xmlLang: 'ca-ES', text: 'Hola — aquesta és la teva veu en català.' },
 ]
 
 function escapeXml(s) {

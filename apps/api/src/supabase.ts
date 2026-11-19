@@ -87,6 +87,18 @@ export type ProfileRow = {
   tts_voice_he: string | null
   tts_voice_fa: string | null
   tts_voice_ur: string | null
+  tts_voice_ml: string | null
+  tts_voice_mr: string | null
+  tts_voice_pa: string | null
+  tts_voice_or: string | null
+  tts_voice_si: string | null
+  tts_voice_ne: string | null
+  tts_voice_da: string | null
+  tts_voice_nb: string | null
+  tts_voice_fi: string | null
+  tts_voice_sk: string | null
+  tts_voice_hr: string | null
+  tts_voice_ca: string | null
   /** Cross-device Auto-speak preference. */
   auto_speak: boolean
   /** Primary non-English language (Solo lower / Conversation partner / Cam / brand). */
@@ -150,6 +162,18 @@ function normalizeProfile(data: unknown): ProfileRow {
     tts_voice_he?: string | null
     tts_voice_fa?: string | null
     tts_voice_ur?: string | null
+    tts_voice_ml?: string | null
+    tts_voice_mr?: string | null
+    tts_voice_pa?: string | null
+    tts_voice_or?: string | null
+    tts_voice_si?: string | null
+    tts_voice_ne?: string | null
+    tts_voice_da?: string | null
+    tts_voice_nb?: string | null
+    tts_voice_fi?: string | null
+    tts_voice_sk?: string | null
+    tts_voice_hr?: string | null
+    tts_voice_ca?: string | null
     auto_speak?: boolean | null
     primary_lang?: string | null
     username?: string | null
@@ -201,6 +225,18 @@ function normalizeProfile(data: unknown): ProfileRow {
     'he',
     'fa',
     'ur',
+    'ml',
+    'mr',
+    'pa',
+    'or',
+    'si',
+    'ne',
+    'da',
+    'nb',
+    'fi',
+    'sk',
+    'hr',
+    'ca',
   ] as const
   const primary = (primaryLangs as readonly string[]).includes(row.primary_lang ?? '')
     ? (row.primary_lang as (typeof primaryLangs)[number])
@@ -255,6 +291,18 @@ function normalizeProfile(data: unknown): ProfileRow {
     tts_voice_he: typeof row.tts_voice_he === 'string' ? row.tts_voice_he : null,
     tts_voice_fa: typeof row.tts_voice_fa === 'string' ? row.tts_voice_fa : null,
     tts_voice_ur: typeof row.tts_voice_ur === 'string' ? row.tts_voice_ur : null,
+    tts_voice_ml: typeof row.tts_voice_ml === 'string' ? row.tts_voice_ml : null,
+    tts_voice_mr: typeof row.tts_voice_mr === 'string' ? row.tts_voice_mr : null,
+    tts_voice_pa: typeof row.tts_voice_pa === 'string' ? row.tts_voice_pa : null,
+    tts_voice_or: typeof row.tts_voice_or === 'string' ? row.tts_voice_or : null,
+    tts_voice_si: typeof row.tts_voice_si === 'string' ? row.tts_voice_si : null,
+    tts_voice_ne: typeof row.tts_voice_ne === 'string' ? row.tts_voice_ne : null,
+    tts_voice_da: typeof row.tts_voice_da === 'string' ? row.tts_voice_da : null,
+    tts_voice_nb: typeof row.tts_voice_nb === 'string' ? row.tts_voice_nb : null,
+    tts_voice_fi: typeof row.tts_voice_fi === 'string' ? row.tts_voice_fi : null,
+    tts_voice_sk: typeof row.tts_voice_sk === 'string' ? row.tts_voice_sk : null,
+    tts_voice_hr: typeof row.tts_voice_hr === 'string' ? row.tts_voice_hr : null,
+    tts_voice_ca: typeof row.tts_voice_ca === 'string' ? row.tts_voice_ca : null,
     auto_speak: Boolean(row.auto_speak),
     primary_lang: primary,
   }
@@ -320,6 +368,18 @@ export async function upsertProfilePlan(
       | 'tts_voice_he'
       | 'tts_voice_fa'
       | 'tts_voice_ur'
+      | 'tts_voice_ml'
+      | 'tts_voice_mr'
+      | 'tts_voice_pa'
+      | 'tts_voice_or'
+      | 'tts_voice_si'
+      | 'tts_voice_ne'
+      | 'tts_voice_da'
+      | 'tts_voice_nb'
+      | 'tts_voice_fi'
+      | 'tts_voice_sk'
+      | 'tts_voice_hr'
+      | 'tts_voice_ca'
       | 'auto_speak'
       | 'primary_lang'
       | 'username'
