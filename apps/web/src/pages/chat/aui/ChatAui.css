@@ -529,7 +529,7 @@
   flex-wrap: wrap;
   gap: 0.3rem;
   align-items: center;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.35rem;
 }
 
 .aui-mode {
@@ -538,27 +538,66 @@
   background: var(--ds-canvas);
   color: var(--ds-text-2);
   border-radius: 0.55rem;
-  padding: 0.28rem 0.7rem;
+  padding: 0.28rem 0.65rem;
   font: inherit;
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   transition:
     background 0.18s ease,
     border-color 0.18s ease,
     color 0.18s ease,
+    box-shadow 0.18s ease,
     transform 0.15s ease;
 }
 
-.aui-mode:hover:not(.is-on) {
-  border-color: var(--ds-blue-soft-border);
-  color: var(--ds-blue);
+.aui-mode-icon {
+  flex-shrink: 0;
 }
 
-.aui-mode.is-on {
-  background: var(--ds-text);
-  border-color: var(--ds-text);
-  color: var(--ds-canvas);
+.aui-mode.is-agent:not(.is-on) {
+  color: var(--ds-blue);
+  border-color: color-mix(in srgb, var(--ds-blue) 28%, var(--ds-divider));
+}
+
+.aui-mode.is-ask:not(.is-on) {
+  color: #0f766e;
+  border-color: color-mix(in srgb, #0f766e 28%, var(--ds-divider));
+}
+
+.aui-mode.is-plan:not(.is-on) {
+  color: #b45309;
+  border-color: color-mix(in srgb, #b45309 28%, var(--ds-divider));
+}
+
+.aui-mode:hover:not(.is-on) {
+  transform: translateY(-1px);
+}
+
+.aui-mode.is-agent.is-on {
+  background: var(--ds-blue);
+  border-color: var(--ds-blue);
+  color: #fff;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--ds-blue) 28%, transparent);
+  transform: translateY(-1px);
+}
+
+.aui-mode.is-ask.is-on {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #fff;
+  box-shadow: 0 4px 14px color-mix(in srgb, #0f766e 28%, transparent);
+  transform: translateY(-1px);
+}
+
+.aui-mode.is-plan.is-on {
+  background: #b45309;
+  border-color: #b45309;
+  color: #fff;
+  box-shadow: 0 4px 14px color-mix(in srgb, #b45309 28%, transparent);
   transform: translateY(-1px);
 }
 
@@ -581,7 +620,7 @@
   cursor: not-allowed;
 }
 
-.aui-composer-toggles {
+.aui-tools {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
@@ -589,19 +628,71 @@
   margin-bottom: 0.35rem;
 }
 
+.aui-tools-toggle {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  color: var(--ds-text-2);
+  border-radius: 0.55rem;
+  padding: 0.22rem 0.5rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  letter-spacing: 0.02em;
+}
+
+.aui-tools-toggle .aui-mode-icon,
+.aui-tools-toggle svg {
+  transition: transform 0.18s ease;
+}
+
+.aui-tools.is-expanded .aui-tools-toggle svg {
+  transform: rotate(180deg);
+}
+
 .aui-tools-label {
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ds-text-3);
-  margin-right: 0.1rem;
+  color: inherit;
+}
+
+.aui-tools-count {
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
+  font-size: 0.62rem;
+  font-weight: 700;
+  display: inline-grid;
+  place-items: center;
+}
+
+.aui-composer-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  width: 100%;
+  flex-basis: 100%;
+  margin: 0;
+  animation: aui-rise 0.22s ease both;
 }
 
 .aui-composer-row-wrap {
   position: relative;
   width: 100%;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .aui-at-menu {
@@ -695,11 +786,6 @@
   font-size: 0.68rem;
 }
 
-.aui-attach.is-on {
-  border-color: var(--ds-blue-soft-border);
-  background: var(--ds-blue-soft);
-  color: var(--ds-blue);
-}
 
 .aui-plugins {
   margin: 0 0 0.5rem;
@@ -827,26 +913,55 @@
   margin-left: 0.25rem;
 }
 
-.aui-composer-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.35rem;
-  width: 100%;
-}
-
 .aui-composer-input {
-  flex: 1 1 auto;
-  min-width: 0;
+  display: block;
+  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   resize: none;
   border: 0;
   outline: none;
   background: transparent;
   color: var(--ds-text);
   font: inherit;
+  /* ≥16px on mobile avoids iOS focus-zoom that clips the placeholder column. */
+  font-size: 1rem;
   line-height: 1.45;
   max-height: 8.5rem;
-  padding: 0.45rem 0.25rem;
+  padding: 0.45rem 0.15rem;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  white-space: pre-wrap;
+}
+
+.aui-composer-input::placeholder {
+  color: var(--ds-text-3);
+  opacity: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aui-composer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.aui-composer-toolbar-start,
+.aui-composer-toolbar-end {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.aui-composer-toolbar-end {
+  margin-left: auto;
 }
 
 .aui-send {
@@ -1367,5 +1482,9 @@
 
   .aui-mode.is-on {
     transform: none;
+  }
+
+  .aui-composer-toggles {
+    animation: none;
   }
 }

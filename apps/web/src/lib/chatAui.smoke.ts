@@ -195,6 +195,10 @@ assert.match(thread, /ChatDictateButton/, 'keeps DeepSeek dictate')
 assert.match(thread, /SpeakButton/, 'keeps SpeakButton')
 assert.match(thread, /DeepThink/, 'DeepThink toggle chrome')
 assert.match(thread, /CHAT_COMPOSER_MODES|aui-composer-modes/, 'Agent/Ask/Plan mode picker')
+assert.match(thread, /AgentModeIcon|AskModeIcon|PlanModeIcon/, 'mode icons')
+assert.match(thread, /aui-tools-toggle|toolsExpanded/, 'collapsible Tools')
+assert.match(thread, /aui-composer-toolbar/, 'composer toolbar under full-width input')
+assert.doesNotMatch(thread, /title="Insert @ context/, 'no dedicated @ button')
 assert.match(thread, /ProjectAgentStrip|aui-agent-strip/, 'project agent strip')
 assert.match(thread, /ChatPluginKeysModal/, 'BYOK keys modal')
 assert.match(thread, /Rich layout/, 'rich layout toggle')
@@ -233,8 +237,8 @@ assert.doesNotMatch(
 )
 assert.match(
   thread,
-  /\{\/\* Plugins strip is Plugins-toggle only[\s\S]*\{pluginsOpen \?/,
-  'plugins strip gated on pluginsOpen alone',
+  /\{\/\* Plugins strip is Plugins-toggle only[\s\S]*\{pluginsOpen && toolsExpanded \?/,
+  'plugins strip gated on pluginsOpen (and Tools expanded)',
 )
 assert.match(thread, /is-streaming/, 'streaming markdown caret class')
 assert.match(thread, /EMPTY_SOURCES/, 'stable empty sources sentinel (Object.is loop guard)')

@@ -16,9 +16,12 @@ import {
   CHAT_COMPOSER_MODE_LABEL,
   CHAT_COMPOSER_MODES,
   CHAT_MODE_KEY,
+  CHAT_TOOLS_EXPANDED_KEY,
   normalizeChatComposerMode,
   readChatComposerMode,
+  readChatToolsExpanded,
   writeChatComposerMode,
+  writeChatToolsExpanded,
 } from './chatUiPrefs.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -103,14 +106,39 @@ assert.match(buildInProject, /## Approved plan/)
 assert.match(buildInProject, /## Steps/)
 assert.doesNotMatch(buildPlanBuildPrompt('x', false), /Project Overseer/)
 
+mem.clear()
+assert.equal(CHAT_TOOLS_EXPANDED_KEY, 'yue-deepseek-chat-tools-expanded-v1')
+writeChatToolsExpanded(false)
+assert.equal(localStorage.getItem(CHAT_TOOLS_EXPANDED_KEY), '0')
+assert.equal(readChatToolsExpanded(), false)
+writeChatToolsExpanded(true)
+assert.equal(readChatToolsExpanded(), true)
+
 const thread = readFileSync(join(root, 'pages/chat/aui/ChatAuiThread.tsx'), 'utf8')
 assert.match(thread, /CHAT_COMPOSER_MODES/, 'mode picker in AUI composer')
 assert.match(thread, /aui-composer-modes/, 'mode row class')
+assert.match(thread, /AgentModeIcon|AskModeIcon|PlanModeIcon/, 'mode icons beside labels')
+assert.match(thread, /aui-tools-toggle|toolsExpanded/, 'Tools row collapsible')
+assert.match(thread, /writeChatToolsExpanded/, 'Tools expand state persisted')
 assert.match(thread, /ProjectAgentStrip/, 'in-thread project agent strip')
-assert.match(thread, /AtMentionMenu|aui-at-menu/, '@ context menu')
+assert.match(thread, /AtMentionMenu|aui-at-menu/, '@ context menu from typed @')
+assert.match(thread, /detectAtQuery/, 'typed @ opens mention picker')
+assert.doesNotMatch(
+  thread,
+  /title="Insert @ context/,
+  'no dedicated @ attach button in composer toolbar',
+)
+assert.match(thread, /aui-composer-toolbar/, 'toolbar row under full-width input')
 assert.match(thread, /buildFromPlan/, 'Plan → Build handoff')
 assert.match(thread, /aui-tools-label/, 'DeepThink/Search nested under Tools')
 assert.match(thread, /ChatDictateButton/, 'dictate preserved')
+
+const css = readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8')
+assert.match(css, /\.aui-mode\.is-agent\.is-on/, 'Agent mode distinct active color')
+assert.match(css, /\.aui-mode\.is-ask\.is-on/, 'Ask mode distinct active color')
+assert.match(css, /\.aui-mode\.is-plan\.is-on/, 'Plan mode distinct active color')
+assert.match(css, /\.aui-composer-toolbar/, 'composer toolbar CSS')
+assert.match(css, /\.aui-composer-input[\s\S]*width:\s*100%/, 'input full width')
 
 const runtime = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtime, /chatMode: composerModeRef/, 'mode forwarded to SSE')
@@ -119,6 +147,7 @@ assert.match(runtime, /buildPlanBuildPrompt/, 'Build uses Overseer-leaning promp
 
 const prefs = readFileSync(join(here, 'chatUiPrefs.ts'), 'utf8')
 assert.match(prefs, /CHAT_MODE_KEY/, 'mode key in shared prefs')
+assert.match(prefs, /CHAT_TOOLS_EXPANDED_KEY/, 'tools expand key in shared prefs')
 
 const api = readFileSync(join(here, 'api.ts'), 'utf8')
 assert.match(api, /chatMode/, 'client API sends chatMode')
