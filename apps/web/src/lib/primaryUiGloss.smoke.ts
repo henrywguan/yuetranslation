@@ -51,6 +51,13 @@ function main() {
   assert.equal(primaryGlossHtmlLang('sk'), 'sk-SK')
   assert.equal(primaryGlossHtmlLang('hr'), 'hr-HR')
   assert.equal(primaryGlossHtmlLang('ca'), 'ca-ES')
+  assert.equal(primaryGlossHtmlLang('az'), 'az-AZ')
+  assert.equal(primaryGlossHtmlLang('kk'), 'kk-KZ')
+  assert.equal(primaryGlossHtmlLang('uz'), 'uz-UZ')
+  assert.equal(primaryGlossHtmlLang('bg'), 'bg-BG')
+  assert.equal(primaryGlossHtmlLang('sr'), 'sr-RS')
+  assert.equal(primaryGlossHtmlLang('sw'), 'sw-KE')
+  assert.equal(primaryGlossHtmlLang('af'), 'af-ZA')
   assert.equal(resolvePrimaryUiGloss(ui.modeSolo, 'ta'), undefined)
 
   const solo = ui.modeSolo
