@@ -3,8 +3,6 @@ import {
   AuiIf,
   ComposerPrimitive,
   MessagePrimitive,
-  ThreadListItemPrimitive,
-  ThreadListPrimitive,
   ThreadPrimitive,
   useAui,
   useAuiState,
@@ -224,37 +222,8 @@ function EditComposer() {
   )
 }
 
-/** History list for the shell sidebar (sibling of main under `.ds-chat`). */
-export function ChatAuiSidebar({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <ThreadListPrimitive.Root className="aui-thread-list">
-      <ThreadListPrimitive.New
-        className="aui-new-thread"
-        onClick={() => {
-          onNavigate?.()
-        }}
-      >
-        + New chat
-      </ThreadListPrimitive.New>
-      <ThreadListPrimitive.Items>
-        {() => (
-          <ThreadListItemPrimitive.Root className="aui-thread-item">
-            <ThreadListItemPrimitive.Trigger
-              className="aui-thread-trigger"
-              onClick={() => {
-                onNavigate?.()
-              }}
-            >
-              <ThreadListItemPrimitive.Title />
-            </ThreadListItemPrimitive.Trigger>
-            <ThreadListItemPrimitive.Archive className="aui-thread-archive" title="Archive" />
-            <ThreadListItemPrimitive.Delete className="aui-thread-delete" title="Delete" />
-          </ThreadListItemPrimitive.Root>
-        )}
-      </ThreadListPrimitive.Items>
-    </ThreadListPrimitive.Root>
-  )
-}
+/** @deprecated Phase A Inbox — use `InboxShell` from `pages/chat/inbox/InboxShell`. */
+export { InboxShell as ChatAuiSidebar } from '../inbox/InboxShell'
 
 function ComposerChrome() {
   const aui = useAui()

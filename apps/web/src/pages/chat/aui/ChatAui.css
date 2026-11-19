@@ -58,6 +58,12 @@
   overflow: auto;
 }
 
+/* InboxShell owns scroll inside `.inbox-agents` — nested list should not steal flex. */
+.inbox-agents .aui-thread-list {
+  flex: 0 1 auto;
+  overflow: visible;
+}
+
 .aui-new-thread {
   appearance: none;
   border: 1px solid var(--ds-divider);
@@ -78,7 +84,7 @@
 
 .aui-thread-item {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
   align-items: center;
   gap: 0.2rem;
   border-radius: 0.55rem;
