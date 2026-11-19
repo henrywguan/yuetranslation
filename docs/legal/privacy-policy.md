@@ -16,7 +16,7 @@ We do not currently list a physical mailing address. When we obtain a PO Box or 
 
 ## 1. Who we are
 
-JyutTranslate is a web service for translation and language learning centered on Hong Kong Cantonese (粵語), with additional language pairs and modes that may include Mandarin, Shanghainese, Sichuanese, Tagalog, Mexican and Peninsular Spanish, Vietnamese, and text-only Philippine languages (such as Cebuano, Ilocano, and Bikol Central). Features may include text translation and romanization (for example Jyutping), interactive character breakdown, live speech translation, text-to-speech, camera / document translation, Account Hub preferences, optional Web Push notifications, and **Harbor Quest** (an in-product Cantonese learning voyage at `#/learn`).
+JyutTranslate is a web service for translation and language learning centered on Hong Kong Cantonese (粵語), with additional language pairs and modes that may include Mandarin, Shanghainese, Sichuanese, Tagalog, Mexican and Peninsular Spanish, Vietnamese, text-only Philippine languages (such as Cebuano, Ilocano, and Bikol Central), and text-only Chinese topolects (Hakka, Teochew, and Hokkien / Fujianese). Features may include text translation and romanization (for example Jyutping), interactive character breakdown, live speech translation, text-to-speech, camera / document translation, Account Hub preferences, optional Web Push notifications, and **Harbor Quest** (an in-product Cantonese learning voyage at `#/learn`).
 
 The Service is operated by Henry Guan, doing business as JyutTranslate. This policy applies to consumer use of the Service worldwide, subject to applicable law.
 

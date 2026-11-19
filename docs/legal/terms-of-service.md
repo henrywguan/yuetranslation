@@ -18,7 +18,7 @@ We do not currently list a physical mailing address. When we obtain a PO Box or 
 
 ## 1. The Service
 
-JyutTranslate provides translation and language-learning tools centered on Hong Kong Cantonese (粵語), with additional languages and modes that may include Mandarin, Shanghainese, Sichuanese, Tagalog, Mexican and Peninsular Spanish, Vietnamese, and text-only Philippine languages. Features may include:
+JyutTranslate provides translation and language-learning tools centered on Hong Kong Cantonese (粵語), with additional languages and modes that may include Mandarin, Shanghainese, Sichuanese, Tagalog, Mexican and Peninsular Spanish, Vietnamese, text-only Philippine languages, and text-only Chinese topolects (Hakka, Teochew, Hokkien). Features may include:
 
 - Solo / text translation and romanization (for example Jyutping)
 - Interactive character breakdown (tap-to-learn) and related pedagogy

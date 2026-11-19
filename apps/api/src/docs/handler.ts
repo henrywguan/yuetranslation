@@ -100,6 +100,9 @@ const Lang = z.enum([
   'ceb',
   'ilo',
   'bcl',
+  'hak',
+  'teo',
+  'nan',
 ])
 
 const FileBody = z.object({

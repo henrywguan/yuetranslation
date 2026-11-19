@@ -92,6 +92,9 @@ const ALL: Lang[] = [
   'ceb',
   'ilo',
   'bcl',
+  'hak',
+  'teo',
+  'nan',
 ]
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -112,7 +115,11 @@ assert.deepEqual(
   [...ALL].sort(),
   'Marquee ids match Lang',
 )
-assert.equal(SUPPORTED_LANG_CARDS.filter((c) => !c.voice).length, 3, 'Cebuano / Ilocano / Bikol are Type chips')
+assert.equal(
+  SUPPORTED_LANG_CARDS.filter((c) => !c.voice).length,
+  6,
+  'Cebuano / Ilocano / Bikol / Hakka / Teochew / Hokkien are Type chips',
+)
 
 assert.match(landing, /<LangMarquee/, 'Home hosts the infinite language strip')
 assert.match(tip, /SUPPORTED_LANG_CARDS/, 'Hero tip cycles the same marquee langs')

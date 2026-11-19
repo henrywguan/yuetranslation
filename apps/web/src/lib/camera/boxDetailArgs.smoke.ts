@@ -165,6 +165,9 @@ const CAMERA_LANGS: CameraLang[] = [
   'ceb',
   'ilo',
   'bcl',
+  'hak',
+  'teo',
+  'nan',
 ]
 for (const L of CAMERA_LANGS) {
   assert.equal(normalizeRegionLang(L), L, `normalizeRegionLang(${L})`)
@@ -172,7 +175,16 @@ for (const L of CAMERA_LANGS) {
     id: 'r',
     box: { x: 0, y: 0, w: 0.2, h: 0.1 },
     text: 'src',
-    translated: L === 'yue' || L === 'cmn' || L === 'wuu' || L === 'sichuan' ? '中文' : 'dst',
+    translated:
+      L === 'yue' ||
+      L === 'cmn' ||
+      L === 'wuu' ||
+      L === 'sichuan' ||
+      L === 'hak' ||
+      L === 'teo' ||
+      L === 'nan'
+        ? '中文'
+        : 'dst',
     from: 'en',
     to: L,
     script: 'other',

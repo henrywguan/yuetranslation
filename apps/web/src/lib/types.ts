@@ -1,6 +1,6 @@
 export type VoiceLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'ps' | 'hy' | 'ka' | 'am'
 /** Solo + Cam text translate only — no STT/TTS (Azure has no locales). */
-export type TextOnlyLang = 'ceb' | 'ilo' | 'bcl'
+export type TextOnlyLang = 'ceb' | 'ilo' | 'bcl' | 'hak' | 'teo' | 'nan'
 export type Lang = VoiceLang | TextOnlyLang
 export type Mode = 'solo' | 'conversation' | 'text' | 'camera'
 /** Mic / speak side — never a text-only language. */

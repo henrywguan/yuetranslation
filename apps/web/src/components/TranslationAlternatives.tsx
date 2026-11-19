@@ -3,6 +3,7 @@ import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
 import { SichuaneseText } from './SichuaneseText'
+import { TopolectHanText, topolectHtmlLang, topolectSchemeLabel } from './TopolectHanText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
 import { PeninsularSpanishText } from './PeninsularSpanishText'
@@ -118,6 +119,16 @@ export function TranslationAlternatives({
                 <SichuaneseText
                   text={alt}
                   romanization={alternativeRomanizations?.[i]}
+                  showSchemeLabel={false}
+                  onActivate={onSelect}
+                  activateLabel={`Use variation ${alt} and open details`}
+                />
+              ) : lang === 'hak' || lang === 'teo' || lang === 'nan' ? (
+                <TopolectHanText
+                  text={alt}
+                  romanization={alternativeRomanizations?.[i]}
+                  schemeLabel={topolectSchemeLabel(lang)}
+                  htmlLang={topolectHtmlLang(lang)}
                   showSchemeLabel={false}
                   onActivate={onSelect}
                   activateLabel={`Use variation ${alt} and open details`}

@@ -89,6 +89,9 @@ const LANG_NAMES: Partial<Record<Lang, string>> = {
   ceb: 'Cebuano',
   ilo: 'Ilocano',
   bcl: 'Bikol',
+  hak: 'Hakka',
+  teo: 'Teochew',
+  nan: 'Hokkien',
 }
 
 export function conversationLangName(lang: Lang): string {

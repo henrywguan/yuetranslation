@@ -2,6 +2,7 @@ import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
 import { SichuaneseText } from './SichuaneseText'
+import { TopolectHanText, topolectHtmlLang, topolectSchemeLabel } from './TopolectHanText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
 import { PeninsularSpanishText } from './PeninsularSpanishText'
@@ -56,7 +57,7 @@ export function ResultWithDefinition({
   cantonese?: boolean
   /** When cantonese/display, which variety for ruby / Tagalog / Mexican Spanish + copy. */
   chineseLang?: Lang
-  /** Wugniu when chineseLang is wuu; Sichuanese Pinyin when sichuan. */
+  /** Wugniu when chineseLang is wuu; Sichuanese Pinyin when sichuan; Pha̍k-fa-sṳ / Peng’im / Tâi-lô for hak/teo/nan. */
   romanization?: string
   className?: string
   textClassName?: string
@@ -234,6 +235,15 @@ export function ResultWithDefinition({
               <LangFamilyText
                 lang={chineseLang}
                 text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'hak' || chineseLang === 'teo' || chineseLang === 'nan' ? (
+              <TopolectHanText
+                text={trimmed}
+                romanization={romanization}
+                schemeLabel={topolectSchemeLabel(chineseLang)}
+                htmlLang={topolectHtmlLang(chineseLang)}
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}
               />

@@ -24,12 +24,20 @@ import type { Lang } from '../lib/types'
 
 const AUTO_TRANSLATE_MS = 2000
 const PASTE_MAX_CHARS = 2000
-const HAN_SOURCE_LANGS: Lang[] = ['yue', 'cmn', 'wuu', 'sichuan', 'ja']
+const HAN_SOURCE_LANGS: Lang[] = ['yue', 'cmn', 'wuu', 'sichuan', 'hak', 'teo', 'nan', 'ja']
 
 function isWorthAutoTranslate(value: string, from: Lang): boolean {
   const t = value.trim()
   if (!t) return false
-  if (from === 'yue' || from === 'cmn' || from === 'wuu' || from === 'sichuan') {
+  if (
+    from === 'yue' ||
+    from === 'cmn' ||
+    from === 'wuu' ||
+    from === 'sichuan' ||
+    from === 'hak' ||
+    from === 'teo' ||
+    from === 'nan'
+  ) {
     return /[\u4e00-\u9fff]/.test(t) || t.length >= 2
   }
   const letters = t.replace(/[^\p{L}\p{N}]+/gu, '')
@@ -119,6 +127,9 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
   if (lang === 'bcl') return 'I-type nin Bikol…'
+  if (lang === 'hak') return 'Type Hakka…'
+  if (lang === 'teo') return 'Type Teochew…'
+  if (lang === 'nan') return 'Type Hokkien…'
   if (lang === 'cmn') return ui.soloTapTypeChinese.zh
   return ui.soloTapTypeChinese.zh
 }
@@ -209,7 +220,10 @@ function isRubyDisplayLang(lang: Lang): boolean {
     lang === 'am' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
-    lang === 'bcl'
+    lang === 'bcl' ||
+    lang === 'hak' ||
+    lang === 'teo' ||
+    lang === 'nan'
   )
 }
 
@@ -224,6 +238,9 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'ceb') return 'Type Cebuano'
   if (lang === 'ilo') return 'Type Ilocano'
   if (lang === 'bcl') return 'Type Bikol'
+  if (lang === 'hak') return 'Type Hakka'
+  if (lang === 'teo') return 'Type Teochew'
+  if (lang === 'nan') return 'Type Hokkien'
   if (lang === 'en') return 'Speak English with the mic'
   if (lang === 'tl') return 'Speak Tagalog with the mic'
   if (lang === 'es') return 'Speak Spanish(MX) with the mic'
@@ -397,7 +414,15 @@ export function SoloView() {
     ? yueAlternatives
     : yueAlternatives.length
       ? yueAlternatives
-      : latest && (latest.to === soloLowerLang || latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu' || latest.to === 'sichuan')
+      : latest &&
+          (latest.to === soloLowerLang ||
+            latest.to === 'yue' ||
+            latest.to === 'cmn' ||
+            latest.to === 'wuu' ||
+            latest.to === 'sichuan' ||
+            latest.to === 'hak' ||
+            latest.to === 'teo' ||
+            latest.to === 'nan')
         ? latest.alternatives || []
         : []
 
@@ -686,7 +711,10 @@ export function SoloView() {
         (soloLowerLang === 'yue' ||
           soloLowerLang === 'cmn' ||
           soloLowerLang === 'wuu' ||
-          soloLowerLang === 'sichuan'))
+          soloLowerLang === 'sichuan' ||
+          soloLowerLang === 'hak' ||
+          soloLowerLang === 'teo' ||
+          soloLowerLang === 'nan'))
     openBreakdown(phrase, {
       lang: paneLang,
       translation: other || undefined,
@@ -702,11 +730,21 @@ export function SoloView() {
         .map((d) => defFitsPaneLang(d, paneLang))
         .filter((d): d is string => Boolean(d)),
       romanization:
-        paneLang === 'wuu' || paneLang === 'sichuan' ? latest?.romanization : undefined,
+        paneLang === 'wuu' ||
+        paneLang === 'sichuan' ||
+        paneLang === 'hak' ||
+        paneLang === 'teo' ||
+        paneLang === 'nan'
+          ? latest?.romanization
+          : undefined,
       sandhiHint: paneLang === 'wuu' ? latest?.sandhiHint : undefined,
       ipa: paneLang === 'wuu' ? latest?.ipa : undefined,
       alternativeRomanizations:
-        paneLang === 'wuu' || paneLang === 'sichuan'
+        paneLang === 'wuu' ||
+        paneLang === 'sichuan' ||
+        paneLang === 'hak' ||
+        paneLang === 'teo' ||
+        paneLang === 'nan'
           ? latest?.alternativeRomanizations
           : undefined,
       alternatives:
@@ -817,7 +855,13 @@ export function SoloView() {
             cantonese={lang !== 'en'}
             chineseLang={lang}
             romanization={
-              lang === 'wuu' || lang === 'sichuan' ? latest?.romanization : undefined
+              lang === 'wuu' ||
+              lang === 'sichuan' ||
+              lang === 'hak' ||
+              lang === 'teo' ||
+              lang === 'nan'
+                ? latest?.romanization
+                : undefined
             }
             textClassName="solo-tr-text"
             onActivate={() => openPaneDetails(pane)}
@@ -832,7 +876,11 @@ export function SoloView() {
             <TranslationAlternatives
               alternatives={paneAlts}
               alternativeRomanizations={
-                lang === 'wuu' || lang === 'sichuan'
+                lang === 'wuu' ||
+                lang === 'sichuan' ||
+                lang === 'hak' ||
+                lang === 'teo' ||
+                lang === 'nan'
                   ? latest?.alternativeRomanizations
                   : undefined
               }
@@ -1103,6 +1151,9 @@ export function SoloView() {
               soloLowerLang === 'cmn' ||
               soloLowerLang === 'wuu' ||
               soloLowerLang === 'sichuan' ||
+              soloLowerLang === 'hak' ||
+              soloLowerLang === 'teo' ||
+              soloLowerLang === 'nan' ||
               soloLowerLang === 'tl' ||
               soloLowerLang === 'es' ||
               soloLowerLang === 'eses' ||
@@ -1113,7 +1164,11 @@ export function SoloView() {
                 alternatives={alts}
                 collapsible
                 alternativeRomanizations={
-                  soloLowerLang === 'wuu' || soloLowerLang === 'sichuan'
+                  soloLowerLang === 'wuu' ||
+                  soloLowerLang === 'sichuan' ||
+                  soloLowerLang === 'hak' ||
+                  soloLowerLang === 'teo' ||
+                  soloLowerLang === 'nan'
                     ? latest?.alternativeRomanizations
                     : undefined
                 }

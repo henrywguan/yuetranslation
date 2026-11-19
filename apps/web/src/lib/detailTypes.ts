@@ -91,6 +91,9 @@ export type DetailLayer =
         | 'ceb'
         | 'ilo'
         | 'bcl'
+        | 'hak'
+        | 'teo'
+        | 'nan'
       translation?: string
       definition?: string
       /** Multiple learner senses listed in the details pane / drawer. */
@@ -199,6 +202,9 @@ export type DetailLayer =
         | 'ceb'
         | 'ilo'
         | 'bcl'
+        | 'hak'
+        | 'teo'
+        | 'nan'
       definition?: string
       /** Sense for this character/word when known. */
       sense?: string

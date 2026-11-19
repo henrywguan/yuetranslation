@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'ps' | 'hy' | 'ka' | 'am' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'ps' | 'hy' | 'ka' | 'am' | 'ceb' | 'ilo' | 'bcl' | 'hak' | 'teo' | 'nan'
 
 export type EditableBox = {
   id: string
@@ -21,7 +21,7 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'ps' | 'hy' | 'ka' | 'am' | 'ceb' | 'ilo' | 'bcl'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'ps' | 'hy' | 'ka' | 'am' | 'ceb' | 'ilo' | 'bcl' | 'hak' | 'teo' | 'nan'
 
 /** Product CameraLang codes — identity map for server `to` / `from` values. */
 const CAMERA_LANG_SET = new Set<string>([
@@ -111,6 +111,9 @@ const CAMERA_LANG_SET = new Set<string>([
   'ceb',
   'ilo',
   'bcl',
+  'hak',
+  'teo',
+  'nan',
 ])
 
 /**
@@ -256,7 +259,15 @@ export function clampBox(box: CameraBox): CameraBox {
 const HAN_RE = /[\u3400-\u9fff]/
 
 function isChineseCam(lang: CameraLang): boolean {
-  return lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan'
+  return (
+    lang === 'yue' ||
+    lang === 'cmn' ||
+    lang === 'wuu' ||
+    lang === 'sichuan' ||
+    lang === 'hak' ||
+    lang === 'teo' ||
+    lang === 'nan'
+  )
 }
 
 /** Latin non-Chinese Cam targets: translation is the Details subject; English is the hint. */
@@ -466,6 +477,9 @@ export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'ceb') return 'ceb'
   if (box.to === 'ilo') return 'ilo'
   if (box.to === 'bcl') return 'bcl'
+  if (box.to === 'hak') return 'hak'
+  if (box.to === 'teo') return 'teo'
+  if (box.to === 'nan') return 'nan'
   if (box.to === 'en') return 'en'
   return HAN_RE.test(box.translated || box.text) ? 'yue' : 'en'
 }

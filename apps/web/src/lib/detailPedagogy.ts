@@ -11,6 +11,9 @@ export type DetailPronField =
   | 'accented'
   | 'wugniu'
   | 'sichuanese'
+  | 'phakfasu'
+  | 'pengim'
+  | 'tailo'
   | 'none'
 
 export type DetailPedagogy = {
@@ -778,6 +781,30 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     defaultGlossLang: 'bcl',
     rubyTitle: false,
     localOffline: true,
+    extraPanels: [],
+  },
+  hak: {
+    htmlLang: 'hak',
+    pronField: 'phakfasu',
+    defaultGlossLang: 'hak',
+    rubyTitle: true,
+    localOffline: false,
+    extraPanels: [],
+  },
+  teo: {
+    htmlLang: 'zh-CN-teo',
+    pronField: 'pengim',
+    defaultGlossLang: 'teo',
+    rubyTitle: true,
+    localOffline: false,
+    extraPanels: [],
+  },
+  nan: {
+    htmlLang: 'nan-CN',
+    pronField: 'tailo',
+    defaultGlossLang: 'nan',
+    rubyTitle: true,
+    localOffline: false,
     extraPanels: [],
   },
 }

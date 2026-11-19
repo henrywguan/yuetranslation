@@ -98,4 +98,7 @@ export const SUPPORTED_LANG_CARDS: SupportedLangCard[] = [
   { id: 'ceb', mark: 'Ceb', en: 'Cebuano', native: 'Binisaya', voice: false, flag: '🇵🇭' },
   { id: 'ilo', mark: 'Ilo', en: 'Ilocano', native: 'Ilokano', voice: false, flag: '🇵🇭' },
   { id: 'bcl', mark: 'Bcl', en: 'Bikol (Central)', native: 'Bikol Sentral', voice: false, flag: '🇵🇭' },
+  { id: 'hak', mark: '客', en: 'Hakka', native: '客家話', voice: false, flag: '🇨🇳' },
+  { id: 'teo', mark: '潮', en: 'Teochew', native: '潮州話', voice: false, flag: '🇨🇳' },
+  { id: 'nan', mark: '閩', en: 'Hokkien (Fujianese)', native: '閩南語', voice: false, flag: '🇨🇳' },
 ]

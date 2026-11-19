@@ -90,6 +90,9 @@ export type DocLang =
   | 'ceb'
   | 'ilo'
   | 'bcl'
+  | 'hak'
+  | 'teo'
+  | 'nan'
 
 export type DocFileResult = {
   filename: string
