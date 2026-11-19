@@ -99,6 +99,13 @@ function langPlaceholder(lang: Lang): string {
   if (lang === 'sk') return ui.dirSlovak.en
   if (lang === 'hr') return ui.dirCroatian.en
   if (lang === 'ca') return ui.dirCatalan.en
+  if (lang === 'az') return ui.dirAzerbaijani.en
+  if (lang === 'kk') return ui.dirKazakh.en
+  if (lang === 'uz') return ui.dirUzbek.en
+  if (lang === 'bg') return ui.dirBulgarian.en
+  if (lang === 'sr') return ui.dirSerbian.en
+  if (lang === 'sw') return ui.dirSwahili.en
+  if (lang === 'af') return ui.dirAfrikaans.en
   if (lang === 'cmn') return ui.dirMandarin.zh
   if (lang === 'wuu') return ui.dirShanghainese.zh
   if (lang === 'sichuan') return ui.dirSichuanese.zh

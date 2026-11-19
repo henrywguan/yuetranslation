@@ -82,6 +82,13 @@ export function createWebSpeechSession(
   let skLocaleIndex = 0
   let hrLocaleIndex = 0
   let caLocaleIndex = 0
+  let azLocaleIndex = 0
+  let kkLocaleIndex = 0
+  let uzLocaleIndex = 0
+  let bgLocaleIndex = 0
+  let srLocaleIndex = 0
+  let swLocaleIndex = 0
+  let afLocaleIndex = 0
   const bilingualYueEn = Boolean(opts?.bilingualYueEn)
   const echo = createEchoGuard()
   const apple = isAppleTouchDevice()
@@ -144,6 +151,13 @@ export function createWebSpeechSession(
   const skLocales = ['sk-SK', 'sk']
   const hrLocales = ['hr-HR', 'hr']
   const caLocales = ['ca-ES', 'ca']
+  const azLocales = ['az-AZ', 'az']
+  const kkLocales = ['kk-KZ', 'kk']
+  const uzLocales = ['uz-UZ', 'uz']
+  const bgLocales = ['bg-BG', 'bg']
+  const srLocales = ['sr-RS', 'sr']
+  const swLocales = ['sw-KE', 'sw']
+  const afLocales = ['af-ZA', 'af']
 
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
   const cmnLocale = () => cmnLocales[cmnLocaleIndex % cmnLocales.length]
@@ -200,6 +214,13 @@ export function createWebSpeechSession(
   const skLocale = () => skLocales[skLocaleIndex % skLocales.length]
   const hrLocale = () => hrLocales[hrLocaleIndex % hrLocales.length]
   const caLocale = () => caLocales[caLocaleIndex % caLocales.length]
+  const azLocale = () => azLocales[azLocaleIndex % azLocales.length]
+  const kkLocale = () => kkLocales[kkLocaleIndex % kkLocales.length]
+  const uzLocale = () => uzLocales[uzLocaleIndex % uzLocales.length]
+  const bgLocale = () => bgLocales[bgLocaleIndex % bgLocales.length]
+  const srLocale = () => srLocales[srLocaleIndex % srLocales.length]
+  const swLocale = () => swLocales[swLocaleIndex % swLocales.length]
+  const afLocale = () => afLocales[afLocaleIndex % afLocales.length]
 
   const resolveRecLang = (): string => {
     if (bilingualYueEn && activeLang === 'en') return 'en-US'
@@ -258,6 +279,13 @@ export function createWebSpeechSession(
     if (activeLang === 'sk') return skLocale()
     if (activeLang === 'hr') return hrLocale()
     if (activeLang === 'ca') return caLocale()
+    if (activeLang === 'az') return azLocale()
+    if (activeLang === 'kk') return kkLocale()
+    if (activeLang === 'uz') return uzLocale()
+    if (activeLang === 'bg') return bgLocale()
+    if (activeLang === 'sr') return srLocale()
+    if (activeLang === 'sw') return swLocale()
+    if (activeLang === 'af') return afLocale()
     return 'en-US'
   }
 
@@ -585,6 +613,41 @@ export function createWebSpeechSession(
         queueMicrotask(() => startOne())
         return
       }
+      if (localeRejected && activeLang === 'az' && azLocaleIndex < azLocales.length - 1) {
+        azLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'kk' && kkLocaleIndex < kkLocales.length - 1) {
+        kkLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'uz' && uzLocaleIndex < uzLocales.length - 1) {
+        uzLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'bg' && bgLocaleIndex < bgLocales.length - 1) {
+        bgLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'sr' && srLocaleIndex < srLocales.length - 1) {
+        srLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'sw' && swLocaleIndex < swLocales.length - 1) {
+        swLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'af' && afLocaleIndex < afLocales.length - 1) {
+        afLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
       if (e.error === 'not-allowed') {
         stopped = true
         handlers.onError('Microphone permission denied. Allow mic access and try again.')
@@ -714,6 +777,13 @@ export function createWebSpeechSession(
       skLocaleIndex = 0
       hrLocaleIndex = 0
       caLocaleIndex = 0
+      azLocaleIndex = 0
+      kkLocaleIndex = 0
+      uzLocaleIndex = 0
+      bgLocaleIndex = 0
+      srLocaleIndex = 0
+      swLocaleIndex = 0
+      afLocaleIndex = 0
       startOne()
     },
     async stop() {

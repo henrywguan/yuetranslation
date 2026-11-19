@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'ceb' | 'ilo' | 'bcl'
 
 export type EditableBox = {
   id: string
@@ -21,7 +21,7 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'ceb' | 'ilo' | 'bcl'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'ceb' | 'ilo' | 'bcl'
 
 /** Product CameraLang codes — identity map for server `to` / `from` values. */
 const CAMERA_LANG_SET = new Set<string>([
@@ -81,6 +81,13 @@ const CAMERA_LANG_SET = new Set<string>([
   'sk',
   'hr',
   'ca',
+  'az',
+  'kk',
+  'uz',
+  'bg',
+  'sr',
+  'sw',
+  'af',
   'ceb',
   'ilo',
   'bcl',
@@ -152,6 +159,13 @@ export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (l.startsWith('sk')) return 'sk'
   if (l.startsWith('hr')) return 'hr'
   if (l === 'ca' || l.startsWith('ca-')) return 'ca'
+  if (l === 'az' || l.startsWith('az-')) return 'az'
+  if (l === 'kk' || l.startsWith('kk-')) return 'kk'
+  if (l === 'uz' || l.startsWith('uz-')) return 'uz'
+  if (l === 'bg' || l.startsWith('bg-')) return 'bg'
+  if (l === 'sr' || l.startsWith('sr-')) return 'sr'
+  if (l === 'sw' || l.startsWith('sw-')) return 'sw'
+  if (l === 'af' || l.startsWith('af-')) return 'af'
   if (l.startsWith('en')) return 'en'
   if (l.startsWith('wuu')) return 'wuu'
   if (l.startsWith('zh-cn') || l.includes('cmn') || l.includes('hans')) return 'cmn'
@@ -232,6 +246,10 @@ const LATIN_DETAIL_CAM_LANGS = [
   'sk',
   'hr',
   'ca',
+  'az',
+  'uz',
+  'sw',
+  'af',
   'ceb',
   'ilo',
   'bcl',
@@ -243,7 +261,7 @@ function isLatinDetailCam(lang: CameraLang): lang is LatinDetailCamLang {
 }
 
 /** Own-script Cam targets (not Latin, not Han primary) — same detail dispatch shape. */
-const SCRIPT_DETAIL_CAM_LANGS = ['th', 'lo', 'ko', 'ja', 'hi', 'km', 'my', 'ar', 'arsa', 'ta', 'bn', 'te', 'gu', 'kn', 'el', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne'] as const
+const SCRIPT_DETAIL_CAM_LANGS = ['th', 'lo', 'ko', 'ja', 'hi', 'km', 'my', 'ar', 'arsa', 'ta', 'bn', 'te', 'gu', 'kn', 'el', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'kk', 'bg', 'sr'] as const
 type ScriptDetailCamLang = (typeof SCRIPT_DETAIL_CAM_LANGS)[number]
 
 function isScriptDetailCam(lang: CameraLang): lang is ScriptDetailCamLang {
@@ -365,6 +383,13 @@ export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'sk') return 'sk'
   if (box.to === 'hr') return 'hr'
   if (box.to === 'ca') return 'ca'
+  if (box.to === 'az') return 'az'
+  if (box.to === 'kk') return 'kk'
+  if (box.to === 'uz') return 'uz'
+  if (box.to === 'bg') return 'bg'
+  if (box.to === 'sr') return 'sr'
+  if (box.to === 'sw') return 'sw'
+  if (box.to === 'af') return 'af'
   if (box.to === 'ceb') return 'ceb'
   if (box.to === 'ilo') return 'ilo'
   if (box.to === 'bcl') return 'bcl'

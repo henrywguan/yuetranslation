@@ -690,6 +690,90 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     friendLooksHere: 'El teu amic mira cap a aquest costat',
     holdFacingYou: 'Sosté el telèfon de cara a tu',
   },
+  az: {
+    htmlLang: 'az-AZ',
+    mic: {
+      holdOrTapToSpeak: 'Danışmaq üçün basıb saxlayın və ya toxunun',
+      releaseWhenDone: 'Dinləyirəm — bitirəndə buraxın',
+      tapListening: 'Dinləyirəm — fasilə verin və ya dayandırmaq üçün yenidən toxunun',
+      speaking: 'Danışıram…',
+      translating: 'Tərcümə edirəm…',
+    },
+    friendLooksHere: 'Dostunuz bu tərəfə baxır',
+    holdFacingYou: 'Telefonu özünüzə tərəf tutun',
+  },
+  kk: {
+    htmlLang: 'kk-KZ',
+    mic: {
+      holdOrTapToSpeak: 'Сөйлеу үшін басып тұрыңыз немесе түртіңіз',
+      releaseWhenDone: 'Тыңдап тұрмын — аяқтаған соң жіберіңіз',
+      tapListening: 'Тыңдап тұрмын — үзіліс жасаңыз немесе тоқтату үшін қайта түртіңіз',
+      speaking: 'Сөйлеп жатырмын…',
+      translating: 'Аударып жатырмын…',
+    },
+    friendLooksHere: 'Сіздің досыңыз осы жаққа қарап тұр',
+    holdFacingYou: 'Телефонды өзіңізге қаратып ұстаңыз',
+  },
+  uz: {
+    htmlLang: 'uz-UZ',
+    mic: {
+      holdOrTapToSpeak: 'Gapirish uchun bosib turing yoki bosing',
+      releaseWhenDone: 'Tinglayapman — tugatgach qo‘yib yuboring',
+      tapListening: 'Tinglayapman — to‘xtab turing yoki to‘xtatish uchun yana bosing',
+      speaking: 'Gapiryapman…',
+      translating: 'Tarjima qilyapman…',
+    },
+    friendLooksHere: 'Do‘stingiz shu tomonga qarayapti',
+    holdFacingYou: 'Telefonni o‘zingizga qaratib ushlang',
+  },
+  bg: {
+    htmlLang: 'bg-BG',
+    mic: {
+      holdOrTapToSpeak: 'Задръжте или докоснете, за да говорите',
+      releaseWhenDone: 'Слушам — пуснете, когато приключите',
+      tapListening: 'Слушам — направете пауза или докоснете отново, за да спрете',
+      speaking: 'Говоря…',
+      translating: 'Превеждам…',
+    },
+    friendLooksHere: 'Вашият събеседник гледа от тази страна',
+    holdFacingYou: 'Дръжте телефона с екрана към себе си',
+  },
+  sr: {
+    htmlLang: 'sr-Cyrl-RS',
+    mic: {
+      holdOrTapToSpeak: 'Држите или додирните да говорите',
+      releaseWhenDone: 'Слушам — пустите кад завршите',
+      tapListening: 'Слушам — направите паузу или поново додирните да зауставите',
+      speaking: 'Говорим…',
+      translating: 'Преводим…',
+    },
+    friendLooksHere: 'Ваш пријатељ гледа са ове стране',
+    holdFacingYou: 'Држите телефон окренут ка себи',
+  },
+  sw: {
+    htmlLang: 'sw-KE',
+    mic: {
+      holdOrTapToSpeak: 'Shikilia au gusa ili uzungumze',
+      releaseWhenDone: 'Nasikiliza — achia ukimaliza',
+      tapListening: 'Nasikiliza — nyamaza kidogo au gusa tena ili kusimamisha',
+      speaking: 'Naongea…',
+      translating: 'Natafsiri…',
+    },
+    friendLooksHere: 'Rafiki yako anatazama upande huu',
+    holdFacingYou: 'Shikilia simu ikikuelekea',
+  },
+  af: {
+    htmlLang: 'af-ZA',
+    mic: {
+      holdOrTapToSpeak: 'Hou ingedruk of tik om te praat',
+      releaseWhenDone: 'Luister — los wanneer jy klaar is',
+      tapListening: 'Luister — maak ’n pouse of tik weer om te stop',
+      speaking: 'Praat…',
+      translating: 'Vertaal…',
+    },
+    friendLooksHere: 'Jou vriend kyk van hierdie kant af',
+    holdFacingYou: 'Hou die foon na jou toe gedraai',
+  },
 }
 
 

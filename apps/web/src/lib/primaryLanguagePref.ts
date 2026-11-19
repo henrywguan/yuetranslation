@@ -65,6 +65,13 @@ export const PRIMARY_LANGS = [
   'sk',
   'hr',
   'ca',
+  'az',
+  'kk',
+  'uz',
+  'bg',
+  'sr',
+  'sw',
+  'af',
 ] as const satisfies readonly VoiceLang[]
 export type PrimaryLang = (typeof PRIMARY_LANGS)[number]
 
@@ -523,6 +530,48 @@ export function primaryLangLabel(lang: PrimaryLang): {
         zh: '加泰隆尼亞文語言工具',
         gloss: 'Eina lingüística en català',
       }
+    case 'az':
+      return {
+        en: 'Azerbaijani Language Tool',
+        zh: '亞塞拜然文語言工具',
+        gloss: 'Dil aləti',
+      }
+    case 'kk':
+      return {
+        en: 'Kazakh Language Tool',
+        zh: '哈薩克文語言工具',
+        gloss: 'Тіл құралы',
+      }
+    case 'uz':
+      return {
+        en: 'Uzbek Language Tool',
+        zh: '烏茲別克文語言工具',
+        gloss: 'Til vositasi',
+      }
+    case 'bg':
+      return {
+        en: 'Bulgarian Language Tool',
+        zh: '保加利亞文語言工具',
+        gloss: 'Езиков инструмент',
+      }
+    case 'sr':
+      return {
+        en: 'Serbian Language Tool',
+        zh: '塞爾維亞文語言工具',
+        gloss: 'Језички алат',
+      }
+    case 'sw':
+      return {
+        en: 'Swahili Language Tool',
+        zh: '斯瓦希里文語言工具',
+        gloss: 'Zana ya Lugha',
+      }
+    case 'af':
+      return {
+        en: 'Afrikaans Language Tool',
+        zh: '南非荷蘭文語言工具',
+        gloss: 'Taalgereedskap',
+      }
     case 'yue':
     default:
       return {
@@ -645,6 +694,20 @@ export function primaryLangShortCopy(lang: PrimaryLang): { en: string; zh: strin
       return { en: 'Croatian', zh: '克羅地亞文' }
     case 'ca':
       return { en: 'Catalan', zh: '加泰隆尼亞文' }
+    case 'az':
+      return { en: 'Azerbaijani', zh: '亞塞拜然文' }
+    case 'kk':
+      return { en: 'Kazakh', zh: '哈薩克文' }
+    case 'uz':
+      return { en: 'Uzbek', zh: '烏茲別克文' }
+    case 'bg':
+      return { en: 'Bulgarian', zh: '保加利亞文' }
+    case 'sr':
+      return { en: 'Serbian', zh: '塞爾維亞文' }
+    case 'sw':
+      return { en: 'Swahili', zh: '斯瓦希里文' }
+    case 'af':
+      return { en: 'Afrikaans', zh: '南非荷蘭文' }
     case 'yue':
     default:
       return { en: 'Cantonese', zh: '粵語' }

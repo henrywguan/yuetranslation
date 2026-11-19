@@ -127,6 +127,20 @@ export function primaryGlossHtmlLang(lang: PrimaryLang): string {
       return 'hr-HR'
     case 'ca':
       return 'ca-ES'
+    case 'az':
+      return 'az-AZ'
+    case 'kk':
+      return 'kk-KZ'
+    case 'uz':
+      return 'uz-UZ'
+    case 'bg':
+      return 'bg-BG'
+    case 'sr':
+      return 'sr-RS'
+    case 'sw':
+      return 'sw-KE'
+    case 'af':
+      return 'af-ZA'
     case 'cmn':
       return 'zh-Latn'
     case 'wuu':

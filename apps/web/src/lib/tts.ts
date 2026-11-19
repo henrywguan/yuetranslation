@@ -4,7 +4,7 @@ import type { PartnerPerformance } from './practicePartnerPerformance'
 import { ensureSharedAudioContext } from './audioReactive'
 import { isAppleTouchDevice } from './mediaAccess'
 import type { Lang } from './types'
-import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalEsesVoice, readLocalViVoice, readLocalThVoice, readLocalLoVoice, readLocalKoVoice, readLocalJaVoice, readLocalIdVoice, readLocalMsVoice, readLocalPtVoice, readLocalFrVoice, readLocalHiVoice, readLocalKmVoice, readLocalMyVoice, readLocalJvVoice, readLocalItVoice, readLocalDeVoice, readLocalNlVoice, readLocalArVoice, readLocalArsaVoice, readLocalTaVoice, readLocalPtptVoice, readLocalTrVoice, readLocalBnVoice, readLocalTeVoice, readLocalGuVoice, readLocalKnVoice, readLocalPlVoice, readLocalRoVoice, readLocalCsVoice, readLocalElVoice, readLocalHuVoice, readLocalSvVoice, readLocalRuVoice, readLocalUkVoice, readLocalHeVoice, readLocalFaVoice, readLocalUrVoice, readLocalMlVoice, readLocalMrVoice, readLocalPaVoice, readLocalOrVoice, readLocalSiVoice, readLocalNeVoice, readLocalDaVoice, readLocalNbVoice, readLocalFiVoice, readLocalSkVoice, readLocalHrVoice, readLocalCaVoice, readLocalYueVoice } from './ttsVoices'
+import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalEsesVoice, readLocalViVoice, readLocalThVoice, readLocalLoVoice, readLocalKoVoice, readLocalJaVoice, readLocalIdVoice, readLocalMsVoice, readLocalPtVoice, readLocalFrVoice, readLocalHiVoice, readLocalKmVoice, readLocalMyVoice, readLocalJvVoice, readLocalItVoice, readLocalDeVoice, readLocalNlVoice, readLocalArVoice, readLocalArsaVoice, readLocalTaVoice, readLocalPtptVoice, readLocalTrVoice, readLocalBnVoice, readLocalTeVoice, readLocalGuVoice, readLocalKnVoice, readLocalPlVoice, readLocalRoVoice, readLocalCsVoice, readLocalElVoice, readLocalHuVoice, readLocalSvVoice, readLocalRuVoice, readLocalUkVoice, readLocalHeVoice, readLocalFaVoice, readLocalUrVoice, readLocalMlVoice, readLocalMrVoice, readLocalPaVoice, readLocalOrVoice, readLocalSiVoice, readLocalNeVoice, readLocalDaVoice, readLocalNbVoice, readLocalFiVoice, readLocalSkVoice, readLocalHrVoice, readLocalCaVoice, readLocalAzVoice, readLocalKkVoice, readLocalUzVoice, readLocalBgVoice, readLocalSrVoice, readLocalSwVoice, readLocalAfVoice, readLocalYueVoice } from './ttsVoices'
 
 /** Practice Partner / fill-the-room — HTML volume caps at 1; Web Audio can go higher. */
 const LOUD_PLAYBACK_GAIN = 1.85
@@ -449,6 +449,13 @@ function browserLangTag(lang: Lang): string {
   if (lang === 'sk') return 'sk-SK'
   if (lang === 'hr') return 'hr-HR'
   if (lang === 'ca') return 'ca-ES'
+  if (lang === 'az') return 'az-AZ'
+  if (lang === 'kk') return 'kk-KZ'
+  if (lang === 'uz') return 'uz-UZ'
+  if (lang === 'bg') return 'bg-BG'
+  if (lang === 'sr') return 'sr-RS'
+  if (lang === 'sw') return 'sw-KE'
+  if (lang === 'af') return 'af-ZA'
   return 'en-US'
 }
 
@@ -579,6 +586,13 @@ function preferredVoiceFor(lang: Lang, override?: string | null): string | null 
   if (lang === 'sk') return readLocalSkVoice()
   if (lang === 'hr') return readLocalHrVoice()
   if (lang === 'ca') return readLocalCaVoice()
+  if (lang === 'az') return readLocalAzVoice()
+  if (lang === 'kk') return readLocalKkVoice()
+  if (lang === 'uz') return readLocalUzVoice()
+  if (lang === 'bg') return readLocalBgVoice()
+  if (lang === 'sr') return readLocalSrVoice()
+  if (lang === 'sw') return readLocalSwVoice()
+  if (lang === 'af') return readLocalAfVoice()
   return readLocalYueVoice()
 }
 

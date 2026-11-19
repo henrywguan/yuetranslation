@@ -513,6 +513,69 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     localOffline: true,
     extraPanels: [],
   },
+  az: {
+    // Azerbaijani Latin orthography (ə ç ğ ı ö ş ü); sən / siz chip in Details.
+    htmlLang: 'az-AZ',
+    pronField: 'accented',
+    defaultGlossLang: 'az',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  kk: {
+    // Kazakh Cyrillic only on compact (ә ғ қ ң ө ұ ү һ і); Latin reading + сен/сіз in Details. Never Russian.
+    htmlLang: 'kk-KZ',
+    pronField: 'accented',
+    defaultGlossLang: 'kk',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  uz: {
+    // Uzbek Latin orthography (o‘ g‘ sh ch ng) — never Cyrillic; sen / siz chip in Details.
+    htmlLang: 'uz-UZ',
+    pronField: 'accented',
+    defaultGlossLang: 'uz',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  bg: {
+    // Bulgarian Cyrillic only on compact; Streamlined System reading + ти/Вие in Details. Never Russian.
+    htmlLang: 'bg-BG',
+    pronField: 'accented',
+    defaultGlossLang: 'bg',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  sr: {
+    // Serbian Cyrillic only (never Latin); ти / Ви chip in Details, no Latin reading line.
+    htmlLang: 'sr-Cyrl-RS',
+    pronField: 'accented',
+    defaultGlossLang: 'sr',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  sw: {
+    // Swahili Latin orthography; wewe / nyinyi chip in Details.
+    htmlLang: 'sw-KE',
+    pronField: 'accented',
+    defaultGlossLang: 'sw',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  af: {
+    // Afrikaans Latin orthography; jy / u chip in Details.
+    htmlLang: 'af-ZA',
+    pronField: 'accented',
+    defaultGlossLang: 'af',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
   ceb: {
     htmlLang: 'ceb',
     pronField: 'accented',

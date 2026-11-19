@@ -3,7 +3,7 @@ import type { EuroLang } from './euroPedagogy'
 import type { CyrillicLang } from './cyrillicPedagogy'
 import type { RtlFamilyLang } from './rtlPedagogy'
 
-/** Batch 2–3a voice languages rendered by `LangFamilyText` (one renderer per script family). */
+/** Batch 2–3b voice languages rendered by `LangFamilyText` (one renderer per script family). */
 export type LangFamilyLang = IndicLang | EuroLang | CyrillicLang | RtlFamilyLang
 
 export function isIndicFamilyLang(lang: string | null | undefined): lang is IndicLang {
@@ -33,12 +33,16 @@ export function isEuroFamilyLang(lang: string | null | undefined): lang is EuroL
     lang === 'fi' ||
     lang === 'sk' ||
     lang === 'hr' ||
-    lang === 'ca'
+    lang === 'ca' ||
+    lang === 'az' ||
+    lang === 'uz' ||
+    lang === 'sw' ||
+    lang === 'af'
   )
 }
 
 export function isCyrillicFamilyLang(lang: string | null | undefined): lang is CyrillicLang {
-  return lang === 'ru' || lang === 'uk'
+  return lang === 'ru' || lang === 'uk' || lang === 'kk' || lang === 'bg' || lang === 'sr'
 }
 
 export function isRtlFamilyLang(lang: string | null | undefined): lang is RtlFamilyLang {

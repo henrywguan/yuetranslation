@@ -345,6 +345,39 @@ export function sanitizeCaTranslation(text: string | null | undefined): string |
   return sanitizeViTranslation(text)
 }
 
+/** Reject EN→Azerbaijani payloads that are not Latin-script (no Cyrillic / Arabic-script main line). */
+export function sanitizeAzTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[A-Za-z\u00C0-\u024F]/, /[\u0400-\u04FF\u0600-\u06FF]/)
+}
+
+/** Reject EN→Kazakh payloads missing Cyrillic (no Latin / Arabic-script main line). */
+export function sanitizeKkTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0400-\u04FF]/, /[\u0600-\u06FF]/)
+}
+
+/** Reject EN→Uzbek payloads that are not Latin-script (no Cyrillic / Arabic-script main line). */
+export function sanitizeUzTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[A-Za-z\u00C0-\u024F]/, /[\u0400-\u04FF\u0600-\u06FF]/)
+}
+
+/** Reject EN→Bulgarian payloads missing Cyrillic or carrying Russian-only letters (ы э ё). */
+export function sanitizeBgTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0400-\u04FF]/, /[ЫыЭэЁё]/)
+}
+
+/** Reject EN→Serbian payloads missing Cyrillic — Latin Serbian (č ć š ž đ) is never the main line. */
+export function sanitizeSrTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0400-\u04FF]/, /[ЫыЭэЁёЪъЇїЄєҐґčćšžđČĆŠŽĐ]/)
+}
+
+export function sanitizeSwTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+export function sanitizeAfTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
 /** Reject EN→Turkish Latin payloads that are empty, glossy, or still Chinese. */
 export function sanitizeTrTranslation(text: string | null | undefined): string | null {
   return sanitizeViTranslation(text)
