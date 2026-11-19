@@ -139,6 +139,13 @@ assert.doesNotMatch(shell, /ProjectDraftPanel/, 'no draft new-project panel (aut
 assert.match(shell, /createAndFocusProject|Overseer chat only/, 'New Project opens Overseer')
 assert.match(shell, /createChatSandbox/, 'Inbox creates internal sandboxes via API')
 assert.match(shell, /All Agents|needs_attention|in_review/, 'tile filter ids used')
+assert.match(shell, /inboxSecondaryDefaultOpen|max-width: 899px/, 'narrow/short drawers collapse secondary')
+assert.match(shell, /\+ New chat/, 'single primary New chat CTA')
+assert.match(
+  shell,
+  /user expands stay open|Initial open only/,
+  'collapse defaults do not force-close after user expands',
+)
 
 const archiveList = readFileSync(join(root, 'pages/chat/inbox/ArchiveList.tsx'), 'utf8')
 assert.match(archiveList, /Restore/, 'archive restore control')
@@ -147,6 +154,17 @@ assert.match(archiveList, /UnarchiveIcon|DeleteIcon/, 'archive row action icons'
 const projectList = readFileSync(join(root, 'pages/chat/inbox/ProjectList.tsx'), 'utf8')
 assert.match(projectList, /onRename/, 'project list rename prop')
 assert.match(projectList, /onDoubleClick/, 'double-click renames project')
+
+const workspaceList = readFileSync(join(root, 'pages/chat/inbox/WorkspaceList.tsx'), 'utf8')
+assert.match(workspaceList, /inbox-ws-menu/, 'workspaces + opens create menu')
+assert.match(workspaceList, /Local folder/, 'local create still available')
+assert.match(workspaceList, /GitHub repo/, 'github create still available')
+assert.match(workspaceList, /Internal sandbox/, 'internal sandbox create still available')
+assert.doesNotMatch(
+  workspaceList,
+  /className="inbox-new-chat"[\s\S]*Local folder|className="inbox-new-chat"[\s\S]*GitHub repo/,
+  'no full-width Local/GitHub CTAs competing with New chat',
+)
 
 const icons = readFileSync(join(root, 'pages/chat/inbox/InboxIcons.tsx'), 'utf8')
 assert.match(icons, /function ArchiveIcon/, 'ArchiveIcon exported')
@@ -157,6 +175,19 @@ const inboxCss = readFileSync(join(root, 'pages/chat/inbox/Inbox.css'), 'utf8')
 assert.match(inboxCss, /\.inbox-scroll/, 'inbox body scrolls inside drawer')
 assert.match(inboxCss, /\.inbox-band/, 'horizontal separators between Inbox bands')
 assert.match(inboxCss, /\.inbox-project-panel[\s\S]*max-height/, 'project panel capped inside drawer')
+assert.match(inboxCss, /\.inbox-band\s*\{[^}]*flex-shrink:\s*0/, 'bands do not shrink under neighbors')
+assert.match(
+  inboxCss,
+  /\.inbox-section-head\s*\{[^}]*flex-shrink:\s*0/,
+  'section headers stay content-sized',
+)
+assert.match(inboxCss, /\.inbox-new-chat\s*\{[^}]*flex-shrink:\s*0/, 'primary CTAs do not shrink')
+assert.match(inboxCss, /\.inbox-ws-menu/, 'workspace create menu styles')
+assert.match(
+  inboxCss,
+  /@media \(max-width: 899px\),\s*\(max-height: 720px\)/,
+  'mobile/short-drawer density rules',
+)
 
 const panel = readFileSync(join(root, 'pages/chat/inbox/ProjectPanel.tsx'), 'utf8')
 assert.doesNotMatch(panel, /Spawn worker/, 'no manual spawn worker button')

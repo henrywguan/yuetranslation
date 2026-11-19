@@ -36,6 +36,18 @@ const STATUS_LABEL: Record<string, string> = {
   done: 'Done',
 }
 
+/** Narrow phones + short desktop drawers start with Projects/Workspaces collapsed. */
+function inboxSecondaryDefaultOpen(): boolean {
+  if (typeof window === 'undefined') return true
+  try {
+    const narrow = window.matchMedia('(max-width: 899px)').matches
+    const short = window.matchMedia('(max-height: 720px)').matches
+    return !(narrow || short)
+  } catch {
+    return true
+  }
+}
+
 export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   const {
     threads,
@@ -66,8 +78,9 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   const [filter, setFilter] = useState<InboxFilter>('all')
   const [query, setQuery] = useState('')
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
-  const [projectsOpen, setProjectsOpen] = useState(true)
-  const [workspacesOpen, setWorkspacesOpen] = useState(true)
+  // Initial open only — user expands stay open (no resize force-collapse).
+  const [projectsOpen, setProjectsOpen] = useState(() => inboxSecondaryDefaultOpen())
+  const [workspacesOpen, setWorkspacesOpen] = useState(() => inboxSecondaryDefaultOpen())
   const [archiveOpen, setArchiveOpen] = useState(false)
   const collapseProjects = () => {
     setProjectsOpen(false)
