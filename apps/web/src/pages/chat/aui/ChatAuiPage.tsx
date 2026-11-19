@@ -13,6 +13,7 @@ import { useDocumentMeta } from '../../../lib/useDocumentMeta'
 import { safeShellViewportHeight } from '../../../lib/visualViewportHeight'
 import '../../ChatPage.css'
 import './ChatAui.css'
+import { ChatInboxProvider } from '../inbox/ChatInboxContext'
 import { InboxShell } from '../inbox/InboxShell'
 import { ChatAuiRuntimeProvider, useChatAuiSession } from './ChatAuiRuntime'
 import { ChatAuiThread } from './ChatAuiThread'
@@ -277,8 +278,10 @@ export function ChatAuiPage() {
   }
 
   return (
-    <ChatAuiRuntimeProvider unlocked={unlocked}>
-      <AuiShell unlocked={unlocked} />
-    </ChatAuiRuntimeProvider>
+    <ChatInboxProvider>
+      <ChatAuiRuntimeProvider unlocked={unlocked}>
+        <AuiShell unlocked={unlocked} />
+      </ChatAuiRuntimeProvider>
+    </ChatInboxProvider>
   )
 }

@@ -395,6 +395,48 @@
   padding-right: 0.25rem;
 }
 
+.inbox-project-panel {
+  padding: 0.35rem 0.4rem 0.5rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-canvas);
+}
+
+.inbox-project-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.4rem;
+}
+
+.inbox-memory {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.35rem;
+}
+
+.inbox-memory textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 3.5rem;
+  max-height: 8rem;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  background: var(--ds-surface-1);
+  color: var(--ds-text);
+}
+
+.inbox-memory textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--ds-blue) 35%, transparent);
+  outline-offset: 1px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .inbox-tile,
   .inbox-section-chevron {

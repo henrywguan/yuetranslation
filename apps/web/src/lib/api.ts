@@ -839,6 +839,10 @@ export type DeepseekChatStreamHandlers = {
   plugins?: string[]
   /** Account Hub primary language for DeepSeek user metadata. */
   primaryLang?: string
+  /** Chat Inbox agent role (Overseer / worker). */
+  inboxRole?: 'overseer' | 'worker'
+  /** Shared Project memory for Inbox multi-agent turns. */
+  projectMemory?: string
   /** Continue last assistant (prefix completion). */
   continueReply?: boolean
   onWorkspace?: (files: Array<{
@@ -1035,6 +1039,12 @@ export async function streamDeepseekChat(
       timeZone,
       locale,
       ...(primaryLang ? { primaryLang } : null),
+      ...(handlers.inboxRole === 'overseer' || handlers.inboxRole === 'worker'
+        ? { inboxRole: handlers.inboxRole }
+        : null),
+      ...(handlers.projectMemory?.trim()
+        ? { projectMemory: handlers.projectMemory.trim().slice(0, 8_000) }
+        : null),
       ...(fileIds.length ? { fileIds } : null),
       ...(plugins.length ? { plugins } : null),
       ...(handlers.continueReply ? { continue: true } : null),

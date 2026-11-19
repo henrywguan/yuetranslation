@@ -226,6 +226,8 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     plan: entitlement.isAdmin ? `admin (${entitlement.plan})` : entitlement.plan,
     searchEnabled,
     harnessEnabled,
+    inboxRole: parsed.data.inboxRole,
+    projectMemory: parsed.data.projectMemory,
   }
   const fileIds = parsed.data.fileIds
   const plugins = parsed.data.plugins
