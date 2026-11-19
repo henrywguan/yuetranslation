@@ -16,9 +16,11 @@ import {
   type ThreadAgentView,
 } from '../../../lib/chatInbox'
 import { useChatAuiSession } from '../aui/ChatAuiRuntime'
+import { ArchiveList } from './ArchiveList'
 import { useChatInboxContext } from './ChatInboxContext'
 import { FilterTiles } from './FilterTiles'
 import './Inbox.css'
+import { ArchiveIcon, DeleteIcon } from './InboxIcons'
 import { GithubBind } from './GithubBind'
 import { LocalFolderBind } from './LocalFolderBind'
 import { ProjectList } from './ProjectList'
@@ -35,11 +37,20 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
-  const { threads, activeId, busy, startNewChat, selectThread } = useChatAuiSession()
+  const {
+    threads,
+    activeId,
+    busy,
+    startNewChat,
+    selectThread,
+    archiveThread,
+    removeThread,
+  } = useChatAuiSession()
   const {
     state,
     addProject,
     removeProject,
+    renameProjectTitle,
     linkThread,
     addWorkspace,
     removeWorkspace,
@@ -57,6 +68,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [projectsOpen, setProjectsOpen] = useState(true)
   const [workspacesOpen, setWorkspacesOpen] = useState(true)
+  const [archiveOpen, setArchiveOpen] = useState(false)
   const collapseProjects = () => {
     setProjectsOpen(false)
     setActiveProjectId(null)
@@ -238,6 +250,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
             onCreate={() => {
               createAndFocusProject()
             }}
+            onRename={renameProjectTitle}
             onDelete={(id) => {
               removeProject(id)
               if (activeProjectId === id) setActiveProjectId(null)
@@ -249,6 +262,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
               project={activeProject}
               agents={state.agents}
               onOpenAgent={openAgent}
+              onRename={(title) => renameProjectTitle(activeProject.id, title)}
               onMemoryChange={(memory) => updateProjectMemory(activeProject.id, memory)}
             />
           ) : null}
@@ -355,6 +369,26 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
             </ul>
           ) : null}
         </div>
+
+        <div className="inbox-band">
+          <ArchiveList
+            threads={threads}
+            activeId={activeId}
+            open={archiveOpen}
+            onToggle={() => setArchiveOpen((v) => !v)}
+            onSelect={(threadId) => {
+              selectThread(threadId)
+              onNavigate?.()
+            }}
+            onRestore={(threadId) => {
+              archiveThread(threadId, false)
+              setArchiveOpen(true)
+            }}
+            onDelete={(threadId) => {
+              removeThread(threadId)
+            }}
+          />
+        </div>
       </div>
     </div>
   )
@@ -389,8 +423,20 @@ function InboxThreadItem({
       <span className={`inbox-agent-status is-${view.status}`}>
         {STATUS_LABEL[view.status] || view.status}
       </span>
-      <ThreadListItemPrimitive.Archive className="aui-thread-archive" title="Archive" />
-      <ThreadListItemPrimitive.Delete className="aui-thread-delete" title="Delete" />
+      <ThreadListItemPrimitive.Archive
+        className="aui-thread-archive"
+        title="Archive"
+        aria-label="Archive"
+      >
+        <ArchiveIcon />
+      </ThreadListItemPrimitive.Archive>
+      <ThreadListItemPrimitive.Delete
+        className="aui-thread-delete"
+        title="Delete"
+        aria-label="Delete"
+      >
+        <DeleteIcon />
+      </ThreadListItemPrimitive.Delete>
     </ThreadListItemPrimitive.Root>
   )
 }

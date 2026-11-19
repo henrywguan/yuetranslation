@@ -10,6 +10,7 @@ import {
   loadChatInbox,
   saveChatInbox,
   markAgentInReview,
+  renameProject,
   setAgentStatus,
   setAgentThread,
   setProjectDefaultWorkspace,
@@ -79,6 +80,13 @@ export function useChatInbox() {
   const removeProject = useCallback(
     (projectId: string) => {
       commit(deleteProject(stateRef.current, projectId))
+    },
+    [commit],
+  )
+
+  const renameProjectTitle = useCallback(
+    (projectId: string, title: string) => {
+      commit(renameProject(stateRef.current, projectId, title))
     },
     [commit],
   )
@@ -169,6 +177,7 @@ export function useChatInbox() {
     state,
     addProject,
     removeProject,
+    renameProjectTitle,
     linkThread,
     addWorkspace,
     removeWorkspace,

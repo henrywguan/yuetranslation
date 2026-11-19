@@ -204,11 +204,20 @@ assert.match(thread, /aui-msg is-user/, 'DeepSeek user message class')
 assert.match(thread, /aui-msg is-assistant/, 'DeepSeek assistant message class')
 assert.match(thread, /aui-send/, 'DeepSeek send button class')
 assert.match(thread, /aui-scroll-bottom/, 'scroll-to-bottom uses DeepSeek hide-when-disabled class')
+const inboxShellSrc = readFileSync(join(root, 'pages/chat/inbox/InboxShell.tsx'), 'utf8')
+assert.match(inboxShellSrc, /\+ New chat/, 'inbox new-chat CTA matches classic tone')
+assert.match(inboxShellSrc, /ArchiveList/, 'inbox has archive browser')
 assert.match(
-  readFileSync(join(root, 'pages/chat/inbox/InboxShell.tsx'), 'utf8'),
-  /\+ New chat/,
-  'inbox new-chat CTA matches classic tone',
+  inboxShellSrc,
+  /ThreadListItemPrimitive\.Archive[\s\S]*ArchiveIcon/,
+  'archive button renders ArchiveIcon child',
 )
+assert.match(
+  inboxShellSrc,
+  /ThreadListItemPrimitive\.Delete[\s\S]*DeleteIcon/,
+  'delete button renders DeleteIcon child',
+)
+assert.match(auiCss, /\.aui-thread-archive[\s\S]*place-items:\s*center/, 'archive icon button centered')
 assert.doesNotMatch(
   thread,
   /useAuiStockDark|aui-thread-root|aui-composer-root|aui-user-message-root|aui-thread-scroll-to-bottom/,
