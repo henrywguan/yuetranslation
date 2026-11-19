@@ -437,6 +437,16 @@
   outline-offset: 1px;
 }
 
+.inbox-local-bind {
+  padding: 0.45rem 0.5rem 0.55rem;
+  border-radius: 0.7rem;
+  border: 1px dashed var(--ds-divider);
+  background: var(--ds-canvas);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .inbox-tile,
   .inbox-section-chevron {

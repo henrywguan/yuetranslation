@@ -1253,3 +1253,18 @@ export async function deleteChatSandbox(id: string): Promise<void> {
   const res = await apiFetch(`/chat/sandbox/${encodeURIComponent(id)}`, { method: 'DELETE' })
   if (!res.ok) await throwApiError(res, 'Failed to destroy sandbox')
 }
+
+/** Write one text file into a sandbox session. */
+export async function writeChatSandboxFile(
+  sessionId: string,
+  path: string,
+  text: string,
+): Promise<{ path: string; bytes: number }> {
+  const res = await apiFetch(`/chat/sandbox/${encodeURIComponent(sessionId)}/fs/write`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path, text }),
+  })
+  if (!res.ok) await throwApiError(res, 'Sandbox write failed')
+  return (await res.json()) as { path: string; bytes: number }
+}
