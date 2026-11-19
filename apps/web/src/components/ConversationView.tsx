@@ -29,6 +29,8 @@ import { TaText } from './TaText'
 import { PtptText } from './PtptText'
 import { TrText } from './TrText'
 import { BnText } from './BnText'
+import { LangFamilyText } from './LangFamilyText'
+import { isLangFamilyLang } from '../lib/langFamily'
 import { InkSettle } from './InkSettle'
 import { LangLabelButton } from './LangLabelButton'
 import { LiveHoldButton } from './LiveHoldButton'
@@ -71,6 +73,20 @@ function langPlaceholder(lang: Lang): string {
   if (lang === 'ptpt') return ui.dirEuropeanPortuguese.en
   if (lang === 'tr') return ui.dirTurkish.en
   if (lang === 'bn') return ui.dirBengali.en
+  if (lang === 'te') return ui.dirTelugu.en
+  if (lang === 'gu') return ui.dirGujarati.en
+  if (lang === 'kn') return ui.dirKannada.en
+  if (lang === 'pl') return ui.dirPolish.en
+  if (lang === 'ro') return ui.dirRomanian.en
+  if (lang === 'cs') return ui.dirCzech.en
+  if (lang === 'el') return ui.dirGreek.en
+  if (lang === 'hu') return ui.dirHungarian.en
+  if (lang === 'sv') return ui.dirSwedish.en
+  if (lang === 'ru') return ui.dirRussian.en
+  if (lang === 'uk') return ui.dirUkrainian.en
+  if (lang === 'he') return ui.dirHebrew.en
+  if (lang === 'fa') return ui.dirPersian.en
+  if (lang === 'ur') return ui.dirUrdu.en
   if (lang === 'cmn') return ui.dirMandarin.zh
   if (lang === 'wuu') return ui.dirShanghainese.zh
   if (lang === 'sichuan') return ui.dirSichuanese.zh
@@ -299,6 +315,9 @@ export function ConversationView() {
     }
     if (lang === 'bn') {
       return <BnText text={text} className={className} onActivate={onActivate} />
+    }
+    if (isLangFamilyLang(lang)) {
+      return <LangFamilyText lang={lang} text={text} className={className} onActivate={onActivate} />
     }
     if (lang === 'cmn') {
       return (

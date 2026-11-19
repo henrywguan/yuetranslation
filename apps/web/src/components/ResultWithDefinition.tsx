@@ -26,6 +26,8 @@ import { TaText } from './TaText'
 import { PtptText } from './PtptText'
 import { TrText } from './TrText'
 import { BnText } from './BnText'
+import { LangFamilyText } from './LangFamilyText'
+import { isLangFamilyLang } from '../lib/langFamily'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -224,6 +226,13 @@ export function ResultWithDefinition({
               />
             ) : chineseLang === 'bn' ? (
               <BnText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : isLangFamilyLang(chineseLang) ? (
+              <LangFamilyText
+                lang={chineseLang}
                 text={trimmed}
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}

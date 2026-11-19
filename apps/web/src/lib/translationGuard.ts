@@ -213,6 +213,84 @@ export function sanitizeBnTranslation(text: string | null | undefined): string |
   return t
 }
 
+function sanitizeScriptGated(
+  text: string | null | undefined,
+  require: RegExp,
+  reject?: RegExp,
+): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!require.test(t)) return null
+  if (reject && reject.test(t)) return null
+  return t
+}
+
+/** Reject EN→Telugu payloads missing Telugu script (no Latin / Kannada main line). */
+export function sanitizeTeTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0C00-\u0C7F]/)
+}
+
+/** Reject EN→Gujarati payloads missing Gujarati script or written in Devanagari. */
+export function sanitizeGuTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0A80-\u0AFF]/, /[\u0900-\u097F]/)
+}
+
+/** Reject EN→Kannada payloads missing Kannada script (no Latin / Telugu main line). */
+export function sanitizeKnTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0C80-\u0CFF]/)
+}
+
+export function sanitizePlTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+export function sanitizeRoTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+export function sanitizeCsTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→Greek payloads missing Greek script (no Greeklish main line). */
+export function sanitizeElTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0370-\u03FF\u1F00-\u1FFF]/)
+}
+
+export function sanitizeHuTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+export function sanitizeSvTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+/** Reject EN→Russian payloads missing Cyrillic or carrying Ukrainian-only letters (і ї є ґ). */
+export function sanitizeRuTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0400-\u04FF]/, /[ІіЇїЄєҐґ]/)
+}
+
+/** Reject EN→Ukrainian payloads missing Cyrillic or carrying Russian-only letters (ы э ъ ё). */
+export function sanitizeUkTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0400-\u04FF]/, /[ЫыЭэЪъЁё]/)
+}
+
+/** Reject EN→Hebrew payloads missing Hebrew script. */
+export function sanitizeHeTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0590-\u05FF]/)
+}
+
+/** Reject EN→Persian payloads missing Perso-Arabic script or carrying Urdu-only letters. */
+export function sanitizeFaTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0600-\u06FF]/, /[\u0679\u0688\u0691\u06BA\u06D2\u06D3\u06BE]/)
+}
+
+/** Reject EN→Urdu payloads missing Perso-Arabic script or written in Devanagari (Hindi). */
+export function sanitizeUrTranslation(text: string | null | undefined): string | null {
+  return sanitizeScriptGated(text, /[\u0600-\u06FF]/, /[\u0900-\u097F]/)
+}
+
 /** Reject EN→Turkish Latin payloads that are empty, glossy, or still Chinese. */
 export function sanitizeTrTranslation(text: string | null | undefined): string | null {
   return sanitizeViTranslation(text)

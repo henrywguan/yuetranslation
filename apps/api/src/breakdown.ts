@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'ceb', 'ilo', 'bcl']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur', 'ceb', 'ilo', 'bcl']).optional(),
 })
 
 export type BreakdownChar = {
@@ -203,8 +203,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'ceb' | 'ilo' | 'bcl',
-): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'ceb' | 'ilo' | 'bcl' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ceb' | 'ilo' | 'bcl',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ceb' | 'ilo' | 'bcl' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -1599,7 +1599,9 @@ async function sichuanBreakdown(text: string) {
   }
 }
 
-type LatinVoiceBreakdownLang = 'id' | 'ms' | 'pt' | 'fr' | 'jv' | 'it' | 'de' | 'nl' | 'ptpt' | 'tr'
+type LatinVoiceBreakdownLang =
+  | 'id' | 'ms' | 'pt' | 'fr' | 'jv' | 'it' | 'de' | 'nl' | 'ptpt' | 'tr'
+  | 'pl' | 'ro' | 'cs' | 'hu' | 'sv'
 
 const LATIN_VOICE_BREAKDOWN_LABEL: Record<LatinVoiceBreakdownLang, string> = {
   id: 'Indonesian',
@@ -1612,11 +1614,16 @@ const LATIN_VOICE_BREAKDOWN_LABEL: Record<LatinVoiceBreakdownLang, string> = {
   nl: 'Dutch',
   ptpt: 'European Portuguese (Portugal, not Brazilian)',
   tr: 'Turkish',
+  pl: 'Polish',
+  ro: 'Romanian (ș ț comma-below)',
+  cs: 'Czech (not Slovak)',
+  hu: 'Hungarian',
+  sv: 'Swedish',
 }
 
 function tokenizeLatinVoice(text: string): string[] {
   const matches = text.match(
-    /[A-Za-zÀ-ÖØ-öø-ÿĀ-ſḀ-ỿ]+(?:['\u2019][A-Za-zÀ-ÖØ-öø-ÿĀ-ſḀ-ỿ]+)?|[0-9]+|[^\sA-Za-zÀ-ÖØ-öø-ÿĀ-ſḀ-ỿ0-9]+/g,
+    /[A-Za-zÀ-ÖØ-öø-ÿĀ-ſƀ-ɏḀ-ỿ]+(?:['\u2019][A-Za-zÀ-ÖØ-öø-ÿĀ-ſƀ-ɏḀ-ỿ]+)?|[0-9]+|[^\sA-Za-zÀ-ÖØ-öø-ÿĀ-ſƀ-ɏḀ-ỿ0-9]+/g,
   )
   return (matches || []).filter((t) => t.trim())
 }
@@ -1825,7 +1832,7 @@ function localScriptBreakdown(text: string, letterRe: RegExp): BreakdownChar[] {
 
 async function scriptVoiceBreakdown(
   text: string,
-  lang: 'km' | 'my' | 'ta' | 'bn',
+  lang: 'km' | 'my' | 'ta' | 'bn' | 'te' | 'gu' | 'kn' | 'el' | 'ru' | 'uk' | 'he' | 'fa' | 'ur',
   label: string,
   tokenRe: RegExp,
 ) {
@@ -1935,6 +1942,78 @@ export async function breakdown(input: unknown) {
       /[\u0980-\u09FF]+|[0-9]+|[^\s\u0980-\u09FF0-9]+/g,
     )
   }
+  if (lang === 'te') {
+    return scriptVoiceBreakdown(
+      text,
+      'te',
+      'colloquial Telugu (Telugu script)',
+      /[\u0C00-\u0C7F]+|[0-9]+|[^\s\u0C00-\u0C7F0-9]+/g,
+    )
+  }
+  if (lang === 'gu') {
+    return scriptVoiceBreakdown(
+      text,
+      'gu',
+      'colloquial Gujarati (Gujarati script, not Devanagari)',
+      /[\u0A80-\u0AFF]+|[0-9]+|[^\s\u0A80-\u0AFF0-9]+/g,
+    )
+  }
+  if (lang === 'kn') {
+    return scriptVoiceBreakdown(
+      text,
+      'kn',
+      'colloquial Kannada (Kannada script)',
+      /[\u0C80-\u0CFF]+|[0-9]+|[^\s\u0C80-\u0CFF0-9]+/g,
+    )
+  }
+  if (lang === 'el') {
+    return scriptVoiceBreakdown(
+      text,
+      'el',
+      'Modern Greek (Greek script)',
+      /[\u0370-\u03FF\u1F00-\u1FFF]+|[0-9]+|[^\s\u0370-\u03FF\u1F00-\u1FFF0-9]+/g,
+    )
+  }
+  if (lang === 'ru') {
+    return scriptVoiceBreakdown(
+      text,
+      'ru',
+      'Russian (Cyrillic, not Ukrainian)',
+      /[\u0400-\u04FF]+|[0-9]+|[^\s\u0400-\u04FF0-9]+/g,
+    )
+  }
+  if (lang === 'uk') {
+    return scriptVoiceBreakdown(
+      text,
+      'uk',
+      'Ukrainian (Cyrillic, not Russian)',
+      /[\u0400-\u04FF\u02BC]+|[0-9]+|[^\s\u0400-\u04FF\u02BC0-9]+/g,
+    )
+  }
+  if (lang === 'he') {
+    return scriptVoiceBreakdown(
+      text,
+      'he',
+      'Modern Hebrew (Hebrew script)',
+      /[\u0590-\u05FF]+|[0-9]+|[^\s\u0590-\u05FF0-9]+/g,
+    )
+  }
+  if (lang === 'fa') {
+    return scriptVoiceBreakdown(
+      text,
+      'fa',
+      'Persian / Farsi (Persian script, not Arabic)',
+      /[\u0600-\u06FF\u200C]+|[0-9]+|[^\s\u0600-\u06FF\u200C0-9]+/g,
+    )
+  }
+  if (lang === 'ur') {
+    return scriptVoiceBreakdown(
+      text,
+      'ur',
+      'Urdu (Perso-Arabic script, not Hindi)',
+      /[\u0600-\u06FF\u0750-\u077F]+|[0-9]+|[^\s\u0600-\u06FF\u0750-\u077F0-9]+/g,
+    )
+  }
   if (
     lang === 'id' ||
     lang === 'ms' ||
@@ -1945,7 +2024,12 @@ export async function breakdown(input: unknown) {
     lang === 'de' ||
     lang === 'nl' ||
     lang === 'ptpt' ||
-    lang === 'tr'
+    lang === 'tr' ||
+    lang === 'pl' ||
+    lang === 'ro' ||
+    lang === 'cs' ||
+    lang === 'hu' ||
+    lang === 'sv'
   ) {
     return latinVoiceBreakdown(text, lang)
   }

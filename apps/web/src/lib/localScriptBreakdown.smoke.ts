@@ -3,8 +3,12 @@ import { buildLocalScriptBreakdown, isScriptDetailLang } from './localScriptBrea
 
 assert.equal(isScriptDetailLang('ta'), true)
 assert.equal(isScriptDetailLang('bn'), true)
+assert.equal(isScriptDetailLang('el'), true)
+assert.equal(isScriptDetailLang('ru'), true)
+assert.equal(isScriptDetailLang('he'), true)
 assert.equal(isScriptDetailLang('ptpt'), false)
 assert.equal(isScriptDetailLang('tr'), false)
+assert.equal(isScriptDetailLang('pl'), false)
 assert.equal(isScriptDetailLang('hi'), false)
 
 const ta = buildLocalScriptBreakdown('வணக்கம்!', 'ta', { phraseGloss: 'Hello' })
@@ -16,6 +20,20 @@ assert.equal(ta[1]?.meaning, 'exclamation mark')
 const bn = buildLocalScriptBreakdown('নমস্কার।', 'bn')
 assert.ok(bn.some((r) => r.char === 'নমস্কার'))
 assert.equal(bn.find((r) => r.char === '।')?.meaning, 'full stop')
+
+const te = buildLocalScriptBreakdown('నమస్కారం', 'te', { phraseGloss: 'Hello' })
+assert.equal(te[0]?.char, 'నమస్కారం')
+assert.equal(te[0]?.meaning, 'Hello')
+
+const el = buildLocalScriptBreakdown('Γεια!', 'el', { phraseGloss: 'Hi' })
+assert.equal(el[0]?.char, 'Γεια')
+assert.equal(el[1]?.meaning, 'exclamation mark')
+
+const ru = buildLocalScriptBreakdown('Привет', 'ru', { phraseGloss: 'Hi' })
+assert.equal(ru[0]?.meaning, 'Hi')
+
+const he = buildLocalScriptBreakdown('שלום', 'he', { phraseGloss: 'Peace' })
+assert.equal(he[0]?.meaning, 'Peace')
 
 const multi = buildLocalScriptBreakdown('நீங்கள் எப்படி?', 'ta', { phraseGloss: 'How are you?' })
 assert.ok(multi.length >= 2)

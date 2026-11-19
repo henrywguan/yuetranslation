@@ -5294,6 +5294,103 @@ button.turkish-activate {
   cursor: pointer;
 }
 
+/* Batch 2 families (LangFamilyText) — native script / orthography on compact; Details add reading + address + honesty.
+   Indic te/gu/kn · Euro pl/ro/cs/el/hu/sv · Cyrillic ru/uk · RTL he/fa/ur (Arabic-style chrome). */
+.lang-family-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.lang-family-block--indic,
+.lang-family-block--rtl {
+  line-height: 1.55;
+}
+.lang-family-block--te {
+  font-family: 'Noto Sans Telugu', 'Telugu Sangam MN', 'Gautami', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--gu {
+  font-family: 'Noto Sans Gujarati', 'Gujarati Sangam MN', 'Shruti', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--kn {
+  font-family: 'Noto Sans Kannada', 'Kannada Sangam MN', 'Tunga', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--he {
+  font-family: 'Noto Sans Hebrew', 'Arial Hebrew', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--fa {
+  font-family: 'Vazirmatn', 'Noto Naskh Arabic', 'Geeza Pro', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--ur {
+  font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Noto Naskh Arabic', 'Geeza Pro', system-ui, sans-serif;
+  line-height: 1.9;
+}
+.lang-family-block--rtl {
+  direction: rtl;
+  unicode-bidi: isolate;
+}
+.lang-family-block--detail {
+  gap: 0.35em;
+}
+.lang-family-reading-row,
+.lang-family-address-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  font-family: var(--font-body);
+}
+.lang-family-reading {
+  font-size: 0.72em;
+  line-height: 1.2;
+  opacity: 0.78;
+  font-weight: 500;
+}
+.lang-family-reading-label,
+.lang-family-address-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.lang-family-address-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.lang-family-block--te .lang-family-address-chip,
+.lang-family-block--gu .lang-family-address-chip,
+.lang-family-block--kn .lang-family-address-chip,
+.lang-family-block--rtl .lang-family-address-chip {
+  font-family: inherit;
+}
+.lang-family-honesty {
+  font-family: var(--font-body);
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+  text-align: left;
+  unicode-bidi: isolate;
+}
+button.lang-family-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+button.lang-family-activate--rtl {
+  text-align: start;
+  direction: rtl;
+}
+
 /* European Portuguese (pt-PT) — orthography on compact; Details add stress chips + vowel-reduction honesty. */
 .european-portuguese-block {
   position: relative;

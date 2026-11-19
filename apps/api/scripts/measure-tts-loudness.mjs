@@ -49,6 +49,20 @@ const SAMPLES = [
   { lang: 'ptpt', voice: 'pt-PT-RaquelNeural', xmlLang: 'pt-PT', text: 'Olá — esta é a sua voz em português de Portugal.' },
   { lang: 'tr', voice: 'tr-TR-EmelNeural', xmlLang: 'tr-TR', text: 'Merhaba — bu sizin Türkçe sesiniz.' },
   { lang: 'bn', voice: 'bn-IN-TanishaaNeural', xmlLang: 'bn-IN', text: 'নমস্কার — এটি আপনার বাংলা কণ্ঠস্বর।' },
+  { lang: 'te', voice: 'te-IN-ShrutiNeural', xmlLang: 'te-IN', text: 'నమస్కారం — ఇది మీ తెలుగు స్వరం.' },
+  { lang: 'gu', voice: 'gu-IN-DhwaniNeural', xmlLang: 'gu-IN', text: 'નમસ્તે — આ તમારો ગુજરાતી અવાજ છે.' },
+  { lang: 'kn', voice: 'kn-IN-SapnaNeural', xmlLang: 'kn-IN', text: 'ನಮಸ್ಕಾರ — ಇದು ನಿಮ್ಮ ಕನ್ನಡ ಧ್ವನಿ.' },
+  { lang: 'pl', voice: 'pl-PL-AgnieszkaNeural', xmlLang: 'pl-PL', text: 'Cześć — to jest Twój polski głos.' },
+  { lang: 'ro', voice: 'ro-RO-AlinaNeural', xmlLang: 'ro-RO', text: 'Bună — aceasta este vocea ta în limba română.' },
+  { lang: 'cs', voice: 'cs-CZ-VlastaNeural', xmlLang: 'cs-CZ', text: 'Ahoj — tohle je tvůj český hlas.' },
+  { lang: 'el', voice: 'el-GR-AthinaNeural', xmlLang: 'el-GR', text: 'Γεια σας — αυτή είναι η ελληνική σας φωνή.' },
+  { lang: 'hu', voice: 'hu-HU-NoemiNeural', xmlLang: 'hu-HU', text: 'Szia — ez a magyar hangod.' },
+  { lang: 'sv', voice: 'sv-SE-SofieNeural', xmlLang: 'sv-SE', text: 'Hej — det här är din svenska röst.' },
+  { lang: 'ru', voice: 'ru-RU-SvetlanaNeural', xmlLang: 'ru-RU', text: 'Привет — это ваш русский голос.' },
+  { lang: 'uk', voice: 'uk-UA-PolinaNeural', xmlLang: 'uk-UA', text: 'Привіт — це ваш український голос.' },
+  { lang: 'he', voice: 'he-IL-HilaNeural', xmlLang: 'he-IL', text: 'שלום — זה הקול שלך בעברית.' },
+  { lang: 'fa', voice: 'fa-IR-DilaraNeural', xmlLang: 'fa-IR', text: 'سلام — این صدای فارسی شماست.' },
+  { lang: 'ur', voice: 'ur-IN-GulNeural', xmlLang: 'ur-IN', text: 'السلام علیکم — یہ آپ کی اردو آواز ہے۔' },
 ]
 
 function escapeXml(s) {

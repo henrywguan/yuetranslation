@@ -39,6 +39,20 @@ export const DetailLangSchema = z.enum([
   'ptpt',
   'tr',
   'bn',
+  'te',
+  'gu',
+  'kn',
+  'pl',
+  'ro',
+  'cs',
+  'el',
+  'hu',
+  'sv',
+  'ru',
+  'uk',
+  'he',
+  'fa',
+  'ur',
   'ceb',
   'ilo',
   'bcl',
@@ -263,6 +277,90 @@ const ENRICH_META: Record<
     glossLangHint:
       'Standard Colloquial Bengali (চলিত বাংলা, bn-IN) — Bangla script only; ISO 15919 is added by the client in Details — never Devanagari or Latin/Banglish as the main line',
     exampleIn: 'natural colloquial Bengali (Bangla script)',
+  },
+  te: {
+    label: 'Telugu (తెలుగు)',
+    glossLangHint:
+      'colloquial spoken Telugu (తెలుగు, te-IN) — Telugu script only; ISO 15919 is added by the client in Details — never Latin, Kannada, Tamil, or Devanagari as the main line',
+    exampleIn: 'natural colloquial Telugu (Telugu script)',
+  },
+  gu: {
+    label: 'Gujarati (ગુજરાતી)',
+    glossLangHint:
+      'colloquial spoken Gujarati (ગુજરાતી, gu-IN) — Gujarati script only; ISO 15919 is added by the client in Details — never Devanagari / Hindi or Latin as the main line',
+    exampleIn: 'natural colloquial Gujarati (Gujarati script)',
+  },
+  kn: {
+    label: 'Kannada (ಕನ್ನಡ)',
+    glossLangHint:
+      'colloquial spoken Kannada (ಕನ್ನಡ, kn-IN) — Kannada script only; ISO 15919 is added by the client in Details — never Latin, Telugu, Tamil, or Devanagari as the main line',
+    exampleIn: 'natural colloquial Kannada (Kannada script)',
+  },
+  pl: {
+    label: 'Polish (polski)',
+    glossLangHint:
+      'Standard Polish (pl-PL) — correct orthography with ą ć ę ł ń ó ś ź ż; note ty vs Pan/Pani address when relevant; never ASCII-folded',
+    exampleIn: 'natural everyday Polish',
+  },
+  ro: {
+    label: 'Romanian (română)',
+    glossLangHint:
+      'Standard Romanian (ro-RO) — correct orthography with ă â î and comma-below ș ț; note tu vs dumneavoastră when relevant; never ASCII-folded',
+    exampleIn: 'natural everyday Romanian',
+  },
+  cs: {
+    label: 'Czech (čeština)',
+    glossLangHint:
+      'Standard Czech (cs-CZ) — correct orthography with háčky and čárky (ě ř ů); note ty vs Vy when relevant; not Slovak',
+    exampleIn: 'natural everyday Czech',
+  },
+  el: {
+    label: 'Modern Greek (Ελληνικά)',
+    glossLangHint:
+      'Modern Greek (el-GR) — Greek alphabet only, monotonic accents; note εσύ vs εσείς when relevant; never Greeklish as the main line',
+    exampleIn: 'natural everyday Modern Greek (Greek script)',
+  },
+  hu: {
+    label: 'Hungarian (magyar)',
+    glossLangHint:
+      'Standard Hungarian (hu-HU) — correct orthography with ö ő ü ű and long vowels; note te vs Ön/Maga when relevant; never ASCII-folded',
+    exampleIn: 'natural everyday Hungarian',
+  },
+  sv: {
+    label: 'Swedish (svenska)',
+    glossLangHint:
+      'Standard Swedish (sv-SE) — correct orthography with å ä ö; du by default (ni for plural / rare formal); not Norwegian or Danish',
+    exampleIn: 'natural everyday Swedish',
+  },
+  ru: {
+    label: 'Russian (русский)',
+    glossLangHint:
+      'Standard Russian (ru-RU) — Cyrillic only, no stress marks; note ты vs Вы when relevant; never Ukrainian wording or Latin translit as the main line',
+    exampleIn: 'natural everyday Russian (Cyrillic)',
+  },
+  uk: {
+    label: 'Ukrainian (українська)',
+    glossLangHint:
+      'Standard Ukrainian (uk-UA) — Ukrainian Cyrillic (і ї є ґ) only, no stress marks; note ти vs Ви when relevant; never Russian wording, surzhyk, or Latin translit',
+    exampleIn: 'natural everyday Ukrainian (Cyrillic)',
+  },
+  he: {
+    label: 'Modern Hebrew (עברית)',
+    glossLangHint:
+      'Modern Israeli Hebrew (he-IL) — Hebrew script without niqqud; never Latin transliteration, Arabic, or Yiddish as the main line',
+    exampleIn: 'natural everyday Modern Hebrew (unpointed Hebrew script)',
+  },
+  fa: {
+    label: 'Persian / Farsi (فارسی)',
+    glossLangHint:
+      'colloquial Iranian Persian (fa-IR) — Persian script with Persian ی ک and ZWNJ; note شما vs تو when relevant; this is Persian, NOT Arabic — never Arabic grammar or Finglish',
+    exampleIn: 'natural everyday Persian (Persian script)',
+  },
+  ur: {
+    label: 'Urdu (اردو)',
+    glossLangHint:
+      'colloquial Urdu (ur-IN / ur-PK) — Perso-Arabic Nastaliq script only; note آپ vs تم vs تو when relevant; this is Urdu, NOT Hindi — never Devanagari or Roman Urdu',
+    exampleIn: 'natural everyday Urdu (Urdu script)',
   },
   ceb: {
     label: 'Cebuano / Bisaya',

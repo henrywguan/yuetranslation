@@ -21,7 +21,7 @@ for (const entry of raw.entries) {
 }
 
 function lookupPhrase(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'ceb' | 'ilo' | 'bcl'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ceb' | 'ilo' | 'bcl'
   targetLang: TargetLang
   source: string
 }): PhraseEntry | null {
@@ -74,7 +74,7 @@ function alternativeRomanizationsFor(
 }
 
 export function dictionaryTranslate(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'ceb' | 'ilo' | 'bcl'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ceb' | 'ilo' | 'bcl'
   targetLang: TargetLang
   source: string
   wantAlternatives?: boolean
@@ -109,6 +109,20 @@ export function dictionaryTranslate(opts: {
       entry.targetLang === 'ptpt' ||
       entry.targetLang === 'tr' ||
       entry.targetLang === 'bn' ||
+      entry.targetLang === 'te' ||
+      entry.targetLang === 'gu' ||
+      entry.targetLang === 'kn' ||
+      entry.targetLang === 'pl' ||
+      entry.targetLang === 'ro' ||
+      entry.targetLang === 'cs' ||
+      entry.targetLang === 'el' ||
+      entry.targetLang === 'hu' ||
+      entry.targetLang === 'sv' ||
+      entry.targetLang === 'ru' ||
+      entry.targetLang === 'uk' ||
+      entry.targetLang === 'he' ||
+      entry.targetLang === 'fa' ||
+      entry.targetLang === 'ur' ||
       entry.targetLang === 'de' ||
       entry.targetLang === 'it' ||
       entry.targetLang === 'jv' ||

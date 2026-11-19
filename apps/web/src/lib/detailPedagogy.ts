@@ -279,6 +279,132 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     localOffline: true,
     extraPanels: [],
   },
+  te: {
+    // Telugu script title via LangFamilyText; optional ISO 15919 + మీరు/నువ్వు in Details only. Not tonal.
+    htmlLang: 'te-IN',
+    pronField: 'accented',
+    defaultGlossLang: 'te',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  gu: {
+    // Gujarati script title (never Devanagari); optional ISO 15919 + આપ/તમે/તું in Details only. Not tonal.
+    htmlLang: 'gu-IN',
+    pronField: 'accented',
+    defaultGlossLang: 'gu',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  kn: {
+    // Kannada script title; optional ISO 15919 + ನೀವು/ನೀನು in Details only. Not tonal.
+    htmlLang: 'kn-IN',
+    pronField: 'accented',
+    defaultGlossLang: 'kn',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  pl: {
+    // Polish orthography; ty / Pan(i) chip + stress honesty in Details.
+    htmlLang: 'pl-PL',
+    pronField: 'accented',
+    defaultGlossLang: 'pl',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  ro: {
+    // Romanian orthography (ș ț comma-below); tu / dumneavoastră chip in Details.
+    htmlLang: 'ro-RO',
+    pronField: 'accented',
+    defaultGlossLang: 'ro',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  cs: {
+    // Czech orthography; ty / Vy chip + length-vs-stress honesty in Details.
+    htmlLang: 'cs-CZ',
+    pronField: 'accented',
+    defaultGlossLang: 'cs',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  el: {
+    // Greek script only (no Greeklish); εσύ / εσείς chip + τόνος honesty in Details.
+    htmlLang: 'el-GR',
+    pronField: 'accented',
+    defaultGlossLang: 'el',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  hu: {
+    // Hungarian orthography; te / Ön chip + length-vs-stress honesty in Details.
+    htmlLang: 'hu-HU',
+    pronField: 'accented',
+    defaultGlossLang: 'hu',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  sv: {
+    // Swedish orthography; du / ni chip + pitch-accent (not lexical tone) honesty in Details.
+    htmlLang: 'sv-SE',
+    pronField: 'accented',
+    defaultGlossLang: 'sv',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  ru: {
+    // Cyrillic only on compact; BGN/PCGN reading + ты/Вы in Details. Never Ukrainian.
+    htmlLang: 'ru-RU',
+    pronField: 'accented',
+    defaultGlossLang: 'ru',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  uk: {
+    // Cyrillic only on compact; national-system reading + ти/Ви in Details. Never Russian.
+    htmlLang: 'uk-UA',
+    pronField: 'accented',
+    defaultGlossLang: 'uk',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  he: {
+    // RTL Hebrew (unpointed); niqqud honesty in Details.
+    htmlLang: 'he-IL',
+    pronField: 'accented',
+    defaultGlossLang: 'he',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  fa: {
+    // RTL Persian script — not Arabic; شما/تو chip in Details.
+    htmlLang: 'fa-IR',
+    pronField: 'accented',
+    defaultGlossLang: 'fa',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  ur: {
+    // RTL Urdu Nastaliq — never Devanagari / Hindi; آپ/تم chip in Details.
+    htmlLang: 'ur-IN',
+    pronField: 'accented',
+    defaultGlossLang: 'ur',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
   ceb: {
     htmlLang: 'ceb',
     pronField: 'accented',

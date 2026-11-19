@@ -39,6 +39,20 @@ export const PRIMARY_LANGS = [
   'ptpt',
   'tr',
   'bn',
+  'te',
+  'gu',
+  'kn',
+  'pl',
+  'ro',
+  'cs',
+  'el',
+  'hu',
+  'sv',
+  'ru',
+  'uk',
+  'he',
+  'fa',
+  'ur',
 ] as const satisfies readonly VoiceLang[]
 export type PrimaryLang = (typeof PRIMARY_LANGS)[number]
 
@@ -341,6 +355,90 @@ export function primaryLangLabel(lang: PrimaryLang): {
         zh: '孟加拉文語言工具',
         gloss: 'বাংলা ভাষার সরঞ্জাম',
       }
+    case 'te':
+      return {
+        en: 'Telugu Language Tool',
+        zh: '泰盧固文語言工具',
+        gloss: 'తెలుగు భాషా సాధనం',
+      }
+    case 'gu':
+      return {
+        en: 'Gujarati Language Tool',
+        zh: '古吉拉特文語言工具',
+        gloss: 'ગુજરાતી ભાષા સાધન',
+      }
+    case 'kn':
+      return {
+        en: 'Kannada Language Tool',
+        zh: '卡納達文語言工具',
+        gloss: 'ಕನ್ನಡ ಭಾಷಾ ಸಾಧನ',
+      }
+    case 'pl':
+      return {
+        en: 'Polish Language Tool',
+        zh: '波蘭文語言工具',
+        gloss: 'Narzędzie językowe – polski',
+      }
+    case 'ro':
+      return {
+        en: 'Romanian Language Tool',
+        zh: '羅馬尼亞文語言工具',
+        gloss: 'Instrument pentru limba română',
+      }
+    case 'cs':
+      return {
+        en: 'Czech Language Tool',
+        zh: '捷克文語言工具',
+        gloss: 'Jazykový nástroj – čeština',
+      }
+    case 'el':
+      return {
+        en: 'Greek Language Tool',
+        zh: '希臘文語言工具',
+        gloss: 'Εργαλείο ελληνικής γλώσσας',
+      }
+    case 'hu':
+      return {
+        en: 'Hungarian Language Tool',
+        zh: '匈牙利文語言工具',
+        gloss: 'Magyar nyelvi eszköz',
+      }
+    case 'sv':
+      return {
+        en: 'Swedish Language Tool',
+        zh: '瑞典文語言工具',
+        gloss: 'Svenskt språkverktyg',
+      }
+    case 'ru':
+      return {
+        en: 'Russian Language Tool',
+        zh: '俄文語言工具',
+        gloss: 'Инструмент для русского языка',
+      }
+    case 'uk':
+      return {
+        en: 'Ukrainian Language Tool',
+        zh: '烏克蘭文語言工具',
+        gloss: 'Інструмент для української мови',
+      }
+    case 'he':
+      return {
+        en: 'Hebrew Language Tool',
+        zh: '希伯來文語言工具',
+        gloss: 'כלי לשפה העברית',
+      }
+    case 'fa':
+      return {
+        en: 'Persian Language Tool',
+        zh: '波斯文語言工具',
+        gloss: 'ابزار زبان فارسی',
+      }
+    case 'ur':
+      return {
+        en: 'Urdu Language Tool',
+        zh: '烏爾都文語言工具',
+        gloss: 'اردو زبان کا آلہ',
+      }
     case 'yue':
     default:
       return {
@@ -411,6 +509,34 @@ export function primaryLangShortCopy(lang: PrimaryLang): { en: string; zh: strin
       return { en: 'Turkish', zh: '土耳其文' }
     case 'bn':
       return { en: 'Bengali', zh: '孟加拉文' }
+    case 'te':
+      return { en: 'Telugu', zh: '泰盧固文' }
+    case 'gu':
+      return { en: 'Gujarati', zh: '古吉拉特文' }
+    case 'kn':
+      return { en: 'Kannada', zh: '卡納達文' }
+    case 'pl':
+      return { en: 'Polish', zh: '波蘭文' }
+    case 'ro':
+      return { en: 'Romanian', zh: '羅馬尼亞文' }
+    case 'cs':
+      return { en: 'Czech', zh: '捷克文' }
+    case 'el':
+      return { en: 'Greek', zh: '希臘文' }
+    case 'hu':
+      return { en: 'Hungarian', zh: '匈牙利文' }
+    case 'sv':
+      return { en: 'Swedish', zh: '瑞典文' }
+    case 'ru':
+      return { en: 'Russian', zh: '俄文' }
+    case 'uk':
+      return { en: 'Ukrainian', zh: '烏克蘭文' }
+    case 'he':
+      return { en: 'Hebrew', zh: '希伯來文' }
+    case 'fa':
+      return { en: 'Persian', zh: '波斯文' }
+    case 'ur':
+      return { en: 'Urdu', zh: '烏爾都文' }
     case 'yue':
     default:
       return { en: 'Cantonese', zh: '粵語' }

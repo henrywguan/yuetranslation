@@ -35,12 +35,26 @@ export function isVoiceLang(lang: string | null | undefined): lang is VoiceLang 
     lang === 'ta' ||
     lang === 'ptpt' ||
     lang === 'tr' ||
-    lang === 'bn'
+    lang === 'bn' ||
+    lang === 'te' ||
+    lang === 'gu' ||
+    lang === 'kn' ||
+    lang === 'pl' ||
+    lang === 'ro' ||
+    lang === 'cs' ||
+    lang === 'el' ||
+    lang === 'hu' ||
+    lang === 'sv' ||
+    lang === 'ru' ||
+    lang === 'uk' ||
+    lang === 'he' ||
+    lang === 'fa' ||
+    lang === 'ur'
   )
 }
 
 export function isRtlLang(lang: string | null | undefined): boolean {
-  return lang === 'ar' || lang === 'arsa'
+  return lang === 'ar' || lang === 'arsa' || lang === 'he' || lang === 'fa' || lang === 'ur'
 }
 
 /** `dir` attribute for text surfaces; undefined keeps the inherited LTR flow. */
