@@ -19,6 +19,7 @@ import { useChatAuiSession } from '../aui/ChatAuiRuntime'
 import { useChatInboxContext } from './ChatInboxContext'
 import { FilterTiles } from './FilterTiles'
 import './Inbox.css'
+import { LocalFolderBind } from './LocalFolderBind'
 import { ProjectList } from './ProjectList'
 import { ProjectPanel } from './ProjectPanel'
 import { WorkspaceList } from './WorkspaceList'
@@ -48,6 +49,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   } = useChatInboxContext()
   const [sandboxBusy, setSandboxBusy] = useState(false)
   const [sandboxNote, setSandboxNote] = useState<string | null>(null)
+  const [localBindWorkspaceId, setLocalBindWorkspaceId] = useState<string | null>(null)
 
   const [filter, setFilter] = useState<InboxFilter>('all')
   const [query, setQuery] = useState('')
@@ -110,6 +112,12 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
         setSandboxBusy(false)
         setWorkspacesOpen(true)
       }
+      return
+    }
+    if (kind === 'local') {
+      const ws = addWorkspace('local', 'Local folder', activeProjectId || undefined)
+      setLocalBindWorkspaceId(ws.id)
+      setWorkspacesOpen(true)
       return
     }
     addWorkspace(kind, undefined, activeProjectId || undefined)
@@ -224,6 +232,18 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
       />
       {sandboxBusy ? <p className="inbox-empty">Starting sandbox…</p> : null}
       {sandboxNote ? <p className="inbox-empty">{sandboxNote}</p> : null}
+      {localBindWorkspaceId ? (
+        <LocalFolderBind
+          workspaceId={localBindWorkspaceId}
+          projectId={activeProjectId || undefined}
+          onBound={({ sessionId, note, fileCount }) => {
+            bindWorkspaceRef(localBindWorkspaceId, sessionId, activeProjectId || undefined)
+            setSandboxNote(`${note} (${fileCount} files)`)
+            setLocalBindWorkspaceId(null)
+          }}
+          onCancel={() => setLocalBindWorkspaceId(null)}
+        />
+      ) : null}
 
       <button
         type="button"
