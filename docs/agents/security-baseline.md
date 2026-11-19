@@ -21,7 +21,7 @@ Updated: **2026-10-01** — Deep attack-surface research (all routes + prod); se
 | Household invite null-email steal | **FIXED** — email required |
 | OOXML zip bomb | **HARDENED** — entry/text caps |
 | Harbor / Practice leaderboards | **Accepted (beta)** — client-trusted scores OK; not cheat-proof esports. Revisit only if abuse shows up. |
-| Guest unlimited TTS | **Accepted product** + Harbor amplify residual |
+| Guest unlimited TTS | **Accepted product** — Harbor/Free guest TTS stays uncapped by IP (Azure TTS effectively free) |
 | Full narrative | [`security-attack-surface-2026-10-01.md`](./security-attack-surface-2026-10-01.md) |
 
 ### Prior executive summary (2026-09-19)
@@ -59,11 +59,11 @@ None.
 
 ### [High] Guest TTS uncapped per-IP — ACCEPTED (product) + Harbor amplification
 - **Category:** abuse / metering
-- **Evidence:** Guests get `ttsUnlimited: true`; no guest IP RL on `/api/tts` (2000 char/request cap). Harbor `#/learn` auto-speak / pier audio calls the same path (`harborSpeak.ts`).
-- **Impact:** Guest or scripted Harbor play can burn Azure TTS harder than Solo tap-to-speak.
-- **Fix:** Guest TTS IP RL and/or Harbor-only daily budget; or local samples for drills.
+- **Evidence:** Guests get `ttsUnlimited: true`; no guest IP RL on `/api/tts` (2000 char/request cap). Harbor `#/learn` auto-speak / pier audio calls the same path (`harborSpeak.ts`). Henry: Azure TTS effectively free — keep unlimited.
+- **Impact:** Guest or scripted Harbor play can call Azure TTS without an IP budget.
+- **Fix:** Only if product changes — guest TTS IP RL / daily budget; or local samples for drills.
 - **Fixability:** NEEDS_HUMAN
-- **Why:** Unlimited guest TTS is an explicit product choice.
+- **Why:** Unlimited guest/Harbor TTS is an explicit product choice.
 
 ### [High] In-memory guest IP RL reset on cold start / multi-instance — residual
 - **Category:** abuse

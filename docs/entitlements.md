@@ -25,7 +25,7 @@ Usage lands in `guest_usage_months` and merges into the user on sign-in (cookie 
 
 ### Guest per-IP rate limits (app)
 
-Signed-in users are not limited by these. TTS is intentionally uncapped by IP (product choice; still counted in usage). Defaults (override with env):
+Signed-in users are not limited by these. TTS is intentionally uncapped by IP (product choice — Azure TTS effectively free for Harbor/Free guest; still counted in usage). Defaults (override with env):
 
 | Bucket | Endpoint | Default |
 | --- | --- | --- |

@@ -65,7 +65,7 @@ No live Critical finding in current `main` + prod health.
 | --- | --- | --- | --- |
 | Guest DeepSeek flood | `POST /api/translate` | IP RL 30/min | Multi-isolate RL reset; no monthly $ hard cap |
 | Free signed-in scraper | Same + Bearer skips IP RL | Plan is “unlimited text” by design | Unbounded DeepSeek until you change product |
-| Guest TTS / Harbor auto-speak | `POST /api/tts` | 2000 chars/req; Free char cap N/A for guest | **Unlimited guest TTS (product)** |
+| Guest TTS / Harbor auto-speak | `POST /api/tts` | 2000 chars/req; Free char cap N/A for guest | **Unlimited guest TTS (product — Azure TTS effectively free)** |
 | Speech token under-meter | Mint + skip heartbeat | Prepaid debit | Was TTL 180 vs debit 60 — **FIXED** (TTL ≤ prepaid) |
 | `forDocs` Vision free ride | Cam scan with `forDocs` without commit | Docs login | Was unmetered — **FIXED** (1 page / success) |
 | Free email farm | New Free accounts × quotas | Soft | NEEDS_HUMAN (fraud / phone verify) |
@@ -132,7 +132,7 @@ No live Critical finding in current `main` + prod health.
 
 **Admin (stolen JWT = game over):** plan/role, ban, CSV PII, email blast, push all, Practice Partner chat, bug AI, incident banner  
 
-★ Guest TTS intentionally uncapped by IP.
+★ Guest TTS intentionally uncapped by IP (product).
 
 ---
 
@@ -172,7 +172,7 @@ Do these in dashboards (NEEDS_HUMAN):
 | P0 | Merge + deploy this hardenings PR | Henry |
 | P0 | Apply pending Supabase migrations (`035`, etc.) | Henry |
 | P1 | ~~Decide Harbor + Practice leaderboard trust~~ → **Accepted beta spoof (2026-10-01)** | — |
-| P1 | Guest TTS IP RL and/or Harbor TTS budget if Azure bill spikes | Henry |
+| P1 | Guest TTS IP RL only if product changes (currently unlimited by design) | Henry |
 | P2 | Upstash shared rate limits + Vercel Firewall rules | Henry |
 | P2 | CSP `frame-ancestors` (optional; embed policy first) | Henry |
 | P2 | Before consumer Practice Partner: hard caps + server chat history | Henry |
