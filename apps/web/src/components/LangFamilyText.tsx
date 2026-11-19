@@ -99,7 +99,7 @@ function FamilyLine({ detail, text, className, onActivate, activateLabel }: Comm
   )
 }
 
-/** Telugu / Gujarati / Kannada — native script on compact; Details add ISO 15919 + address + honesty. */
+/** Telugu / Gujarati / Kannada / Malayalam / Marathi / Punjabi / Odia / Sinhala / Nepali — native script on compact; Details add ISO 15919 + address + honesty. */
 export function IndicText({ lang, ...props }: CommonProps & { lang: IndicLang }) {
   const trimmed = props.text.trim()
   if (!trimmed) return props.placeholder ? <>{props.placeholder}</> : null
@@ -115,7 +115,7 @@ export function IndicText({ lang, ...props }: CommonProps & { lang: IndicLang })
   return <FamilyLine {...props} text={trimmed} detail={detail} />
 }
 
-/** Polish / Romanian / Czech / Greek / Hungarian / Swedish — orthography only; Details add address + honesty. */
+/** Polish / Romanian / Czech / Greek / Hungarian / Swedish / Danish / Norwegian / Finnish / Slovak / Croatian / Catalan — orthography only; Details add address + honesty. */
 export function EuroText({ lang, ...props }: CommonProps & { lang: EuroLang }) {
   const trimmed = props.text.trim()
   if (!trimmed) return props.placeholder ? <>{props.placeholder}</> : null
@@ -161,7 +161,7 @@ export function RtlText({ lang, ...props }: CommonProps & { lang: RtlFamilyLang 
   return <FamilyLine {...props} text={trimmed} detail={detail} />
 }
 
-/** Single call-site branch for every Batch 2 language (`isLangFamilyLang`). */
+/** Single call-site branch for every Batch 2–3a language (`isLangFamilyLang`). */
 export function LangFamilyText({ lang, ...props }: CommonProps & { lang: LangFamilyLang }) {
   if (isIndicFamilyLang(lang)) return <IndicText lang={lang} {...props} />
   if (isEuroFamilyLang(lang)) return <EuroText lang={lang} {...props} />

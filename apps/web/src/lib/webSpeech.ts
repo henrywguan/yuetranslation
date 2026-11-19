@@ -70,6 +70,18 @@ export function createWebSpeechSession(
   let heLocaleIndex = 0
   let faLocaleIndex = 0
   let urLocaleIndex = 0
+  let mlLocaleIndex = 0
+  let mrLocaleIndex = 0
+  let paLocaleIndex = 0
+  let orLocaleIndex = 0
+  let siLocaleIndex = 0
+  let neLocaleIndex = 0
+  let daLocaleIndex = 0
+  let nbLocaleIndex = 0
+  let fiLocaleIndex = 0
+  let skLocaleIndex = 0
+  let hrLocaleIndex = 0
+  let caLocaleIndex = 0
   const bilingualYueEn = Boolean(opts?.bilingualYueEn)
   const echo = createEchoGuard()
   const apple = isAppleTouchDevice()
@@ -120,6 +132,18 @@ export function createWebSpeechSession(
   const heLocales = ['he-IL', 'he']
   const faLocales = ['fa-IR', 'fa']
   const urLocales = ['ur-IN', 'ur']
+  const mlLocales = ['ml-IN', 'ml']
+  const mrLocales = ['mr-IN', 'mr']
+  const paLocales = ['pa-IN', 'pa']
+  const orLocales = ['or-IN', 'or']
+  const siLocales = ['si-LK', 'si']
+  const neLocales = ['ne-NP', 'ne']
+  const daLocales = ['da-DK', 'da']
+  const nbLocales = ['nb-NO', 'nb']
+  const fiLocales = ['fi-FI', 'fi']
+  const skLocales = ['sk-SK', 'sk']
+  const hrLocales = ['hr-HR', 'hr']
+  const caLocales = ['ca-ES', 'ca']
 
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
   const cmnLocale = () => cmnLocales[cmnLocaleIndex % cmnLocales.length]
@@ -164,6 +188,18 @@ export function createWebSpeechSession(
   const heLocale = () => heLocales[heLocaleIndex % heLocales.length]
   const faLocale = () => faLocales[faLocaleIndex % faLocales.length]
   const urLocale = () => urLocales[urLocaleIndex % urLocales.length]
+  const mlLocale = () => mlLocales[mlLocaleIndex % mlLocales.length]
+  const mrLocale = () => mrLocales[mrLocaleIndex % mrLocales.length]
+  const paLocale = () => paLocales[paLocaleIndex % paLocales.length]
+  const orLocale = () => orLocales[orLocaleIndex % orLocales.length]
+  const siLocale = () => siLocales[siLocaleIndex % siLocales.length]
+  const neLocale = () => neLocales[neLocaleIndex % neLocales.length]
+  const daLocale = () => daLocales[daLocaleIndex % daLocales.length]
+  const nbLocale = () => nbLocales[nbLocaleIndex % nbLocales.length]
+  const fiLocale = () => fiLocales[fiLocaleIndex % fiLocales.length]
+  const skLocale = () => skLocales[skLocaleIndex % skLocales.length]
+  const hrLocale = () => hrLocales[hrLocaleIndex % hrLocales.length]
+  const caLocale = () => caLocales[caLocaleIndex % caLocales.length]
 
   const resolveRecLang = (): string => {
     if (bilingualYueEn && activeLang === 'en') return 'en-US'
@@ -210,6 +246,18 @@ export function createWebSpeechSession(
     if (activeLang === 'he') return heLocale()
     if (activeLang === 'fa') return faLocale()
     if (activeLang === 'ur') return urLocale()
+    if (activeLang === 'ml') return mlLocale()
+    if (activeLang === 'mr') return mrLocale()
+    if (activeLang === 'pa') return paLocale()
+    if (activeLang === 'or') return orLocale()
+    if (activeLang === 'si') return siLocale()
+    if (activeLang === 'ne') return neLocale()
+    if (activeLang === 'da') return daLocale()
+    if (activeLang === 'nb') return nbLocale()
+    if (activeLang === 'fi') return fiLocale()
+    if (activeLang === 'sk') return skLocale()
+    if (activeLang === 'hr') return hrLocale()
+    if (activeLang === 'ca') return caLocale()
     return 'en-US'
   }
 
@@ -477,6 +525,66 @@ export function createWebSpeechSession(
         queueMicrotask(() => startOne())
         return
       }
+      if (localeRejected && activeLang === 'ml' && mlLocaleIndex < mlLocales.length - 1) {
+        mlLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'mr' && mrLocaleIndex < mrLocales.length - 1) {
+        mrLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'pa' && paLocaleIndex < paLocales.length - 1) {
+        paLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'or' && orLocaleIndex < orLocales.length - 1) {
+        orLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'si' && siLocaleIndex < siLocales.length - 1) {
+        siLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'ne' && neLocaleIndex < neLocales.length - 1) {
+        neLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'da' && daLocaleIndex < daLocales.length - 1) {
+        daLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'nb' && nbLocaleIndex < nbLocales.length - 1) {
+        nbLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'fi' && fiLocaleIndex < fiLocales.length - 1) {
+        fiLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'sk' && skLocaleIndex < skLocales.length - 1) {
+        skLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'hr' && hrLocaleIndex < hrLocales.length - 1) {
+        hrLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'ca' && caLocaleIndex < caLocales.length - 1) {
+        caLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
       if (e.error === 'not-allowed') {
         stopped = true
         handlers.onError('Microphone permission denied. Allow mic access and try again.')
@@ -594,6 +702,18 @@ export function createWebSpeechSession(
       heLocaleIndex = 0
       faLocaleIndex = 0
       urLocaleIndex = 0
+      mlLocaleIndex = 0
+      mrLocaleIndex = 0
+      paLocaleIndex = 0
+      orLocaleIndex = 0
+      siLocaleIndex = 0
+      neLocaleIndex = 0
+      daLocaleIndex = 0
+      nbLocaleIndex = 0
+      fiLocaleIndex = 0
+      skLocaleIndex = 0
+      hrLocaleIndex = 0
+      caLocaleIndex = 0
       startOne()
     },
     async stop() {

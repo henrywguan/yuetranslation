@@ -53,6 +53,18 @@ export const PRIMARY_LANGS = [
   'he',
   'fa',
   'ur',
+  'ml',
+  'mr',
+  'pa',
+  'or',
+  'si',
+  'ne',
+  'da',
+  'nb',
+  'fi',
+  'sk',
+  'hr',
+  'ca',
 ] as const satisfies readonly VoiceLang[]
 export type PrimaryLang = (typeof PRIMARY_LANGS)[number]
 
@@ -439,6 +451,78 @@ export function primaryLangLabel(lang: PrimaryLang): {
         zh: '烏爾都文語言工具',
         gloss: 'اردو زبان کا آلہ',
       }
+    case 'ml':
+      return {
+        en: 'Malayalam Language Tool',
+        zh: '馬拉雅拉姆文語言工具',
+        gloss: 'മലയാളം ഭാഷാ ഉപകരണം',
+      }
+    case 'mr':
+      return {
+        en: 'Marathi Language Tool',
+        zh: '馬拉地文語言工具',
+        gloss: 'मराठी भाषा साधन',
+      }
+    case 'pa':
+      return {
+        en: 'Punjabi Language Tool',
+        zh: '旁遮普文語言工具',
+        gloss: 'ਪੰਜਾਬੀ ਭਾਸ਼ਾ ਟੂਲ',
+      }
+    case 'or':
+      return {
+        en: 'Odia Language Tool',
+        zh: '奧里亞文語言工具',
+        gloss: 'ଓଡ଼ିଆ ଭାଷା ସାଧନ',
+      }
+    case 'si':
+      return {
+        en: 'Sinhala Language Tool',
+        zh: '僧伽羅文語言工具',
+        gloss: 'සිංහල භාෂා මෙවලම',
+      }
+    case 'ne':
+      return {
+        en: 'Nepali Language Tool',
+        zh: '尼泊爾文語言工具',
+        gloss: 'नेपाली भाषा उपकरण',
+      }
+    case 'da':
+      return {
+        en: 'Danish Language Tool',
+        zh: '丹麥文語言工具',
+        gloss: 'Dansk sprogværktøj',
+      }
+    case 'nb':
+      return {
+        en: 'Norwegian Language Tool',
+        zh: '挪威文語言工具',
+        gloss: 'Norsk språkverktøy',
+      }
+    case 'fi':
+      return {
+        en: 'Finnish Language Tool',
+        zh: '芬蘭文語言工具',
+        gloss: 'Suomen kielityökalu',
+      }
+    case 'sk':
+      return {
+        en: 'Slovak Language Tool',
+        zh: '斯洛伐克文語言工具',
+        gloss: 'Slovenský jazykový nástroj',
+      }
+    case 'hr':
+      return {
+        en: 'Croatian Language Tool',
+        zh: '克羅地亞文語言工具',
+        gloss: 'Hrvatski jezični alat',
+      }
+    case 'ca':
+      return {
+        en: 'Catalan Language Tool',
+        zh: '加泰隆尼亞文語言工具',
+        gloss: 'Eina lingüística en català',
+      }
     case 'yue':
     default:
       return {
@@ -537,6 +621,30 @@ export function primaryLangShortCopy(lang: PrimaryLang): { en: string; zh: strin
       return { en: 'Persian', zh: '波斯文' }
     case 'ur':
       return { en: 'Urdu', zh: '烏爾都文' }
+    case 'ml':
+      return { en: 'Malayalam', zh: '馬拉雅拉姆文' }
+    case 'mr':
+      return { en: 'Marathi', zh: '馬拉地文' }
+    case 'pa':
+      return { en: 'Punjabi', zh: '旁遮普文' }
+    case 'or':
+      return { en: 'Odia', zh: '奧里亞文' }
+    case 'si':
+      return { en: 'Sinhala', zh: '僧伽羅文' }
+    case 'ne':
+      return { en: 'Nepali', zh: '尼泊爾文' }
+    case 'da':
+      return { en: 'Danish', zh: '丹麥文' }
+    case 'nb':
+      return { en: 'Norwegian', zh: '挪威文' }
+    case 'fi':
+      return { en: 'Finnish', zh: '芬蘭文' }
+    case 'sk':
+      return { en: 'Slovak', zh: '斯洛伐克文' }
+    case 'hr':
+      return { en: 'Croatian', zh: '克羅地亞文' }
+    case 'ca':
+      return { en: 'Catalan', zh: '加泰隆尼亞文' }
     case 'yue':
     default:
       return { en: 'Cantonese', zh: '粵語' }

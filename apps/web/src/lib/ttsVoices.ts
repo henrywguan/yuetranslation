@@ -47,6 +47,18 @@ export {
   DEFAULT_HE_VOICE,
   DEFAULT_FA_VOICE,
   DEFAULT_UR_VOICE,
+  DEFAULT_ML_VOICE,
+  DEFAULT_MR_VOICE,
+  DEFAULT_PA_VOICE,
+  DEFAULT_OR_VOICE,
+  DEFAULT_SI_VOICE,
+  DEFAULT_NE_VOICE,
+  DEFAULT_DA_VOICE,
+  DEFAULT_NB_VOICE,
+  DEFAULT_FI_VOICE,
+  DEFAULT_SK_VOICE,
+  DEFAULT_HR_VOICE,
+  DEFAULT_CA_VOICE,
   YUE_VOICES,
   EN_VOICES,
   CMN_VOICES,
@@ -91,6 +103,18 @@ export {
   HE_VOICES,
   FA_VOICES,
   UR_VOICES,
+  ML_VOICES,
+  MR_VOICES,
+  PA_VOICES,
+  OR_VOICES,
+  SI_VOICES,
+  NE_VOICES,
+  DA_VOICES,
+  NB_VOICES,
+  FI_VOICES,
+  SK_VOICES,
+  HR_VOICES,
+  CA_VOICES,
   PREVIEW_YUE,
   PREVIEW_EN,
   PREVIEW_CMN,
@@ -135,6 +159,18 @@ export {
   PREVIEW_HE,
   PREVIEW_FA,
   PREVIEW_UR,
+  PREVIEW_ML,
+  PREVIEW_MR,
+  PREVIEW_PA,
+  PREVIEW_OR,
+  PREVIEW_SI,
+  PREVIEW_NE,
+  PREVIEW_DA,
+  PREVIEW_NB,
+  PREVIEW_FI,
+  PREVIEW_SK,
+  PREVIEW_HR,
+  PREVIEW_CA,
   resolveYueVoice,
   resolveEnVoice,
   resolveCmnVoice,
@@ -179,6 +215,18 @@ export {
   resolveHeVoice,
   resolveFaVoice,
   resolveUrVoice,
+  resolveMlVoice,
+  resolveMrVoice,
+  resolvePaVoice,
+  resolveOrVoice,
+  resolveSiVoice,
+  resolveNeVoice,
+  resolveDaVoice,
+  resolveNbVoice,
+  resolveFiVoice,
+  resolveSkVoice,
+  resolveHrVoice,
+  resolveCaVoice,
   isYueVoice,
   isEnVoice,
   isCmnVoice,
@@ -223,6 +271,18 @@ export {
   isHeVoice,
   isFaVoice,
   isUrVoice,
+  isMlVoice,
+  isMrVoice,
+  isPaVoice,
+  isOrVoice,
+  isSiVoice,
+  isNeVoice,
+  isDaVoice,
+  isNbVoice,
+  isFiVoice,
+  isSkVoice,
+  isHrVoice,
+  isCaVoice,
   voiceMeta,
   type YueVoiceId,
   type EnVoiceId,
@@ -268,6 +328,18 @@ export {
   type HeVoiceId,
   type FaVoiceId,
   type UrVoiceId,
+  type MlVoiceId,
+  type MrVoiceId,
+  type PaVoiceId,
+  type OrVoiceId,
+  type SiVoiceId,
+  type NeVoiceId,
+  type DaVoiceId,
+  type NbVoiceId,
+  type FiVoiceId,
+  type SkVoiceId,
+  type HrVoiceId,
+  type CaVoiceId,
   type TtsVoiceId,
   type TtsVoiceOption,
 } from '@jyut/shared/ttsVoices'
@@ -313,6 +385,18 @@ import {
   DEFAULT_HE_VOICE,
   DEFAULT_FA_VOICE,
   DEFAULT_UR_VOICE,
+  DEFAULT_ML_VOICE,
+  DEFAULT_MR_VOICE,
+  DEFAULT_PA_VOICE,
+  DEFAULT_OR_VOICE,
+  DEFAULT_SI_VOICE,
+  DEFAULT_NE_VOICE,
+  DEFAULT_DA_VOICE,
+  DEFAULT_NB_VOICE,
+  DEFAULT_FI_VOICE,
+  DEFAULT_SK_VOICE,
+  DEFAULT_HR_VOICE,
+  DEFAULT_CA_VOICE,
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
   DEFAULT_WUU_VOICE,
@@ -357,6 +441,18 @@ import {
   resolveHeVoice,
   resolveFaVoice,
   resolveUrVoice,
+  resolveMlVoice,
+  resolveMrVoice,
+  resolvePaVoice,
+  resolveOrVoice,
+  resolveSiVoice,
+  resolveNeVoice,
+  resolveDaVoice,
+  resolveNbVoice,
+  resolveFiVoice,
+  resolveSkVoice,
+  resolveHrVoice,
+  resolveCaVoice,
   resolveEnVoice,
   resolveYueVoice,
   resolveWuuVoice,
@@ -402,6 +498,18 @@ import {
   type HeVoiceId,
   type FaVoiceId,
   type UrVoiceId,
+  type MlVoiceId,
+  type MrVoiceId,
+  type PaVoiceId,
+  type OrVoiceId,
+  type SiVoiceId,
+  type NeVoiceId,
+  type DaVoiceId,
+  type NbVoiceId,
+  type FiVoiceId,
+  type SkVoiceId,
+  type HrVoiceId,
+  type CaVoiceId,
   type EnVoiceId,
   type YueVoiceId,
   type WuuVoiceId,
@@ -452,6 +560,18 @@ const STORAGE_UK = 'yue-tts-voice-uk'
 const STORAGE_HE = 'yue-tts-voice-he'
 const STORAGE_FA = 'yue-tts-voice-fa'
 const STORAGE_UR = 'yue-tts-voice-ur'
+const STORAGE_ML = 'yue-tts-voice-ml'
+const STORAGE_MR = 'yue-tts-voice-mr'
+const STORAGE_PA = 'yue-tts-voice-pa'
+const STORAGE_OR = 'yue-tts-voice-or'
+const STORAGE_SI = 'yue-tts-voice-si'
+const STORAGE_NE = 'yue-tts-voice-ne'
+const STORAGE_DA = 'yue-tts-voice-da'
+const STORAGE_NB = 'yue-tts-voice-nb'
+const STORAGE_FI = 'yue-tts-voice-fi'
+const STORAGE_SK = 'yue-tts-voice-sk'
+const STORAGE_HR = 'yue-tts-voice-hr'
+const STORAGE_CA = 'yue-tts-voice-ca'
 
 
 export function readLocalYueVoice(): YueVoiceId {
@@ -1178,6 +1298,210 @@ export function writeLocalFaVoice(id: FaVoiceId) {
 export function writeLocalUrVoice(id: UrVoiceId) {
   try {
     localStorage.setItem(STORAGE_UR, resolveUrVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalMlVoice(): MlVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_ML_VOICE
+  try {
+    return resolveMlVoice(localStorage.getItem(STORAGE_ML))
+  } catch {
+    return DEFAULT_ML_VOICE
+  }
+}
+
+export function writeLocalMlVoice(id: MlVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_ML, resolveMlVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalMrVoice(): MrVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_MR_VOICE
+  try {
+    return resolveMrVoice(localStorage.getItem(STORAGE_MR))
+  } catch {
+    return DEFAULT_MR_VOICE
+  }
+}
+
+export function writeLocalMrVoice(id: MrVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_MR, resolveMrVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalPaVoice(): PaVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_PA_VOICE
+  try {
+    return resolvePaVoice(localStorage.getItem(STORAGE_PA))
+  } catch {
+    return DEFAULT_PA_VOICE
+  }
+}
+
+export function writeLocalPaVoice(id: PaVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_PA, resolvePaVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalOrVoice(): OrVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_OR_VOICE
+  try {
+    return resolveOrVoice(localStorage.getItem(STORAGE_OR))
+  } catch {
+    return DEFAULT_OR_VOICE
+  }
+}
+
+export function writeLocalOrVoice(id: OrVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_OR, resolveOrVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalSiVoice(): SiVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_SI_VOICE
+  try {
+    return resolveSiVoice(localStorage.getItem(STORAGE_SI))
+  } catch {
+    return DEFAULT_SI_VOICE
+  }
+}
+
+export function writeLocalSiVoice(id: SiVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_SI, resolveSiVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalNeVoice(): NeVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_NE_VOICE
+  try {
+    return resolveNeVoice(localStorage.getItem(STORAGE_NE))
+  } catch {
+    return DEFAULT_NE_VOICE
+  }
+}
+
+export function writeLocalNeVoice(id: NeVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_NE, resolveNeVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalDaVoice(): DaVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_DA_VOICE
+  try {
+    return resolveDaVoice(localStorage.getItem(STORAGE_DA))
+  } catch {
+    return DEFAULT_DA_VOICE
+  }
+}
+
+export function writeLocalDaVoice(id: DaVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_DA, resolveDaVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalNbVoice(): NbVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_NB_VOICE
+  try {
+    return resolveNbVoice(localStorage.getItem(STORAGE_NB))
+  } catch {
+    return DEFAULT_NB_VOICE
+  }
+}
+
+export function writeLocalNbVoice(id: NbVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_NB, resolveNbVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalFiVoice(): FiVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_FI_VOICE
+  try {
+    return resolveFiVoice(localStorage.getItem(STORAGE_FI))
+  } catch {
+    return DEFAULT_FI_VOICE
+  }
+}
+
+export function writeLocalFiVoice(id: FiVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_FI, resolveFiVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalSkVoice(): SkVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_SK_VOICE
+  try {
+    return resolveSkVoice(localStorage.getItem(STORAGE_SK))
+  } catch {
+    return DEFAULT_SK_VOICE
+  }
+}
+
+export function writeLocalSkVoice(id: SkVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_SK, resolveSkVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalHrVoice(): HrVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_HR_VOICE
+  try {
+    return resolveHrVoice(localStorage.getItem(STORAGE_HR))
+  } catch {
+    return DEFAULT_HR_VOICE
+  }
+}
+
+export function writeLocalHrVoice(id: HrVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_HR, resolveHrVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalCaVoice(): CaVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_CA_VOICE
+  try {
+    return resolveCaVoice(localStorage.getItem(STORAGE_CA))
+  } catch {
+    return DEFAULT_CA_VOICE
+  }
+}
+
+export function writeLocalCaVoice(id: CaVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_CA, resolveCaVoice(id))
   } catch {
     /* ignore */
   }

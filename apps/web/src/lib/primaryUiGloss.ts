@@ -103,6 +103,30 @@ export function primaryGlossHtmlLang(lang: PrimaryLang): string {
       return 'fa-IR'
     case 'ur':
       return 'ur-IN'
+    case 'ml':
+      return 'ml-IN'
+    case 'mr':
+      return 'mr-IN'
+    case 'pa':
+      return 'pa-IN'
+    case 'or':
+      return 'or-IN'
+    case 'si':
+      return 'si-LK'
+    case 'ne':
+      return 'ne-NP'
+    case 'da':
+      return 'da-DK'
+    case 'nb':
+      return 'nb-NO'
+    case 'fi':
+      return 'fi-FI'
+    case 'sk':
+      return 'sk-SK'
+    case 'hr':
+      return 'hr-HR'
+    case 'ca':
+      return 'ca-ES'
     case 'cmn':
       return 'zh-Latn'
     case 'wuu':

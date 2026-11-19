@@ -5,7 +5,7 @@ import { humanizeThrownError } from './apiError'
 import { maybeOfferPushNudge } from './pushNudge'
 import { expireHistoryTurns, MAX_TURNS } from './historyMerge'
 import { newId } from './id'
-import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation, sanitizeThTranslation, sanitizeLoTranslation, sanitizeKoTranslation, sanitizeJaTranslation, sanitizeIdTranslation, sanitizeMsTranslation, sanitizePtTranslation, sanitizeFrTranslation, sanitizeHiTranslation, sanitizeKmTranslation, sanitizeMyTranslation, sanitizeJvTranslation, sanitizeItTranslation, sanitizeDeTranslation, sanitizeNlTranslation, sanitizeArTranslation, sanitizeTaTranslation, sanitizePtptTranslation, sanitizeTrTranslation, sanitizeBnTranslation, sanitizeTeTranslation, sanitizeGuTranslation, sanitizeKnTranslation, sanitizePlTranslation, sanitizeRoTranslation, sanitizeCsTranslation, sanitizeElTranslation, sanitizeHuTranslation, sanitizeSvTranslation, sanitizeRuTranslation, sanitizeUkTranslation, sanitizeHeTranslation, sanitizeFaTranslation, sanitizeUrTranslation, sanitizeCebTranslation, sanitizeIloTranslation, sanitizeBclTranslation } from './translationGuard'
+import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation, sanitizeThTranslation, sanitizeLoTranslation, sanitizeKoTranslation, sanitizeJaTranslation, sanitizeIdTranslation, sanitizeMsTranslation, sanitizePtTranslation, sanitizeFrTranslation, sanitizeHiTranslation, sanitizeKmTranslation, sanitizeMyTranslation, sanitizeJvTranslation, sanitizeItTranslation, sanitizeDeTranslation, sanitizeNlTranslation, sanitizeArTranslation, sanitizeTaTranslation, sanitizePtptTranslation, sanitizeTrTranslation, sanitizeBnTranslation, sanitizeTeTranslation, sanitizeGuTranslation, sanitizeKnTranslation, sanitizePlTranslation, sanitizeRoTranslation, sanitizeCsTranslation, sanitizeElTranslation, sanitizeHuTranslation, sanitizeSvTranslation, sanitizeRuTranslation, sanitizeUkTranslation, sanitizeHeTranslation, sanitizeFaTranslation, sanitizeUrTranslation, sanitizeMlTranslation, sanitizeMrTranslation, sanitizePaTranslation, sanitizeOrTranslation, sanitizeSiTranslation, sanitizeNeTranslation, sanitizeDaTranslation, sanitizeNbTranslation, sanitizeFiTranslation, sanitizeSkTranslation, sanitizeHrTranslation, sanitizeCaTranslation, sanitizeCebTranslation, sanitizeIloTranslation, sanitizeBclTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
 import type { ConversationLang, ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './types'
 
@@ -183,6 +183,18 @@ function sanitizeTranslation(to: Lang, text: string, source?: string): string | 
   if (to === 'he') return sanitizeHeTranslation(text)
   if (to === 'fa') return sanitizeFaTranslation(text)
   if (to === 'ur') return sanitizeUrTranslation(text)
+  if (to === 'ml') return sanitizeMlTranslation(text)
+  if (to === 'mr') return sanitizeMrTranslation(text)
+  if (to === 'pa') return sanitizePaTranslation(text)
+  if (to === 'or') return sanitizeOrTranslation(text)
+  if (to === 'si') return sanitizeSiTranslation(text)
+  if (to === 'ne') return sanitizeNeTranslation(text)
+  if (to === 'da') return sanitizeDaTranslation(text)
+  if (to === 'nb') return sanitizeNbTranslation(text)
+  if (to === 'fi') return sanitizeFiTranslation(text)
+  if (to === 'sk') return sanitizeSkTranslation(text)
+  if (to === 'hr') return sanitizeHrTranslation(text)
+  if (to === 'ca') return sanitizeCaTranslation(text)
   if (to === 'ceb') return sanitizeCebTranslation(text)
   if (to === 'ilo') return sanitizeIloTranslation(text)
   if (to === 'bcl') return sanitizeBclTranslation(text)
