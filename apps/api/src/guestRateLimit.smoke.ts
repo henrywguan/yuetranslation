@@ -4,6 +4,7 @@ import {
   allowGuestIpOrReject,
   allowIpRateOrReject,
   allowUserRateOrReject,
+  clientIp,
   resetGuestRateLimitWindowsForTests,
 } from './guestRateLimit.js'
 import type { AuthedRequest } from './auth.js'
@@ -47,9 +48,22 @@ resetGuestRateLimitWindowsForTests()
 
 const guestReq = {
   auth: undefined,
-  headers: { 'x-forwarded-for': '203.0.113.50' },
+  ip: '203.0.113.50',
+  headers: { 'x-forwarded-for': '198.51.100.1, 203.0.113.50' },
   socket: { remoteAddress: '127.0.0.1' },
 } as unknown as AuthedRequest
+
+// With trust-proxy-style req.ip set, clientIp must prefer it over a spoofed left XFF hop.
+assert.equal(clientIp(guestReq), '203.0.113.50')
+
+const spoofOnly = {
+  auth: undefined,
+  ip: undefined,
+  headers: { 'x-forwarded-for': '198.51.100.9, 203.0.113.77' },
+  socket: { remoteAddress: '10.0.0.1' },
+} as unknown as AuthedRequest
+// Without req.ip, prefer rightmost hop (proxy-appended peer) over leftmost spoof.
+assert.equal(clientIp(spoofOnly), '203.0.113.77')
 
 const limit = env.guestRlTranslatePerMin
 assert.ok(limit > 0, 'guest translate RL should be enabled by default')
@@ -69,6 +83,7 @@ assert.equal(blocked.statusCode, 429)
 
 const signedIn = {
   auth: { userId: 'user-1', email: 'a@b.c' },
+  ip: '203.0.113.50',
   headers: { 'x-forwarded-for': '203.0.113.50' },
   socket: { remoteAddress: '127.0.0.1' },
 } as unknown as AuthedRequest

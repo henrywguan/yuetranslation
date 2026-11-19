@@ -28,19 +28,50 @@ function limitFor(bucket: GuestRateBucket): number {
   }
 }
 
-/** Client IP behind Vercel / proxies — first X-Forwarded-For hop. */
+/**
+ * Client IP behind Vercel / one trusted reverse proxy.
+ *
+ * Prefer Express `req.ip` when `trust proxy` is enabled (proxy-addr picks the
+ * left-of-trusted hop so a client-prepended X-Forwarded-For cannot trivially
+ * spoof guest RL). Fall back to platform-controlled headers, then socket.
+ */
 export function clientIp(req: Request): string {
-  const xf = req.headers['x-forwarded-for']
-  if (typeof xf === 'string' && xf.trim()) {
-    const first = xf.split(',')[0]?.trim()
+  const fromExpress = typeof req.ip === 'string' ? req.ip.trim() : ''
+  if (fromExpress && fromExpress !== '::1' && fromExpress !== '127.0.0.1') {
+    // Strip IPv6-mapped IPv4 for stable guest keys.
+    if (fromExpress.startsWith('::ffff:')) return fromExpress.slice(7)
+    return fromExpress
+  }
+
+  const vercel = req.headers['x-vercel-forwarded-for']
+  if (typeof vercel === 'string' && vercel.trim()) {
+    const first = vercel.split(',')[0]?.trim()
     if (first) return first
   }
-  if (Array.isArray(xf) && xf[0]) {
-    const first = String(xf[0]).split(',')[0]?.trim()
-    if (first) return first
-  }
+
   const real = req.headers['x-real-ip']
   if (typeof real === 'string' && real.trim()) return real.trim()
+
+  // Last resort: with a single trusted proxy that *appends*, the rightmost
+  // address is the connecting peer Vercel saw — safer than leftmost (spoofable).
+  const xf = req.headers['x-forwarded-for']
+  if (typeof xf === 'string' && xf.trim()) {
+    const parts = xf.split(',').map((p) => p.trim()).filter(Boolean)
+    if (parts.length === 1) return parts[0]!
+    if (parts.length > 1) return parts[parts.length - 1]!
+  }
+  if (Array.isArray(xf) && xf[0]) {
+    const parts = String(xf[0])
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean)
+    if (parts.length) return parts[parts.length - 1]!
+  }
+
+  if (fromExpress) {
+    if (fromExpress.startsWith('::ffff:')) return fromExpress.slice(7)
+    return fromExpress
+  }
   return req.socket.remoteAddress || 'unknown'
 }
 

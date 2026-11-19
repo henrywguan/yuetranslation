@@ -197,7 +197,8 @@ export const env = {
   /**
    * Guest-only per-IP rate limits (requests / rolling minute).
    * Signed-in users are not limited by these. Set 0 to disable a bucket.
-   * TTS is intentionally uncapped here (product choice — still metered in usage).
+   * TTS stays uncapped by IP (product — Azure TTS effectively free; still metered in usage).
+   * In-memory Map — soft on multi-isolate Vercel.
    */
   guestRlTranslatePerMin: Number(process.env.YUE_GUEST_RL_TRANSLATE_PER_MIN || 30),
   guestRlBreakdownPerMin: Number(process.env.YUE_GUEST_RL_BREAKDOWN_PER_MIN || 20),

@@ -135,7 +135,27 @@ import { getOfflinePack, isOfflinePackId, offlinePackManifest } from './offlineP
 
 export const app = express()
 app.disable('x-powered-by')
+// Vercel (and local tunnels) sit one hop in front — needed so req.ip / guest RL
+// cannot be trivially spoofed via a client-prepended X-Forwarded-For.
+app.set('trust proxy', 1)
 app.use(cors({ origin: corsOriginDelegate, credentials: true }))
+
+/** Performance-safe baseline headers (mirror vercel.json; API responses need these too). */
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+  // Clickjacking only — no script-src rewrite (Vite / AUI stay intact).
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self'")
+  // Cam + Solo/Conversation mic need self; deny unused powerful features.
+  res.setHeader(
+    'Permissions-Policy',
+    'camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()',
+  )
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
+  }
+  next()
+})
 
 // Stripe webhook must read the raw body before JSON parsing.
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), handleBillingWebhook)
