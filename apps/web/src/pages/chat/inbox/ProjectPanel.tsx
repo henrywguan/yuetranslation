@@ -62,40 +62,37 @@ export function ProjectDraftPanel({
 export function ProjectPanel({
   project,
   agents,
-  onSpawnWorker,
   onOpenAgent,
   onMemoryChange,
 }: {
   project: ChatInboxProject
   agents: ChatInboxAgent[]
-  onSpawnWorker: () => void
   onOpenAgent: (agent: ChatInboxAgent) => void
   onMemoryChange: (memory: string) => void
 }) {
   const workers = agents.filter((a) => a.projectId === project.id && a.role === 'worker')
-  const overseer = agents.find((a) => a.id === project.overseerAgentId) ||
+  const overseer =
+    agents.find((a) => a.id === project.overseerAgentId) ||
     agents.find((a) => a.projectId === project.id && a.role === 'overseer')
 
   return (
     <section className="inbox-section inbox-project-panel" aria-label={`${project.title} overseer`}>
       <div className="inbox-section-head">
-        <span className="inbox-section-toggle" style={{ cursor: 'default' }}>
+        <button
+          type="button"
+          className="inbox-section-toggle"
+          onClick={() => {
+            if (overseer) onOpenAgent(overseer)
+          }}
+          title="Focus Overseer chat"
+        >
           {project.title}
-        </span>
-      </div>
-      <p className="inbox-empty" style={{ paddingTop: 0 }}>
-        Overseer plans · workers implement · statuses drive the tiles above.
-      </p>
-      <div className="inbox-project-actions">
-        {overseer ? (
-          <button type="button" className="inbox-new-chat" onClick={() => onOpenAgent(overseer)}>
-            Open Overseer
-          </button>
-        ) : null}
-        <button type="button" className="inbox-new-chat" onClick={onSpawnWorker}>
-          + Spawn worker
+          <span aria-hidden>· Overseer</span>
         </button>
       </div>
+      <p className="inbox-empty" style={{ paddingTop: 0 }}>
+        Describe work in the Overseer chat — it plans, creates workers, and drives the tiles above.
+      </p>
       <label className="inbox-memory">
         <span className="inbox-agents-label">Project memory</span>
         <textarea
@@ -119,7 +116,7 @@ export function ProjectPanel({
           ))}
         </ul>
       ) : (
-        <p className="inbox-empty">No workers yet — spawn one to run a DeepSeek turn with the worker role.</p>
+        <p className="inbox-empty">No workers yet — the Overseer will create them when you assign work.</p>
       )}
     </section>
   )

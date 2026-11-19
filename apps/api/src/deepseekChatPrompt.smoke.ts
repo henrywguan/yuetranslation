@@ -56,6 +56,8 @@ const overseer = buildDeepseekChatSystem({
 })
 assert.match(overseer, /Project Overseer/)
 assert.match(overseer, /Ship Inbox Phase B/)
+assert.match(overseer, /project_create_agent/)
+assert.match(overseer, /Never ask the user to click Spawn/)
 assert.match(
   buildDeepseekChatSystem({ inboxRole: 'worker', now: fixed, mode: 'tools' }),
   /worker agent/i,

@@ -41,7 +41,11 @@ import {
   type ChatSource,
   type ChatThread,
 } from '../../../lib/chatHistory'
-import { agentForThread, resolveActiveSandboxSessionId } from '../../../lib/chatInbox'
+import {
+  agentForThread,
+  resolveActiveSandboxSessionId,
+  type InboxAgentStatus,
+} from '../../../lib/chatInbox'
 import { StreamingDeepseekChatTts } from '../../../lib/chatDeepseekVoice'
 import { useChatInboxContextOptional } from '../inbox/ChatInboxContext'
 import {
@@ -211,6 +215,79 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const activeIdRef = useRef(activeId)
   threadsRef.current = threads
   activeIdRef.current = activeId
+  /** Overseer project_* message queue — flushed after the current turn. */
+  const pendingProjectMsgsRef = useRef<
+    Array<{ agentId: string; message: string; projectId: string }>
+  >([])
+  const overseerReturnThreadRef = useRef<string | null>(null)
+  const flushingProjectMsgsRef = useRef(false)
+
+  const createSilentThread = useCallback(() => {
+    const created = emptyThread()
+    setThreads((prev) =>
+      upsertChatThread(
+        created,
+        prev.filter((t) => t.id !== BOOT_THREAD.id),
+      ),
+    )
+    return created.id
+  }, [])
+
+  const applyProjectActions = useCallback(
+    (actions: Array<Record<string, unknown>>, projectId: string) => {
+      const api = inboxRef.current
+      if (!api || !projectId) return
+      for (const raw of actions) {
+        const type = String(raw.type || '')
+        if (type === 'create_agent') {
+          const agentId = String(raw.agentId || '').trim()
+          const title = String(raw.title || 'Worker').trim() || 'Worker'
+          if (!agentId) continue
+          if (!api.state.agents.some((a) => a.id === agentId)) {
+            api.spawnWorker(projectId, { id: agentId, title, status: 'queued' })
+          }
+          const message = typeof raw.message === 'string' ? raw.message.trim() : ''
+          if (message) {
+            pendingProjectMsgsRef.current.push({ agentId, message, projectId })
+          }
+          continue
+        }
+        if (type === 'message_agent') {
+          const agentId = String(raw.agentId || '').trim()
+          const message = String(raw.message || '').trim()
+          if (!agentId || !message) continue
+          if (!api.state.agents.some((a) => a.id === agentId)) {
+            api.spawnWorker(projectId, {
+              id: agentId,
+              title: `Worker · ${api.state.projects.find((p) => p.id === projectId)?.title || 'Project'}`,
+              status: 'queued',
+            })
+          } else {
+            api.updateAgentStatus(agentId, 'queued')
+          }
+          pendingProjectMsgsRef.current.push({ agentId, message, projectId })
+          continue
+        }
+        if (type === 'set_status') {
+          const agentId = String(raw.agentId || '').trim()
+          const status = String(raw.status || '').trim() as InboxAgentStatus
+          if (!agentId || !status) continue
+          const reviewUrl =
+            typeof raw.reviewUrl === 'string' ? raw.reviewUrl.trim() : undefined
+          if (status === 'in_review' && reviewUrl) {
+            api.markInReview(agentId, reviewUrl)
+          } else {
+            api.updateAgentStatus(agentId, status, reviewUrl)
+          }
+          continue
+        }
+        if (type === 'update_memory') {
+          api.updateProjectMemory(projectId, String(raw.memory || ''))
+        }
+      }
+    },
+    [],
+  )
 
   const autoSpeak = useYueStore((s) => s.autoSpeak)
   const speakManual = useYueStore((s) => s.speakManual)
@@ -556,8 +633,27 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         const sandboxSessionId = inboxState
           ? resolveActiveSandboxSessionId(inboxState, linkedAgent?.projectId)
           : undefined
+        const projectId =
+          linkedAgent?.role === 'overseer' && linkedAgent.projectId
+            ? linkedAgent.projectId
+            : undefined
+        const projectAgents =
+          projectId && inboxState
+            ? inboxState.agents
+                .filter((a) => a.projectId === projectId)
+                .map((a) => ({
+                  id: a.id,
+                  title: a.title,
+                  status: a.status,
+                  role: a.role,
+                  ...(a.threadId ? { threadId: a.threadId } : null),
+                }))
+            : undefined
         if (linkedAgent && inboxRef.current) {
           inboxRef.current.updateAgentStatus(linkedAgent.id, 'working')
+        }
+        if (linkedAgent?.role === 'overseer') {
+          overseerReturnThreadRef.current = thread.id
         }
         await streamDeepseekChat(wireMessages, {
           thinking: deepThink,
@@ -572,6 +668,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           inboxRole,
           projectMemory,
           sandboxSessionId,
+          projectId,
+          projectAgents,
           signal: controller.signal,
           onWorkspace: (files) => {
             thread = patchThreadWorkspace(
@@ -579,6 +677,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
               applyWorkspaceWireUpdate(thread.workspace, files),
             )
             schedulePaint()
+          },
+          onProject: (actions) => {
+            if (projectId) applyProjectActions(actions, projectId)
           },
           onStatus: (status) => {
             if (status === 'searching') {
@@ -720,6 +821,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       }
     },
     [
+      applyProjectActions,
       autoSpeak,
       canAutoSpeak,
       deepThink,
@@ -766,6 +868,36 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     },
     [persist, runAssistant, unlocked],
   )
+
+  // Flush Overseer project_message / create_agent messages sequentially, then return to Overseer.
+  useEffect(() => {
+    if (!unlocked || busy || flushingProjectMsgsRef.current) return
+    if (!pendingProjectMsgsRef.current.length) return
+    flushingProjectMsgsRef.current = true
+    void (async () => {
+      try {
+        while (pendingProjectMsgsRef.current.length) {
+          const next = pendingProjectMsgsRef.current.shift()!
+          const api = inboxRef.current
+          const agent = api?.state.agents.find((a) => a.id === next.agentId)
+          let threadId = agent?.threadId
+          if (!threadId || !threadsRef.current.some((t) => t.id === threadId)) {
+            threadId = createSilentThread()
+            api?.bindAgentThread(next.agentId, threadId)
+            api?.linkThread(next.projectId, threadId)
+          }
+          await enqueuePrompt(next.message, threadId)
+        }
+        const returnTo = overseerReturnThreadRef.current
+        overseerReturnThreadRef.current = null
+        if (returnTo && returnTo !== activeIdRef.current) {
+          selectThread(returnTo)
+        }
+      } finally {
+        flushingProjectMsgsRef.current = false
+      }
+    })()
+  }, [busy, createSilentThread, enqueuePrompt, selectThread, unlocked])
 
   const onNew = useCallback(
     async (message: AppendMessage) => {

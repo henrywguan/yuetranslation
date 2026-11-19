@@ -69,6 +69,21 @@ export const DeepseekChatBodySchema = z.object({
     .regex(/^sbx_[a-zA-Z0-9]+$/)
     .max(48)
     .optional(),
+  /** Chat Inbox Project id (Overseer orchestration). */
+  projectId: z.string().trim().min(1).max(80).optional(),
+  /** Snapshot of Project agents for project_* tools. */
+  projectAgents: z
+    .array(
+      z.object({
+        id: z.string().trim().min(1).max(80),
+        title: z.string().trim().max(120),
+        status: z.string().trim().max(32),
+        role: z.enum(['overseer', 'worker', 'thread']),
+        threadId: z.string().trim().max(80).optional(),
+      }),
+    )
+    .max(80)
+    .optional(),
   /** Device-local thread workspace snapshot (text files only). */
   workspace: z
     .object({

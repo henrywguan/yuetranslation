@@ -22,7 +22,7 @@ import './Inbox.css'
 import { GithubBind } from './GithubBind'
 import { LocalFolderBind } from './LocalFolderBind'
 import { ProjectList } from './ProjectList'
-import { ProjectDraftPanel, ProjectPanel } from './ProjectPanel'
+import { ProjectPanel } from './ProjectPanel'
 import { WorkspaceList } from './WorkspaceList'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -44,7 +44,6 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     addWorkspace,
     removeWorkspace,
     bindWorkspaceRef,
-    spawnWorker,
     bindAgentThread,
     updateProjectMemory,
   } = useChatInboxContext()
@@ -58,33 +57,8 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [projectsOpen, setProjectsOpen] = useState(true)
   const [workspacesOpen, setWorkspacesOpen] = useState(true)
-  const [projectDraft, setProjectDraft] = useState<{ title: string } | null>(null)
-
-  const draftOpen = projectDraft != null
-  const createDisabled = draftOpen
-
-  const openProjectDraft = () => {
-    if (draftOpen) return
-    setProjectsOpen(true)
-    setActiveProjectId(null)
-    setProjectDraft({ title: 'New project' })
-  }
-
-  const cancelProjectDraft = () => {
-    setProjectDraft(null)
-  }
-
-  const confirmProjectDraft = () => {
-    if (!projectDraft) return
-    const project = addProject(projectDraft.title.trim() || 'New project', activeId || undefined)
-    setProjectDraft(null)
-    setActiveProjectId(project.id)
-    setProjectsOpen(true)
-  }
-
   const collapseProjects = () => {
     setProjectsOpen(false)
-    setProjectDraft(null)
     setActiveProjectId(null)
   }
 
@@ -105,15 +79,28 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     onNavigate?.()
   }
 
-  const spawnWorkerForProject = (projectId: string) => {
+  /** New Project → Overseer chat only (no manual spawn UI). */
+  const createAndFocusProject = () => {
+    const { project, overseer } = addProject()
     const threadId = startNewChat()
-    const worker = spawnWorker(projectId, {
-      threadId,
-      title: `Worker · ${state.projects.find((p) => p.id === projectId)?.title || 'Project'}`,
-    })
-    bindAgentThread(worker.id, threadId)
-    setActiveProjectId(projectId)
+    bindAgentThread(overseer.id, threadId)
+    linkThread(project.id, threadId)
+    setActiveProjectId(project.id)
+    setProjectsOpen(true)
     onNavigate?.()
+    return project
+  }
+
+  const selectProject = (projectId: string | null) => {
+    setActiveProjectId(projectId)
+    if (!projectId) return
+    const project = state.projects.find((p) => p.id === projectId)
+    const overseer =
+      (project?.overseerAgentId
+        ? state.agents.find((a) => a.id === project.overseerAgentId)
+        : undefined) ||
+      state.agents.find((a) => a.projectId === projectId && a.role === 'overseer')
+    if (overseer) openAgent(overseer)
   }
 
   const createWorkspaceKind = async (kind: ChatInboxWorkspaceKind) => {
@@ -216,10 +203,9 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
           type="button"
           className="inbox-header-new"
           aria-label="New project"
-          title={createDisabled ? 'Finish or cancel the draft project first' : 'New project'}
-          disabled={createDisabled}
+          title="New project"
           onClick={() => {
-            openProjectDraft()
+            createAndFocusProject()
           }}
         >
           +
@@ -244,34 +230,24 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
             projects={state.projects}
             activeProjectId={activeProjectId}
             open={projectsOpen}
-            createDisabled={createDisabled}
             onToggle={toggleProjects}
             onSelect={(id) => {
-              cancelProjectDraft()
-              setActiveProjectId(id)
+              selectProject(id)
               if (id) setProjectsOpen(true)
             }}
-            onCreate={openProjectDraft}
+            onCreate={() => {
+              createAndFocusProject()
+            }}
             onDelete={(id) => {
               removeProject(id)
               if (activeProjectId === id) setActiveProjectId(null)
             }}
           />
 
-          {projectsOpen && draftOpen && projectDraft ? (
-            <ProjectDraftPanel
-              title={projectDraft.title}
-              onTitleChange={(title) => setProjectDraft({ title })}
-              onConfirm={confirmProjectDraft}
-              onCancel={cancelProjectDraft}
-            />
-          ) : null}
-
-          {projectsOpen && !draftOpen && activeProject ? (
+          {projectsOpen && activeProject ? (
             <ProjectPanel
               project={activeProject}
               agents={state.agents}
-              onSpawnWorker={() => spawnWorkerForProject(activeProject.id)}
               onOpenAgent={openAgent}
               onMemoryChange={(memory) => updateProjectMemory(activeProject.id, memory)}
             />

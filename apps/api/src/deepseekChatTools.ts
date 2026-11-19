@@ -24,6 +24,15 @@ import {
   openGithubPullRequest,
   parseGithubRepo,
 } from './chatGithub.js'
+import {
+  projectCreateAgent,
+  projectListJson,
+  projectMessageAgent,
+  projectSetStatus,
+  projectUpdateMemory,
+  type ChatProjectStore,
+  type ProjectAction,
+} from './deepseekChatProject.js'
 
 export type ChatToolContext = DeepseekChatPromptContext & {
   signal?: AbortSignal
@@ -45,6 +54,10 @@ export type ChatToolContext = DeepseekChatPromptContext & {
   userId?: string
   /** Attached Chat Inbox sandbox session id. */
   sandboxSessionId?: string
+  /** Overseer Project store (turn-local) when inboxRole=overseer. */
+  project?: ChatProjectStore
+  /** Fired when project_* tools enqueue client-side actions. */
+  onProjectActions?: (actions: ProjectAction[]) => void
 }
 
 type OpenAiTool = {
@@ -55,6 +68,88 @@ type OpenAiTool = {
     parameters: Record<string, unknown>
   }
 }
+
+/** Overseer orchestration — declared when inboxRole=overseer + projectId attached. */
+export const DEEPSEEK_CHAT_PROJECT_TOOLS: OpenAiTool[] = [
+  {
+    type: 'function',
+    function: {
+      name: 'project_list_agents',
+      description:
+        'List agents in this Project (Overseer + workers) with status for Inbox tiles.',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'project_create_agent',
+      description:
+        'Create a worker agent in this Project. Optionally include an initial task message; the client starts/resumes that worker chat.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Short worker label' },
+          message: {
+            type: 'string',
+            description: 'Optional first task prompt for the worker',
+          },
+        },
+        required: ['title'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'project_message_agent',
+      description:
+        'Send a task or follow-up to an existing worker (create/resume that worker turn). Prefer this over asking the user to spawn manually.',
+      parameters: {
+        type: 'object',
+        properties: {
+          agentId: { type: 'string' },
+          message: { type: 'string' },
+        },
+        required: ['agentId', 'message'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'project_set_status',
+      description:
+        'Update an agent status so Inbox tiles stay accurate (working / needs_attention / in_review / done / queued / idle).',
+      parameters: {
+        type: 'object',
+        properties: {
+          agentId: { type: 'string' },
+          status: {
+            type: 'string',
+            enum: ['queued', 'working', 'needs_attention', 'in_review', 'done', 'idle'],
+          },
+          reviewUrl: { type: 'string', description: 'Optional PR / review URL for in_review' },
+        },
+        required: ['agentId', 'status'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'project_update_memory',
+      description: 'Update shared Project memory visible to Overseer and workers on later turns.',
+      parameters: {
+        type: 'object',
+        properties: {
+          memory: { type: 'string' },
+        },
+        required: ['memory'],
+      },
+    },
+  },
+]
 
 /** Coding sandbox tools — declared when a sandboxSessionId is attached (Phase C). */
 export const DEEPSEEK_CHAT_SANDBOX_TOOLS: OpenAiTool[] = [
@@ -639,6 +734,81 @@ export async function executeDeepseekChatTool(
           bytes: result.file.text?.length ?? 0,
           updatedAt: result.file.updatedAt,
         })
+      }
+      case 'project_list_agents': {
+        if (!ctx.project) {
+          return JSON.stringify({
+            error: 'No Project attached. Open a Project Overseer chat from the Inbox.',
+          })
+        }
+        return projectListJson(ctx.project)
+      }
+      case 'project_create_agent': {
+        if (!ctx.project) {
+          return JSON.stringify({
+            error: 'No Project attached. Open a Project Overseer chat from the Inbox.',
+          })
+        }
+        const created = projectCreateAgent(
+          ctx.project,
+          String(args.title || ''),
+          typeof args.message === 'string' ? args.message : undefined,
+        )
+        if (!created.ok) return JSON.stringify({ error: created.error })
+        ctx.onProjectActions?.([created.action])
+        return JSON.stringify({
+          ok: true,
+          agentId: created.agentId,
+          title: created.action.title,
+          status: created.action.status,
+          queuedMessage: Boolean(created.action.message),
+        })
+      }
+      case 'project_message_agent': {
+        if (!ctx.project) {
+          return JSON.stringify({
+            error: 'No Project attached. Open a Project Overseer chat from the Inbox.',
+          })
+        }
+        const messaged = projectMessageAgent(
+          ctx.project,
+          String(args.agentId || ''),
+          String(args.message || ''),
+        )
+        if (!messaged.ok) return JSON.stringify({ error: messaged.error })
+        ctx.onProjectActions?.([messaged.action])
+        return JSON.stringify({ ok: true, agentId: messaged.action.agentId, queued: true })
+      }
+      case 'project_set_status': {
+        if (!ctx.project) {
+          return JSON.stringify({
+            error: 'No Project attached. Open a Project Overseer chat from the Inbox.',
+          })
+        }
+        const set = projectSetStatus(
+          ctx.project,
+          String(args.agentId || ''),
+          String(args.status || ''),
+          typeof args.reviewUrl === 'string' ? args.reviewUrl : undefined,
+        )
+        if (!set.ok) return JSON.stringify({ error: set.error })
+        ctx.onProjectActions?.([set.action])
+        return JSON.stringify({
+          ok: true,
+          agentId: set.action.agentId,
+          status: set.action.status,
+          reviewUrl: set.action.reviewUrl,
+        })
+      }
+      case 'project_update_memory': {
+        if (!ctx.project) {
+          return JSON.stringify({
+            error: 'No Project attached. Open a Project Overseer chat from the Inbox.',
+          })
+        }
+        const mem = projectUpdateMemory(ctx.project, String(args.memory ?? ''))
+        ctx.onProjectActions?.([mem.action])
+        return JSON.stringify({ ok: true, memoryChars: mem.action.memory.length })
       }
       case 'sandbox_list':
       case 'sandbox_read':

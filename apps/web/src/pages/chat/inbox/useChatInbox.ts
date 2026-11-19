@@ -59,15 +59,19 @@ export function useChatInbox() {
   }, [])
 
   const addProject = useCallback(
-    (title?: string, threadId?: string): ChatInboxProject => {
+    (
+      title?: string,
+      threadId?: string,
+    ): { project: ChatInboxProject; overseer: ChatInboxAgent } => {
       let { state: next, project, overseer } = createProject(stateRef.current, title)
       if (threadId) {
         next = attachThreadToProject(next, project.id, threadId)
         next = setAgentThread(next, overseer.id, threadId)
       }
       project = next.projects.find((p) => p.id === project.id) || project
+      overseer = next.agents.find((a) => a.id === overseer.id) || overseer
       commit(next)
-      return project
+      return { project, overseer }
     },
     [commit],
   )
@@ -121,7 +125,10 @@ export function useChatInbox() {
   )
 
   const spawnWorker = useCallback(
-    (projectId: string, opts?: { title?: string; threadId?: string }): ChatInboxAgent => {
+    (
+      projectId: string,
+      opts?: { id?: string; title?: string; threadId?: string; status?: InboxAgentStatus },
+    ): ChatInboxAgent => {
       const { state: next, worker } = createWorker(stateRef.current, projectId, opts)
       commit(next)
       return worker

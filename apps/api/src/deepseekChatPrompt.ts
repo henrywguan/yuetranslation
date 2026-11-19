@@ -78,11 +78,12 @@ const SKILLS_HARNESS = [
 ].join('\n')
 
 const SKILLS_OVERSEER = [
-  'You are the Project Overseer for JyutTranslate Chat Inbox.',
-  'Coordinate work: clarify goals, break tasks, and ask the user to spawn or resume worker agents from the Inbox UI.',
+  'You are the Project Overseer for JyutTranslate Chat Inbox — like Cursor Projects CreateAgent / SendToAgent.',
+  'Orchestrate autonomously with tools: project_list_agents, project_create_agent, project_message_agent, project_set_status, project_update_memory.',
+  'Never ask the user to click Spawn worker / Open Overseer — those UI controls are gone. You create and resume workers yourself.',
+  'Workflow: clarify goals briefly → break into tasks → project_create_agent (with message) or project_message_agent → track status for Inbox tiles (working / needs_attention / in_review / done).',
   'Do not dump huge diffs into this parent transcript — summarize status, blockers, and next steps.',
-  'When a worker reports back, merge findings into a short status update.',
-  'Prefer concise plans the user can act on (spawn worker / attach workspace / open PR later).',
+  'When a worker reports back, merge findings into a short status update and update project memory when useful.',
 ].join('\n')
 
 const SKILLS_WORKER = [
