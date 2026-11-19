@@ -43,6 +43,8 @@ import {
 } from '../../../lib/chatHistory'
 import {
   agentForThread,
+  looksLikeDeferredOrchestration,
+  ORCHESTRATION_STALL_ERROR,
   resolveActiveSandboxSessionId,
   type InboxAgentStatus,
 } from '../../../lib/chatInbox'
@@ -619,6 +621,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         messages: t.messages.filter((m) => m.id !== assistantId),
       })
 
+      let projectActionsThisTurn = 0
+      let overseerTurn = false
       try {
         const wireMessages = apiMessagesFromThread(thread).filter((m) => m.content.trim())
         const inboxState = inboxRef.current?.state
@@ -649,6 +653,13 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
                   ...(a.threadId ? { threadId: a.threadId } : null),
                 }))
             : undefined
+        overseerTurn = linkedAgent?.role === 'overseer' && Boolean(projectId)
+        // Overseer chat without projectId means tools cannot attach — surface immediately.
+        if (linkedAgent?.role === 'overseer' && !projectId) {
+          setError(
+            'Overseer is missing a Project link — open the Project from Inbox so orchestration tools can run.',
+          )
+        }
         if (linkedAgent && inboxRef.current) {
           inboxRef.current.updateAgentStatus(linkedAgent.id, 'working')
         }
@@ -679,6 +690,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             schedulePaint()
           },
           onProject: (actions) => {
+            projectActionsThisTurn += actions.length
             if (projectId) applyProjectActions(actions, projectId)
           },
           onStatus: (status) => {
@@ -777,6 +789,14 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             thread = maybeSeedArtifactsIntoWorkspace(thread, assistant)
           }
           persist(thread)
+          // Never leave silent ATTENTION: Overseer promised workers but emitted no project.actions.
+          if (
+            overseerTurn &&
+            projectActionsThisTurn === 0 &&
+            looksLikeDeferredOrchestration(assembled)
+          ) {
+            setError(ORCHESTRATION_STALL_ERROR)
+          }
           if (liveTts) {
             void liveTts.finish().catch(() => {
               /* ignore */
@@ -811,11 +831,20 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         const inboxState = inboxRef.current?.state
         const linkedAgent = inboxState ? agentForThread(inboxState, thread.id) : undefined
         if (linkedAgent && inboxRef.current) {
-          // Workers surface under Needs Attention so the Overseer / user can resume.
-          const nextStatus =
+          const hasPendingWorkers = pendingProjectMsgsRef.current.some(
+            (p) =>
+              p.projectId === linkedAgent.projectId ||
+              (linkedAgent.role === 'overseer' && Boolean(p.agentId)),
+          )
+          // Keep Overseer Working while worker prompts are queued; otherwise Needs Attention.
+          // Workers always surface under Needs Attention when their turn ends.
+          let nextStatus: InboxAgentStatus =
             linkedAgent.role === 'worker' || linkedAgent.role === 'overseer'
               ? 'needs_attention'
               : 'idle'
+          if (linkedAgent.role === 'overseer' && hasPendingWorkers) {
+            nextStatus = 'working'
+          }
           inboxRef.current.updateAgentStatus(linkedAgent.id, nextStatus)
         }
       }
