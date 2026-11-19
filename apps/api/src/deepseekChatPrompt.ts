@@ -96,7 +96,7 @@ const SKILLS_SANDBOX = [
   'An internal coding sandbox is attached this turn.',
   'Tools: sandbox_list, sandbox_read, sandbox_write, sandbox_exec (argv array, no shell).',
   'Prefer editing files in the sandbox over dumping huge diffs into chat.',
-  'Stub driver runs on the API host temp dir; Fly Machines need FLY_API_TOKEN (host secrets).',
+  'Stub driver runs on the API host temp dir; Fly Machines need Plugins → API keys (`fly` + `fly_app`) or FLY_* env.',
 ].join('\n')
 
 function resolveTimeZone(raw?: string): string {

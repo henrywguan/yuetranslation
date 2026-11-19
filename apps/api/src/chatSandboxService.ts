@@ -21,16 +21,22 @@ import {
   stubRead,
   stubWrite,
 } from './chatSandboxStub.js'
+import {
+  loadChatPluginCredentials,
+  type ChatPluginCredentials,
+} from './deepseekChatPluginKeys.js'
 
 export async function createSandboxSession(opts: {
   userId: string
   title?: string
   projectId?: string
   driver?: string
+  creds?: ChatPluginCredentials | null
 }): Promise<{ session: SandboxSession; fallbackFromFly?: boolean }> {
+  const creds = opts.creds ?? (await loadChatPluginCredentials(opts.userId))
   const requested = resolveSandboxDriver(opts.driver)
   if (requested === 'fly') {
-    if (!flyConfigured()) {
+    if (!flyConfigured(creds)) {
       const session = await createStubSandbox({
         userId: opts.userId,
         title: opts.title || 'Internal sandbox (stub — Fly not configured)',
@@ -39,7 +45,7 @@ export async function createSandboxSession(opts: {
       return { session, fallbackFromFly: true }
     }
     try {
-      const session = await createFlySandbox(opts)
+      const session = await createFlySandbox({ ...opts, creds })
       return { session }
     } catch (err) {
       if (err instanceof FlySandboxNotConfiguredError) {
@@ -130,14 +136,16 @@ export async function destroySandbox(session: SandboxSession): Promise<void> {
   else await destroyStubSandbox(session)
 }
 
-export function describeSandboxes(userId: string) {
-  return listSandboxSessions(userId).map(publicSessionView)
+export async function describeSandboxes(userId: string) {
+  const creds = await loadChatPluginCredentials(userId)
+  return listSandboxSessions(userId).map((s) => publicSessionView(s, creds))
 }
 
-export function sandboxDriverInfo() {
+export async function sandboxDriverInfo(userId?: string) {
+  const creds = userId ? await loadChatPluginCredentials(userId) : null
   return {
     defaultDriver: resolveSandboxDriver(),
-    flyConfigured: flyConfigured(),
+    flyConfigured: flyConfigured(creds),
     drivers: ['stub', 'fly'] as SandboxDriver[],
   }
 }

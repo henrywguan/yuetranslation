@@ -75,8 +75,9 @@ export function GithubBind({
   return (
     <div className="inbox-local-bind" role="dialog" aria-label="Bind GitHub repo">
       <p className="inbox-empty" style={{ paddingTop: 0 }}>
-        Link a GitHub repo (App install). Without App credentials this stays blocked for Henry
-        (NEEDS_HUMAN).
+        Link a GitHub repo via your GitHub App. Add App credentials under Plugins → API keys
+        (<code>github_app_id</code>, <code>github_app_private_key</code>,{' '}
+        <code>github_app_installation_id</code>) — or rely on server env.
       </p>
       <div className="inbox-project-actions">
         <button type="button" className="inbox-new-chat" disabled={busy} onClick={() => void refresh()}>

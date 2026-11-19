@@ -41,7 +41,52 @@ const FIELDS: Array<{
     placeholder: 'Bearer token (when Cursor publishes a remote MCP)',
     help: 'Optional until Cursor ships a hosted generation endpoint.',
   },
+  {
+    id: 'fly',
+    label: 'Fly API token',
+    placeholder: 'fo1_…',
+    help: 'BYO Fly Machines token for real inbox sandboxes. Pair with Fly app name below. Server FLY_API_TOKEN still works as fallback.',
+  },
+  {
+    id: 'fly_app',
+    label: 'Fly app name',
+    placeholder: 'my-sandbox-app',
+    help: 'Fly app that hosts Machines for your sandboxes (key id: fly_app).',
+  },
+  {
+    id: 'github_app_id',
+    label: 'GitHub App ID',
+    placeholder: '123456',
+    help: 'Your GitHub App’s numeric App ID (key id: github_app_id).',
+  },
+  {
+    id: 'github_app_private_key',
+    label: 'GitHub App private key',
+    placeholder: '-----BEGIN RSA PRIVATE KEY-----',
+    help: 'PEM private key for the App (key id: github_app_private_key). Newlines or \\n are fine.',
+  },
+  {
+    id: 'github_app_installation_id',
+    label: 'GitHub App installation ID',
+    placeholder: '987654321',
+    help: 'Installation ID on the org/user that grants repo access (key id: github_app_installation_id).',
+  },
 ]
+
+function emptyDrafts(): Record<DeepseekChatPluginKeyId, string> {
+  return {
+    gemini: '',
+    image: '',
+    higgsfield: '',
+    adobe: '',
+    cursor: '',
+    fly: '',
+    fly_app: '',
+    github_app_id: '',
+    github_app_private_key: '',
+    github_app_installation_id: '',
+  }
+}
 
 type Props = {
   open: boolean
@@ -53,13 +98,7 @@ type Props = {
 
 export function ChatPluginKeysModal({ open, initialHints, focusId, onClose, onSaved }: Props) {
   const titleId = useId()
-  const [drafts, setDrafts] = useState<Record<DeepseekChatPluginKeyId, string>>({
-    gemini: '',
-    image: '',
-    higgsfield: '',
-    adobe: '',
-    cursor: '',
-  })
+  const [drafts, setDrafts] = useState<Record<DeepseekChatPluginKeyId, string>>(emptyDrafts)
   const [hints, setHints] = useState(initialHints)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -68,7 +107,7 @@ export function ChatPluginKeysModal({ open, initialHints, focusId, onClose, onSa
   useEffect(() => {
     if (!open) return
     setHints(initialHints)
-    setDrafts({ gemini: '', image: '', higgsfield: '', adobe: '', cursor: '' })
+    setDrafts(emptyDrafts())
     setError(null)
     setNote(null)
   }, [open, initialHints])
@@ -97,7 +136,7 @@ export function ChatPluginKeysModal({ open, initialHints, focusId, onClose, onSa
       }
       const next = await saveDeepseekChatPluginKeys({ keys })
       setHints(next)
-      setDrafts({ gemini: '', image: '', higgsfield: '', adobe: '', cursor: '' })
+      setDrafts(emptyDrafts())
       setNote('Keys saved. They stay on your account — not in Vercel env.')
       onSaved(next)
     } catch (err) {
@@ -140,8 +179,8 @@ export function ChatPluginKeysModal({ open, initialHints, focusId, onClose, onSa
           </button>
         </header>
         <p className="ds-chat-keys-lead">
-          Bring your own keys for image generation and MCP connectors. Stored encrypted for your
-          signed-in account — not shared Vercel env vars.
+          Bring your own keys for image generation, MCP connectors, Fly sandboxes, and GitHub App
+          clone/PR. Stored encrypted for your signed-in account — not shared Vercel env vars.
         </p>
         <ul className="ds-chat-keys-list">
           {FIELDS.map((f) => {
@@ -159,7 +198,7 @@ export function ChatPluginKeysModal({ open, initialHints, focusId, onClose, onSa
                     autoComplete="off"
                     spellCheck={false}
                     placeholder={
-                      hint.set ? `Saved ········${hint.hint || ''}` : f.placeholder
+                      hint?.set ? `Saved ········${hint.hint || ''}` : f.placeholder
                     }
                     value={drafts[f.id]}
                     disabled={busy}
@@ -168,7 +207,7 @@ export function ChatPluginKeysModal({ open, initialHints, focusId, onClose, onSa
                   <button
                     type="button"
                     className="ds-chat-keys-clear"
-                    disabled={busy || !hint.set}
+                    disabled={busy || !hint?.set}
                     onClick={() => void clearOne(f.id)}
                   >
                     Clear

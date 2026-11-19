@@ -20,6 +20,7 @@ import {
   writeSandboxFs,
 } from './chatSandboxService.js'
 import { getSandboxSession } from './chatSandbox.js'
+import { loadChatPluginCredentials } from './deepseekChatPluginKeys.js'
 
 async function gateChatSandbox(req: AuthedRequest, res: Response): Promise<{ userId: string } | null> {
   const auth = req.auth
@@ -48,10 +49,14 @@ async function gateChatSandbox(req: AuthedRequest, res: Response): Promise<{ use
 export async function getChatSandboxes(req: AuthedRequest, res: Response) {
   const gate = await gateChatSandbox(req, res)
   if (!gate) return
+  const [info, sessions] = await Promise.all([
+    sandboxDriverInfo(gate.userId),
+    describeSandboxes(gate.userId),
+  ])
   res.json({
     ok: true,
-    ...sandboxDriverInfo(),
-    sessions: describeSandboxes(gate.userId),
+    ...info,
+    sessions,
   })
 }
 
@@ -65,18 +70,20 @@ export async function postChatSandbox(req: AuthedRequest, res: Response) {
     driver?: string
   }
   try {
+    const creds = await loadChatPluginCredentials(gate.userId)
     const { session, fallbackFromFly } = await createSandboxSession({
       userId: gate.userId,
       title: typeof body.title === 'string' ? body.title : undefined,
       projectId: typeof body.projectId === 'string' ? body.projectId : undefined,
       driver: typeof body.driver === 'string' ? body.driver : undefined,
+      creds,
     })
     res.status(201).json({
       ok: true,
-      session: publicSessionView(session),
+      session: publicSessionView(session, creds),
       fallbackFromFly: Boolean(fallbackFromFly),
       note: fallbackFromFly
-        ? 'Fly not configured — using in-process stub. Set FLY_API_TOKEN + FLY_APP for real Machines.'
+        ? 'Fly not configured — using in-process stub. Add fly + fly_app under Plugins → API keys (or FLY_API_TOKEN + FLY_APP).'
         : undefined,
     })
   } catch (err) {
@@ -95,7 +102,8 @@ export async function getChatSandbox(req: AuthedRequest, res: Response) {
     res.status(404).json({ message: 'Sandbox not found.', code: 'sandbox_not_found' })
     return
   }
-  res.json({ ok: true, session: publicSessionView(session) })
+  const creds = await loadChatPluginCredentials(gate.userId)
+  res.json({ ok: true, session: publicSessionView(session, creds) })
 }
 
 /** DELETE /api/chat/sandbox/:id */
