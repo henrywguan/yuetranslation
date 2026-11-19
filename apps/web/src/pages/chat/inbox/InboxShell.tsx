@@ -3,13 +3,15 @@ import {
   ThreadListPrimitive,
   useAuiState,
 } from '@assistant-ui/react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createChatSandbox } from '../../../lib/api'
 import {
   buildAgentViews,
   countByFilter,
   filterAgentViews,
   matchesSearch,
+  projectNestedViews,
+  ungroupedAgentViews,
   type ChatInboxAgent,
   type ChatInboxWorkspaceKind,
   type InboxFilter,
@@ -78,6 +80,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   const [filter, setFilter] = useState<InboxFilter>('all')
   const [query, setQuery] = useState('')
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
+  const [expandedProjectIds, setExpandedProjectIds] = useState<Set<string>>(() => new Set())
   // Initial open only — user expands stay open (no resize force-collapse).
   const [projectsOpen, setProjectsOpen] = useState(() => inboxSecondaryDefaultOpen())
   const [workspacesOpen, setWorkspacesOpen] = useState(() => inboxSecondaryDefaultOpen())
@@ -92,6 +95,24 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     else setProjectsOpen(true)
   }
 
+  const toggleProjectExpand = (projectId: string) => {
+    setExpandedProjectIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(projectId)) next.delete(projectId)
+      else next.add(projectId)
+      return next
+    })
+  }
+
+  const expandProject = (projectId: string) => {
+    setExpandedProjectIds((prev) => {
+      if (prev.has(projectId)) return prev
+      const next = new Set(prev)
+      next.add(projectId)
+      return next
+    })
+  }
+
   const openAgent = (agent: ChatInboxAgent) => {
     if (agent.threadId && threads.some((t) => t.id === agent.threadId)) {
       selectThread(agent.threadId)
@@ -104,6 +125,22 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     onNavigate?.()
   }
 
+  const openView = (view: ThreadAgentView) => {
+    if (view.source === 'agent') {
+      const agent = state.agents.find((a) => a.id === view.id)
+      if (agent) {
+        if (agent.projectId) expandProject(agent.projectId)
+        openAgent(agent)
+        return
+      }
+    }
+    if (view.threadId && threads.some((t) => t.id === view.threadId)) {
+      if (view.projectId) expandProject(view.projectId)
+      selectThread(view.threadId)
+      onNavigate?.()
+    }
+  }
+
   /** New Project → Overseer chat only (no manual spawn UI). */
   const createAndFocusProject = () => {
     const { project, overseer } = addProject()
@@ -111,6 +148,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     bindAgentThread(overseer.id, threadId)
     linkThread(project.id, threadId)
     setActiveProjectId(project.id)
+    expandProject(project.id)
     setProjectsOpen(true)
     onNavigate?.()
     return project
@@ -119,6 +157,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   const selectProject = (projectId: string | null) => {
     setActiveProjectId(projectId)
     if (!projectId) return
+    expandProject(projectId)
     const project = state.projects.find((p) => p.id === projectId)
     const overseer =
       (project?.overseerAgentId
@@ -192,33 +231,71 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
 
   const counts = useMemo(() => countByFilter(views), [views])
 
+  /** Status/search filter across the whole Inbox — not scoped to the focused project. */
   const filtered = useMemo(() => {
-    const base = filterAgentViews(views, filter, activeProjectId)
+    const base = filterAgentViews(views, filter, null)
     return base.filter((v) => matchesSearch(v.title, query))
-  }, [activeProjectId, filter, query, views])
+  }, [filter, query, views])
 
-  const filteredByThreadId = useMemo(() => {
+  const projectChildren = useMemo(() => {
+    const map = new Map<string, ThreadAgentView[]>()
+    for (const p of state.projects) {
+      map.set(p.id, projectNestedViews(filtered, p.id))
+    }
+    return map
+  }, [filtered, state.projects])
+
+  const visibleProjects = useMemo(() => {
+    if (filter === 'all' && !query.trim()) return state.projects
+    return state.projects.filter((p) => {
+      if (p.id === activeProjectId) return true
+      return (projectChildren.get(p.id) || []).length > 0
+    })
+  }, [activeProjectId, filter, projectChildren, query, state.projects])
+
+  const ungrouped = useMemo(() => ungroupedAgentViews(filtered), [filtered])
+
+  const ungroupedByThreadId = useMemo(() => {
     const map = new Map<string, ThreadAgentView>()
-    for (const v of filtered) {
+    for (const v of ungrouped) {
       if (v.threadId) map.set(v.threadId, v)
     }
     return map
-  }, [filtered])
+  }, [ungrouped])
 
-  const orphanAgents = useMemo(
+  const orphanUngroupedAgents = useMemo(
     () =>
-      filtered.filter(
+      ungrouped.filter(
         (v) =>
           v.source === 'agent' &&
           v.role !== 'thread' &&
           (!v.threadId || !threads.some((t) => t.id === v.threadId)),
       ),
-    [filtered, threads],
+    [threads, ungrouped],
   )
+
+  // Status filters auto-expand matching project folders (Cursor-like discoverability).
+  useEffect(() => {
+    if (filter === 'all' && !query.trim()) return
+    setExpandedProjectIds((prev) => {
+      let changed = false
+      const next = new Set(prev)
+      for (const p of state.projects) {
+        if ((projectChildren.get(p.id) || []).length > 0 && !next.has(p.id)) {
+          next.add(p.id)
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [filter, projectChildren, query, state.projects])
 
   const activeProject = activeProjectId
     ? state.projects.find((p) => p.id === activeProjectId) || null
     : null
+
+  const chatsLabel =
+    filter === 'all' ? 'Chats' : STATUS_LABEL[filter] || 'Chats'
 
   return (
     <div className="inbox-shell">
@@ -252,14 +329,21 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
 
         <div className="inbox-band">
           <ProjectList
-            projects={state.projects}
+            projects={visibleProjects}
             activeProjectId={activeProjectId}
+            expandedProjectIds={expandedProjectIds}
+            projectChildren={projectChildren}
+            activeThreadId={activeId}
             open={projectsOpen}
             onToggle={toggleProjects}
             onSelect={(id) => {
               selectProject(id)
               if (id) setProjectsOpen(true)
             }}
+            onToggleExpand={toggleProjectExpand}
+            onOpenView={openView}
+            onArchiveThread={(threadId) => archiveThread(threadId, true)}
+            onDeleteThread={removeThread}
             onCreate={() => {
               createAndFocusProject()
             }}
@@ -267,6 +351,12 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
             onDelete={(id) => {
               removeProject(id)
               if (activeProjectId === id) setActiveProjectId(null)
+              setExpandedProjectIds((prev) => {
+                if (!prev.has(id)) return prev
+                const next = new Set(prev)
+                next.delete(id)
+                return next
+              })
             }}
           />
 
@@ -333,40 +423,37 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
           + New chat
         </button>
 
-        <div className="inbox-agents" aria-label="Agents and chats">
-          <div className="inbox-agents-label">
-            {filter === 'all' ? 'Agents' : STATUS_LABEL[filter] || 'Agents'}
-            {activeProjectId ? ' · project' : ''}
-          </div>
+        <div className="inbox-agents" aria-label="Ungrouped chats">
+          <div className="inbox-agents-label">{chatsLabel}</div>
 
           <ThreadListPrimitive.Root className="aui-thread-list">
             <ThreadListPrimitive.Items>
               {() => (
                 <InboxThreadItem
-                  filteredByThreadId={filteredByThreadId}
-                  activeProjectId={activeProjectId}
-                  onAttach={(threadId) => {
-                    if (activeProjectId) linkThread(activeProjectId, threadId)
-                  }}
+                  ungroupedByThreadId={ungroupedByThreadId}
                   onNavigate={onNavigate}
                 />
               )}
             </ThreadListPrimitive.Items>
           </ThreadListPrimitive.Root>
 
-          {filtered.length === 0 ? (
-            <p className="inbox-empty">No agents match this filter yet.</p>
+          {ungrouped.length === 0 && orphanUngroupedAgents.length === 0 ? (
+            <p className="inbox-empty">
+              {filter === 'all'
+                ? 'No ungrouped chats — project agents nest under Projects above.'
+                : 'No ungrouped chats match this filter.'}
+            </p>
           ) : null}
 
-          {orphanAgents.length ? (
+          {orphanUngroupedAgents.length ? (
             <ul className="inbox-list">
-              {orphanAgents.map((v) => {
+              {orphanUngroupedAgents.map((v) => {
                 const agent = state.agents.find((a) => a.id === v.id)
                 return (
-                  <li key={v.id} className="inbox-list-item">
+                  <li key={v.id} className="inbox-list-item inbox-agent-row">
                     <button
                       type="button"
-                      className="inbox-list-btn"
+                      className="inbox-list-btn inbox-agent-trigger"
                       onClick={() => {
                         if (agent) openAgent(agent)
                       }}
@@ -408,26 +495,21 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function InboxThreadItem({
-  filteredByThreadId,
-  activeProjectId,
-  onAttach,
+  ungroupedByThreadId,
   onNavigate,
 }: {
-  filteredByThreadId: Map<string, ThreadAgentView>
-  activeProjectId: string | null
-  onAttach: (threadId: string) => void
+  ungroupedByThreadId: Map<string, ThreadAgentView>
   onNavigate?: () => void
 }) {
   const threadId = useAuiState((s) => s.threadListItem.id)
-  const view = filteredByThreadId.get(threadId)
+  const view = ungroupedByThreadId.get(threadId)
   if (!view) return null
 
   return (
-    <ThreadListItemPrimitive.Root className="aui-thread-item">
+    <ThreadListItemPrimitive.Root className="aui-thread-item inbox-agent-row">
       <ThreadListItemPrimitive.Trigger
         className="aui-thread-trigger"
         onClick={() => {
-          if (activeProjectId) onAttach(threadId)
           onNavigate?.()
         }}
       >

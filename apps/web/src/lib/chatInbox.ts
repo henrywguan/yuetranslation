@@ -589,6 +589,32 @@ export function filterAgentViews(
   return list.filter((v) => v.status === filter)
 }
 
+/** Threads / agents with no Project — Cursor-style top-level chats. */
+export function ungroupedAgentViews(views: ThreadAgentView[]): ThreadAgentView[] {
+  return views.filter((v) => !v.projectId)
+}
+
+const ROLE_ORDER: Record<ChatInboxAgentRole, number> = {
+  overseer: 0,
+  worker: 1,
+  thread: 2,
+}
+
+/** Project-owned views nested under a Project folder (Overseer → workers → chats). */
+export function projectNestedViews(
+  views: ThreadAgentView[],
+  projectId: string,
+): ThreadAgentView[] {
+  return views
+    .filter((v) => v.projectId === projectId)
+    .slice()
+    .sort((a, b) => {
+      const roleDiff = (ROLE_ORDER[a.role] ?? 9) - (ROLE_ORDER[b.role] ?? 9)
+      if (roleDiff !== 0) return roleDiff
+      return a.title.localeCompare(b.title)
+    })
+}
+
 export function matchesSearch(title: string, query: string): boolean {
   const q = query.trim().toLowerCase()
   if (!q) return true

@@ -1,15 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ChatInboxAgent, ChatInboxProject } from '../../../lib/chatInbox'
 
-const STATUS_LABEL: Record<string, string> = {
-  idle: 'Idle',
-  queued: 'Queued',
-  working: 'Working',
-  needs_attention: 'Attention',
-  in_review: 'Review',
-  done: 'Done',
-}
-
 export function ProjectDraftPanel({
   title,
   onTitleChange,
@@ -75,7 +66,6 @@ export function ProjectPanel({
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(project.title)
-  const workers = agents.filter((a) => a.projectId === project.id && a.role === 'worker')
   const overseer =
     agents.find((a) => a.id === project.overseerAgentId) ||
     agents.find((a) => a.projectId === project.id && a.role === 'overseer')
@@ -90,7 +80,7 @@ export function ProjectPanel({
   }
 
   return (
-    <section className="inbox-section inbox-project-panel" aria-label={`${project.title} overseer`}>
+    <section className="inbox-section inbox-project-panel" aria-label={`${project.title} memory`}>
       <div className="inbox-section-head">
         {editing && onRename ? (
           <form
@@ -131,12 +121,13 @@ export function ProjectPanel({
             title="Focus Overseer chat · double-click to rename"
           >
             {project.title}
-            <span aria-hidden>· Overseer</span>
+            <span aria-hidden>· Memory</span>
           </button>
         )}
       </div>
       <p className="inbox-empty" style={{ paddingTop: 0 }}>
-        Describe work in the Overseer chat — it plans, creates workers, and drives the tiles above.
+        Agents nest under this project above. Describe work in the Overseer chat — it plans and creates
+        workers.
       </p>
       <label className="inbox-memory">
         <span className="inbox-agents-label">Project memory</span>
@@ -147,22 +138,6 @@ export function ProjectPanel({
           onChange={(e) => onMemoryChange(e.target.value)}
         />
       </label>
-      {workers.length ? (
-        <ul className="inbox-list">
-          {workers.map((w) => (
-            <li key={w.id} className="inbox-list-item">
-              <button type="button" className="inbox-list-btn" onClick={() => onOpenAgent(w)}>
-                {w.title}
-              </button>
-              <span className={`inbox-agent-status is-${w.status}`}>
-                {STATUS_LABEL[w.status] || w.status}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="inbox-empty">No workers yet — the Overseer will create them when you assign work.</p>
-      )}
     </section>
   )
 }

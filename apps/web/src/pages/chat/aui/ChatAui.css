@@ -123,11 +123,14 @@
 
 .aui-thread-item {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 0.2rem;
   border-radius: 0.55rem;
   padding: 0.15rem;
+  min-height: 2.15rem;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .aui-thread-item[data-active],
@@ -148,6 +151,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .aui-thread-archive,

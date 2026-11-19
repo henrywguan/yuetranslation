@@ -20,8 +20,10 @@ import {
   matchesSearch,
   normalizeInboxState,
   ORCHESTRATION_STALL_ERROR,
+  projectNestedViews,
   renameProject,
   setProjectMemory,
+  ungroupedAgentViews,
 } from './chatInbox'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -79,6 +81,16 @@ const projectOnly = filterAgentViews(views, 'all', project.id)
 assert.ok(projectOnly.every((v) => v.projectId === project.id))
 assert.ok(projectOnly.some((v) => v.threadId === 'thread-1'))
 assert.ok(!projectOnly.some((v) => v.threadId === 'thread-2'))
+
+const nested = projectNestedViews(views, project.id)
+assert.ok(nested.every((v) => v.projectId === project.id))
+assert.equal(nested[0]?.role, 'overseer', 'Overseer sorts first under project')
+assert.ok(nested.some((v) => v.threadId === 'thread-1'))
+
+const loose = ungroupedAgentViews(views)
+assert.ok(loose.every((v) => !v.projectId))
+assert.ok(loose.some((v) => v.threadId === 'thread-2'))
+assert.ok(!loose.some((v) => v.threadId === 'thread-1'), 'project threads stay out of ungrouped Chats')
 
 assert.equal(matchesSearch('Harbor Quest', 'quest'), true)
 assert.equal(matchesSearch('Harbor Quest', 'xyz'), false)
@@ -146,6 +158,15 @@ assert.match(
   /user expands stay open|Initial open only/,
   'collapse defaults do not force-close after user expands',
 )
+assert.match(shell, /ungroupedAgentViews|Ungrouped chats/, 'flat list is ungrouped chats only')
+assert.match(shell, /projectNestedViews|projectChildren/, 'project agents nest under Projects')
+assert.match(shell, /expandedProjectIds/, 'projects expand to reveal nested agents')
+assert.doesNotMatch(
+  shell,
+  /filter === 'all' \? 'Agents'/,
+  'no flat AGENTS mega-list label',
+)
+assert.match(shell, /Chats/, 'ungrouped section labeled Chats')
 
 const archiveList = readFileSync(join(root, 'pages/chat/inbox/ArchiveList.tsx'), 'utf8')
 assert.match(archiveList, /Restore/, 'archive restore control')
@@ -154,6 +175,9 @@ assert.match(archiveList, /UnarchiveIcon|DeleteIcon/, 'archive row action icons'
 const projectList = readFileSync(join(root, 'pages/chat/inbox/ProjectList.tsx'), 'utf8')
 assert.match(projectList, /onRename/, 'project list rename prop')
 assert.match(projectList, /onDoubleClick/, 'double-click renames project')
+assert.match(projectList, /inbox-project-children|projectChildren/, 'agents nest under project folders')
+assert.match(projectList, /onToggleExpand|expandedProjectIds/, 'per-project expand chevron')
+assert.match(projectList, /onOpenView/, 'nested rows open Overseer/workers/chats')
 
 const workspaceList = readFileSync(join(root, 'pages/chat/inbox/WorkspaceList.tsx'), 'utf8')
 assert.match(workspaceList, /inbox-ws-menu/, 'workspaces + opens create menu')
@@ -188,11 +212,28 @@ assert.match(
   /@media \(max-width: 899px\),\s*\(max-height: 720px\)/,
   'mobile/short-drawer density rules',
 )
+assert.match(inboxCss, /\.inbox-project-children/, 'nested project agent list styles')
+assert.match(
+  inboxCss,
+  /\.inbox-agent-row\s*\{[^}]*flex-shrink:\s*0/,
+  'agent rows do not flex-squeeze/stack',
+)
+assert.match(
+  inboxCss,
+  /\.inbox-agent-row\s*\{[^}]*min-height:\s*2\.15rem/,
+  'agent rows keep readable height',
+)
+assert.match(
+  inboxCss,
+  /\.inbox-list-item\s*\{[^}]*flex-shrink:\s*0/,
+  'list rows do not compress into neighbors',
+)
 
 const panel = readFileSync(join(root, 'pages/chat/inbox/ProjectPanel.tsx'), 'utf8')
 assert.doesNotMatch(panel, /Spawn worker/, 'no manual spawn worker button')
 assert.doesNotMatch(panel, /onSpawnWorker/, 'no spawn callback prop')
-assert.match(panel, /Overseer will create them/, 'auto-orchestrate copy')
+assert.match(panel, /Agents nest under this project|Overseer chat/, 'auto-orchestrate copy')
+assert.doesNotMatch(panel, /workers\.map|role === 'worker'/, 'workers listed under project tree, not panel')
 assert.match(panel, /onRename|double-click to rename/, 'project panel supports rename')
 
 const hook = readFileSync(join(root, 'pages/chat/inbox/useChatInbox.ts'), 'utf8')
