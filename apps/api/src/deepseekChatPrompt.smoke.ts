@@ -60,6 +60,10 @@ assert.match(
   buildDeepseekChatSystem({ inboxRole: 'worker', now: fixed, mode: 'tools' }),
   /worker agent/i,
 )
+assert.match(
+  buildDeepseekChatSystem({ sandboxSessionId: 'sbx_abc', now: fixed, mode: 'tools' }),
+  /coding sandbox/i,
+)
 
 assert.equal(shouldAutoEnableSearch('what day is today?'), false, 'clock questions use temporal inject')
 assert.equal(shouldAutoEnableSearch("what's the latest news on AI?"), true)

@@ -64,6 +64,8 @@ async function* chatStreamEvents(
   continueReply = false,
   harnessEnabled = false,
   workspaceFiles?: import('./deepseekChatWorkspace.js').ChatWorkspaceFileWire[],
+  userId?: string,
+  sandboxSessionId?: string,
 ): AsyncGenerator<
   | { kind: 'thinking' }
   | { kind: 'searching' }
@@ -84,13 +86,15 @@ async function* chatStreamEvents(
       thinkingEnabled,
       searchEnabled,
       harnessEnabled,
-      prompt: { ...prompt, searchEnabled, harnessEnabled },
+      prompt: { ...prompt, searchEnabled, harnessEnabled, sandboxSessionId },
       signal,
       fileIds,
       plugins,
       pluginCreds,
       continueReply,
       workspaceFiles,
+      userId,
+      sandboxSessionId,
     })) {
       harnessEmitted = true
       yield event
@@ -219,6 +223,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         updatedAt: f.updatedAt || Date.now(),
       }))
     : undefined
+  const sandboxSessionId = parsed.data.sandboxSessionId
   const promptBase: DeepseekChatPromptContext = {
     timeZone: parsed.data.timeZone,
     locale: parsed.data.locale,
@@ -228,6 +233,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     harnessEnabled,
     inboxRole: parsed.data.inboxRole,
     projectMemory: parsed.data.projectMemory,
+    sandboxSessionId,
   }
   const fileIds = parsed.data.fileIds
   const plugins = parsed.data.plugins
@@ -248,6 +254,8 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
             pluginCreds,
             continueReply,
             workspaceFiles,
+            userId: auth.userId,
+            sandboxSessionId,
           },
         )
         void addDeepseekChatTurns(auth.userId, 1)
@@ -313,6 +321,8 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         continueReply,
         harnessEnabled,
         workspaceFiles,
+        auth.userId,
+        sandboxSessionId,
       )) {
         if (upstream.signal.aborted || res.writableEnded) break
         if (event.kind === 'thinking') {

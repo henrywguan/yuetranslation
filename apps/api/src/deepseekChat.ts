@@ -62,6 +62,13 @@ export const DeepseekChatBodySchema = z.object({
   inboxRole: z.enum(['overseer', 'worker']).optional(),
   /** Shared Project memory snippet (bounded) for Inbox multi-agent turns. */
   projectMemory: z.string().trim().max(8_000).optional(),
+  /** Attached internal sandbox session (Phase C) — enables sandbox_* tools. */
+  sandboxSessionId: z
+    .string()
+    .trim()
+    .regex(/^sbx_[a-zA-Z0-9]+$/)
+    .max(48)
+    .optional(),
   /** Device-local thread workspace snapshot (text files only). */
   workspace: z
     .object({

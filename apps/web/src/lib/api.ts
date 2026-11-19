@@ -843,6 +843,8 @@ export type DeepseekChatStreamHandlers = {
   inboxRole?: 'overseer' | 'worker'
   /** Shared Project memory for Inbox multi-agent turns. */
   projectMemory?: string
+  /** Attached internal sandbox session (Phase C). */
+  sandboxSessionId?: string
   /** Continue last assistant (prefix completion). */
   continueReply?: boolean
   onWorkspace?: (files: Array<{
@@ -1045,6 +1047,9 @@ export async function streamDeepseekChat(
       ...(handlers.projectMemory?.trim()
         ? { projectMemory: handlers.projectMemory.trim().slice(0, 8_000) }
         : null),
+      ...(handlers.sandboxSessionId && /^sbx_[a-zA-Z0-9]+$/.test(handlers.sandboxSessionId)
+        ? { sandboxSessionId: handlers.sandboxSessionId }
+        : null),
       ...(fileIds.length ? { fileIds } : null),
       ...(plugins.length ? { plugins } : null),
       ...(handlers.continueReply ? { continue: true } : null),
@@ -1206,4 +1211,45 @@ export async function saveDeepseekChatPluginKeys(opts: {
     adobe: data.keys?.adobe || base.adobe,
     cursor: data.keys?.cursor || base.cursor,
   }
+}
+
+export type ChatSandboxSessionView = {
+  id: string
+  driver: 'stub' | 'fly'
+  status: string
+  title: string
+  projectId?: string
+  flyMachineId?: string
+  error?: string
+  createdAt: number
+  lastUsedAt: number
+  flyReady?: boolean
+}
+
+/** Create an internal Chat Inbox sandbox (stub by default; Fly when configured). */
+export async function createChatSandbox(opts?: {
+  title?: string
+  projectId?: string
+  driver?: 'stub' | 'fly'
+}): Promise<{ session: ChatSandboxSessionView; fallbackFromFly?: boolean; note?: string }> {
+  const res = await apiFetch('/chat/sandbox', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...(opts?.title ? { title: opts.title } : null),
+      ...(opts?.projectId ? { projectId: opts.projectId } : null),
+      ...(opts?.driver ? { driver: opts.driver } : null),
+    }),
+  })
+  if (!res.ok) await throwApiError(res, 'Failed to create sandbox')
+  return (await res.json()) as {
+    session: ChatSandboxSessionView
+    fallbackFromFly?: boolean
+    note?: string
+  }
+}
+
+export async function deleteChatSandbox(id: string): Promise<void> {
+  const res = await apiFetch(`/chat/sandbox/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!res.ok) await throwApiError(res, 'Failed to destroy sandbox')
 }

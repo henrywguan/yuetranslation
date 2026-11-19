@@ -45,8 +45,9 @@ export function WorkspaceList({
             <ul className="inbox-list">
               {workspaces.map((w) => (
                 <li key={w.id} className="inbox-list-item">
-                  <button type="button" className="inbox-list-btn" title={w.title}>
+                  <button type="button" className="inbox-list-btn" title={w.ref || w.title}>
                     {w.title}
+                    {w.ref ? ` · ${w.ref.slice(0, 12)}…` : ''}
                   </button>
                   <span className="inbox-workspace-kind">{KIND_LABEL[w.kind]}</span>
                   <button
