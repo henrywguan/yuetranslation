@@ -11,6 +11,8 @@ export const CHAT_THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
 export const CHAT_SEARCH_KEY = 'yue-deepseek-chat-search-v1'
 export const CHAT_RICH_LAYOUT_KEY = 'yue-deepseek-chat-rich-layout-v1'
 export const CHAT_PLUGINS_KEY = 'yue-deepseek-chat-plugins-v1'
+/** Composer Tools row expand/collapse (DeepThink / Search / Harness / …). */
+export const CHAT_TOOLS_EXPANDED_KEY = 'yue-deepseek-chat-tools-expanded-v1'
 
 export const CHAT_COMPOSER_MODES: readonly ChatComposerMode[] = ['agent', 'ask', 'plan'] as const
 
@@ -39,6 +41,29 @@ export function readChatComposerMode(fallback: ChatComposerMode = 'agent'): Chat
 export function writeChatComposerMode(mode: ChatComposerMode) {
   try {
     localStorage.setItem(CHAT_MODE_KEY, normalizeChatComposerMode(mode))
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Default: collapsed on narrow viewports, expanded on desktop — until user toggles. */
+export function readChatToolsExpanded(fallbackNarrow = false, fallbackWide = true): boolean {
+  try {
+    const v = localStorage.getItem(CHAT_TOOLS_EXPANDED_KEY)
+    if (v === '0') return false
+    if (v === '1') return true
+  } catch {
+    /* ignore */
+  }
+  if (typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches) {
+    return fallbackNarrow
+  }
+  return fallbackWide
+}
+
+export function writeChatToolsExpanded(on: boolean) {
+  try {
+    localStorage.setItem(CHAT_TOOLS_EXPANDED_KEY, on ? '1' : '0')
   } catch {
     /* ignore */
   }

@@ -37,13 +37,27 @@ import {
   CHAT_COMPOSER_MODE_LABEL,
   CHAT_COMPOSER_MODES,
   CHAT_EMPTY_SUGGESTIONS,
+  readChatToolsExpanded,
+  writeChatToolsExpanded,
   type ChatComposerMode,
 } from '../../../lib/chatUiPrefs'
 import { chatSpeakLang, mergeDictateText } from '../../../lib/chatVoice'
 import { renderChatMarkdown } from '../../../lib/renderChatMarkdown'
 import { useChatInboxContextOptional } from '../inbox/ChatInboxContext'
 import { StatusChip } from '../inbox/StatusChip'
+import {
+  AgentModeIcon,
+  AskModeIcon,
+  PlanModeIcon,
+  ToolsChevronIcon,
+} from './ChatComposerIcons'
 import { useChatAuiSession } from './ChatAuiRuntime'
+
+const MODE_ICONS = {
+  agent: AgentModeIcon,
+  ask: AskModeIcon,
+  plan: PlanModeIcon,
+} as const
 
 const SUGGESTIONS = CHAT_EMPTY_SUGGESTIONS
 const EMPTY_SOURCES: ChatSource[] = []
@@ -343,6 +357,7 @@ function ComposerChrome() {
   const [keysOpen, setKeysOpen] = useState(false)
   const [keysFocusId, setKeysFocusId] = useState<DeepseekChatPluginKeyId | null>(null)
   const [atOpen, setAtOpen] = useState(false)
+  const [toolsExpanded, setToolsExpanded] = useState(() => readChatToolsExpanded())
   const inbox = useChatInboxContextOptional()
   const {
     deepThink,
@@ -398,6 +413,7 @@ function ComposerChrome() {
   }, [activeId, activeWorkspace, atMatch, inbox?.state.agents, inbox?.state.workspaces, threads])
 
   useEffect(() => {
+    // Typed `@` only — no dedicated composer @ button.
     setAtOpen(Boolean(atMatch && mentionItems.length))
   }, [atMatch, mentionItems.length])
 
@@ -405,11 +421,26 @@ function ComposerChrome() {
     if (composerMode !== 'agent') setPluginsOpen(false)
   }, [composerMode])
 
+  const toggleToolsExpanded = () => {
+    setToolsExpanded((prev) => {
+      const next = !prev
+      writeChatToolsExpanded(next)
+      return next
+    })
+  }
+
   const pickMention = (item: ChatMentionItem) => {
     if (!atMatch) return
     aui.composer.setText(applyMentionInsert(draft, atMatch.start, item.insert))
     setAtOpen(false)
   }
+
+  const toolsOnCount =
+    Number(deepThink) +
+    Number(searchOn) +
+    Number(harnessOn) +
+    Number(richLayout) +
+    enabledPlugins.length
 
   const fallbackPlugins = [
     {
@@ -442,25 +473,29 @@ function ComposerChrome() {
     >
       <ProjectAgentStrip />
       <div className="aui-composer-modes" role="group" aria-label="Composer mode">
-        {CHAT_COMPOSER_MODES.map((mode: ChatComposerMode) => (
-          <button
-            key={mode}
-            type="button"
-            className={`aui-mode${composerMode === mode ? ' is-on' : ''}`}
-            aria-pressed={composerMode === mode}
-            disabled={busy}
-            title={
-              mode === 'ask'
-                ? 'Ask — read-only, no sandbox writes'
-                : mode === 'plan'
-                  ? 'Plan — research then Build with Overseer'
-                  : 'Agent — tools on'
-            }
-            onClick={() => setComposerMode(mode)}
-          >
-            {CHAT_COMPOSER_MODE_LABEL[mode]}
-          </button>
-        ))}
+        {CHAT_COMPOSER_MODES.map((mode: ChatComposerMode) => {
+          const Icon = MODE_ICONS[mode]
+          return (
+            <button
+              key={mode}
+              type="button"
+              className={`aui-mode is-${mode}${composerMode === mode ? ' is-on' : ''}`}
+              aria-pressed={composerMode === mode}
+              disabled={busy}
+              title={
+                mode === 'ask'
+                  ? 'Ask — read-only, no sandbox writes'
+                  : mode === 'plan'
+                    ? 'Plan — research then Build with Overseer'
+                    : 'Agent — tools on'
+              }
+              onClick={() => setComposerMode(mode)}
+            >
+              <Icon size={14} />
+              <span>{CHAT_COMPOSER_MODE_LABEL[mode]}</span>
+            </button>
+          )
+        })}
         {composerMode === 'plan' ? (
           <button
             type="button"
@@ -473,68 +508,88 @@ function ComposerChrome() {
           </button>
         ) : null}
       </div>
-      <div className="aui-composer-toggles" aria-label="Tools">
-        <span className="aui-tools-label">Tools</span>
+
+      <div className={`aui-tools${toolsExpanded ? ' is-expanded' : ''}`}>
         <button
           type="button"
-          className={`aui-toggle${deepThink ? ' is-on' : ''}`}
-          aria-pressed={deepThink}
+          className="aui-tools-toggle"
+          aria-expanded={toolsExpanded}
+          aria-controls="aui-tools-panel"
           disabled={busy}
-          onClick={() => setDeepThink(!deepThink)}
+          onClick={toggleToolsExpanded}
         >
-          DeepThink
-        </button>
-        <button
-          type="button"
-          className={`aui-toggle${searchOn ? ' is-on' : ''}`}
-          aria-pressed={searchOn}
-          disabled={busy}
-          onClick={() => setSearchOn(!searchOn)}
-        >
-          Search
-        </button>
-        <button
-          type="button"
-          className={`aui-toggle${harnessOn ? ' is-on' : ''}`}
-          aria-pressed={harnessOn}
-          disabled={busy}
-          title="Harness — Workspace panel + durable file tools"
-          onClick={() => setHarnessOn(!harnessOn)}
-        >
-          Harness
-        </button>
-        <button
-          type="button"
-          className={`aui-toggle${richLayout ? ' is-on' : ''}`}
-          aria-pressed={richLayout}
-          disabled={busy}
-          title="Rich layout for PDF / Office uploads"
-          onClick={() => setRichLayout(!richLayout)}
-        >
-          Rich layout
-        </button>
-        <button
-          type="button"
-          className={`aui-toggle${pluginsOpen || enabledPlugins.length ? ' is-on' : ''}`}
-          aria-pressed={pluginsOpen}
-          disabled={busy || composerMode !== 'agent'}
-          title={
-            composerMode !== 'agent'
-              ? 'Plugins available in Agent mode'
-              : 'Plugins'
-          }
-          onClick={() => setPluginsOpen((v) => !v)}
-        >
-          Plugins{enabledPlugins.length ? ` · ${enabledPlugins.length}` : ''}
+          <span className="aui-tools-label">Tools</span>
+          {toolsOnCount > 0 ? (
+            <span className="aui-tools-count" aria-label={`${toolsOnCount} tools on`}>
+              {toolsOnCount}
+            </span>
+          ) : null}
+          <ToolsChevronIcon size={12} />
         </button>
         {thinking ? <span className="aui-status">Thinking…</span> : null}
         {searching ? <span className="aui-status">Searching…</span> : null}
         {composerMode === 'ask' ? <span className="aui-status">Ask · read-only</span> : null}
         {composerMode === 'plan' ? <span className="aui-status">Plan · then Build</span> : null}
+        {toolsExpanded ? (
+          <div className="aui-composer-toggles" id="aui-tools-panel" aria-label="Tools">
+            <button
+              type="button"
+              className={`aui-toggle${deepThink ? ' is-on' : ''}`}
+              aria-pressed={deepThink}
+              disabled={busy}
+              onClick={() => setDeepThink(!deepThink)}
+            >
+              DeepThink
+            </button>
+            <button
+              type="button"
+              className={`aui-toggle${searchOn ? ' is-on' : ''}`}
+              aria-pressed={searchOn}
+              disabled={busy}
+              onClick={() => setSearchOn(!searchOn)}
+            >
+              Search
+            </button>
+            <button
+              type="button"
+              className={`aui-toggle${harnessOn ? ' is-on' : ''}`}
+              aria-pressed={harnessOn}
+              disabled={busy}
+              title="Harness — Workspace panel + durable file tools"
+              onClick={() => setHarnessOn(!harnessOn)}
+            >
+              Harness
+            </button>
+            <button
+              type="button"
+              className={`aui-toggle${richLayout ? ' is-on' : ''}`}
+              aria-pressed={richLayout}
+              disabled={busy}
+              title="Rich layout for PDF / Office uploads"
+              onClick={() => setRichLayout(!richLayout)}
+            >
+              Rich layout
+            </button>
+            <button
+              type="button"
+              className={`aui-toggle${pluginsOpen || enabledPlugins.length ? ' is-on' : ''}`}
+              aria-pressed={pluginsOpen}
+              disabled={busy || composerMode !== 'agent'}
+              title={
+                composerMode !== 'agent'
+                  ? 'Plugins available in Agent mode'
+                  : 'Plugins'
+              }
+              onClick={() => setPluginsOpen((v) => !v)}
+            >
+              Plugins{enabledPlugins.length ? ` · ${enabledPlugins.length}` : ''}
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {/* Plugins strip is Plugins-toggle only — Harness must not force it open. */}
-      {pluginsOpen ? (
+      {pluginsOpen && toolsExpanded ? (
         <div className={`aui-plugins${harnessOn ? ' is-harness-strip' : ''}`}>
           <button
             type="button"
@@ -631,83 +686,75 @@ function ComposerChrome() {
             onClose={() => setAtOpen(false)}
           />
         ) : null}
-        <div className="aui-composer-row">
-          <input
-            ref={fileInputRef}
-            type="file"
-            hidden
-            onChange={(e) => void pickFile(e.target.files?.[0] || null)}
-          />
-          <input
-            ref={ocrInputRef}
-            type="file"
-            accept="image/*,.pdf"
-            hidden
-            onChange={(e) => {
-              const file = e.target.files?.[0] || null
-              void pickOcr(file, (text) => aui.composer.setText(mergeDictateText(draft, text)))
-              if (ocrInputRef.current) ocrInputRef.current.value = ''
-            }}
-          />
-          <button
-            type="button"
-            className="aui-attach"
-            disabled={busy || uploadingFile}
-            title="Attach file"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {uploadingFile ? '…' : '+'}
-          </button>
-          <button
-            type="button"
-            className={`aui-attach${atOpen ? ' is-on' : ''}`}
-            disabled={busy}
-            title="Insert @ context (files, workspaces, chats)"
-            onClick={() => {
-              const next = draft.endsWith('@') || /@$/.test(draft) ? draft : `${draft}${draft && !/\s$/.test(draft) ? ' ' : ''}@`
-              aui.composer.setText(next)
-              setAtOpen(true)
-            }}
-          >
-            @
-          </button>
-          <button
-            type="button"
-            className="aui-attach"
-            disabled={busy || ocrBusy}
-            title="OCR into draft"
-            onClick={() => ocrInputRef.current?.click()}
-          >
-            {ocrBusy ? '…' : 'OCR'}
-          </button>
-          <ComposerPrimitive.Input
-            className="aui-composer-input"
-            placeholder={
-              composerMode === 'ask'
-                ? 'Ask DeepSeek (read-only)…'
-                : composerMode === 'plan'
-                  ? 'Plan with DeepSeek…'
-                  : 'Message DeepSeek…'
-            }
-            rows={1}
-            submitMode="enter"
-            unstable_insertNewlineOnTouchEnter
-          />
-          <ChatDictateButton
-            disabled={busy}
-            draft={draft}
-            onDraft={(next) => aui.composer.setText(next)}
-            onBargeIn={() => stopGeneration()}
-            onError={(message) => setError(message)}
-          />
-          <AuiIf condition={(s) => s.thread.isRunning}>
-            <ComposerPrimitive.Cancel className="aui-send is-stop" onClick={() => stopGeneration()}>
-              Stop
-            </ComposerPrimitive.Cancel>
-          </AuiIf>
-          <AuiIf condition={(s) => !s.thread.isRunning}>
-            <ComposerPrimitive.Send className="aui-send">Send</ComposerPrimitive.Send>
-          </AuiIf>
+        <input
+          ref={fileInputRef}
+          type="file"
+          hidden
+          onChange={(e) => void pickFile(e.target.files?.[0] || null)}
+        />
+        <input
+          ref={ocrInputRef}
+          type="file"
+          accept="image/*,.pdf"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null
+            void pickOcr(file, (text) => aui.composer.setText(mergeDictateText(draft, text)))
+            if (ocrInputRef.current) ocrInputRef.current.value = ''
+          }}
+        />
+        {/* Full-width input row — never share horizontal space with attach/mic/send on mobile. */}
+        <ComposerPrimitive.Input
+          className="aui-composer-input"
+          placeholder={
+            composerMode === 'ask'
+              ? 'Ask DeepSeek (read-only)…'
+              : composerMode === 'plan'
+                ? 'Plan with DeepSeek…'
+                : 'Message DeepSeek…'
+          }
+          rows={1}
+          submitMode="enter"
+          unstable_insertNewlineOnTouchEnter
+        />
+        <div className="aui-composer-toolbar">
+          <div className="aui-composer-toolbar-start">
+            <button
+              type="button"
+              className="aui-attach"
+              disabled={busy || uploadingFile}
+              title="Attach file"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploadingFile ? '…' : '+'}
+            </button>
+            <button
+              type="button"
+              className="aui-attach"
+              disabled={busy || ocrBusy}
+              title="OCR into draft"
+              onClick={() => ocrInputRef.current?.click()}
+            >
+              {ocrBusy ? '…' : 'OCR'}
+            </button>
+          </div>
+          <div className="aui-composer-toolbar-end">
+            <ChatDictateButton
+              disabled={busy}
+              draft={draft}
+              onDraft={(next) => aui.composer.setText(next)}
+              onBargeIn={() => stopGeneration()}
+              onError={(message) => setError(message)}
+            />
+            <AuiIf condition={(s) => s.thread.isRunning}>
+              <ComposerPrimitive.Cancel className="aui-send is-stop" onClick={() => stopGeneration()}>
+                Stop
+              </ComposerPrimitive.Cancel>
+            </AuiIf>
+            <AuiIf condition={(s) => !s.thread.isRunning}>
+              <ComposerPrimitive.Send className="aui-send">Send</ComposerPrimitive.Send>
+            </AuiIf>
+          </div>
         </div>
       </div>
 
