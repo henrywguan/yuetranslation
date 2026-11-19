@@ -110,10 +110,43 @@ assert.match(
   'thread list grows so sidebar foot pins to bottom',
 )
 assert.doesNotMatch(auiCss, /\.aui-shell-footer|\.aui-classic-link/, 'page-bottom classic link CSS removed')
+assert.match(
+  auiCss,
+  /\.aui-viewport[\s\S]*overflow-x:\s*hidden[\s\S]*overflow-y:\s*auto/,
+  'AUI viewport scrolls vertically only (no iPhone horizontal bar)',
+)
+assert.match(
+  auiCss,
+  /\.aui-md[\s\S]*overflow-wrap:\s*anywhere/,
+  'AUI markdown wraps long unbroken strings',
+)
+assert.match(
+  auiCss,
+  /\.aui-bubble\.is-user[\s\S]*overflow-wrap:\s*anywhere/,
+  'AUI user bubbles wrap long URLs',
+)
 assert.doesNotMatch(
   auiCss,
   /\.aui-layout\.is-sidebar-open \.aui-sidebar/,
   'no nested absolute aui-sidebar under aui-layout (left gap)',
+)
+
+const classicCss = readFileSync(join(root, 'pages/ChatPage.css'), 'utf8')
+assert.match(classicCss, /\.ds-chat\s*\{[\s\S]*max-width:\s*100%;/, 'chat shell avoids 100vw overflow')
+assert.doesNotMatch(
+  classicCss,
+  /\.ds-chat\s*\{[^}]*max-width:\s*100vw/,
+  'chat shell must not use max-width:100vw',
+)
+assert.match(
+  classicCss,
+  /\.ds-chat-messages[\s\S]*overflow-x:\s*hidden[\s\S]*overflow-y:\s*auto/,
+  'classic messages scroll vertically only',
+)
+assert.match(
+  classicCss,
+  /\.ds-md-code-wrap[\s\S]*max-width:\s*100%/,
+  'code blocks stay within chat width',
 )
 
 const runtime = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
