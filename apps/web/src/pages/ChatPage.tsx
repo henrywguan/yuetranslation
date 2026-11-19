@@ -1200,7 +1200,7 @@ export function ChatPage() {
         }
         persist(thread)
         // Never leave a silent "I'll look into…" stopover when Search was on.
-        const hadSearchChrome = Boolean(sources.length || searchSteps.length)
+        const hadSearchChrome = Boolean(sources?.length || searchSteps.length)
         if (
           searchOn &&
           !hadSearchChrome &&
