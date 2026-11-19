@@ -103,6 +103,46 @@ export const DEFAULT_SR_VOICE = 'sr-RS-SophieNeural'
 export const DEFAULT_SW_VOICE = 'sw-KE-ZuriNeural'
 /** Afrikaans — Azure locale af-ZA. */
 export const DEFAULT_AF_VOICE = 'af-ZA-AdriNeural'
+/** Estonian — Azure locale et-EE. */
+export const DEFAULT_ET_VOICE = 'et-EE-AnuNeural'
+/** Latvian — Azure locale lv-LV. */
+export const DEFAULT_LV_VOICE = 'lv-LV-EveritaNeural'
+/** Lithuanian — Azure locale lt-LT. */
+export const DEFAULT_LT_VOICE = 'lt-LT-OnaNeural'
+/** Irish — Azure locale ga-IE. */
+export const DEFAULT_GA_VOICE = 'ga-IE-OrlaNeural'
+/** Welsh — Azure locale cy-GB. */
+export const DEFAULT_CY_VOICE = 'cy-GB-NiaNeural'
+/** Basque — Azure locale eu-ES. */
+export const DEFAULT_EU_VOICE = 'eu-ES-AinhoaNeural'
+/** Galician — Azure locale gl-ES. */
+export const DEFAULT_GL_VOICE = 'gl-ES-SabelaNeural'
+/** Maltese — Azure locale mt-MT. */
+export const DEFAULT_MT_VOICE = 'mt-MT-GraceNeural'
+/** Icelandic — Azure locale is-IS. */
+export const DEFAULT_IS_VOICE = 'is-IS-GudrunNeural'
+/** Bosnian — Azure locale bs-BA. */
+export const DEFAULT_BS_VOICE = 'bs-BA-VesnaNeural'
+/** Albanian — Azure locale sq-AL. */
+export const DEFAULT_SQ_VOICE = 'sq-AL-AnilaNeural'
+/** Zulu — Azure locale zu-ZA. */
+export const DEFAULT_ZU_VOICE = 'zu-ZA-ThandoNeural'
+/** Somali — Azure locale so-SO. */
+export const DEFAULT_SO_VOICE = 'so-SO-UbaxNeural'
+/** Assamese — Azure locale as-IN. */
+export const DEFAULT_AS_VOICE = 'as-IN-YashicaNeural'
+/** Macedonian — Azure locale mk-MK. */
+export const DEFAULT_MK_VOICE = 'mk-MK-MarijaNeural'
+/** Mongolian — Azure locale mn-MN. */
+export const DEFAULT_MN_VOICE = 'mn-MN-YesuiNeural'
+/** Armenian — Azure locale hy-AM. */
+export const DEFAULT_HY_VOICE = 'hy-AM-AnahitNeural'
+/** Georgian — Azure locale ka-GE. */
+export const DEFAULT_KA_VOICE = 'ka-GE-EkaNeural'
+/** Amharic — Azure locale am-ET. */
+export const DEFAULT_AM_VOICE = 'am-ET-MekdesNeural'
+/** Pashto — Azure locale ps-AF. */
+export const DEFAULT_PS_VOICE = 'ps-AF-LatifaNeural'
 
 export type YueVoiceId =
   | 'zh-HK-HiuMaanNeural'
@@ -190,6 +230,26 @@ export type BgVoiceId = 'bg-BG-KalinaNeural' | 'bg-BG-BorislavNeural'
 export type SrVoiceId = 'sr-RS-SophieNeural' | 'sr-RS-NicholasNeural'
 export type SwVoiceId = 'sw-KE-ZuriNeural' | 'sw-KE-RafikiNeural'
 export type AfVoiceId = 'af-ZA-AdriNeural' | 'af-ZA-WillemNeural'
+export type EtVoiceId = 'et-EE-AnuNeural' | 'et-EE-KertNeural'
+export type LvVoiceId = 'lv-LV-EveritaNeural' | 'lv-LV-NilsNeural'
+export type LtVoiceId = 'lt-LT-OnaNeural' | 'lt-LT-LeonasNeural'
+export type GaVoiceId = 'ga-IE-OrlaNeural' | 'ga-IE-ColmNeural'
+export type CyVoiceId = 'cy-GB-NiaNeural' | 'cy-GB-AledNeural'
+export type EuVoiceId = 'eu-ES-AinhoaNeural' | 'eu-ES-AnderNeural'
+export type GlVoiceId = 'gl-ES-SabelaNeural' | 'gl-ES-RoiNeural'
+export type MtVoiceId = 'mt-MT-GraceNeural' | 'mt-MT-JosephNeural'
+export type IsVoiceId = 'is-IS-GudrunNeural' | 'is-IS-GunnarNeural'
+export type BsVoiceId = 'bs-BA-VesnaNeural' | 'bs-BA-GoranNeural'
+export type SqVoiceId = 'sq-AL-AnilaNeural' | 'sq-AL-IlirNeural'
+export type ZuVoiceId = 'zu-ZA-ThandoNeural' | 'zu-ZA-ThembaNeural'
+export type SoVoiceId = 'so-SO-UbaxNeural' | 'so-SO-MuuseNeural'
+export type AsVoiceId = 'as-IN-YashicaNeural' | 'as-IN-PriyomNeural'
+export type MkVoiceId = 'mk-MK-MarijaNeural' | 'mk-MK-AleksandarNeural'
+export type MnVoiceId = 'mn-MN-YesuiNeural' | 'mn-MN-BataaNeural'
+export type HyVoiceId = 'hy-AM-AnahitNeural' | 'hy-AM-HaykNeural'
+export type KaVoiceId = 'ka-GE-EkaNeural' | 'ka-GE-GiorgiNeural'
+export type AmVoiceId = 'am-ET-MekdesNeural' | 'am-ET-AmehaNeural'
+export type PsVoiceId = 'ps-AF-LatifaNeural' | 'ps-AF-GulNawazNeural'
 
 export type TtsVoiceId =
   | YueVoiceId
@@ -255,10 +315,30 @@ export type TtsVoiceId =
   | SrVoiceId
   | SwVoiceId
   | AfVoiceId
+  | EtVoiceId
+  | LvVoiceId
+  | LtVoiceId
+  | GaVoiceId
+  | CyVoiceId
+  | EuVoiceId
+  | GlVoiceId
+  | MtVoiceId
+  | IsVoiceId
+  | BsVoiceId
+  | SqVoiceId
+  | ZuVoiceId
+  | SoVoiceId
+  | AsVoiceId
+  | MkVoiceId
+  | MnVoiceId
+  | HyVoiceId
+  | KaVoiceId
+  | AmVoiceId
+  | PsVoiceId
 
 export type TtsVoiceOption = {
   id: TtsVoiceId
-  lang: 'yue' | 'en' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af'
+  lang: 'yue' | 'en' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'hy' | 'ka' | 'am' | 'ps'
   /** Azure SSML xml:lang */
   xmlLang: string
   labelEn: string
@@ -1448,6 +1528,386 @@ export const AF_VOICES: TtsVoiceOption[] = [
   },
 ]
 
+export const ET_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'et-EE-AnuNeural',
+    lang: 'et',
+    xmlLang: 'et-EE',
+    labelEn: 'Anu · Female',
+    labelZh: 'Anu · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'et-EE-KertNeural',
+    lang: 'et',
+    xmlLang: 'et-EE',
+    labelEn: 'Kert · Male',
+    labelZh: 'Kert · 男聲',
+    gender: 'male',
+  },
+]
+
+export const LV_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'lv-LV-EveritaNeural',
+    lang: 'lv',
+    xmlLang: 'lv-LV',
+    labelEn: 'Everita · Female',
+    labelZh: 'Everita · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'lv-LV-NilsNeural',
+    lang: 'lv',
+    xmlLang: 'lv-LV',
+    labelEn: 'Nils · Male',
+    labelZh: 'Nils · 男聲',
+    gender: 'male',
+  },
+]
+
+export const LT_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'lt-LT-OnaNeural',
+    lang: 'lt',
+    xmlLang: 'lt-LT',
+    labelEn: 'Ona · Female',
+    labelZh: 'Ona · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'lt-LT-LeonasNeural',
+    lang: 'lt',
+    xmlLang: 'lt-LT',
+    labelEn: 'Leonas · Male',
+    labelZh: 'Leonas · 男聲',
+    gender: 'male',
+  },
+]
+
+export const GA_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'ga-IE-OrlaNeural',
+    lang: 'ga',
+    xmlLang: 'ga-IE',
+    labelEn: 'Orla · Female',
+    labelZh: 'Orla · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'ga-IE-ColmNeural',
+    lang: 'ga',
+    xmlLang: 'ga-IE',
+    labelEn: 'Colm · Male',
+    labelZh: 'Colm · 男聲',
+    gender: 'male',
+  },
+]
+
+export const CY_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'cy-GB-NiaNeural',
+    lang: 'cy',
+    xmlLang: 'cy-GB',
+    labelEn: 'Nia · Female',
+    labelZh: 'Nia · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'cy-GB-AledNeural',
+    lang: 'cy',
+    xmlLang: 'cy-GB',
+    labelEn: 'Aled · Male',
+    labelZh: 'Aled · 男聲',
+    gender: 'male',
+  },
+]
+
+export const EU_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'eu-ES-AinhoaNeural',
+    lang: 'eu',
+    xmlLang: 'eu-ES',
+    labelEn: 'Ainhoa · Female',
+    labelZh: 'Ainhoa · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'eu-ES-AnderNeural',
+    lang: 'eu',
+    xmlLang: 'eu-ES',
+    labelEn: 'Ander · Male',
+    labelZh: 'Ander · 男聲',
+    gender: 'male',
+  },
+]
+
+export const GL_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'gl-ES-SabelaNeural',
+    lang: 'gl',
+    xmlLang: 'gl-ES',
+    labelEn: 'Sabela · Female',
+    labelZh: 'Sabela · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'gl-ES-RoiNeural',
+    lang: 'gl',
+    xmlLang: 'gl-ES',
+    labelEn: 'Roi · Male',
+    labelZh: 'Roi · 男聲',
+    gender: 'male',
+  },
+]
+
+export const MT_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'mt-MT-GraceNeural',
+    lang: 'mt',
+    xmlLang: 'mt-MT',
+    labelEn: 'Grace · Female',
+    labelZh: 'Grace · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'mt-MT-JosephNeural',
+    lang: 'mt',
+    xmlLang: 'mt-MT',
+    labelEn: 'Joseph · Male',
+    labelZh: 'Joseph · 男聲',
+    gender: 'male',
+  },
+]
+
+export const IS_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'is-IS-GudrunNeural',
+    lang: 'is',
+    xmlLang: 'is-IS',
+    labelEn: 'Gudrun · Female',
+    labelZh: 'Gudrun · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'is-IS-GunnarNeural',
+    lang: 'is',
+    xmlLang: 'is-IS',
+    labelEn: 'Gunnar · Male',
+    labelZh: 'Gunnar · 男聲',
+    gender: 'male',
+  },
+]
+
+export const BS_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'bs-BA-VesnaNeural',
+    lang: 'bs',
+    xmlLang: 'bs-BA',
+    labelEn: 'Vesna · Female',
+    labelZh: 'Vesna · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'bs-BA-GoranNeural',
+    lang: 'bs',
+    xmlLang: 'bs-BA',
+    labelEn: 'Goran · Male',
+    labelZh: 'Goran · 男聲',
+    gender: 'male',
+  },
+]
+
+export const SQ_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'sq-AL-AnilaNeural',
+    lang: 'sq',
+    xmlLang: 'sq-AL',
+    labelEn: 'Anila · Female',
+    labelZh: 'Anila · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'sq-AL-IlirNeural',
+    lang: 'sq',
+    xmlLang: 'sq-AL',
+    labelEn: 'Ilir · Male',
+    labelZh: 'Ilir · 男聲',
+    gender: 'male',
+  },
+]
+
+export const ZU_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'zu-ZA-ThandoNeural',
+    lang: 'zu',
+    xmlLang: 'zu-ZA',
+    labelEn: 'Thando · Female',
+    labelZh: 'Thando · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'zu-ZA-ThembaNeural',
+    lang: 'zu',
+    xmlLang: 'zu-ZA',
+    labelEn: 'Themba · Male',
+    labelZh: 'Themba · 男聲',
+    gender: 'male',
+  },
+]
+
+export const SO_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'so-SO-UbaxNeural',
+    lang: 'so',
+    xmlLang: 'so-SO',
+    labelEn: 'Ubax · Female',
+    labelZh: 'Ubax · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'so-SO-MuuseNeural',
+    lang: 'so',
+    xmlLang: 'so-SO',
+    labelEn: 'Muuse · Male',
+    labelZh: 'Muuse · 男聲',
+    gender: 'male',
+  },
+]
+
+export const AS_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'as-IN-YashicaNeural',
+    lang: 'as',
+    xmlLang: 'as-IN',
+    labelEn: 'Yashica · Female',
+    labelZh: 'Yashica · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'as-IN-PriyomNeural',
+    lang: 'as',
+    xmlLang: 'as-IN',
+    labelEn: 'Priyom · Male',
+    labelZh: 'Priyom · 男聲',
+    gender: 'male',
+  },
+]
+
+export const MK_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'mk-MK-MarijaNeural',
+    lang: 'mk',
+    xmlLang: 'mk-MK',
+    labelEn: 'Marija · Female',
+    labelZh: 'Marija · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'mk-MK-AleksandarNeural',
+    lang: 'mk',
+    xmlLang: 'mk-MK',
+    labelEn: 'Aleksandar · Male',
+    labelZh: 'Aleksandar · 男聲',
+    gender: 'male',
+  },
+]
+
+export const MN_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'mn-MN-YesuiNeural',
+    lang: 'mn',
+    xmlLang: 'mn-MN',
+    labelEn: 'Yesui · Female',
+    labelZh: 'Yesui · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'mn-MN-BataaNeural',
+    lang: 'mn',
+    xmlLang: 'mn-MN',
+    labelEn: 'Bataa · Male',
+    labelZh: 'Bataa · 男聲',
+    gender: 'male',
+  },
+]
+
+export const HY_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'hy-AM-AnahitNeural',
+    lang: 'hy',
+    xmlLang: 'hy-AM',
+    labelEn: 'Anahit · Female',
+    labelZh: 'Anahit · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'hy-AM-HaykNeural',
+    lang: 'hy',
+    xmlLang: 'hy-AM',
+    labelEn: 'Hayk · Male',
+    labelZh: 'Hayk · 男聲',
+    gender: 'male',
+  },
+]
+
+export const KA_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'ka-GE-EkaNeural',
+    lang: 'ka',
+    xmlLang: 'ka-GE',
+    labelEn: 'Eka · Female',
+    labelZh: 'Eka · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'ka-GE-GiorgiNeural',
+    lang: 'ka',
+    xmlLang: 'ka-GE',
+    labelEn: 'Giorgi · Male',
+    labelZh: 'Giorgi · 男聲',
+    gender: 'male',
+  },
+]
+
+export const AM_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'am-ET-MekdesNeural',
+    lang: 'am',
+    xmlLang: 'am-ET',
+    labelEn: 'Mekdes · Female',
+    labelZh: 'Mekdes · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'am-ET-AmehaNeural',
+    lang: 'am',
+    xmlLang: 'am-ET',
+    labelEn: 'Ameha · Male',
+    labelZh: 'Ameha · 男聲',
+    gender: 'male',
+  },
+]
+
+export const PS_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'ps-AF-LatifaNeural',
+    lang: 'ps',
+    xmlLang: 'ps-AF',
+    labelEn: 'Latifa · Female',
+    labelZh: 'Latifa · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'ps-AF-GulNawazNeural',
+    lang: 'ps',
+    xmlLang: 'ps-AF',
+    labelEn: 'Gul Nawaz · Male',
+    labelZh: 'Gul Nawaz · 男聲',
+    gender: 'male',
+  },
+]
+
 export const CMN_VOICES: TtsVoiceOption[] = [
   {
     id: 'zh-CN-XiaoxiaoNeural',
@@ -1560,6 +2020,26 @@ const BG_SET = new Set(BG_VOICES.map((v) => v.id))
 const SR_SET = new Set(SR_VOICES.map((v) => v.id))
 const SW_SET = new Set(SW_VOICES.map((v) => v.id))
 const AF_SET = new Set(AF_VOICES.map((v) => v.id))
+const ET_SET = new Set(ET_VOICES.map((v) => v.id))
+const LV_SET = new Set(LV_VOICES.map((v) => v.id))
+const LT_SET = new Set(LT_VOICES.map((v) => v.id))
+const GA_SET = new Set(GA_VOICES.map((v) => v.id))
+const CY_SET = new Set(CY_VOICES.map((v) => v.id))
+const EU_SET = new Set(EU_VOICES.map((v) => v.id))
+const GL_SET = new Set(GL_VOICES.map((v) => v.id))
+const MT_SET = new Set(MT_VOICES.map((v) => v.id))
+const IS_SET = new Set(IS_VOICES.map((v) => v.id))
+const BS_SET = new Set(BS_VOICES.map((v) => v.id))
+const SQ_SET = new Set(SQ_VOICES.map((v) => v.id))
+const ZU_SET = new Set(ZU_VOICES.map((v) => v.id))
+const SO_SET = new Set(SO_VOICES.map((v) => v.id))
+const AS_SET = new Set(AS_VOICES.map((v) => v.id))
+const MK_SET = new Set(MK_VOICES.map((v) => v.id))
+const MN_SET = new Set(MN_VOICES.map((v) => v.id))
+const HY_SET = new Set(HY_VOICES.map((v) => v.id))
+const KA_SET = new Set(KA_VOICES.map((v) => v.id))
+const AM_SET = new Set(AM_VOICES.map((v) => v.id))
+const PS_SET = new Set(PS_VOICES.map((v) => v.id))
 const ALL = new Map<string, TtsVoiceOption>(
   [
     ...YUE_VOICES,
@@ -1625,6 +2105,26 @@ const ALL = new Map<string, TtsVoiceOption>(
     ...SR_VOICES,
     ...SW_VOICES,
     ...AF_VOICES,
+    ...ET_VOICES,
+    ...LV_VOICES,
+    ...LT_VOICES,
+    ...GA_VOICES,
+    ...CY_VOICES,
+    ...EU_VOICES,
+    ...GL_VOICES,
+    ...MT_VOICES,
+    ...IS_VOICES,
+    ...BS_VOICES,
+    ...SQ_VOICES,
+    ...ZU_VOICES,
+    ...SO_VOICES,
+    ...AS_VOICES,
+    ...MK_VOICES,
+    ...MN_VOICES,
+    ...HY_VOICES,
+    ...KA_VOICES,
+    ...AM_VOICES,
+    ...PS_VOICES,
   ].map((v) => [v.id, v]),
 )
 
@@ -2085,6 +2585,146 @@ export function resolveAfVoice(id: string | null | undefined): AfVoiceId {
   return id && isAfVoice(id) ? id : DEFAULT_AF_VOICE
 }
 
+export function isEtVoice(id: string): id is EtVoiceId {
+  return ET_SET.has(id as EtVoiceId)
+}
+export function resolveEtVoice(id: string | null | undefined): EtVoiceId {
+  return id && isEtVoice(id) ? id : DEFAULT_ET_VOICE
+}
+
+export function isLvVoice(id: string): id is LvVoiceId {
+  return LV_SET.has(id as LvVoiceId)
+}
+export function resolveLvVoice(id: string | null | undefined): LvVoiceId {
+  return id && isLvVoice(id) ? id : DEFAULT_LV_VOICE
+}
+
+export function isLtVoice(id: string): id is LtVoiceId {
+  return LT_SET.has(id as LtVoiceId)
+}
+export function resolveLtVoice(id: string | null | undefined): LtVoiceId {
+  return id && isLtVoice(id) ? id : DEFAULT_LT_VOICE
+}
+
+export function isGaVoice(id: string): id is GaVoiceId {
+  return GA_SET.has(id as GaVoiceId)
+}
+export function resolveGaVoice(id: string | null | undefined): GaVoiceId {
+  return id && isGaVoice(id) ? id : DEFAULT_GA_VOICE
+}
+
+export function isCyVoice(id: string): id is CyVoiceId {
+  return CY_SET.has(id as CyVoiceId)
+}
+export function resolveCyVoice(id: string | null | undefined): CyVoiceId {
+  return id && isCyVoice(id) ? id : DEFAULT_CY_VOICE
+}
+
+export function isEuVoice(id: string): id is EuVoiceId {
+  return EU_SET.has(id as EuVoiceId)
+}
+export function resolveEuVoice(id: string | null | undefined): EuVoiceId {
+  return id && isEuVoice(id) ? id : DEFAULT_EU_VOICE
+}
+
+export function isGlVoice(id: string): id is GlVoiceId {
+  return GL_SET.has(id as GlVoiceId)
+}
+export function resolveGlVoice(id: string | null | undefined): GlVoiceId {
+  return id && isGlVoice(id) ? id : DEFAULT_GL_VOICE
+}
+
+export function isMtVoice(id: string): id is MtVoiceId {
+  return MT_SET.has(id as MtVoiceId)
+}
+export function resolveMtVoice(id: string | null | undefined): MtVoiceId {
+  return id && isMtVoice(id) ? id : DEFAULT_MT_VOICE
+}
+
+export function isIsVoice(id: string): id is IsVoiceId {
+  return IS_SET.has(id as IsVoiceId)
+}
+export function resolveIsVoice(id: string | null | undefined): IsVoiceId {
+  return id && isIsVoice(id) ? id : DEFAULT_IS_VOICE
+}
+
+export function isBsVoice(id: string): id is BsVoiceId {
+  return BS_SET.has(id as BsVoiceId)
+}
+export function resolveBsVoice(id: string | null | undefined): BsVoiceId {
+  return id && isBsVoice(id) ? id : DEFAULT_BS_VOICE
+}
+
+export function isSqVoice(id: string): id is SqVoiceId {
+  return SQ_SET.has(id as SqVoiceId)
+}
+export function resolveSqVoice(id: string | null | undefined): SqVoiceId {
+  return id && isSqVoice(id) ? id : DEFAULT_SQ_VOICE
+}
+
+export function isZuVoice(id: string): id is ZuVoiceId {
+  return ZU_SET.has(id as ZuVoiceId)
+}
+export function resolveZuVoice(id: string | null | undefined): ZuVoiceId {
+  return id && isZuVoice(id) ? id : DEFAULT_ZU_VOICE
+}
+
+export function isSoVoice(id: string): id is SoVoiceId {
+  return SO_SET.has(id as SoVoiceId)
+}
+export function resolveSoVoice(id: string | null | undefined): SoVoiceId {
+  return id && isSoVoice(id) ? id : DEFAULT_SO_VOICE
+}
+
+export function isAsVoice(id: string): id is AsVoiceId {
+  return AS_SET.has(id as AsVoiceId)
+}
+export function resolveAsVoice(id: string | null | undefined): AsVoiceId {
+  return id && isAsVoice(id) ? id : DEFAULT_AS_VOICE
+}
+
+export function isMkVoice(id: string): id is MkVoiceId {
+  return MK_SET.has(id as MkVoiceId)
+}
+export function resolveMkVoice(id: string | null | undefined): MkVoiceId {
+  return id && isMkVoice(id) ? id : DEFAULT_MK_VOICE
+}
+
+export function isMnVoice(id: string): id is MnVoiceId {
+  return MN_SET.has(id as MnVoiceId)
+}
+export function resolveMnVoice(id: string | null | undefined): MnVoiceId {
+  return id && isMnVoice(id) ? id : DEFAULT_MN_VOICE
+}
+
+export function isHyVoice(id: string): id is HyVoiceId {
+  return HY_SET.has(id as HyVoiceId)
+}
+export function resolveHyVoice(id: string | null | undefined): HyVoiceId {
+  return id && isHyVoice(id) ? id : DEFAULT_HY_VOICE
+}
+
+export function isKaVoice(id: string): id is KaVoiceId {
+  return KA_SET.has(id as KaVoiceId)
+}
+export function resolveKaVoice(id: string | null | undefined): KaVoiceId {
+  return id && isKaVoice(id) ? id : DEFAULT_KA_VOICE
+}
+
+export function isAmVoice(id: string): id is AmVoiceId {
+  return AM_SET.has(id as AmVoiceId)
+}
+export function resolveAmVoice(id: string | null | undefined): AmVoiceId {
+  return id && isAmVoice(id) ? id : DEFAULT_AM_VOICE
+}
+
+export function isPsVoice(id: string): id is PsVoiceId {
+  return PS_SET.has(id as PsVoiceId)
+}
+export function resolvePsVoice(id: string | null | undefined): PsVoiceId {
+  return id && isPsVoice(id) ? id : DEFAULT_PS_VOICE
+}
+
 export function voiceMeta(id: string): TtsVoiceOption | undefined {
   return ALL.get(id)
 }
@@ -2156,6 +2796,26 @@ export function resolveSpeakVoice(
   preferredSr?: string | null,
   preferredSw?: string | null,
   preferredAf?: string | null,
+  preferredEt?: string | null,
+  preferredLv?: string | null,
+  preferredLt?: string | null,
+  preferredGa?: string | null,
+  preferredCy?: string | null,
+  preferredEu?: string | null,
+  preferredGl?: string | null,
+  preferredMt?: string | null,
+  preferredIs?: string | null,
+  preferredBs?: string | null,
+  preferredSq?: string | null,
+  preferredZu?: string | null,
+  preferredSo?: string | null,
+  preferredAs?: string | null,
+  preferredMk?: string | null,
+  preferredMn?: string | null,
+  preferredHy?: string | null,
+  preferredKa?: string | null,
+  preferredAm?: string | null,
+  preferredPs?: string | null,
 ): { voice: string; xmlLang: string } {
   const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU'
   const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans'
@@ -2222,6 +2882,26 @@ export function resolveSpeakVoice(
   const isSr = lang === 'sr' || lang === 'sr-RS' || lang === 'sr-rs'
   const isSw = lang === 'sw' || lang === 'sw-KE' || lang === 'sw-ke'
   const isAf = lang === 'af' || lang === 'af-ZA' || lang === 'af-za'
+  const isEt = lang === 'et' || lang === 'et-EE' || lang === 'et-ee'
+  const isLv = lang === 'lv' || lang === 'lv-LV' || lang === 'lv-lv'
+  const isLt = lang === 'lt' || lang === 'lt-LT' || lang === 'lt-lt'
+  const isGa = lang === 'ga' || lang === 'ga-IE' || lang === 'ga-ie'
+  const isCy = lang === 'cy' || lang === 'cy-GB' || lang === 'cy-gb'
+  const isEu = lang === 'eu' || lang === 'eu-ES' || lang === 'eu-es'
+  const isGl = lang === 'gl' || lang === 'gl-ES' || lang === 'gl-es'
+  const isMt = lang === 'mt' || lang === 'mt-MT' || lang === 'mt-mt'
+  const isIs = lang === 'is' || lang === 'is-IS' || lang === 'is-is'
+  const isBs = lang === 'bs' || lang === 'bs-BA' || lang === 'bs-ba'
+  const isSq = lang === 'sq' || lang === 'sq-AL' || lang === 'sq-al'
+  const isZu = lang === 'zu' || lang === 'zu-ZA' || lang === 'zu-za'
+  const isSo = lang === 'so' || lang === 'so-SO' || lang === 'so-so'
+  const isAs = lang === 'as' || lang === 'as-IN' || lang === 'as-in'
+  const isMk = lang === 'mk' || lang === 'mk-MK' || lang === 'mk-mk'
+  const isMn = lang === 'mn' || lang === 'mn-MN' || lang === 'mn-mn'
+  const isHy = lang === 'hy' || lang === 'hy-AM' || lang === 'hy-am'
+  const isKa = lang === 'ka' || lang === 'ka-GE' || lang === 'ka-ge'
+  const isAm = lang === 'am' || lang === 'am-ET' || lang === 'am-et'
+  const isPs = lang === 'ps' || lang === 'ps-AF' || lang === 'ps-af'
   if (override) {
     const meta = voiceMeta(override)
     if (meta) {
@@ -2287,6 +2967,26 @@ export function resolveSpeakVoice(
       if (isSr && meta.lang === 'sr') return { voice: meta.id, xmlLang: meta.xmlLang }
       if (isSw && meta.lang === 'sw') return { voice: meta.id, xmlLang: meta.xmlLang }
       if (isAf && meta.lang === 'af') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isEt && meta.lang === 'et') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isLv && meta.lang === 'lv') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isLt && meta.lang === 'lt') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isGa && meta.lang === 'ga') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isCy && meta.lang === 'cy') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isEu && meta.lang === 'eu') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isGl && meta.lang === 'gl') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isMt && meta.lang === 'mt') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isIs && meta.lang === 'is') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isBs && meta.lang === 'bs') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isSq && meta.lang === 'sq') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isZu && meta.lang === 'zu') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isSo && meta.lang === 'so') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isAs && meta.lang === 'as') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isMk && meta.lang === 'mk') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isMn && meta.lang === 'mn') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isHy && meta.lang === 'hy') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isKa && meta.lang === 'ka') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isAm && meta.lang === 'am') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isPs && meta.lang === 'ps') return { voice: meta.id, xmlLang: meta.xmlLang }
       if (
         !isEn &&
         !isCmn &&
@@ -2350,6 +3050,26 @@ export function resolveSpeakVoice(
         !isSr &&
         !isSw &&
         !isAf &&
+        !isEt &&
+        !isLv &&
+        !isLt &&
+        !isGa &&
+        !isCy &&
+        !isEu &&
+        !isGl &&
+        !isMt &&
+        !isIs &&
+        !isBs &&
+        !isSq &&
+        !isZu &&
+        !isSo &&
+        !isAs &&
+        !isMk &&
+        !isMn &&
+        !isHy &&
+        !isKa &&
+        !isAm &&
+        !isPs &&
         meta.lang === 'yue'
       ) {
         return { voice: meta.id, xmlLang: meta.xmlLang }
@@ -2604,6 +3324,86 @@ export function resolveSpeakVoice(
     const id = resolveAfVoice(preferredAf)
     return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
   }
+  if (isEt) {
+    const id = resolveEtVoice(preferredEt)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isLv) {
+    const id = resolveLvVoice(preferredLv)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isLt) {
+    const id = resolveLtVoice(preferredLt)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isGa) {
+    const id = resolveGaVoice(preferredGa)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isCy) {
+    const id = resolveCyVoice(preferredCy)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isEu) {
+    const id = resolveEuVoice(preferredEu)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isGl) {
+    const id = resolveGlVoice(preferredGl)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isMt) {
+    const id = resolveMtVoice(preferredMt)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isIs) {
+    const id = resolveIsVoice(preferredIs)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isBs) {
+    const id = resolveBsVoice(preferredBs)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isSq) {
+    const id = resolveSqVoice(preferredSq)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isZu) {
+    const id = resolveZuVoice(preferredZu)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isSo) {
+    const id = resolveSoVoice(preferredSo)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isAs) {
+    const id = resolveAsVoice(preferredAs)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isMk) {
+    const id = resolveMkVoice(preferredMk)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isMn) {
+    const id = resolveMnVoice(preferredMn)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isHy) {
+    const id = resolveHyVoice(preferredHy)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isKa) {
+    const id = resolveKaVoice(preferredKa)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isAm) {
+    const id = resolveAmVoice(preferredAm)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isPs) {
+    const id = resolvePsVoice(preferredPs)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
   const id = resolveYueVoice(preferredYue)
   return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
 }
@@ -2671,3 +3471,23 @@ export const PREVIEW_BG = 'Здравей — това е твоят бълга�
 export const PREVIEW_SR = 'Здраво — ово је ваш српски глас.'
 export const PREVIEW_SW = 'Habari — hii ni sauti yako ya Kiswahili.'
 export const PREVIEW_AF = 'Hallo — dit is jou Afrikaanse stem.'
+export const PREVIEW_ET = 'Tere — see on sinu eesti hääl.'
+export const PREVIEW_LV = 'Sveiki — šī ir jūsu latviešu balss.'
+export const PREVIEW_LT = 'Labas — tai tavo lietuviškas balsas.'
+export const PREVIEW_GA = 'Dia duit — seo do ghuth Gaeilge.'
+export const PREVIEW_CY = 'Helo — dyma eich llais Cymraeg.'
+export const PREVIEW_EU = 'Kaixo — hau zure euskarazko ahotsa da.'
+export const PREVIEW_GL = 'Ola — esta é a túa voz en galego.'
+export const PREVIEW_MT = 'Bonġu — din hija leħen Malti tiegħek.'
+export const PREVIEW_IS = 'Halló — þetta er íslenska röddin þín.'
+export const PREVIEW_BS = 'Zdravo — ovo je tvoj bosanski glas.'
+export const PREVIEW_SQ = 'Përshëndetje — kjo është zëri yt shqip.'
+export const PREVIEW_ZU = 'Sawubona — lena yilizwi lakho lesiZulu.'
+export const PREVIEW_SO = 'Salaan — kani waa codkaaga Soomaaliga.'
+export const PREVIEW_AS = 'নমস্কাৰ — এইটো আপোনাৰ অসমীয়া কণ্ঠ।'
+export const PREVIEW_MK = 'Здраво — ова е твојот македонски глас.'
+export const PREVIEW_MN = 'Сайн байна уу — энэ бол таны монгол хоолой.'
+export const PREVIEW_HY = 'Բարև — սա ձեր հայերեն ձայնն է։'
+export const PREVIEW_KA = 'გამარჯობა — ეს არის თქვენი ქართული ხმა.'
+export const PREVIEW_AM = 'ሰላም — ይህ የእርስዎ የአማርኛ ድምጽ ነው።'
+export const PREVIEW_PS = 'سلام — دا ستاسو پښتو غږ دی.'
