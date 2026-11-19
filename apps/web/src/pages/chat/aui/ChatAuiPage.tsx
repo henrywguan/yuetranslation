@@ -13,8 +13,9 @@ import { useDocumentMeta } from '../../../lib/useDocumentMeta'
 import { safeShellViewportHeight } from '../../../lib/visualViewportHeight'
 import '../../ChatPage.css'
 import './ChatAui.css'
+import { InboxShell } from '../inbox/InboxShell'
 import { ChatAuiRuntimeProvider, useChatAuiSession } from './ChatAuiRuntime'
-import { ChatAuiSidebar, ChatAuiThread } from './ChatAuiThread'
+import { ChatAuiThread } from './ChatAuiThread'
 
 const MENU_ICON = (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
@@ -81,14 +82,14 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           onClick={() => setSidebarOpen(false)}
         />
       ) : null}
-      <aside className={`ds-chat-sidebar${sidebarOpen ? ' is-open' : ''}`} aria-label="Chat history">
+      <aside className={`ds-chat-sidebar${sidebarOpen ? ' is-open' : ''}`} aria-label="Inbox">
         <div className="ds-chat-sidebar-brand">
           <DeepSeekMark className="ds-chat-sidebar-brand-mark" />
           <span className="ds-chat-sidebar-brand-name">
             Deep<span>Seek</span>
           </span>
         </div>
-        <ChatAuiSidebar onNavigate={() => setSidebarOpen(false)} />
+        <InboxShell onNavigate={() => setSidebarOpen(false)} />
         <div className="ds-chat-sidebar-foot">
           <button
             type="button"

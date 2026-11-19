@@ -83,7 +83,8 @@ assert.match(
   /ds-chat-sidebar[\s\S]*ds-chat-main aui-main/,
   'sidebar is a sibling of main under ds-chat (flush left)',
 )
-assert.match(auiShellFn, /ChatAuiSidebar/, 'thread list lives in shell sidebar')
+assert.match(auiShellFn, /InboxShell/, 'Inbox chrome lives in shell sidebar')
+assert.match(auiShellFn, /aria-label="Inbox"/, 'sidebar is the Chat Inbox')
 // Classic/new toggle lives in the sidebar footer (pinned under the thread list),
 // not as a page-bottom text link under the composer.
 assert.match(
@@ -108,6 +109,11 @@ assert.match(
   auiCss,
   /\.aui-thread-list[\s\S]*flex:\s*1\s+1\s+auto/,
   'thread list grows so sidebar foot pins to bottom',
+)
+assert.match(
+  auiCss,
+  /\.inbox-agents \.aui-thread-list[\s\S]*flex:\s*0\s+1\s+auto/,
+  'nested inbox thread list does not steal sidebar scroll',
 )
 assert.doesNotMatch(auiCss, /\.aui-shell-footer|\.aui-classic-link/, 'page-bottom classic link CSS removed')
 assert.match(
@@ -184,7 +190,11 @@ assert.match(thread, /aui-msg is-user/, 'DeepSeek user message class')
 assert.match(thread, /aui-msg is-assistant/, 'DeepSeek assistant message class')
 assert.match(thread, /aui-send/, 'DeepSeek send button class')
 assert.match(thread, /aui-scroll-bottom/, 'scroll-to-bottom uses DeepSeek hide-when-disabled class')
-assert.match(thread, /\+ New chat/, 'sidebar new-chat CTA matches classic tone')
+assert.match(
+  readFileSync(join(root, 'pages/chat/inbox/InboxShell.tsx'), 'utf8'),
+  /\+ New chat/,
+  'inbox new-chat CTA matches classic tone',
+)
 assert.doesNotMatch(
   thread,
   /useAuiStockDark|aui-thread-root|aui-composer-root|aui-user-message-root|aui-thread-scroll-to-bottom/,
