@@ -576,6 +576,186 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     localOffline: true,
     extraPanels: [],
   },
+  et: {
+    // Estonian Latin orthography (õ ä ö ü š ž); sina / teie chip in Details.
+    htmlLang: 'et-EE',
+    pronField: 'accented',
+    defaultGlossLang: 'et',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  lv: {
+    // Latvian Latin orthography (ā č ē ģ ī ķ ļ ņ š ū ž); tu / jūs chip in Details.
+    htmlLang: 'lv-LV',
+    pronField: 'accented',
+    defaultGlossLang: 'lv',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  lt: {
+    // Lithuanian Latin orthography (ą č ę ė į š ų ū ž); tu / jūs chip in Details.
+    htmlLang: 'lt-LT',
+    pronField: 'accented',
+    defaultGlossLang: 'lt',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  ga: {
+    // Irish Latin orthography with fada (á é í ó ú); tú / sibh chip in Details.
+    htmlLang: 'ga-IE',
+    pronField: 'accented',
+    defaultGlossLang: 'ga',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  cy: {
+    // Welsh Latin orthography (ŵ ŷ circumflex); ti / chi chip in Details.
+    htmlLang: 'cy-GB',
+    pronField: 'accented',
+    defaultGlossLang: 'cy',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  eu: {
+    // Basque Latin orthography (ñ, tx ts tz); hi / zu / zuek chip in Details.
+    htmlLang: 'eu-ES',
+    pronField: 'accented',
+    defaultGlossLang: 'eu',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  gl: {
+    // Galician Latin orthography (ñ, accents); ti / vostede chip in Details.
+    htmlLang: 'gl-ES',
+    pronField: 'accented',
+    defaultGlossLang: 'gl',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  mt: {
+    // Maltese Latin orthography (ċ ġ ħ ż, għ); inti / intom chip in Details.
+    htmlLang: 'mt-MT',
+    pronField: 'accented',
+    defaultGlossLang: 'mt',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  is: {
+    // Icelandic Latin orthography (þ ð æ ö, acute accents); þú / þið chip in Details.
+    htmlLang: 'is-IS',
+    pronField: 'accented',
+    defaultGlossLang: 'is',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  bs: {
+    // Bosnian Latin only (č ć đ š ž) — never Cyrillic; ti / vi chip in Details.
+    htmlLang: 'bs-BA',
+    pronField: 'accented',
+    defaultGlossLang: 'bs',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  sq: {
+    // Albanian Latin orthography (ë ç); ti / ju chip in Details.
+    htmlLang: 'sq-AL',
+    pronField: 'accented',
+    defaultGlossLang: 'sq',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  zu: {
+    // Zulu Latin orthography (clicks c q x); wena / nina chip in Details. Tone not written.
+    htmlLang: 'zu-ZA',
+    pronField: 'accented',
+    defaultGlossLang: 'zu',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  so: {
+    // Somali Latin orthography (x c and apostrophe); adiga / idinka chip in Details.
+    htmlLang: 'so-SO',
+    pronField: 'accented',
+    defaultGlossLang: 'so',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  as: {
+    // Assamese in Bengali–Assamese script (ৰ ৱ); ISO 15919 reading + আপুনি/তুমি/তই chips in Details. Never Bengali.
+    htmlLang: 'as-IN',
+    pronField: 'accented',
+    defaultGlossLang: 'as',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  mk: {
+    // Macedonian Cyrillic only on compact (ѓ ќ ѕ љ њ џ ј); BGN/PCGN reading + ти/Вие in Details. Never Bulgarian or Serbian.
+    htmlLang: 'mk-MK',
+    pronField: 'accented',
+    defaultGlossLang: 'mk',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  mn: {
+    // Mongolian Cyrillic only (ө ү) — never traditional vertical Mongolian script; MNS 5217-style reading + чи/та in Details.
+    htmlLang: 'mn-MN',
+    pronField: 'accented',
+    defaultGlossLang: 'mn',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  ps: {
+    // Pashto RTL Perso-Arabic script (ټ ډ ړ ږ ښ ڼ ځ څ); honesty + ته/تاسو chips in Details. Never Persian or Dari.
+    htmlLang: 'ps-AF',
+    pronField: 'accented',
+    defaultGlossLang: 'ps',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  hy: {
+    // Armenian script (Eastern Armenian); դու / դուք chip + honesty in Details, no Latin reading.
+    htmlLang: 'hy-AM',
+    pronField: 'accented',
+    defaultGlossLang: 'hy',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  ka: {
+    // Georgian Mkhedruli script; შენ / თქვენ chip + honesty in Details, no Latin reading.
+    htmlLang: 'ka-GE',
+    pronField: 'accented',
+    defaultGlossLang: 'ka',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  am: {
+    // Amharic Ethiopic (Ge’ez) script; አንተ / አንቺ / እርስዎ / እናንተ chips + honesty in Details, no Latin reading.
+    htmlLang: 'am-ET',
+    pronField: 'accented',
+    defaultGlossLang: 'am',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
   ceb: {
     htmlLang: 'ceb',
     pronField: 'accented',

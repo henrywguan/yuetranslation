@@ -35,7 +35,7 @@ assert.ok(!resolveSpeakVoice('sr').voice.includes('Latn'))
 assert.equal(DEFAULT_SR_VOICE, 'sr-RS-SophieNeural')
 assert.equal(DEFAULT_AF_VOICE, 'af-ZA-AdriNeural')
 assert.ok(PREVIEW_KK.length > 0)
-assert.equal(PRIMARY_LANGS.length, 63)
+assert.ok(PRIMARY_LANGS.length >= 63, 'Batch 3b primaries remain registered')
 for (const [code] of CASES) assert.ok((PRIMARY_LANGS as readonly string[]).includes(code), `${code} is a primary`)
 
 console.log('ttsVoicesBatch3b.smoke: ok')

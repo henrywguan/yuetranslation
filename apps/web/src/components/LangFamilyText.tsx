@@ -11,11 +11,18 @@ import {
   type CyrillicLang,
 } from '../lib/cyrillicPedagogy'
 import { RTL_HONESTY_NOTE, RTL_HTML_LANG, detectRtlAddress, type RtlFamilyLang } from '../lib/rtlPedagogy'
+import {
+  SCRIPT_FAMILY_HONESTY_NOTE,
+  SCRIPT_FAMILY_HTML_LANG,
+  detectScriptFamilyAddress,
+  type ScriptFamilyLang,
+} from '../lib/scriptPedagogy'
 import type { AddressHit } from '../lib/langFamilyAddress'
 import {
   isCyrillicFamilyLang,
   isEuroFamilyLang,
   isIndicFamilyLang,
+  isRtlFamilyLang,
   type LangFamilyLang,
 } from '../lib/langFamily'
 
@@ -32,7 +39,7 @@ type CommonProps = {
 }
 
 type Detail = {
-  family: 'indic' | 'euro' | 'cyrillic' | 'rtl'
+  family: 'indic' | 'euro' | 'cyrillic' | 'rtl' | 'script'
   lang: LangFamilyLang
   htmlLang: string
   reading: { text: string; label: string; htmlLang: string } | null
@@ -99,7 +106,7 @@ function FamilyLine({ detail, text, className, onActivate, activateLabel }: Comm
   )
 }
 
-/** Telugu / Gujarati / Kannada / Malayalam / Marathi / Punjabi / Odia / Sinhala / Nepali — native script on compact; Details add ISO 15919 + address + honesty. */
+/** Telugu / Gujarati / Kannada / Malayalam / Marathi / Punjabi / Odia / Sinhala / Nepali / Assamese — native script on compact; Details add ISO 15919 + address + honesty. */
 export function IndicText({ lang, ...props }: CommonProps & { lang: IndicLang }) {
   const trimmed = props.text.trim()
   if (!trimmed) return props.placeholder ? <>{props.placeholder}</> : null
@@ -115,7 +122,7 @@ export function IndicText({ lang, ...props }: CommonProps & { lang: IndicLang })
   return <FamilyLine {...props} text={trimmed} detail={detail} />
 }
 
-/** Polish / Romanian / Czech / Greek / Hungarian / Swedish / Danish / Norwegian / Finnish / Slovak / Croatian / Catalan — orthography only; Details add address + honesty. */
+/** Polish … Afrikaans plus Batch 4 Latin langs (et lv lt ga cy eu gl mt is bs sq zu so) — orthography only; Details add address + honesty. */
 export function EuroText({ lang, ...props }: CommonProps & { lang: EuroLang }) {
   const trimmed = props.text.trim()
   if (!trimmed) return props.placeholder ? <>{props.placeholder}</> : null
@@ -130,7 +137,7 @@ export function EuroText({ lang, ...props }: CommonProps & { lang: EuroLang }) {
   return <FamilyLine {...props} text={trimmed} detail={detail} />
 }
 
-/** Russian / Ukrainian — Cyrillic only on compact; Details add Latin reading + ты/Вы · ти/Ви + honesty. */
+/** Russian / Ukrainian / Kazakh / Bulgarian / Serbian / Macedonian / Mongolian — Cyrillic only on compact; Details add Latin reading (not Serbian) + address chips + honesty. */
 export function CyrillicText({ lang, ...props }: CommonProps & { lang: CyrillicLang }) {
   const trimmed = props.text.trim()
   if (!trimmed) return props.placeholder ? <>{props.placeholder}</> : null
@@ -146,7 +153,7 @@ export function CyrillicText({ lang, ...props }: CommonProps & { lang: CyrillicL
   return <FamilyLine {...props} text={trimmed} detail={detail} />
 }
 
-/** Hebrew / Persian / Urdu — RTL native script (Arabic-style chrome); Details add honesty + address. */
+/** Hebrew / Persian / Urdu / Pashto — RTL native script (Arabic-style chrome); Details add honesty + address. */
 export function RtlText({ lang, ...props }: CommonProps & { lang: RtlFamilyLang }) {
   const trimmed = props.text.trim()
   if (!trimmed) return props.placeholder ? <>{props.placeholder}</> : null
@@ -161,10 +168,26 @@ export function RtlText({ lang, ...props }: CommonProps & { lang: RtlFamilyLang 
   return <FamilyLine {...props} text={trimmed} detail={detail} />
 }
 
-/** Single call-site branch for every Batch 2–3a language (`isLangFamilyLang`). */
+/** Armenian / Georgian / Amharic — own-alphabet native script on compact; Details add address + honesty (no Latin reading). */
+export function ScriptText({ lang, ...props }: CommonProps & { lang: ScriptFamilyLang }) {
+  const trimmed = props.text.trim()
+  if (!trimmed) return props.placeholder ? <>{props.placeholder}</> : null
+  const detail: Detail = {
+    family: 'script',
+    lang,
+    htmlLang: SCRIPT_FAMILY_HTML_LANG[lang],
+    reading: null,
+    address: props.showDetail ? detectScriptFamilyAddress(trimmed, lang) : null,
+    honesty: props.showDetail ? SCRIPT_FAMILY_HONESTY_NOTE[lang] : null,
+  }
+  return <FamilyLine {...props} text={trimmed} detail={detail} />
+}
+
+/** Single call-site branch for every Batch 2–4 language (`isLangFamilyLang`). */
 export function LangFamilyText({ lang, ...props }: CommonProps & { lang: LangFamilyLang }) {
   if (isIndicFamilyLang(lang)) return <IndicText lang={lang} {...props} />
   if (isEuroFamilyLang(lang)) return <EuroText lang={lang} {...props} />
   if (isCyrillicFamilyLang(lang)) return <CyrillicText lang={lang} {...props} />
-  return <RtlText lang={lang} {...props} />
+  if (isRtlFamilyLang(lang)) return <RtlText lang={lang} {...props} />
+  return <ScriptText lang={lang} {...props} />
 }

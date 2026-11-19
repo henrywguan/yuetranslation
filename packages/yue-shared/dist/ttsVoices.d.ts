@@ -102,6 +102,46 @@ export declare const DEFAULT_SR_VOICE = "sr-RS-SophieNeural";
 export declare const DEFAULT_SW_VOICE = "sw-KE-ZuriNeural";
 /** Afrikaans — Azure locale af-ZA. */
 export declare const DEFAULT_AF_VOICE = "af-ZA-AdriNeural";
+/** Estonian — Azure locale et-EE. */
+export declare const DEFAULT_ET_VOICE = "et-EE-AnuNeural";
+/** Latvian — Azure locale lv-LV. */
+export declare const DEFAULT_LV_VOICE = "lv-LV-EveritaNeural";
+/** Lithuanian — Azure locale lt-LT. */
+export declare const DEFAULT_LT_VOICE = "lt-LT-OnaNeural";
+/** Irish — Azure locale ga-IE. */
+export declare const DEFAULT_GA_VOICE = "ga-IE-OrlaNeural";
+/** Welsh — Azure locale cy-GB. */
+export declare const DEFAULT_CY_VOICE = "cy-GB-NiaNeural";
+/** Basque — Azure locale eu-ES. */
+export declare const DEFAULT_EU_VOICE = "eu-ES-AinhoaNeural";
+/** Galician — Azure locale gl-ES. */
+export declare const DEFAULT_GL_VOICE = "gl-ES-SabelaNeural";
+/** Maltese — Azure locale mt-MT. */
+export declare const DEFAULT_MT_VOICE = "mt-MT-GraceNeural";
+/** Icelandic — Azure locale is-IS. */
+export declare const DEFAULT_IS_VOICE = "is-IS-GudrunNeural";
+/** Bosnian — Azure locale bs-BA. */
+export declare const DEFAULT_BS_VOICE = "bs-BA-VesnaNeural";
+/** Albanian — Azure locale sq-AL. */
+export declare const DEFAULT_SQ_VOICE = "sq-AL-AnilaNeural";
+/** Zulu — Azure locale zu-ZA. */
+export declare const DEFAULT_ZU_VOICE = "zu-ZA-ThandoNeural";
+/** Somali — Azure locale so-SO. */
+export declare const DEFAULT_SO_VOICE = "so-SO-UbaxNeural";
+/** Assamese — Azure locale as-IN. */
+export declare const DEFAULT_AS_VOICE = "as-IN-YashicaNeural";
+/** Macedonian — Azure locale mk-MK. */
+export declare const DEFAULT_MK_VOICE = "mk-MK-MarijaNeural";
+/** Mongolian — Azure locale mn-MN. */
+export declare const DEFAULT_MN_VOICE = "mn-MN-YesuiNeural";
+/** Armenian — Azure locale hy-AM. */
+export declare const DEFAULT_HY_VOICE = "hy-AM-AnahitNeural";
+/** Georgian — Azure locale ka-GE. */
+export declare const DEFAULT_KA_VOICE = "ka-GE-EkaNeural";
+/** Amharic — Azure locale am-ET. */
+export declare const DEFAULT_AM_VOICE = "am-ET-MekdesNeural";
+/** Pashto — Azure locale ps-AF. */
+export declare const DEFAULT_PS_VOICE = "ps-AF-LatifaNeural";
 export type YueVoiceId = 'zh-HK-HiuMaanNeural' | 'zh-HK-HiuGaaiNeural' | 'zh-HK-WanLungNeural';
 export type EnVoiceId = 'en-US-JennyNeural' | 'en-US-GuyNeural' | 'en-US-AriaNeural' | 'en-GB-SoniaNeural' | 'en-GB-RyanNeural' | 'en-AU-NatashaNeural';
 export type CmnVoiceId = 'zh-CN-XiaoxiaoNeural' | 'zh-CN-YunxiNeural';
@@ -168,10 +208,30 @@ export type BgVoiceId = 'bg-BG-KalinaNeural' | 'bg-BG-BorislavNeural';
 export type SrVoiceId = 'sr-RS-SophieNeural' | 'sr-RS-NicholasNeural';
 export type SwVoiceId = 'sw-KE-ZuriNeural' | 'sw-KE-RafikiNeural';
 export type AfVoiceId = 'af-ZA-AdriNeural' | 'af-ZA-WillemNeural';
-export type TtsVoiceId = YueVoiceId | EnVoiceId | CmnVoiceId | WuuVoiceId | SichuanVoiceId | TlVoiceId | EsVoiceId | EsesVoiceId | ViVoiceId | ThVoiceId | LoVoiceId | KoVoiceId | JaVoiceId | IdVoiceId | MsVoiceId | PtVoiceId | FrVoiceId | HiVoiceId | KmVoiceId | MyVoiceId | JvVoiceId | ItVoiceId | DeVoiceId | NlVoiceId | ArVoiceId | ArsaVoiceId | TaVoiceId | PtptVoiceId | TrVoiceId | BnVoiceId | TeVoiceId | GuVoiceId | KnVoiceId | PlVoiceId | RoVoiceId | CsVoiceId | ElVoiceId | HuVoiceId | SvVoiceId | RuVoiceId | UkVoiceId | HeVoiceId | FaVoiceId | UrVoiceId | MlVoiceId | MrVoiceId | PaVoiceId | OrVoiceId | SiVoiceId | NeVoiceId | DaVoiceId | NbVoiceId | FiVoiceId | SkVoiceId | HrVoiceId | CaVoiceId | AzVoiceId | KkVoiceId | UzVoiceId | BgVoiceId | SrVoiceId | SwVoiceId | AfVoiceId;
+export type EtVoiceId = 'et-EE-AnuNeural' | 'et-EE-KertNeural';
+export type LvVoiceId = 'lv-LV-EveritaNeural' | 'lv-LV-NilsNeural';
+export type LtVoiceId = 'lt-LT-OnaNeural' | 'lt-LT-LeonasNeural';
+export type GaVoiceId = 'ga-IE-OrlaNeural' | 'ga-IE-ColmNeural';
+export type CyVoiceId = 'cy-GB-NiaNeural' | 'cy-GB-AledNeural';
+export type EuVoiceId = 'eu-ES-AinhoaNeural' | 'eu-ES-AnderNeural';
+export type GlVoiceId = 'gl-ES-SabelaNeural' | 'gl-ES-RoiNeural';
+export type MtVoiceId = 'mt-MT-GraceNeural' | 'mt-MT-JosephNeural';
+export type IsVoiceId = 'is-IS-GudrunNeural' | 'is-IS-GunnarNeural';
+export type BsVoiceId = 'bs-BA-VesnaNeural' | 'bs-BA-GoranNeural';
+export type SqVoiceId = 'sq-AL-AnilaNeural' | 'sq-AL-IlirNeural';
+export type ZuVoiceId = 'zu-ZA-ThandoNeural' | 'zu-ZA-ThembaNeural';
+export type SoVoiceId = 'so-SO-UbaxNeural' | 'so-SO-MuuseNeural';
+export type AsVoiceId = 'as-IN-YashicaNeural' | 'as-IN-PriyomNeural';
+export type MkVoiceId = 'mk-MK-MarijaNeural' | 'mk-MK-AleksandarNeural';
+export type MnVoiceId = 'mn-MN-YesuiNeural' | 'mn-MN-BataaNeural';
+export type HyVoiceId = 'hy-AM-AnahitNeural' | 'hy-AM-HaykNeural';
+export type KaVoiceId = 'ka-GE-EkaNeural' | 'ka-GE-GiorgiNeural';
+export type AmVoiceId = 'am-ET-MekdesNeural' | 'am-ET-AmehaNeural';
+export type PsVoiceId = 'ps-AF-LatifaNeural' | 'ps-AF-GulNawazNeural';
+export type TtsVoiceId = YueVoiceId | EnVoiceId | CmnVoiceId | WuuVoiceId | SichuanVoiceId | TlVoiceId | EsVoiceId | EsesVoiceId | ViVoiceId | ThVoiceId | LoVoiceId | KoVoiceId | JaVoiceId | IdVoiceId | MsVoiceId | PtVoiceId | FrVoiceId | HiVoiceId | KmVoiceId | MyVoiceId | JvVoiceId | ItVoiceId | DeVoiceId | NlVoiceId | ArVoiceId | ArsaVoiceId | TaVoiceId | PtptVoiceId | TrVoiceId | BnVoiceId | TeVoiceId | GuVoiceId | KnVoiceId | PlVoiceId | RoVoiceId | CsVoiceId | ElVoiceId | HuVoiceId | SvVoiceId | RuVoiceId | UkVoiceId | HeVoiceId | FaVoiceId | UrVoiceId | MlVoiceId | MrVoiceId | PaVoiceId | OrVoiceId | SiVoiceId | NeVoiceId | DaVoiceId | NbVoiceId | FiVoiceId | SkVoiceId | HrVoiceId | CaVoiceId | AzVoiceId | KkVoiceId | UzVoiceId | BgVoiceId | SrVoiceId | SwVoiceId | AfVoiceId | EtVoiceId | LvVoiceId | LtVoiceId | GaVoiceId | CyVoiceId | EuVoiceId | GlVoiceId | MtVoiceId | IsVoiceId | BsVoiceId | SqVoiceId | ZuVoiceId | SoVoiceId | AsVoiceId | MkVoiceId | MnVoiceId | HyVoiceId | KaVoiceId | AmVoiceId | PsVoiceId;
 export type TtsVoiceOption = {
     id: TtsVoiceId;
-    lang: 'yue' | 'en' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af';
+    lang: 'yue' | 'en' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'hy' | 'ka' | 'am' | 'ps';
     /** Azure SSML xml:lang */
     xmlLang: string;
     labelEn: string;
@@ -238,6 +298,26 @@ export declare const BG_VOICES: TtsVoiceOption[];
 export declare const SR_VOICES: TtsVoiceOption[];
 export declare const SW_VOICES: TtsVoiceOption[];
 export declare const AF_VOICES: TtsVoiceOption[];
+export declare const ET_VOICES: TtsVoiceOption[];
+export declare const LV_VOICES: TtsVoiceOption[];
+export declare const LT_VOICES: TtsVoiceOption[];
+export declare const GA_VOICES: TtsVoiceOption[];
+export declare const CY_VOICES: TtsVoiceOption[];
+export declare const EU_VOICES: TtsVoiceOption[];
+export declare const GL_VOICES: TtsVoiceOption[];
+export declare const MT_VOICES: TtsVoiceOption[];
+export declare const IS_VOICES: TtsVoiceOption[];
+export declare const BS_VOICES: TtsVoiceOption[];
+export declare const SQ_VOICES: TtsVoiceOption[];
+export declare const ZU_VOICES: TtsVoiceOption[];
+export declare const SO_VOICES: TtsVoiceOption[];
+export declare const AS_VOICES: TtsVoiceOption[];
+export declare const MK_VOICES: TtsVoiceOption[];
+export declare const MN_VOICES: TtsVoiceOption[];
+export declare const HY_VOICES: TtsVoiceOption[];
+export declare const KA_VOICES: TtsVoiceOption[];
+export declare const AM_VOICES: TtsVoiceOption[];
+export declare const PS_VOICES: TtsVoiceOption[];
 export declare const CMN_VOICES: TtsVoiceOption[];
 export declare const WUU_VOICES: TtsVoiceOption[];
 export declare const SICHUAN_VOICES: TtsVoiceOption[];
@@ -367,9 +447,49 @@ export declare function isSwVoice(id: string): id is SwVoiceId;
 export declare function resolveSwVoice(id: string | null | undefined): SwVoiceId;
 export declare function isAfVoice(id: string): id is AfVoiceId;
 export declare function resolveAfVoice(id: string | null | undefined): AfVoiceId;
+export declare function isEtVoice(id: string): id is EtVoiceId;
+export declare function resolveEtVoice(id: string | null | undefined): EtVoiceId;
+export declare function isLvVoice(id: string): id is LvVoiceId;
+export declare function resolveLvVoice(id: string | null | undefined): LvVoiceId;
+export declare function isLtVoice(id: string): id is LtVoiceId;
+export declare function resolveLtVoice(id: string | null | undefined): LtVoiceId;
+export declare function isGaVoice(id: string): id is GaVoiceId;
+export declare function resolveGaVoice(id: string | null | undefined): GaVoiceId;
+export declare function isCyVoice(id: string): id is CyVoiceId;
+export declare function resolveCyVoice(id: string | null | undefined): CyVoiceId;
+export declare function isEuVoice(id: string): id is EuVoiceId;
+export declare function resolveEuVoice(id: string | null | undefined): EuVoiceId;
+export declare function isGlVoice(id: string): id is GlVoiceId;
+export declare function resolveGlVoice(id: string | null | undefined): GlVoiceId;
+export declare function isMtVoice(id: string): id is MtVoiceId;
+export declare function resolveMtVoice(id: string | null | undefined): MtVoiceId;
+export declare function isIsVoice(id: string): id is IsVoiceId;
+export declare function resolveIsVoice(id: string | null | undefined): IsVoiceId;
+export declare function isBsVoice(id: string): id is BsVoiceId;
+export declare function resolveBsVoice(id: string | null | undefined): BsVoiceId;
+export declare function isSqVoice(id: string): id is SqVoiceId;
+export declare function resolveSqVoice(id: string | null | undefined): SqVoiceId;
+export declare function isZuVoice(id: string): id is ZuVoiceId;
+export declare function resolveZuVoice(id: string | null | undefined): ZuVoiceId;
+export declare function isSoVoice(id: string): id is SoVoiceId;
+export declare function resolveSoVoice(id: string | null | undefined): SoVoiceId;
+export declare function isAsVoice(id: string): id is AsVoiceId;
+export declare function resolveAsVoice(id: string | null | undefined): AsVoiceId;
+export declare function isMkVoice(id: string): id is MkVoiceId;
+export declare function resolveMkVoice(id: string | null | undefined): MkVoiceId;
+export declare function isMnVoice(id: string): id is MnVoiceId;
+export declare function resolveMnVoice(id: string | null | undefined): MnVoiceId;
+export declare function isHyVoice(id: string): id is HyVoiceId;
+export declare function resolveHyVoice(id: string | null | undefined): HyVoiceId;
+export declare function isKaVoice(id: string): id is KaVoiceId;
+export declare function resolveKaVoice(id: string | null | undefined): KaVoiceId;
+export declare function isAmVoice(id: string): id is AmVoiceId;
+export declare function resolveAmVoice(id: string | null | undefined): AmVoiceId;
+export declare function isPsVoice(id: string): id is PsVoiceId;
+export declare function resolvePsVoice(id: string | null | undefined): PsVoiceId;
 export declare function voiceMeta(id: string): TtsVoiceOption | undefined;
 /** Pick Azure voice + xml:lang for a speak request. */
-export declare function resolveSpeakVoice(lang: string, preferredYue?: string | null, preferredEn?: string | null, preferredCmn?: string | null, preferredWuu?: string | null, preferredSichuan?: string | null, preferredTl?: string | null, preferredEs?: string | null, override?: string | null, preferredVi?: string | null, preferredEses?: string | null, preferredTh?: string | null, preferredLo?: string | null, preferredKo?: string | null, preferredJa?: string | null, preferredId?: string | null, preferredMs?: string | null, preferredPt?: string | null, preferredFr?: string | null, preferredHi?: string | null, preferredKm?: string | null, preferredMy?: string | null, preferredJv?: string | null, preferredIt?: string | null, preferredDe?: string | null, preferredNl?: string | null, preferredAr?: string | null, preferredArsa?: string | null, preferredTa?: string | null, preferredPtpt?: string | null, preferredTr?: string | null, preferredBn?: string | null, preferredTe?: string | null, preferredGu?: string | null, preferredKn?: string | null, preferredPl?: string | null, preferredRo?: string | null, preferredCs?: string | null, preferredEl?: string | null, preferredHu?: string | null, preferredSv?: string | null, preferredRu?: string | null, preferredUk?: string | null, preferredHe?: string | null, preferredFa?: string | null, preferredUr?: string | null, preferredMl?: string | null, preferredMr?: string | null, preferredPa?: string | null, preferredOr?: string | null, preferredSi?: string | null, preferredNe?: string | null, preferredDa?: string | null, preferredNb?: string | null, preferredFi?: string | null, preferredSk?: string | null, preferredHr?: string | null, preferredCa?: string | null, preferredAz?: string | null, preferredKk?: string | null, preferredUz?: string | null, preferredBg?: string | null, preferredSr?: string | null, preferredSw?: string | null, preferredAf?: string | null): {
+export declare function resolveSpeakVoice(lang: string, preferredYue?: string | null, preferredEn?: string | null, preferredCmn?: string | null, preferredWuu?: string | null, preferredSichuan?: string | null, preferredTl?: string | null, preferredEs?: string | null, override?: string | null, preferredVi?: string | null, preferredEses?: string | null, preferredTh?: string | null, preferredLo?: string | null, preferredKo?: string | null, preferredJa?: string | null, preferredId?: string | null, preferredMs?: string | null, preferredPt?: string | null, preferredFr?: string | null, preferredHi?: string | null, preferredKm?: string | null, preferredMy?: string | null, preferredJv?: string | null, preferredIt?: string | null, preferredDe?: string | null, preferredNl?: string | null, preferredAr?: string | null, preferredArsa?: string | null, preferredTa?: string | null, preferredPtpt?: string | null, preferredTr?: string | null, preferredBn?: string | null, preferredTe?: string | null, preferredGu?: string | null, preferredKn?: string | null, preferredPl?: string | null, preferredRo?: string | null, preferredCs?: string | null, preferredEl?: string | null, preferredHu?: string | null, preferredSv?: string | null, preferredRu?: string | null, preferredUk?: string | null, preferredHe?: string | null, preferredFa?: string | null, preferredUr?: string | null, preferredMl?: string | null, preferredMr?: string | null, preferredPa?: string | null, preferredOr?: string | null, preferredSi?: string | null, preferredNe?: string | null, preferredDa?: string | null, preferredNb?: string | null, preferredFi?: string | null, preferredSk?: string | null, preferredHr?: string | null, preferredCa?: string | null, preferredAz?: string | null, preferredKk?: string | null, preferredUz?: string | null, preferredBg?: string | null, preferredSr?: string | null, preferredSw?: string | null, preferredAf?: string | null, preferredEt?: string | null, preferredLv?: string | null, preferredLt?: string | null, preferredGa?: string | null, preferredCy?: string | null, preferredEu?: string | null, preferredGl?: string | null, preferredMt?: string | null, preferredIs?: string | null, preferredBs?: string | null, preferredSq?: string | null, preferredZu?: string | null, preferredSo?: string | null, preferredAs?: string | null, preferredMk?: string | null, preferredMn?: string | null, preferredHy?: string | null, preferredKa?: string | null, preferredAm?: string | null, preferredPs?: string | null): {
     voice: string;
     xmlLang: string;
 };
@@ -436,4 +556,24 @@ export declare const PREVIEW_BG = "\u0417\u0434\u0440\u0430\u0432\u0435\u0439 \u
 export declare const PREVIEW_SR = "\u0417\u0434\u0440\u0430\u0432\u043E \u2014 \u043E\u0432\u043E \u0458\u0435 \u0432\u0430\u0448 \u0441\u0440\u043F\u0441\u043A\u0438 \u0433\u043B\u0430\u0441.";
 export declare const PREVIEW_SW = "Habari \u2014 hii ni sauti yako ya Kiswahili.";
 export declare const PREVIEW_AF = "Hallo \u2014 dit is jou Afrikaanse stem.";
+export declare const PREVIEW_ET = "Tere \u2014 see on sinu eesti h\u00E4\u00E4l.";
+export declare const PREVIEW_LV = "Sveiki \u2014 \u0161\u012B ir j\u016Bsu latvie\u0161u balss.";
+export declare const PREVIEW_LT = "Labas \u2014 tai tavo lietuvi\u0161kas balsas.";
+export declare const PREVIEW_GA = "Dia duit \u2014 seo do ghuth Gaeilge.";
+export declare const PREVIEW_CY = "Helo \u2014 dyma eich llais Cymraeg.";
+export declare const PREVIEW_EU = "Kaixo \u2014 hau zure euskarazko ahotsa da.";
+export declare const PREVIEW_GL = "Ola \u2014 esta \u00E9 a t\u00FAa voz en galego.";
+export declare const PREVIEW_MT = "Bon\u0121u \u2014 din hija le\u0127en Malti tieg\u0127ek.";
+export declare const PREVIEW_IS = "Hall\u00F3 \u2014 \u00FEetta er \u00EDslenska r\u00F6ddin \u00FE\u00EDn.";
+export declare const PREVIEW_BS = "Zdravo \u2014 ovo je tvoj bosanski glas.";
+export declare const PREVIEW_SQ = "P\u00EBrsh\u00EBndetje \u2014 kjo \u00EBsht\u00EB z\u00EBri yt shqip.";
+export declare const PREVIEW_ZU = "Sawubona \u2014 lena yilizwi lakho lesiZulu.";
+export declare const PREVIEW_SO = "Salaan \u2014 kani waa codkaaga Soomaaliga.";
+export declare const PREVIEW_AS = "\u09A8\u09AE\u09B8\u09CD\u0995\u09BE\u09F0 \u2014 \u098F\u0987\u099F\u09CB \u0986\u09AA\u09CB\u09A8\u09BE\u09F0 \u0985\u09B8\u09AE\u09C0\u09AF\u09BC\u09BE \u0995\u09A3\u09CD\u09A0\u0964";
+export declare const PREVIEW_MK = "\u0417\u0434\u0440\u0430\u0432\u043E \u2014 \u043E\u0432\u0430 \u0435 \u0442\u0432\u043E\u0458\u043E\u0442 \u043C\u0430\u043A\u0435\u0434\u043E\u043D\u0441\u043A\u0438 \u0433\u043B\u0430\u0441.";
+export declare const PREVIEW_MN = "\u0421\u0430\u0439\u043D \u0431\u0430\u0439\u043D\u0430 \u0443\u0443 \u2014 \u044D\u043D\u044D \u0431\u043E\u043B \u0442\u0430\u043D\u044B \u043C\u043E\u043D\u0433\u043E\u043B \u0445\u043E\u043E\u043B\u043E\u0439.";
+export declare const PREVIEW_HY = "\u0532\u0561\u0580\u0587 \u2014 \u057D\u0561 \u0571\u0565\u0580 \u0570\u0561\u0575\u0565\u0580\u0565\u0576 \u0571\u0561\u0575\u0576\u0576 \u0567\u0589";
+export declare const PREVIEW_KA = "\u10D2\u10D0\u10DB\u10D0\u10E0\u10EF\u10DD\u10D1\u10D0 \u2014 \u10D4\u10E1 \u10D0\u10E0\u10D8\u10E1 \u10D7\u10E5\u10D5\u10D4\u10DC\u10D8 \u10E5\u10D0\u10E0\u10D7\u10E3\u10DA\u10D8 \u10EE\u10DB\u10D0.";
+export declare const PREVIEW_AM = "\u1230\u120B\u121D \u2014 \u12ED\u1205 \u12E8\u12A5\u122D\u1235\u12CE \u12E8\u12A0\u121B\u122D\u129B \u12F5\u121D\u133D \u1290\u12CD\u1362";
+export declare const PREVIEW_PS = "\u0633\u0644\u0627\u0645 \u2014 \u062F\u0627 \u0633\u062A\u0627\u0633\u0648 \u067E\u069A\u062A\u0648 \u063A\u0696 \u062F\u06CC.";
 //# sourceMappingURL=ttsVoices.d.ts.map

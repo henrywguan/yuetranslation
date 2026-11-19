@@ -1,6 +1,16 @@
 import assert from 'node:assert/strict'
 import {
   ARABIC_SCRIPT_RE,
+  ARMENIAN_REJECT_RE,
+  ARMENIAN_SCRIPT_RE,
+  ASSAMESE_REJECT_RE,
+  BENGALI_ASSAMESE_SCRIPT_RE,
+  ETHIOPIC_REJECT_RE,
+  ETHIOPIC_SCRIPT_RE,
+  GEORGIAN_REJECT_RE,
+  GEORGIAN_SCRIPT_RE,
+  MACEDONIAN_REJECT_RE,
+  MONGOLIAN_REJECT_RE,
   BULGARIAN_REJECT_RE,
   CYRILLIC_OR_ARABIC_RE,
   KAZAKH_REJECT_RE,
@@ -86,5 +96,26 @@ assert.ok(KAZAKH_REJECT_RE.test('їжак') && KAZAKH_REJECT_RE.test('Ђорђе
 assert.ok(CYRILLIC_OR_ARABIC_RE.test('Салом') && CYRILLIC_OR_ARABIC_RE.test('سلام'), 'Cyrillic / Arabic flagged for Latin Azerbaijani / Uzbek')
 assert.ok(!CYRILLIC_OR_ARABIC_RE.test('Salam, necəsən? Salom, qalaysiz? oʻzbek'), 'Latin Azerbaijani / Uzbek passes')
 assert.ok(!CYRILLIC_SCRIPT_RE.test('Zdravo, kako ste?'), 'Latin-only Serbian is not Cyrillic (rejected by requireScript)')
+
+assert.ok(BENGALI_ASSAMESE_SCRIPT_RE.test('নমস্কাৰ, আপুনি কেনে আছে? ৰ ৱ'), 'Assamese script incl. ৰ ৱ')
+assert.ok(!BENGALI_ASSAMESE_SCRIPT_RE.test('नमस्ते') && !BENGALI_ASSAMESE_SCRIPT_RE.test('hello'), 'Devanagari / Latin are not Assamese script')
+assert.ok(!ASSAMESE_REJECT_RE.test('নমস্কাৰ, আপুনি কেনে আছে।'), 'Assamese passes incl. danda full stop')
+assert.ok(ASSAMESE_REJECT_RE.test('नमस्ते') && ASSAMESE_REJECT_RE.test('ਸਤ ਸ੍ਰੀ ਅਕਾਲ') && ASSAMESE_REJECT_RE.test('Привет'), 'Other scripts rejected for Assamese')
+
+assert.ok(!MACEDONIAN_REJECT_RE.test('Здраво, како си? Ѓорѓи, ќе дојдам, џеб, љубов, њива, ѕвезда, јас.'), 'Macedonian Cyrillic passes')
+assert.ok(MACEDONIAN_REJECT_RE.test('Здравей, ъгъл') && MACEDONIAN_REJECT_RE.test('щастие') && MACEDONIAN_REJECT_RE.test('Ђорђе') && MACEDONIAN_REJECT_RE.test('ёлка'), 'Bulgarian / Serbian / Russian-only letters rejected for Macedonian')
+assert.ok(!MONGOLIAN_REJECT_RE.test('Сайн байна уу? Миний нэр Өлзий, үнэн, ёстой, юу, ямар.'), 'Mongolian Cyrillic (ө ү ё ю я) passes')
+assert.ok(MONGOLIAN_REJECT_RE.test('Сәлем, қалайсың') && MONGOLIAN_REJECT_RE.test('їжак') && MONGOLIAN_REJECT_RE.test('ᠮᠣᠩᠭᠣᠯ'), 'Kazakh / Ukrainian / traditional Mongol script rejected')
+
+assert.ok(ARMENIAN_SCRIPT_RE.test('Բարև ձեզ։') && !ARMENIAN_SCRIPT_RE.test('Привет') && !ARMENIAN_SCRIPT_RE.test('გამარჯობა'), 'Armenian script')
+assert.ok(ARMENIAN_REJECT_RE.test('გამარჯობა') && ARMENIAN_REJECT_RE.test('Привет') && !ARMENIAN_REJECT_RE.test('Բարև, ինչպե՞ս եք։'), 'Armenian rejects Georgian / Cyrillic')
+assert.ok(GEORGIAN_SCRIPT_RE.test('გამარჯობა') && !GEORGIAN_SCRIPT_RE.test('Բարև') && !GEORGIAN_SCRIPT_RE.test('Привет'), 'Georgian script')
+assert.ok(GEORGIAN_REJECT_RE.test('Բարև') && GEORGIAN_REJECT_RE.test('Привет') && !GEORGIAN_REJECT_RE.test('გამარჯობა, როგორ ხართ?'), 'Georgian rejects Armenian / Cyrillic')
+assert.ok(ETHIOPIC_SCRIPT_RE.test('ሰላም፣ እንዴት ነህ።') && !ETHIOPIC_SCRIPT_RE.test('selam'), 'Ethiopic script')
+assert.ok(ETHIOPIC_REJECT_RE.test('Привет') && ETHIOPIC_REJECT_RE.test('سلام') && !ETHIOPIC_REJECT_RE.test('ሰላም፣ እንዴት ነህ።'), 'Amharic rejects Cyrillic / Arabic')
+assert.ok(ARABIC_SCRIPT_RE.test('سلام، ته څنګه یې؟ ټ ډ ړ ږ ښ ڼ ې ۍ ځ څ ګ') && !ARABIC_SCRIPT_RE.test('salaam'), 'Pashto uses Arabic script block')
+assert.ok(DEVANAGARI_RE.test('नमस्ते') && !DEVANAGARI_RE.test('سلام، ته څنګه یې؟'), 'Pashto rejects Devanagari only')
+assert.ok(!CYRILLIC_OR_ARABIC_RE.test('Tere, kuidas läheb? Sveiki, labas, Dia duit, Helo, Kaixo, Ola, Bonġu, Halló, Zdravo, Përshëndetje, Sawubona, Salaan'), 'Latin long-tail langs pass the Cyrillic / Arabic gate')
+assert.ok(CYRILLIC_OR_ARABIC_RE.test('Здраво, како сте?'), 'Bosnian Latin-only: Cyrillic rejected')
 
 console.log('voiceLangRegister.smoke: ok')

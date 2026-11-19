@@ -68,12 +68,32 @@ export function isVoiceLang(lang: string | null | undefined): lang is VoiceLang 
     lang === 'bg' ||
     lang === 'sr' ||
     lang === 'sw' ||
-    lang === 'af'
+    lang === 'af' ||
+    lang === 'et' ||
+    lang === 'lv' ||
+    lang === 'lt' ||
+    lang === 'ga' ||
+    lang === 'cy' ||
+    lang === 'eu' ||
+    lang === 'gl' ||
+    lang === 'mt' ||
+    lang === 'is' ||
+    lang === 'bs' ||
+    lang === 'sq' ||
+    lang === 'zu' ||
+    lang === 'so' ||
+    lang === 'as' ||
+    lang === 'mk' ||
+    lang === 'mn' ||
+    lang === 'ps' ||
+    lang === 'hy' ||
+    lang === 'ka' ||
+    lang === 'am'
   )
 }
 
 export function isRtlLang(lang: string | null | undefined): boolean {
-  return lang === 'ar' || lang === 'arsa' || lang === 'he' || lang === 'fa' || lang === 'ur'
+  return lang === 'ar' || lang === 'arsa' || lang === 'he' || lang === 'fa' || lang === 'ur' || lang === 'ps'
 }
 
 /** `dir` attribute for text surfaces; undefined keeps the inherited LTR flow. */

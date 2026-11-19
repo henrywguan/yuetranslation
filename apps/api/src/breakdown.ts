@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'da', 'nb', 'fi', 'sk', 'hr', 'ca', 'az', 'kk', 'uz', 'bg', 'sr', 'sw', 'af', 'ceb', 'ilo', 'bcl']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'te', 'gu', 'kn', 'pl', 'ro', 'cs', 'el', 'hu', 'sv', 'ru', 'uk', 'he', 'fa', 'ur', 'ml', 'mr', 'pa', 'or', 'si', 'ne', 'da', 'nb', 'fi', 'sk', 'hr', 'ca', 'az', 'kk', 'uz', 'bg', 'sr', 'sw', 'af', 'et', 'lv', 'lt', 'ga', 'cy', 'eu', 'gl', 'mt', 'is', 'bs', 'sq', 'zu', 'so', 'as', 'mk', 'mn', 'hy', 'ka', 'am', 'ps', 'ceb', 'ilo', 'bcl']).optional(),
 })
 
 export type BreakdownChar = {
@@ -203,8 +203,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'ceb' | 'ilo' | 'bcl',
-): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'ceb' | 'ilo' | 'bcl' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'hy' | 'ka' | 'am' | 'ps' | 'ceb' | 'ilo' | 'bcl',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'kk' | 'uz' | 'bg' | 'sr' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so' | 'as' | 'mk' | 'mn' | 'hy' | 'ka' | 'am' | 'ps' | 'ceb' | 'ilo' | 'bcl' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -1604,6 +1604,7 @@ type LatinVoiceBreakdownLang =
   | 'pl' | 'ro' | 'cs' | 'hu' | 'sv'
   | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca'
   | 'az' | 'uz' | 'sw' | 'af'
+  | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so'
 
 const LATIN_VOICE_BREAKDOWN_LABEL: Record<LatinVoiceBreakdownLang, string> = {
   id: 'Indonesian',
@@ -1631,6 +1632,19 @@ const LATIN_VOICE_BREAKDOWN_LABEL: Record<LatinVoiceBreakdownLang, string> = {
   uz: 'Uzbek (Latin script, not Cyrillic)',
   sw: 'Swahili',
   af: 'Afrikaans (not Dutch)',
+  et: 'Estonian (not Finnish)',
+  lv: 'Latvian (not Lithuanian)',
+  lt: 'Lithuanian (not Latvian)',
+  ga: 'Irish / Gaeilge (not Scottish Gaelic)',
+  cy: 'Welsh (Cymraeg)',
+  eu: 'Basque (Euskara)',
+  gl: 'Galician (not Portuguese)',
+  mt: 'Maltese (Malti)',
+  is: 'Icelandic',
+  bs: 'Bosnian (Latin script only, not Serbian or Croatian)',
+  sq: 'Albanian (Shqip)',
+  zu: 'Zulu (isiZulu, not Xhosa)',
+  so: 'Somali (Soomaali)',
 }
 
 function tokenizeLatinVoice(text: string): string[] {
@@ -1844,7 +1858,7 @@ function localScriptBreakdown(text: string, letterRe: RegExp): BreakdownChar[] {
 
 async function scriptVoiceBreakdown(
   text: string,
-  lang: 'km' | 'my' | 'ta' | 'bn' | 'te' | 'gu' | 'kn' | 'el' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'kk' | 'bg' | 'sr',
+  lang: 'km' | 'my' | 'ta' | 'bn' | 'te' | 'gu' | 'kn' | 'el' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'kk' | 'bg' | 'sr' | 'as' | 'mk' | 'mn' | 'hy' | 'ka' | 'am' | 'ps',
   label: string,
   tokenRe: RegExp,
 ) {
@@ -2098,6 +2112,62 @@ export async function breakdown(input: unknown) {
       /[\u0900-\u0963\u0966-\u097F\u200C\u200D]+|[0-9]+|[^\s\u0900-\u0963\u0966-\u097F\u200C\u200D0-9]+/g,
     )
   }
+  if (lang === 'as') {
+    return scriptVoiceBreakdown(
+      text,
+      'as',
+      'Assamese (Assamese script, not Bengali)',
+      /[\u0980-\u09FF\u200C\u200D]+|[0-9]+|[^\s\u0980-\u09FF\u200C\u200D0-9]+/g,
+    )
+  }
+  if (lang === 'mk') {
+    return scriptVoiceBreakdown(
+      text,
+      'mk',
+      'Macedonian (Cyrillic, not Bulgarian or Serbian)',
+      /[\u0400-\u04FF]+|[0-9]+|[^\s\u0400-\u04FF0-9]+/g,
+    )
+  }
+  if (lang === 'mn') {
+    return scriptVoiceBreakdown(
+      text,
+      'mn',
+      'Mongolian (Khalkha, Mongolian Cyrillic)',
+      /[\u0400-\u04FF]+|[0-9]+|[^\s\u0400-\u04FF0-9]+/g,
+    )
+  }
+  if (lang === 'hy') {
+    return scriptVoiceBreakdown(
+      text,
+      'hy',
+      'Armenian (Eastern Armenian, Armenian script)',
+      /[\u0531-\u0556\u0559\u055B-\u055E\u0561-\u0587]+|[0-9]+|[^\s\u0531-\u0556\u0559\u055B-\u055E\u0561-\u05870-9]+/g,
+    )
+  }
+  if (lang === 'ka') {
+    return scriptVoiceBreakdown(
+      text,
+      'ka',
+      'Georgian (Mkhedruli script)',
+      /[\u10A0-\u10CF\u10D0-\u10FF\u1C90-\u1CBF]+|[0-9]+|[^\s\u10A0-\u10CF\u10D0-\u10FF\u1C90-\u1CBF0-9]+/g,
+    )
+  }
+  if (lang === 'am') {
+    return scriptVoiceBreakdown(
+      text,
+      'am',
+      'Amharic (Ethiopic script)',
+      /[\u1200-\u135F\u1369-\u137C]+|[0-9]+|[^\s\u1200-\u135F\u1369-\u137C0-9]+/g,
+    )
+  }
+  if (lang === 'ps') {
+    return scriptVoiceBreakdown(
+      text,
+      'ps',
+      'Pashto (Perso-Arabic script, not Dari or Urdu)',
+      /[\u0610-\u061A\u0620-\u065F\u0670-\u06D3\u06D5\u06FA-\u06FF\u0750-\u077F\u200C]+|[0-9]+|[^\s\u0610-\u061A\u0620-\u065F\u0670-\u06D3\u06D5\u06FA-\u06FF\u0750-\u077F\u200C0-9]+/g,
+    )
+  }
   if (
     lang === 'id' ||
     lang === 'ms' ||
@@ -2123,7 +2193,20 @@ export async function breakdown(input: unknown) {
     lang === 'az' ||
     lang === 'uz' ||
     lang === 'sw' ||
-    lang === 'af'
+    lang === 'af' ||
+    lang === 'et' ||
+    lang === 'lv' ||
+    lang === 'lt' ||
+    lang === 'ga' ||
+    lang === 'cy' ||
+    lang === 'eu' ||
+    lang === 'gl' ||
+    lang === 'mt' ||
+    lang === 'is' ||
+    lang === 'bs' ||
+    lang === 'sq' ||
+    lang === 'zu' ||
+    lang === 'so'
   ) {
     return latinVoiceBreakdown(text, lang)
   }

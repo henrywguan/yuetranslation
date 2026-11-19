@@ -66,6 +66,26 @@ export {
   DEFAULT_SR_VOICE,
   DEFAULT_SW_VOICE,
   DEFAULT_AF_VOICE,
+  DEFAULT_ET_VOICE,
+  DEFAULT_LV_VOICE,
+  DEFAULT_LT_VOICE,
+  DEFAULT_GA_VOICE,
+  DEFAULT_CY_VOICE,
+  DEFAULT_EU_VOICE,
+  DEFAULT_GL_VOICE,
+  DEFAULT_MT_VOICE,
+  DEFAULT_IS_VOICE,
+  DEFAULT_BS_VOICE,
+  DEFAULT_SQ_VOICE,
+  DEFAULT_ZU_VOICE,
+  DEFAULT_SO_VOICE,
+  DEFAULT_AS_VOICE,
+  DEFAULT_MK_VOICE,
+  DEFAULT_MN_VOICE,
+  DEFAULT_PS_VOICE,
+  DEFAULT_HY_VOICE,
+  DEFAULT_KA_VOICE,
+  DEFAULT_AM_VOICE,
   YUE_VOICES,
   EN_VOICES,
   CMN_VOICES,
@@ -129,6 +149,26 @@ export {
   SR_VOICES,
   SW_VOICES,
   AF_VOICES,
+  ET_VOICES,
+  LV_VOICES,
+  LT_VOICES,
+  GA_VOICES,
+  CY_VOICES,
+  EU_VOICES,
+  GL_VOICES,
+  MT_VOICES,
+  IS_VOICES,
+  BS_VOICES,
+  SQ_VOICES,
+  ZU_VOICES,
+  SO_VOICES,
+  AS_VOICES,
+  MK_VOICES,
+  MN_VOICES,
+  PS_VOICES,
+  HY_VOICES,
+  KA_VOICES,
+  AM_VOICES,
   PREVIEW_YUE,
   PREVIEW_EN,
   PREVIEW_CMN,
@@ -192,6 +232,26 @@ export {
   PREVIEW_SR,
   PREVIEW_SW,
   PREVIEW_AF,
+  PREVIEW_ET,
+  PREVIEW_LV,
+  PREVIEW_LT,
+  PREVIEW_GA,
+  PREVIEW_CY,
+  PREVIEW_EU,
+  PREVIEW_GL,
+  PREVIEW_MT,
+  PREVIEW_IS,
+  PREVIEW_BS,
+  PREVIEW_SQ,
+  PREVIEW_ZU,
+  PREVIEW_SO,
+  PREVIEW_AS,
+  PREVIEW_MK,
+  PREVIEW_MN,
+  PREVIEW_PS,
+  PREVIEW_HY,
+  PREVIEW_KA,
+  PREVIEW_AM,
   resolveYueVoice,
   resolveEnVoice,
   resolveCmnVoice,
@@ -255,6 +315,26 @@ export {
   resolveSrVoice,
   resolveSwVoice,
   resolveAfVoice,
+  resolveEtVoice,
+  resolveLvVoice,
+  resolveLtVoice,
+  resolveGaVoice,
+  resolveCyVoice,
+  resolveEuVoice,
+  resolveGlVoice,
+  resolveMtVoice,
+  resolveIsVoice,
+  resolveBsVoice,
+  resolveSqVoice,
+  resolveZuVoice,
+  resolveSoVoice,
+  resolveAsVoice,
+  resolveMkVoice,
+  resolveMnVoice,
+  resolvePsVoice,
+  resolveHyVoice,
+  resolveKaVoice,
+  resolveAmVoice,
   isYueVoice,
   isEnVoice,
   isCmnVoice,
@@ -318,6 +398,26 @@ export {
   isSrVoice,
   isSwVoice,
   isAfVoice,
+  isEtVoice,
+  isLvVoice,
+  isLtVoice,
+  isGaVoice,
+  isCyVoice,
+  isEuVoice,
+  isGlVoice,
+  isMtVoice,
+  isIsVoice,
+  isBsVoice,
+  isSqVoice,
+  isZuVoice,
+  isSoVoice,
+  isAsVoice,
+  isMkVoice,
+  isMnVoice,
+  isPsVoice,
+  isHyVoice,
+  isKaVoice,
+  isAmVoice,
   voiceMeta,
   type YueVoiceId,
   type EnVoiceId,
@@ -382,6 +482,26 @@ export {
   type SrVoiceId,
   type SwVoiceId,
   type AfVoiceId,
+  type EtVoiceId,
+  type LvVoiceId,
+  type LtVoiceId,
+  type GaVoiceId,
+  type CyVoiceId,
+  type EuVoiceId,
+  type GlVoiceId,
+  type MtVoiceId,
+  type IsVoiceId,
+  type BsVoiceId,
+  type SqVoiceId,
+  type ZuVoiceId,
+  type SoVoiceId,
+  type AsVoiceId,
+  type MkVoiceId,
+  type MnVoiceId,
+  type PsVoiceId,
+  type HyVoiceId,
+  type KaVoiceId,
+  type AmVoiceId,
   type TtsVoiceId,
   type TtsVoiceOption,
 } from '@jyut/shared/ttsVoices'
@@ -446,6 +566,26 @@ import {
   DEFAULT_SR_VOICE,
   DEFAULT_SW_VOICE,
   DEFAULT_AF_VOICE,
+  DEFAULT_ET_VOICE,
+  DEFAULT_LV_VOICE,
+  DEFAULT_LT_VOICE,
+  DEFAULT_GA_VOICE,
+  DEFAULT_CY_VOICE,
+  DEFAULT_EU_VOICE,
+  DEFAULT_GL_VOICE,
+  DEFAULT_MT_VOICE,
+  DEFAULT_IS_VOICE,
+  DEFAULT_BS_VOICE,
+  DEFAULT_SQ_VOICE,
+  DEFAULT_ZU_VOICE,
+  DEFAULT_SO_VOICE,
+  DEFAULT_AS_VOICE,
+  DEFAULT_MK_VOICE,
+  DEFAULT_MN_VOICE,
+  DEFAULT_PS_VOICE,
+  DEFAULT_HY_VOICE,
+  DEFAULT_KA_VOICE,
+  DEFAULT_AM_VOICE,
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
   DEFAULT_WUU_VOICE,
@@ -509,6 +649,26 @@ import {
   resolveSrVoice,
   resolveSwVoice,
   resolveAfVoice,
+  resolveEtVoice,
+  resolveLvVoice,
+  resolveLtVoice,
+  resolveGaVoice,
+  resolveCyVoice,
+  resolveEuVoice,
+  resolveGlVoice,
+  resolveMtVoice,
+  resolveIsVoice,
+  resolveBsVoice,
+  resolveSqVoice,
+  resolveZuVoice,
+  resolveSoVoice,
+  resolveAsVoice,
+  resolveMkVoice,
+  resolveMnVoice,
+  resolvePsVoice,
+  resolveHyVoice,
+  resolveKaVoice,
+  resolveAmVoice,
   resolveEnVoice,
   resolveYueVoice,
   resolveWuuVoice,
@@ -573,6 +733,26 @@ import {
   type SrVoiceId,
   type SwVoiceId,
   type AfVoiceId,
+  type EtVoiceId,
+  type LvVoiceId,
+  type LtVoiceId,
+  type GaVoiceId,
+  type CyVoiceId,
+  type EuVoiceId,
+  type GlVoiceId,
+  type MtVoiceId,
+  type IsVoiceId,
+  type BsVoiceId,
+  type SqVoiceId,
+  type ZuVoiceId,
+  type SoVoiceId,
+  type AsVoiceId,
+  type MkVoiceId,
+  type MnVoiceId,
+  type PsVoiceId,
+  type HyVoiceId,
+  type KaVoiceId,
+  type AmVoiceId,
   type EnVoiceId,
   type YueVoiceId,
   type WuuVoiceId,
@@ -642,6 +822,26 @@ const STORAGE_BG = 'yue-tts-voice-bg'
 const STORAGE_SR = 'yue-tts-voice-sr'
 const STORAGE_SW = 'yue-tts-voice-sw'
 const STORAGE_AF = 'yue-tts-voice-af'
+const STORAGE_ET = 'yue-tts-voice-et'
+const STORAGE_LV = 'yue-tts-voice-lv'
+const STORAGE_LT = 'yue-tts-voice-lt'
+const STORAGE_GA = 'yue-tts-voice-ga'
+const STORAGE_CY = 'yue-tts-voice-cy'
+const STORAGE_EU = 'yue-tts-voice-eu'
+const STORAGE_GL = 'yue-tts-voice-gl'
+const STORAGE_MT = 'yue-tts-voice-mt'
+const STORAGE_IS = 'yue-tts-voice-is'
+const STORAGE_BS = 'yue-tts-voice-bs'
+const STORAGE_SQ = 'yue-tts-voice-sq'
+const STORAGE_ZU = 'yue-tts-voice-zu'
+const STORAGE_SO = 'yue-tts-voice-so'
+const STORAGE_AS = 'yue-tts-voice-as'
+const STORAGE_MK = 'yue-tts-voice-mk'
+const STORAGE_MN = 'yue-tts-voice-mn'
+const STORAGE_PS = 'yue-tts-voice-ps'
+const STORAGE_HY = 'yue-tts-voice-hy'
+const STORAGE_KA = 'yue-tts-voice-ka'
+const STORAGE_AM = 'yue-tts-voice-am'
 
 
 export function readLocalYueVoice(): YueVoiceId {
@@ -1691,6 +1891,346 @@ export function readLocalAfVoice(): AfVoiceId {
 export function writeLocalAfVoice(id: AfVoiceId) {
   try {
     localStorage.setItem(STORAGE_AF, resolveAfVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalEtVoice(): EtVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_ET_VOICE
+  try {
+    return resolveEtVoice(localStorage.getItem(STORAGE_ET))
+  } catch {
+    return DEFAULT_ET_VOICE
+  }
+}
+
+export function writeLocalEtVoice(id: EtVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_ET, resolveEtVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalLvVoice(): LvVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_LV_VOICE
+  try {
+    return resolveLvVoice(localStorage.getItem(STORAGE_LV))
+  } catch {
+    return DEFAULT_LV_VOICE
+  }
+}
+
+export function writeLocalLvVoice(id: LvVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_LV, resolveLvVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalLtVoice(): LtVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_LT_VOICE
+  try {
+    return resolveLtVoice(localStorage.getItem(STORAGE_LT))
+  } catch {
+    return DEFAULT_LT_VOICE
+  }
+}
+
+export function writeLocalLtVoice(id: LtVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_LT, resolveLtVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalGaVoice(): GaVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_GA_VOICE
+  try {
+    return resolveGaVoice(localStorage.getItem(STORAGE_GA))
+  } catch {
+    return DEFAULT_GA_VOICE
+  }
+}
+
+export function writeLocalGaVoice(id: GaVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_GA, resolveGaVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalCyVoice(): CyVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_CY_VOICE
+  try {
+    return resolveCyVoice(localStorage.getItem(STORAGE_CY))
+  } catch {
+    return DEFAULT_CY_VOICE
+  }
+}
+
+export function writeLocalCyVoice(id: CyVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_CY, resolveCyVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalEuVoice(): EuVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_EU_VOICE
+  try {
+    return resolveEuVoice(localStorage.getItem(STORAGE_EU))
+  } catch {
+    return DEFAULT_EU_VOICE
+  }
+}
+
+export function writeLocalEuVoice(id: EuVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_EU, resolveEuVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalGlVoice(): GlVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_GL_VOICE
+  try {
+    return resolveGlVoice(localStorage.getItem(STORAGE_GL))
+  } catch {
+    return DEFAULT_GL_VOICE
+  }
+}
+
+export function writeLocalGlVoice(id: GlVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_GL, resolveGlVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalMtVoice(): MtVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_MT_VOICE
+  try {
+    return resolveMtVoice(localStorage.getItem(STORAGE_MT))
+  } catch {
+    return DEFAULT_MT_VOICE
+  }
+}
+
+export function writeLocalMtVoice(id: MtVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_MT, resolveMtVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalIsVoice(): IsVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_IS_VOICE
+  try {
+    return resolveIsVoice(localStorage.getItem(STORAGE_IS))
+  } catch {
+    return DEFAULT_IS_VOICE
+  }
+}
+
+export function writeLocalIsVoice(id: IsVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_IS, resolveIsVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalBsVoice(): BsVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_BS_VOICE
+  try {
+    return resolveBsVoice(localStorage.getItem(STORAGE_BS))
+  } catch {
+    return DEFAULT_BS_VOICE
+  }
+}
+
+export function writeLocalBsVoice(id: BsVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_BS, resolveBsVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalSqVoice(): SqVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_SQ_VOICE
+  try {
+    return resolveSqVoice(localStorage.getItem(STORAGE_SQ))
+  } catch {
+    return DEFAULT_SQ_VOICE
+  }
+}
+
+export function writeLocalSqVoice(id: SqVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_SQ, resolveSqVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalZuVoice(): ZuVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_ZU_VOICE
+  try {
+    return resolveZuVoice(localStorage.getItem(STORAGE_ZU))
+  } catch {
+    return DEFAULT_ZU_VOICE
+  }
+}
+
+export function writeLocalZuVoice(id: ZuVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_ZU, resolveZuVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalSoVoice(): SoVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_SO_VOICE
+  try {
+    return resolveSoVoice(localStorage.getItem(STORAGE_SO))
+  } catch {
+    return DEFAULT_SO_VOICE
+  }
+}
+
+export function writeLocalSoVoice(id: SoVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_SO, resolveSoVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalAsVoice(): AsVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_AS_VOICE
+  try {
+    return resolveAsVoice(localStorage.getItem(STORAGE_AS))
+  } catch {
+    return DEFAULT_AS_VOICE
+  }
+}
+
+export function writeLocalAsVoice(id: AsVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_AS, resolveAsVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalMkVoice(): MkVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_MK_VOICE
+  try {
+    return resolveMkVoice(localStorage.getItem(STORAGE_MK))
+  } catch {
+    return DEFAULT_MK_VOICE
+  }
+}
+
+export function writeLocalMkVoice(id: MkVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_MK, resolveMkVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalMnVoice(): MnVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_MN_VOICE
+  try {
+    return resolveMnVoice(localStorage.getItem(STORAGE_MN))
+  } catch {
+    return DEFAULT_MN_VOICE
+  }
+}
+
+export function writeLocalMnVoice(id: MnVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_MN, resolveMnVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalPsVoice(): PsVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_PS_VOICE
+  try {
+    return resolvePsVoice(localStorage.getItem(STORAGE_PS))
+  } catch {
+    return DEFAULT_PS_VOICE
+  }
+}
+
+export function writeLocalPsVoice(id: PsVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_PS, resolvePsVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalHyVoice(): HyVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_HY_VOICE
+  try {
+    return resolveHyVoice(localStorage.getItem(STORAGE_HY))
+  } catch {
+    return DEFAULT_HY_VOICE
+  }
+}
+
+export function writeLocalHyVoice(id: HyVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_HY, resolveHyVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalKaVoice(): KaVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_KA_VOICE
+  try {
+    return resolveKaVoice(localStorage.getItem(STORAGE_KA))
+  } catch {
+    return DEFAULT_KA_VOICE
+  }
+}
+
+export function writeLocalKaVoice(id: KaVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_KA, resolveKaVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalAmVoice(): AmVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_AM_VOICE
+  try {
+    return resolveAmVoice(localStorage.getItem(STORAGE_AM))
+  } catch {
+    return DEFAULT_AM_VOICE
+  }
+}
+
+export function writeLocalAmVoice(id: AmVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_AM, resolveAmVoice(id))
   } catch {
     /* ignore */
   }

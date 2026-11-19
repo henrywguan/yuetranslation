@@ -25,6 +25,7 @@ assert.equal(parsed[2], '50g 或以上')
 
 for (const [alias, code] of [
   ['az', 'az'], ['az-AZ', 'az'], ['kk-kz', 'kk'], ['uz-UZ', 'uz'], ['bg-BG', 'bg'], ['sr-RS', 'sr'], ['sw-KE', 'sw'], ['af-ZA', 'af'],
+  ['et', 'et'], ['et-EE', 'et'], ['et-ee', 'et'], ['lv', 'lv'], ['lv-LV', 'lv'], ['lv-lv', 'lv'], ['lt', 'lt'], ['lt-LT', 'lt'], ['lt-lt', 'lt'], ['ga', 'ga'], ['ga-IE', 'ga'], ['ga-ie', 'ga'], ['cy', 'cy'], ['cy-GB', 'cy'], ['cy-gb', 'cy'], ['eu', 'eu'], ['eu-ES', 'eu'], ['eu-es', 'eu'], ['gl', 'gl'], ['gl-ES', 'gl'], ['gl-es', 'gl'], ['mt', 'mt'], ['mt-MT', 'mt'], ['mt-mt', 'mt'], ['is', 'is'], ['is-IS', 'is'], ['is-is', 'is'], ['bs', 'bs'], ['bs-BA', 'bs'], ['bs-ba', 'bs'], ['sq', 'sq'], ['sq-AL', 'sq'], ['sq-al', 'sq'], ['zu', 'zu'], ['zu-ZA', 'zu'], ['zu-za', 'zu'], ['so', 'so'], ['so-SO', 'so'], ['so-so', 'so'], ['as', 'as'], ['as-IN', 'as'], ['as-in', 'as'], ['mk', 'mk'], ['mk-MK', 'mk'], ['mk-mk', 'mk'], ['mn', 'mn'], ['mn-MN', 'mn'], ['mn-mn', 'mn'], ['hy', 'hy'], ['hy-AM', 'hy'], ['hy-am', 'hy'], ['ka', 'ka'], ['ka-GE', 'ka'], ['ka-ge', 'ka'], ['am', 'am'], ['am-ET', 'am'], ['am-et', 'am'], ['ps', 'ps'], ['ps-AF', 'ps'], ['ps-af', 'ps'],
 ] as const) {
   assert.equal(normalizeCameraLang(alias), code, `${alias} normalizes to ${code}`)
 }

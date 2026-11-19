@@ -171,6 +171,26 @@ function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'sr') return 'sr'
   if (detailLang === 'sw') return 'sw'
   if (detailLang === 'af') return 'af'
+  if (detailLang === 'et') return 'et'
+  if (detailLang === 'lv') return 'lv'
+  if (detailLang === 'lt') return 'lt'
+  if (detailLang === 'ga') return 'ga'
+  if (detailLang === 'cy') return 'cy'
+  if (detailLang === 'eu') return 'eu'
+  if (detailLang === 'gl') return 'gl'
+  if (detailLang === 'mt') return 'mt'
+  if (detailLang === 'is') return 'is'
+  if (detailLang === 'bs') return 'bs'
+  if (detailLang === 'sq') return 'sq'
+  if (detailLang === 'zu') return 'zu'
+  if (detailLang === 'so') return 'so'
+  if (detailLang === 'as') return 'as'
+  if (detailLang === 'mk') return 'mk'
+  if (detailLang === 'mn') return 'mn'
+  if (detailLang === 'ps') return 'ps'
+  if (detailLang === 'hy') return 'hy'
+  if (detailLang === 'ka') return 'ka'
+  if (detailLang === 'am') return 'am'
   if (detailLang === 'ceb') return 'ceb'
   if (detailLang === 'ilo') return 'ilo'
   if (detailLang === 'bcl') return 'bcl'
@@ -544,7 +564,27 @@ export function CharacterBreakdownHost() {
     detailLang === 'bg' ||
     detailLang === 'sr' ||
     detailLang === 'sw' ||
-    detailLang === 'af'
+    detailLang === 'af' ||
+    detailLang === 'et' ||
+    detailLang === 'lv' ||
+    detailLang === 'lt' ||
+    detailLang === 'ga' ||
+    detailLang === 'cy' ||
+    detailLang === 'eu' ||
+    detailLang === 'gl' ||
+    detailLang === 'mt' ||
+    detailLang === 'is' ||
+    detailLang === 'bs' ||
+    detailLang === 'sq' ||
+    detailLang === 'zu' ||
+    detailLang === 'so' ||
+    detailLang === 'as' ||
+    detailLang === 'mk' ||
+    detailLang === 'mn' ||
+    detailLang === 'ps' ||
+    detailLang === 'hy' ||
+    detailLang === 'ka' ||
+    detailLang === 'am'
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
   const isLatinDetail =

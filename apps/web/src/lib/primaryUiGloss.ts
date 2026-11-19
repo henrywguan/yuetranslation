@@ -141,6 +141,46 @@ export function primaryGlossHtmlLang(lang: PrimaryLang): string {
       return 'sw-KE'
     case 'af':
       return 'af-ZA'
+    case 'et':
+      return 'et-EE'
+    case 'lv':
+      return 'lv-LV'
+    case 'lt':
+      return 'lt-LT'
+    case 'ga':
+      return 'ga-IE'
+    case 'cy':
+      return 'cy-GB'
+    case 'eu':
+      return 'eu-ES'
+    case 'gl':
+      return 'gl-ES'
+    case 'mt':
+      return 'mt-MT'
+    case 'is':
+      return 'is-IS'
+    case 'bs':
+      return 'bs-BA'
+    case 'sq':
+      return 'sq-AL'
+    case 'zu':
+      return 'zu-ZA'
+    case 'so':
+      return 'so-SO'
+    case 'as':
+      return 'as-IN'
+    case 'mk':
+      return 'mk-MK'
+    case 'mn':
+      return 'mn-MN'
+    case 'ps':
+      return 'ps-AF'
+    case 'hy':
+      return 'hy-AM'
+    case 'ka':
+      return 'ka-GE'
+    case 'am':
+      return 'am-ET'
     case 'cmn':
       return 'zh-Latn'
     case 'wuu':

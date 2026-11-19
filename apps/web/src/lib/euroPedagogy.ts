@@ -1,12 +1,13 @@
 /**
  * Polish / Romanian / Czech / Greek / Hungarian / Swedish / Danish / Norwegian (Bokmål) / Finnish /
- * Slovak / Croatian / Catalan / Azerbaijani / Uzbek / Swahili / Afrikaans Details helpers —
+ * Slovak / Croatian / Catalan / Azerbaijani / Uzbek / Swahili / Afrikaans /
+ * Estonian / Latvian / Lithuanian / Irish / Welsh / Basque / Galician / Maltese / Icelandic / Bosnian (Latin) / Albanian / Zulu / Somali Details helpers —
  * informal vs formal address chips + stress / orthography honesty.
  * Compact panes stay orthography only (Greek stays Greek script; no Greeklish / IPA / tone digits).
  */
 import { detectAddress, type AddressHit, type AddressRule } from './langFamilyAddress'
 
-export type EuroLang = 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'uz' | 'sw' | 'af'
+export type EuroLang = 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'uz' | 'sw' | 'af' | 'et' | 'lv' | 'lt' | 'ga' | 'cy' | 'eu' | 'gl' | 'mt' | 'is' | 'bs' | 'sq' | 'zu' | 'so'
 
 export const EURO_HTML_LANG: Record<EuroLang, string> = {
   pl: 'pl-PL',
@@ -25,6 +26,19 @@ export const EURO_HTML_LANG: Record<EuroLang, string> = {
   uz: 'uz-UZ',
   sw: 'sw-KE',
   af: 'af-ZA',
+  et: 'et-EE',
+  lv: 'lv-LV',
+  lt: 'lt-LT',
+  ga: 'ga-IE',
+  cy: 'cy-GB',
+  eu: 'eu-ES',
+  gl: 'gl-ES',
+  mt: 'mt-MT',
+  is: 'is-IS',
+  bs: 'bs-BA',
+  sq: 'sq-AL',
+  zu: 'zu-ZA',
+  so: 'so-SO',
 }
 
 export const EURO_HONESTY_NOTE: Record<EuroLang, string> = {
@@ -44,6 +58,19 @@ export const EURO_HONESTY_NOTE: Record<EuroLang, string> = {
   uz: 'Uzbek is written here in Latin script (o‘ g‘ sh ch ng), not Cyrillic. It has agglutinative suffixes and stress usually on the last syllable. Uzbek is not tonal. sen is informal; siz is formal / plural.',
   sw: 'Swahili is a Bantu language: nouns belong to classes (m-/wa-, ki-/vi-, …) and verbs agree with them. Spelling is phonetic and stress falls on the second-to-last syllable. Swahili is not tonal. wewe is singular “you”; nyinyi is plural “you”.',
   af: 'Afrikaans grew out of Dutch with much simpler grammar: no grammatical gender and no verb endings by person. g sounds like a throaty “ch” and w like “v”; double negatives are normal. Afrikaans is not tonal. jy is informal “you”; u is formal.',
+  et: 'Estonian is a Finnic language (not Indo-European, and not Russian or Latvian): it has no grammatical gender and no future tense, õ is its own vowel, and stress is on the first syllable. Short, long and overlong sounds are distinct but spelling only partly shows them. Estonian is not tonal. sina is informal; teie is formal / plural.',
+  lv: 'Latvian is a Baltic language (not Slavic): ā ē ī ū mark long vowels, č ģ ķ ļ ņ š ž are separate letters, and stress is on the first syllable. It has syllable intonations that spelling does not mark — not lexical tone like Cantonese. tu is informal; jūs is formal / plural.',
+  lt: 'Lithuanian is a Baltic language (not Slavic) with a free pitch accent that normal spelling does not mark — not lexical tone like Cantonese. ą ę į ų are long vowels, ė and ū are separate letters, and č š ž are separate consonants. tu is informal; jūs is formal / plural.',
+  ga: 'Irish has initial mutations (lenition and eclipsis) that change the first letter or sound of a word, and fada accents (á é í ó ú) mark long vowels, so spelling is far from speech. Word order is verb–subject–object. Irish is not tonal. tú is singular “you”; sibh is plural.',
+  cy: 'Welsh has initial consonant mutations (soft, nasal, aspirate) that change the first letter of a word; ch dd ff ng ll ph rh th are single letters, and w and y can be vowels. Stress usually falls on the second-to-last syllable. Welsh is not tonal. ti is informal; chi is formal / plural.',
+  eu: 'Basque is a language isolate — unrelated to Spanish or French. It is ergative, has no grammatical gender, and builds meaning with case suffixes. Spelling is phonetic (tx ts tz x z are distinct sounds, ñ is used). Basque is not tonal. zu is the everyday polite “you”; hi is a very intimate form; zuek is plural.',
+  gl: 'Galician is a Romance language closely related to Portuguese — it is not a dialect of Spanish. x sounds like “sh”, ñ and ll are used, and accents (á é í ó ú) mark stress where the default rule breaks. Galician is not tonal. ti / tu is informal; vostede is formal.',
+  mt: 'Maltese is a Semitic language written in Latin script, with many Italian and English loanwords. ċ ġ ħ ż are separate letters, għ is a silent / pharyngeal digraph, q is a glottal stop, and the article assimilates (is-sema, il-bahar). Maltese is not Arabic script and not tonal. inti is singular “you”; intom is plural.',
+  is: 'Icelandic keeps four cases, three genders and rich verb endings; þ (thorn) and ð (eth) are separate letters, and stress is always on the first syllable. Spelling is conservative and close to Old Norse. Icelandic is not tonal. þú is singular “you”; þið is plural.',
+  bs: 'Bosnian is shown in Latin script only here (it also has a Cyrillic tradition this app does not use). Spelling is phonetic; č ć đ š ž and dž are separate letters, and ije / je reflexes (mlijeko, vrijeme) are typical. It has a pitch accent that spelling does not mark — not lexical tone like Cantonese. Bosnian is not Croatian or Serbian. ti is informal; vi is formal / plural.',
+  sq: 'Albanian is its own branch of Indo-European, with Gheg and Tosk dialects — the standard is Tosk-based. ë and ç are separate letters and the definite article is a suffix (-i, -a, -u, -ja). Albanian is not tonal. ti is informal; ju is formal / plural.',
+  zu: 'Zulu is a Bantu language: nouns belong to classes (umu- / aba-, isi- / izi-, …) and verbs agree with them. c q x are click sounds. Zulu is tonal, but tone is not written in everyday spelling. wena is singular “you”; nina is plural.',
+  so: 'Somali is a Cushitic language written in Latin script (official since 1972): x is a pharyngeal sound, c is a voiced pharyngeal sound, and an apostrophe marks a glottal stop; doubled vowels mark length. It has a pitch accent that spelling does not mark. Somali is not Arabic. adiga is singular “you”; idinka is plural.',
 }
 
 const RULES: Record<EuroLang, AddressRule[]> = {
@@ -111,6 +138,59 @@ const RULES: Record<EuroLang, AddressRule[]> = {
     { kind: 'jy', chip: 'jy', label: 'jy (informal)', forms: ['jy', 'jou', 'jouself'] },
     { kind: 'u', chip: 'u', label: 'u (formal)', forms: ['u', 'uself'] },
     { kind: 'julle', chip: 'julle', label: 'julle (plural “you”)', forms: ['julle', 'julleself'] },
+  ],
+  et: [
+    { kind: 'sina', chip: 'sina', label: 'sina (informal)', forms: ['sina', 'sind', 'sulle', 'sinu', 'sinuga', 'sinult', 'sinus'] },
+    { kind: 'teie', chip: 'teie', label: 'teie (formal / plural)', forms: ['teie', 'teid', 'teile', 'teiega', 'teilt', 'teis'] },
+  ],
+  lv: [
+    { kind: 'tu', chip: 'tu', label: 'tu (informal)', forms: ['tu', 'tevi', 'tev', 'tevis', 'tavs', 'tava', 'tavi', 'tavu'] },
+    { kind: 'jus', chip: 'jūs', label: 'jūs (formal / plural)', forms: ['jūs', 'jūsu', 'jums', 'jūsos'] },
+  ],
+  lt: [
+    { kind: 'tu', chip: 'tu', label: 'tu (informal)', forms: ['tu', 'tave', 'tau', 'tavęs', 'tavo', 'tavimi'] },
+    { kind: 'jus', chip: 'jūs', label: 'jūs (formal / plural)', forms: ['jūs', 'jus', 'jūsų', 'jums', 'jumis'] },
+  ],
+  ga: [
+    { kind: 'tu', chip: 'tú', label: 'tú (singular)', forms: ['tú', 'tusa', 'thú', 'duit', 'agat', 'leat', 'ort'] },
+    { kind: 'sibh', chip: 'sibh', label: 'sibh (plural)', forms: ['sibh', 'sibhse', 'daoibh', 'agaibh', 'libh', 'oraibh', 'bhur'] },
+  ],
+  cy: [
+    { kind: 'ti', chip: 'ti', label: 'ti (informal)', forms: ['ti', 'di', 'dy', 'tithau', 'titha'] },
+    { kind: 'chi', chip: 'chi', label: 'chi (formal / plural)', forms: ['chi', 'eich', 'ichi', 'chithau'] },
+  ],
+  eu: [
+    { kind: 'hi', chip: 'hi', label: 'hi (intimate)', forms: ['hi', 'hik', 'hire', 'hiri'] },
+    { kind: 'zu', chip: 'zu', label: 'zu (polite / standard)', forms: ['zu', 'zuk', 'zure', 'zuri', 'zurekin'] },
+    { kind: 'zuek', chip: 'zuek', label: 'zuek (plural)', forms: ['zuek', 'zuen', 'zuei', 'zuekin'] },
+  ],
+  gl: [
+    { kind: 'ti', chip: 'ti', label: 'ti / tu (informal)', forms: ['ti', 'tu', 'te', 'teu', 'túa', 'teus', 'túas', 'contigo'] },
+    { kind: 'vostede', chip: 'vostede', label: 'vostede (formal)', forms: ['vostede', 'vostedes'] },
+  ],
+  mt: [
+    { kind: 'inti', chip: 'inti', label: 'inti (singular “you”)', forms: ['inti', 'int', 'tiegħek', 'lilek', 'miegħek'] },
+    { kind: 'intom', chip: 'intom', label: 'intom (plural “you”)', forms: ['intom', 'tagħkom', 'lilkom', 'magħkom'] },
+  ],
+  is: [
+    { kind: 'thu', chip: 'þú', label: 'þú (singular)', forms: ['þú', 'þig', 'þinn', 'þín', 'þitt', 'þinni'] },
+    { kind: 'thid', chip: 'þið', label: 'þið (plural)', forms: ['þið', 'ykkur', 'ykkar'] },
+  ],
+  bs: [
+    { kind: 'ti', chip: 'ti', label: 'ti (informal)', forms: ['ti', 'tebe', 'tebi', 'tobom', 'tvoj', 'tvoja', 'tvoje', 'tvoji', 'tvojeg'] },
+    { kind: 'vi', chip: 'vi', label: 'vi (formal / plural)', forms: ['vi', 'vas', 'vama', 'vaš', 'vaša', 'vaše', 'vaši', 'vašeg'] },
+  ],
+  sq: [
+    { kind: 'ti', chip: 'ti', label: 'ti (informal)', forms: ['ti', 'ty', 'teje', 'yt', 'jote', 'tënd', 'tënde'] },
+    { kind: 'ju', chip: 'ju', label: 'ju (formal / plural)', forms: ['ju', 'juaj', 'juve'] },
+  ],
+  zu: [
+    { kind: 'wena', chip: 'wena', label: 'wena (singular)', forms: ['wena', 'kuwe', 'wakho', 'yakho', 'sakho', 'zakho'] },
+    { kind: 'nina', chip: 'nina', label: 'nina (plural)', forms: ['nina', 'kini', 'wenu', 'yenu', 'zenu', 'benu'] },
+  ],
+  so: [
+    { kind: 'adiga', chip: 'adiga', label: 'adiga (singular)', forms: ['adiga', 'adigu', 'adigaa'] },
+    { kind: 'idinka', chip: 'idinka', label: 'idinka (plural)', forms: ['idinka', 'idinku', 'idin', 'idinkaa'] },
   ],
 }
 

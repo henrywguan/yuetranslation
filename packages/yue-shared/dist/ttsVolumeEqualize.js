@@ -80,6 +80,26 @@ export const TTS_EQUALIZE_VOLUME = {
     sr: '+50%',
     sw: '+50%',
     af: '+50%',
+    et: '+50%',
+    lv: '+50%',
+    lt: '+50%',
+    ga: '+50%',
+    cy: '+50%',
+    eu: '+50%',
+    gl: '+50%',
+    mt: '+50%',
+    is: '+50%',
+    bs: '+50%',
+    sq: '+50%',
+    zu: '+50%',
+    so: '+50%',
+    as: '+50%',
+    mk: '+50%',
+    mn: '+50%',
+    hy: '+50%',
+    ka: '+50%',
+    am: '+50%',
+    ps: '+50%',
 };
 /**
  * Extra Web Audio playback gain on top of SSML (1 = unity).
@@ -150,6 +170,26 @@ export const TTS_EQUALIZE_PLAYBACK_GAIN = {
     sr: 2.0,
     sw: 2.0,
     af: 2.0,
+    et: 2.0,
+    lv: 2.0,
+    lt: 2.0,
+    ga: 2.0,
+    cy: 2.0,
+    eu: 2.0,
+    gl: 2.0,
+    mt: 2.0,
+    is: 2.0,
+    bs: 2.0,
+    sq: 2.0,
+    zu: 2.0,
+    so: 2.0,
+    as: 2.0,
+    mk: 2.0,
+    mn: 2.0,
+    hy: 2.0,
+    ka: 2.0,
+    am: 2.0,
+    ps: 2.0,
 };
 /** Normalize API / client lang codes to an equalize key. */
 export function equalizeLangKey(lang) {
@@ -280,6 +320,46 @@ export function equalizeLangKey(lang) {
         return 'sw';
     if (l === 'af' || l === 'af-za')
         return 'af';
+    if (l === 'et' || l === 'et-ee')
+        return 'et';
+    if (l === 'lv' || l === 'lv-lv')
+        return 'lv';
+    if (l === 'lt' || l === 'lt-lt')
+        return 'lt';
+    if (l === 'ga' || l === 'ga-ie')
+        return 'ga';
+    if (l === 'cy' || l === 'cy-gb')
+        return 'cy';
+    if (l === 'eu' || l === 'eu-es')
+        return 'eu';
+    if (l === 'gl' || l === 'gl-es')
+        return 'gl';
+    if (l === 'mt' || l === 'mt-mt')
+        return 'mt';
+    if (l === 'is' || l === 'is-is')
+        return 'is';
+    if (l === 'bs' || l === 'bs-ba')
+        return 'bs';
+    if (l === 'sq' || l === 'sq-al')
+        return 'sq';
+    if (l === 'zu' || l === 'zu-za')
+        return 'zu';
+    if (l === 'so' || l === 'so-so')
+        return 'so';
+    if (l === 'as' || l === 'as-in')
+        return 'as';
+    if (l === 'mk' || l === 'mk-mk')
+        return 'mk';
+    if (l === 'mn' || l === 'mn-mn')
+        return 'mn';
+    if (l === 'hy' || l === 'hy-am')
+        return 'hy';
+    if (l === 'ka' || l === 'ka-ge')
+        return 'ka';
+    if (l === 'am' || l === 'am-et')
+        return 'am';
+    if (l === 'ps' || l === 'ps-af')
+        return 'ps';
     return null;
 }
 /** Azure SSML volume for normal (non–Practice-Partner) speak. */

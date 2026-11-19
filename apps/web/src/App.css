@@ -5295,7 +5295,7 @@ button.turkish-activate {
 }
 
 /* Batch 2 families (LangFamilyText) — native script / orthography on compact; Details add reading + address + honesty.
-   Indic te/gu/kn (+3a ml/mr/pa/or/si/ne) · Euro pl/ro/cs/el/hu/sv (+3a da/nb/fi/sk/hr/ca, +3b az/uz/sw/af) · Cyrillic ru/uk (+3b kk/bg/sr) · RTL he/fa/ur (Arabic-style chrome). */
+   Indic te/gu/kn (+3a ml/mr/pa/or/si/ne, +4 as) · Euro pl/ro/cs/el/hu/sv (+3a da/nb/fi/sk/hr/ca, +3b az/uz/sw/af, +4 et/lv/lt/ga/cy/eu/gl/mt/is/bs/sq/zu/so) · Cyrillic ru/uk (+3b kk/bg/sr, +4 mk/mn) · RTL he/fa/ur (+4 ps; Arabic-style chrome) · Script hy/ka/am (+4). */
 .lang-family-block {
   display: inline-flex;
   flex-direction: column;
@@ -5331,6 +5331,21 @@ button.turkish-activate {
 .lang-family-block--si {
   font-family: 'Noto Sans Sinhala', 'Sinhala Sangam MN', 'Iskoola Pota', 'Nirmala UI', 'Segoe UI', system-ui, sans-serif;
 }
+.lang-family-block--as {
+  font-family: 'Noto Sans Bengali', 'Bangla Sangam MN', 'Nirmala UI', 'Vrinda', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--hy {
+  font-family: 'Noto Sans Armenian', 'Mshtakan', 'Sylfaen', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--ka {
+  font-family: 'Noto Sans Georgian', 'Sylfaen', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--am {
+  font-family: 'Noto Sans Ethiopic', 'Kefa', 'Nyala', 'Abyssinica SIL', 'Segoe UI', system-ui, sans-serif;
+}
+.lang-family-block--script {
+  line-height: 1.5;
+}
 .lang-family-block--he {
   font-family: 'Noto Sans Hebrew', 'Arial Hebrew', 'Segoe UI', system-ui, sans-serif;
 }
@@ -5340,6 +5355,9 @@ button.turkish-activate {
 .lang-family-block--ur {
   font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Noto Naskh Arabic', 'Geeza Pro', system-ui, sans-serif;
   line-height: 1.9;
+}
+.lang-family-block--ps {
+  font-family: 'Noto Naskh Arabic', 'Geeza Pro', 'Segoe UI', system-ui, sans-serif;
 }
 .lang-family-block--rtl {
   direction: rtl;
@@ -5386,6 +5404,8 @@ button.turkish-activate {
 .lang-family-block--or .lang-family-address-chip,
 .lang-family-block--si .lang-family-address-chip,
 .lang-family-block--ne .lang-family-address-chip,
+.lang-family-block--as .lang-family-address-chip,
+.lang-family-block--script .lang-family-address-chip,
 .lang-family-block--rtl .lang-family-address-chip {
   font-family: inherit;
 }

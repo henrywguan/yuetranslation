@@ -106,6 +106,26 @@ function langPlaceholder(lang: Lang): string {
   if (lang === 'sr') return ui.dirSerbian.en
   if (lang === 'sw') return ui.dirSwahili.en
   if (lang === 'af') return ui.dirAfrikaans.en
+  if (lang === 'et') return ui.dirEstonian.en
+  if (lang === 'lv') return ui.dirLatvian.en
+  if (lang === 'lt') return ui.dirLithuanian.en
+  if (lang === 'ga') return ui.dirIrish.en
+  if (lang === 'cy') return ui.dirWelsh.en
+  if (lang === 'eu') return ui.dirBasque.en
+  if (lang === 'gl') return ui.dirGalician.en
+  if (lang === 'mt') return ui.dirMaltese.en
+  if (lang === 'is') return ui.dirIcelandic.en
+  if (lang === 'bs') return ui.dirBosnian.en
+  if (lang === 'sq') return ui.dirAlbanian.en
+  if (lang === 'zu') return ui.dirZulu.en
+  if (lang === 'so') return ui.dirSomali.en
+  if (lang === 'as') return ui.dirAssamese.en
+  if (lang === 'mk') return ui.dirMacedonian.en
+  if (lang === 'mn') return ui.dirMongolian.en
+  if (lang === 'ps') return ui.dirPashto.en
+  if (lang === 'hy') return ui.dirArmenian.en
+  if (lang === 'ka') return ui.dirGeorgian.en
+  if (lang === 'am') return ui.dirAmharic.en
   if (lang === 'cmn') return ui.dirMandarin.zh
   if (lang === 'wuu') return ui.dirShanghainese.zh
   if (lang === 'sichuan') return ui.dirSichuanese.zh

@@ -76,6 +76,26 @@ function isLang(v: unknown): v is Lang {
     v === 'sr' ||
     v === 'sw' ||
     v === 'af' ||
+    v === 'et' ||
+    v === 'lv' ||
+    v === 'lt' ||
+    v === 'ga' ||
+    v === 'cy' ||
+    v === 'eu' ||
+    v === 'gl' ||
+    v === 'mt' ||
+    v === 'is' ||
+    v === 'bs' ||
+    v === 'sq' ||
+    v === 'zu' ||
+    v === 'so' ||
+    v === 'as' ||
+    v === 'mk' ||
+    v === 'mn' ||
+    v === 'ps' ||
+    v === 'hy' ||
+    v === 'ka' ||
+    v === 'am' ||
     v === 'ceb' ||
     v === 'ilo' ||
     v === 'bcl'
