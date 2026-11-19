@@ -35,6 +35,10 @@ export const PRIMARY_LANGS = [
   'nl',
   'ar',
   'arsa',
+  'ta',
+  'ptpt',
+  'tr',
+  'bn',
 ] as const satisfies readonly VoiceLang[]
 export type PrimaryLang = (typeof PRIMARY_LANGS)[number]
 
@@ -313,6 +317,30 @@ export function primaryLangLabel(lang: PrimaryLang): {
         zh: '標準阿拉伯文語言工具',
         gloss: 'أداة اللغة العربية الفصحى',
       }
+    case 'ta':
+      return {
+        en: 'Tamil Language Tool',
+        zh: '泰米爾文語言工具',
+        gloss: 'தமிழ் மொழிக் கருவி',
+      }
+    case 'ptpt':
+      return {
+        en: 'European Portuguese Language Tool',
+        zh: '歐洲葡文語言工具',
+        gloss: 'Ferramenta de português europeu',
+      }
+    case 'tr':
+      return {
+        en: 'Turkish Language Tool',
+        zh: '土耳其文語言工具',
+        gloss: 'Türkçe dil aracı',
+      }
+    case 'bn':
+      return {
+        en: 'Bengali Language Tool',
+        zh: '孟加拉文語言工具',
+        gloss: 'বাংলা ভাষার সরঞ্জাম',
+      }
     case 'yue':
     default:
       return {
@@ -375,6 +403,14 @@ export function primaryLangShortCopy(lang: PrimaryLang): { en: string; zh: strin
       return { en: 'Egyptian Arabic', zh: '埃及阿拉伯話' }
     case 'arsa':
       return { en: 'Modern Standard Arabic', zh: '標準阿拉伯文' }
+    case 'ta':
+      return { en: 'Tamil', zh: '泰米爾文' }
+    case 'ptpt':
+      return { en: 'European Portuguese', zh: '歐洲葡文' }
+    case 'tr':
+      return { en: 'Turkish', zh: '土耳其文' }
+    case 'bn':
+      return { en: 'Bengali', zh: '孟加拉文' }
     case 'yue':
     default:
       return { en: 'Cantonese', zh: '粵語' }

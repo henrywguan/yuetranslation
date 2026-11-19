@@ -108,6 +108,8 @@ function localeToLang(locale: string): Lang {
   if (l.startsWith('ja')) return 'ja'
   if (l.startsWith('id')) return 'id'
   if (l.startsWith('ms')) return 'ms'
+  // pt-PT → ptpt (European); pt-BR / bare pt → pt (Brazilian). Never cross-map.
+  if (l.startsWith('pt-pt')) return 'ptpt'
   if (l.startsWith('pt')) return 'pt'
   if (l.startsWith('fr')) return 'fr'
   if (l.startsWith('hi')) return 'hi'
@@ -120,6 +122,9 @@ function localeToLang(locale: string): Lang {
   // ar-EG → ar (Egyptian colloquial); ar-SA and other Arabic locales → arsa (MSA).
   if (l.startsWith('ar-eg')) return 'ar'
   if (l.startsWith('ar')) return 'arsa'
+  if (l.startsWith('ta')) return 'ta'
+  if (l.startsWith('tr')) return 'tr'
+  if (l.startsWith('bn')) return 'bn'
   // Generic zh without region — prefer Cantonese for HK product default.
   if (l.startsWith('zh')) return 'yue'
   return 'en'
@@ -151,6 +156,10 @@ function langToLocale(lang: Lang): string {
   if (lang === 'nl') return 'nl-NL'
   if (lang === 'ar') return 'ar-EG'
   if (lang === 'arsa') return 'ar-SA'
+  if (lang === 'ta') return 'ta-IN'
+  if (lang === 'ptpt') return 'pt-PT'
+  if (lang === 'tr') return 'tr-TR'
+  if (lang === 'bn') return 'bn-IN'
   return 'en-US'
 }
 

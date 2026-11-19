@@ -39,6 +39,10 @@ function isLang(v: unknown): v is Lang {
     v === 'nl' ||
     v === 'ar' ||
     v === 'arsa' ||
+    v === 'ta' ||
+    v === 'ptpt' ||
+    v === 'tr' ||
+    v === 'bn' ||
     v === 'ceb' ||
     v === 'ilo' ||
     v === 'bcl'

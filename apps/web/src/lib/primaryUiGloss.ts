@@ -67,6 +67,14 @@ export function primaryGlossHtmlLang(lang: PrimaryLang): string {
       return 'ar-EG'
     case 'arsa':
       return 'ar-SA'
+    case 'ta':
+      return 'ta-IN'
+    case 'ptpt':
+      return 'pt-PT'
+    case 'tr':
+      return 'tr-TR'
+    case 'bn':
+      return 'bn-IN'
     case 'cmn':
       return 'zh-Latn'
     case 'wuu':

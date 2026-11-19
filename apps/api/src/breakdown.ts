@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ceb', 'ilo', 'bcl']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'ceb', 'ilo', 'bcl']).optional(),
 })
 
 export type BreakdownChar = {
@@ -203,8 +203,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ceb' | 'ilo' | 'bcl',
-): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ceb' | 'ilo' | 'bcl' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'ceb' | 'ilo' | 'bcl',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'ceb' | 'ilo' | 'bcl' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -1599,7 +1599,7 @@ async function sichuanBreakdown(text: string) {
   }
 }
 
-type LatinVoiceBreakdownLang = 'id' | 'ms' | 'pt' | 'fr' | 'jv' | 'it' | 'de' | 'nl'
+type LatinVoiceBreakdownLang = 'id' | 'ms' | 'pt' | 'fr' | 'jv' | 'it' | 'de' | 'nl' | 'ptpt' | 'tr'
 
 const LATIN_VOICE_BREAKDOWN_LABEL: Record<LatinVoiceBreakdownLang, string> = {
   id: 'Indonesian',
@@ -1610,6 +1610,8 @@ const LATIN_VOICE_BREAKDOWN_LABEL: Record<LatinVoiceBreakdownLang, string> = {
   it: 'Italian',
   de: 'German',
   nl: 'Dutch',
+  ptpt: 'European Portuguese (Portugal, not Brazilian)',
+  tr: 'Turkish',
 }
 
 function tokenizeLatinVoice(text: string): string[] {
@@ -1800,7 +1802,7 @@ function tokenizeScriptRange(text: string, re: RegExp): string[] {
 
 function localScriptBreakdown(text: string, letterRe: RegExp): BreakdownChar[] {
   return tokenizeScriptRange(text, letterRe).map((tok) => {
-    if (/^[^\p{L}\p{N}]+$/u.test(tok) && !letterRe.test(tok)) {
+    if (/^[^\p{L}\p{M}\p{N}]+$/u.test(tok)) {
       return {
         char: tok,
         jyutping: null,
@@ -1809,7 +1811,7 @@ function localScriptBreakdown(text: string, letterRe: RegExp): BreakdownChar[] {
             ? 'question mark'
             : tok === '!' || tok === '！'
               ? 'exclamation mark'
-              : tok === '.' || tok === '。'
+              : tok === '.' || tok === '।' || tok === '。'
                 ? 'full stop'
                 : tok === ',' || tok === '，'
                   ? 'comma'
@@ -1823,7 +1825,7 @@ function localScriptBreakdown(text: string, letterRe: RegExp): BreakdownChar[] {
 
 async function scriptVoiceBreakdown(
   text: string,
-  lang: 'km' | 'my',
+  lang: 'km' | 'my' | 'ta' | 'bn',
   label: string,
   tokenRe: RegExp,
 ) {
@@ -1917,6 +1919,22 @@ export async function breakdown(input: unknown) {
       /[\u1000-\u109F]+|[0-9]+|[^\s\u1000-\u109F0-9]+/g,
     )
   }
+  if (lang === 'ta') {
+    return scriptVoiceBreakdown(
+      text,
+      'ta',
+      'colloquial Tamil (Tamil script)',
+      /[\u0B80-\u0BFF]+|[0-9]+|[^\s\u0B80-\u0BFF0-9]+/g,
+    )
+  }
+  if (lang === 'bn') {
+    return scriptVoiceBreakdown(
+      text,
+      'bn',
+      'colloquial Bengali (Bangla script)',
+      /[\u0980-\u09FF]+|[0-9]+|[^\s\u0980-\u09FF0-9]+/g,
+    )
+  }
   if (
     lang === 'id' ||
     lang === 'ms' ||
@@ -1925,7 +1943,9 @@ export async function breakdown(input: unknown) {
     lang === 'jv' ||
     lang === 'it' ||
     lang === 'de' ||
-    lang === 'nl'
+    lang === 'nl' ||
+    lang === 'ptpt' ||
+    lang === 'tr'
   ) {
     return latinVoiceBreakdown(text, lang)
   }

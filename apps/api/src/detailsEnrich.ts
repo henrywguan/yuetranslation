@@ -35,6 +35,10 @@ export const DetailLangSchema = z.enum([
   'nl',
   'ar',
   'arsa',
+  'ta',
+  'ptpt',
+  'tr',
+  'bn',
   'ceb',
   'ilo',
   'bcl',
@@ -235,6 +239,30 @@ const ENRICH_META: Record<
     glossLangHint:
       'Modern Standard Arabic (فصحى, ar-SA speech) — Arabic script only; formal written pan-Arab register, not Egyptian or Gulf colloquial; no Arabizi, no full tashkeel',
     exampleIn: 'natural Modern Standard Arabic (Arabic script)',
+  },
+  ta: {
+    label: 'Tamil (தமிழ்)',
+    glossLangHint:
+      'colloquial spoken Tamil (தமிழ், ta-IN) — Tamil script only; ISO 15919 is added by the client in Details — never Latin/Tanglish as the main line',
+    exampleIn: 'natural colloquial Tamil (Tamil script)',
+  },
+  ptpt: {
+    label: 'European Portuguese (português de Portugal)',
+    glossLangHint:
+      'European Portuguese (pt-PT) — Latin orthography with correct accents (AO90 Portugal spelling) and European lexicon (autocarro, telemóvel, "estar a"); not Brazilian Portuguese',
+    exampleIn: 'natural European Portuguese (pt-PT)',
+  },
+  tr: {
+    label: 'Turkish (Türkçe)',
+    glossLangHint:
+      'colloquial Turkish (Türkiye / tr-TR) — correct orthography with ı İ ğ ş ç ö ü and vowel harmony; never ASCII-folded',
+    exampleIn: 'natural colloquial Turkish',
+  },
+  bn: {
+    label: 'Bengali (বাংলা)',
+    glossLangHint:
+      'Standard Colloquial Bengali (চলিত বাংলা, bn-IN) — Bangla script only; ISO 15919 is added by the client in Details — never Devanagari or Latin/Banglish as the main line',
+    exampleIn: 'natural colloquial Bengali (Bangla script)',
   },
   ceb: {
     label: 'Cebuano / Bisaya',

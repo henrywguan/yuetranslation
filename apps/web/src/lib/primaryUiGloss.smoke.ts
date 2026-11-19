@@ -20,6 +20,12 @@ function main() {
   assert.equal(resolvePrimaryUiGloss(ui.modeSolo, 'ar'), undefined)
   assert.equal(primaryGlossHtmlLang('ar'), 'ar-EG')
   assert.equal(primaryGlossHtmlLang('arsa'), 'ar-SA')
+  assert.equal(primaryGlossHtmlLang('ta'), 'ta-IN')
+  assert.equal(primaryGlossHtmlLang('ptpt'), 'pt-PT')
+  assert.equal(primaryGlossHtmlLang('pt'), 'pt-BR')
+  assert.equal(primaryGlossHtmlLang('tr'), 'tr-TR')
+  assert.equal(primaryGlossHtmlLang('bn'), 'bn-IN')
+  assert.equal(resolvePrimaryUiGloss(ui.modeSolo, 'ta'), undefined)
 
   const solo = ui.modeSolo
   assert.equal(resolvePrimaryUiGloss(solo, 'yue'), undefined)

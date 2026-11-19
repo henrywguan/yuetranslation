@@ -244,6 +244,41 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     localOffline: true,
     extraPanels: [],
   },
+  ta: {
+    // Tamil script title via TaText; optional ISO 15919 + நீங்கள்/நீ in Details only. Not tonal.
+    htmlLang: 'ta-IN',
+    pronField: 'accented',
+    defaultGlossLang: 'ta',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  ptpt: {
+    htmlLang: 'pt-PT',
+    /** Orthographic stress like `pt` — European norms (AO90), never pt-BR. */
+    pronField: 'accented',
+    defaultGlossLang: 'ptpt',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  tr: {
+    htmlLang: 'tr-TR',
+    pronField: 'accented',
+    defaultGlossLang: 'tr',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  bn: {
+    // Bangla script title via BnText; optional ISO 15919 + আপনি/তুমি/তুই in Details only. Not tonal.
+    htmlLang: 'bn-IN',
+    pronField: 'accented',
+    defaultGlossLang: 'bn',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
   ceb: {
     htmlLang: 'ceb',
     pronField: 'accented',

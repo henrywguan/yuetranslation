@@ -5169,6 +5169,216 @@ button.arabic-activate {
   direction: rtl;
 }
 
+/* Tamil (ta-IN) + Bengali (bn-IN) — native script on compact; Details add ISO 15919 + address + honesty. */
+.tamil-block,
+.bengali-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+  line-height: 1.55;
+}
+.tamil-block {
+  font-family: 'Noto Sans Tamil', 'Tamil Sangam MN', 'Latha', 'Segoe UI', system-ui, sans-serif;
+}
+.bengali-block {
+  font-family: 'Noto Sans Bengali', 'Bangla Sangam MN', 'Vrinda', 'Segoe UI', system-ui, sans-serif;
+}
+.tamil-block--detail,
+.bengali-block--detail {
+  gap: 0.35em;
+}
+.tamil-reading-row,
+.tamil-address-row,
+.bengali-reading-row,
+.bengali-address-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  font-family: var(--font-body);
+}
+.tamil-reading,
+.bengali-reading {
+  font-size: 0.72em;
+  line-height: 1.2;
+  opacity: 0.78;
+  font-weight: 500;
+}
+.tamil-reading-label,
+.tamil-address-scheme,
+.bengali-reading-label,
+.bengali-address-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.tamil-address-chip,
+.bengali-address-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.tamil-honesty,
+.bengali-honesty {
+  font-family: var(--font-body);
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.tamil-activate,
+button.bengali-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* Turkish (tr-TR) — orthography on compact; Details add sen/siz + vowel-harmony honesty. */
+.turkish-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.turkish-block--detail {
+  gap: 0.35em;
+}
+.turkish-address-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.turkish-address-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.turkish-address-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.turkish-address-chip--siz,
+.turkish-address-chip--mixed {
+  opacity: 0.9;
+}
+.turkish-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.turkish-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* European Portuguese (pt-PT) — orthography on compact; Details add stress chips + vowel-reduction honesty. */
+.european-portuguese-block {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 100%;
+}
+.european-portuguese-activate {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  max-width: 100%;
+}
+.european-portuguese-stress-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  max-width: 100%;
+}
+.european-portuguese-stress-scheme {
+  flex: 0 0 auto;
+  font-family: var(--font-body);
+  font-size: clamp(0.58rem, 1.9vw, 0.68rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--mint) 72%, white);
+}
+.european-portuguese-stress-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 100%;
+}
+.european-portuguese-stress-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.28em;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.18em 0.62em;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mint) 34%, transparent);
+  background: color-mix(in srgb, var(--mint) 14%, transparent);
+  color: color-mix(in srgb, var(--mint) 88%, white);
+  font-family: var(--font-body);
+  font-size: clamp(0.64rem, 2.15vw, 0.76rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+.european-portuguese-stress-chip-word {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.european-portuguese-stress-chip-sep {
+  opacity: 0.55;
+  font-weight: 500;
+}
+.european-portuguese-stress-chip-kind {
+  font-weight: 600;
+  opacity: 0.92;
+}
+.european-portuguese-stress-chip--oxitona,
+.european-portuguese-stress-chip--proparoxitona {
+  border-color: color-mix(in srgb, var(--mint) 48%, transparent);
+  background: color-mix(in srgb, var(--mint) 20%, transparent);
+}
+.european-portuguese-honesty {
+  font-family: var(--font-body);
+  font-size: clamp(0.6rem, 1.9vw, 0.7rem);
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+
 /* RTL text surfaces (Arabic panes, mic labels, Solo input). Logical alignment keeps LTR untouched. */
 [dir='rtl'] {
   unicode-bidi: isolate;

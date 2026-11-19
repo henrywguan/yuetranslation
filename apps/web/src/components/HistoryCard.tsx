@@ -24,6 +24,10 @@ import { ItText } from './ItText'
 import { DeText } from './DeText'
 import { NlText } from './NlText'
 import { ArText } from './ArText'
+import { TaText } from './TaText'
+import { PtptText } from './PtptText'
+import { TrText } from './TrText'
+import { BnText } from './BnText'
 import { BiText } from './BiText'
 import { StarPhraseButton } from './StarPhraseButton'
 import type { ConversationTurn, Lang } from '../lib/types'
@@ -55,6 +59,10 @@ export function langShort(lang: Lang): string {
   if (lang === 'nl') return 'Nl'
   if (lang === 'ar') return 'Ar'
   if (lang === 'arsa') return 'Ar'
+  if (lang === 'ta') return 'Ta'
+  if (lang === 'ptpt') return 'Pt'
+  if (lang === 'tr') return 'Tr'
+  if (lang === 'bn') return 'Bn'
   if (lang === 'ceb') return 'Cb'
   if (lang === 'ilo') return 'Il'
   if (lang === 'bcl') return 'Bc'
@@ -213,6 +221,18 @@ export function LangLine({
   if (lang === 'arsa') {
     return <ArText variant="arsa" text={text} className="history-card-line" onActivate={onBreakdown} />
   }
+  if (lang === 'ta') {
+    return <TaText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'ptpt') {
+    return <PtptText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'tr') {
+    return <TrText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'bn') {
+    return <BnText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
   if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') {
     if (onBreakdown) {
       return (
@@ -274,6 +294,10 @@ function langLabel(lang: Lang) {
   if (lang === 'nl') return <BiText copy={ui.dirDutch} size="sm" />
   if (lang === 'ar') return <BiText copy={ui.dirEgyptianArabic} size="sm" />
   if (lang === 'arsa') return <BiText copy={ui.dirModernStandardArabic} size="sm" />
+  if (lang === 'ta') return <BiText copy={ui.dirTamil} size="sm" />
+  if (lang === 'ptpt') return <BiText copy={ui.dirEuropeanPortuguese} size="sm" />
+  if (lang === 'tr') return <BiText copy={ui.dirTurkish} size="sm" />
+  if (lang === 'bn') return <BiText copy={ui.dirBengali} size="sm" />
   if (lang === 'ceb') return <BiText copy={ui.dirCebuano} size="sm" />
   if (lang === 'ilo') return <BiText copy={ui.dirIlocano} size="sm" />
   if (lang === 'bcl') return <BiText copy={ui.dirBikol} size="sm" />
@@ -545,6 +569,14 @@ export function HistoryCard({
                       <NlText text={alt} className="history-card-line" onActivate={onBreakdown} />
                     ) : turn.to === 'ar' || turn.to === 'arsa' ? (
                       <ArText variant={turn.to} text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'ta' ? (
+                      <TaText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'ptpt' ? (
+                      <PtptText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'tr' ? (
+                      <TrText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'bn' ? (
+                      <BnText text={alt} className="history-card-line" onActivate={onBreakdown} />
                     ) : (
                       alt
                     )}

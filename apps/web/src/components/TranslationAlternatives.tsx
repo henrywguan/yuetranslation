@@ -23,6 +23,10 @@ import { ItText } from './ItText'
 import { DeText } from './DeText'
 import { NlText } from './NlText'
 import { ArText } from './ArText'
+import { TaText } from './TaText'
+import { PtptText } from './PtptText'
+import { TrText } from './TrText'
+import { BnText } from './BnText'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
 import { BiText } from './BiText'
@@ -233,6 +237,30 @@ export function TranslationAlternatives({
               ) : lang === 'ar' || lang === 'arsa' ? (
                 <ArText
                   variant={lang}
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'ta' ? (
+                <TaText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'ptpt' ? (
+                <PtptText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'tr' ? (
+                <TrText
+                  text={alt}
+                  className="result-text"
+                  onActivate={onSelect}
+                />
+              ) : lang === 'bn' ? (
+                <BnText
                   text={alt}
                   className="result-text"
                   onActivate={onSelect}

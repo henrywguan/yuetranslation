@@ -60,6 +60,10 @@ import {
   PREVIEW_NL,
   PREVIEW_AR,
   PREVIEW_ARSA,
+  PREVIEW_TA,
+  PREVIEW_PTPT,
+  PREVIEW_TR,
+  PREVIEW_BN,
   PREVIEW_WUU,
   PREVIEW_SICHUAN,
   PREVIEW_YUE,
@@ -86,6 +90,10 @@ import {
   readLocalNlVoice,
   readLocalArVoice,
   readLocalArsaVoice,
+  readLocalTaVoice,
+  readLocalPtptVoice,
+  readLocalTrVoice,
+  readLocalBnVoice,
   readLocalWuuVoice,
   readLocalSichuanVoice,
   readLocalYueVoice,
@@ -112,6 +120,10 @@ import {
   resolveNlVoice,
   resolveArVoice,
   resolveArsaVoice,
+  resolveTaVoice,
+  resolvePtptVoice,
+  resolveTrVoice,
+  resolveBnVoice,
   resolveYueVoice,
   writeLocalCmnVoice,
   writeLocalEnVoice,
@@ -136,6 +148,10 @@ import {
   writeLocalNlVoice,
   writeLocalArVoice,
   writeLocalArsaVoice,
+  writeLocalTaVoice,
+  writeLocalPtptVoice,
+  writeLocalTrVoice,
+  writeLocalBnVoice,
   writeLocalWuuVoice,
   writeLocalSichuanVoice,
   writeLocalYueVoice,
@@ -162,6 +178,10 @@ import {
   type NlVoiceId,
   type ArVoiceId,
   type ArsaVoiceId,
+  type TaVoiceId,
+  type PtptVoiceId,
+  type TrVoiceId,
+  type BnVoiceId,
   type WuuVoiceId,
   type SichuanVoiceId,
   type YueVoiceId,
@@ -225,11 +245,15 @@ export function PlanChip() {
   const [nlVoice, setNlVoice] = useState<NlVoiceId>(() => readLocalNlVoice())
   const [arVoice, setArVoice] = useState<ArVoiceId>(() => readLocalArVoice())
   const [arsaVoice, setArsaVoice] = useState<ArsaVoiceId>(() => readLocalArsaVoice())
+  const [taVoice, setTaVoice] = useState<TaVoiceId>(() => readLocalTaVoice())
+  const [ptptVoice, setPtptVoice] = useState<PtptVoiceId>(() => readLocalPtptVoice())
+  const [trVoice, setTrVoice] = useState<TrVoiceId>(() => readLocalTrVoice())
+  const [bnVoice, setBnVoice] = useState<BnVoiceId>(() => readLocalBnVoice())
   const [wuuVoice, setWuuVoice] = useState<WuuVoiceId>(() => readLocalWuuVoice())
   const [sichuanVoice, setSichuanVoice] = useState<SichuanVoiceId>(() => readLocalSichuanVoice())
   const [voiceBusy, setVoiceBusy] = useState(false)
   const [previewBusy, setPreviewBusy] = useState<
-    'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'wuu' | 'sichuan' | null
+    'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'wuu' | 'sichuan' | null
   >(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteBusy, setInviteBusy] = useState(false)
@@ -379,6 +403,26 @@ export function PlanChip() {
       setArsaVoice(v)
       writeLocalArsaVoice(v)
     }
+    if (prefs?.ttsVoiceTa) {
+      const v = resolveTaVoice(prefs.ttsVoiceTa)
+      setTaVoice(v)
+      writeLocalTaVoice(v)
+    }
+    if (prefs?.ttsVoicePtpt) {
+      const v = resolvePtptVoice(prefs.ttsVoicePtpt)
+      setPtptVoice(v)
+      writeLocalPtptVoice(v)
+    }
+    if (prefs?.ttsVoiceTr) {
+      const v = resolveTrVoice(prefs.ttsVoiceTr)
+      setTrVoice(v)
+      writeLocalTrVoice(v)
+    }
+    if (prefs?.ttsVoiceBn) {
+      const v = resolveBnVoice(prefs.ttsVoiceBn)
+      setBnVoice(v)
+      writeLocalBnVoice(v)
+    }
     if (prefs?.username) {
       setUsername(prefs.username)
       setUsernameDraft(prefs.username)
@@ -410,6 +454,10 @@ export function PlanChip() {
     entitlement?.prefs?.ttsVoiceNl,
     entitlement?.prefs?.ttsVoiceAr,
     entitlement?.prefs?.ttsVoiceArsa,
+    entitlement?.prefs?.ttsVoiceTa,
+    entitlement?.prefs?.ttsVoicePtpt,
+    entitlement?.prefs?.ttsVoiceTr,
+    entitlement?.prefs?.ttsVoiceBn,
     entitlement?.prefs?.username,
     entitlement?.loggedIn,
   ])
@@ -559,6 +607,10 @@ export function PlanChip() {
     nl?: NlVoiceId
     ar?: ArVoiceId
     arsa?: ArsaVoiceId
+    ta?: TaVoiceId
+    ptpt?: PtptVoiceId
+    tr?: TrVoiceId
+    bn?: BnVoiceId
     wuu?: WuuVoiceId
     sichuan?: SichuanVoiceId
   }) => {
@@ -575,6 +627,10 @@ export function PlanChip() {
     const nl = next.nl ?? nlVoice
     const ar = next.ar ?? arVoice
     const arsa = next.arsa ?? arsaVoice
+    const ta = next.ta ?? taVoice
+    const ptpt = next.ptpt ?? ptptVoice
+    const tr = next.tr ?? trVoice
+    const bn = next.bn ?? bnVoice
     const de = next.de ?? deVoice
     const it = next.it ?? itVoice
     const jv = next.jv ?? jvVoice
@@ -601,6 +657,10 @@ export function PlanChip() {
     writeLocalNlVoice(nl)
     writeLocalArVoice(ar)
     writeLocalArsaVoice(arsa)
+    writeLocalTaVoice(ta)
+    writeLocalPtptVoice(ptpt)
+    writeLocalTrVoice(tr)
+    writeLocalBnVoice(bn)
     writeLocalDeVoice(de)
     writeLocalItVoice(it)
     writeLocalJvVoice(jv)
@@ -627,6 +687,10 @@ export function PlanChip() {
     setNlVoice(nl)
     setArVoice(ar)
     setArsaVoice(arsa)
+    setTaVoice(ta)
+    setPtptVoice(ptpt)
+    setTrVoice(tr)
+    setBnVoice(bn)
     setDeVoice(de)
     setItVoice(it)
     setJvVoice(jv)
@@ -657,6 +721,10 @@ export function PlanChip() {
         ttsVoiceNl: nl,
         ttsVoiceAr: ar,
         ttsVoiceArsa: arsa,
+        ttsVoiceTa: ta,
+        ttsVoicePtpt: ptpt,
+        ttsVoiceTr: tr,
+        ttsVoiceBn: bn,
         ttsVoiceDe: de,
         ttsVoiceIt: it,
         ttsVoiceJv: jv,
@@ -688,7 +756,7 @@ export function PlanChip() {
   }
 
   const onPreview = async (
-    kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'wuu' | 'sichuan',
+    kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'wuu' | 'sichuan',
   ) => {
     unlockTtsPlayback()
     setPreviewBusy(kind)
@@ -717,6 +785,10 @@ export function PlanChip() {
       else if (kind === 'nl') await speakText(PREVIEW_NL, 'nl', nlVoice)
       else if (kind === 'ar') await speakText(PREVIEW_AR, 'ar', arVoice)
       else if (kind === 'arsa') await speakText(PREVIEW_ARSA, 'arsa', arsaVoice)
+      else if (kind === 'ta') await speakText(PREVIEW_TA, 'ta', taVoice)
+      else if (kind === 'ptpt') await speakText(PREVIEW_PTPT, 'ptpt', ptptVoice)
+      else if (kind === 'tr') await speakText(PREVIEW_TR, 'tr', trVoice)
+      else if (kind === 'bn') await speakText(PREVIEW_BN, 'bn', bnVoice)
       else if (kind === 'sichuan') await speakText(PREVIEW_SICHUAN, 'sichuan', sichuanVoice)
       else await speakText(PREVIEW_WUU, 'wuu', wuuVoice)
     } catch (err) {
@@ -778,6 +850,10 @@ export function PlanChip() {
               ttsVoiceNl: entitlement.prefs?.ttsVoiceNl || nlVoice,
               ttsVoiceAr: entitlement.prefs?.ttsVoiceAr || arVoice,
               ttsVoiceArsa: entitlement.prefs?.ttsVoiceArsa || arsaVoice,
+              ttsVoiceTa: entitlement.prefs?.ttsVoiceTa || taVoice,
+              ttsVoicePtpt: entitlement.prefs?.ttsVoicePtpt || ptptVoice,
+              ttsVoiceTr: entitlement.prefs?.ttsVoiceTr || trVoice,
+              ttsVoiceBn: entitlement.prefs?.ttsVoiceBn || bnVoice,
               ttsVoiceDe: entitlement.prefs?.ttsVoiceDe || deVoice,
               ttsVoiceIt: entitlement.prefs?.ttsVoiceIt || itVoice,
               ttsVoiceJv: entitlement.prefs?.ttsVoiceJv || jvVoice,
@@ -1197,6 +1273,10 @@ export function PlanChip() {
           nlVoice={nlVoice}
           arVoice={arVoice}
           arsaVoice={arsaVoice}
+          taVoice={taVoice}
+          ptptVoice={ptptVoice}
+          trVoice={trVoice}
+          bnVoice={bnVoice}
           wuuVoice={wuuVoice}
           sichuanVoice={sichuanVoice}
           voiceBusy={voiceBusy}

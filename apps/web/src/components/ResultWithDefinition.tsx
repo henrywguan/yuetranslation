@@ -22,6 +22,10 @@ import { ItText } from './ItText'
 import { DeText } from './DeText'
 import { NlText } from './NlText'
 import { ArText } from './ArText'
+import { TaText } from './TaText'
+import { PtptText } from './PtptText'
+import { TrText } from './TrText'
+import { BnText } from './BnText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -196,6 +200,30 @@ export function ResultWithDefinition({
             ) : chineseLang === 'ar' || chineseLang === 'arsa' ? (
               <ArText
                 variant={chineseLang}
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'ta' ? (
+              <TaText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'ptpt' ? (
+              <PtptText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'tr' ? (
+              <TrText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'bn' ? (
+              <BnText
                 text={trimmed}
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}

@@ -37,6 +37,10 @@ const SAMPLES = [
   ['nl', 'nl-NL-FennaNeural', 'nl-NL', 'Hallo — dit is je Nederlandse stem.'],
   ['ar', 'ar-EG-SalmaNeural', 'ar-EG', 'أهلاً — ده صوتك بالعامية المصرية.'],
   ['arsa', 'ar-SA-ZariyahNeural', 'ar-SA', 'مرحباً — هذا صوتك باللغة العربية الفصحى.'],
+  ['ta', 'ta-IN-PallaviNeural', 'ta-IN', 'வணக்கம் — இது உங்கள் தமிழ்க் குரல்.'],
+  ['ptpt', 'pt-PT-RaquelNeural', 'pt-PT', 'Olá — esta é a sua voz em português de Portugal.'],
+  ['tr', 'tr-TR-EmelNeural', 'tr-TR', 'Merhaba — bu sizin Türkçe sesiniz.'],
+  ['bn', 'bn-IN-TanishaaNeural', 'bn-IN', 'নমস্কার — এটি আপনার বাংলা কণ্ঠস্বর।'],
 ]
 
 function escapeXml(s) {

@@ -69,6 +69,10 @@ export type ProfileRow = {
   tts_voice_nl: string | null
   tts_voice_ar: string | null
   tts_voice_arsa: string | null
+  tts_voice_ta: string | null
+  tts_voice_ptpt: string | null
+  tts_voice_tr: string | null
+  tts_voice_bn: string | null
   /** Cross-device Auto-speak preference. */
   auto_speak: boolean
   /** Primary non-English language (Solo lower / Conversation partner / Cam / brand). */
@@ -114,6 +118,10 @@ function normalizeProfile(data: unknown): ProfileRow {
     tts_voice_nl?: string | null
     tts_voice_ar?: string | null
     tts_voice_arsa?: string | null
+    tts_voice_ta?: string | null
+    tts_voice_ptpt?: string | null
+    tts_voice_tr?: string | null
+    tts_voice_bn?: string | null
     auto_speak?: boolean | null
     primary_lang?: string | null
     username?: string | null
@@ -147,6 +155,10 @@ function normalizeProfile(data: unknown): ProfileRow {
     'nl',
     'ar',
     'arsa',
+    'ta',
+    'ptpt',
+    'tr',
+    'bn',
   ] as const
   const primary = (primaryLangs as readonly string[]).includes(row.primary_lang ?? '')
     ? (row.primary_lang as (typeof primaryLangs)[number])
@@ -183,6 +195,10 @@ function normalizeProfile(data: unknown): ProfileRow {
     tts_voice_nl: typeof row.tts_voice_nl === 'string' ? row.tts_voice_nl : null,
     tts_voice_ar: typeof row.tts_voice_ar === 'string' ? row.tts_voice_ar : null,
     tts_voice_arsa: typeof row.tts_voice_arsa === 'string' ? row.tts_voice_arsa : null,
+    tts_voice_ta: typeof row.tts_voice_ta === 'string' ? row.tts_voice_ta : null,
+    tts_voice_ptpt: typeof row.tts_voice_ptpt === 'string' ? row.tts_voice_ptpt : null,
+    tts_voice_tr: typeof row.tts_voice_tr === 'string' ? row.tts_voice_tr : null,
+    tts_voice_bn: typeof row.tts_voice_bn === 'string' ? row.tts_voice_bn : null,
     auto_speak: Boolean(row.auto_speak),
     primary_lang: primary,
   }
@@ -230,6 +246,10 @@ export async function upsertProfilePlan(
       | 'tts_voice_nl'
       | 'tts_voice_ar'
       | 'tts_voice_arsa'
+      | 'tts_voice_ta'
+      | 'tts_voice_ptpt'
+      | 'tts_voice_tr'
+      | 'tts_voice_bn'
       | 'auto_speak'
       | 'primary_lang'
       | 'username'

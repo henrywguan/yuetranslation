@@ -26,7 +26,7 @@ const Body = z.object({
   boxes: z.array(BoxSchema).max(64).optional(),
   /** Preferred output language. Auto flips per-region from script when omitted. */
   target: z
-    .enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ceb', 'ilo', 'bcl'])
+    .enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ko', 'ja', 'id', 'ms', 'pt', 'fr', 'hi', 'km', 'my', 'jv', 'it', 'de', 'nl', 'ar', 'arsa', 'ta', 'ptpt', 'tr', 'bn', 'ceb', 'ilo', 'bcl'])
     .optional(),
   /** When true, skip translation and only return OCR regions. */
   ocrOnly: z.boolean().optional().default(false),
@@ -140,6 +140,18 @@ function pickTarget(
   }
   if (preferred === 'arsa') {
     return looksChinese ? { from: 'yue', to: 'arsa' } : { from: 'en', to: 'arsa' }
+  }
+  if (preferred === 'ta') {
+    return looksChinese ? { from: 'yue', to: 'ta' } : { from: 'en', to: 'ta' }
+  }
+  if (preferred === 'ptpt') {
+    return looksChinese ? { from: 'yue', to: 'ptpt' } : { from: 'en', to: 'ptpt' }
+  }
+  if (preferred === 'tr') {
+    return looksChinese ? { from: 'yue', to: 'tr' } : { from: 'en', to: 'tr' }
+  }
+  if (preferred === 'bn') {
+    return looksChinese ? { from: 'yue', to: 'bn' } : { from: 'en', to: 'bn' }
   }
   if (preferred === 'ceb') {
     return looksChinese ? { from: 'yue', to: 'ceb' } : { from: 'en', to: 'ceb' }

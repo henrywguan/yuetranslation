@@ -1,5 +1,5 @@
 /** Auto-seeded primary-language UI glosses (replaces Jyutping in BiText). */
-// TODO(primary-gloss): seed columns for th/lo/ko/ja/id/ms/pt/fr/hi/km/my/jv/it/de/nl/ar/arsa
+// TODO(primary-gloss): seed columns for th/lo/ko/ja/id/ms/pt/fr/hi/km/my/jv/it/de/nl/ar/arsa/ta/ptpt/tr/bn
 // (and fill any remaining eses gaps) — until then BiText falls back to English-only
 // chrome for those primaries instead of Cantonese 漢字.
 export type PrimaryUiGlossRow = {
@@ -27,6 +27,10 @@ export type PrimaryUiGlossRow = {
   nl?: string
   ar?: string
   arsa?: string
+  ta?: string
+  ptpt?: string
+  tr?: string
+  bn?: string
 }
 
 export const PRIMARY_UI_GLOSS: Record<string, PrimaryUiGlossRow> = {

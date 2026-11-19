@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'ceb' | 'ilo' | 'bcl'
 
 export type EditableBox = {
   id: string
@@ -21,25 +21,91 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ceb' | 'ilo' | 'bcl'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'ceb' | 'ilo' | 'bcl'
 
-/** Map API/legacy region langs (`zh`) onto CameraLang. */
+/** Product CameraLang codes — identity map for server `to` / `from` values. */
+const CAMERA_LANG_SET = new Set<string>([
+  'en',
+  'yue',
+  'cmn',
+  'wuu',
+  'sichuan',
+  'tl',
+  'es',
+  'eses',
+  'vi',
+  'th',
+  'lo',
+  'ko',
+  'ja',
+  'id',
+  'ms',
+  'pt',
+  'fr',
+  'hi',
+  'km',
+  'my',
+  'jv',
+  'it',
+  'de',
+  'nl',
+  'ar',
+  'arsa',
+  'ta',
+  'ptpt',
+  'tr',
+  'bn',
+  'ceb',
+  'ilo',
+  'bcl',
+])
+
+/**
+ * Map API/legacy region langs onto CameraLang.
+ * Locale aliases (es-ES, pt-PT, fil-PH, …) resolve before bare tags.
+ * Unknown / legacy `zh` → Cantonese — never silently remaps a known CameraLang.
+ */
 export function normalizeRegionLang(lang: string | undefined): CameraLang {
-  if (lang === 'cmn') return 'cmn'
-  if (lang === 'wuu') return 'wuu'
-  if (lang === 'sichuan') return 'sichuan'
-  if (lang === 'en') return 'en'
-  if (lang === 'ceb') return 'ceb'
-  if (lang === 'ilo') return 'ilo'
-  if (lang === 'bcl') return 'bcl'
-  if (lang === 'tl' || lang === 'fil') return 'tl'
-  if (lang === 'eses' || lang === 'es-ES' || lang === 'es-es') return 'eses'
-  if (lang === 'es' || lang === 'es-MX' || lang === 'es-mx') return 'es'
-  if (lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn') return 'vi'
-  if (lang === 'th' || lang === 'th-TH' || lang === 'th-th') return 'th'
-  if (lang === 'lo' || lang === 'lo-LA' || lang === 'lo-la') return 'lo'
-  if (lang === 'ko' || lang === 'ko-KR' || lang === 'ko-kr') return 'ko'
-  // Legacy `zh` and explicit yue → Cantonese
+  if (!lang) return 'yue'
+  const raw = lang.trim()
+  if (!raw) return 'yue'
+  if (CAMERA_LANG_SET.has(raw)) return raw as CameraLang
+
+  const l = raw.toLowerCase()
+  // Variety peers — check specific locales before bare tags.
+  if (l === 'es-es' || l.startsWith('es-es')) return 'eses'
+  if (l === 'pt-pt' || l.startsWith('pt-pt')) return 'ptpt'
+  if (l === 'es-mx' || l.startsWith('es-mx') || l === 'es') return 'es'
+  if (l === 'pt-br' || l.startsWith('pt-br') || l === 'pt') return 'pt'
+  if (l.startsWith('fil') || l === 'tl') return 'tl'
+  if (l.startsWith('ar-eg') || l === 'ar') return 'ar'
+  if (l.startsWith('ar-sa') || l.startsWith('ar-')) return 'arsa'
+  if (l.startsWith('vi')) return 'vi'
+  if (l.startsWith('th')) return 'th'
+  if (l.startsWith('lo')) return 'lo'
+  if (l.startsWith('ko')) return 'ko'
+  if (l.startsWith('ja')) return 'ja'
+  if (l.startsWith('id')) return 'id'
+  if (l.startsWith('ms')) return 'ms'
+  if (l.startsWith('fr')) return 'fr'
+  if (l.startsWith('hi')) return 'hi'
+  if (l.startsWith('km')) return 'km'
+  if (l.startsWith('my')) return 'my'
+  if (l.startsWith('jv')) return 'jv'
+  if (l.startsWith('it')) return 'it'
+  if (l.startsWith('de')) return 'de'
+  if (l.startsWith('nl')) return 'nl'
+  if (l.startsWith('ta')) return 'ta'
+  if (l.startsWith('tr')) return 'tr'
+  if (l.startsWith('bn')) return 'bn'
+  if (l.startsWith('en')) return 'en'
+  if (l.includes('sichuan')) return 'sichuan'
+  if (l.startsWith('wuu')) return 'wuu'
+  if (l.startsWith('zh-cn') || l.includes('cmn') || l.includes('hans')) return 'cmn'
+  if (l.startsWith('ceb')) return 'ceb'
+  if (l.startsWith('ilo')) return 'ilo'
+  if (l.startsWith('bcl')) return 'bcl'
+  // Legacy `zh` / explicit yue / unknown → Cantonese
   return 'yue'
 }
 
@@ -100,6 +166,8 @@ const LATIN_DETAIL_CAM_LANGS = [
   'it',
   'de',
   'nl',
+  'ptpt',
+  'tr',
   'ceb',
   'ilo',
   'bcl',
@@ -111,7 +179,7 @@ function isLatinDetailCam(lang: CameraLang): lang is LatinDetailCamLang {
 }
 
 /** Own-script Cam targets (not Latin, not Han primary) — same detail dispatch shape. */
-const SCRIPT_DETAIL_CAM_LANGS = ['th', 'lo', 'ko', 'ja', 'hi', 'km', 'my', 'ar', 'arsa'] as const
+const SCRIPT_DETAIL_CAM_LANGS = ['th', 'lo', 'ko', 'ja', 'hi', 'km', 'my', 'ar', 'arsa', 'ta', 'bn'] as const
 type ScriptDetailCamLang = (typeof SCRIPT_DETAIL_CAM_LANGS)[number]
 
 function isScriptDetailCam(lang: CameraLang): lang is ScriptDetailCamLang {
@@ -203,6 +271,10 @@ export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'nl') return 'nl'
   if (box.to === 'ar') return 'ar'
   if (box.to === 'arsa') return 'arsa'
+  if (box.to === 'ta') return 'ta'
+  if (box.to === 'ptpt') return 'ptpt'
+  if (box.to === 'tr') return 'tr'
+  if (box.to === 'bn') return 'bn'
   if (box.to === 'ceb') return 'ceb'
   if (box.to === 'ilo') return 'ilo'
   if (box.to === 'bcl') return 'bcl'
