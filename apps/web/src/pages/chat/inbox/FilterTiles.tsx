@@ -1,7 +1,7 @@
 import type { InboxFilter } from '../../../lib/chatInbox'
 
 const TILES: Array<{ id: InboxFilter; label: string }> = [
-  { id: 'all', label: 'All Agents' },
+  { id: 'all', label: 'All' },
   { id: 'needs_attention', label: 'Needs Attention' },
   { id: 'working', label: 'Working' },
   { id: 'in_review', label: 'In Review' },

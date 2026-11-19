@@ -1,23 +1,18 @@
 import { useEffect, useState } from 'react'
 import type { ChatInboxProject, ThreadAgentView } from '../../../lib/chatInbox'
+import { ChatProjectMenu } from './ChatProjectMenu'
 import { ArchiveIcon, DeleteIcon } from './InboxIcons'
-
-const STATUS_LABEL: Record<string, string> = {
-  idle: 'Idle',
-  queued: 'Queued',
-  working: 'Working',
-  needs_attention: 'Attention',
-  in_review: 'Review',
-  done: 'Done',
-}
+import { StatusChip } from './StatusChip'
 
 export function ProjectList({
   projects,
+  allProjects,
   activeProjectId,
   expandedProjectIds,
   projectChildren,
   activeThreadId,
   open,
+  dimEmpty,
   createDisabled,
   onToggle,
   onSelect,
@@ -25,17 +20,23 @@ export function ProjectList({
   onOpenView,
   onArchiveThread,
   onDeleteThread,
+  onAddChatToProject,
+  onRemoveChatFromProject,
   onCreate,
   onRename,
   onDelete,
 }: {
   projects: ChatInboxProject[]
+  /** Full project list for Add-to-Project menus (not just visible/filtered). */
+  allProjects: ChatInboxProject[]
   activeProjectId: string | null
   expandedProjectIds: ReadonlySet<string>
   /** Filtered nested agent/thread rows keyed by project id. */
   projectChildren: Map<string, ThreadAgentView[]>
   activeThreadId?: string | null
   open: boolean
+  /** When a status/search filter is active, dim folders with no matching children. */
+  dimEmpty?: boolean
   createDisabled?: boolean
   onToggle: () => void
   onSelect: (projectId: string | null) => void
@@ -43,6 +44,8 @@ export function ProjectList({
   onOpenView: (view: ThreadAgentView) => void
   onArchiveThread?: (threadId: string) => void
   onDeleteThread?: (threadId: string) => void
+  onAddChatToProject?: (threadId: string, projectId: string) => void
+  onRemoveChatFromProject?: (threadId: string) => void
   onCreate: () => void
   onRename: (projectId: string, title: string) => void
   onDelete: (projectId: string) => void
@@ -90,8 +93,12 @@ export function ProjectList({
               const editing = editingId === p.id
               const expanded = expandedProjectIds.has(p.id)
               const children = projectChildren.get(p.id) || []
+              const dimmed = Boolean(dimEmpty && children.length === 0 && !active)
               return (
-                <li key={p.id} className={`inbox-project-node${active ? ' is-active' : ''}`}>
+                <li
+                  key={p.id}
+                  className={`inbox-project-node${active ? ' is-active' : ''}${dimmed ? ' is-dimmed' : ''}`}
+                >
                   <div className={`inbox-list-item inbox-project-row${active ? ' is-active' : ''}`}>
                     <button
                       type="button"
@@ -166,10 +173,14 @@ export function ProjectList({
                           const threadActive = Boolean(v.threadId && v.threadId === activeThreadId)
                           const canArchive = Boolean(v.threadId && onArchiveThread)
                           const canDelete = Boolean(v.threadId && onDeleteThread)
+                          const canMoveChat =
+                            Boolean(v.threadId) &&
+                            v.role === 'thread' &&
+                            Boolean(onAddChatToProject || onRemoveChatFromProject)
                           return (
                             <li
                               key={v.id}
-                              className={`inbox-list-item inbox-agent-row${threadActive ? ' is-active' : ''}`}
+                              className={`inbox-list-item inbox-agent-row${threadActive ? ' is-active' : ''}${canMoveChat ? ' has-chat-menu' : ''}`}
                             >
                               <button
                                 type="button"
@@ -178,13 +189,28 @@ export function ProjectList({
                                 title={v.role === 'overseer' ? 'Overseer' : v.role}
                               >
                                 {v.role === 'overseer' ? (
-                                  <span className="inbox-agent-role">Overseer · </span>
+                                  <span className="inbox-agent-role inbox-agent-role--overseer">
+                                    Overseer ·{' '}
+                                  </span>
+                                ) : v.role === 'worker' ? (
+                                  <span className="inbox-agent-role">Worker · </span>
                                 ) : null}
                                 {v.title}
                               </button>
-                              <span className={`inbox-agent-status is-${v.status}`}>
-                                {STATUS_LABEL[v.status] || v.status}
-                              </span>
+                              <StatusChip status={v.status} />
+                              {canMoveChat && v.threadId ? (
+                                <ChatProjectMenu
+                                  projects={allProjects}
+                                  currentProjectId={v.projectId}
+                                  canRemove
+                                  onAddToProject={(projectId) =>
+                                    onAddChatToProject?.(v.threadId, projectId)
+                                  }
+                                  onRemoveFromProject={() =>
+                                    onRemoveChatFromProject?.(v.threadId)
+                                  }
+                                />
+                              ) : null}
                               {canArchive ? (
                                 <button
                                   type="button"
@@ -212,9 +238,9 @@ export function ProjectList({
                         })}
                       </ul>
                     ) : (
-                      <p className="inbox-empty inbox-project-children-empty">
-                        No matching agents in this project.
-                      </p>
+                      <div className="inbox-empty inbox-empty--block inbox-project-children-empty">
+                        <p>No matching agents in this project.</p>
+                      </div>
                     )
                   ) : null}
                 </li>
@@ -222,7 +248,12 @@ export function ProjectList({
             })}
           </ul>
         ) : (
-          <p className="inbox-empty">Create a Project to open an Overseer that orchestrates workers.</p>
+          <div className="inbox-empty inbox-empty--block">
+            <p>No projects yet — create one so Overseer can nest workers here.</p>
+            <button type="button" className="inbox-empty-cta" onClick={onCreate}>
+              New project
+            </button>
+          </div>
         )
       ) : null}
     </section>

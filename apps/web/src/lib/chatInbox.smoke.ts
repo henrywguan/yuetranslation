@@ -14,8 +14,11 @@ import {
   createWorker,
   createWorkspace,
   deleteProject,
+  detachThreadFromProject,
   emptyInboxState,
   filterAgentViews,
+  isIdleStatus,
+  linkChatToProject,
   looksLikeDeferredOrchestration,
   matchesSearch,
   normalizeInboxState,
@@ -23,6 +26,7 @@ import {
   projectNestedViews,
   renameProject,
   setProjectMemory,
+  statusChipLabel,
   ungroupedAgentViews,
 } from './chatInbox'
 
@@ -45,6 +49,49 @@ assert.deepEqual(
   linked.projects.find((p) => p.id === project.id)?.threadIds,
   ['thread-1'],
 )
+
+const linkedChat = linkChatToProject(
+  {
+    ...withProj,
+    agents: [
+      ...withProj.agents,
+      {
+        id: 'agent_chat',
+        projectId: null,
+        title: 'Loose chat agent',
+        status: 'idle',
+        role: 'thread',
+        threadId: 'thread-loose',
+        updatedAt: Date.now(),
+      },
+    ],
+  },
+  project.id,
+  'thread-loose',
+)
+assert.ok(linkedChat.projects[0]?.threadIds.includes('thread-loose'))
+assert.equal(
+  linkedChat.agents.find((a) => a.id === 'agent_chat')?.projectId,
+  project.id,
+  'linkChatToProject moves thread-role agents under the Project',
+)
+const unlinked = detachThreadFromProject(linkedChat, 'thread-loose')
+assert.ok(!unlinked.projects[0]?.threadIds.includes('thread-loose'))
+assert.equal(
+  unlinked.agents.find((a) => a.id === 'agent_chat')?.projectId,
+  null,
+  'detachThreadFromProject clears thread-role projectId',
+)
+assert.equal(
+  unlinked.agents.find((a) => a.id === overseer.id)?.projectId,
+  project.id,
+  'detach does not rehome Overseer',
+)
+
+assert.equal(statusChipLabel('needs_attention'), 'You')
+assert.equal(statusChipLabel('working'), 'Work')
+assert.equal(isIdleStatus('idle'), true)
+assert.equal(isIdleStatus('working'), false)
 
 const renamed = renameProject(linked, project.id, 'Harbor Quest')
 assert.equal(renamed.projects[0]?.title, 'Harbor Quest')
@@ -150,7 +197,7 @@ assert.doesNotMatch(shell, /Spawn worker/, 'no manual spawn worker button')
 assert.doesNotMatch(shell, /ProjectDraftPanel/, 'no draft new-project panel (auto-orchestrate)')
 assert.match(shell, /createAndFocusProject|Overseer chat only/, 'New Project opens Overseer')
 assert.match(shell, /createChatSandbox/, 'Inbox creates internal sandboxes via API')
-assert.match(shell, /All Agents|needs_attention|in_review/, 'tile filter ids used')
+assert.match(shell, /needs_attention|in_review/, 'tile filter ids used')
 assert.match(shell, /inboxSecondaryDefaultOpen|max-width: 899px/, 'narrow/short drawers collapse secondary')
 assert.match(shell, /\+ New chat/, 'single primary New chat CTA')
 assert.match(
@@ -167,6 +214,11 @@ assert.doesNotMatch(
   'no flat AGENTS mega-list label',
 )
 assert.match(shell, /Chats/, 'ungrouped section labeled Chats')
+assert.match(shell, /StatusChip/, 'compact status chips')
+assert.match(shell, /ChatProjectMenu|Add to Project|unlinkThread/, 'Add/Remove chat ↔ Project menu')
+assert.match(shell, /inboxZero|inbox-empty--hero/, 'distinct empty Inbox state')
+assert.match(shell, /No ungrouped chats|New chat/, 'distinct empty Chats CTA')
+assert.match(shell, /dimEmpty|filterActive/, 'filter tiles dim empty project folders')
 
 const archiveList = readFileSync(join(root, 'pages/chat/inbox/ArchiveList.tsx'), 'utf8')
 assert.match(archiveList, /Restore/, 'archive restore control')
@@ -178,6 +230,11 @@ assert.match(projectList, /onDoubleClick/, 'double-click renames project')
 assert.match(projectList, /inbox-project-children|projectChildren/, 'agents nest under project folders')
 assert.match(projectList, /onToggleExpand|expandedProjectIds/, 'per-project expand chevron')
 assert.match(projectList, /onOpenView/, 'nested rows open Overseer/workers/chats')
+assert.match(projectList, /StatusChip/, 'nested rows use compact status chips')
+assert.match(projectList, /ChatProjectMenu|onAddChatToProject|onRemoveChatFromProject/, 'project nest Add/Remove menu')
+assert.match(projectList, /New project|inbox-empty-cta/, 'empty Projects CTA')
+assert.match(projectList, /is-dimmed|dimEmpty/, 'dim empty folders under filter')
+assert.match(projectList, /inbox-agent-role--overseer/, 'Overseer badge distinct from workers')
 
 const workspaceList = readFileSync(join(root, 'pages/chat/inbox/WorkspaceList.tsx'), 'utf8')
 assert.match(workspaceList, /inbox-ws-menu/, 'workspaces + opens create menu')
@@ -228,23 +285,38 @@ assert.match(
   /\.inbox-list-item\s*\{[^}]*flex-shrink:\s*0/,
   'list rows do not compress into neighbors',
 )
+assert.match(inboxCss, /\.inbox-agent-status-dot/, 'status chip colored dot')
+assert.match(inboxCss, /\.inbox-agent-status\.is-idle/, 'idle chip hide rule')
+assert.match(inboxCss, /\.inbox-empty--hero|\.inbox-empty-cta/, 'empty-state CTA styles')
+assert.match(inboxCss, /\.inbox-project-node\.is-dimmed/, 'dim empty filtered projects')
+assert.match(inboxCss, /\.inbox-chat-menu/, 'Add/Remove project menu styles')
 
 const panel = readFileSync(join(root, 'pages/chat/inbox/ProjectPanel.tsx'), 'utf8')
 assert.doesNotMatch(panel, /Spawn worker/, 'no manual spawn worker button')
 assert.doesNotMatch(panel, /onSpawnWorker/, 'no spawn callback prop')
-assert.match(panel, /Agents nest under this project|Overseer chat/, 'auto-orchestrate copy')
+assert.match(panel, /Memory only|Overseer/, 'auto-orchestrate memory-only panel copy')
 assert.doesNotMatch(panel, /workers\.map|role === 'worker'/, 'workers listed under project tree, not panel')
 assert.match(panel, /onRename|double-click to rename/, 'project panel supports rename')
 
 const hook = readFileSync(join(root, 'pages/chat/inbox/useChatInbox.ts'), 'utf8')
 assert.match(hook, /renameProjectTitle/, 'hook exposes renameProjectTitle')
 assert.match(hook, /renameProject\(/, 'hook commits renameProject')
+assert.match(hook, /unlinkThread|detachThreadFromProject|linkChatToProject/, 'hook Add/Remove Project APIs')
 
 const tiles = readFileSync(join(root, 'pages/chat/inbox/FilterTiles.tsx'), 'utf8')
-assert.match(tiles, /All Agents/)
+assert.match(tiles, /label: 'All'/)
+assert.doesNotMatch(tiles, /All Agents/, 'All tile no longer says Agents mega-list')
 assert.match(tiles, /Needs Attention/)
 assert.match(tiles, /Working/)
 assert.match(tiles, /In Review/)
+
+const statusChip = readFileSync(join(root, 'pages/chat/inbox/StatusChip.tsx'), 'utf8')
+assert.match(statusChip, /inbox-agent-status-dot/, 'StatusChip renders dot')
+assert.match(statusChip, /statusChipLabel/, 'StatusChip uses short labels')
+
+const chatMenu = readFileSync(join(root, 'pages/chat/inbox/ChatProjectMenu.tsx'), 'utf8')
+assert.match(chatMenu, /Add to /, 'menu Add to Project items')
+assert.match(chatMenu, /Remove from Project/, 'menu Remove from Project')
 
 const runtime = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtime, /inboxRole/, 'runtime forwards inbox role')

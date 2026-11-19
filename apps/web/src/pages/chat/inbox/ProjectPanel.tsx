@@ -126,7 +126,7 @@ export function ProjectPanel({
         )}
       </div>
       <p className="inbox-empty" style={{ paddingTop: 0 }}>
-        Agents nest under this project above. Describe work in the Overseer chat — it plans and creates
+        Memory only — agents nest in the project folder above. Chat the Overseer; it plans and creates
         workers.
       </p>
       <label className="inbox-memory">

@@ -13,12 +13,14 @@ import {
   projectNestedViews,
   ungroupedAgentViews,
   type ChatInboxAgent,
+  type ChatInboxProject,
   type ChatInboxWorkspaceKind,
   type InboxFilter,
   type ThreadAgentView,
 } from '../../../lib/chatInbox'
 import { useChatAuiSession } from '../aui/ChatAuiRuntime'
 import { ArchiveList } from './ArchiveList'
+import { ChatProjectMenu } from './ChatProjectMenu'
 import { useChatInboxContext } from './ChatInboxContext'
 import { FilterTiles } from './FilterTiles'
 import './Inbox.css'
@@ -27,16 +29,8 @@ import { GithubBind } from './GithubBind'
 import { LocalFolderBind } from './LocalFolderBind'
 import { ProjectList } from './ProjectList'
 import { ProjectPanel } from './ProjectPanel'
+import { StatusChip } from './StatusChip'
 import { WorkspaceList } from './WorkspaceList'
-
-const STATUS_LABEL: Record<string, string> = {
-  idle: 'Idle',
-  queued: 'Queued',
-  working: 'Working',
-  needs_attention: 'Attention',
-  in_review: 'Review',
-  done: 'Done',
-}
 
 /** Narrow phones + short desktop drawers start with Projects/Workspaces collapsed. */
 function inboxSecondaryDefaultOpen(): boolean {
@@ -66,6 +60,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     removeProject,
     renameProjectTitle,
     linkThread,
+    unlinkThread,
     addWorkspace,
     removeWorkspace,
     bindWorkspaceRef,
@@ -167,6 +162,16 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     if (overseer) openAgent(overseer)
   }
 
+  const addChatToProject = (threadId: string, projectId: string) => {
+    linkThread(projectId, threadId)
+    expandProject(projectId)
+    setProjectsOpen(true)
+  }
+
+  const removeChatFromProject = (threadId: string) => {
+    unlinkThread(threadId)
+  }
+
   const createWorkspaceKind = async (kind: ChatInboxWorkspaceKind) => {
     if (kind === 'internal') {
       if (sandboxBusy) return
@@ -245,13 +250,15 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     return map
   }, [filtered, state.projects])
 
+  const filterActive = filter !== 'all' || Boolean(query.trim())
+
   const visibleProjects = useMemo(() => {
-    if (filter === 'all' && !query.trim()) return state.projects
+    if (!filterActive) return state.projects
     return state.projects.filter((p) => {
       if (p.id === activeProjectId) return true
       return (projectChildren.get(p.id) || []).length > 0
     })
-  }, [activeProjectId, filter, projectChildren, query, state.projects])
+  }, [activeProjectId, filterActive, projectChildren, state.projects])
 
   const ungrouped = useMemo(() => ungroupedAgentViews(filtered), [filtered])
 
@@ -274,9 +281,15 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     [threads, ungrouped],
   )
 
+  const inboxZero =
+    !filterActive &&
+    state.projects.length === 0 &&
+    ungrouped.length === 0 &&
+    orphanUngroupedAgents.length === 0
+
   // Status filters auto-expand matching project folders (Cursor-like discoverability).
   useEffect(() => {
-    if (filter === 'all' && !query.trim()) return
+    if (!filterActive) return
     setExpandedProjectIds((prev) => {
       let changed = false
       const next = new Set(prev)
@@ -288,14 +301,25 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
       }
       return changed ? next : prev
     })
-  }, [filter, projectChildren, query, state.projects])
+  }, [filterActive, projectChildren, state.projects])
 
   const activeProject = activeProjectId
     ? state.projects.find((p) => p.id === activeProjectId) || null
     : null
 
   const chatsLabel =
-    filter === 'all' ? 'Chats' : STATUS_LABEL[filter] || 'Chats'
+    filter === 'all'
+      ? 'Chats'
+      : filter === 'needs_attention'
+        ? 'Attention'
+        : filter === 'in_review'
+          ? 'Review'
+          : 'Working'
+
+  const startUngroupedChat = () => {
+    startNewChat()
+    onNavigate?.()
+  }
 
   return (
     <div className="inbox-shell">
@@ -319,7 +343,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
         <input
           type="search"
           value={query}
-          placeholder="Search agents & chats"
+          placeholder="Search projects & chats"
           onChange={(e) => setQuery(e.target.value)}
         />
       </label>
@@ -327,14 +351,25 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
       <div className="inbox-scroll">
         <FilterTiles filter={filter} counts={counts} onChange={setFilter} />
 
+        {inboxZero ? (
+          <div className="inbox-empty inbox-empty--hero" role="status">
+            <p>Your Inbox is empty — start a Project so Overseer can nest agents, or open a loose chat.</p>
+            <button type="button" className="inbox-empty-cta" onClick={() => createAndFocusProject()}>
+              New project
+            </button>
+          </div>
+        ) : null}
+
         <div className="inbox-band">
           <ProjectList
             projects={visibleProjects}
+            allProjects={state.projects}
             activeProjectId={activeProjectId}
             expandedProjectIds={expandedProjectIds}
             projectChildren={projectChildren}
             activeThreadId={activeId}
             open={projectsOpen}
+            dimEmpty={filterActive}
             onToggle={toggleProjects}
             onSelect={(id) => {
               selectProject(id)
@@ -344,6 +379,8 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
             onOpenView={openView}
             onArchiveThread={(threadId) => archiveThread(threadId, true)}
             onDeleteThread={removeThread}
+            onAddChatToProject={addChatToProject}
+            onRemoveChatFromProject={removeChatFromProject}
             onCreate={() => {
               createAndFocusProject()
             }}
@@ -412,14 +449,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
           ) : null}
         </div>
 
-        <button
-          type="button"
-          className="inbox-new-chat"
-          onClick={() => {
-            startNewChat()
-            onNavigate?.()
-          }}
-        >
+        <button type="button" className="inbox-new-chat" onClick={startUngroupedChat}>
           + New chat
         </button>
 
@@ -431,18 +461,28 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
               {() => (
                 <InboxThreadItem
                   ungroupedByThreadId={ungroupedByThreadId}
+                  projects={state.projects}
                   onNavigate={onNavigate}
+                  onAddToProject={addChatToProject}
+                  onRemoveFromProject={removeChatFromProject}
                 />
               )}
             </ThreadListPrimitive.Items>
           </ThreadListPrimitive.Root>
 
           {ungrouped.length === 0 && orphanUngroupedAgents.length === 0 ? (
-            <p className="inbox-empty">
-              {filter === 'all'
-                ? 'No ungrouped chats — project agents nest under Projects above.'
-                : 'No ungrouped chats match this filter.'}
-            </p>
+            <div className="inbox-empty inbox-empty--block">
+              <p>
+                {filter === 'all'
+                  ? 'No ungrouped chats — project work nests under Projects.'
+                  : 'No ungrouped chats match this filter.'}
+              </p>
+              {filter === 'all' ? (
+                <button type="button" className="inbox-empty-cta" onClick={startUngroupedChat}>
+                  New chat
+                </button>
+              ) : null}
+            </div>
           ) : null}
 
           {orphanUngroupedAgents.length ? (
@@ -460,9 +500,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
                     >
                       {v.title}
                     </button>
-                    <span className={`inbox-agent-status is-${v.status}`}>
-                      {STATUS_LABEL[v.status] || v.status}
-                    </span>
+                    <StatusChip status={v.status} />
                   </li>
                 )
               })}
@@ -496,17 +534,23 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
 
 function InboxThreadItem({
   ungroupedByThreadId,
+  projects,
   onNavigate,
+  onAddToProject,
+  onRemoveFromProject,
 }: {
   ungroupedByThreadId: Map<string, ThreadAgentView>
+  projects: ChatInboxProject[]
   onNavigate?: () => void
+  onAddToProject: (threadId: string, projectId: string) => void
+  onRemoveFromProject: (threadId: string) => void
 }) {
   const threadId = useAuiState((s) => s.threadListItem.id)
   const view = ungroupedByThreadId.get(threadId)
   if (!view) return null
 
   return (
-    <ThreadListItemPrimitive.Root className="aui-thread-item inbox-agent-row">
+    <ThreadListItemPrimitive.Root className="aui-thread-item inbox-agent-row has-chat-menu">
       <ThreadListItemPrimitive.Trigger
         className="aui-thread-trigger"
         onClick={() => {
@@ -515,9 +559,14 @@ function InboxThreadItem({
       >
         <ThreadListItemPrimitive.Title />
       </ThreadListItemPrimitive.Trigger>
-      <span className={`inbox-agent-status is-${view.status}`}>
-        {STATUS_LABEL[view.status] || view.status}
-      </span>
+      <StatusChip status={view.status} />
+      <ChatProjectMenu
+        projects={projects}
+        currentProjectId={view.projectId}
+        canRemove={view.role === 'thread'}
+        onAddToProject={(projectId) => onAddToProject(view.threadId, projectId)}
+        onRemoveFromProject={() => onRemoveFromProject(view.threadId)}
+      />
       <ThreadListItemPrimitive.Archive
         className="aui-thread-archive"
         title="Archive"
