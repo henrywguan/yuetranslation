@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { ChatInboxProject } from '../../../lib/chatInbox'
 
 export function ProjectList({
@@ -8,6 +9,7 @@ export function ProjectList({
   onToggle,
   onSelect,
   onCreate,
+  onRename,
   onDelete,
 }: {
   projects: ChatInboxProject[]
@@ -17,8 +19,23 @@ export function ProjectList({
   onToggle: () => void
   onSelect: (projectId: string | null) => void
   onCreate: () => void
+  onRename: (projectId: string, title: string) => void
   onDelete: (projectId: string) => void
 }) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [draft, setDraft] = useState('')
+
+  useEffect(() => {
+    if (!editingId) return
+    const stillThere = projects.some((p) => p.id === editingId)
+    if (!stillThere) setEditingId(null)
+  }, [editingId, projects])
+
+  const commitRename = (projectId: string) => {
+    onRename(projectId, draft)
+    setEditingId(null)
+  }
+
   return (
     <section className="inbox-section" aria-label="Projects">
       <div className="inbox-section-head">
@@ -45,15 +62,47 @@ export function ProjectList({
           <ul className="inbox-list">
             {projects.map((p) => {
               const active = activeProjectId === p.id
+              const editing = editingId === p.id
               return (
                 <li key={p.id} className={`inbox-list-item${active ? ' is-active' : ''}`}>
-                  <button
-                    type="button"
-                    className="inbox-list-btn"
-                    onClick={() => onSelect(active ? null : p.id)}
-                  >
-                    {p.title}
-                  </button>
+                  {editing ? (
+                    <form
+                      className="inbox-list-rename"
+                      onSubmit={(e) => {
+                        e.preventDefault()
+                        commitRename(p.id)
+                      }}
+                    >
+                      <input
+                        value={draft}
+                        aria-label={`Rename ${p.title}`}
+                        autoFocus
+                        onChange={(e) => setDraft(e.target.value)}
+                        onBlur={() => commitRename(p.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            e.preventDefault()
+                            setEditingId(null)
+                          }
+                        }}
+                      />
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      className="inbox-list-btn"
+                      title="Click to open · double-click to rename"
+                      onClick={() => onSelect(active ? null : p.id)}
+                      onDoubleClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setDraft(p.title)
+                        setEditingId(p.id)
+                      }}
+                    >
+                      {p.title}
+                    </button>
+                  )}
                   <span className="inbox-list-meta" title="Threads in project">
                     {p.threadIds.length}
                   </span>
