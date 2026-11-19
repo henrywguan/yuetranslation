@@ -89,6 +89,18 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           </span>
         </div>
         <ChatAuiSidebar onNavigate={() => setSidebarOpen(false)} />
+        <div className="ds-chat-sidebar-foot">
+          <button
+            type="button"
+            className="ds-chat-sidebar-link"
+            onClick={() => {
+              setChatAuiEnabled(false)
+              window.location.reload()
+            }}
+          >
+            Classic chat UI
+          </button>
+        </div>
       </aside>
 
       {/* Top bar must live inside `.ds-chat-main` — `.ds-chat` is a row flex
@@ -136,18 +148,6 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           <PwaInstallButton />
         </header>
         <ChatAuiThread />
-        <div className="aui-shell-footer">
-          <button
-            type="button"
-            className="aui-classic-link"
-            onClick={() => {
-              setChatAuiEnabled(false)
-              window.location.reload()
-            }}
-          >
-            Classic chat UI
-          </button>
-        </div>
       </div>
       {showWorkspace ? (
         <ChatWorkspacePanel

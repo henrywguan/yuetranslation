@@ -48,6 +48,7 @@
   flex-direction: column;
   gap: 0.35rem;
   min-height: 0;
+  flex: 1 1 auto;
   overflow: auto;
 }
 
@@ -539,23 +540,6 @@
 
 .aui-scroll-bottom:disabled {
   display: none;
-}
-
-.aui-shell-footer {
-  display: flex;
-  justify-content: center;
-  padding: 0.25rem 1rem 0.5rem;
-}
-
-.aui-classic-link {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--ds-text-3);
-  font: inherit;
-  font-size: 0.75rem;
-  text-decoration: underline;
-  cursor: pointer;
 }
 
 .aui-edit-composer {
