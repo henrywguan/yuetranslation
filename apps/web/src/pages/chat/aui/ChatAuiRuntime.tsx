@@ -48,6 +48,12 @@ import {
   resolveActiveSandboxSessionId,
   type InboxAgentStatus,
 } from '../../../lib/chatInbox'
+import {
+  looksLikeDeferredSearchTurn,
+  looksLikeDeferredToolUse,
+  SEARCH_STALL_ERROR,
+  TOOL_STALL_ERROR,
+} from '../../../lib/chatSearchStall'
 import { StreamingDeepseekChatTts } from '../../../lib/chatDeepseekVoice'
 import { useChatInboxContextOptional } from '../inbox/ChatInboxContext'
 import {
@@ -796,6 +802,21 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             looksLikeDeferredOrchestration(assembled)
           ) {
             setError(ORCHESTRATION_STALL_ERROR)
+          } else {
+            const hadSearchChrome = Boolean(sources.length || searchSteps.length)
+            if (
+              searchOn &&
+              !hadSearchChrome &&
+              looksLikeDeferredSearchTurn(assembled, reasoning)
+            ) {
+              setError(SEARCH_STALL_ERROR)
+            } else if (
+              !hadSearchChrome &&
+              looksLikeDeferredToolUse(assembled) &&
+              !looksLikeDeferredSearchTurn(assembled, reasoning)
+            ) {
+              setError(TOOL_STALL_ERROR)
+            }
           }
           if (liveTts) {
             void liveTts.finish().catch(() => {

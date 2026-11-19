@@ -11,6 +11,11 @@ import {
 import { parseAnyChatImport, parseDeepseekSessionJson, parseChatMarkdown } from './chatDeepseekImport.js'
 import { emptyThread, type ChatThread } from './chatHistory.js'
 import { CHAT_DEFERRED_FEATURES } from './chatDeferred.js'
+import {
+  looksLikeDeferredSearch,
+  looksLikeDeferredSearchTurn,
+  SEARCH_STALL_ERROR,
+} from './chatSearchStall.js'
 
 const thread: ChatThread = {
   ...emptyThread(),
@@ -93,6 +98,28 @@ assert.match(chat, /branchFromMessage/, 'Branch fork wired')
 assert.match(chat, /cycleAlternate/, 'Alternate cycling wired')
 assert.match(chat, /parseAnyChatImport/, 'DeepSeek/markdown import wired')
 assert.match(chat, /continueReply:\s*Boolean/, 'Stream sends continue flag')
+assert.match(chat, /SEARCH_STALL_ERROR|looksLikeDeferredSearchTurn/, 'Chat surfaces deferred-search stalls')
+assert.match(chat, /TOOL_STALL_ERROR|looksLikeDeferredToolUse/, 'Chat surfaces deferred-tool stalls')
+
+const stall = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), './chatSearchStall.ts'),
+  'utf8',
+)
+assert.match(stall, /I'll look into|look into/, 'Client stall detector covers look-into phrasing')
+assert.match(stall, /SEARCH_STALL_ERROR/, 'Client exports search stall copy')
+assert.equal(
+  looksLikeDeferredSearch("I'll look into what 'GrokBot' refers to…"),
+  true,
+  'Henry GrokBot phrase flagged on client',
+)
+assert.equal(
+  looksLikeDeferredSearchTurn(
+    "I'll look into what 'GrokBot' refers to…",
+    'Let me search the web…',
+  ),
+  true,
+)
+assert.match(SEARCH_STALL_ERROR, /no web search ran/i)
 
 const harness = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '../../../api/src/deepseekChatHarness.ts'),

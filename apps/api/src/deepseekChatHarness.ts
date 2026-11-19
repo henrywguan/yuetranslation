@@ -52,8 +52,10 @@ export const DEEPSEEK_CHAT_WEB_TOOLS = [
 ]
 
 /**
- * True when the model finished with a short "I'll search…" style reply and never
- * actually invoked web tools — the #/chat "stopped instead of continuing" failure.
+ * True when the model finished with a short "I'll search…" / "I'll look into…"
+ * style reply and never actually invoked web tools — the #/chat "stopped instead
+ * of continuing" failure (Henry: Search on, DeepThink plans search, visible reply
+ * stalls until the user types "continue").
  */
 export function looksLikeDeferredSearch(text: string): boolean {
   const t = String(text || '').trim()
@@ -61,14 +63,56 @@ export function looksLikeDeferredSearch(text: string): boolean {
   // Already delivered substantive content — do not treat as a deferred promise.
   if ((t.match(/\n/g) || []).length >= 4) return false
   return (
-    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,60}\b(search|look up|check (?:the )?(?:web|online|news)|find (?:the )?latest)\b/i.test(
+    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,80}\b(search|look\s+(?:up|into)|investigate|research|dig\s+into|find\s+out|check (?:the )?(?:web|online|news)|find (?:the )?latest)\b/i.test(
       t,
-    ) || /^(?:i(?:['’]ll| will)|let me)\s+search\b/i.test(t)
+    ) ||
+    /^(?:i(?:['’]ll| will)|let me)\s+(?:search|look\s+(?:up|into)|investigate|research)\b/i.test(
+      t,
+    )
+  )
+}
+
+/**
+ * Combine visible reply + DeepThink reasoning: models often plan "Let me search the
+ * web…" in reasoning while the streamed answer is a softer "I'll look into…".
+ * Do not treat a short factual reply as deferred merely because reasoning mentioned search.
+ */
+export function looksLikeDeferredSearchTurn(content: string, reasoning = ''): boolean {
+  if (looksLikeDeferredSearch(content)) return true
+  const body = String(content || '').trim()
+  const think = String(reasoning || '').trim()
+  if (!think || !looksLikeDeferredSearch(think)) return false
+  if (!body) return true
+  // Tiny filler only ("Sure." / "One moment.") — not a real answer.
+  if (body.length > 120 || (body.match(/\n/g) || []).length >= 1) return false
+  return /^(?:sure|ok|okay|one moment|hang on|got it|alright|let me (?:see|check)|i(?:['’]ll| will) (?:check|see))[.!]?\s*$/i.test(
+    body,
   )
 }
 
 const DEFERRED_SEARCH_NUDGE =
-  'You announced a web search but did not call deepseek_web_search (or deepseek_read_url). Call the web search tool now with concrete queries, then answer from the results. Do not stop after another "I\'ll search" sentence.'
+  'You announced a web search but did not call deepseek_web_search (or deepseek_read_url). Call the web search tool now with concrete queries, then answer from the results. Do not stop after another "I\'ll search" / "I\'ll look into" sentence.'
+
+/**
+ * True when the model announced a client function tool (weather, fetch_url, etc.)
+ * and ended the turn without any tool_calls — general tool deferral stall.
+ */
+export function looksLikeDeferredToolUse(text: string): boolean {
+  const t = String(text || '').trim()
+  if (!t || t.length > 480) return false
+  if ((t.match(/\n/g) || []).length >= 4) return false
+  return (
+    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,80}\b(check|fetch|look up|get|call|use|run|calculate|convert)\b[\s\S]{0,100}\b(weather|forecast|url|page|link|calendar|date|time|math|units?|tool|jyut|phrase|temperature)\b/i.test(
+      t,
+    ) ||
+    /\b(get_weather|fetch_url|get_date|get_now|calc|convert_units|jyut_plan_limits|jyut_phrase_lookup|jyut_learn_hint|generate_image|workspace_|sandbox_|project_)\w*\b/i.test(
+      t,
+    )
+  )
+}
+
+const DEFERRED_TOOL_NUDGE =
+  'You announced using a tool but did not emit any tool_calls. Call the matching function tool now (for example get_weather, fetch_url, get_date, calc, workspace_*, or project_*), then answer from the tool result. Do not stop after another "I\'ll check…" sentence.'
 
 /**
  * True when the Overseer finished with a short "I'll set up workers…" reply and never
@@ -567,7 +611,9 @@ export async function* streamDeepseekChatHarness(
   let announcedSearching = false
   let deferredSearchRecovered = false
   let deferredOrchestrationRecovered = false
+  let deferredToolRecovered = false
   let projectOrchestrationUsed = false
+  let clientToolsUsed = false
   const allSources = new Map<string, string>()
   const pendingImages: Array<{ url: string; prompt: string; id: string }> = []
 
@@ -720,6 +766,7 @@ export async function* streamDeepseekChatHarness(
       }
       for (const call of pendingToolCalls) {
         const toolName = call.function.name
+        clientToolsUsed = true
         if (toolName === 'project_create_agent' || toolName === 'project_message_agent') {
           projectOrchestrationUsed = true
         }
@@ -769,9 +816,10 @@ export async function* streamDeepseekChatHarness(
     const didServerSearch = announcedSearching || allSources.size > 0
     if (
       searchEnabled &&
+      useNativeWeb &&
       !deferredSearchRecovered &&
       !didServerSearch &&
-      looksLikeDeferredSearch(assistantContent) &&
+      looksLikeDeferredSearchTurn(assistantContent, assistantReasoning) &&
       round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS - 1
     ) {
       deferredSearchRecovered = true
@@ -806,6 +854,31 @@ export async function* streamDeepseekChatHarness(
         reasoning_content: assistantReasoning || null,
       })
       msgs.push({ role: 'user', content: DEFERRED_ORCHESTRATION_NUDGE })
+      yield { kind: 'content_replace', text: '' }
+      assistantContent = ''
+      continue
+    }
+
+    // General client-tool deferral: announced weather/fetch/etc. without tool_calls.
+    if (
+      tools.length > 0 &&
+      !deferredToolRecovered &&
+      !clientToolsUsed &&
+      !didServerSearch &&
+      looksLikeDeferredToolUse(assistantContent) &&
+      // Prefer search/orchestration recoveries when those intents also match.
+      !(searchEnabled && useNativeWeb && looksLikeDeferredSearchTurn(assistantContent, assistantReasoning)) &&
+      !(projectAttached && looksLikeDeferredOrchestration(assistantContent)) &&
+      round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS - 1
+    ) {
+      deferredToolRecovered = true
+      console.warn('[deepseek-chat] deferred-tool recovery: model announced tools without tool_calls')
+      msgs.push({
+        role: 'assistant',
+        content: assistantContent || null,
+        reasoning_content: assistantReasoning || null,
+      })
+      msgs.push({ role: 'user', content: DEFERRED_TOOL_NUDGE })
       yield { kind: 'content_replace', text: '' }
       assistantContent = ''
       continue

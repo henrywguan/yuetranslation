@@ -184,6 +184,7 @@ assert.match(runtime, /onProject|applyProjectActions/, 'runtime applies project_
 assert.match(runtime, /needs_attention/, 'turn end marks Needs Attention')
 assert.match(runtime, /looksLikeDeferredOrchestration/, 'runtime detects stalled Overseer promises')
 assert.match(runtime, /ORCHESTRATION_STALL_ERROR/, 'runtime surfaces orchestration stall error')
+assert.match(runtime, /SEARCH_STALL_ERROR|looksLikeDeferredSearchTurn/, 'runtime surfaces deferred-search stalls')
 assert.match(runtime, /hasPendingWorkers/, 'Overseer stays Working while workers are queued')
 assert.match(
   runtime,
