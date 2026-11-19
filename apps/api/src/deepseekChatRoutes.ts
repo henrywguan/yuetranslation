@@ -80,7 +80,8 @@ async function* chatStreamEvents(
   | { kind: 'title'; title: string }
   | { kind: 'image'; url: string; prompt: string; id: string }
   | { kind: 'workspace'; files: import('./deepseekChatWorkspace.js').ChatWorkspaceFileWire[] }
-  | { kind: 'project'; actions: import('./deepseekChatProject.js').ProjectAction[] },
+  | { kind: 'project'; actions: import('./deepseekChatProject.js').ProjectAction[] }
+  | { kind: 'sandbox'; activity: Record<string, unknown> },
   void,
   unknown
 > {
@@ -375,6 +376,10 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         }
         if (event.kind === 'project') {
           writeSse(res, `data: ${JSON.stringify({ project: { actions: event.actions } })}\n\n`)
+          continue
+        }
+        if (event.kind === 'sandbox') {
+          writeSse(res, `data: ${JSON.stringify({ sandbox: event.activity })}\n\n`)
           continue
         }
         if (event.kind === 'image') {

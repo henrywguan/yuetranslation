@@ -770,6 +770,88 @@
   margin-bottom: 0.4rem;
 }
 
+.inbox-project-wizard {
+  animation: inbox-wizard-in 0.28s ease both;
+}
+
+@keyframes inbox-wizard-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inbox-wizard-ws {
+  margin: 0 0 0.45rem;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.inbox-wizard-ws legend {
+  padding: 0;
+  margin-bottom: 0.3rem;
+}
+
+.inbox-wizard-ws-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.inbox-wizard-ws-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 0.45rem;
+  row-gap: 0.05rem;
+  align-items: start;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.inbox-wizard-ws-option input {
+  grid-row: 1 / span 2;
+  margin: 0.15rem 0 0;
+}
+
+.inbox-wizard-ws-option.is-on {
+  border-color: var(--ds-blue-soft-border);
+  background: var(--ds-blue-soft);
+}
+
+.inbox-wizard-ws-label {
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--ds-text);
+}
+
+.inbox-wizard-ws-hint {
+  font-size: 0.68rem;
+  color: var(--ds-text-3);
+  line-height: 1.35;
+}
+
+.inbox-wizard-error {
+  color: var(--ds-danger) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inbox-project-wizard {
+    animation: none;
+  }
+}
+
 .inbox-memory {
   display: flex;
   flex-direction: column;

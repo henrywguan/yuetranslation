@@ -895,6 +895,8 @@ export type DeepseekChatStreamHandlers = {
   }>) => void
   /** Overseer project_* actions for the client to apply. */
   onProject?: (actions: Array<Record<string, unknown>>) => void
+  /** Sandbox write / exec / PR activity for Diffs + Runs panes. */
+  onSandbox?: (activity: Record<string, unknown>) => void
   signal?: AbortSignal
 }
 
@@ -1167,6 +1169,7 @@ export async function streamDeepseekChat(
           }>
         }
         project?: { actions?: Array<Record<string, unknown>> }
+        sandbox?: Record<string, unknown>
       }
       try {
         parsed = JSON.parse(payload) as typeof parsed
@@ -1184,6 +1187,7 @@ export async function streamDeepseekChat(
       if (parsed.image?.url) handlers.onImage?.(parsed.image)
       if (parsed.workspace?.files?.length) handlers.onWorkspace?.(parsed.workspace.files)
       if (parsed.project?.actions?.length) handlers.onProject?.(parsed.project.actions)
+      if (parsed.sandbox) handlers.onSandbox?.(parsed.sandbox)
       if (typeof parsed.contentReplace === 'string') {
         handlers.onContentReplace?.(parsed.contentReplace)
       }
@@ -1343,6 +1347,33 @@ export async function writeChatSandboxFile(
   })
   if (!res.ok) await throwApiError(res, 'Sandbox write failed')
   return (await res.json()) as { path: string; bytes: number }
+}
+
+export type ChatSandboxExecResult = {
+  ok: boolean
+  code: number | null
+  stdout: string
+  stderr: string
+  timedOut?: boolean
+  argv: string[]
+  cwd?: string
+  driver?: string
+}
+
+/** Run an allowlisted argv in a sandbox (read-only review panes use `git diff`). */
+export async function execChatSandbox(
+  sessionId: string,
+  argv: string[],
+): Promise<ChatSandboxExecResult> {
+  const res = await apiFetch(`/chat/sandbox/${encodeURIComponent(sessionId)}/exec`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ argv }),
+  })
+  if (!res.ok) await throwApiError(res, 'Sandbox exec failed')
+  const data = (await res.json()) as { result?: ChatSandboxExecResult }
+  if (!data.result) throw new Error('Sandbox exec returned no result')
+  return data.result
 }
 
 export async function fetchChatGithubStatus(): Promise<{
