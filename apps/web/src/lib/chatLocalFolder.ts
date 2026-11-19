@@ -137,7 +137,6 @@ export async function collectFromDirectoryHandle(
 
   async function walk(dir: FileSystemDirectoryHandle, prefix: string[]) {
     if (out.length >= LOCAL_MIRROR_MAX_FILES || total >= LOCAL_MIRROR_MAX_TOTAL_BYTES) return
-    // @ts-expect-error async iterator on directory handle
     for await (const [name, handle] of dir.entries()) {
       if (out.length >= LOCAL_MIRROR_MAX_FILES || total >= LOCAL_MIRROR_MAX_TOTAL_BYTES) break
       if (name.startsWith('.') || name === 'node_modules' || name === 'dist' || name === '.git') continue
