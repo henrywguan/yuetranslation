@@ -49,7 +49,10 @@ function TopBrand() {
 
 function AuiShell({ unlocked }: { unlocked: boolean }) {
   const titleId = useId()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  // Desktop defaults open; menu still toggles Inbox chrome open/closed.
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 900px)').matches,
+  )
   const {
     startNewChat,
     busy,
@@ -67,7 +70,7 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
 
   return (
     <div
-      className={`ds-chat aui-chat${showWorkspace ? ' has-workspace' : ''}${harnessOn ? ' is-harness' : ''}`}
+      className={`ds-chat aui-chat${showWorkspace ? ' has-workspace' : ''}${harnessOn ? ' is-harness' : ''}${sidebarOpen ? ' is-inbox-open' : ' is-inbox-collapsed'}`}
       aria-labelledby={titleId}
     >
       <h1 id={titleId} className="aui-sr-only">
@@ -79,7 +82,7 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
         <button
           type="button"
           className="ds-chat-sidebar-backdrop"
-          aria-label="Close history"
+          aria-label="Close inbox"
           onClick={() => setSidebarOpen(false)}
         />
       ) : null}
@@ -90,7 +93,14 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
             Deep<span>Seek</span>
           </span>
         </div>
-        <InboxShell onNavigate={() => setSidebarOpen(false)} />
+        <InboxShell
+          onNavigate={() => {
+            // Mobile drawer closes after pick; desktop Inbox stays unless menu collapses it.
+            if (typeof window !== 'undefined' && window.matchMedia('(max-width: 899px)').matches) {
+              setSidebarOpen(false)
+            }
+          }}
+        />
         <div className="ds-chat-sidebar-foot">
           <button
             type="button"
@@ -101,6 +111,9 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
             }}
           >
             Classic chat UI
+          </button>
+          <button type="button" className="ds-chat-sidebar-link" onClick={() => openApp()}>
+            Back to app
           </button>
         </div>
       </aside>
@@ -113,14 +126,11 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           <button
             type="button"
             className="ds-chat-icon-btn ds-chat-menu-btn"
-            aria-label="Chat history"
+            aria-label={sidebarOpen ? 'Collapse inbox' : 'Open inbox'}
             aria-expanded={sidebarOpen}
             onClick={() => setSidebarOpen((v) => !v)}
           >
             {MENU_ICON}
-          </button>
-          <button type="button" className="ds-chat-icon-btn" aria-label="Back to app" onClick={() => openApp()}>
-            {BACK_ICON}
           </button>
           <TopBrand />
           <span className="ds-chat-top-spacer" />
@@ -142,7 +152,9 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
             disabled={busy || !unlocked}
             onClick={() => {
               startNewChat()
-              setSidebarOpen(false)
+              if (typeof window !== 'undefined' && window.matchMedia('(max-width: 899px)').matches) {
+                setSidebarOpen(false)
+              }
             }}
           >
             {PLUS_ICON}

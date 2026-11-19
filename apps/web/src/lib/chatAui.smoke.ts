@@ -90,9 +90,16 @@ assert.match(page, /ChatInboxProvider/, 'Inbox provider wraps AUI runtime')
 // not as a page-bottom text link under the composer.
 assert.match(
   auiShellFn,
-  /ds-chat-sidebar[\s\S]*ds-chat-sidebar-foot[\s\S]*Classic chat UI[\s\S]*ds-chat-main/,
-  'classic toggle is in sidebar foot under thread list',
+  /ds-chat-sidebar[\s\S]*ds-chat-sidebar-foot[\s\S]*Classic chat UI[\s\S]*Back to app[\s\S]*ds-chat-main/,
+  'classic toggle + Back to app live in sidebar foot',
 )
+assert.doesNotMatch(
+  auiShellFn,
+  /ds-chat-top[\s\S]*aria-label="Back to app"/,
+  'Back to app is not in the AUI top bar',
+)
+assert.match(auiShellFn, /ds-chat-menu-btn/, 'menu button collapses/expands Inbox')
+assert.match(auiShellFn, /is-inbox-collapsed|is-inbox-open/, 'shell marks Inbox collapse state')
 assert.doesNotMatch(auiShellFn, /aui-shell-footer|aui-classic-link/, 'no page-bottom classic link')
 assert.doesNotMatch(page, /ChatAuiStock\.css/, 'page does not import stock styles')
 assert.doesNotMatch(auiShellFn, /is-stock/, 'shell does not mark stock look')
@@ -101,6 +108,12 @@ assert.doesNotMatch(page, /useAuiStockDark/, 'no stock dark bridge')
 
 const auiCss = readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8')
 assert.match(auiCss, /\.ds-chat\.aui-chat/, 'AUI shell scoped under .aui-chat')
+assert.match(
+  auiCss,
+  /\.ds-chat\.aui-chat \.ds-chat-menu-btn[\s\S]*display:\s*grid/,
+  'AUI keeps menu btn on desktop to collapse Inbox',
+)
+assert.match(auiCss, /is-inbox-collapsed/, 'desktop collapsed Inbox width rules')
 assert.match(
   auiCss,
   /Top bar must live inside|never becomes a full-height row sibling|flex-row sibling/i,

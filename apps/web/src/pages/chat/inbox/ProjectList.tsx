@@ -4,6 +4,7 @@ export function ProjectList({
   projects,
   activeProjectId,
   open,
+  createDisabled,
   onToggle,
   onSelect,
   onCreate,
@@ -12,6 +13,7 @@ export function ProjectList({
   projects: ChatInboxProject[]
   activeProjectId: string | null
   open: boolean
+  createDisabled?: boolean
   onToggle: () => void
   onSelect: (projectId: string | null) => void
   onCreate: () => void
@@ -31,7 +33,8 @@ export function ProjectList({
           type="button"
           className="inbox-section-add"
           aria-label="New project"
-          title="New project"
+          title={createDisabled ? 'Finish or cancel the draft project first' : 'New project'}
+          disabled={createDisabled}
           onClick={onCreate}
         >
           +

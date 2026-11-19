@@ -22,7 +22,7 @@ import './Inbox.css'
 import { GithubBind } from './GithubBind'
 import { LocalFolderBind } from './LocalFolderBind'
 import { ProjectList } from './ProjectList'
-import { ProjectPanel } from './ProjectPanel'
+import { ProjectDraftPanel, ProjectPanel } from './ProjectPanel'
 import { WorkspaceList } from './WorkspaceList'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -58,12 +58,39 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [projectsOpen, setProjectsOpen] = useState(true)
   const [workspacesOpen, setWorkspacesOpen] = useState(true)
+  const [projectDraft, setProjectDraft] = useState<{ title: string } | null>(null)
 
-  const createAndFocusProject = () => {
-    const project = addProject(undefined, activeId || undefined)
+  const draftOpen = projectDraft != null
+  const createDisabled = draftOpen
+
+  const openProjectDraft = () => {
+    if (draftOpen) return
+    setProjectsOpen(true)
+    setActiveProjectId(null)
+    setProjectDraft({ title: 'New project' })
+  }
+
+  const cancelProjectDraft = () => {
+    setProjectDraft(null)
+  }
+
+  const confirmProjectDraft = () => {
+    if (!projectDraft) return
+    const project = addProject(projectDraft.title.trim() || 'New project', activeId || undefined)
+    setProjectDraft(null)
     setActiveProjectId(project.id)
     setProjectsOpen(true)
-    return project
+  }
+
+  const collapseProjects = () => {
+    setProjectsOpen(false)
+    setProjectDraft(null)
+    setActiveProjectId(null)
+  }
+
+  const toggleProjects = () => {
+    if (projectsOpen) collapseProjects()
+    else setProjectsOpen(true)
   }
 
   const openAgent = (agent: ChatInboxAgent) => {
@@ -189,10 +216,10 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
           type="button"
           className="inbox-header-new"
           aria-label="New project"
-          title="New project"
+          title={createDisabled ? 'Finish or cancel the draft project first' : 'New project'}
+          disabled={createDisabled}
           onClick={() => {
-            createAndFocusProject()
-            onNavigate?.()
+            openProjectDraft()
           }}
         >
           +
@@ -209,131 +236,149 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
         />
       </label>
 
-      <FilterTiles filter={filter} counts={counts} onChange={setFilter} />
+      <div className="inbox-scroll">
+        <FilterTiles filter={filter} counts={counts} onChange={setFilter} />
 
-      <ProjectList
-        projects={state.projects}
-        activeProjectId={activeProjectId}
-        open={projectsOpen}
-        onToggle={() => setProjectsOpen((v) => !v)}
-        onSelect={(id) => setActiveProjectId(id)}
-        onCreate={() => {
-          createAndFocusProject()
-        }}
-        onDelete={(id) => {
-          removeProject(id)
-          if (activeProjectId === id) setActiveProjectId(null)
-        }}
-      />
+        <div className="inbox-band">
+          <ProjectList
+            projects={state.projects}
+            activeProjectId={activeProjectId}
+            open={projectsOpen}
+            createDisabled={createDisabled}
+            onToggle={toggleProjects}
+            onSelect={(id) => {
+              cancelProjectDraft()
+              setActiveProjectId(id)
+              if (id) setProjectsOpen(true)
+            }}
+            onCreate={openProjectDraft}
+            onDelete={(id) => {
+              removeProject(id)
+              if (activeProjectId === id) setActiveProjectId(null)
+            }}
+          />
 
-      {activeProject ? (
-        <ProjectPanel
-          project={activeProject}
-          agents={state.agents}
-          onSpawnWorker={() => spawnWorkerForProject(activeProject.id)}
-          onOpenAgent={openAgent}
-          onMemoryChange={(memory) => updateProjectMemory(activeProject.id, memory)}
-        />
-      ) : null}
+          {projectsOpen && draftOpen && projectDraft ? (
+            <ProjectDraftPanel
+              title={projectDraft.title}
+              onTitleChange={(title) => setProjectDraft({ title })}
+              onConfirm={confirmProjectDraft}
+              onCancel={cancelProjectDraft}
+            />
+          ) : null}
 
-      <WorkspaceList
-        workspaces={state.workspaces}
-        open={workspacesOpen}
-        onToggle={() => setWorkspacesOpen((v) => !v)}
-        onCreate={(kind) => {
-          void createWorkspaceKind(kind)
-        }}
-        onDelete={removeWorkspace}
-      />
-      {sandboxBusy ? <p className="inbox-empty">Starting sandbox…</p> : null}
-      {sandboxNote ? <p className="inbox-empty">{sandboxNote}</p> : null}
-      {localBindWorkspaceId ? (
-        <LocalFolderBind
-          workspaceId={localBindWorkspaceId}
-          projectId={activeProjectId || undefined}
-          onBound={({ sessionId, note, fileCount }) => {
-            bindWorkspaceRef(localBindWorkspaceId, sessionId, activeProjectId || undefined)
-            setSandboxNote(`${note} (${fileCount} files)`)
-            setLocalBindWorkspaceId(null)
-          }}
-          onCancel={() => setLocalBindWorkspaceId(null)}
-        />
-      ) : null}
-      {githubBindWorkspaceId ? (
-        <GithubBind
-          sandboxSessionId={activeSandboxSessionId}
-          onBound={({ repo, note, sandboxSessionId }) => {
-            bindWorkspaceRef(
-              githubBindWorkspaceId,
-              sandboxSessionId || repo,
-              activeProjectId || undefined,
-            )
-            setSandboxNote(note)
-            setGithubBindWorkspaceId(null)
-          }}
-          onCancel={() => setGithubBindWorkspaceId(null)}
-        />
-      ) : null}
-
-      <button
-        type="button"
-        className="inbox-new-chat"
-        onClick={() => {
-          startNewChat()
-          onNavigate?.()
-        }}
-      >
-        + New chat
-      </button>
-
-      <div className="inbox-agents" aria-label="Agents and chats">
-        <div className="inbox-agents-label">
-          {filter === 'all' ? 'Agents' : STATUS_LABEL[filter] || 'Agents'}
-          {activeProjectId ? ' · project' : ''}
+          {projectsOpen && !draftOpen && activeProject ? (
+            <ProjectPanel
+              project={activeProject}
+              agents={state.agents}
+              onSpawnWorker={() => spawnWorkerForProject(activeProject.id)}
+              onOpenAgent={openAgent}
+              onMemoryChange={(memory) => updateProjectMemory(activeProject.id, memory)}
+            />
+          ) : null}
         </div>
 
-        <ThreadListPrimitive.Root className="aui-thread-list">
-          <ThreadListPrimitive.Items>
-            {() => (
-              <InboxThreadItem
-                filteredByThreadId={filteredByThreadId}
-                activeProjectId={activeProjectId}
-                onAttach={(threadId) => {
-                  if (activeProjectId) linkThread(activeProjectId, threadId)
-                }}
-                onNavigate={onNavigate}
-              />
-            )}
-          </ThreadListPrimitive.Items>
-        </ThreadListPrimitive.Root>
+        <div className="inbox-band">
+          <WorkspaceList
+            workspaces={state.workspaces}
+            open={workspacesOpen}
+            onToggle={() => setWorkspacesOpen((v) => !v)}
+            onCreate={(kind) => {
+              void createWorkspaceKind(kind)
+            }}
+            onDelete={removeWorkspace}
+          />
+          {sandboxBusy ? <p className="inbox-empty">Starting sandbox…</p> : null}
+          {sandboxNote ? <p className="inbox-empty">{sandboxNote}</p> : null}
+          {localBindWorkspaceId ? (
+            <LocalFolderBind
+              workspaceId={localBindWorkspaceId}
+              projectId={activeProjectId || undefined}
+              onBound={({ sessionId, note, fileCount }) => {
+                bindWorkspaceRef(localBindWorkspaceId, sessionId, activeProjectId || undefined)
+                setSandboxNote(`${note} (${fileCount} files)`)
+                setLocalBindWorkspaceId(null)
+              }}
+              onCancel={() => setLocalBindWorkspaceId(null)}
+            />
+          ) : null}
+          {githubBindWorkspaceId ? (
+            <GithubBind
+              sandboxSessionId={activeSandboxSessionId}
+              onBound={({ repo, note, sandboxSessionId }) => {
+                bindWorkspaceRef(
+                  githubBindWorkspaceId,
+                  sandboxSessionId || repo,
+                  activeProjectId || undefined,
+                )
+                setSandboxNote(note)
+                setGithubBindWorkspaceId(null)
+              }}
+              onCancel={() => setGithubBindWorkspaceId(null)}
+            />
+          ) : null}
+        </div>
 
-        {filtered.length === 0 ? (
-          <p className="inbox-empty">No agents match this filter yet.</p>
-        ) : null}
+        <button
+          type="button"
+          className="inbox-new-chat"
+          onClick={() => {
+            startNewChat()
+            onNavigate?.()
+          }}
+        >
+          + New chat
+        </button>
 
-        {orphanAgents.length ? (
-          <ul className="inbox-list">
-            {orphanAgents.map((v) => {
-              const agent = state.agents.find((a) => a.id === v.id)
-              return (
-                <li key={v.id} className="inbox-list-item">
-                  <button
-                    type="button"
-                    className="inbox-list-btn"
-                    onClick={() => {
-                      if (agent) openAgent(agent)
-                    }}
-                  >
-                    {v.title}
-                  </button>
-                  <span className={`inbox-agent-status is-${v.status}`}>
-                    {STATUS_LABEL[v.status] || v.status}
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
-        ) : null}
+        <div className="inbox-agents" aria-label="Agents and chats">
+          <div className="inbox-agents-label">
+            {filter === 'all' ? 'Agents' : STATUS_LABEL[filter] || 'Agents'}
+            {activeProjectId ? ' · project' : ''}
+          </div>
+
+          <ThreadListPrimitive.Root className="aui-thread-list">
+            <ThreadListPrimitive.Items>
+              {() => (
+                <InboxThreadItem
+                  filteredByThreadId={filteredByThreadId}
+                  activeProjectId={activeProjectId}
+                  onAttach={(threadId) => {
+                    if (activeProjectId) linkThread(activeProjectId, threadId)
+                  }}
+                  onNavigate={onNavigate}
+                />
+              )}
+            </ThreadListPrimitive.Items>
+          </ThreadListPrimitive.Root>
+
+          {filtered.length === 0 ? (
+            <p className="inbox-empty">No agents match this filter yet.</p>
+          ) : null}
+
+          {orphanAgents.length ? (
+            <ul className="inbox-list">
+              {orphanAgents.map((v) => {
+                const agent = state.agents.find((a) => a.id === v.id)
+                return (
+                  <li key={v.id} className="inbox-list-item">
+                    <button
+                      type="button"
+                      className="inbox-list-btn"
+                      onClick={() => {
+                        if (agent) openAgent(agent)
+                      }}
+                    >
+                      {v.title}
+                    </button>
+                    <span className={`inbox-agent-status is-${v.status}`}>
+                      {STATUS_LABEL[v.status] || v.status}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          ) : null}
+        </div>
       </div>
     </div>
   )
