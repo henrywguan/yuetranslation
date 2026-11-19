@@ -41,7 +41,9 @@ import {
   type ChatSource,
   type ChatThread,
 } from '../../../lib/chatHistory'
+import { agentForThread } from '../../../lib/chatInbox'
 import { StreamingDeepseekChatTts } from '../../../lib/chatDeepseekVoice'
+import { useChatInboxContextOptional } from '../inbox/ChatInboxContext'
 import {
   addScheduleJob,
   claimDueScheduleJobs,
@@ -132,7 +134,7 @@ export type ChatAuiSession = {
   pickFile: (file: File | null) => Promise<void>
   pickOcr: (file: File | null, setDraft: (text: string) => void) => Promise<void>
   removePendingFile: (fileId: string) => void
-  startNewChat: () => void
+  startNewChat: () => string
   selectThread: (id: string) => void
   removeThread: (id: string) => void
   archiveThread: (id: string, archived: boolean) => void
@@ -155,6 +157,9 @@ type Props = {
 }
 
 export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
+  const inbox = useChatInboxContextOptional()
+  const inboxRef = useRef(inbox)
+  inboxRef.current = inbox
   const [threads, setThreads] = useState<ChatThread[]>(() => [BOOT_THREAD])
   const [activeId, setActiveId] = useState(BOOT_THREAD.id)
   const [historyReady, setHistoryReady] = useState(false)
@@ -413,6 +418,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     setThreads((prev) => upsertChatThread(created, prev.filter((t) => t.id !== BOOT_THREAD.id)))
     setActiveId(created.id)
     setError(null)
+    return created.id
   }, [stopGeneration])
 
   const selectThread = useCallback(
@@ -507,6 +513,18 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
       try {
         const wireMessages = apiMessagesFromThread(thread).filter((m) => m.content.trim())
+        const inboxState = inboxRef.current?.state
+        const linkedAgent = inboxState ? agentForThread(inboxState, thread.id) : undefined
+        const inboxRole =
+          linkedAgent?.role === 'overseer' || linkedAgent?.role === 'worker'
+            ? linkedAgent.role
+            : undefined
+        const projectMemory = linkedAgent?.projectId
+          ? inboxState?.projects.find((p) => p.id === linkedAgent.projectId)?.memory
+          : undefined
+        if (linkedAgent && inboxRef.current) {
+          inboxRef.current.updateAgentStatus(linkedAgent.id, 'working')
+        }
         await streamDeepseekChat(wireMessages, {
           thinking: deepThink,
           search: searchOn,
@@ -517,6 +535,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           fileIds,
           plugins: enabledPluginsRef.current,
           primaryLang: primaryLanguage,
+          inboxRole,
+          projectMemory,
           signal: controller.signal,
           onWorkspace: (files) => {
             thread = patchThreadWorkspace(
@@ -652,6 +672,16 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         setBusy(false)
         abortRef.current = null
         if (streamTtsRef.current === liveTts) streamTtsRef.current = null
+        const inboxState = inboxRef.current?.state
+        const linkedAgent = inboxState ? agentForThread(inboxState, thread.id) : undefined
+        if (linkedAgent && inboxRef.current) {
+          // Workers surface under Needs Attention so the Overseer / user can resume.
+          const nextStatus =
+            linkedAgent.role === 'worker' || linkedAgent.role === 'overseer'
+              ? 'needs_attention'
+              : 'idle'
+          inboxRef.current.updateAgentStatus(linkedAgent.id, nextStatus)
+        }
       }
     },
     [

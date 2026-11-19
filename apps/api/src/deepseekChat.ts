@@ -55,6 +55,13 @@ export const DeepseekChatBodySchema = z.object({
    * Default off; client sends true when the Harness toggle is on.
    */
   harness: z.boolean().optional(),
+  /**
+   * Chat Inbox agent role (Phase B) — Overseer coordinates; worker implements.
+   * Omit for classic single-thread chat.
+   */
+  inboxRole: z.enum(['overseer', 'worker']).optional(),
+  /** Shared Project memory snippet (bounded) for Inbox multi-agent turns. */
+  projectMemory: z.string().trim().max(8_000).optional(),
   /** Device-local thread workspace snapshot (text files only). */
   workspace: z
     .object({

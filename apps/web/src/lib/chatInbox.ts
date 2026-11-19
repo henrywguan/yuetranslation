@@ -24,6 +24,8 @@ export type ChatInboxProject = {
   defaultWorkspaceId?: string
   /** Overseer agent id (Phase B fills runtime). */
   overseerAgentId?: string
+  /** Shared notes the Overseer / workers see each turn (Phase B). */
+  memory?: string
 }
 
 export type ChatInboxAgentRole = 'overseer' | 'worker' | 'thread'
@@ -122,6 +124,8 @@ export function normalizeInboxState(raw: unknown): ChatInboxState {
       defaultWorkspaceId:
         typeof p.defaultWorkspaceId === 'string' ? p.defaultWorkspaceId : undefined,
       overseerAgentId: typeof p.overseerAgentId === 'string' ? p.overseerAgentId : undefined,
+      memory:
+        typeof p.memory === 'string' ? p.memory.slice(0, 8_000) : undefined,
     }))
 
   const agents: ChatInboxAgent[] = agentsIn
@@ -367,6 +371,79 @@ export function setAgentStatus(
     updatedAt: now,
     agents: state.agents.map((a) => (a.id === agentId ? { ...a, status, updatedAt: now } : a)),
   }
+}
+
+export function setAgentThread(
+  state: ChatInboxState,
+  agentId: string,
+  threadId: string,
+): ChatInboxState {
+  const now = Date.now()
+  const agent = state.agents.find((a) => a.id === agentId)
+  let next = {
+    ...state,
+    updatedAt: now,
+    agents: state.agents.map((a) =>
+      a.id === agentId ? { ...a, threadId, updatedAt: now } : a,
+    ),
+  }
+  if (agent?.projectId) {
+    next = attachThreadToProject(next, agent.projectId, threadId)
+  }
+  return next
+}
+
+export function setProjectMemory(
+  state: ChatInboxState,
+  projectId: string,
+  memory: string,
+): ChatInboxState {
+  const now = Date.now()
+  const trimmed = memory.slice(0, 8_000)
+  return {
+    ...state,
+    updatedAt: now,
+    projects: state.projects.map((p) =>
+      p.id === projectId ? { ...p, memory: trimmed, updatedAt: now } : p,
+    ),
+  }
+}
+
+export function createWorker(
+  state: ChatInboxState,
+  projectId: string,
+  opts?: { title?: string; threadId?: string },
+): { state: ChatInboxState; worker: ChatInboxAgent } {
+  const project = state.projects.find((p) => p.id === projectId)
+  if (!project) {
+    throw new Error('Project not found')
+  }
+  const now = Date.now()
+  const worker: ChatInboxAgent = {
+    id: uid('agent'),
+    projectId,
+    title: (opts?.title || `Worker · ${project.title}`).trim(),
+    status: 'queued',
+    role: 'worker',
+    threadId: opts?.threadId,
+    updatedAt: now,
+  }
+  let next: ChatInboxState = {
+    ...state,
+    agents: [worker, ...state.agents].slice(0, MAX_AGENTS),
+    updatedAt: now,
+  }
+  if (opts?.threadId) {
+    next = attachThreadToProject(next, projectId, opts.threadId)
+  }
+  return { worker, state: next }
+}
+
+export function agentForThread(
+  state: ChatInboxState,
+  threadId: string,
+): ChatInboxAgent | undefined {
+  return state.agents.find((a) => a.threadId === threadId)
 }
 
 /** Synthetic agents for classic threads not yet linked to a Project agent. */

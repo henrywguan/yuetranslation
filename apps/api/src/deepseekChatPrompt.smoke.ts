@@ -48,6 +48,19 @@ assert.doesNotMatch(
   'Harness nudge only when enabled',
 )
 
+const overseer = buildDeepseekChatSystem({
+  inboxRole: 'overseer',
+  projectMemory: 'Ship Inbox Phase B',
+  now: fixed,
+  mode: 'tools',
+})
+assert.match(overseer, /Project Overseer/)
+assert.match(overseer, /Ship Inbox Phase B/)
+assert.match(
+  buildDeepseekChatSystem({ inboxRole: 'worker', now: fixed, mode: 'tools' }),
+  /worker agent/i,
+)
+
 assert.equal(shouldAutoEnableSearch('what day is today?'), false, 'clock questions use temporal inject')
 assert.equal(shouldAutoEnableSearch("what's the latest news on AI?"), true)
 assert.equal(shouldAutoEnableSearch('who is the current president of France?'), true)

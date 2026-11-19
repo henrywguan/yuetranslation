@@ -9,14 +9,16 @@ import {
   countByFilter,
   filterAgentViews,
   matchesSearch,
+  type ChatInboxAgent,
   type InboxFilter,
   type ThreadAgentView,
 } from '../../../lib/chatInbox'
 import { useChatAuiSession } from '../aui/ChatAuiRuntime'
+import { useChatInboxContext } from './ChatInboxContext'
 import { FilterTiles } from './FilterTiles'
 import './Inbox.css'
 import { ProjectList } from './ProjectList'
-import { useChatInbox } from './useChatInbox'
+import { ProjectPanel } from './ProjectPanel'
 import { WorkspaceList } from './WorkspaceList'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -29,9 +31,18 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
-  const { threads, activeId, busy, startNewChat } = useChatAuiSession()
-  const { state, addProject, removeProject, linkThread, addWorkspace, removeWorkspace } =
-    useChatInbox()
+  const { threads, activeId, busy, startNewChat, selectThread } = useChatAuiSession()
+  const {
+    state,
+    addProject,
+    removeProject,
+    linkThread,
+    addWorkspace,
+    removeWorkspace,
+    spawnWorker,
+    bindAgentThread,
+    updateProjectMemory,
+  } = useChatInboxContext()
 
   const [filter, setFilter] = useState<InboxFilter>('all')
   const [query, setQuery] = useState('')
@@ -40,11 +51,33 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   const [workspacesOpen, setWorkspacesOpen] = useState(true)
 
   const createAndFocusProject = () => {
-    // Group the live chat into the new Project so the sidebar isn't empty.
     const project = addProject(undefined, activeId || undefined)
     setActiveProjectId(project.id)
     setProjectsOpen(true)
     return project
+  }
+
+  const openAgent = (agent: ChatInboxAgent) => {
+    if (agent.threadId && threads.some((t) => t.id === agent.threadId)) {
+      selectThread(agent.threadId)
+      onNavigate?.()
+      return
+    }
+    const threadId = startNewChat()
+    bindAgentThread(agent.id, threadId)
+    if (agent.projectId) linkThread(agent.projectId, threadId)
+    onNavigate?.()
+  }
+
+  const spawnWorkerForProject = (projectId: string) => {
+    const threadId = startNewChat()
+    const worker = spawnWorker(projectId, {
+      threadId,
+      title: `Worker · ${state.projects.find((p) => p.id === projectId)?.title || 'Project'}`,
+    })
+    bindAgentThread(worker.id, threadId)
+    setActiveProjectId(projectId)
+    onNavigate?.()
   }
 
   const views = useMemo(
@@ -84,6 +117,10 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
       ),
     [filtered, threads],
   )
+
+  const activeProject = activeProjectId
+    ? state.projects.find((p) => p.id === activeProjectId) || null
+    : null
 
   return (
     <div className="inbox-shell">
@@ -129,6 +166,16 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
           if (activeProjectId === id) setActiveProjectId(null)
         }}
       />
+
+      {activeProject ? (
+        <ProjectPanel
+          project={activeProject}
+          agents={state.agents}
+          onSpawnWorker={() => spawnWorkerForProject(activeProject.id)}
+          onOpenAgent={openAgent}
+          onMemoryChange={(memory) => updateProjectMemory(activeProject.id, memory)}
+        />
+      ) : null}
 
       <WorkspaceList
         workspaces={state.workspaces}
@@ -179,16 +226,25 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
 
         {orphanAgents.length ? (
           <ul className="inbox-list">
-            {orphanAgents.map((v) => (
-              <li key={v.id} className="inbox-list-item">
-                <button type="button" className="inbox-list-btn" disabled title="Opens in Phase B">
-                  {v.title}
-                </button>
-                <span className={`inbox-agent-status is-${v.status}`}>
-                  {STATUS_LABEL[v.status] || v.status}
-                </span>
-              </li>
-            ))}
+            {orphanAgents.map((v) => {
+              const agent = state.agents.find((a) => a.id === v.id)
+              return (
+                <li key={v.id} className="inbox-list-item">
+                  <button
+                    type="button"
+                    className="inbox-list-btn"
+                    onClick={() => {
+                      if (agent) openAgent(agent)
+                    }}
+                  >
+                    {v.title}
+                  </button>
+                  <span className={`inbox-agent-status is-${v.status}`}>
+                    {STATUS_LABEL[v.status] || v.status}
+                  </span>
+                </li>
+              )
+            })}
           </ul>
         ) : null}
       </div>

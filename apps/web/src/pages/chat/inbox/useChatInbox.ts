@@ -2,16 +2,22 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   attachThreadToProject,
   createProject,
+  createWorker,
   createWorkspace,
   deleteProject,
   deleteWorkspace,
   emptyInboxState,
   loadChatInbox,
   saveChatInbox,
+  setAgentStatus,
+  setAgentThread,
+  setProjectMemory,
+  type ChatInboxAgent,
   type ChatInboxProject,
   type ChatInboxState,
   type ChatInboxWorkspace,
   type ChatInboxWorkspaceKind,
+  type InboxAgentStatus,
 } from '../../../lib/chatInbox'
 
 export function useChatInbox() {
@@ -51,9 +57,11 @@ export function useChatInbox() {
 
   const addProject = useCallback(
     (title?: string, threadId?: string): ChatInboxProject => {
-      let { state: next, project } = createProject(stateRef.current, title)
-      if (threadId) next = attachThreadToProject(next, project.id, threadId)
-      // Refresh project snapshot after attach.
+      let { state: next, project, overseer } = createProject(stateRef.current, title)
+      if (threadId) {
+        next = attachThreadToProject(next, project.id, threadId)
+        next = setAgentThread(next, overseer.id, threadId)
+      }
       project = next.projects.find((p) => p.id === project.id) || project
       commit(next)
       return project
@@ -100,6 +108,36 @@ export function useChatInbox() {
     [commit],
   )
 
+  const spawnWorker = useCallback(
+    (projectId: string, opts?: { title?: string; threadId?: string }): ChatInboxAgent => {
+      const { state: next, worker } = createWorker(stateRef.current, projectId, opts)
+      commit(next)
+      return worker
+    },
+    [commit],
+  )
+
+  const bindAgentThread = useCallback(
+    (agentId: string, threadId: string) => {
+      commit(setAgentThread(stateRef.current, agentId, threadId))
+    },
+    [commit],
+  )
+
+  const updateAgentStatus = useCallback(
+    (agentId: string, status: InboxAgentStatus) => {
+      commit(setAgentStatus(stateRef.current, agentId, status))
+    },
+    [commit],
+  )
+
+  const updateProjectMemory = useCallback(
+    (projectId: string, memory: string) => {
+      commit(setProjectMemory(stateRef.current, projectId, memory))
+    },
+    [commit],
+  )
+
   return {
     ready,
     state,
@@ -108,5 +146,9 @@ export function useChatInbox() {
     linkThread,
     addWorkspace,
     removeWorkspace,
+    spawnWorker,
+    bindAgentThread,
+    updateAgentStatus,
+    updateProjectMemory,
   }
 }

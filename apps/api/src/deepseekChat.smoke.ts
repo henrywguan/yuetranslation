@@ -83,6 +83,15 @@ assert.equal(harnessBody.success, true)
 assert.equal(harnessBody.data?.harness, true)
 assert.equal(harnessBody.data?.workspace?.files[0]?.path, 'notes/a.md')
 
+const inboxBody = DeepseekChatBodySchema.safeParse({
+  messages: [{ role: 'user', content: 'plan the workers' }],
+  inboxRole: 'overseer',
+  projectMemory: 'Phase B local workers',
+})
+assert.equal(inboxBody.success, true)
+assert.equal(inboxBody.data?.inboxRole, 'overseer')
+assert.equal(inboxBody.data?.projectMemory, 'Phase B local workers')
+
 const routes = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatRoutes.ts'),
   'utf8',
@@ -90,6 +99,8 @@ const routes = readFileSync(
 assert.match(routes, /shouldAutoEnableSearch/, 'Routes auto-enable search for freshness intents')
 assert.match(routes, /streamDeepseekChatHarness/, 'Routes use unified Completions harness')
 assert.match(routes, /streamDeepseekChatAgent/, 'Routes keep tool agent as fallback')
+assert.match(routes, /inboxRole/, 'Routes forward Inbox agent role into prompt')
+assert.match(routes, /projectMemory/, 'Routes forward Project memory into prompt')
 
 const agent = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatAgent.ts'),

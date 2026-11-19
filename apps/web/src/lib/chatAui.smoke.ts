@@ -85,6 +85,7 @@ assert.match(
 )
 assert.match(auiShellFn, /InboxShell/, 'Inbox chrome lives in shell sidebar')
 assert.match(auiShellFn, /aria-label="Inbox"/, 'sidebar is the Chat Inbox')
+assert.match(page, /ChatInboxProvider/, 'Inbox provider wraps AUI runtime')
 // Classic/new toggle lives in the sidebar footer (pinned under the thread list),
 // not as a page-bottom text link under the composer.
 assert.match(

@@ -11,6 +11,7 @@ import {
   buildAgentViews,
   countByFilter,
   createProject,
+  createWorker,
   createWorkspace,
   deleteProject,
   emptyInboxState,
@@ -18,6 +19,7 @@ import {
   matchesSearch,
   normalizeInboxState,
   renameProject,
+  setProjectMemory,
 } from './chatInbox'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -90,15 +92,30 @@ assert.equal(normalized.agents[0]?.status, 'idle')
 assert.equal(normalized.agents[0]?.role, 'thread')
 assert.equal(normalized.workspaces[0]?.kind, 'internal')
 
+const withMemory = setProjectMemory(withProj, project.id, 'Shared brief')
+assert.equal(withMemory.projects[0]?.memory, 'Shared brief')
+
+const { state: withWorker, worker } = createWorker(withMemory, project.id, {
+  title: 'Worker · docs',
+  threadId: 'w-thread',
+})
+assert.equal(worker.role, 'worker')
+assert.equal(worker.status, 'queued')
+assert.ok(withWorker.agents.some((a) => a.id === worker.id))
+assert.ok(withWorker.projects[0]?.threadIds.includes('w-thread'))
+
 const page = readFileSync(join(root, 'pages/chat/aui/ChatAuiPage.tsx'), 'utf8')
 assert.match(page, /InboxShell/, 'AUI page mounts InboxShell')
+assert.match(page, /ChatInboxProvider/, 'Inbox provider wraps runtime')
 assert.match(page, /aria-label="Inbox"/, 'sidebar labeled Inbox')
 assert.match(page, /Classic chat UI/, 'classic toggle preserved')
 
 const shell = readFileSync(join(root, 'pages/chat/inbox/InboxShell.tsx'), 'utf8')
 assert.match(shell, /FilterTiles/, 'filter tiles')
 assert.match(shell, /ProjectList/, 'projects list')
+assert.match(shell, /ProjectPanel/, 'overseer project panel')
 assert.match(shell, /WorkspaceList/, 'workspaces list')
+assert.match(shell, /spawnWorker|Spawn worker/, 'spawn worker action')
 assert.match(shell, /All Agents|needs_attention|in_review/, 'tile filter ids used')
 
 const tiles = readFileSync(join(root, 'pages/chat/inbox/FilterTiles.tsx'), 'utf8')
@@ -106,5 +123,13 @@ assert.match(tiles, /All Agents/)
 assert.match(tiles, /Needs Attention/)
 assert.match(tiles, /Working/)
 assert.match(tiles, /In Review/)
+
+const runtime = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
+assert.match(runtime, /inboxRole/, 'runtime forwards inbox role')
+assert.match(runtime, /projectMemory/, 'runtime forwards project memory')
+assert.match(runtime, /needs_attention/, 'turn end marks Needs Attention')
+
+const api = readFileSync(join(here, 'api.ts'), 'utf8')
+assert.match(api, /inboxRole/, 'web API client sends inboxRole')
 
 console.log('chatInbox.smoke: ok')
