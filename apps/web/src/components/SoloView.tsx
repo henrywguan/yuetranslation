@@ -89,6 +89,13 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'sk') return 'Píšte alebo hovorte po slovensky…'
   if (lang === 'hr') return 'Pišite ili govorite hrvatski…'
   if (lang === 'ca') return 'Escriu o parla en català…'
+  if (lang === 'az') return 'Azərbaycanca yazın və ya danışın…'
+  if (lang === 'kk') return 'Қазақша жазыңыз немесе сөйлеңіз…'
+  if (lang === 'uz') return 'O‘zbekcha yozing yoki gapiring…'
+  if (lang === 'bg') return 'Пишете или говорете на български…'
+  if (lang === 'sr') return 'Пишите или говорите на српском…'
+  if (lang === 'sw') return 'Andika au sema kwa Kiswahili…'
+  if (lang === 'af') return 'Tik of praat in Afrikaans…'
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
   if (lang === 'bcl') return 'I-type nin Bikol…'
@@ -153,6 +160,13 @@ function isRubyDisplayLang(lang: Lang): boolean {
     lang === 'sk' ||
     lang === 'hr' ||
     lang === 'ca' ||
+    lang === 'az' ||
+    lang === 'kk' ||
+    lang === 'uz' ||
+    lang === 'bg' ||
+    lang === 'sr' ||
+    lang === 'sw' ||
+    lang === 'af' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'
@@ -222,6 +236,13 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'sk') return 'Speak Slovak with the mic'
   if (lang === 'hr') return 'Speak Croatian with the mic'
   if (lang === 'ca') return 'Speak Catalan with the mic'
+  if (lang === 'az') return 'Speak Azerbaijani with the mic'
+  if (lang === 'kk') return 'Speak Kazakh with the mic'
+  if (lang === 'uz') return 'Speak Uzbek with the mic'
+  if (lang === 'bg') return 'Speak Bulgarian with the mic'
+  if (lang === 'sr') return 'Speak Serbian with the mic'
+  if (lang === 'sw') return 'Speak Swahili with the mic'
+  if (lang === 'af') return 'Speak Afrikaans with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
   if (lang === 'sichuan') return 'Speak Sichuanese with the mic'

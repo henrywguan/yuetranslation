@@ -91,6 +91,13 @@ export function langShort(lang: Lang): string {
   if (lang === 'sk') return 'Sk'
   if (lang === 'hr') return 'Hr'
   if (lang === 'ca') return 'Ca'
+  if (lang === 'az') return 'Az'
+  if (lang === 'kk') return 'Kk'
+  if (lang === 'uz') return 'Uz'
+  if (lang === 'bg') return 'Bg'
+  if (lang === 'sr') return 'Sr'
+  if (lang === 'sw') return 'Sw'
+  if (lang === 'af') return 'Af'
   if (lang === 'ceb') return 'Cb'
   if (lang === 'ilo') return 'Il'
   if (lang === 'bcl') return 'Bc'
@@ -355,6 +362,13 @@ function langLabel(lang: Lang) {
   if (lang === 'sk') return <BiText copy={ui.dirSlovak} size="sm" />
   if (lang === 'hr') return <BiText copy={ui.dirCroatian} size="sm" />
   if (lang === 'ca') return <BiText copy={ui.dirCatalan} size="sm" />
+  if (lang === 'az') return <BiText copy={ui.dirAzerbaijani} size="sm" />
+  if (lang === 'kk') return <BiText copy={ui.dirKazakh} size="sm" />
+  if (lang === 'uz') return <BiText copy={ui.dirUzbek} size="sm" />
+  if (lang === 'bg') return <BiText copy={ui.dirBulgarian} size="sm" />
+  if (lang === 'sr') return <BiText copy={ui.dirSerbian} size="sm" />
+  if (lang === 'sw') return <BiText copy={ui.dirSwahili} size="sm" />
+  if (lang === 'af') return <BiText copy={ui.dirAfrikaans} size="sm" />
   if (lang === 'ceb') return <BiText copy={ui.dirCebuano} size="sm" />
   if (lang === 'ilo') return <BiText copy={ui.dirIlocano} size="sm" />
   if (lang === 'bcl') return <BiText copy={ui.dirBikol} size="sm" />

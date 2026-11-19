@@ -164,6 +164,13 @@ function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'sk') return 'sk'
   if (detailLang === 'hr') return 'hr'
   if (detailLang === 'ca') return 'ca'
+  if (detailLang === 'az') return 'az'
+  if (detailLang === 'kk') return 'kk'
+  if (detailLang === 'uz') return 'uz'
+  if (detailLang === 'bg') return 'bg'
+  if (detailLang === 'sr') return 'sr'
+  if (detailLang === 'sw') return 'sw'
+  if (detailLang === 'af') return 'af'
   if (detailLang === 'ceb') return 'ceb'
   if (detailLang === 'ilo') return 'ilo'
   if (detailLang === 'bcl') return 'bcl'
@@ -530,7 +537,14 @@ export function CharacterBreakdownHost() {
     detailLang === 'fi' ||
     detailLang === 'sk' ||
     detailLang === 'hr' ||
-    detailLang === 'ca'
+    detailLang === 'ca' ||
+    detailLang === 'az' ||
+    detailLang === 'kk' ||
+    detailLang === 'uz' ||
+    detailLang === 'bg' ||
+    detailLang === 'sr' ||
+    detailLang === 'sw' ||
+    detailLang === 'af'
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
   const isLatinDetail =

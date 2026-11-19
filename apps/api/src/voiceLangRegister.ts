@@ -4,7 +4,8 @@
  * Switch to formal (respectful address, careful wording) when the source looks
  * official, legal, medical, or ceremonial. Shared by the Batch 2 voice langs
  * (te / gu / kn / pl / ro / cs / el / hu / sv / ru / uk / he / fa / ur) and
- * Batch 3a (ml / mr / pa / or / si / ne / da / nb / fi / sk / hr / ca); each
+ * Batch 3a (ml / mr / pa / or / si / ne / da / nb / fi / sk / hr / ca) and
+ * Batch 3b (az / kk / uz / bg / sr / sw / af); each
  * language module decides what "formal" means for its own address system.
  */
 export type SourceRegister = 'colloquial' | 'formal'
@@ -79,3 +80,12 @@ export function rejectOtherIndic(own: IndicBlock): RegExp {
     .join('')
   return new RegExp(`[${ranges}]`)
 }
+
+/** Cyrillic or Arabic script — Latin-script Azerbaijani / Uzbek output must contain neither. */
+export const CYRILLIC_OR_ARABIC_RE = /[\u0400-\u04FF\u0600-\u06FF]/
+/** Russian-only ы э ъ ё щ — Serbian Cyrillic never uses them. */
+export const SERBIAN_REJECT_RE = /[ЫыЭэЪъЁёЩщ]/
+/** Serbian / Macedonian ђ ј љ њ ћ џ and Russian-only ы э ё — Bulgarian Cyrillic uses none of them. */
+export const BULGARIAN_REJECT_RE = /[ЫыЭэЁёЂђЈјЉљЊњЋћЏџ]/
+/** Ukrainian ї є ґ and Serbian ђ ј љ њ ћ џ — Kazakh Cyrillic uses none of them. */
+export const KAZAKH_REJECT_RE = /[ЇїЄєҐґЂђЈјЉљЊњЋћЏџ]/

@@ -135,6 +135,13 @@ const CAMERA_LANGS: CameraLang[] = [
   'sk',
   'hr',
   'ca',
+  'az',
+  'kk',
+  'uz',
+  'bg',
+  'sr',
+  'sw',
+  'af',
   'ceb',
   'ilo',
   'bcl',
@@ -185,6 +192,16 @@ assert.equal(normalizeRegionLang('da-DK'), 'da')
 assert.equal(normalizeRegionLang('nb-NO'), 'nb')
 assert.equal(normalizeRegionLang('ca-ES'), 'ca')
 assert.equal(normalizeRegionLang('sichuan'), 'sichuan')
+assert.equal(normalizeRegionLang('az-AZ'), 'az')
+assert.equal(normalizeRegionLang('kk-KZ'), 'kk')
+assert.equal(normalizeRegionLang('uz-UZ'), 'uz')
+assert.equal(normalizeRegionLang('bg-BG'), 'bg')
+assert.equal(normalizeRegionLang('sr-RS'), 'sr')
+assert.equal(normalizeRegionLang('sr-Cyrl-RS'), 'sr')
+assert.equal(normalizeRegionLang('sw-KE'), 'sw')
+assert.equal(normalizeRegionLang('af-ZA'), 'af')
+assert.equal(normalizeRegionLang('sv-SE'), 'sv', 'sw / sr never swallow sv')
+assert.equal(normalizeRegionLang('fa-IR'), 'fa', 'af never swallows fa')
 
 const taWouldHaveBeenYue = regionToEditable({
   id: 'r',
@@ -219,6 +236,13 @@ for (const [to, translated] of [
   ['si', 'ආයුබෝවන්'],
   ['da', 'Hej'],
   ['ca', 'Hola'],
+  ['az', 'Salam'],
+  ['kk', 'Сәлем'],
+  ['uz', 'Salom'],
+  ['bg', 'Здравей'],
+  ['sr', 'Здраво'],
+  ['sw', 'Habari'],
+  ['af', 'Hallo'],
 ] as const) {
   const box = regionToEditable({
     id: 'r',

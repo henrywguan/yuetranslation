@@ -1,12 +1,12 @@
 /**
  * Polish / Romanian / Czech / Greek / Hungarian / Swedish / Danish / Norwegian (Bokmål) / Finnish /
- * Slovak / Croatian / Catalan Details helpers —
+ * Slovak / Croatian / Catalan / Azerbaijani / Uzbek / Swahili / Afrikaans Details helpers —
  * informal vs formal address chips + stress / orthography honesty.
  * Compact panes stay orthography only (Greek stays Greek script; no Greeklish / IPA / tone digits).
  */
 import { detectAddress, type AddressHit, type AddressRule } from './langFamilyAddress'
 
-export type EuroLang = 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca'
+export type EuroLang = 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'az' | 'uz' | 'sw' | 'af'
 
 export const EURO_HTML_LANG: Record<EuroLang, string> = {
   pl: 'pl-PL',
@@ -21,6 +21,10 @@ export const EURO_HTML_LANG: Record<EuroLang, string> = {
   sk: 'sk-SK',
   hr: 'hr-HR',
   ca: 'ca-ES',
+  az: 'az-AZ',
+  uz: 'uz-UZ',
+  sw: 'sw-KE',
+  af: 'af-ZA',
 }
 
 export const EURO_HONESTY_NOTE: Record<EuroLang, string> = {
@@ -36,6 +40,10 @@ export const EURO_HONESTY_NOTE: Record<EuroLang, string> = {
   sk: 'Slovak stress is always on the first syllable; the dĺžeň (á é í ó ú ý ŕ ĺ) marks vowel length, not stress, and ä ô ľ are Slovak-specific letters. Slovak is not Czech and is not tonal.',
   hr: 'Croatian spelling is phonetic (one letter, one sound); č ć đ š ž and dž are separate letters. It has a pitch accent that spelling does not mark — not lexical tone like Cantonese. Standard Croatian is written in Latin script.',
   ca: 'Catalan marks stress with accents (à è é í ò ó ú), uses ç, l·l and ny, and reduces vowels in unstressed syllables, so spelling is not always speech. Catalan is its own language, not Spanish, and is not tonal. tu is informal; vostè is formal.',
+  az: 'Azerbaijani is written here in Latin script with ə ç ğ ı ö ş ü (dotted İ and dotless I are different letters). It has vowel harmony and agglutinative suffixes, with stress usually on the last syllable. It is related to Turkish but is not Turkish, and it is not tonal. sən is informal; siz is formal / plural.',
+  uz: 'Uzbek is written here in Latin script (o‘ g‘ sh ch ng), not Cyrillic. It has agglutinative suffixes and stress usually on the last syllable. Uzbek is not tonal. sen is informal; siz is formal / plural.',
+  sw: 'Swahili is a Bantu language: nouns belong to classes (m-/wa-, ki-/vi-, …) and verbs agree with them. Spelling is phonetic and stress falls on the second-to-last syllable. Swahili is not tonal. wewe is singular “you”; nyinyi is plural “you”.',
+  af: 'Afrikaans grew out of Dutch with much simpler grammar: no grammatical gender and no verb endings by person. g sounds like a throaty “ch” and w like “v”; double negatives are normal. Afrikaans is not tonal. jy is informal “you”; u is formal.',
 }
 
 const RULES: Record<EuroLang, AddressRule[]> = {
@@ -86,6 +94,23 @@ const RULES: Record<EuroLang, AddressRule[]> = {
   ca: [
     { kind: 'tu', chip: 'tu', label: 'tu (informal)', forms: ['tu', 'teu', 'teva', 'teus', 'teves', 'ets'] },
     { kind: 'voste', chip: 'vostè', label: 'vostè (formal)', forms: ['vostè', 'vostès'] },
+  ],
+  az: [
+    { kind: 'sen', chip: 'sən', label: 'sən (informal)', forms: ['sən', 'səni', 'sənə', 'səndə', 'səndən', 'sənin'] },
+    { kind: 'siz', chip: 'siz', label: 'siz (formal / plural)', forms: ['siz', 'sizi', 'sizə', 'sizdə', 'sizdən', 'sizin'] },
+  ],
+  uz: [
+    { kind: 'sen', chip: 'sen', label: 'sen (informal)', forms: ['sen', 'seni', 'senga', 'sening', 'sendan', 'senda'] },
+    { kind: 'siz', chip: 'siz', label: 'siz (formal / plural)', forms: ['siz', 'sizni', 'sizga', 'sizning', 'sizdan', 'sizda'] },
+  ],
+  sw: [
+    { kind: 'wewe', chip: 'wewe', label: 'wewe (you, singular)', forms: ['wewe', 'yako', 'wako', 'zako', 'chako', 'vyako', 'lako', 'kwako'] },
+    { kind: 'nyinyi', chip: 'nyinyi', label: 'nyinyi (you, plural)', forms: ['nyinyi', 'yenu', 'wenu', 'zenu', 'chenu', 'vyenu', 'lenu', 'kwenu'] },
+  ],
+  af: [
+    { kind: 'jy', chip: 'jy', label: 'jy (informal)', forms: ['jy', 'jou', 'jouself'] },
+    { kind: 'u', chip: 'u', label: 'u (formal)', forms: ['u', 'uself'] },
+    { kind: 'julle', chip: 'julle', label: 'julle (plural “you”)', forms: ['julle', 'julleself'] },
   ],
 }
 

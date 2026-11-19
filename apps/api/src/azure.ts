@@ -104,6 +104,13 @@ export type SynthesizeOpts = {
   preferredSk?: string | null
   preferredHr?: string | null
   preferredCa?: string | null
+  preferredAz?: string | null
+  preferredKk?: string | null
+  preferredUz?: string | null
+  preferredBg?: string | null
+  preferredSr?: string | null
+  preferredSw?: string | null
+  preferredAf?: string | null
   /**
    * Azure SSML `volume="x-loud"` — Practice Partner and other “fill the room”
    * surfaces. Cached separately from normal clips.
@@ -221,6 +228,13 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
     opts.preferredSk,
     opts.preferredHr,
     opts.preferredCa,
+    opts.preferredAz,
+    opts.preferredKk,
+    opts.preferredUz,
+    opts.preferredBg,
+    opts.preferredSr,
+    opts.preferredSw,
+    opts.preferredAf,
   )
   // Practice Partner / explicit loud mode. Do not special-case fil-PH: Azure
   // Neural `x-loud` is a no-op there; use per-lang equalize volumes instead.

@@ -11,7 +11,7 @@ export function appleNeedsAzureStt(lockLang?: Lang | null): boolean {
 }
 
 /**
- * iPhone live STT stays on Web Speech for Yue / En / Cmn / Es / Vi / Th / Lo / Ko / Ja / Id / Ms / Pt / Fr / Hi / Km / My / Jv / It / De / Nl / Ar / Arsa / Ta / Ptpt / Tr / Bn / Te / Gu / Kn / Pl / Ro / Cs / El / Hu / Sv / Ru / Uk / He / Fa / Ur / Ml / Mr / Pa / Or / Si / Ne / Da / Nb / Fi / Sk / Hr / Ca.
+ * iPhone live STT stays on Web Speech for Yue / En / Cmn / Es / Vi / Th / Lo / Ko / Ja / Id / Ms / Pt / Fr / Hi / Km / My / Jv / It / De / Nl / Ar / Arsa / Ta / Ptpt / Tr / Bn / Te / Gu / Kn / Pl / Ro / Cs / El / Hu / Sv / Ru / Uk / He / Fa / Ur / Ml / Mr / Pa / Or / Si / Ne / Da / Nb / Fi / Sk / Hr / Ca / Az / Kk / Uz / Bg / Sr / Sw / Af.
  * Tagalog + Shanghainese + Sichuanese use Azure fixed-locale instead (see above).
  */
 export function appleLiveUsesWebSpeech(lockLang?: Lang | null): boolean {

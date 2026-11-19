@@ -4,7 +4,7 @@
  * (DETAIL_PEDAGOGY.localOffline === true).
  *
  * Batch 1: ta, bn · Batch 2: te, gu, kn, el, ru, uk, he, fa, ur
- * Batch 3a: ml, mr, pa, or, si, ne
+ * Batch 3a: ml, mr, pa, or, si, ne · Batch 3b (Cyrillic): kk, bg, sr
  * (Latin Batch langs use `localLatinBreakdown` instead.)
  */
 import type { CharBreakdown } from './jyutping'
@@ -28,6 +28,9 @@ export type ScriptDetailLang =
   | 'or'
   | 'si'
   | 'ne'
+  | 'kk'
+  | 'bg'
+  | 'sr'
 
 const TOKEN_RE: Record<ScriptDetailLang, RegExp> = {
   ta: /[\u0B80-\u0BFF]+|[0-9]+|[^\s\u0B80-\u0BFF0-9]+/g,
@@ -47,6 +50,9 @@ const TOKEN_RE: Record<ScriptDetailLang, RegExp> = {
   or: /[\u0B00-\u0B7F]+|[0-9]+|[^\s\u0B00-\u0B7F0-9]+/g,
   si: /[\u0D80-\u0DFF]+|[0-9]+|[^\s\u0D80-\u0DFF0-9]+/g,
   ne: /[\u0900-\u0963\u0966-\u097F]+|[0-9]+|[^\s\u0900-\u0963\u0966-\u097F0-9]+/g,
+  kk: /[\u0400-\u04FF]+|[0-9]+|[^\s\u0400-\u04FF0-9]+/g,
+  bg: /[\u0400-\u04FF]+|[0-9]+|[^\s\u0400-\u04FF0-9]+/g,
+  sr: /[\u0400-\u04FF]+|[0-9]+|[^\s\u0400-\u04FF0-9]+/g,
 }
 
 function punctMeaning(tok: string): string {
@@ -75,7 +81,10 @@ export function isScriptDetailLang(lang: Lang | string | null | undefined): lang
     lang === 'pa' ||
     lang === 'or' ||
     lang === 'si' ||
-    lang === 'ne'
+    lang === 'ne' ||
+    lang === 'kk' ||
+    lang === 'bg' ||
+    lang === 'sr'
   )
 }
 

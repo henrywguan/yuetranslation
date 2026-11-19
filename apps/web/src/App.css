@@ -5295,7 +5295,7 @@ button.turkish-activate {
 }
 
 /* Batch 2 families (LangFamilyText) — native script / orthography on compact; Details add reading + address + honesty.
-   Indic te/gu/kn (+3a ml/mr/pa/or/si/ne) · Euro pl/ro/cs/el/hu/sv (+3a da/nb/fi/sk/hr/ca) · Cyrillic ru/uk · RTL he/fa/ur (Arabic-style chrome). */
+   Indic te/gu/kn (+3a ml/mr/pa/or/si/ne) · Euro pl/ro/cs/el/hu/sv (+3a da/nb/fi/sk/hr/ca, +3b az/uz/sw/af) · Cyrillic ru/uk (+3b kk/bg/sr) · RTL he/fa/ur (Arabic-style chrome). */
 .lang-family-block {
   display: inline-flex;
   flex-direction: column;

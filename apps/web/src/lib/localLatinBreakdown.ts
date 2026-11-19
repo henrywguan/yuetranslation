@@ -1,14 +1,19 @@
 /**
- * Offline token breakdown for Latin-script langs (en / tl / es / vi / id / ms / pt / ptpt / fr / jv / it / de / nl / tr / pl / ro / cs / hu / sv / ceb / ilo / bcl).
+ * Offline token breakdown for Latin-script langs (en / tl / es / vi / id / ms / pt / ptpt / fr / jv / it / de / nl / tr / pl / ro / cs / hu / sv / da / nb / fi / sk / hr / ca / az / uz / sw / af / ceb / ilo / bcl).
  * Used when /api/breakdown is slow, metered, or offline — prevents an empty details panel.
  */
 import type { CharBreakdown } from './jyutping'
 import type { Lang } from './types'
 
+// Includes IPA-extension letters (ə U+0259 for Azerbaijani) and the apostrophe variants Uzbek uses (o‘ g‘ / o' g').
+const LATIN_LETTERS = 'A-Za-zÀ-ÖØ-öø-ÿĀ-ſƀ-ɏɐ-ʯḀ-ỿ'
+const LATIN_TOKEN_RE = new RegExp(
+  `[${LATIN_LETTERS}]+(?:['\u2018\u2019\u02BB\u02BC][${LATIN_LETTERS}]+)?|[0-9]+|[^\\s${LATIN_LETTERS}0-9]+`,
+  'g',
+)
+
 function tokenizeLatin(text: string): string[] {
-  const matches = text.match(
-    /[A-Za-zÀ-ÖØ-öø-ÿĀ-ſƀ-ɏḀ-ỿ]+(?:['\u2019][A-Za-zÀ-ÖØ-öø-ÿĀ-ſƀ-ɏḀ-ỿ]+)?|[0-9]+|[^\sA-Za-zÀ-ÖØ-öø-ÿĀ-ſƀ-ɏḀ-ỿ0-9]+/g,
-  )
+  const matches = text.match(LATIN_TOKEN_RE)
   return (matches || []).filter((t) => t.trim())
 }
 
@@ -33,7 +38,7 @@ export function buildLocalLatinBreakdown(
   const gloss = (opts?.phraseGloss || '').trim()
 
   return tokens.map((tok) => {
-    if (/^[^\p{L}\p{N}\u2019']+$/u.test(tok)) {
+    if (/^[^\p{L}\p{N}\u2018\u2019\u02BB\u02BC']+$/u.test(tok)) {
       return { char: tok, jyutping: null, meaning: punctMeaning(tok) }
     }
     return {
@@ -72,6 +77,10 @@ export function isLatinDetailLang(lang: Lang): boolean {
     lang === 'sk' ||
     lang === 'hr' ||
     lang === 'ca' ||
+    lang === 'az' ||
+    lang === 'uz' ||
+    lang === 'sw' ||
+    lang === 'af' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'

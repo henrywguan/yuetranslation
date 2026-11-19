@@ -75,6 +75,13 @@ const SAMPLES = [
   { lang: 'sk', voice: 'sk-SK-ViktoriaNeural', xmlLang: 'sk-SK', text: 'Ahoj — toto je tvoj slovenský hlas.' },
   { lang: 'hr', voice: 'hr-HR-GabrijelaNeural', xmlLang: 'hr-HR', text: 'Bok — ovo je tvoj hrvatski glas.' },
   { lang: 'ca', voice: 'ca-ES-JoanaNeural', xmlLang: 'ca-ES', text: 'Hola — aquesta és la teva veu en català.' },
+  { lang: 'az', voice: 'az-AZ-BanuNeural', xmlLang: 'az-AZ', text: 'Salam — bu sənin Azərbaycan səsindir.' },
+  { lang: 'kk', voice: 'kk-KZ-AigulNeural', xmlLang: 'kk-KZ', text: 'Сәлем — бұл сіздің қазақ тіліндегі дауысыңыз.' },
+  { lang: 'uz', voice: 'uz-UZ-MadinaNeural', xmlLang: 'uz-UZ', text: 'Salom — bu sizning o‘zbek tilidagi ovozingiz.' },
+  { lang: 'bg', voice: 'bg-BG-KalinaNeural', xmlLang: 'bg-BG', text: 'Здравей — това е твоят български глас.' },
+  { lang: 'sr', voice: 'sr-RS-SophieNeural', xmlLang: 'sr-RS', text: 'Здраво — ово је ваш српски глас.' },
+  { lang: 'sw', voice: 'sw-KE-ZuriNeural', xmlLang: 'sw-KE', text: 'Habari — hii ni sauti yako ya Kiswahili.' },
+  { lang: 'af', voice: 'af-ZA-AdriNeural', xmlLang: 'af-ZA', text: 'Hallo — dit is jou Afrikaanse stem.' },
 ]
 
 function escapeXml(s) {

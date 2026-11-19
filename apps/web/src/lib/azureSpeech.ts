@@ -139,7 +139,7 @@ function localeToLang(locale: string): Lang {
   if (l.startsWith('he')) return 'he'
   if (l.startsWith('fa')) return 'fa'
   if (l.startsWith('ur')) return 'ur'
-  // Batch 3a: exact / hyphen-boundary matches (sichuan is already handled above; fil-PH stays tl).
+  // Batch 3a/3b: exact / hyphen-boundary matches (sichuan is already handled above; fil-PH stays tl).
   if (l === 'ml' || l.startsWith('ml-')) return 'ml'
   if (l === 'mr' || l.startsWith('mr-')) return 'mr'
   if (l === 'pa' || l.startsWith('pa-')) return 'pa'
@@ -152,6 +152,13 @@ function localeToLang(locale: string): Lang {
   if (l === 'sk' || l.startsWith('sk-')) return 'sk'
   if (l === 'hr' || l.startsWith('hr-')) return 'hr'
   if (l === 'ca' || l.startsWith('ca-')) return 'ca'
+  if (l === 'az' || l.startsWith('az-')) return 'az'
+  if (l === 'kk' || l.startsWith('kk-')) return 'kk'
+  if (l === 'uz' || l.startsWith('uz-')) return 'uz'
+  if (l === 'bg' || l.startsWith('bg-')) return 'bg'
+  if (l === 'sr' || l.startsWith('sr-')) return 'sr'
+  if (l === 'sw' || l.startsWith('sw-')) return 'sw'
+  if (l === 'af' || l.startsWith('af-')) return 'af'
   // Generic zh without region — prefer Cantonese for HK product default.
   if (l.startsWith('zh')) return 'yue'
   return 'en'
@@ -213,6 +220,13 @@ function langToLocale(lang: Lang): string {
   if (lang === 'sk') return 'sk-SK'
   if (lang === 'hr') return 'hr-HR'
   if (lang === 'ca') return 'ca-ES'
+  if (lang === 'az') return 'az-AZ'
+  if (lang === 'kk') return 'kk-KZ'
+  if (lang === 'uz') return 'uz-UZ'
+  if (lang === 'bg') return 'bg-BG'
+  if (lang === 'sr') return 'sr-RS'
+  if (lang === 'sw') return 'sw-KE'
+  if (lang === 'af') return 'af-ZA'
   return 'en-US'
 }
 
