@@ -9,6 +9,28 @@
   overflow: hidden;
 }
 
+/* Whole Inbox chrome (tiles → agents) scrolls inside the drawer — project panel
+ * must not clip outside the sidebar. */
+.inbox-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.inbox-band {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-height: 0;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--ds-divider);
+}
+
 .inbox-header {
   display: flex;
   align-items: center;
@@ -41,10 +63,16 @@
   flex-shrink: 0;
 }
 
-.inbox-header-new:hover {
+.inbox-header-new:hover:not(:disabled) {
   border-color: var(--ds-blue-soft-border);
   background: var(--ds-blue-soft);
   color: var(--ds-blue);
+}
+
+.inbox-header-new:disabled,
+.inbox-section-add:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .inbox-search {
@@ -296,7 +324,6 @@
   gap: 0.25rem;
   min-height: 0;
   flex: 1 1 auto;
-  overflow: auto;
 }
 
 .inbox-agents-label {
@@ -386,6 +413,12 @@
   color: var(--ds-blue);
 }
 
+.inbox-new-chat--quiet {
+  border-style: dashed;
+  font-weight: 500;
+  color: var(--ds-text-2);
+}
+
 .inbox-workspace-kind {
   font-size: 0.625rem;
   font-weight: 700;
@@ -400,6 +433,11 @@
   border-radius: 0.7rem;
   border: 1px solid var(--ds-divider);
   background: var(--ds-canvas);
+  min-height: 0;
+  max-height: min(42vh, 22rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  flex: 0 1 auto;
 }
 
 .inbox-project-actions {
@@ -416,12 +454,10 @@
   margin-bottom: 0.35rem;
 }
 
-.inbox-memory textarea {
+.inbox-memory textarea,
+.inbox-memory input[type='text'] {
   width: 100%;
   box-sizing: border-box;
-  resize: vertical;
-  min-height: 3.5rem;
-  max-height: 8rem;
   border: 1px solid var(--ds-divider);
   border-radius: 0.55rem;
   padding: 0.45rem 0.55rem;
@@ -432,7 +468,14 @@
   color: var(--ds-text);
 }
 
-.inbox-memory textarea:focus {
+.inbox-memory textarea {
+  resize: vertical;
+  min-height: 3.5rem;
+  max-height: 8rem;
+}
+
+.inbox-memory textarea:focus,
+.inbox-memory input[type='text']:focus {
   outline: 2px solid color-mix(in srgb, var(--ds-blue) 35%, transparent);
   outline-offset: 1px;
 }

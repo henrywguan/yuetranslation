@@ -109,15 +109,36 @@ assert.match(page, /InboxShell/, 'AUI page mounts InboxShell')
 assert.match(page, /ChatInboxProvider/, 'Inbox provider wraps runtime')
 assert.match(page, /aria-label="Inbox"/, 'sidebar labeled Inbox')
 assert.match(page, /Classic chat UI/, 'classic toggle preserved')
+assert.match(
+  page,
+  /Classic chat UI[\s\S]*Back to app/,
+  'Back to app sits under Classic chat UI in sidebar foot',
+)
+const auiShellFn = page.slice(page.indexOf('function AuiShell'), page.indexOf('function GateShell'))
+assert.doesNotMatch(
+  auiShellFn,
+  /ds-chat-top[\s\S]*aria-label="Back to app"/,
+  'AuiShell top bar no longer hosts Back to app',
+)
+assert.match(auiShellFn, /is-inbox-collapsed|Collapse inbox|Open inbox/, 'menu toggles Inbox open/closed')
 
 const shell = readFileSync(join(root, 'pages/chat/inbox/InboxShell.tsx'), 'utf8')
 assert.match(shell, /FilterTiles/, 'filter tiles')
 assert.match(shell, /ProjectList/, 'projects list')
 assert.match(shell, /ProjectPanel/, 'overseer project panel')
+assert.match(shell, /ProjectDraftPanel/, 'draft new-project panel')
+assert.match(shell, /createDisabled|draftOpen/, 'new-project + gated while draft open')
+assert.match(shell, /collapseProjects|setActiveProjectId\(null\)/, 'Projects chevron closes panel')
+assert.match(shell, /inbox-band/, 'Inbox/Projects/Workspaces section bands')
 assert.match(shell, /WorkspaceList/, 'workspaces list')
 assert.match(shell, /spawnWorker|Spawn worker/, 'spawn worker action')
 assert.match(shell, /createChatSandbox/, 'Inbox creates internal sandboxes via API')
 assert.match(shell, /All Agents|needs_attention|in_review/, 'tile filter ids used')
+
+const inboxCss = readFileSync(join(root, 'pages/chat/inbox/Inbox.css'), 'utf8')
+assert.match(inboxCss, /\.inbox-scroll/, 'inbox body scrolls inside drawer')
+assert.match(inboxCss, /\.inbox-band/, 'horizontal separators between Inbox bands')
+assert.match(inboxCss, /\.inbox-project-panel[\s\S]*max-height/, 'project panel capped inside drawer')
 
 const tiles = readFileSync(join(root, 'pages/chat/inbox/FilterTiles.tsx'), 'utf8')
 assert.match(tiles, /All Agents/)
@@ -130,6 +151,11 @@ assert.match(runtime, /inboxRole/, 'runtime forwards inbox role')
 assert.match(runtime, /projectMemory/, 'runtime forwards project memory')
 assert.match(runtime, /sandboxSessionId/, 'runtime forwards sandbox session')
 assert.match(runtime, /needs_attention/, 'turn end marks Needs Attention')
+assert.match(
+  runtime,
+  /!live\.length[\s\S]*emptyThread\(\)/,
+  'clearing last live agents opens a fresh empty thread',
+)
 
 const api = readFileSync(join(here, 'api.ts'), 'utf8')
 assert.match(api, /inboxRole/, 'web API client sends inboxRole')

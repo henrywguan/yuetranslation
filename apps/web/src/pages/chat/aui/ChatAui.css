@@ -13,6 +13,45 @@
   min-width: 0;
 }
 
+/* Inbox chrome: menu toggles sidebar on desktop too (classic hid the button). */
+@media (min-width: 900px) {
+  .ds-chat.aui-chat .ds-chat-menu-btn {
+    display: grid;
+  }
+
+  .ds-chat.aui-chat .ds-chat-sidebar-backdrop {
+    display: none;
+  }
+
+  .ds-chat.aui-chat .ds-chat-sidebar {
+    position: relative;
+    transform: none;
+    width: var(--ds-sidebar-w);
+    flex: 0 0 var(--ds-sidebar-w);
+    max-width: var(--ds-sidebar-w);
+    transition:
+      flex-basis 0.2s ease,
+      width 0.2s ease,
+      max-width 0.2s ease,
+      padding 0.2s ease,
+      opacity 0.15s ease,
+      border-color 0.15s ease;
+    overflow: hidden;
+  }
+
+  .ds-chat.aui-chat.is-inbox-collapsed .ds-chat-sidebar,
+  .ds-chat.aui-chat .ds-chat-sidebar:not(.is-open) {
+    flex-basis: 0;
+    width: 0;
+    max-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-right-color: transparent;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
 .aui-sr-only {
   position: absolute;
   width: 1px;
@@ -58,7 +97,7 @@
   overflow: auto;
 }
 
-/* InboxShell owns scroll inside `.inbox-agents` — nested list should not steal flex. */
+/* InboxShell scrolls via `.inbox-scroll` — nested thread list should not steal flex. */
 .inbox-agents .aui-thread-list {
   flex: 0 1 auto;
   overflow: visible;

@@ -440,26 +440,52 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     (id: string) => {
       stopGeneration()
       setThreads((prev) => {
-        const next = deleteChatThread(id, prev.filter((t) => t.id !== BOOT_THREAD.id))
-        if (!next.length) {
+        const withoutBoot = prev.filter((t) => t.id !== BOOT_THREAD.id)
+        const next = deleteChatThread(id, withoutBoot)
+        const live = next.filter((t) => !t.archived)
+        // Clearing the last active agent → fresh empty new-chat window (no leftover messages).
+        if (!live.length) {
           const created = emptyThread()
           setActiveId(created.id)
-          return [created]
+          activeIdRef.current = created.id
+          return [created, ...next]
         }
-        if (activeIdRef.current === id) setActiveId(next[0]!.id)
+        if (activeIdRef.current === id) {
+          setActiveId(live[0]!.id)
+          activeIdRef.current = live[0]!.id
+        }
         return next
       })
     },
     [stopGeneration],
   )
 
-  const archiveThread = useCallback((id: string, archived: boolean) => {
-    setThreads((prev) => {
-      const cur = prev.find((t) => t.id === id)
-      if (!cur) return prev
-      return upsertChatThread(setChatThreadArchived(cur, archived), prev)
-    })
-  }, [])
+  const archiveThread = useCallback(
+    (id: string, archived: boolean) => {
+      setThreads((prev) => {
+        const withoutBoot = prev.filter((t) => t.id !== BOOT_THREAD.id)
+        const cur = withoutBoot.find((t) => t.id === id)
+        if (!cur) return prev
+        const next = upsertChatThread(setChatThreadArchived(cur, archived), withoutBoot)
+        const live = next.filter((t) => !t.archived)
+        if (archived) {
+          // Archiving the last live agent (or the active one with none left) → empty new chat.
+          if (!live.length) {
+            const created = emptyThread()
+            setActiveId(created.id)
+            activeIdRef.current = created.id
+            return [created, ...next]
+          }
+          if (activeIdRef.current === id) {
+            setActiveId(live[0]!.id)
+            activeIdRef.current = live[0]!.id
+          }
+        }
+        return next
+      })
+    },
+    [],
+  )
 
   const runAssistant = useCallback(
     async (baseThread: ChatThread, fileIds?: string[]) => {

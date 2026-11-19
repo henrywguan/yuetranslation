@@ -9,6 +9,56 @@ const STATUS_LABEL: Record<string, string> = {
   done: 'Done',
 }
 
+export function ProjectDraftPanel({
+  title,
+  onTitleChange,
+  onConfirm,
+  onCancel,
+}: {
+  title: string
+  onTitleChange: (title: string) => void
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <section className="inbox-section inbox-project-panel" aria-label="New project draft">
+      <div className="inbox-section-head">
+        <span className="inbox-section-toggle" style={{ cursor: 'default' }}>
+          New project
+        </span>
+      </div>
+      <label className="inbox-memory">
+        <span className="inbox-agents-label">Name</span>
+        <input
+          type="text"
+          value={title}
+          placeholder="Project name"
+          autoFocus
+          onChange={(e) => onTitleChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              onConfirm()
+            }
+            if (e.key === 'Escape') {
+              e.preventDefault()
+              onCancel()
+            }
+          }}
+        />
+      </label>
+      <div className="inbox-project-actions">
+        <button type="button" className="inbox-new-chat" onClick={onConfirm}>
+          Create project
+        </button>
+        <button type="button" className="inbox-new-chat inbox-new-chat--quiet" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </section>
+  )
+}
+
 export function ProjectPanel({
   project,
   agents,
