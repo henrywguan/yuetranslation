@@ -858,6 +858,8 @@ export type DeepseekChatStreamHandlers = {
   search?: boolean
   /** Harness mode — workspace tools + prompt nudge. */
   harness?: boolean
+  /** Composer Agent / Ask / Plan (Ask & Plan are read-only on the server). */
+  chatMode?: 'agent' | 'ask' | 'plan'
   /** Thread workspace snapshot when harness is on. */
   workspace?: {
     files: Array<{ id?: string; path: string; mime?: string; text?: string; updatedAt?: number }>
@@ -1074,6 +1076,11 @@ export async function streamDeepseekChat(
       thinking: handlers.thinking !== false,
       search: handlers.search === true,
       ...(handlers.harness === true ? { harness: true } : null),
+      ...(handlers.chatMode === 'ask' || handlers.chatMode === 'plan'
+        ? { chatMode: handlers.chatMode }
+        : handlers.chatMode === 'agent'
+          ? { chatMode: 'agent' }
+          : null),
       ...(handlers.harness === true && handlers.workspace?.files?.length
         ? { workspace: handlers.workspace }
         : null),

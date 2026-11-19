@@ -38,6 +38,46 @@ assert.ok(
   ),
   'Harness mode declares workspace_write',
 )
+const askHarness = buildDeepseekChatToolList(false, [], true, true, true, 'ask')
+assert.ok(
+  askHarness.some(
+    (t) => (t as { function?: { name?: string } }).function?.name === 'workspace_list',
+  ),
+  'Ask keeps workspace_list',
+)
+assert.ok(
+  !askHarness.some(
+    (t) => (t as { function?: { name?: string } }).function?.name === 'workspace_write',
+  ),
+  'Ask strips workspace_write',
+)
+assert.ok(
+  !askHarness.some(
+    (t) => (t as { function?: { name?: string } }).function?.name === 'sandbox_write',
+  ),
+  'Ask strips sandbox_write',
+)
+assert.ok(
+  !askHarness.some(
+    (t) => (t as { function?: { name?: string } }).function?.name === 'project_create_agent',
+  ),
+  'Ask strips project_create_agent',
+)
+const planTools = buildDeepseekChatToolList(false, [], true, false, true, 'plan')
+assert.ok(
+  !planTools.some(
+    (t) => (t as { function?: { name?: string } }).function?.name === 'project_message_agent',
+  ),
+  'Plan strips project_message_agent',
+)
+assert.match(
+  readFileSync(
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChat.ts'),
+    'utf8',
+  ),
+  /chatMode:\s*z\.enum\(\['agent',\s*'ask',\s*'plan'\]\)/,
+  'Body schema accepts chatMode',
+)
 
 const withSearch = buildDeepseekChatToolList(true)
 if (deepseekChatSupportsNativeWebTools()) {
@@ -179,6 +219,7 @@ assert.match(routes, /streamDeepseekChatHarness/, 'Routes use unified harness')
 assert.match(routes, /searchStep/, 'Routes forward search step cards')
 assert.match(routes, /contentReplace/, 'Routes forward citation content_replace')
 assert.match(routes, /primaryLang/, 'Routes accept primaryLang metadata')
+assert.match(routes, /chatMode/, 'Routes forward chatMode')
 assert.doesNotMatch(routes, /chat_refusal/, 'Routes must not surface content-safety refusals')
 assert.match(routes, /harnessEmitted/, 'Partial harness streams do not concatenate fallbacks')
 assert.match(routes, /workspace:\s*\{\s*files/, 'Routes forward workspace SSE')

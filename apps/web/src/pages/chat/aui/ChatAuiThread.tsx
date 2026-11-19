@@ -9,22 +9,40 @@ import {
   useMessagePartReasoning,
   useMessagePartText,
 } from '@assistant-ui/react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChatDictateButton } from '../../../components/ChatDictateButton'
 import { ChatPluginKeysModal } from '../../../components/ChatPluginKeysModal'
 import { ChatSourcesList } from '../../../components/ChatShellExtras'
 import { DeepSeekMark } from '../../../components/DeepSeekMark'
 import { SpeakButton } from '../../../components/SpeakButton'
 import type { DeepseekChatPluginKeyId } from '../../../lib/api'
+import {
+  applyMentionInsert,
+  buildChatMentionItems,
+  detectAtQuery,
+  type ChatMentionItem,
+} from '../../../lib/chatComposerContext'
 import { consumeChatPrefill } from '../../../lib/chatExport'
 import {
   LIVE_REASONING_PAINT,
   type ChatSearchStep,
   type ChatSource,
 } from '../../../lib/chatHistory'
-import { CHAT_EMPTY_SUGGESTIONS } from '../../../lib/chatUiPrefs'
+import {
+  agentForThread,
+  projectNestedViews,
+  buildAgentViews,
+} from '../../../lib/chatInbox'
+import {
+  CHAT_COMPOSER_MODE_LABEL,
+  CHAT_COMPOSER_MODES,
+  CHAT_EMPTY_SUGGESTIONS,
+  type ChatComposerMode,
+} from '../../../lib/chatUiPrefs'
 import { chatSpeakLang, mergeDictateText } from '../../../lib/chatVoice'
 import { renderChatMarkdown } from '../../../lib/renderChatMarkdown'
+import { useChatInboxContextOptional } from '../inbox/ChatInboxContext'
+import { StatusChip } from '../inbox/StatusChip'
 import { useChatAuiSession } from './ChatAuiRuntime'
 
 const SUGGESTIONS = CHAT_EMPTY_SUGGESTIONS
@@ -225,6 +243,97 @@ function EditComposer() {
 /** @deprecated Phase A Inbox — use `InboxShell` from `pages/chat/inbox/InboxShell`. */
 export { InboxShell as ChatAuiSidebar } from '../inbox/InboxShell'
 
+/** In-thread Project agents (Overseer + workers) — jump without leaving the composer. */
+function ProjectAgentStrip() {
+  const inbox = useChatInboxContextOptional()
+  const { activeId, busy, selectThread, threads } = useChatAuiSession()
+  const projectAgents = useMemo(() => {
+    if (!inbox?.ready) return []
+    const linked = agentForThread(inbox.state, activeId)
+    let projectId = linked?.projectId || null
+    if (!projectId) {
+      const hit = inbox.state.projects.find((p) => p.threadIds.includes(activeId))
+      projectId = hit?.id || null
+    }
+    if (!projectId) return []
+    const views = buildAgentViews({
+      agents: inbox.state.agents,
+      projects: inbox.state.projects,
+      threads: threads.map((t) => ({ id: t.id, title: t.title, archived: t.archived })),
+      busy,
+      activeId,
+    })
+    return projectNestedViews(views, projectId).filter(
+      (v) => v.role === 'overseer' || v.role === 'worker',
+    )
+  }, [activeId, busy, inbox, threads])
+
+  if (!projectAgents.length) return null
+
+  return (
+    <div className="aui-agent-strip" role="toolbar" aria-label="Project agents">
+      {projectAgents.map((a) => {
+        const active = a.threadId === activeId
+        const roleLabel = a.role === 'overseer' ? 'Overseer' : 'Worker'
+        return (
+          <button
+            key={a.id}
+            type="button"
+            className={`aui-agent-chip${active ? ' is-active' : ''}${a.role === 'overseer' ? ' is-overseer' : ''}`}
+            aria-current={active ? 'true' : undefined}
+            title={`${roleLabel}: ${a.title}`}
+            onClick={() => {
+              if (a.threadId && a.threadId !== activeId) selectThread(a.threadId)
+            }}
+          >
+            <span className="aui-agent-chip-role">{roleLabel}</span>
+            <span className="aui-agent-chip-title">{a.title}</span>
+            <StatusChip status={a.status} />
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function AtMentionMenu({
+  items,
+  onPick,
+  onClose,
+}: {
+  items: ChatMentionItem[]
+  onPick: (item: ChatMentionItem) => void
+  onClose: () => void
+}) {
+  if (!items.length) return null
+  return (
+    <div className="aui-at-menu" role="listbox" aria-label="Insert context">
+      <div className="aui-at-menu-head">
+        <span>Context</span>
+        <button type="button" className="aui-at-menu-close" onClick={onClose} aria-label="Close">
+          ×
+        </button>
+      </div>
+      <ul className="aui-at-menu-list">
+        {items.map((item) => (
+          <li key={item.id}>
+            <button
+              type="button"
+              role="option"
+              className="aui-at-item"
+              onClick={() => onPick(item)}
+            >
+              <span className={`aui-at-kind is-${item.kind}`}>{item.kind}</span>
+              <span className="aui-at-label">{item.label}</span>
+              {item.hint ? <small>{item.hint}</small> : null}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 function ComposerChrome() {
   const aui = useAui()
   const draft = useAuiState((s) => s.composer.text)
@@ -233,11 +342,16 @@ function ComposerChrome() {
   const [pluginsOpen, setPluginsOpen] = useState(false)
   const [keysOpen, setKeysOpen] = useState(false)
   const [keysFocusId, setKeysFocusId] = useState<DeepseekChatPluginKeyId | null>(null)
+  const [atOpen, setAtOpen] = useState(false)
+  const inbox = useChatInboxContextOptional()
   const {
     deepThink,
     setDeepThink,
     searchOn,
     setSearchOn,
+    composerMode,
+    setComposerMode,
+    buildFromPlan,
     richLayout,
     setRichLayout,
     harnessOn,
@@ -258,6 +372,9 @@ function ComposerChrome() {
     pluginKeyHints,
     refreshPlugins,
     setError,
+    activeWorkspace,
+    threads,
+    activeId,
   } = useChatAuiSession()
 
   // Solo / Conversation handoff — classic ChatPage already consumed this; AUI is default.
@@ -265,6 +382,34 @@ function ComposerChrome() {
     const prefill = consumeChatPrefill()
     if (prefill) aui.composer.setText(prefill)
   }, [aui.composer])
+
+  const atMatch = detectAtQuery(draft)
+  const mentionItems = useMemo(() => {
+    if (!atMatch) return []
+    return buildChatMentionItems({
+      workspace: activeWorkspace,
+      workspaces: inbox?.state.workspaces,
+      threads: threads.map((t) => ({ id: t.id, title: t.title, archived: t.archived })),
+      agents: inbox?.state.agents,
+      activeThreadId: activeId,
+      query: atMatch.query,
+      limit: 20,
+    })
+  }, [activeId, activeWorkspace, atMatch, inbox?.state.agents, inbox?.state.workspaces, threads])
+
+  useEffect(() => {
+    setAtOpen(Boolean(atMatch && mentionItems.length))
+  }, [atMatch, mentionItems.length])
+
+  useEffect(() => {
+    if (composerMode !== 'agent') setPluginsOpen(false)
+  }, [composerMode])
+
+  const pickMention = (item: ChatMentionItem) => {
+    if (!atMatch) return
+    aui.composer.setText(applyMentionInsert(draft, atMatch.start, item.insert))
+    setAtOpen(false)
+  }
 
   const fallbackPlugins = [
     {
@@ -292,8 +437,44 @@ function ComposerChrome() {
   const installed = catalog.filter((p) => !official.includes(p))
 
   return (
-    <ComposerPrimitive.Root className={`aui-composer${harnessOn ? ' is-harness' : ''}`}>
-      <div className="aui-composer-toggles">
+    <ComposerPrimitive.Root
+      className={`aui-composer${harnessOn ? ' is-harness' : ''} is-mode-${composerMode}`}
+    >
+      <ProjectAgentStrip />
+      <div className="aui-composer-modes" role="group" aria-label="Composer mode">
+        {CHAT_COMPOSER_MODES.map((mode: ChatComposerMode) => (
+          <button
+            key={mode}
+            type="button"
+            className={`aui-mode${composerMode === mode ? ' is-on' : ''}`}
+            aria-pressed={composerMode === mode}
+            disabled={busy}
+            title={
+              mode === 'ask'
+                ? 'Ask — read-only, no sandbox writes'
+                : mode === 'plan'
+                  ? 'Plan — research then Build with Overseer'
+                  : 'Agent — tools on'
+            }
+            onClick={() => setComposerMode(mode)}
+          >
+            {CHAT_COMPOSER_MODE_LABEL[mode]}
+          </button>
+        ))}
+        {composerMode === 'plan' ? (
+          <button
+            type="button"
+            className="aui-mode-build"
+            disabled={busy}
+            title="Switch to Agent and hand the plan to Overseer / workers"
+            onClick={() => void buildFromPlan()}
+          >
+            Build
+          </button>
+        ) : null}
+      </div>
+      <div className="aui-composer-toggles" aria-label="Tools">
+        <span className="aui-tools-label">Tools</span>
         <button
           type="button"
           className={`aui-toggle${deepThink ? ' is-on' : ''}`}
@@ -336,13 +517,20 @@ function ComposerChrome() {
           type="button"
           className={`aui-toggle${pluginsOpen || enabledPlugins.length ? ' is-on' : ''}`}
           aria-pressed={pluginsOpen}
-          disabled={busy}
+          disabled={busy || composerMode !== 'agent'}
+          title={
+            composerMode !== 'agent'
+              ? 'Plugins available in Agent mode'
+              : 'Plugins'
+          }
           onClick={() => setPluginsOpen((v) => !v)}
         >
           Plugins{enabledPlugins.length ? ` · ${enabledPlugins.length}` : ''}
         </button>
         {thinking ? <span className="aui-status">Thinking…</span> : null}
         {searching ? <span className="aui-status">Searching…</span> : null}
+        {composerMode === 'ask' ? <span className="aui-status">Ask · read-only</span> : null}
+        {composerMode === 'plan' ? <span className="aui-status">Plan · then Build</span> : null}
       </div>
 
       {/* Plugins strip is Plugins-toggle only — Harness must not force it open. */}
@@ -435,64 +623,92 @@ function ComposerChrome() {
         </ul>
       ) : null}
 
-      <div className="aui-composer-row">
-        <input
-          ref={fileInputRef}
-          type="file"
-          hidden
-          onChange={(e) => void pickFile(e.target.files?.[0] || null)}
-        />
-        <input
-          ref={ocrInputRef}
-          type="file"
-          accept="image/*,.pdf"
-          hidden
-          onChange={(e) => {
-            const file = e.target.files?.[0] || null
-            void pickOcr(file, (text) => aui.composer.setText(mergeDictateText(draft, text)))
-            if (ocrInputRef.current) ocrInputRef.current.value = ''
-          }}
-        />
-        <button
-          type="button"
-          className="aui-attach"
-          disabled={busy || uploadingFile}
-          title="Attach file"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {uploadingFile ? '…' : '+'}
-        </button>
-        <button
-          type="button"
-          className="aui-attach"
-          disabled={busy || ocrBusy}
-          title="OCR into draft"
-          onClick={() => ocrInputRef.current?.click()}
-        >
-          {ocrBusy ? '…' : 'OCR'}
-        </button>
-        <ComposerPrimitive.Input
-          className="aui-composer-input"
-          placeholder="Message DeepSeek…"
-          rows={1}
-          submitMode="enter"
-          unstable_insertNewlineOnTouchEnter
-        />
-        <ChatDictateButton
-          disabled={busy}
-          draft={draft}
-          onDraft={(next) => aui.composer.setText(next)}
-          onBargeIn={() => stopGeneration()}
-          onError={(message) => setError(message)}
-        />
-        <AuiIf condition={(s) => s.thread.isRunning}>
-          <ComposerPrimitive.Cancel className="aui-send is-stop" onClick={() => stopGeneration()}>
-            Stop
-          </ComposerPrimitive.Cancel>
-        </AuiIf>
-        <AuiIf condition={(s) => !s.thread.isRunning}>
-          <ComposerPrimitive.Send className="aui-send">Send</ComposerPrimitive.Send>
-        </AuiIf>
+      <div className="aui-composer-row-wrap">
+        {atOpen ? (
+          <AtMentionMenu
+            items={mentionItems}
+            onPick={pickMention}
+            onClose={() => setAtOpen(false)}
+          />
+        ) : null}
+        <div className="aui-composer-row">
+          <input
+            ref={fileInputRef}
+            type="file"
+            hidden
+            onChange={(e) => void pickFile(e.target.files?.[0] || null)}
+          />
+          <input
+            ref={ocrInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0] || null
+              void pickOcr(file, (text) => aui.composer.setText(mergeDictateText(draft, text)))
+              if (ocrInputRef.current) ocrInputRef.current.value = ''
+            }}
+          />
+          <button
+            type="button"
+            className="aui-attach"
+            disabled={busy || uploadingFile}
+            title="Attach file"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploadingFile ? '…' : '+'}
+          </button>
+          <button
+            type="button"
+            className={`aui-attach${atOpen ? ' is-on' : ''}`}
+            disabled={busy}
+            title="Insert @ context (files, workspaces, chats)"
+            onClick={() => {
+              const next = draft.endsWith('@') || /@$/.test(draft) ? draft : `${draft}${draft && !/\s$/.test(draft) ? ' ' : ''}@`
+              aui.composer.setText(next)
+              setAtOpen(true)
+            }}
+          >
+            @
+          </button>
+          <button
+            type="button"
+            className="aui-attach"
+            disabled={busy || ocrBusy}
+            title="OCR into draft"
+            onClick={() => ocrInputRef.current?.click()}
+          >
+            {ocrBusy ? '…' : 'OCR'}
+          </button>
+          <ComposerPrimitive.Input
+            className="aui-composer-input"
+            placeholder={
+              composerMode === 'ask'
+                ? 'Ask DeepSeek (read-only)…'
+                : composerMode === 'plan'
+                  ? 'Plan with DeepSeek…'
+                  : 'Message DeepSeek…'
+            }
+            rows={1}
+            submitMode="enter"
+            unstable_insertNewlineOnTouchEnter
+          />
+          <ChatDictateButton
+            disabled={busy}
+            draft={draft}
+            onDraft={(next) => aui.composer.setText(next)}
+            onBargeIn={() => stopGeneration()}
+            onError={(message) => setError(message)}
+          />
+          <AuiIf condition={(s) => s.thread.isRunning}>
+            <ComposerPrimitive.Cancel className="aui-send is-stop" onClick={() => stopGeneration()}>
+              Stop
+            </ComposerPrimitive.Cancel>
+          </AuiIf>
+          <AuiIf condition={(s) => !s.thread.isRunning}>
+            <ComposerPrimitive.Send className="aui-send">Send</ComposerPrimitive.Send>
+          </AuiIf>
+        </div>
       </div>
 
       {keysOpen ? (

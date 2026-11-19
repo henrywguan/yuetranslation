@@ -60,6 +60,38 @@ export type ChatToolContext = DeepseekChatPromptContext & {
   onProjectActions?: (actions: ProjectAction[]) => void
 }
 
+/** Tools that mutate files / sandboxes / projects / generation — blocked in Ask & Plan. */
+export const DEEPSEEK_CHAT_MUTATING_TOOL_NAMES = new Set([
+  'workspace_write',
+  'sandbox_write',
+  'sandbox_exec',
+  'github_open_pr',
+  'project_create_agent',
+  'project_message_agent',
+  'project_update_memory',
+  'generate_image',
+])
+
+export function isMutatingChatTool(name: string): boolean {
+  const n = String(name || '')
+  if (DEEPSEEK_CHAT_MUTATING_TOOL_NAMES.has(n)) return true
+  // MCP generation plugins are mutating for Ask/Plan.
+  if (n.startsWith('mcp__')) return true
+  return false
+}
+
+export function filterToolsForChatMode(
+  tools: unknown[],
+  chatMode?: 'agent' | 'ask' | 'plan',
+): unknown[] {
+  if (!chatMode || chatMode === 'agent') return tools
+  return tools.filter((t) => {
+    const name = (t as { function?: { name?: string } })?.function?.name
+    if (!name) return true
+    return !isMutatingChatTool(name)
+  })
+}
+
 type OpenAiTool = {
   type: 'function'
   function: {
@@ -695,6 +727,14 @@ export async function executeDeepseekChatTool(
     args = argsJson ? (JSON.parse(argsJson) as Record<string, unknown>) : {}
   } catch {
     return JSON.stringify({ error: 'Invalid tool arguments JSON.' })
+  }
+
+  const chatMode = ctx.chatMode === 'ask' || ctx.chatMode === 'plan' ? ctx.chatMode : 'agent'
+  if (chatMode !== 'agent' && isMutatingChatTool(name)) {
+    return JSON.stringify({
+      error: `${name} is unavailable in ${chatMode === 'ask' ? 'Ask' : 'Plan'} mode (read-only). Switch to Agent or click Build.`,
+      code: 'chat_mode_readonly',
+    })
   }
 
   const now = ctx.now ?? new Date()

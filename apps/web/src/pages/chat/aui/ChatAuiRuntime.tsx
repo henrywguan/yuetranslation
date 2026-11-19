@@ -70,11 +70,15 @@ import {
   CHAT_RICH_LAYOUT_KEY,
   CHAT_SEARCH_KEY,
   CHAT_THINK_KEY,
+  readChatComposerMode,
   readChatFlag,
   readChatPluginIds,
+  writeChatComposerMode,
   writeChatFlag,
   writeChatPluginIds,
+  type ChatComposerMode,
 } from '../../../lib/chatUiPrefs'
+import { buildPlanBuildPrompt } from '../../../lib/chatComposerContext'
 import { chatSpeakLang } from '../../../lib/chatVoice'
 import {
   applyWorkspaceWireUpdate,
@@ -120,6 +124,11 @@ export type ChatAuiSession = {
   setDeepThink: (on: boolean) => void
   searchOn: boolean
   setSearchOn: (on: boolean) => void
+  /** Agent / Ask / Plan — persisted; DeepThink/Search stay capability toggles. */
+  composerMode: ChatComposerMode
+  setComposerMode: (mode: ChatComposerMode) => void
+  /** Plan → Build: switch to Agent and enqueue Overseer-leaning handoff. */
+  buildFromPlan: () => Promise<void>
   richLayout: boolean
   setRichLayout: (on: boolean) => void
   harnessOn: boolean
@@ -182,6 +191,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [searching, setSearching] = useState(false)
   const [deepThink, setDeepThinkState] = useState(() => readFlag(THINK_KEY, true))
   const [searchOn, setSearchOnState] = useState(() => readFlag(SEARCH_KEY, false))
+  const [composerMode, setComposerModeState] = useState<ChatComposerMode>(() =>
+    readChatComposerMode('agent'),
+  )
+  const composerModeRef = useRef(composerMode)
+  composerModeRef.current = composerMode
   const [richLayout, setRichLayoutState] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
   const [harnessOn, setHarnessOnState] = useState(() => readHarnessFlag(false))
   const [workspaceOpen, setWorkspaceOpen] = useState(() => readHarnessFlag(false))
@@ -359,6 +373,14 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const setSearchOn = useCallback((on: boolean) => {
     setSearchOnState(on)
     writeFlag(SEARCH_KEY, on)
+  }, [])
+
+  const setComposerMode = useCallback((mode: ChatComposerMode) => {
+    // Mode switch must not touch live mic / dictate — prefs only.
+    // Sync ref immediately so Build → Agent handoff uses Agent tools on this turn.
+    composerModeRef.current = mode
+    setComposerModeState(mode)
+    writeChatComposerMode(mode)
   }, [])
 
   const setHarnessOn = useCallback(
@@ -676,6 +698,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           thinking: deepThink,
           search: searchOn,
           harness: harnessOnRef.current,
+          chatMode: composerModeRef.current,
           workspace: harnessOnRef.current
             ? workspaceWirePayload(thread.workspace)
             : undefined,
@@ -919,6 +942,29 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     [persist, runAssistant, unlocked],
   )
 
+  const buildFromPlan = useCallback(async () => {
+    if (!unlocked || busyRef.current) return
+    const tid = activeIdRef.current
+    const thread = threadsRef.current.find((t) => t.id === tid)
+    const lastAssistant = [...(thread?.messages || [])]
+      .reverse()
+      .find((m) => m.role === 'assistant' && m.content.trim())
+    const inboxState = inboxRef.current?.state
+    const linked = inboxState ? agentForThread(inboxState, tid) : undefined
+    const inProject = Boolean(linked?.projectId)
+    // Prefer Overseer thread when building inside a Project.
+    let targetThreadId = tid
+    if (inProject && linked?.projectId && linked.role !== 'overseer') {
+      const overseer = inboxState?.agents.find(
+        (a) => a.projectId === linked.projectId && a.role === 'overseer' && a.threadId,
+      )
+      if (overseer?.threadId) targetThreadId = overseer.threadId
+    }
+    setComposerMode('agent')
+    const prompt = buildPlanBuildPrompt(lastAssistant?.content || '', inProject)
+    await enqueuePrompt(prompt, targetThreadId)
+  }, [enqueuePrompt, setComposerMode, unlocked])
+
   // Flush Overseer project_message / create_agent messages sequentially, then return to Overseer.
   useEffect(() => {
     if (!unlocked || busy || flushingProjectMsgsRef.current) return
@@ -1101,6 +1147,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setDeepThink,
       searchOn,
       setSearchOn,
+      composerMode,
+      setComposerMode,
+      buildFromPlan,
       richLayout,
       setRichLayout,
       harnessOn,
@@ -1139,7 +1188,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       activeWorkspace,
       addSchedule,
       archiveThread,
+      buildFromPlan,
       busy,
+      composerMode,
       deepThink,
       enabledPlugins,
       enqueuePrompt,
@@ -1161,6 +1212,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       searching,
       selectThread,
       setActiveWorkspace,
+      setComposerMode,
       setDeepThink,
       setHarnessOn,
       setRichLayout,

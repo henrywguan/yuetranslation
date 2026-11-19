@@ -56,6 +56,11 @@ export const DeepseekChatBodySchema = z.object({
    */
   harness: z.boolean().optional(),
   /**
+   * Composer mode — Agent (default, tools on) · Ask (read-only) · Plan (research → plan; Build → Agent).
+   * DeepThink / Search remain separate capability toggles.
+   */
+  chatMode: z.enum(['agent', 'ask', 'plan']).optional(),
+  /**
    * Chat Inbox agent role (Phase B) — Overseer coordinates; worker implements.
    * Omit for classic single-thread chat.
    */
