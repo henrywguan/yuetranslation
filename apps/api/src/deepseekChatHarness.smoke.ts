@@ -9,6 +9,8 @@ import {
   formatLatestReminder,
   looksLikeDeferredOrchestration,
   looksLikeDeferredSearch,
+  looksLikeDeferredSearchTurn,
+  looksLikeDeferredToolUse,
 } from './deepseekChatHarness.js'
 import { deepseekChatModel, deepseekChatSupportsNativeWebTools } from './deepseekChat.js'
 
@@ -108,12 +110,47 @@ assert.equal(
 )
 assert.equal(looksLikeDeferredSearch('Let me search the web for that.'), true)
 assert.equal(
+  looksLikeDeferredSearch("I'll look into what 'GrokBot' refers to…"),
+  true,
+  'Henry GrokBot stall phrase is deferred-search',
+)
+assert.equal(
+  looksLikeDeferredSearchTurn(
+    "I'll look into what 'GrokBot' refers to…",
+    'Let me search the web for information about GrokBot. Let me search the web…',
+  ),
+  true,
+  'DeepThink search plan + soft look-into reply is deferred',
+)
+assert.equal(
+  looksLikeDeferredSearchTurn(
+    'GrokBot is xAI’s agent product that…',
+    'Let me search the web for confirmation.',
+  ),
+  false,
+  'substantive answers are not deferred even if reasoning mentioned search',
+)
+assert.equal(
   looksLikeDeferredSearch(
     'Warframe got a major update this week with new quests, balance changes, and a weekend platinum sale. Here are the highlights…',
   ),
   false,
   'real answers are not deferred-search',
 )
+assert.equal(
+  looksLikeDeferredToolUse("I'll check the weather in Hong Kong for you."),
+  true,
+  'weather announce without tool_calls is deferred-tool',
+)
+assert.equal(looksLikeDeferredToolUse('Calling get_weather next.'), true)
+assert.equal(
+  looksLikeDeferredToolUse('It is 28°C and humid in Hong Kong this afternoon.'),
+  false,
+  'real weather answers are not deferred-tool',
+)
+assert.match(harnessSrc, /looksLikeDeferredSearchTurn/, 'Harness uses reply+reasoning deferred search')
+assert.match(harnessSrc, /deferredToolRecovered|deferred-tool recovery/, 'Harness recovers empty tool promises')
+assert.match(harnessSrc, /looksLikeDeferredToolUse/, 'Harness detects I\'ll-check-weather stopovers')
 
 assert.equal(
   looksLikeDeferredOrchestration(

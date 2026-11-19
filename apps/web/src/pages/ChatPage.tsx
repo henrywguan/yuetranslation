@@ -47,6 +47,12 @@ import {
   forkThreadAt,
   pushAssistantAlternate,
 } from '../lib/chatBranching'
+import {
+  looksLikeDeferredSearchTurn,
+  looksLikeDeferredToolUse,
+  SEARCH_STALL_ERROR,
+  TOOL_STALL_ERROR,
+} from '../lib/chatSearchStall'
 import { parseAnyChatImport } from '../lib/chatDeepseekImport'
 import {
   consumeChatPrefill,
@@ -1193,6 +1199,23 @@ export function ChatPage() {
           thread = maybeSeedArtifactsIntoWorkspace(thread, assistant)
         }
         persist(thread)
+        // Never leave a silent "I'll look into…" stopover when Search was on.
+        const hadSearchChrome = Boolean(sources.length || searchSteps.length)
+        if (
+          searchOn &&
+          !hadSearchChrome &&
+          !continueFromId &&
+          looksLikeDeferredSearchTurn(assembled, reasoning)
+        ) {
+          setError(SEARCH_STALL_ERROR)
+        } else if (
+          !hadSearchChrome &&
+          !continueFromId &&
+          looksLikeDeferredToolUse(assembled) &&
+          !looksLikeDeferredSearchTurn(assembled, reasoning)
+        ) {
+          setError(TOOL_STALL_ERROR)
+        }
         if (liveTts) {
           void liveTts.finish().catch(() => {
             /* ignore */
