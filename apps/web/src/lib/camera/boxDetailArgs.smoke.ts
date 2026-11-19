@@ -123,6 +123,18 @@ const CAMERA_LANGS: CameraLang[] = [
   'he',
   'fa',
   'ur',
+  'ml',
+  'mr',
+  'pa',
+  'or',
+  'si',
+  'ne',
+  'da',
+  'nb',
+  'fi',
+  'sk',
+  'hr',
+  'ca',
   'ceb',
   'ilo',
   'bcl',
@@ -151,6 +163,28 @@ assert.equal(normalizeRegionLang('zh'), 'yue')
 assert.equal(normalizeRegionLang('ru-RU'), 'ru')
 assert.equal(normalizeRegionLang('he-IL'), 'he')
 assert.equal(normalizeRegionLang('te-IN'), 'te')
+assert.equal(normalizeRegionLang('ml-IN'), 'ml')
+assert.equal(normalizeRegionLang('mr-IN'), 'mr')
+assert.equal(normalizeRegionLang('pa-IN'), 'pa')
+assert.equal(normalizeRegionLang('or-IN'), 'or')
+assert.equal(normalizeRegionLang('si-LK'), 'si')
+assert.equal(normalizeRegionLang('si'), 'si')
+assert.equal(normalizeRegionLang('ne-NP'), 'ne')
+assert.equal(normalizeRegionLang('da-DK'), 'da')
+assert.equal(normalizeRegionLang('nb-NO'), 'nb')
+assert.equal(normalizeRegionLang('no-NO'), 'nb')
+assert.equal(normalizeRegionLang('fi-FI'), 'fi')
+assert.equal(normalizeRegionLang('sk-SK'), 'sk')
+assert.equal(normalizeRegionLang('hr-HR'), 'hr')
+assert.equal(normalizeRegionLang('ca-ES'), 'ca')
+assert.equal(normalizeRegionLang('sichuan'), 'sichuan', 'Sinhala si never swallows sichuan')
+assert.equal(normalizeRegionLang('zh-CN-sichuan'), 'sichuan')
+assert.equal(normalizeRegionLang('fil-PH'), 'tl', 'fi never swallows fil-PH')
+assert.equal(normalizeRegionLang('si-LK'), 'si')
+assert.equal(normalizeRegionLang('da-DK'), 'da')
+assert.equal(normalizeRegionLang('nb-NO'), 'nb')
+assert.equal(normalizeRegionLang('ca-ES'), 'ca')
+assert.equal(normalizeRegionLang('sichuan'), 'sichuan')
 
 const taWouldHaveBeenYue = regionToEditable({
   id: 'r',
@@ -179,5 +213,29 @@ const ruWouldHaveBeenYue = regionToEditable({
 assert.equal(ruWouldHaveBeenYue.to, 'ru')
 assert.equal(speakLangForBox(ruWouldHaveBeenYue), 'ru')
 assert.equal(boxDetailArgs(ruWouldHaveBeenYue).lang, 'ru')
+
+for (const [to, translated] of [
+  ['ml', 'നമസ്കാരം'],
+  ['si', 'ආයුබෝවන්'],
+  ['da', 'Hej'],
+  ['ca', 'Hola'],
+] as const) {
+  const box = regionToEditable({
+    id: 'r',
+    box: { x: 0, y: 0, w: 0.2, h: 0.1 },
+    text: 'Hello',
+    translated,
+    from: 'en',
+    to,
+    script: 'other',
+    cacheHit: false,
+  })
+  assert.equal(box.to, to)
+  assert.equal(speakLangForBox(box), to)
+  const args = boxDetailArgs(box)
+  assert.equal(args.lang, to, `${to} detail lang survives`)
+  assert.equal(args.phrase, translated)
+  assert.equal(args.translation, 'Hello')
+}
 
 console.log('boxDetailArgs.smoke: ok')

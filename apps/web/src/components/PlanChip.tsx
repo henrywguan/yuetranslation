@@ -78,6 +78,18 @@ import {
   PREVIEW_HE,
   PREVIEW_FA,
   PREVIEW_UR,
+  PREVIEW_ML,
+  PREVIEW_MR,
+  PREVIEW_PA,
+  PREVIEW_OR,
+  PREVIEW_SI,
+  PREVIEW_NE,
+  PREVIEW_DA,
+  PREVIEW_NB,
+  PREVIEW_FI,
+  PREVIEW_SK,
+  PREVIEW_HR,
+  PREVIEW_CA,
   PREVIEW_WUU,
   PREVIEW_SICHUAN,
   PREVIEW_YUE,
@@ -122,6 +134,18 @@ import {
   readLocalHeVoice,
   readLocalFaVoice,
   readLocalUrVoice,
+  readLocalMlVoice,
+  readLocalMrVoice,
+  readLocalPaVoice,
+  readLocalOrVoice,
+  readLocalSiVoice,
+  readLocalNeVoice,
+  readLocalDaVoice,
+  readLocalNbVoice,
+  readLocalFiVoice,
+  readLocalSkVoice,
+  readLocalHrVoice,
+  readLocalCaVoice,
   readLocalWuuVoice,
   readLocalSichuanVoice,
   readLocalYueVoice,
@@ -166,6 +190,18 @@ import {
   resolveHeVoice,
   resolveFaVoice,
   resolveUrVoice,
+  resolveMlVoice,
+  resolveMrVoice,
+  resolvePaVoice,
+  resolveOrVoice,
+  resolveSiVoice,
+  resolveNeVoice,
+  resolveDaVoice,
+  resolveNbVoice,
+  resolveFiVoice,
+  resolveSkVoice,
+  resolveHrVoice,
+  resolveCaVoice,
   resolveYueVoice,
   writeLocalCmnVoice,
   writeLocalEnVoice,
@@ -208,6 +244,18 @@ import {
   writeLocalHeVoice,
   writeLocalFaVoice,
   writeLocalUrVoice,
+  writeLocalMlVoice,
+  writeLocalMrVoice,
+  writeLocalPaVoice,
+  writeLocalOrVoice,
+  writeLocalSiVoice,
+  writeLocalNeVoice,
+  writeLocalDaVoice,
+  writeLocalNbVoice,
+  writeLocalFiVoice,
+  writeLocalSkVoice,
+  writeLocalHrVoice,
+  writeLocalCaVoice,
   writeLocalWuuVoice,
   writeLocalSichuanVoice,
   writeLocalYueVoice,
@@ -252,6 +300,18 @@ import {
   type HeVoiceId,
   type FaVoiceId,
   type UrVoiceId,
+  type MlVoiceId,
+  type MrVoiceId,
+  type PaVoiceId,
+  type OrVoiceId,
+  type SiVoiceId,
+  type NeVoiceId,
+  type DaVoiceId,
+  type NbVoiceId,
+  type FiVoiceId,
+  type SkVoiceId,
+  type HrVoiceId,
+  type CaVoiceId,
   type WuuVoiceId,
   type SichuanVoiceId,
   type YueVoiceId,
@@ -333,11 +393,23 @@ export function PlanChip() {
   const [heVoice, setHeVoice] = useState<HeVoiceId>(() => readLocalHeVoice())
   const [faVoice, setFaVoice] = useState<FaVoiceId>(() => readLocalFaVoice())
   const [urVoice, setUrVoice] = useState<UrVoiceId>(() => readLocalUrVoice())
+  const [mlVoice, setMlVoice] = useState<MlVoiceId>(() => readLocalMlVoice())
+  const [mrVoice, setMrVoice] = useState<MrVoiceId>(() => readLocalMrVoice())
+  const [paVoice, setPaVoice] = useState<PaVoiceId>(() => readLocalPaVoice())
+  const [orVoice, setOrVoice] = useState<OrVoiceId>(() => readLocalOrVoice())
+  const [siVoice, setSiVoice] = useState<SiVoiceId>(() => readLocalSiVoice())
+  const [neVoice, setNeVoice] = useState<NeVoiceId>(() => readLocalNeVoice())
+  const [daVoice, setDaVoice] = useState<DaVoiceId>(() => readLocalDaVoice())
+  const [nbVoice, setNbVoice] = useState<NbVoiceId>(() => readLocalNbVoice())
+  const [fiVoice, setFiVoice] = useState<FiVoiceId>(() => readLocalFiVoice())
+  const [skVoice, setSkVoice] = useState<SkVoiceId>(() => readLocalSkVoice())
+  const [hrVoice, setHrVoice] = useState<HrVoiceId>(() => readLocalHrVoice())
+  const [caVoice, setCaVoice] = useState<CaVoiceId>(() => readLocalCaVoice())
   const [wuuVoice, setWuuVoice] = useState<WuuVoiceId>(() => readLocalWuuVoice())
   const [sichuanVoice, setSichuanVoice] = useState<SichuanVoiceId>(() => readLocalSichuanVoice())
   const [voiceBusy, setVoiceBusy] = useState(false)
   const [previewBusy, setPreviewBusy] = useState<
-    'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'wuu' | 'sichuan' | null
+    'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'wuu' | 'sichuan' | null
   >(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteBusy, setInviteBusy] = useState(false)
@@ -577,6 +649,66 @@ export function PlanChip() {
       setUrVoice(v)
       writeLocalUrVoice(v)
     }
+    if (prefs?.ttsVoiceMl) {
+      const v = resolveMlVoice(prefs.ttsVoiceMl)
+      setMlVoice(v)
+      writeLocalMlVoice(v)
+    }
+    if (prefs?.ttsVoiceMr) {
+      const v = resolveMrVoice(prefs.ttsVoiceMr)
+      setMrVoice(v)
+      writeLocalMrVoice(v)
+    }
+    if (prefs?.ttsVoicePa) {
+      const v = resolvePaVoice(prefs.ttsVoicePa)
+      setPaVoice(v)
+      writeLocalPaVoice(v)
+    }
+    if (prefs?.ttsVoiceOr) {
+      const v = resolveOrVoice(prefs.ttsVoiceOr)
+      setOrVoice(v)
+      writeLocalOrVoice(v)
+    }
+    if (prefs?.ttsVoiceSi) {
+      const v = resolveSiVoice(prefs.ttsVoiceSi)
+      setSiVoice(v)
+      writeLocalSiVoice(v)
+    }
+    if (prefs?.ttsVoiceNe) {
+      const v = resolveNeVoice(prefs.ttsVoiceNe)
+      setNeVoice(v)
+      writeLocalNeVoice(v)
+    }
+    if (prefs?.ttsVoiceDa) {
+      const v = resolveDaVoice(prefs.ttsVoiceDa)
+      setDaVoice(v)
+      writeLocalDaVoice(v)
+    }
+    if (prefs?.ttsVoiceNb) {
+      const v = resolveNbVoice(prefs.ttsVoiceNb)
+      setNbVoice(v)
+      writeLocalNbVoice(v)
+    }
+    if (prefs?.ttsVoiceFi) {
+      const v = resolveFiVoice(prefs.ttsVoiceFi)
+      setFiVoice(v)
+      writeLocalFiVoice(v)
+    }
+    if (prefs?.ttsVoiceSk) {
+      const v = resolveSkVoice(prefs.ttsVoiceSk)
+      setSkVoice(v)
+      writeLocalSkVoice(v)
+    }
+    if (prefs?.ttsVoiceHr) {
+      const v = resolveHrVoice(prefs.ttsVoiceHr)
+      setHrVoice(v)
+      writeLocalHrVoice(v)
+    }
+    if (prefs?.ttsVoiceCa) {
+      const v = resolveCaVoice(prefs.ttsVoiceCa)
+      setCaVoice(v)
+      writeLocalCaVoice(v)
+    }
     if (prefs?.username) {
       setUsername(prefs.username)
       setUsernameDraft(prefs.username)
@@ -626,6 +758,18 @@ export function PlanChip() {
     entitlement?.prefs?.ttsVoiceHe,
     entitlement?.prefs?.ttsVoiceFa,
     entitlement?.prefs?.ttsVoiceUr,
+    entitlement?.prefs?.ttsVoiceMl,
+    entitlement?.prefs?.ttsVoiceMr,
+    entitlement?.prefs?.ttsVoicePa,
+    entitlement?.prefs?.ttsVoiceOr,
+    entitlement?.prefs?.ttsVoiceSi,
+    entitlement?.prefs?.ttsVoiceNe,
+    entitlement?.prefs?.ttsVoiceDa,
+    entitlement?.prefs?.ttsVoiceNb,
+    entitlement?.prefs?.ttsVoiceFi,
+    entitlement?.prefs?.ttsVoiceSk,
+    entitlement?.prefs?.ttsVoiceHr,
+    entitlement?.prefs?.ttsVoiceCa,
     entitlement?.prefs?.username,
     entitlement?.loggedIn,
   ])
@@ -793,6 +937,18 @@ export function PlanChip() {
     he?: HeVoiceId
     fa?: FaVoiceId
     ur?: UrVoiceId
+    ml?: MlVoiceId
+    mr?: MrVoiceId
+    pa?: PaVoiceId
+    or?: OrVoiceId
+    si?: SiVoiceId
+    ne?: NeVoiceId
+    da?: DaVoiceId
+    nb?: NbVoiceId
+    fi?: FiVoiceId
+    sk?: SkVoiceId
+    hr?: HrVoiceId
+    ca?: CaVoiceId
     wuu?: WuuVoiceId
     sichuan?: SichuanVoiceId
   }) => {
@@ -827,6 +983,18 @@ export function PlanChip() {
     const he = next.he ?? heVoice
     const fa = next.fa ?? faVoice
     const ur = next.ur ?? urVoice
+    const ml = next.ml ?? mlVoice
+    const mr = next.mr ?? mrVoice
+    const pa = next.pa ?? paVoice
+    const or = next.or ?? orVoice
+    const si = next.si ?? siVoice
+    const ne = next.ne ?? neVoice
+    const da = next.da ?? daVoice
+    const nb = next.nb ?? nbVoice
+    const fi = next.fi ?? fiVoice
+    const sk = next.sk ?? skVoice
+    const hr = next.hr ?? hrVoice
+    const ca = next.ca ?? caVoice
     const de = next.de ?? deVoice
     const it = next.it ?? itVoice
     const jv = next.jv ?? jvVoice
@@ -871,6 +1039,18 @@ export function PlanChip() {
     writeLocalHeVoice(he)
     writeLocalFaVoice(fa)
     writeLocalUrVoice(ur)
+    writeLocalMlVoice(ml)
+    writeLocalMrVoice(mr)
+    writeLocalPaVoice(pa)
+    writeLocalOrVoice(or)
+    writeLocalSiVoice(si)
+    writeLocalNeVoice(ne)
+    writeLocalDaVoice(da)
+    writeLocalNbVoice(nb)
+    writeLocalFiVoice(fi)
+    writeLocalSkVoice(sk)
+    writeLocalHrVoice(hr)
+    writeLocalCaVoice(ca)
     writeLocalDeVoice(de)
     writeLocalItVoice(it)
     writeLocalJvVoice(jv)
@@ -915,6 +1095,18 @@ export function PlanChip() {
     setHeVoice(he)
     setFaVoice(fa)
     setUrVoice(ur)
+    setMlVoice(ml)
+    setMrVoice(mr)
+    setPaVoice(pa)
+    setOrVoice(or)
+    setSiVoice(si)
+    setNeVoice(ne)
+    setDaVoice(da)
+    setNbVoice(nb)
+    setFiVoice(fi)
+    setSkVoice(sk)
+    setHrVoice(hr)
+    setCaVoice(ca)
     setDeVoice(de)
     setItVoice(it)
     setJvVoice(jv)
@@ -963,6 +1155,18 @@ export function PlanChip() {
         ttsVoiceHe: he,
         ttsVoiceFa: fa,
         ttsVoiceUr: ur,
+        ttsVoiceMl: ml,
+        ttsVoiceMr: mr,
+        ttsVoicePa: pa,
+        ttsVoiceOr: or,
+        ttsVoiceSi: si,
+        ttsVoiceNe: ne,
+        ttsVoiceDa: da,
+        ttsVoiceNb: nb,
+        ttsVoiceFi: fi,
+        ttsVoiceSk: sk,
+        ttsVoiceHr: hr,
+        ttsVoiceCa: ca,
         ttsVoiceDe: de,
         ttsVoiceIt: it,
         ttsVoiceJv: jv,
@@ -994,7 +1198,7 @@ export function PlanChip() {
   }
 
   const onPreview = async (
-    kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'wuu' | 'sichuan',
+    kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ko' | 'ja' | 'id' | 'ms' | 'pt' | 'fr' | 'hi' | 'km' | 'my' | 'jv' | 'it' | 'de' | 'nl' | 'ar' | 'arsa' | 'ta' | 'ptpt' | 'tr' | 'bn' | 'te' | 'gu' | 'kn' | 'pl' | 'ro' | 'cs' | 'el' | 'hu' | 'sv' | 'ru' | 'uk' | 'he' | 'fa' | 'ur' | 'ml' | 'mr' | 'pa' | 'or' | 'si' | 'ne' | 'da' | 'nb' | 'fi' | 'sk' | 'hr' | 'ca' | 'wuu' | 'sichuan',
   ) => {
     unlockTtsPlayback()
     setPreviewBusy(kind)
@@ -1041,6 +1245,18 @@ export function PlanChip() {
       else if (kind === 'he') await speakText(PREVIEW_HE, 'he', heVoice)
       else if (kind === 'fa') await speakText(PREVIEW_FA, 'fa', faVoice)
       else if (kind === 'ur') await speakText(PREVIEW_UR, 'ur', urVoice)
+      else if (kind === 'ml') await speakText(PREVIEW_ML, 'ml', mlVoice)
+      else if (kind === 'mr') await speakText(PREVIEW_MR, 'mr', mrVoice)
+      else if (kind === 'pa') await speakText(PREVIEW_PA, 'pa', paVoice)
+      else if (kind === 'or') await speakText(PREVIEW_OR, 'or', orVoice)
+      else if (kind === 'si') await speakText(PREVIEW_SI, 'si', siVoice)
+      else if (kind === 'ne') await speakText(PREVIEW_NE, 'ne', neVoice)
+      else if (kind === 'da') await speakText(PREVIEW_DA, 'da', daVoice)
+      else if (kind === 'nb') await speakText(PREVIEW_NB, 'nb', nbVoice)
+      else if (kind === 'fi') await speakText(PREVIEW_FI, 'fi', fiVoice)
+      else if (kind === 'sk') await speakText(PREVIEW_SK, 'sk', skVoice)
+      else if (kind === 'hr') await speakText(PREVIEW_HR, 'hr', hrVoice)
+      else if (kind === 'ca') await speakText(PREVIEW_CA, 'ca', caVoice)
       else if (kind === 'sichuan') await speakText(PREVIEW_SICHUAN, 'sichuan', sichuanVoice)
       else await speakText(PREVIEW_WUU, 'wuu', wuuVoice)
     } catch (err) {
@@ -1120,6 +1336,18 @@ export function PlanChip() {
               ttsVoiceHe: entitlement.prefs?.ttsVoiceHe || heVoice,
               ttsVoiceFa: entitlement.prefs?.ttsVoiceFa || faVoice,
               ttsVoiceUr: entitlement.prefs?.ttsVoiceUr || urVoice,
+              ttsVoiceMl: entitlement.prefs?.ttsVoiceMl || mlVoice,
+              ttsVoiceMr: entitlement.prefs?.ttsVoiceMr || mrVoice,
+              ttsVoicePa: entitlement.prefs?.ttsVoicePa || paVoice,
+              ttsVoiceOr: entitlement.prefs?.ttsVoiceOr || orVoice,
+              ttsVoiceSi: entitlement.prefs?.ttsVoiceSi || siVoice,
+              ttsVoiceNe: entitlement.prefs?.ttsVoiceNe || neVoice,
+              ttsVoiceDa: entitlement.prefs?.ttsVoiceDa || daVoice,
+              ttsVoiceNb: entitlement.prefs?.ttsVoiceNb || nbVoice,
+              ttsVoiceFi: entitlement.prefs?.ttsVoiceFi || fiVoice,
+              ttsVoiceSk: entitlement.prefs?.ttsVoiceSk || skVoice,
+              ttsVoiceHr: entitlement.prefs?.ttsVoiceHr || hrVoice,
+              ttsVoiceCa: entitlement.prefs?.ttsVoiceCa || caVoice,
               ttsVoiceDe: entitlement.prefs?.ttsVoiceDe || deVoice,
               ttsVoiceIt: entitlement.prefs?.ttsVoiceIt || itVoice,
               ttsVoiceJv: entitlement.prefs?.ttsVoiceJv || jvVoice,
@@ -1557,6 +1785,18 @@ export function PlanChip() {
           heVoice={heVoice}
           faVoice={faVoice}
           urVoice={urVoice}
+          mlVoice={mlVoice}
+          mrVoice={mrVoice}
+          paVoice={paVoice}
+          orVoice={orVoice}
+          siVoice={siVoice}
+          neVoice={neVoice}
+          daVoice={daVoice}
+          nbVoice={nbVoice}
+          fiVoice={fiVoice}
+          skVoice={skVoice}
+          hrVoice={hrVoice}
+          caVoice={caVoice}
           wuuVoice={wuuVoice}
           sichuanVoice={sichuanVoice}
           voiceBusy={voiceBusy}
