@@ -10,8 +10,11 @@ import {
   applyMentionInsert,
   buildChatMentionItems,
   buildPlanBuildPrompt,
+  CHAT_PLAN_WORKSPACE_PATH,
   detectAtQuery,
+  extractPlanArtifactText,
 } from './chatComposerContext.js'
+import { parseGithubPrUrl, summarizePrChecks } from './chatPrChecks.js'
 import {
   CHAT_COMPOSER_MODE_LABEL,
   CHAT_COMPOSER_MODES,
@@ -79,6 +82,7 @@ const mentions = buildChatMentionItems({
   threads: [
     { id: 't1', title: 'Prior research' },
     { id: 't2', title: 'Active', archived: false },
+    { id: 't-proj', title: 'Project chat' },
   ],
   agents: [
     {
@@ -92,13 +96,40 @@ const mentions = buildChatMentionItems({
     },
   ],
   activeThreadId: 't2',
+  projectId: 'p1',
+  projectThreadIds: ['t-proj', 't-ov'],
+  githubBound: true,
+  defaultBranch: 'main',
+  lastRun: { argv: ['npm', 'run', 'smoke:canto'] },
   query: '',
 })
 assert.ok(mentions.some((m) => m.kind === 'file' && m.label === 'notes/plan.md'))
 assert.ok(mentions.some((m) => m.kind === 'workspace' && /yuetranslation/.test(m.label)))
 assert.ok(mentions.some((m) => m.kind === 'chat' && m.insert === '@chat:t1'))
 assert.ok(mentions.some((m) => m.insert === '@chat:t-ov'))
+assert.ok(mentions.some((m) => m.insert === '@chat:t-proj' && /Project/.test(m.hint || '')))
+assert.ok(mentions.some((m) => m.kind === 'diff' && m.insert === '@diff:main'))
+assert.ok(mentions.some((m) => m.kind === 'run' && m.insert === '@run:last'))
 assert.ok(!mentions.some((m) => m.insert === '@chat:t2'), 'active thread excluded')
+
+assert.equal(CHAT_PLAN_WORKSPACE_PATH, 'plans/latest.md')
+assert.match(extractPlanArtifactText('```plan\n## Steps\n```'), /## Steps/)
+assert.equal(
+  extractPlanArtifactText('Intro\n```ts\nconst x = 1\n```\nDone'),
+  'Intro\n```ts\nconst x = 1\n```\nDone',
+  'unlabeled fences are not stolen as the plan',
+)
+assert.equal(extractPlanArtifactText('plain plan'), 'plain plan')
+assert.match(
+  readFileSync(join(root, 'pages/chat/aui/ChatDiffsPanel.tsx'), 'utf8'),
+  /setSummary\(null\)[\s\S]*setLoading\(true\)/,
+  'PR checks clear stale summary before refetch',
+)
+
+const prRef = parseGithubPrUrl('https://github.com/henrywguan/yuetranslation/pull/800')
+assert.deepEqual(prRef, { owner: 'henrywguan', repo: 'yuetranslation', number: 800 })
+assert.equal(parseGithubPrUrl('nope'), null)
+assert.match(summarizePrChecks({ state: 'success', total: 3, success: 3 }).label, /3\/3/)
 
 const buildInProject = buildPlanBuildPrompt('## Steps\n1. Nest', true)
 assert.match(buildInProject, /Project Overseer/)
@@ -133,12 +164,26 @@ assert.doesNotMatch(
 )
 assert.match(thread, /aui-composer-toolbar/, 'toolbar row under full-width input')
 assert.match(thread, /buildFromPlan/, 'Plan → Build handoff')
-assert.match(thread, /disabled=\{busy\}/, 'Build disabled while busy')
+assert.match(thread, /planDraft|aui-plan-artifact/, 'editable Plan artifact')
+assert.match(thread, /savePlanToWorkspace/, 'Save plan to workspace')
+assert.match(thread, /onPaste|onDrop|takeImageFromDataTransfer/, 'paste/drop image into composer')
+assert.match(thread, /types\]\.some\(\(t\) => t === 'Files'\)/, 'dragover only claims Files')
+assert.match(thread, /githubBound|@diff:|lastRun/, 'richer @ diff/run wiring')
+assert.match(
+  thread,
+  /resolveProjectGithubWorkspace/,
+  '@diff scoped to active Project GitHub workspace',
+)
+assert.match(
+  thread,
+  /disabled=\{busy \|\| !planDraft\.trim\(\)\}/,
+  'Build disabled while busy or empty plan',
+)
 assert.match(thread, /Wait for reply/, 'Plan busy shows wait-for-reply status')
 assert.match(
   thread,
-  /Wait for the current reply to finish, then Build/,
-  'Build title explains wait while busy',
+  /Wait for the current reply to finish, then Build|Plan is empty/,
+  'Build title explains wait / empty plan',
 )
 assert.match(thread, /aui-tools-label/, 'DeepThink/Search nested under Tools')
 assert.match(thread, /ChatDictateButton/, 'dictate preserved')
@@ -159,12 +204,38 @@ const runtime = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'u
 assert.match(runtime, /chatMode: composerModeRef/, 'mode forwarded to SSE')
 assert.match(runtime, /writeChatComposerMode/, 'mode persisted')
 assert.match(runtime, /buildPlanBuildPrompt/, 'Build uses Overseer-leaning prompt')
+assert.match(runtime, /planDraft|savePlanToWorkspace|CHAT_PLAN_WORKSPACE_PATH/, 'Plan artifact session APIs')
+assert.match(runtime, /planDraftsByThreadRef|planSeedByThreadRef/, 'Plan drafts keyed per thread')
+assert.match(
+  runtime,
+  /applyPlanDraftForThread/,
+  'Plan draft applied synchronously on thread switch',
+)
+assert.match(
+  runtime,
+  /selectThread[\s\S]*applyPlanDraftForThread\(id\)/,
+  'selectThread syncs Plan draft before paint',
+)
+assert.match(
+  runtime,
+  /currentDraft !== prev\.text|do not replace a curated draft/,
+  'Plan seed preserves user edits / non-plan follow-ups',
+)
+assert.match(
+  runtime,
+  /Plan is empty — write or restore a plan before Build/,
+  'Build refuses empty plan (no silent fallback to last assistant)',
+)
 assert.match(
   runtime,
   /Wait for the current reply to finish, then Build/,
   'buildFromPlan busy path sets wait-for-reply error (keeps Plan)',
 )
 assert.match(runtime, /if \(busyRef\.current\) \{\s*setError/, 'busy Build is not a silent no-op')
+
+assert.match(css, /\.aui-plan-artifact/, 'plan artifact CSS')
+assert.match(css, /\.aui-composer\.is-drag-over/, 'composer drop affordance')
+assert.match(css, /\.aui-at-kind\.is-diff/, 'diff mention kind style')
 
 const prefs = readFileSync(join(here, 'chatUiPrefs.ts'), 'utf8')
 assert.match(prefs, /CHAT_MODE_KEY/, 'mode key in shared prefs')

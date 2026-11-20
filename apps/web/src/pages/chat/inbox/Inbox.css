@@ -593,10 +593,41 @@
   background: var(--ds-blue-soft);
 }
 
+/* Archive (box) vs Delete (filled trash) — distinct at rest, not only on hover. */
+.inbox-list-action.is-archive {
+  color: var(--ds-text-2);
+}
+.inbox-list-action.is-archive:hover {
+  color: var(--ds-blue);
+  background: var(--ds-blue-soft);
+}
+.inbox-list-action.is-delete,
+.inbox-list-del.is-delete {
+  color: color-mix(in srgb, var(--ds-danger) 62%, var(--ds-text-3));
+}
+.inbox-list-action.is-delete:hover,
+.inbox-list-del.is-delete:hover {
+  color: var(--ds-danger);
+  background: color-mix(in srgb, var(--ds-danger) 12%, transparent);
+}
+
 .inbox-list-action svg,
 .inbox-list-del svg {
   display: block;
   pointer-events: none;
+}
+
+.inbox-agent-row.is-draggable {
+  cursor: grab;
+}
+.inbox-agent-row.is-draggable:active {
+  cursor: grabbing;
+}
+
+.inbox-project-node.is-drop-target > .inbox-project-row {
+  outline: 2px solid color-mix(in srgb, var(--ds-blue) 55%, transparent);
+  outline-offset: 1px;
+  background: var(--ds-blue-soft);
 }
 
 .inbox-list-item.is-active {
@@ -866,6 +897,13 @@
   display: inline-flex;
 }
 
+/* Desktop quiet: when idle reveals, keep it a soft ghost (not a loud pill). */
+.inbox-agent-status.is-idle .inbox-agent-status-label {
+  font-weight: 550;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
 .inbox-chat-menu-wrap {
   position: relative;
   flex-shrink: 0;
@@ -934,7 +972,7 @@
   border: 1px solid var(--ds-divider);
   background: var(--ds-canvas);
   min-height: 0;
-  max-height: min(42vh, 22rem);
+  max-height: min(48vh, 26rem);
   overflow-x: hidden;
   overflow-y: auto;
   flex: 0 1 auto;
@@ -1054,6 +1092,61 @@
   resize: vertical;
   min-height: 3.5rem;
   max-height: 8rem;
+}
+
+.inbox-memory--rules textarea {
+  min-height: 5.5rem;
+  max-height: 12rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  border-color: color-mix(in srgb, var(--ds-blue) 22%, var(--ds-divider));
+  background: color-mix(in srgb, var(--ds-blue-soft) 35%, var(--ds-surface-1));
+}
+
+.inbox-rules-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.55rem 0.6rem 0.65rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--ds-blue) 28%, var(--ds-divider));
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--ds-blue-soft) 55%, var(--ds-canvas)) 0%,
+    var(--ds-canvas) 72%
+  );
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.inbox-rules-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+  min-width: 0;
+}
+
+.inbox-rules-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ds-text);
+}
+
+.inbox-rules-hint {
+  font-size: 0.65rem;
+  color: var(--ds-text-3);
+  min-width: 0;
+}
+
+.inbox-rules-copy {
+  padding: 0 !important;
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.35;
 }
 
 .inbox-memory textarea:focus,

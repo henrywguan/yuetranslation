@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ChatInboxProject, ThreadAgentView } from '../../../lib/chatInbox'
+import { CHAT_THREAD_DRAG_MIME } from '../../../lib/chatPrChecks'
 import { ChatProjectMenu } from './ChatProjectMenu'
 import { ArchiveIcon, DeleteIcon } from './InboxIcons'
 import { StatusChip } from './StatusChip'
@@ -52,6 +53,7 @@ export function ProjectList({
 }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!editingId) return
@@ -62,6 +64,14 @@ export function ProjectList({
   const commitRename = (projectId: string) => {
     onRename(projectId, draft)
     setEditingId(null)
+  }
+
+  const isChatThreadDrag = (dt: DataTransfer): boolean =>
+    [...dt.types].includes(CHAT_THREAD_DRAG_MIME)
+
+  const readDraggedThreadId = (dt: DataTransfer): string => {
+    // Only our MIME — never treat arbitrary text/plain as a thread id.
+    return (dt.getData(CHAT_THREAD_DRAG_MIME) || '').trim()
   }
 
   return (
@@ -97,9 +107,36 @@ export function ProjectList({
               return (
                 <li
                   key={p.id}
-                  className={`inbox-project-node${active ? ' is-active' : ''}${dimmed ? ' is-dimmed' : ''}`}
+                  className={`inbox-project-node${active ? ' is-active' : ''}${dimmed ? ' is-dimmed' : ''}${dropTargetId === p.id ? ' is-drop-target' : ''}`}
+                  onDragEnter={(e) => {
+                    if (!onAddChatToProject || !isChatThreadDrag(e.dataTransfer)) return
+                    e.preventDefault()
+                    setDropTargetId(p.id)
+                  }}
+                  onDragOver={(e) => {
+                    if (!onAddChatToProject || !isChatThreadDrag(e.dataTransfer)) return
+                    e.preventDefault()
+                    e.dataTransfer.dropEffect = 'move'
+                    setDropTargetId(p.id)
+                  }}
+                  onDragLeave={(e) => {
+                    if (e.currentTarget === e.target) setDropTargetId((cur) => (cur === p.id ? null : cur))
+                  }}
+                  onDrop={(e) => {
+                    setDropTargetId(null)
+                    if (!onAddChatToProject || !isChatThreadDrag(e.dataTransfer)) return
+                    e.preventDefault()
+                    const threadId = readDraggedThreadId(e.dataTransfer)
+                    if (!threadId) return
+                    onAddChatToProject(threadId, p.id)
+                    if (!expanded) onToggleExpand(p.id)
+                    onSelect(p.id)
+                  }}
                 >
-                  <div className={`inbox-list-item inbox-project-row${active ? ' is-active' : ''}`}>
+                  <div
+                    className={`inbox-list-item inbox-project-row${active ? ' is-active' : ''}`}
+                    title="Drop a chat here to nest it in this Project"
+                  >
                     <button
                       type="button"
                       className={`inbox-project-expand${expanded ? ' is-open' : ''}`}
@@ -180,7 +217,19 @@ export function ProjectList({
                           return (
                             <li
                               key={v.id}
-                              className={`inbox-list-item inbox-agent-row${threadActive ? ' is-active' : ''}${canMoveChat ? ' has-chat-menu' : ''}`}
+                              className={`inbox-list-item inbox-agent-row${threadActive ? ' is-active' : ''}${canMoveChat ? ' has-chat-menu is-draggable' : ''}`}
+                              draggable={canMoveChat}
+                              onDragStart={(e) => {
+                                if (!canMoveChat || !v.threadId) return
+                                e.dataTransfer.setData(CHAT_THREAD_DRAG_MIME, v.threadId)
+                                e.dataTransfer.setData('text/plain', v.threadId)
+                                e.dataTransfer.effectAllowed = 'move'
+                              }}
+                              title={
+                                canMoveChat
+                                  ? 'Drag onto another Project to re-home'
+                                  : undefined
+                              }
                             >
                               <button
                                 type="button"
@@ -214,8 +263,8 @@ export function ProjectList({
                               {canArchive ? (
                                 <button
                                   type="button"
-                                  className="inbox-list-action"
-                                  title="Archive"
+                                  className="inbox-list-action is-archive"
+                                  title="Archive (keeps chat — restore later)"
                                   aria-label={`Archive ${v.title}`}
                                   onClick={() => onArchiveThread?.(v.threadId)}
                                 >
@@ -225,8 +274,8 @@ export function ProjectList({
                               {canDelete ? (
                                 <button
                                   type="button"
-                                  className="inbox-list-action"
-                                  title="Delete"
+                                  className="inbox-list-action is-delete"
+                                  title="Delete permanently"
                                   aria-label={`Delete ${v.title}`}
                                   onClick={() => onDeleteThread?.(v.threadId)}
                                 >

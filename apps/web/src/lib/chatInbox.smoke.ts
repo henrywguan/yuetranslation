@@ -25,6 +25,8 @@ import {
   ORCHESTRATION_STALL_ERROR,
   projectNestedViews,
   renameProject,
+  resolveProjectGithubWorkspace,
+  setProjectDefaultWorkspace,
   setProjectMemory,
   statusChipLabel,
   ungroupedAgentViews,
@@ -100,6 +102,37 @@ assert.ok(renamed.agents[0]?.title.includes('Harbor Quest'))
 const { state: withWs } = createWorkspace(renamed, 'internal', 'Dev sandbox', project.id)
 assert.equal(withWs.workspaces[0]?.kind, 'internal')
 assert.equal(withWs.workspaces[0]?.projectId, project.id)
+
+const { state: withGh, workspace: ghWs } = createWorkspace(
+  withWs,
+  'github',
+  'yuetranslation',
+  project.id,
+)
+const ghBound = {
+  ...withGh,
+  workspaces: withGh.workspaces.map((w) =>
+    w.id === ghWs.id ? { ...w, ref: 'henrywguan/yuetranslation' } : w,
+  ),
+}
+assert.equal(resolveProjectGithubWorkspace(ghBound, null), undefined, 'no project → no @diff')
+assert.equal(
+  resolveProjectGithubWorkspace(ghBound, project.id)?.id,
+  ghWs.id,
+  'project-linked GitHub workspace resolves',
+)
+const otherProj = createProject(ghBound, 'Other')
+assert.equal(
+  resolveProjectGithubWorkspace(otherProj.state, otherProj.project.id),
+  undefined,
+  'unrelated project does not inherit GitHub bind',
+)
+const defaulted = setProjectDefaultWorkspace(ghBound, project.id, ghWs.id)
+assert.equal(
+  resolveProjectGithubWorkspace(defaulted, project.id)?.id,
+  ghWs.id,
+  'defaultWorkspaceId GitHub bind preferred',
+)
 
 const cleared = deleteProject(withWs, project.id)
 assert.equal(cleared.projects.length, 0)
@@ -218,6 +251,18 @@ assert.doesNotMatch(
 assert.match(shell, /Chats/, 'ungrouped section labeled Chats')
 assert.match(shell, /StatusChip/, 'compact status chips')
 assert.match(shell, /ChatProjectMenu|Add to Project|unlinkThread/, 'Add/Remove chat ↔ Project menu')
+assert.match(shell, /CHAT_THREAD_DRAG_MIME|draggable|is-draggable/, 'drag chat → Project')
+assert.match(
+  readFileSync(join(root, 'lib/chatInbox.ts'), 'utf8'),
+  /resolveProjectGithubWorkspace/,
+  'GitHub @diff helper exported from inbox store',
+)
+assert.match(
+  shell,
+  /threads\.some\(\(t\) => t\.id === tid\)/,
+  'Add-to-Project validates real thread ids',
+)
+assert.match(shell, /is-archive|is-delete/, 'Archive vs Delete contrast classes')
 assert.match(shell, /inboxZero|inbox-empty--hero/, 'distinct empty Inbox state')
 assert.match(shell, /No ungrouped chats|New chat/, 'distinct empty Chats CTA')
 assert.match(shell, /dimEmpty|filterActive/, 'filter tiles dim empty project folders')
@@ -234,6 +279,14 @@ assert.match(projectList, /onToggleExpand|expandedProjectIds/, 'per-project expa
 assert.match(projectList, /onOpenView/, 'nested rows open Overseer/workers/chats')
 assert.match(projectList, /StatusChip/, 'nested rows use compact status chips')
 assert.match(projectList, /ChatProjectMenu|onAddChatToProject|onRemoveChatFromProject/, 'project nest Add/Remove menu')
+assert.match(projectList, /onDrop|is-drop-target|CHAT_THREAD_DRAG_MIME/, 'Project rows accept chat drops')
+assert.match(projectList, /isChatThreadDrag/, 'drop target only claims chat MIME')
+assert.doesNotMatch(
+  projectList,
+  /getData\('text\/plain'\)/,
+  'Project drop ignores arbitrary text/plain',
+)
+assert.match(projectList, /is-archive|is-delete/, 'nested Archive/Delete contrast')
 assert.match(projectList, /New project|inbox-empty-cta/, 'empty Projects CTA')
 assert.match(projectList, /is-dimmed|dimEmpty/, 'dim empty folders under filter')
 assert.match(projectList, /inbox-agent-role--overseer/, 'Overseer badge distinct from workers')
@@ -252,6 +305,7 @@ assert.doesNotMatch(
 const icons = readFileSync(join(root, 'pages/chat/inbox/InboxIcons.tsx'), 'utf8')
 assert.match(icons, /function ArchiveIcon/, 'ArchiveIcon exported')
 assert.match(icons, /function DeleteIcon/, 'DeleteIcon exported')
+assert.match(icons, /Filled trash|fill="currentColor"/, 'DeleteIcon filled for contrast vs Archive stroke')
 assert.match(icons, /function UnarchiveIcon/, 'UnarchiveIcon exported')
 
 const inboxCss = readFileSync(join(root, 'pages/chat/inbox/Inbox.css'), 'utf8')
@@ -321,11 +375,20 @@ assert.doesNotMatch(
 assert.match(inboxCss, /\.inbox-empty--hero|\.inbox-empty-cta/, 'empty-state CTA styles')
 assert.match(inboxCss, /\.inbox-project-node\.is-dimmed/, 'dim empty filtered projects')
 assert.match(inboxCss, /\.inbox-chat-menu/, 'Add/Remove project menu styles')
+assert.match(inboxCss, /\.inbox-list-action\.is-archive|\.is-delete/, 'Archive/Delete rest contrast CSS')
+assert.match(inboxCss, /\.inbox-project-node\.is-drop-target/, 'drop target highlight')
+assert.match(inboxCss, /\.inbox-rules-card|\.inbox-memory--rules/, 'Project Rules editor styles')
+assert.match(
+  inboxCss,
+  /\.inbox-agent-status\.is-idle \.inbox-agent-status-label/,
+  'quieter desktop IDLE label when revealed',
+)
 
 const panel = readFileSync(join(root, 'pages/chat/inbox/ProjectPanel.tsx'), 'utf8')
 assert.doesNotMatch(panel, /Spawn worker/, 'no manual spawn worker button')
 assert.doesNotMatch(panel, /onSpawnWorker/, 'no spawn callback prop')
-assert.match(panel, /Memory only|Overseer/, 'auto-orchestrate memory-only panel copy')
+assert.match(panel, /Project Rules|inbox-rules-card/, 'prominent Project Rules editor')
+assert.match(panel, /Overseer/, 'auto-orchestrate rules panel copy')
 assert.doesNotMatch(panel, /workers\.map|role === 'worker'/, 'workers listed under project tree, not panel')
 assert.match(panel, /onRename|double-click to rename/, 'project panel supports rename')
 
@@ -344,7 +407,7 @@ assert.match(tiles, /In Review/)
 const statusChip = readFileSync(join(root, 'pages/chat/inbox/StatusChip.tsx'), 'utf8')
 assert.match(statusChip, /inbox-agent-status-dot/, 'StatusChip renders dot')
 assert.match(statusChip, /statusChipLabel/, 'StatusChip uses short labels')
-assert.match(statusChip, /all densities|hover\/focus/, 'StatusChip documents global idle hide')
+assert.match(statusChip, /all densities|hover\/focus|Wave B/, 'StatusChip documents global idle hide')
 
 const chatMenu = readFileSync(join(root, 'pages/chat/inbox/ChatProjectMenu.tsx'), 'utf8')
 assert.match(chatMenu, /Add to /, 'menu Add to Project items')

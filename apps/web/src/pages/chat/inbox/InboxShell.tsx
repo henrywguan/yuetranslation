@@ -18,6 +18,7 @@ import {
   type InboxFilter,
   type ThreadAgentView,
 } from '../../../lib/chatInbox'
+import { CHAT_THREAD_DRAG_MIME } from '../../../lib/chatPrChecks'
 import { useChatAuiSession } from '../aui/ChatAuiRuntime'
 import { ArchiveList } from './ArchiveList'
 import { ChatProjectMenu } from './ChatProjectMenu'
@@ -213,7 +214,9 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   const addChatToProject = (threadId: string, projectId: string) => {
-    linkThread(projectId, threadId)
+    const tid = String(threadId || '').trim()
+    if (!tid || !threads.some((t) => t.id === tid)) return
+    linkThread(projectId, tid)
     expandProject(projectId)
     setProjectsOpen(true)
   }
@@ -616,8 +619,20 @@ function InboxThreadItem({
   const view = ungroupedByThreadId.get(threadId)
   if (!view) return null
 
+  const canDrag = view.role === 'thread' && Boolean(view.threadId)
+
   return (
-    <ThreadListItemPrimitive.Root className="aui-thread-item inbox-agent-row has-chat-menu">
+    <ThreadListItemPrimitive.Root
+      className={`aui-thread-item inbox-agent-row has-chat-menu${canDrag ? ' is-draggable' : ''}`}
+      draggable={canDrag}
+      onDragStart={(e) => {
+        if (!canDrag) return
+        e.dataTransfer.setData(CHAT_THREAD_DRAG_MIME, view.threadId)
+        e.dataTransfer.setData('text/plain', view.threadId)
+        e.dataTransfer.effectAllowed = 'move'
+      }}
+      title={canDrag ? 'Drag onto a Project to nest this chat' : undefined}
+    >
       <ThreadListItemPrimitive.Trigger
         className="aui-thread-trigger"
         onClick={() => {
@@ -635,15 +650,15 @@ function InboxThreadItem({
         onRemoveFromProject={() => onRemoveFromProject(view.threadId)}
       />
       <ThreadListItemPrimitive.Archive
-        className="aui-thread-archive"
-        title="Archive"
+        className="aui-thread-archive is-archive"
+        title="Archive (keeps chat — restore later)"
         aria-label="Archive"
       >
         <ArchiveIcon />
       </ThreadListItemPrimitive.Archive>
       <ThreadListItemPrimitive.Delete
-        className="aui-thread-delete"
-        title="Delete"
+        className="aui-thread-delete is-delete"
+        title="Delete permanently"
         aria-label="Delete"
       >
         <DeleteIcon />

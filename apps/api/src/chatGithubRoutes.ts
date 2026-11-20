@@ -13,6 +13,8 @@ import {
   listGithubRepos,
   openGithubPullRequest,
   parseGithubRepo,
+  parseGithubPrUrl,
+  fetchGithubPrChecks,
   suggestChatBranch,
   getGithubInstallationToken,
 } from './chatGithub.js'
@@ -132,6 +134,55 @@ export async function postChatGithubClone(req: AuthedRequest, res: Response) {
     res.status(status).json({
       message: err instanceof Error ? err.message : 'Clone failed',
       code: 'github_clone_failed',
+    })
+  }
+}
+
+/**
+ * GET /api/chat/github/pr-checks?url=… | owner=&repo=&pull=
+ * Read-only glance of CI checks for an open PR (Family/Business + GitHub App).
+ */
+export async function getChatGithubPrChecks(req: AuthedRequest, res: Response) {
+  const g = await gate(req, res)
+  if (!g) return
+  const q = req.query || {}
+  const urlRaw = typeof q.url === 'string' ? q.url : ''
+  const fromUrl = urlRaw ? parseGithubPrUrl(urlRaw) : null
+  const owner =
+    fromUrl?.owner || (typeof q.owner === 'string' ? q.owner.trim() : '')
+  const repo = fromUrl?.repo || (typeof q.repo === 'string' ? q.repo.trim() : '')
+  const pullRaw =
+    fromUrl?.number != null
+      ? String(fromUrl.number)
+      : typeof q.pull === 'string'
+        ? q.pull
+        : typeof q.number === 'string'
+          ? q.number
+          : ''
+  const number = Number(pullRaw)
+  if (!owner || !repo || !Number.isFinite(number) || number < 1) {
+    res.status(400).json({
+      message: 'url or owner+repo+pull required',
+      code: 'invalid_pr_ref',
+    })
+    return
+  }
+  try {
+    const creds = await loadChatPluginCredentials(g.userId)
+    const checks = await fetchGithubPrChecks({ owner, repo, number, creds })
+    res.json({ ok: true, checks, owner, repo, number })
+  } catch (err) {
+    if (err instanceof GithubNotConfiguredError) {
+      res.status(501).json({
+        message: err.message,
+        code: err.code,
+        fixability: err.fixability,
+      })
+      return
+    }
+    res.status(502).json({
+      message: err instanceof Error ? err.message : 'PR checks failed',
+      code: 'github_pr_checks_failed',
     })
   }
 }

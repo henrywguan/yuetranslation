@@ -93,11 +93,16 @@ import {
   writeChatPluginIds,
   type ChatComposerMode,
 } from '../../../lib/chatUiPrefs'
-import { buildPlanBuildPrompt } from '../../../lib/chatComposerContext'
+import {
+  buildPlanBuildPrompt,
+  CHAT_PLAN_WORKSPACE_PATH,
+  extractPlanArtifactText,
+} from '../../../lib/chatComposerContext'
 import { chatSpeakLang } from '../../../lib/chatVoice'
 import {
   applyWorkspaceWireUpdate,
   ensureThreadWorkspace,
+  upsertWorkspaceFile,
   maybeSeedArtifactsIntoWorkspace,
   patchThreadWorkspace,
   readHarnessFlag,
@@ -144,6 +149,11 @@ export type ChatAuiSession = {
   setComposerMode: (mode: ChatComposerMode) => void
   /** Plan → Build: switch to Agent and enqueue Overseer-leaning handoff. */
   buildFromPlan: () => Promise<void>
+  /** Editable Plan artifact (seeded from last assistant; used by Build). */
+  planDraft: string
+  setPlanDraft: (text: string) => void
+  /** Persist current planDraft into the thread workspace as plans/latest.md. */
+  savePlanToWorkspace: () => { ok: boolean; path?: string; error?: string }
   richLayout: boolean
   setRichLayout: (on: boolean) => void
   harnessOn: boolean
@@ -228,6 +238,33 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   )
   const composerModeRef = useRef(composerMode)
   composerModeRef.current = composerMode
+  /** Per-thread Plan drafts — survive thread switches without clobbering edits. */
+  const planDraftsByThreadRef = useRef<Record<string, string>>({})
+  /**
+   * Per-thread seed snapshot: assistant message id + exact text we wrote.
+   * A newer assistant reply only reseeds when the draft still equals `text`
+   * (user has not edited). Empty `msgId` = seeded with no assistant yet.
+   */
+  const planSeedByThreadRef = useRef<Record<string, { msgId: string; text: string }>>({})
+  const [planDraft, setPlanDraftState] = useState('')
+  const planDraftRef = useRef(planDraft)
+  planDraftRef.current = planDraft
+  const setPlanDraft = useCallback((text: string) => {
+    const tid = activeIdRef.current
+    if (tid && tid !== BOOT_THREAD.id) {
+      planDraftsByThreadRef.current[tid] = text
+    }
+    planDraftRef.current = text
+    setPlanDraftState(text)
+  }, [])
+
+  /** Sync Plan draft ref+state for a thread immediately (no post-paint lag on switch). */
+  const applyPlanDraftForThread = useCallback((tid: string) => {
+    const stored =
+      !tid || tid === BOOT_THREAD.id ? '' : planDraftsByThreadRef.current[tid] ?? ''
+    planDraftRef.current = stored
+    setPlanDraftState(stored)
+  }, [])
   const [richLayout, setRichLayoutState] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
   const [reviewActivity, setReviewActivity] = useState<ChatReviewActivity>(() => emptyReviewActivity())
   const [reviewOpen, setReviewOpenState] = useState(false)
@@ -587,10 +624,12 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     followUpQueueRef.current = []
     const created = emptyThread()
     setThreads((prev) => upsertChatThread(created, prev.filter((t) => t.id !== BOOT_THREAD.id)))
+    activeIdRef.current = created.id
     setActiveId(created.id)
+    applyPlanDraftForThread(created.id)
     setError(null)
     return created.id
-  }, [stopGeneration])
+  }, [applyPlanDraftForThread, stopGeneration])
 
   const selectThread = useCallback(
     (id: string) => {
@@ -599,10 +638,13 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       // Follow-ups are thread-local intent — never auto-send into a different chat.
       setFollowUpQueue([])
       followUpQueueRef.current = []
+      // Sync activeId + Plan draft before paint so Save/Build cannot hit the wrong thread.
+      activeIdRef.current = id
       setActiveId(id)
+      applyPlanDraftForThread(id)
       setError(null)
     },
-    [stopGeneration],
+    [applyPlanDraftForThread, stopGeneration],
   )
 
   const removeThread = useCallback(
@@ -617,16 +659,19 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           const created = emptyThread()
           setActiveId(created.id)
           activeIdRef.current = created.id
+          applyPlanDraftForThread(created.id)
           return [created, ...next]
         }
         if (activeIdRef.current === id) {
-          setActiveId(live[0]!.id)
-          activeIdRef.current = live[0]!.id
+          const nextId = live[0]!.id
+          setActiveId(nextId)
+          activeIdRef.current = nextId
+          applyPlanDraftForThread(nextId)
         }
         return next
       })
     },
-    [stopGeneration],
+    [applyPlanDraftForThread, stopGeneration],
   )
 
   const archiveThread = useCallback(
@@ -643,17 +688,20 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             const created = emptyThread()
             setActiveId(created.id)
             activeIdRef.current = created.id
+            applyPlanDraftForThread(created.id)
             return [created, ...next]
           }
           if (activeIdRef.current === id) {
-            setActiveId(live[0]!.id)
-            activeIdRef.current = live[0]!.id
+            const nextId = live[0]!.id
+            setActiveId(nextId)
+            activeIdRef.current = nextId
+            applyPlanDraftForThread(nextId)
           }
         }
         return next
       })
     },
-    [],
+    [applyPlanDraftForThread],
   )
 
   const runAssistant = useCallback(
@@ -1041,8 +1089,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       if (!content) return false
       const tid = threadId || activeIdRef.current
       if (tid !== activeIdRef.current) {
-        setActiveId(tid)
         activeIdRef.current = tid
+        setActiveId(tid)
+        applyPlanDraftForThread(tid)
       }
       setError(null)
       // Set busy synchronously so a concurrent follow-up flush cannot claim another send.
@@ -1055,7 +1104,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       await runAssistant(userStep.thread)
       return true
     },
-    [persist, runAssistant, unlocked],
+    [applyPlanDraftForThread, persist, runAssistant, unlocked],
   )
 
   const refreshGitDiff = useCallback(async () => {
@@ -1105,6 +1154,28 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     }
   }, [])
 
+  const savePlanToWorkspace = useCallback((): { ok: boolean; path?: string; error?: string } => {
+    const tid = activeIdRef.current
+    const cur = threadsRef.current.find((t) => t.id === tid)
+    if (!cur || cur.id === BOOT_THREAD.id) {
+      return { ok: false, error: 'Open a chat before saving the plan.' }
+    }
+    const text = planDraftRef.current.trim()
+    if (!text) return { ok: false, error: 'Plan is empty — nothing to save.' }
+    try {
+      const seeded = ensureThreadWorkspace(cur)
+      const ws = upsertWorkspaceFile(seeded.workspace, {
+        path: CHAT_PLAN_WORKSPACE_PATH,
+        text,
+        mime: 'text/markdown',
+      })
+      persist(patchThreadWorkspace(seeded, ws))
+      return { ok: true, path: CHAT_PLAN_WORKSPACE_PATH }
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'Save failed' }
+    }
+  }, [persist])
+
   const buildFromPlan = useCallback(async () => {
     // Keep Plan selected while a reply is in flight — never silent-switch to Agent.
     if (!unlocked) return
@@ -1112,11 +1183,12 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setError('Wait for the current reply to finish, then Build.')
       return
     }
+    const planText = planDraftRef.current.trim()
+    if (!planText) {
+      setError('Plan is empty — write or restore a plan before Build.')
+      return
+    }
     const tid = activeIdRef.current
-    const thread = threadsRef.current.find((t) => t.id === tid)
-    const lastAssistant = [...(thread?.messages || [])]
-      .reverse()
-      .find((m) => m.role === 'assistant' && m.content.trim())
     const inboxState = inboxRef.current?.state
     const linked = inboxState ? agentForThread(inboxState, tid) : undefined
     const inProject = Boolean(linked?.projectId)
@@ -1132,9 +1204,57 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     markChatDeepAvatarPlanBuild()
     setChatDeepAvatarPlanBuildChainBusy(inProject)
     setComposerMode('agent')
-    const prompt = buildPlanBuildPrompt(lastAssistant?.content || '', inProject)
+    const prompt = buildPlanBuildPrompt(planText, inProject)
     await enqueuePrompt(prompt, targetThreadId)
   }, [enqueuePrompt, setComposerMode, unlocked])
+
+  // Load the active thread's Plan draft when switching chats (edits are keyed by threadId).
+  useEffect(() => {
+    if (activeId === BOOT_THREAD.id) {
+      setPlanDraftState('')
+      planDraftRef.current = ''
+      return
+    }
+    const stored = planDraftsByThreadRef.current[activeId] ?? ''
+    setPlanDraftState(stored)
+    planDraftRef.current = stored
+  }, [activeId])
+
+  // Seed / refresh editable Plan artifact from the latest assistant reply while in Plan mode.
+  // Never overwrite a draft the user has edited away from the last seed snapshot.
+  useEffect(() => {
+    if (composerMode !== 'plan') return
+    if (busy) return
+    if (activeId === BOOT_THREAD.id) return
+    const thread = threads.find((t) => t.id === activeId)
+    const lastAssistant = [...(thread?.messages || [])]
+      .reverse()
+      .find((m) => m.role === 'assistant' && m.content.trim())
+    const msgId = lastAssistant ? lastAssistant.id : ''
+    const prev = planSeedByThreadRef.current[activeId]
+    if (prev?.msgId === msgId) return
+    const currentDraft = planDraftsByThreadRef.current[activeId] ?? planDraftRef.current
+    // User edited since last seed — keep their text even if a new reply landed.
+    if (prev && currentDraft !== prev.text) return
+    // Prefer tagged plan fences; if the reply has none, leave an existing draft alone.
+    const extracted = lastAssistant
+      ? extractPlanArtifactText(lastAssistant.content)
+      : ''
+    if (
+      lastAssistant &&
+      extracted === lastAssistant.content.trim() &&
+      !/```(plan|markdown|md)\b/i.test(lastAssistant.content) &&
+      currentDraft.trim()
+    ) {
+      // Conversational follow-up without a plan fence — do not replace a curated draft.
+      planSeedByThreadRef.current[activeId] = { msgId, text: currentDraft }
+      return
+    }
+    planSeedByThreadRef.current[activeId] = { msgId, text: extracted }
+    planDraftsByThreadRef.current[activeId] = extracted
+    planDraftRef.current = extracted
+    setPlanDraftState(extracted)
+  }, [activeId, busy, composerMode, threads])
 
   // Flush Overseer project_message / create_agent messages sequentially, then return to Overseer.
   useEffect(() => {
@@ -1374,6 +1494,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       composerMode,
       setComposerMode,
       buildFromPlan,
+      planDraft,
+      setPlanDraft,
+      savePlanToWorkspace,
       richLayout,
       setRichLayout,
       harnessOn,
@@ -1426,6 +1549,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       clearFollowUpQueue,
       composerMode,
       deepThink,
+      planDraft,
+      savePlanToWorkspace,
       dismissFollowUp,
       enabledPlugins,
       enqueuePrompt,

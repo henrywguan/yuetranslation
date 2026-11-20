@@ -41,6 +41,7 @@ import {
   agentForThread,
   projectNestedViews,
   buildAgentViews,
+  resolveProjectGithubWorkspace,
 } from '../../../lib/chatInbox'
 import { buildToolCards } from '../../../lib/chatToolCards'
 import {
@@ -430,6 +431,9 @@ function ComposerChrome({ error }: { error?: string | null }) {
     composerMode,
     setComposerMode,
     buildFromPlan,
+    planDraft,
+    setPlanDraft,
+    savePlanToWorkspace,
     richLayout,
     setRichLayout,
     harnessOn,
@@ -457,6 +461,7 @@ function ComposerChrome({ error }: { error?: string | null }) {
     queueFollowUp,
     dismissFollowUp,
     clearFollowUpQueue,
+    reviewActivity,
   } = useChatAuiSession()
   const {
     mood: portraitMood,
@@ -477,6 +482,8 @@ function ComposerChrome({ error }: { error?: string | null }) {
     deepFinish: portraitDeep,
     celebrateMode,
   })
+  const [composerDragOver, setComposerDragOver] = useState(false)
+  const [planSaveNote, setPlanSaveNote] = useState<string | null>(null)
 
   // Solo / Conversation handoff — classic ChatPage already consumed this; AUI is default.
   useEffect(() => {
@@ -512,16 +519,42 @@ function ComposerChrome({ error }: { error?: string | null }) {
   const atMatch = detectAtQuery(draft)
   const mentionItems = useMemo(() => {
     if (!atMatch) return []
+    const linked = inbox?.ready ? agentForThread(inbox.state, activeId) : undefined
+    let projectId = linked?.projectId || null
+    if (!projectId && inbox?.ready) {
+      projectId = inbox.state.projects.find((p) => p.threadIds.includes(activeId))?.id || null
+    }
+    const project = projectId
+      ? inbox?.state.projects.find((p) => p.id === projectId)
+      : undefined
+    // Only offer `@diff:…` when *this* Project has a bound GitHub workspace.
+    const githubWs =
+      projectId && inbox?.ready
+        ? resolveProjectGithubWorkspace(inbox.state, projectId)
+        : undefined
+    const lastRun = reviewActivity.runs[0] || null
     return buildChatMentionItems({
       workspace: activeWorkspace,
       workspaces: inbox?.state.workspaces,
       threads: threads.map((t) => ({ id: t.id, title: t.title, archived: t.archived })),
       agents: inbox?.state.agents,
       activeThreadId: activeId,
+      projectId,
+      projectThreadIds: project?.threadIds,
+      githubBound: Boolean(githubWs),
+      defaultBranch: 'main',
+      lastRun,
       query: atMatch.query,
       limit: 20,
     })
-  }, [activeId, activeWorkspace, atMatch, inbox?.state.agents, inbox?.state.workspaces, threads])
+  }, [
+    activeId,
+    activeWorkspace,
+    atMatch,
+    inbox,
+    reviewActivity.runs,
+    threads,
+  ])
 
   useEffect(() => {
     // Typed `@` only — no dedicated composer @ button.
@@ -530,6 +563,7 @@ function ComposerChrome({ error }: { error?: string | null }) {
 
   useEffect(() => {
     if (composerMode !== 'agent') setPluginsOpen(false)
+    if (composerMode !== 'plan') setPlanSaveNote(null)
   }, [composerMode])
 
   const toggleToolsExpanded = () => {
@@ -578,9 +612,68 @@ function ComposerChrome({ error }: { error?: string | null }) {
   const official = catalog.filter((p) => p.kind === 'builtin' || p.id === 'image')
   const installed = catalog.filter((p) => !official.includes(p))
 
+  const takeImageFromDataTransfer = (dt: DataTransfer | null): File | null => {
+    if (!dt) return null
+    const files = dt.files
+    if (files?.length) {
+      for (const f of Array.from(files)) {
+        if (f.type.startsWith('image/')) return f
+      }
+    }
+    const items = dt.items
+    if (items?.length) {
+      for (const item of Array.from(items)) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          return item.getAsFile()
+        }
+      }
+    }
+    return null
+  }
+
   return (
     <ComposerPrimitive.Root
-      className={`aui-composer${harnessOn ? ' is-harness' : ''} is-mode-${composerMode}`}
+      className={`aui-composer${harnessOn ? ' is-harness' : ''} is-mode-${composerMode}${composerDragOver ? ' is-drag-over' : ''}`}
+      onDragEnter={(e) => {
+        if (busy || uploadingFile) return
+        if (![...e.dataTransfer.types].some((t) => t === 'Files')) return
+        e.preventDefault()
+        setComposerDragOver(true)
+      }}
+      onDragOver={(e) => {
+        if (busy || uploadingFile) return
+        // Only claim file/image drags — never block text drops into the draft.
+        if (![...e.dataTransfer.types].some((t) => t === 'Files')) return
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'copy'
+        setComposerDragOver(true)
+      }}
+      onDragLeave={(e) => {
+        if (e.currentTarget === e.target) setComposerDragOver(false)
+      }}
+      onDrop={(e) => {
+        setComposerDragOver(false)
+        if (busy || uploadingFile) return
+        const file = takeImageFromDataTransfer(e.dataTransfer)
+        if (!file) return
+        e.preventDefault()
+        void pickFile(file)
+      }}
+      onPaste={(e) => {
+        if (busy || uploadingFile) return
+        const items = e.clipboardData?.items
+        if (!items) return
+        for (const item of Array.from(items)) {
+          if (item.kind === 'file' && item.type.startsWith('image/')) {
+            const file = item.getAsFile()
+            if (file) {
+              e.preventDefault()
+              void pickFile(file)
+            }
+            break
+          }
+        }
+      }}
     >
       {/* Modes span full dialogue bar width — above portrait + draft (Henry). */}
       <ProjectAgentStrip />
@@ -612,20 +705,42 @@ function ComposerChrome({ error }: { error?: string | null }) {
           )
         })}
         {composerMode === 'plan' ? (
-          <button
-            type="button"
-            className="aui-mode-build"
-            disabled={busy}
-            aria-disabled={busy}
-            title={
-              busy
-                ? 'Wait for the current reply to finish, then Build'
-                : 'Switch to Agent and hand the plan to Overseer / workers'
-            }
-            onClick={() => void buildFromPlan()}
-          >
-            Build
-          </button>
+          <>
+            <button
+              type="button"
+              className="aui-mode-build aui-mode-build--save"
+              disabled={busy || !planDraft.trim()}
+              title="Save plan markdown to workspace (plans/latest.md)"
+              onClick={() => {
+                const res = savePlanToWorkspace()
+                if (res.ok) {
+                  setPlanSaveNote(`Saved · ${res.path}`)
+                  setError(null)
+                } else {
+                  setPlanSaveNote(null)
+                  setError(res.error || 'Save failed')
+                }
+              }}
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              className="aui-mode-build"
+              disabled={busy || !planDraft.trim()}
+              aria-disabled={busy || !planDraft.trim()}
+              title={
+                busy
+                  ? 'Wait for the current reply to finish, then Build'
+                  : !planDraft.trim()
+                    ? 'Plan is empty — write a plan before Build'
+                    : 'Switch to Agent and hand the plan to Overseer / workers'
+              }
+              onClick={() => void buildFromPlan()}
+            >
+              Build
+            </button>
+          </>
         ) : null}
         <button
           type="button"
@@ -789,10 +904,38 @@ function ComposerChrome({ error }: { error?: string | null }) {
         </div>
       ) : null}
 
+      {composerMode === 'plan' ? (
+        <div className="aui-plan-artifact" aria-label="Plan artifact">
+          <div className="aui-plan-artifact-head">
+            <span>Plan</span>
+            <span className="aui-plan-artifact-hint">Edit before Build · optional Save to workspace</span>
+            {planSaveNote ? (
+              <span className="aui-plan-artifact-saved" role="status">
+                {planSaveNote}
+              </span>
+            ) : null}
+          </div>
+          <textarea
+            className="aui-plan-artifact-input"
+            value={planDraft}
+            rows={5}
+            disabled={busy}
+            placeholder="Plan markdown appears here after a Plan reply — edit freely, then Build."
+            onChange={(e) => {
+              setPlanDraft(e.target.value)
+              setPlanSaveNote(null)
+            }}
+          />
+        </div>
+      ) : null}
+
       {pendingFiles.length ? (
         <ul className="aui-pending-files">
           {pendingFiles.map((f) => (
             <li key={f.fileId}>
+              {f.previewUrl ? (
+                <img src={f.previewUrl} alt="" className="aui-pending-thumb" draggable={false} />
+              ) : null}
               <span>{f.filename}</span>
               <button type="button" onClick={() => removePendingFile(f.fileId)} aria-label="Remove file">
                 ×

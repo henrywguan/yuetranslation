@@ -1,6 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { fetchChatGithubPrChecks } from '../../../lib/api'
 import type { ChatDiffEntry, ChatReviewActivity } from '../../../lib/chatReviewActivity'
 import { snapshotAsPatchPreview } from '../../../lib/chatReviewActivity'
+import {
+  parseGithubPrUrl,
+  summarizePrChecks,
+  type ChatPrCheckSummary,
+} from '../../../lib/chatPrChecks'
 
 function DiffPreview({ text, path }: { text: string; path: string }) {
   const lines = text.split('\n')
@@ -23,6 +29,79 @@ function DiffPreview({ text, path }: { text: string; path: string }) {
       })}
       {truncated ? <span className="aui-diff-line is-meta">… ({lines.length - 500} more lines)</span> : null}
     </pre>
+  )
+}
+
+function PrChecksGlance({ reviewUrl }: { reviewUrl: string }) {
+  const ref = useMemo(() => parseGithubPrUrl(reviewUrl), [reviewUrl])
+  const [summary, setSummary] = useState<ChatPrCheckSummary | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!ref) {
+      setSummary(null)
+      setErr(null)
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    // Clear prior PR summary immediately so we never flash stale checks.
+    setSummary(null)
+    setLoading(true)
+    setErr(null)
+    void fetchChatGithubPrChecks({ url: reviewUrl })
+      .then((checks) => {
+        if (cancelled) return
+        setSummary(
+          summarizePrChecks({
+            state: checks.state,
+            total: checks.total,
+            success: checks.success,
+            failure: checks.failure,
+            pending: checks.pending,
+            detail: checks.detail,
+          }),
+        )
+      })
+      .catch((e) => {
+        if (cancelled) return
+        setSummary(null)
+        setErr(e instanceof Error ? e.message : 'Checks unavailable')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [ref, reviewUrl])
+
+  if (!ref) return null
+
+  if (loading && !summary) {
+    return (
+      <span className="aui-pr-checks is-pending" title="Loading PR checks">
+        Checks · …
+      </span>
+    )
+  }
+  if (err && !summary) {
+    return (
+      <span className="aui-pr-checks is-unknown" title={err}>
+        Checks · —
+      </span>
+    )
+  }
+  if (!summary) return null
+  return (
+    <span
+      className={`aui-pr-checks is-${summary.state}`}
+      title={summary.detail || summary.label}
+      aria-label={summary.detail || summary.label}
+    >
+      {summary.label}
+    </span>
   )
 }
 
@@ -85,14 +164,17 @@ export function ChatDiffsPanel({
             </button>
           ) : null}
           {effectiveReview ? (
-            <a
-              className="aui-review-btn aui-review-btn--pr"
-              href={effectiveReview}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open PR
-            </a>
+            <>
+              <PrChecksGlance reviewUrl={effectiveReview} />
+              <a
+                className="aui-review-btn aui-review-btn--pr"
+                href={effectiveReview}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open PR
+              </a>
+            </>
           ) : null}
           {onClose ? (
             <button type="button" className="aui-review-btn aui-review-btn--quiet" onClick={onClose}>

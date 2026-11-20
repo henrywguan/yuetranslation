@@ -7,8 +7,12 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
+  GITHUB_PR_CHECKS_MAX_PAGES,
+  githubApiPathFromUrl,
   githubConfigured,
+  githubLinkNextUrl,
   githubStatus,
+  parseGithubPrUrl,
   parseGithubRepo,
   suggestChatBranch,
 } from './chatGithub.js'
@@ -32,7 +36,32 @@ assert.deepEqual(parseGithubRepo('https://github.com/henrywguan/yuetranslation.g
   repo: 'yuetranslation',
 })
 assert.equal(parseGithubRepo('not a repo'), null)
+assert.deepEqual(parseGithubPrUrl('https://github.com/henrywguan/yuetranslation/pull/800'), {
+  owner: 'henrywguan',
+  repo: 'yuetranslation',
+  number: 800,
+})
+assert.equal(parseGithubPrUrl('nope'), null)
 assert.match(suggestChatBranch('chat'), /^chat\//)
+
+assert.equal(GITHUB_PR_CHECKS_MAX_PAGES, 5)
+assert.equal(
+  githubLinkNextUrl(
+    '<https://api.github.com/repos/o/r/commits/abc/check-runs?page=2>; rel="next", <https://api.github.com/repos/o/r/commits/abc/check-runs?page=1>; rel="prev"',
+  ),
+  'https://api.github.com/repos/o/r/commits/abc/check-runs?page=2',
+)
+assert.equal(githubLinkNextUrl(null), null)
+assert.equal(
+  githubApiPathFromUrl('https://api.github.com/repos/o/r/commits/abc/check-runs?page=2'),
+  '/repos/o/r/commits/abc/check-runs?page=2',
+)
+assert.equal(githubApiPathFromUrl('https://evil.example/x'), null)
+
+const here = path.dirname(fileURLToPath(import.meta.url))
+const githubSrc = readFileSync(path.join(here, 'chatGithub.ts'), 'utf8')
+assert.match(githubSrc, /GITHUB_PR_CHECKS_MAX_PAGES|githubLinkNextUrl/, 'PR checks paginate')
+assert.match(githubSrc, /page=\$\{checksPages \+ 1\}|page=1/, 'check-runs page loop')
 
 const byoGithub = await saveChatPluginCredentials('smoke-github-byo', {
   github_app_id: '111',
@@ -46,16 +75,17 @@ assert.equal(resolvedByo?.source, 'byo')
 assert.equal(githubConfigured(byoGithub), true)
 assert.match(githubStatus(byoGithub).message, /byo/i)
 
-const here = path.dirname(fileURLToPath(import.meta.url))
 const routes = readFileSync(path.join(here, 'chatGithubRoutes.ts'), 'utf8')
 assert.match(routes, /GithubNotConfiguredError/)
 assert.match(routes, /fixability/)
 assert.match(routes, /postChatGithubClone/)
 assert.match(routes, /postChatGithubPr/)
+assert.match(routes, /getChatGithubPrChecks/)
 assert.match(routes, /loadChatPluginCredentials/)
 
 const app = readFileSync(path.join(here, 'app.ts'), 'utf8')
 assert.match(app, /\/api\/chat\/github\/status/)
+assert.match(app, /\/api\/chat\/github\/pr-checks/)
 assert.match(app, /\/api\/chat\/github\/pr/)
 
 const tools = readFileSync(path.join(here, 'deepseekChatTools.ts'), 'utf8')

@@ -119,6 +119,7 @@ import {
 } from './chatSandboxRoutes.js'
 import {
   getChatGithubRepos,
+  getChatGithubPrChecks,
   getChatGithubStatus,
   postChatGithubClone,
   postChatGithubPr,
@@ -2066,6 +2067,7 @@ app.post('/api/chat/sandbox/:id/fs/read', postChatSandboxFsRead)
 app.post('/api/chat/sandbox/:id/fs/write', postChatSandboxFsWrite)
 app.get('/api/chat/github/status', getChatGithubStatus)
 app.get('/api/chat/github/repos', getChatGithubRepos)
+app.get('/api/chat/github/pr-checks', getChatGithubPrChecks)
 app.post('/api/chat/github/clone', postChatGithubClone)
 app.post('/api/chat/github/pr', postChatGithubPr)
 app.get('/api/chat/plugins', getDeepseekChatPlugins)
