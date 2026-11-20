@@ -3,16 +3,21 @@
  * Keep patterns in sync with apps/api `deepseekChatHarness.ts`.
  */
 
-/** Match short "I'll search…" / "I'll look into…" stopovers with no web tool follow-through. */
+/** Match short "I'll search…" / "I'll look into…" / "I'll check…" / "Running the searches now" stopovers. */
 export function looksLikeDeferredSearch(text: string): boolean {
   const t = String(text || '').trim()
   if (!t || t.length > 480) return false
   if ((t.match(/\n/g) || []).length >= 4) return false
   return (
-    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,80}\b(search|look\s+(?:up|into)|investigate|research|dig\s+into|find\s+out|check (?:the )?(?:web|online|news)|find (?:the )?latest)\b/i.test(
+    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,100}\b(search(?:es|ing)?|look\s+(?:up|into)|investigate|research|dig\s+into|find\s+out|check (?:the )?(?:web|online|news)|find (?:the )?latest|check\b[\s\S]{0,40}\b(?:what'?s\s+new|latest|updates?|news|this\s+week))\b/i.test(
       t,
     ) ||
     /^(?:i(?:['’]ll| will)|let me)\s+(?:search|look\s+(?:up|into)|investigate|research)\b/i.test(
+      t,
+    ) ||
+    /\b(?:running|starting|doing|performing)\b[\s\S]{0,48}\bsearches?\b/i.test(t) ||
+    /\bsearches?\s+(?:now|next)\b/i.test(t) ||
+    /^(?:sure[,.]?\s*|ok(?:ay)?[,.]?\s*)?(?:i(?:['’]ll| will)|let me)\s+check(?:\s+(?:for\s+you|that|this|it))?[.…!\s]*$/i.test(
       t,
     )
   )
@@ -26,7 +31,7 @@ export function looksLikeDeferredSearchTurn(content: string, reasoning = ''): bo
   if (!think || !looksLikeDeferredSearch(think)) return false
   if (!body) return true
   if (body.length > 120 || (body.match(/\n/g) || []).length >= 1) return false
-  return /^(?:sure|ok|okay|one moment|hang on|got it|alright|let me (?:see|check)|i(?:['’]ll| will) (?:check|see))[.!]?\s*$/i.test(
+  return /^(?:sure|ok|okay|one moment|hang on|got it|alright|let me (?:see|check)|i(?:['’]ll| will) (?:check|see)|one moment while i (?:search|check|look))[.!…⋯]*\s*$/i.test(
     body,
   )
 }

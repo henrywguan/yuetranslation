@@ -56,6 +56,7 @@ import {
   resolveActiveSandboxSessionId,
   type InboxAgentStatus,
 } from '../../../lib/chatInbox'
+import { humanizeThrownError } from '../../../lib/apiError'
 import {
   looksLikeDeferredSearchTurn,
   looksLikeDeferredToolUse,
@@ -859,7 +860,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           ) {
             setError(ORCHESTRATION_STALL_ERROR)
           } else {
-            const hadSearchChrome = Boolean(sources?.length || searchSteps.length)
+            // call_started search_steps alone are not evidence — need source URLs.
+            const hadSearchChrome = Boolean(sources?.length)
             if (
               searchOn &&
               !hadSearchChrome &&
@@ -889,8 +891,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           if (!assembled.trim()) thread = dropEmpty(thread)
           persist(thread)
         } else {
-          const message = err instanceof Error ? err.message : 'Chat failed'
-          setError(message)
+          setError(humanizeThrownError(err))
           thread = {
             ...thread,
             messages: thread.messages.filter((m) => m.id !== assistantId || m.content.trim()),

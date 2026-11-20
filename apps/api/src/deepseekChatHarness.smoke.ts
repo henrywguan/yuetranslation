@@ -132,8 +132,18 @@ assert.match(harnessSrc, /enabled:\s*true/, 'Harness requests conversation title
 assert.match(harnessSrc, /body\.title/, 'Harness sets title on Completions body')
 assert.match(harnessSrc, /latest_reminder/, 'Harness injects user metadata marker')
 assert.match(harnessSrc, /deepseek_web_search/, 'Harness declares native web search')
-assert.match(harnessSrc, /deferredSearchRecovered|deferred-search recovery/, 'Harness recovers empty search promises')
+assert.match(
+  harnessSrc,
+  /deferredSearchRecoveries|deferred-search recovery/,
+  'Harness recovers empty search promises',
+)
+assert.match(harnessSrc, /MAX_DEFERRED_SEARCH_RECOVERIES/, 'Harness allows a second search nudge')
 assert.match(harnessSrc, /looksLikeDeferredSearch/, 'Harness detects I\'ll-search stopovers')
+assert.match(
+  harnessSrc,
+  /didServerSearch = allSources\.size > 0/,
+  'Bare call_started does not block deferred-search recovery',
+)
 assert.match(
   harnessSrc,
   /deferredOrchestrationRecovered|deferred-orchestration recovery/,
@@ -153,6 +163,29 @@ assert.equal(
   looksLikeDeferredSearch("I'll look into what 'GrokBot' refers to…"),
   true,
   'Henry GrokBot stall phrase is deferred-search',
+)
+assert.equal(
+  looksLikeDeferredSearch("I'll check…"),
+  true,
+  'Henry I\'ll-check ellipsis is deferred-search',
+)
+assert.equal(
+  looksLikeDeferredSearch('Running the searches now'),
+  true,
+  'Henry running-the-searches status line is deferred-search',
+)
+assert.equal(
+  looksLikeDeferredSearch("I'll check what's new this week."),
+  true,
+  'Warframe-style what\'s-new check is deferred-search',
+)
+assert.equal(
+  looksLikeDeferredSearchTurn(
+    "I'll check…",
+    'Let me search the web for Warframe updates this week.',
+  ),
+  true,
+  'DeepThink plan + I\'ll-check… filler is deferred',
 )
 assert.equal(
   looksLikeDeferredSearchTurn(
@@ -176,6 +209,11 @@ assert.equal(
   ),
   false,
   'real answers are not deferred-search',
+)
+assert.equal(
+  looksLikeDeferredSearch("I'll check the weather in Hong Kong for you."),
+  false,
+  'weather check stays out of deferred-search (tool path)',
 )
 assert.equal(
   looksLikeDeferredToolUse("I'll check the weather in Hong Kong for you."),

@@ -39,6 +39,7 @@ assert.match(webOn, /deepseek_web_search/)
 assert.match(webOn, /jyut_plan_limits/)
 assert.match(webOn, /Never end the turn with only/, 'Web skills forbid I\'ll-search stopovers')
 assert.match(webOn, /look into/, 'Web skills forbid I\'ll-look-into stopovers')
+assert.match(webOn, /Running the searches now|I\\'ll check/, 'Web skills forbid check/running-searches stopovers')
 
 const harnessOn = buildDeepseekChatSystem({ harnessEnabled: true, now: fixed, mode: 'tools' })
 assert.match(harnessOn, /workspace_write/)

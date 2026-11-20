@@ -47,6 +47,7 @@ import {
   forkThreadAt,
   pushAssistantAlternate,
 } from '../lib/chatBranching'
+import { humanizeThrownError } from '../lib/apiError'
 import {
   looksLikeDeferredSearchTurn,
   looksLikeDeferredToolUse,
@@ -1200,7 +1201,8 @@ export function ChatPage() {
         }
         persist(thread)
         // Never leave a silent "I'll look into…" stopover when Search was on.
-        const hadSearchChrome = Boolean(sources?.length || searchSteps.length)
+        // call_started search_steps alone are not evidence — need source URLs.
+        const hadSearchChrome = Boolean(sources?.length)
         if (
           searchOn &&
           !hadSearchChrome &&
@@ -1232,8 +1234,7 @@ export function ChatPage() {
         if (!assembled.trim()) thread = dropEmptyAssistant(thread)
         persist(thread)
       } else {
-        const message = err instanceof Error ? err.message : 'Chat failed'
-        setError(message)
+        setError(humanizeThrownError(err))
         thread = {
           ...thread,
           messages: thread.messages.filter((m) => m.id !== assistantId || m.content.trim()),
