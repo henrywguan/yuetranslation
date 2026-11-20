@@ -12,7 +12,7 @@ type Props = {
   workspace: ChatWorkspace | undefined
   onChange: (ws: ChatWorkspace) => void
   onClose: () => void
-  /** Mobile: full-screen sheet. */
+  /** Narrow viewport: sheet below the chat topbar (Δ / WS stay clickable). */
   sheet?: boolean
   scheduleJobs?: ChatScheduleJob[]
   onAddSchedule?: (prompt: string, cadence: ChatScheduleJob['cadence']) => void

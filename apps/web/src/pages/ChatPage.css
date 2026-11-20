@@ -20,6 +20,9 @@
     sans-serif;
   --ds-mono: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
   --ds-sidebar-w: 17.5rem;
+  /* Top chrome height (icon 2.25rem + vertical pad) — sheet mode must clear this
+   * so Δ / WS stay clickable under an open Harness workspace. */
+  --ds-chat-top-h: 3.35rem;
 
   /* Match Practice / app-shell: pin to the visual viewport. `position: relative`
    * left #/chat in document flow — after Account Hub (body portal) → route
@@ -1843,6 +1846,8 @@ html[data-theme='light'] .ds-chat-assistant-body code {
 }
 
 .ds-chat-workspace.is-sheet {
+  /* Leave topbar (Δ / WS / New chat) uncovered — full inset covered Δ clicks. */
+  top: var(--ds-chat-top-h);
   width: 100%;
   z-index: 12;
 }
