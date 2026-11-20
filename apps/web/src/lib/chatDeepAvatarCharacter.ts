@@ -62,11 +62,18 @@ export function readChatDeepAvatarCharacter(
   }
 }
 
+/** Same-tab sync when Inbox settings and the composer portrait both mount the hook. */
+export const CHAT_DEEP_AVATAR_CHARACTER_EVENT = 'yue-deepseek-chat-avatar-character'
+
 export function writeChatDeepAvatarCharacter(id: ChatDeepAvatarCharacterId) {
+  const next = normalizeChatDeepAvatarCharacter(id)
   try {
-    localStorage.setItem(CHAT_DEEP_AVATAR_CHARACTER_KEY, normalizeChatDeepAvatarCharacter(id))
+    localStorage.setItem(CHAT_DEEP_AVATAR_CHARACTER_KEY, next)
   } catch {
     /* ignore quota / private mode */
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(CHAT_DEEP_AVATAR_CHARACTER_EVENT, { detail: next }))
   }
 }
 

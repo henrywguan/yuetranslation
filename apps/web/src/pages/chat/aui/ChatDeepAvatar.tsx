@@ -6,14 +6,18 @@
  * Moods: idle / think / listen / speak / happy / celebrate / concern.
  * TTS lips: amplitude/vowel envelope overlay while Azure or DeepSeek chat TTS plays
  * (not phoneme lip-sync — GIF clip swaps + CSS mouth only).
+ *
+ * Layout: WC3-style portrait lives inside the full-bleed composer bar
+ * (`size="portrait"`). Character pick is Inbox settings → Companion.
  */
 import { useAuiState } from '@assistant-ui/react'
-import { useEffect, useId, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
+  CHAT_DEEP_AVATAR_CHARACTER_EVENT,
   CHAT_DEEP_AVATAR_CHARACTER_LABEL,
-  CHAT_DEEP_AVATAR_CHARACTERS,
   chatDeepAvatarMoodSrc,
   chatDeepAvatarPosterSrc,
+  normalizeChatDeepAvatarCharacter,
   readChatDeepAvatarCharacter,
   writeChatDeepAvatarCharacter,
   type ChatDeepAvatarCharacterId,
@@ -31,7 +35,7 @@ export type { ChatDeepAvatarMood, ChatDeepAvatarCharacterId }
 const CELEBRATE_MS = 2400
 const HAPPY_MS = 2200
 
-type Size = 'hero' | 'bubble'
+type Size = 'portrait' | 'hero' | 'bubble'
 
 type Props = {
   mood: ChatDeepAvatarMood
@@ -99,7 +103,7 @@ export function useChatDeepAvatarMood(opts?: ChatDeepAvatarMoodOpts): ChatDeepAv
   return 'idle'
 }
 
-/** Persisted DS Boy / DS Girl pick — shared across hero + bubble. */
+/** Persisted DS Boy / DS Girl pick — shared across composer portrait + Inbox settings. */
 export function useChatDeepAvatarCharacter(): [
   ChatDeepAvatarCharacterId,
   (id: ChatDeepAvatarCharacterId) => void,
@@ -108,9 +112,18 @@ export function useChatDeepAvatarCharacter(): [
     readChatDeepAvatarCharacter(),
   )
 
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent<unknown>).detail
+      setCharacterState(normalizeChatDeepAvatarCharacter(detail))
+    }
+    window.addEventListener(CHAT_DEEP_AVATAR_CHARACTER_EVENT, onChange)
+    return () => window.removeEventListener(CHAT_DEEP_AVATAR_CHARACTER_EVENT, onChange)
+  }, [])
+
   const setCharacter = (id: ChatDeepAvatarCharacterId) => {
     writeChatDeepAvatarCharacter(id)
-    setCharacterState(id)
+    setCharacterState(normalizeChatDeepAvatarCharacter(id))
   }
 
   return [character, setCharacter]
@@ -151,9 +164,15 @@ function usePrefersReducedMotion(): boolean {
   return reduce
 }
 
+function sizeClassName(size: Size): string {
+  if (size === 'bubble') return 'aui-deep-avatar is-bubble'
+  if (size === 'hero') return 'aui-deep-avatar is-hero'
+  return 'aui-deep-avatar is-portrait'
+}
+
 export function ChatDeepAvatar({
   mood,
-  size = 'hero',
+  size = 'portrait',
   className = '',
   label,
   lipLevel = 0,
@@ -163,12 +182,13 @@ export function ChatDeepAvatar({
   const src = reduceMotion
     ? chatDeepAvatarPosterSrc(character)
     : chatDeepAvatarMoodSrc(character, mood)
-  const sizeClass = size === 'bubble' ? 'aui-deep-avatar is-bubble' : 'aui-deep-avatar is-hero'
+  const sizeClass = sizeClassName(size)
   const speaking = mood === 'speak'
   const lipsOn = speaking && !reduceMotion && lipLevel > 0.04
   const lipScaleY = 0.35 + lipLevel * 1.15
   const lipScaleX = 0.85 + lipLevel * 0.35
   const charLabel = CHAT_DEEP_AVATAR_CHARACTER_LABEL[character]
+  const imgPx = size === 'bubble' ? 112 : size === 'portrait' ? 224 : 720
 
   return (
     <div
@@ -184,8 +204,8 @@ export function ChatDeepAvatar({
         className="aui-deep-avatar-img"
         src={src}
         alt=""
-        width={size === 'bubble' ? 112 : 720}
-        height={size === 'bubble' ? 112 : 720}
+        width={imgPx}
+        height={imgPx}
         decoding="async"
         draggable={false}
       />
@@ -203,132 +223,6 @@ export function ChatDeepAvatar({
         />
       ) : null}
       {speaking ? <span className="aui-deep-avatar-pulse" aria-hidden /> : null}
-    </div>
-  )
-}
-
-/** Compact floating chat-head when the thread has messages. */
-export function ChatDeepAvatarBubble({
-  mood,
-  lipLevel = 0,
-  character = 'boy',
-}: {
-  mood: ChatDeepAvatarMood
-  lipLevel?: number
-  character?: ChatDeepAvatarCharacterId
-}) {
-  const charLabel = CHAT_DEEP_AVATAR_CHARACTER_LABEL[character]
-  return (
-    <div className="aui-deep-avatar-dock">
-      <ChatDeepAvatar
-        mood={mood}
-        size="bubble"
-        lipLevel={lipLevel}
-        character={character}
-        label={`${charLabel} · ${mood}`}
-      />
-    </div>
-  )
-}
-
-/**
- * Compact DS Boy / DS Girl picker — sits on the empty hero and as a cog
- * near the docked bubble so the mood / TTS lip machine stays character-agnostic.
- */
-export function ChatDeepAvatarCharacterPicker({
-  character,
-  onChange,
-  compact = false,
-}: {
-  character: ChatDeepAvatarCharacterId
-  onChange: (id: ChatDeepAvatarCharacterId) => void
-  compact?: boolean
-}) {
-  const [open, setOpen] = useState(false)
-  const wrapRef = useRef<HTMLDivElement | null>(null)
-  const menuId = useId()
-
-  useEffect(() => {
-    if (!open) return
-    const onPointer = (e: MouseEvent | PointerEvent) => {
-      if (!wrapRef.current) return
-      if (e.target instanceof Node && wrapRef.current.contains(e.target)) return
-      setOpen(false)
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('pointerdown', onPointer)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('pointerdown', onPointer)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
-
-  return (
-    <div
-      className={`aui-avatar-char-picker${compact ? ' is-compact' : ''}`}
-      ref={wrapRef}
-    >
-      <button
-        type="button"
-        className="aui-avatar-char-trigger"
-        title="Companion character"
-        aria-label="Companion character"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={menuId}
-        onClick={() => setOpen((v) => !v)}
-      >
-        {compact ? (
-          <span className="aui-avatar-char-cog" aria-hidden>
-            ⚙
-          </span>
-        ) : (
-          <>
-            <span className="aui-avatar-char-current">
-              {CHAT_DEEP_AVATAR_CHARACTER_LABEL[character]}
-            </span>
-            <span className="aui-avatar-char-chevron" aria-hidden>
-              ▾
-            </span>
-          </>
-        )}
-      </button>
-      {open ? (
-        <div
-          className="aui-avatar-char-menu"
-          id={menuId}
-          role="menu"
-          aria-label="Companion character"
-        >
-          {CHAT_DEEP_AVATAR_CHARACTERS.map((id) => (
-            <button
-              key={id}
-              type="button"
-              role="menuitemradio"
-              aria-checked={character === id}
-              className={`aui-avatar-char-item${character === id ? ' is-active' : ''}`}
-              onClick={() => {
-                onChange(id)
-                setOpen(false)
-              }}
-            >
-              <img
-                className="aui-avatar-char-thumb"
-                src={chatDeepAvatarPosterSrc(id)}
-                alt=""
-                width={36}
-                height={36}
-                decoding="async"
-                draggable={false}
-              />
-              <span>{CHAT_DEEP_AVATAR_CHARACTER_LABEL[id]}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
     </div>
   )
 }

@@ -155,6 +155,54 @@
   transform: translateX(16px);
 }
 
+.inbox-settings-companion {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.25rem 0.45rem 0.45rem;
+}
+
+.inbox-settings-companion-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-text-3, #7a879c);
+}
+
+.inbox-settings-companion-row {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.inbox-settings-companion-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.4rem 0.45rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--ds-text);
+  font: 600 0.8125rem/1.2 'Noto Sans', system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inbox-settings-companion-item:hover,
+.inbox-settings-companion-item.is-active {
+  background: color-mix(in srgb, var(--ds-blue) 12%, transparent);
+}
+
+.inbox-settings-companion-thumb {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  object-fit: contain;
+  background: color-mix(in srgb, var(--ds-blue) 8%, transparent);
+  flex-shrink: 0;
+}
+
 .inbox-header-new:disabled,
 .inbox-section-add:disabled {
   opacity: 0.4;
