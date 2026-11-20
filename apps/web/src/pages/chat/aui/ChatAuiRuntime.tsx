@@ -240,8 +240,12 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   composerModeRef.current = composerMode
   /** Per-thread Plan drafts — survive thread switches without clobbering edits. */
   const planDraftsByThreadRef = useRef<Record<string, string>>({})
-  /** Per-thread last seeded assistant message id (empty string = seeded empty). */
-  const planSeedByThreadRef = useRef<Record<string, string>>({})
+  /**
+   * Per-thread seed snapshot: assistant message id + exact text we wrote.
+   * A newer assistant reply only reseeds when the draft still equals `text`
+   * (user has not edited). Empty `msgId` = seeded with no assistant yet.
+   */
+  const planSeedByThreadRef = useRef<Record<string, { msgId: string; text: string }>>({})
   const [planDraft, setPlanDraftState] = useState('')
   const planDraftRef = useRef(planDraft)
   planDraftRef.current = planDraft
@@ -1197,7 +1201,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   }, [activeId])
 
   // Seed / refresh editable Plan artifact from the latest assistant reply while in Plan mode.
-  // Seed key is per-thread — switching away and back keeps user edits for that thread.
+  // Never overwrite a draft the user has edited away from the last seed snapshot.
   useEffect(() => {
     if (composerMode !== 'plan') return
     if (busy) return
@@ -1206,12 +1210,27 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     const lastAssistant = [...(thread?.messages || [])]
       .reverse()
       .find((m) => m.role === 'assistant' && m.content.trim())
-    const msgKey = lastAssistant ? lastAssistant.id : ''
-    if (planSeedByThreadRef.current[activeId] === msgKey) return
+    const msgId = lastAssistant ? lastAssistant.id : ''
+    const prev = planSeedByThreadRef.current[activeId]
+    if (prev?.msgId === msgId) return
+    const currentDraft = planDraftsByThreadRef.current[activeId] ?? planDraftRef.current
+    // User edited since last seed — keep their text even if a new reply landed.
+    if (prev && currentDraft !== prev.text) return
+    // Prefer tagged plan fences; if the reply has none, leave an existing draft alone.
     const extracted = lastAssistant
       ? extractPlanArtifactText(lastAssistant.content)
       : ''
-    planSeedByThreadRef.current[activeId] = msgKey
+    if (
+      lastAssistant &&
+      extracted === lastAssistant.content.trim() &&
+      !/```(plan|markdown|md)\b/i.test(lastAssistant.content) &&
+      currentDraft.trim()
+    ) {
+      // Conversational follow-up without a plan fence — do not replace a curated draft.
+      planSeedByThreadRef.current[activeId] = { msgId, text: currentDraft }
+      return
+    }
+    planSeedByThreadRef.current[activeId] = { msgId, text: extracted }
     planDraftsByThreadRef.current[activeId] = extracted
     planDraftRef.current = extracted
     setPlanDraftState(extracted)

@@ -203,6 +203,11 @@ assert.match(runtime, /planDraft|savePlanToWorkspace|CHAT_PLAN_WORKSPACE_PATH/, 
 assert.match(runtime, /planDraftsByThreadRef|planSeedByThreadRef/, 'Plan drafts keyed per thread')
 assert.match(
   runtime,
+  /currentDraft !== prev\.text|do not replace a curated draft/,
+  'Plan seed preserves user edits / non-plan follow-ups',
+)
+assert.match(
+  runtime,
   /Plan is empty — write or restore a plan before Build/,
   'Build refuses empty plan (no silent fallback to last assistant)',
 )
