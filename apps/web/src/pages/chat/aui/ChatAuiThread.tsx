@@ -39,10 +39,12 @@ import {
   projectNestedViews,
   buildAgentViews,
 } from '../../../lib/chatInbox'
+import { buildToolCards } from '../../../lib/chatToolCards'
 import {
   CHAT_COMPOSER_MODE_LABEL,
   CHAT_COMPOSER_MODES,
   CHAT_EMPTY_SUGGESTIONS,
+  cycleChatComposerMode,
   readChatToolsExpanded,
   writeChatToolsExpanded,
   type ChatComposerMode,
@@ -209,29 +211,62 @@ function UserMessage() {
   )
 }
 
-function HarnessSearchTrace() {
+/**
+ * Cursor-like expandable tool chips in the assistant stream.
+ * Fed by searchSteps (Search SSE + sandbox mirrored into steps). Always on —
+ * not gated on Harness (Harness keeps the denser timeline below when enabled).
+ */
+function ToolActivityCards() {
   const { harnessOn } = useChatAuiSession()
+  const streaming = useAuiState((s) => s.message.status?.type === 'running')
   const steps = useAuiState((s) => {
     const custom = s.message.metadata?.custom as { searchSteps?: ChatSearchStep[] } | undefined
     return custom?.searchSteps
   })
-  if (!harnessOn || !steps?.length) return null
+  const cards = useMemo(
+    () => buildToolCards({ searchSteps: steps, streaming }),
+    [steps, streaming],
+  )
+  if (!cards.length) return null
   return (
-    <details className="aui-harness-trace" open>
-      <summary>Tool / search timeline · {steps.length}</summary>
-      <ol className="aui-harness-trace-list">
-        {steps.map((step, i) => (
-          <li key={`${step.kind}-${i}`}>
-            <span className="aui-harness-trace-kind">{step.kind}</span>
-            {step.queries?.length ? <span>{step.queries.join(' · ')}</span> : null}
-            {step.title || step.url ? (
-              <span>{step.title || step.url}</span>
+    <div className="aui-tool-cards" aria-label="Tool activity">
+      {cards.map((card) => (
+        <details
+          key={card.id}
+          className={`aui-tool-card is-${card.kind}${card.live ? ' is-live' : ''}`}
+          open={card.live || Boolean(card.body && card.body.length < 280)}
+        >
+          <summary>
+            <span className="aui-tool-card-kind" data-kind={card.kind}>
+              {card.kind}
+            </span>
+            <span className="aui-tool-card-label">{card.label}</span>
+            {card.detail ? <span className="aui-tool-card-detail">{card.detail}</span> : null}
+            {card.live ? (
+              <span className="aui-tool-card-live" aria-label="In progress">
+                ·
+              </span>
             ) : null}
-            {step.snippet ? <span className="aui-harness-trace-snip">{step.snippet}</span> : null}
-          </li>
-        ))}
-      </ol>
-    </details>
+          </summary>
+          {card.body ? <pre className="aui-tool-card-body">{card.body}</pre> : null}
+        </details>
+      ))}
+      {harnessOn && steps && steps.length > 0 ? (
+        <details className="aui-harness-trace">
+          <summary>Harness timeline · {steps.length}</summary>
+          <ol className="aui-harness-trace-list">
+            {steps.map((step, i) => (
+              <li key={`${step.kind}-${i}`}>
+                <span className="aui-harness-trace-kind">{step.kind}</span>
+                {step.queries?.length ? <span>{step.queries.join(' · ')}</span> : null}
+                {step.title || step.url ? <span>{step.title || step.url}</span> : null}
+                {step.snippet ? <span className="aui-harness-trace-snip">{step.snippet}</span> : null}
+              </li>
+            ))}
+          </ol>
+        </details>
+      ) : null}
+    </div>
   )
 }
 
@@ -242,7 +277,7 @@ function AssistantMessage() {
   return (
     <MessagePrimitive.Root className="aui-msg is-assistant">
       <div className="aui-bubble is-assistant">
-        <HarnessSearchTrace />
+        <ToolActivityCards />
         <MessagePrimitive.Parts
           components={{
             Text: MarkdownText,
@@ -415,6 +450,10 @@ function ComposerChrome({ error }: { error?: string | null }) {
     activeWorkspace,
     threads,
     activeId,
+    followUpQueue,
+    queueFollowUp,
+    dismissFollowUp,
+    clearFollowUpQueue,
   } = useChatAuiSession()
 
   // Solo / Conversation handoff — classic ChatPage already consumed this; AUI is default.
@@ -422,6 +461,31 @@ function ComposerChrome({ error }: { error?: string | null }) {
     const prefill = consumeChatPrefill()
     if (prefill) aui.composer.setText(prefill)
   }, [aui.composer])
+
+  // Shift+Tab cycles Agent → Ask → Plan from the draft/modes only.
+  // Keep focus where it is (preventDefault); never intercept mic/dictate or dialogs.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || !e.shiftKey) return
+      if (e.altKey || e.metaKey || e.ctrlKey) return
+      const t = e.target as HTMLElement | null
+      if (!t) return
+      if (t.closest?.('.ds-plugin-keys, [role="dialog"]')) return
+      // Mic / dictate owns its own keys — do not cycle modes or swallow Tab.
+      if (t.closest?.('.ds-chat-dictate, .aui-composer-running-actions')) return
+      const inDraft =
+        t.classList?.contains('aui-composer-input') ||
+        t.closest?.('.aui-composer-input') ||
+        (t.tagName === 'TEXTAREA' && Boolean(t.closest?.('.aui-composer')))
+      const inModes = Boolean(t.closest?.('.aui-composer-modes'))
+      if (!inDraft && !inModes) return
+      e.preventDefault()
+      e.stopPropagation()
+      setComposerMode(cycleChatComposerMode(composerMode))
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [composerMode, setComposerMode])
 
   const atMatch = detectAtQuery(draft)
   const mentionItems = useMemo(() => {
@@ -511,13 +575,12 @@ function ComposerChrome({ error }: { error?: string | null }) {
               type="button"
               className={`aui-mode is-${mode}${composerMode === mode ? ' is-on' : ''}`}
               aria-pressed={composerMode === mode}
-              disabled={busy}
               title={
                 mode === 'ask'
-                  ? 'Ask — read-only, no sandbox writes'
+                  ? 'Ask — read-only, no sandbox writes (Shift+Tab cycles modes)'
                   : mode === 'plan'
-                    ? 'Plan — research then Build with Overseer'
-                    : 'Agent — tools on'
+                    ? 'Plan — research then Build with Overseer (Shift+Tab cycles modes)'
+                    : 'Agent — tools on (Shift+Tab cycles modes)'
               }
               onClick={() => setComposerMode(mode)}
             >
@@ -547,7 +610,6 @@ function ComposerChrome({ error }: { error?: string | null }) {
           className={`aui-tools-toggle${toolsExpanded ? ' is-expanded' : ''}`}
           aria-expanded={toolsExpanded}
           aria-controls="aui-tools-panel"
-          disabled={busy}
           onClick={toggleToolsExpanded}
         >
           <span className="aui-tools-label">Tools</span>
@@ -718,6 +780,36 @@ function ComposerChrome({ error }: { error?: string | null }) {
         </ul>
       ) : null}
 
+      {followUpQueue.length ? (
+        <div className="aui-followups" aria-label="Queued follow-ups">
+          <div className="aui-followups-head">
+            <span>
+              Queued · {followUpQueue.length}
+              {busy ? ' · sends after this reply' : ''}
+            </span>
+            <button type="button" className="aui-followups-clear" onClick={clearFollowUpQueue}>
+              Clear
+            </button>
+          </div>
+          <ul className="aui-followups-list">
+            {followUpQueue.map((item, i) => (
+              <li key={item.id}>
+                <span className="aui-followups-idx">{i + 1}</span>
+                <span className="aui-followups-text">{item.text}</span>
+                <button
+                  type="button"
+                  className="aui-followups-dismiss"
+                  aria-label="Remove follow-up"
+                  onClick={() => dismissFollowUp(item.id)}
+                >
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div className="aui-composer-body">
         <div className="aui-composer-portrait" aria-hidden={false}>
           <ChatDeepAvatar
@@ -758,15 +850,29 @@ function ComposerChrome({ error }: { error?: string | null }) {
             <ComposerPrimitive.Input
               className="aui-composer-input"
               placeholder={
-                composerMode === 'ask'
-                  ? 'Ask DeepSeek (read-only)…'
-                  : composerMode === 'plan'
-                    ? 'Plan with DeepSeek…'
-                    : 'Message DeepSeek…'
+                busy
+                  ? 'Queue a follow-up (Enter)…'
+                  : composerMode === 'ask'
+                    ? 'Ask DeepSeek (read-only)…'
+                    : composerMode === 'plan'
+                      ? 'Plan with DeepSeek…'
+                      : 'Message DeepSeek…'
               }
               rows={1}
-              submitMode="enter"
+              // While running, assistant-ui blocks Submit — capture Enter here to queue.
+              submitMode={busy ? 'none' : 'enter'}
               unstable_insertNewlineOnTouchEnter
+              onKeyDown={(e) => {
+                if (!busy) return
+                if (e.key !== 'Enter' || e.shiftKey) return
+                if (e.nativeEvent.isComposing) return
+                e.preventDefault()
+                e.stopPropagation()
+                const text = draft.trim()
+                if (!text) return
+                queueFollowUp(text)
+                aui.composer.setText('')
+              }}
             />
             <div className="aui-composer-toolbar">
               <div className="aui-composer-toolbar-start">
@@ -798,9 +904,28 @@ function ComposerChrome({ error }: { error?: string | null }) {
                   onError={(message) => setError(message)}
                 />
                 <AuiIf condition={(s) => s.thread.isRunning}>
-                  <ComposerPrimitive.Cancel className="aui-send is-stop" onClick={() => stopGeneration()}>
-                    Stop
-                  </ComposerPrimitive.Cancel>
+                  <span className="aui-composer-running-actions">
+                    <ComposerPrimitive.Cancel
+                      className="aui-send is-stop"
+                      onClick={() => stopGeneration()}
+                    >
+                      Stop
+                    </ComposerPrimitive.Cancel>
+                    <button
+                      type="button"
+                      className="aui-send is-queue"
+                      disabled={!draft.trim()}
+                      title="Queue follow-up — sends after the current reply (Stop keeps the queue)"
+                      onClick={() => {
+                        const text = draft.trim()
+                        if (!text) return
+                        queueFollowUp(text)
+                        aui.composer.setText('')
+                      }}
+                    >
+                      Queue
+                    </button>
+                  </span>
                 </AuiIf>
                 <AuiIf condition={(s) => !s.thread.isRunning}>
                   <ComposerPrimitive.Send className="aui-send">Send</ComposerPrimitive.Send>

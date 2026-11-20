@@ -52,6 +52,14 @@ export function writeChatComposerMode(mode: ChatComposerMode) {
   }
 }
 
+/** Shift+Tab cycle: Agent → Ask → Plan → Agent. */
+export function cycleChatComposerMode(mode: ChatComposerMode): ChatComposerMode {
+  const cur = normalizeChatComposerMode(mode)
+  const i = CHAT_COMPOSER_MODES.indexOf(cur)
+  const next = CHAT_COMPOSER_MODES[(i < 0 ? 0 : i + 1) % CHAT_COMPOSER_MODES.length]
+  return next || 'agent'
+}
+
 /** Default: collapsed on narrow viewports, expanded on desktop — until user toggles. */
 export function readChatToolsExpanded(fallbackNarrow = false, fallbackWide = true): boolean {
   try {

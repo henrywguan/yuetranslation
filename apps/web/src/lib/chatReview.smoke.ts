@@ -14,6 +14,8 @@ import {
   formatArgv,
   mergeGitDiffs,
   shouldShowReviewRail,
+  splitUnifiedDiffByPath,
+  snapshotAsPatchPreview,
 } from './chatReviewActivity.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -61,9 +63,16 @@ act = applyWorkspaceFilesToDiffs(act, [{ path: 'notes.md', text: '# hi' }])
 assert.ok(act.diffs.some((d) => d.path === 'notes.md' && d.source === 'workspace'))
 
 const gitStdout =
-  'diff --git a/foo.ts b/foo.ts\n+++ b/foo.ts\n--- a/foo.ts\n+const a = 1\n'
+  'diff --git a/foo.ts b/foo.ts\n+++ b/foo.ts\n--- a/foo.ts\n+const a = 1\n' +
+  'diff --git a/bar.ts b/bar.ts\n+++ b/bar.ts\n--- a/bar.ts\n+const b = 2\n'
+const split = splitUnifiedDiffByPath(gitStdout)
+assert.equal(split.size, 2)
+assert.match(split.get('foo.ts') || '', /\+const a = 1/)
+assert.doesNotMatch(split.get('foo.ts') || '', /\+const b = 2/)
 const gitDiffs = diffsFromGitOutput(gitStdout)
 assert.ok(gitDiffs.some((d) => d.path === 'foo.ts' && d.source === 'git'))
+assert.ok(gitDiffs.some((d) => d.path === 'bar.ts'))
+assert.match(snapshotAsPatchPreview('x.ts', 'hi'), /\+hi/)
 
 act = mergeGitDiffs(emptyReviewActivity(), gitStdout)
 assert.ok(act.diffs.length >= 1)
@@ -110,9 +119,11 @@ assert.match(rail, /ChatRunsPanel/, 'rail hosts runs')
 const diffs = readFileSync(join(root, 'pages/chat/aui/ChatDiffsPanel.tsx'), 'utf8')
 assert.match(diffs, /Open PR|reviewUrl/, 'diffs surface PR CTA')
 assert.match(diffs, /git diff/, 'diffs can refresh via git')
+assert.match(diffs, /DiffPreview|aui-diff-line|snapshotAsPatchPreview/, 'diffs show patch substance')
 
 const runs = readFileSync(join(root, 'pages/chat/aui/ChatRunsPanel.tsx'), 'utf8')
 assert.match(runs, /formatArgv|aui-run/, 'runs show exec argv')
+assert.match(runs, /aui-run-out|aui-run-err|No stdout/, 'runs surface command output')
 
 const runtime = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtime, /onSandbox/, 'runtime consumes sandbox SSE')

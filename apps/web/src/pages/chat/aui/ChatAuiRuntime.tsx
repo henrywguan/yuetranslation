@@ -31,6 +31,7 @@ import {
   mergeGitDiffs,
   type ChatReviewActivity,
 } from '../../../lib/chatReviewActivity'
+import { searchStepFromSandboxActivity } from '../../../lib/chatToolCards'
 import {
   apiMessagesFromThread,
   appendChatMessage,
@@ -170,7 +171,18 @@ export type ChatAuiSession = {
   archiveThread: (id: string, archived: boolean) => void
   stopGeneration: () => void
   /** Enqueue a user prompt as a chat turn (scheduled jobs / Workspace). */
-  enqueuePrompt: (text: string, threadId?: string) => Promise<void>
+  enqueuePrompt: (text: string, threadId?: string) => Promise<boolean>
+  /**
+   * Follow-ups typed while a turn is running (keyed by threadId).
+   * Behavior: Send/Enter/Queue while busy queues for the **current** thread;
+   * after that turn finishes (or Stop settles), the next item for that thread
+   * auto-sends. Stop does not clear the queue — dismiss chips or Clear.
+   * Switching threads / New chat clears the queue so UI never implies old-thread items.
+   */
+  followUpQueue: Array<{ id: string; text: string; threadId: string }>
+  queueFollowUp: (text: string) => void
+  dismissFollowUp: (id: string) => void
+  clearFollowUpQueue: () => void
   /** Diffs + Runs activity from sandbox/workspace tools. */
   reviewActivity: ChatReviewActivity
   reviewOpen: boolean
@@ -215,6 +227,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [reviewActivity, setReviewActivity] = useState<ChatReviewActivity>(() => emptyReviewActivity())
   const [reviewOpen, setReviewOpenState] = useState(false)
   const [gitDiffBusy, setGitDiffBusy] = useState(false)
+  type FollowUpItem = { id: string; text: string; threadId: string }
+  const [followUpQueue, setFollowUpQueue] = useState<FollowUpItem[]>([])
+  /** Keep in sync only via queue helpers — never mirror from render (avoids reclaim races). */
+  const followUpQueueRef = useRef<FollowUpItem[]>([])
+  const flushingFollowUpsRef = useRef(false)
   const [harnessOn, setHarnessOnState] = useState(() => readHarnessFlag(false))
   const [workspaceOpen, setWorkspaceOpenState] = useState(() => readHarnessFlag(false))
   /** Opening Diffs/Runs dismisses Harness sheet so Δ is never trapped under is-sheet. */
@@ -559,6 +576,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
   const startNewChat = useCallback(() => {
     stopGeneration()
+    setFollowUpQueue([])
+    followUpQueueRef.current = []
     const created = emptyThread()
     setThreads((prev) => upsertChatThread(created, prev.filter((t) => t.id !== BOOT_THREAD.id)))
     setActiveId(created.id)
@@ -570,6 +589,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     (id: string) => {
       if (id === activeIdRef.current) return
       stopGeneration()
+      // Follow-ups are thread-local intent — never auto-send into a different chat.
+      setFollowUpQueue([])
+      followUpQueueRef.current = []
       setActiveId(id)
       setError(null)
     },
@@ -760,6 +782,17 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
               typeof activity.reviewUrl === 'string' ? activity.reviewUrl.trim() : ''
             if (reviewUrl && linkedAgent && inboxRef.current) {
               inboxRef.current.markInReview(linkedAgent.id, reviewUrl)
+            }
+            // Mirror into searchSteps so inline tool cards stream in the reply.
+            const step = searchStepFromSandboxActivity(activity)
+            if (step) {
+              searchSteps = [...searchSteps, step].slice(-24)
+              thread = patchAssistantContent(thread, assistantId, assembled, {
+                reasoning: reasoning || undefined,
+                sources,
+                searchSteps,
+              })
+              schedulePaint()
             }
           },
           onProject: (actions) => {
@@ -965,23 +998,55 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     [streamingId],
   )
 
+  const queueFollowUp = useCallback((text: string) => {
+    const content = text.trim().slice(0, MAX_CONTENT_CHARS)
+    if (!content) return
+    const threadId = activeIdRef.current
+    if (!threadId || threadId === BOOT_THREAD.id) return
+    const id =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? `fu_${crypto.randomUUID()}`
+        : `fu_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
+    setFollowUpQueue((prev) => {
+      const next = [...prev, { id, text: content, threadId }].slice(-8)
+      followUpQueueRef.current = next
+      return next
+    })
+  }, [])
+
+  const dismissFollowUp = useCallback((id: string) => {
+    setFollowUpQueue((prev) => {
+      const next = prev.filter((x) => x.id !== id)
+      followUpQueueRef.current = next
+      return next
+    })
+  }, [])
+
+  const clearFollowUpQueue = useCallback(() => {
+    followUpQueueRef.current = []
+    setFollowUpQueue([])
+  }, [])
+
   const enqueuePrompt = useCallback(
-    async (text: string, threadId?: string) => {
-      if (!unlocked || busyRef.current) return
+    async (text: string, threadId?: string): Promise<boolean> => {
+      if (!unlocked || busyRef.current) return false
       const content = text.trim().slice(0, MAX_CONTENT_CHARS)
-      if (!content) return
+      if (!content) return false
       const tid = threadId || activeIdRef.current
       if (tid !== activeIdRef.current) {
         setActiveId(tid)
         activeIdRef.current = tid
       }
       setError(null)
+      // Set busy synchronously so a concurrent follow-up flush cannot claim another send.
+      busyRef.current = true
       setBusy(true)
       let cur = threadsRef.current.find((t) => t.id === tid) || emptyThread()
       if (harnessOnRef.current) cur = ensureThreadWorkspace(cur)
       const userStep = appendChatMessage(cur, 'user', content)
       persist(userStep.thread)
       await runAssistant(userStep.thread)
+      return true
     },
     [persist, runAssistant, unlocked],
   )
@@ -1079,13 +1144,23 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
   const onNew = useCallback(
     async (message: AppendMessage) => {
-      if (!unlocked || busy) return
+      if (!unlocked) return
       const textPart = message.content.find((p) => p.type === 'text')
       const content = (textPart && textPart.type === 'text' ? textPart.text : '').trim()
       const pending = pendingFilesRef.current
       if (!content && !pending.length) return
       if (content.length > MAX_CONTENT_CHARS) {
         setError(`Message is too long (max ${MAX_CONTENT_CHARS.toLocaleString()} characters).`)
+        return
+      }
+      // While a turn is running: queue text follow-ups (attachments wait until idle).
+      if (busyRef.current) {
+        if (pending.length) {
+          setError('Wait for the current reply to finish before attaching files.')
+          return
+        }
+        if (!content) return
+        queueFollowUp(content)
         return
       }
       const fileIds = pending.map((f) => f.fileId)
@@ -1101,6 +1176,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         }
         return []
       })
+      busyRef.current = true
       setBusy(true)
       let cur =
         threadsRef.current.find((t) => t.id === activeIdRef.current) || emptyThread()
@@ -1118,8 +1194,42 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       persist(thread)
       await runAssistant(thread, fileIds.length ? fileIds : undefined)
     },
-    [busy, persist, runAssistant, unlocked],
+    [persist, queueFollowUp, runAssistant, unlocked],
   )
+
+  // Auto-send one queued follow-up for the **active** thread after the turn settles.
+  // Items are keyed by threadId; never flush into a different conversation.
+  useEffect(() => {
+    if (!unlocked || busy || flushingFollowUpsRef.current) return
+    if (flushingProjectMsgsRef.current || pendingProjectMsgsRef.current.length) return
+    const active = activeIdRef.current
+    const head = followUpQueueRef.current.find((x) => x.threadId === active)
+    if (!head) return
+    flushingFollowUpsRef.current = true
+    void (async () => {
+      try {
+        if (busyRef.current) return
+        // Claim before await so a second effect pass cannot double-send the same id.
+        const rest = followUpQueueRef.current.filter((x) => x.id !== head.id)
+        followUpQueueRef.current = rest
+        setFollowUpQueue(rest)
+        // If the user left this thread after claim, drop — do not post elsewhere.
+        if (activeIdRef.current !== head.threadId) return
+        const sent = await enqueuePrompt(head.text, head.threadId)
+        if (!sent) {
+          // Only restore if we are still on the same thread (switch clears the queue).
+          if (activeIdRef.current !== head.threadId) return
+          setFollowUpQueue((prev) => {
+            const next = [head, ...prev.filter((x) => x.id !== head.id)].slice(0, 8)
+            followUpQueueRef.current = next
+            return next
+          })
+        }
+      } finally {
+        flushingFollowUpsRef.current = false
+      }
+    })()
+  }, [busy, enqueuePrompt, followUpQueue, unlocked])
 
   // In-tab scheduled prompts (Harness Phase 3) — only while tab open + Harness on.
   useEffect(() => {
@@ -1264,6 +1374,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       archiveThread,
       stopGeneration,
       enqueuePrompt,
+      followUpQueue: followUpQueue.filter((x) => x.threadId === activeId),
+      queueFollowUp,
+      dismissFollowUp,
+      clearFollowUpQueue,
       reviewActivity,
       reviewOpen,
       setReviewOpen,
@@ -1277,11 +1391,14 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       archiveThread,
       buildFromPlan,
       busy,
+      clearFollowUpQueue,
       composerMode,
       deepThink,
+      dismissFollowUp,
       enabledPlugins,
       enqueuePrompt,
       error,
+      followUpQueue,
       gitDiffBusy,
       harnessOn,
       historyReady,
@@ -1291,6 +1408,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       pickOcr,
       pluginCatalog,
       pluginKeyHints,
+      queueFollowUp,
       refreshGitDiff,
       refreshPlugins,
       removePendingFile,

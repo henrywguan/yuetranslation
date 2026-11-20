@@ -17,6 +17,7 @@ import {
   CHAT_COMPOSER_MODES,
   CHAT_MODE_KEY,
   CHAT_TOOLS_EXPANDED_KEY,
+  cycleChatComposerMode,
   normalizeChatComposerMode,
   readChatComposerMode,
   readChatToolsExpanded,
@@ -118,6 +119,8 @@ const thread = readFileSync(join(root, 'pages/chat/aui/ChatAuiThread.tsx'), 'utf
 assert.match(thread, /CHAT_COMPOSER_MODES/, 'mode picker in AUI composer')
 assert.match(thread, /aui-composer-modes/, 'mode row class')
 assert.match(thread, /AgentModeIcon|AskModeIcon|PlanModeIcon/, 'mode icons beside labels')
+assert.match(thread, /cycleChatComposerMode/, 'Shift+Tab mode cycle helper wired')
+assert.match(thread, /Shift\+Tab/, 'Shift+Tab mentioned in titles/handler')
 assert.match(thread, /aui-tools-toggle|toolsExpanded/, 'Tools row collapsible')
 assert.match(thread, /writeChatToolsExpanded/, 'Tools expand state persisted')
 assert.match(thread, /ProjectAgentStrip/, 'in-thread project agent strip')
@@ -139,6 +142,11 @@ assert.match(
 )
 assert.match(thread, /aui-tools-label/, 'DeepThink/Search nested under Tools')
 assert.match(thread, /ChatDictateButton/, 'dictate preserved')
+assert.match(thread, /followUpQueue|queueFollowUp/, 'follow-up queue while Agent runs')
+
+assert.equal(cycleChatComposerMode('agent'), 'ask')
+assert.equal(cycleChatComposerMode('ask'), 'plan')
+assert.equal(cycleChatComposerMode('plan'), 'agent')
 
 const css = readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8')
 assert.match(css, /\.aui-mode\.is-agent\.is-on/, 'Agent mode distinct active color')
