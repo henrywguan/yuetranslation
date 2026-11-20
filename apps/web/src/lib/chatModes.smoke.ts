@@ -203,6 +203,16 @@ assert.match(runtime, /planDraft|savePlanToWorkspace|CHAT_PLAN_WORKSPACE_PATH/, 
 assert.match(runtime, /planDraftsByThreadRef|planSeedByThreadRef/, 'Plan drafts keyed per thread')
 assert.match(
   runtime,
+  /applyPlanDraftForThread/,
+  'Plan draft applied synchronously on thread switch',
+)
+assert.match(
+  runtime,
+  /selectThread[\s\S]*applyPlanDraftForThread\(id\)/,
+  'selectThread syncs Plan draft before paint',
+)
+assert.match(
+  runtime,
   /currentDraft !== prev\.text|do not replace a curated draft/,
   'Plan seed preserves user edits / non-plan follow-ups',
 )

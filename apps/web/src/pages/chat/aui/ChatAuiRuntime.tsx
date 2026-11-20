@@ -257,6 +257,14 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     planDraftRef.current = text
     setPlanDraftState(text)
   }, [])
+
+  /** Sync Plan draft ref+state for a thread immediately (no post-paint lag on switch). */
+  const applyPlanDraftForThread = useCallback((tid: string) => {
+    const stored =
+      !tid || tid === BOOT_THREAD.id ? '' : planDraftsByThreadRef.current[tid] ?? ''
+    planDraftRef.current = stored
+    setPlanDraftState(stored)
+  }, [])
   const [richLayout, setRichLayoutState] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
   const [reviewActivity, setReviewActivity] = useState<ChatReviewActivity>(() => emptyReviewActivity())
   const [reviewOpen, setReviewOpenState] = useState(false)
@@ -616,10 +624,12 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     followUpQueueRef.current = []
     const created = emptyThread()
     setThreads((prev) => upsertChatThread(created, prev.filter((t) => t.id !== BOOT_THREAD.id)))
+    activeIdRef.current = created.id
     setActiveId(created.id)
+    applyPlanDraftForThread(created.id)
     setError(null)
     return created.id
-  }, [stopGeneration])
+  }, [applyPlanDraftForThread, stopGeneration])
 
   const selectThread = useCallback(
     (id: string) => {
@@ -628,10 +638,13 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       // Follow-ups are thread-local intent — never auto-send into a different chat.
       setFollowUpQueue([])
       followUpQueueRef.current = []
+      // Sync activeId + Plan draft before paint so Save/Build cannot hit the wrong thread.
+      activeIdRef.current = id
       setActiveId(id)
+      applyPlanDraftForThread(id)
       setError(null)
     },
-    [stopGeneration],
+    [applyPlanDraftForThread, stopGeneration],
   )
 
   const removeThread = useCallback(
@@ -646,16 +659,19 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           const created = emptyThread()
           setActiveId(created.id)
           activeIdRef.current = created.id
+          applyPlanDraftForThread(created.id)
           return [created, ...next]
         }
         if (activeIdRef.current === id) {
-          setActiveId(live[0]!.id)
-          activeIdRef.current = live[0]!.id
+          const nextId = live[0]!.id
+          setActiveId(nextId)
+          activeIdRef.current = nextId
+          applyPlanDraftForThread(nextId)
         }
         return next
       })
     },
-    [stopGeneration],
+    [applyPlanDraftForThread, stopGeneration],
   )
 
   const archiveThread = useCallback(
@@ -672,17 +688,20 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             const created = emptyThread()
             setActiveId(created.id)
             activeIdRef.current = created.id
+            applyPlanDraftForThread(created.id)
             return [created, ...next]
           }
           if (activeIdRef.current === id) {
-            setActiveId(live[0]!.id)
-            activeIdRef.current = live[0]!.id
+            const nextId = live[0]!.id
+            setActiveId(nextId)
+            activeIdRef.current = nextId
+            applyPlanDraftForThread(nextId)
           }
         }
         return next
       })
     },
-    [],
+    [applyPlanDraftForThread],
   )
 
   const runAssistant = useCallback(
@@ -1070,8 +1089,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       if (!content) return false
       const tid = threadId || activeIdRef.current
       if (tid !== activeIdRef.current) {
-        setActiveId(tid)
         activeIdRef.current = tid
+        setActiveId(tid)
+        applyPlanDraftForThread(tid)
       }
       setError(null)
       // Set busy synchronously so a concurrent follow-up flush cannot claim another send.
@@ -1084,7 +1104,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       await runAssistant(userStep.thread)
       return true
     },
-    [persist, runAssistant, unlocked],
+    [applyPlanDraftForThread, persist, runAssistant, unlocked],
   )
 
   const refreshGitDiff = useCallback(async () => {

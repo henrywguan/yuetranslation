@@ -2418,10 +2418,18 @@
     padding: 0.35rem 0.4rem 0.4rem;
   }
 
+  .aui-plan-artifact-hint {
+    display: none;
+  }
+
   .aui-plan-artifact-input {
     max-height: min(22vh, 8.5rem);
     min-height: 3.5rem;
     font-size: 0.74rem;
+  }
+
+  .aui-mode-build--save {
+    padding: 0.22rem 0.42rem;
   }
 
   .aui-review-actions {
