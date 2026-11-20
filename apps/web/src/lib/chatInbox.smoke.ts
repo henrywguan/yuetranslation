@@ -302,7 +302,21 @@ assert.match(
   'list rows do not compress into neighbors',
 )
 assert.match(inboxCss, /\.inbox-agent-status-dot/, 'status chip colored dot')
-assert.match(inboxCss, /\.inbox-agent-status\.is-idle/, 'idle chip hide rule')
+assert.match(
+  inboxCss,
+  /\.inbox-agent-status\.is-idle\s*\{\s*display:\s*none/,
+  'idle chips hidden by default at all densities',
+)
+assert.match(
+  inboxCss,
+  /\.inbox-agent-row:hover \.inbox-agent-status\.is-idle/,
+  'idle chips reveal on row hover',
+)
+assert.doesNotMatch(
+  inboxCss,
+  /@media \(max-width: 899px\),\s*\(max-height: 720px\)\s*\{[\s\S]*?\.inbox-agent-status\.is-idle/,
+  'idle hide is not narrow-only',
+)
 assert.match(inboxCss, /\.inbox-empty--hero|\.inbox-empty-cta/, 'empty-state CTA styles')
 assert.match(inboxCss, /\.inbox-project-node\.is-dimmed/, 'dim empty filtered projects')
 assert.match(inboxCss, /\.inbox-chat-menu/, 'Add/Remove project menu styles')
@@ -329,6 +343,7 @@ assert.match(tiles, /In Review/)
 const statusChip = readFileSync(join(root, 'pages/chat/inbox/StatusChip.tsx'), 'utf8')
 assert.match(statusChip, /inbox-agent-status-dot/, 'StatusChip renders dot')
 assert.match(statusChip, /statusChipLabel/, 'StatusChip uses short labels')
+assert.match(statusChip, /all densities|hover\/focus/, 'StatusChip documents global idle hide')
 
 const chatMenu = readFileSync(join(root, 'pages/chat/inbox/ChatProjectMenu.tsx'), 'utf8')
 assert.match(chatMenu, /Add to /, 'menu Add to Project items')
