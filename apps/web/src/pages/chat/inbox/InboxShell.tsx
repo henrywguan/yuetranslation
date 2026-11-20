@@ -25,6 +25,7 @@ import { useChatInboxContext } from './ChatInboxContext'
 import { FilterTiles } from './FilterTiles'
 import './Inbox.css'
 import { ArchiveIcon, DeleteIcon } from './InboxIcons'
+import { InboxSettingsMenu } from './InboxSettingsMenu'
 import { GithubBind } from './GithubBind'
 import { LocalFolderBind } from './LocalFolderBind'
 import { ProjectCreateWizard, type ProjectWizardWorkspace } from './ProjectCreateWizard'
@@ -374,18 +375,21 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     <div className="inbox-shell">
       <div className="inbox-header">
         <h2 className="inbox-header-title">Inbox</h2>
-        <button
-          type="button"
-          className="inbox-header-new"
-          aria-label="New project"
-          title="New project"
-          disabled={wizardOpen}
-          onClick={() => {
-            openProjectWizard()
-          }}
-        >
-          +
-        </button>
+        <div className="inbox-header-actions">
+          <InboxSettingsMenu />
+          <button
+            type="button"
+            className="inbox-header-new"
+            aria-label="New project"
+            title="New project"
+            disabled={wizardOpen}
+            onClick={() => {
+              openProjectWizard()
+            }}
+          >
+            +
+          </button>
+        </div>
       </div>
 
       <label className="inbox-search">

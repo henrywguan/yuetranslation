@@ -169,13 +169,8 @@ const page = readFileSync(join(root, 'pages/chat/aui/ChatAuiPage.tsx'), 'utf8')
 assert.match(page, /InboxShell/, 'AUI page mounts InboxShell')
 assert.match(page, /ChatInboxProvider/, 'Inbox provider wraps runtime')
 assert.match(page, /aria-label="Inbox"/, 'sidebar labeled Inbox')
-assert.match(page, /Classic chat UI/, 'classic toggle preserved')
-assert.match(
-  page,
-  /Classic chat UI[\s\S]*Back to app/,
-  'Back to app sits under Classic chat UI in sidebar foot',
-)
 const auiShellFn = page.slice(page.indexOf('function AuiShell'), page.indexOf('function GateShell'))
+assert.doesNotMatch(auiShellFn, /ds-chat-sidebar-foot/, 'sidebar foot removed — settings cog owns chrome')
 assert.doesNotMatch(
   auiShellFn,
   /ds-chat-top[\s\S]*aria-label="Back to app"/,
@@ -184,6 +179,8 @@ assert.doesNotMatch(
 assert.match(auiShellFn, /is-inbox-collapsed|Collapse inbox|Open inbox/, 'menu toggles Inbox open/closed')
 
 const shell = readFileSync(join(root, 'pages/chat/inbox/InboxShell.tsx'), 'utf8')
+assert.match(shell, /InboxSettingsMenu/, 'header cog settings menu')
+assert.match(shell, /inbox-header-actions/, 'settings + New project share header actions')
 assert.match(shell, /FilterTiles/, 'filter tiles')
 assert.match(shell, /ProjectList/, 'projects list')
 assert.match(shell, /ProjectPanel/, 'overseer project panel')
@@ -197,6 +194,10 @@ assert.doesNotMatch(shell, /Spawn worker/, 'no manual spawn worker button')
 assert.doesNotMatch(shell, /ProjectDraftPanel/, 'no name-only draft panel')
 assert.match(shell, /ProjectCreateWizard/, 'New Project uses name + workspace wizard')
 assert.match(shell, /createAndFocusProject|Overseer chat/, 'New Project opens Overseer')
+const settings = readFileSync(join(root, 'pages/chat/inbox/InboxSettingsMenu.tsx'), 'utf8')
+assert.match(settings, /Classic chat UI/, 'classic toggle preserved in settings')
+assert.match(settings, /Back to app/, 'Back to app preserved in settings')
+assert.match(settings, /ThemeToggle/, 'theme toggle in settings')
 assert.match(shell, /createChatSandbox/, 'Inbox creates internal sandboxes via API')
 assert.match(shell, /needs_attention|in_review/, 'tile filter ids used')
 assert.match(shell, /inboxSecondaryDefaultOpen|max-width: 899px/, 'narrow/short drawers collapse secondary')

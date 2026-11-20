@@ -2,8 +2,45 @@
 
 /* `.ds-chat` is a horizontal flex (sidebar + main). Keep AUI as a single main
  * column so the top bar never becomes a full-height row sibling on iPhone. */
+
+/*
+ * AUI typography (scoped — do not leak into Solo/Cam/landing):
+ * - Body → Noto Sans (already Google-loaded; HK/Chao fallbacks for CJK + tones)
+ * - Headers → Ailerons (Warframe display). Designer license is personal-use only;
+ *   no binary is bundled until Henry supplies a commercial grant. Syne is the
+ *   legal interim fallback so chrome still has a display face.
+ */
 .ds-chat.aui-chat {
+  --ds-font: 'Noto Sans', 'Noto Sans HK', 'Noto Sans Chao', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --ds-font-display: 'Ailerons', Syne, 'Noto Sans', system-ui, sans-serif;
+  font-family: var(--ds-font);
   flex-direction: row;
+}
+
+.ds-chat.aui-chat .ds-chat-top-brand-name,
+.ds-chat.aui-chat .ds-chat-sidebar-brand-name,
+.ds-chat.aui-chat .inbox-header-title,
+.ds-chat.aui-chat .aui-empty h1,
+.ds-chat.aui-chat .ds-chat-gate h1,
+.ds-chat.aui-chat .inbox-agents-label,
+.ds-chat.aui-chat .inbox-section-toggle {
+  font-family: var(--ds-font-display);
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.ds-chat.aui-chat .aui-msg,
+.ds-chat.aui-chat .aui-bubble,
+.ds-chat.aui-chat .aui-composer-input,
+.ds-chat.aui-chat .aui-empty p {
+  font-family: var(--ds-font);
+}
+
+/* Chao / Jyutping tone spans keep their dedicated face (index.css .chao-face). */
+.ds-chat.aui-chat .chao-face,
+.ds-chat.aui-chat .jp-chao {
+  font-family: 'Noto Sans Chao', 'Noto Sans', var(--ds-font), sans-serif;
 }
 
 .ds-chat.aui-chat > .ds-chat-main.aui-main {

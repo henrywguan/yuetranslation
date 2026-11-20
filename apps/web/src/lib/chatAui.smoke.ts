@@ -59,7 +59,6 @@ assert.match(
 const page = readFileSync(join(root, 'pages/chat/aui/ChatAuiPage.tsx'), 'utf8')
 assert.match(page, /ChatAuiRuntimeProvider/, 'AUI page wraps runtime')
 assert.match(page, /canUseDeepseekChat/, 'AUI page keeps Family gate')
-assert.match(page, /Classic chat UI/, 'AUI page can flip back to classic')
 assert.match(page, /ds-chat-top-brand/, 'AUI uses classic centered brand classes')
 // Header must be nested under main — a header sibling of main under row-flex
 // .ds-chat vertically centered the chrome and hid the composer on iPhone.
@@ -86,18 +85,21 @@ assert.match(
 assert.match(auiShellFn, /InboxShell/, 'Inbox chrome lives in shell sidebar')
 assert.match(auiShellFn, /aria-label="Inbox"/, 'sidebar is the Chat Inbox')
 assert.match(page, /ChatInboxProvider/, 'Inbox provider wraps AUI runtime')
-// Classic/new toggle lives in the sidebar footer (pinned under the thread list),
-// not as a page-bottom text link under the composer.
-assert.match(
-  auiShellFn,
-  /ds-chat-sidebar[\s\S]*ds-chat-sidebar-foot[\s\S]*Classic chat UI[\s\S]*Back to app[\s\S]*ds-chat-main/,
-  'classic toggle + Back to app live in sidebar foot',
-)
+// Classic / Back to app / theme live in Inbox header cog (not sidebar foot / top bar).
+assert.doesNotMatch(auiShellFn, /ds-chat-sidebar-foot/, 'sidebar foot chrome removed')
 assert.doesNotMatch(
   auiShellFn,
   /ds-chat-top[\s\S]*aria-label="Back to app"/,
   'Back to app is not in the AUI top bar',
 )
+const settingsMenu = readFileSync(join(root, 'pages/chat/inbox/InboxSettingsMenu.tsx'), 'utf8')
+assert.match(settingsMenu, /Classic chat UI/, 'settings menu can flip to classic')
+assert.match(settingsMenu, /Back to app/, 'settings menu has Back to app')
+assert.match(settingsMenu, /ThemeToggle|toggleTheme/, 'settings menu wires theme')
+assert.match(settingsMenu, /setChatAuiEnabled\(false\)/, 'classic opt-out still flips flag')
+const inboxShell = readFileSync(join(root, 'pages/chat/inbox/InboxShell.tsx'), 'utf8')
+assert.match(inboxShell, /InboxSettingsMenu/, 'Inbox header mounts settings cog')
+assert.match(inboxShell, /inbox-header-actions/, 'settings sits beside New project +')
 assert.match(auiShellFn, /ds-chat-menu-btn/, 'menu button collapses/expands Inbox')
 assert.match(auiShellFn, /is-inbox-collapsed|is-inbox-open/, 'shell marks Inbox collapse state')
 assert.match(auiShellFn, /ds-chat-sidebar-resize/, 'Inbox edge resize handle')
@@ -111,6 +113,14 @@ assert.doesNotMatch(page, /useAuiStockDark/, 'no stock dark bridge')
 
 const auiCss = readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8')
 assert.match(auiCss, /\.ds-chat\.aui-chat/, 'AUI shell scoped under .aui-chat')
+assert.match(auiCss, /--ds-font-display:\s*'Ailerons'/, 'AUI headers target Ailerons display face')
+assert.match(auiCss, /--ds-font:\s*'Noto Sans'/, 'AUI body uses Noto Sans')
+assert.match(auiCss, /Noto Sans Chao/, 'Chao / Jyutping face preserved under AUI')
+assert.doesNotMatch(
+  auiCss,
+  /@font-face[\s\S]*Ailerons/,
+  'Ailerons binary not bundled without commercial license',
+)
 assert.match(
   auiCss,
   /\.ds-chat\.aui-chat \.ds-chat-menu-btn[\s\S]*display:\s*grid/,
