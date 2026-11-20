@@ -264,6 +264,21 @@ assert.match(
   'section headers stay content-sized',
 )
 assert.match(inboxCss, /\.inbox-new-chat\s*\{[^}]*flex-shrink:\s*0/, 'primary CTAs do not shrink')
+assert.match(
+  inboxCss,
+  /\.inbox-agents\s*\{[^}]*flex:\s*1\s+0\s+auto/,
+  'CHATS region grows into spare height but never shrinks under Projects/Workspaces',
+)
+assert.match(
+  inboxCss,
+  /\.inbox-agents-label\s*\{[^}]*flex-shrink:\s*0/,
+  'CHATS label stays content-sized above the thread list',
+)
+assert.doesNotMatch(
+  inboxCss,
+  /\.inbox-agents\s*\{[^}]*min-height:\s*0/,
+  'CHATS region must not min-height:0 crush label into list',
+)
 assert.match(inboxCss, /\.inbox-ws-menu/, 'workspace create menu styles')
 assert.match(
   inboxCss,
