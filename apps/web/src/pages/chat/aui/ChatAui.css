@@ -348,22 +348,27 @@
   margin: 0 auto 1rem;
 }
 
-/* Companion avatar — Higgsfield GIF moods + TTS lip approx overlay */
+/* Companion portrait — WC3 dialogue-bar left tile (mood GIFs + TTS lips) */
 .aui-deep-avatar {
   position: relative;
   display: grid;
   place-items: center;
-  margin: 0 auto;
+  margin: 0;
   user-select: none;
   pointer-events: none;
+}
+
+.aui-deep-avatar.is-portrait {
+  width: 5.5rem;
+  height: 5.5rem;
+  filter: drop-shadow(0 8px 18px color-mix(in srgb, var(--ds-blue) 22%, transparent));
 }
 
 .aui-deep-avatar.is-hero {
   width: min(15rem, 58vw);
   height: min(15rem, 58vw);
-  margin-bottom: 0.35rem;
+  margin: 0 auto 0.35rem;
   filter: drop-shadow(0 18px 36px color-mix(in srgb, var(--ds-blue) 28%, transparent));
-  animation: aui-deep-float 4.8s ease-in-out infinite;
 }
 
 .aui-deep-avatar.is-bubble {
@@ -377,153 +382,6 @@
   height: 100%;
   object-fit: contain;
   display: block;
-}
-
-.aui-deep-avatar-stage {
-  position: absolute;
-  right: max(0.85rem, env(safe-area-inset-right));
-  bottom: max(5.75rem, calc(env(safe-area-inset-bottom) + 5.1rem));
-  z-index: 4;
-  display: grid;
-  justify-items: end;
-  gap: 0.35rem;
-  pointer-events: none;
-}
-
-.aui-deep-avatar-stage .aui-deep-avatar-dock,
-.aui-deep-avatar-stage .aui-avatar-char-picker {
-  pointer-events: auto;
-}
-
-.aui-deep-avatar-dock {
-  position: relative;
-  right: auto;
-  bottom: auto;
-  width: 3.85rem;
-  height: 3.85rem;
-  border-radius: 1.15rem;
-  background: color-mix(in srgb, var(--ds-surface-1) 88%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ds-blue) 22%, var(--ds-divider));
-  backdrop-filter: blur(10px);
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent);
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  animation: aui-rise 0.35s ease both;
-}
-
-/* DS Boy / DS Girl character switcher */
-.aui-avatar-char-picker {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  margin: 0.15rem auto 0.55rem;
-  z-index: 5;
-  pointer-events: auto;
-}
-
-.aui-avatar-char-picker.is-compact {
-  margin: 0;
-  justify-content: end;
-}
-
-.aui-avatar-char-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 1.85rem;
-  padding: 0.28rem 0.7rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ds-blue) 22%, var(--ds-divider));
-  background: color-mix(in srgb, var(--ds-surface-1) 90%, transparent);
-  color: var(--ds-text-2, #5a6a85);
-  font: 600 0.78rem/1.2 'Noto Sans', system-ui, sans-serif;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 6px 16px color-mix(in srgb, #000 10%, transparent);
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-}
-
-.aui-avatar-char-trigger:hover,
-.aui-avatar-char-trigger[aria-expanded='true'] {
-  border-color: color-mix(in srgb, var(--ds-blue) 42%, var(--ds-divider));
-  color: var(--ds-text-1, #1a2744);
-  background: color-mix(in srgb, var(--ds-surface-1) 96%, var(--ds-blue));
-}
-
-.aui-avatar-char-picker.is-compact .aui-avatar-char-trigger {
-  width: 1.85rem;
-  min-height: 1.85rem;
-  padding: 0;
-  justify-content: center;
-  border-radius: 0.65rem;
-}
-
-.aui-avatar-char-cog {
-  font-size: 0.95rem;
-  line-height: 1;
-  opacity: 0.85;
-}
-
-.aui-avatar-char-chevron {
-  font-size: 0.65rem;
-  opacity: 0.7;
-}
-
-.aui-avatar-char-menu {
-  position: absolute;
-  top: calc(100% + 0.35rem);
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 10.5rem;
-  padding: 0.35rem;
-  border-radius: 0.85rem;
-  border: 1px solid color-mix(in srgb, var(--ds-blue) 18%, var(--ds-divider));
-  background: color-mix(in srgb, var(--ds-surface-1) 96%, transparent);
-  box-shadow: 0 14px 32px color-mix(in srgb, #000 18%, transparent);
-  backdrop-filter: blur(12px);
-  display: grid;
-  gap: 0.2rem;
-  animation: aui-rise 0.18s ease both;
-  z-index: 6;
-}
-
-.aui-avatar-char-picker.is-compact .aui-avatar-char-menu {
-  left: auto;
-  right: 0;
-  transform: none;
-  bottom: calc(100% + 0.35rem);
-  top: auto;
-}
-
-.aui-avatar-char-item {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  width: 100%;
-  padding: 0.4rem 0.5rem;
-  border: 0;
-  border-radius: 0.65rem;
-  background: transparent;
-  color: var(--ds-text-1, #1a2744);
-  font: 600 0.82rem/1.2 'Noto Sans', system-ui, sans-serif;
-  text-align: left;
-  cursor: pointer;
-}
-
-.aui-avatar-char-item:hover,
-.aui-avatar-char-item.is-active {
-  background: color-mix(in srgb, var(--ds-blue) 12%, transparent);
-}
-
-.aui-avatar-char-thumb {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.55rem;
-  object-fit: contain;
-  background: color-mix(in srgb, var(--ds-blue) 8%, transparent);
-  flex-shrink: 0;
 }
 
 .aui-deep-avatar.is-speaking .aui-deep-avatar-pulse,
@@ -553,6 +411,7 @@
   will-change: transform, opacity;
 }
 
+.aui-deep-avatar.is-portrait .aui-deep-avatar-lips,
 .aui-deep-avatar.is-bubble .aui-deep-avatar-lips {
   top: 60%;
   width: 22%;
@@ -570,20 +429,6 @@
 
 .aui-deep-avatar[data-mood='celebrate'] {
   filter: drop-shadow(0 12px 26px color-mix(in srgb, #3ecf8e 30%, transparent));
-}
-
-.aui-empty-avatar {
-  margin-bottom: 0.15rem;
-}
-
-@keyframes aui-deep-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-0.35rem);
-  }
 }
 
 @keyframes aui-deep-speak-ring {
@@ -776,38 +621,50 @@
   bottom: 0;
   min-width: 0;
   max-width: 100%;
-  padding: 0.5rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to top, var(--ds-canvas) 70%, transparent);
+  padding: 0 0 calc(env(safe-area-inset-bottom, 0px));
+  background: var(--ds-canvas);
   box-sizing: border-box;
+  border-top: 1px solid color-mix(in srgb, var(--ds-blue-soft-border) 45%, var(--ds-divider));
 }
 
 .aui-composer {
-  max-width: min(46rem, 100%);
+  max-width: none;
   width: 100%;
   min-width: 0;
-  margin: 0 auto;
-  border: 1px solid color-mix(in srgb, var(--ds-blue-soft-border) 55%, var(--ds-divider));
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--ds-blue-soft) 35%, var(--ds-canvas)) 0%, var(--ds-canvas) 42%),
-    var(--ds-canvas);
-  border-radius: 1.25rem;
-  padding: 0.6rem 0.7rem 0.7rem;
-  box-shadow:
-    0 1px 0 color-mix(in srgb, #fff 55%, transparent),
-    0 12px 36px rgba(26, 27, 30, 0.08),
-    0 0 0 1px color-mix(in srgb, var(--ds-blue) 6%, transparent);
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--ds-blue-soft) 18%, var(--ds-canvas));
+  padding: 0.55rem 0.65rem 0.6rem;
+  box-shadow: none;
   box-sizing: border-box;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.25s ease;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0.55rem;
+  transition: background 0.2s ease;
 }
 
 .aui-composer:focus-within {
-  border-color: var(--ds-blue-soft-border);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, #fff 55%, transparent),
-    0 16px 40px rgba(77, 107, 254, 0.12),
-    0 0 0 1px color-mix(in srgb, var(--ds-blue) 14%, transparent);
+  background: color-mix(in srgb, var(--ds-blue-soft) 28%, var(--ds-canvas));
+}
+
+.aui-composer-portrait {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  display: grid;
+  place-items: end center;
+  width: 5.5rem;
+  min-height: 5.5rem;
+  padding-bottom: 0.1rem;
+}
+
+.aui-composer-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
 .aui-agent-strip {
@@ -877,10 +734,19 @@
 
 .aui-composer-modes {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.3rem;
   align-items: center;
-  margin-bottom: 0.35rem;
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 0.05rem;
+}
+
+.aui-composer-modes > * {
+  flex: 0 0 auto;
 }
 
 .aui-mode {
@@ -963,20 +829,12 @@
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  margin-left: 0.15rem;
+  margin-left: 0;
 }
 
 .aui-mode-build:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-
-.aui-tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  align-items: center;
-  margin-bottom: 0.35rem;
 }
 
 .aui-tools-toggle {
@@ -1001,7 +859,8 @@
   transition: transform 0.18s ease;
 }
 
-.aui-tools.is-expanded .aui-tools-toggle svg {
+.aui-tools-toggle.is-expanded svg,
+.aui-composer-modes.is-tools-expanded .aui-tools-toggle svg {
   transform: rotate(180deg);
 }
 
@@ -1032,7 +891,6 @@
   gap: 0.35rem;
   align-items: center;
   width: 100%;
-  flex-basis: 100%;
   margin: 0;
   animation: aui-rise 0.22s ease both;
 }
@@ -1261,7 +1119,8 @@
 .aui-status {
   font-size: 0.75rem;
   color: var(--ds-text-3);
-  margin-left: 0.25rem;
+  margin-left: 0;
+  white-space: nowrap;
 }
 
 .aui-composer-input {
@@ -1340,14 +1199,15 @@
 }
 
 .aui-error {
-  max-width: 46rem;
-  margin: 0 auto 0.5rem;
+  max-width: none;
+  margin: 0;
   display: flex;
   gap: 0.75rem;
   align-items: center;
   justify-content: space-between;
   padding: 0.55rem 0.75rem;
-  border-radius: 0.75rem;
+  border-radius: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ds-danger) 22%, var(--ds-divider));
   background: color-mix(in srgb, var(--ds-danger) 12%, var(--ds-canvas));
   color: var(--ds-danger);
   font-size: 0.875rem;
@@ -1366,7 +1226,7 @@
 .aui-scroll-bottom {
   position: absolute;
   right: 1.25rem;
-  bottom: 7.5rem;
+  bottom: max(8.75rem, calc(env(safe-area-inset-bottom, 0px) + 7.75rem));
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 999px;
@@ -1375,6 +1235,7 @@
   color: var(--ds-text-2);
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  z-index: 3;
 }
 
 .aui-scroll-bottom:disabled {
@@ -1828,8 +1689,6 @@
   .aui-run,
   .aui-review-tab-count,
   .aui-review-count,
-  .aui-deep-avatar.is-hero,
-  .aui-deep-avatar-dock,
   .aui-deep-avatar-pulse {
     animation: none;
   }
@@ -1847,19 +1706,37 @@
   }
 }
 
+@media (min-width: 600px) {
+  .aui-deep-avatar.is-portrait,
+  .aui-composer-portrait {
+    width: 7rem;
+    height: 7rem;
+    min-height: 7rem;
+  }
+
+  .aui-composer {
+    padding: 0.65rem 0.85rem 0.7rem;
+    gap: 0.75rem;
+  }
+
+  .aui-scroll-bottom {
+    bottom: max(10rem, calc(env(safe-area-inset-bottom, 0px) + 9rem));
+  }
+}
+
 @media (max-width: 599px) {
-  .aui-deep-avatar-stage {
-    right: max(0.55rem, env(safe-area-inset-right));
-    bottom: max(6.4rem, calc(env(safe-area-inset-bottom) + 5.6rem));
-  }
-
-  .aui-deep-avatar-dock {
-    width: 3.35rem;
-    height: 3.35rem;
-  }
-
   .aui-deep-avatar.is-hero {
     width: min(12.5rem, 64vw);
     height: min(12.5rem, 64vw);
+  }
+
+  .aui-composer {
+    padding: 0.45rem 0.5rem 0.5rem;
+    gap: 0.4rem;
+  }
+
+  .aui-composer-portrait {
+    width: 5.5rem;
+    min-height: 5.5rem;
   }
 }

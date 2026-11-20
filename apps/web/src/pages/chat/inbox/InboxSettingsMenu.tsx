@@ -1,13 +1,19 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { ThemeToggle } from '../../../components/ThemeToggle'
+import {
+  CHAT_DEEP_AVATAR_CHARACTER_LABEL,
+  CHAT_DEEP_AVATAR_CHARACTERS,
+  chatDeepAvatarPosterSrc,
+} from '../../../lib/chatDeepAvatarCharacter'
 import { setChatAuiEnabled } from '../../../lib/chatAuiFlag'
 import { openApp } from '../../../lib/siteLinks'
 import { useTheme } from '../../../lib/theme'
+import { useChatDeepAvatarCharacter } from '../aui/ChatDeepAvatar'
 import { SettingsIcon } from './InboxIcons'
 
 /**
- * Inbox header cog — Classic / Back to app / theme live here so the sidebar
- * foot does not burn vertical chrome.
+ * Inbox header cog — Classic / Back to app / theme / companion live here so the
+ * sidebar foot does not burn vertical chrome.
  */
 export function InboxSettingsMenu() {
   const [open, setOpen] = useState(false)
@@ -15,6 +21,7 @@ export function InboxSettingsMenu() {
   const menuId = useId()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
+  const [character, setCharacter] = useChatDeepAvatarCharacter()
 
   useEffect(() => {
     if (!open) return
@@ -84,6 +91,36 @@ export function InboxSettingsMenu() {
               {isDark ? 'Dark mode' : 'Light mode'}
             </span>
             <ThemeToggle className="inbox-settings-theme-toggle" />
+          </div>
+          <div className="inbox-settings-divider" role="separator" />
+          <div className="inbox-settings-companion" role="group" aria-label="Companion">
+            <span className="inbox-settings-companion-label">Companion</span>
+            <div className="inbox-settings-companion-row">
+              {CHAT_DEEP_AVATAR_CHARACTERS.map((id) => {
+                const active = character === id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={active}
+                    className={`inbox-settings-companion-item${active ? ' is-active' : ''}`}
+                    onClick={() => setCharacter(id)}
+                  >
+                    <img
+                      className="inbox-settings-companion-thumb"
+                      src={chatDeepAvatarPosterSrc(id)}
+                      alt=""
+                      width={36}
+                      height={36}
+                      decoding="async"
+                      draggable={false}
+                    />
+                    <span>{CHAT_DEEP_AVATAR_CHARACTER_LABEL[id]}</span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
       ) : null}
