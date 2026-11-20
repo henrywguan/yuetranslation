@@ -118,8 +118,13 @@ assert.match(rail, /ChatRunsPanel/, 'rail hosts runs')
 
 const diffs = readFileSync(join(root, 'pages/chat/aui/ChatDiffsPanel.tsx'), 'utf8')
 assert.match(diffs, /Open PR|reviewUrl/, 'diffs surface PR CTA')
+assert.match(diffs, /PrChecksGlance|fetchChatGithubPrChecks|aui-pr-checks/, 'in-app PR checks glance')
 assert.match(diffs, /git diff/, 'diffs can refresh via git')
 assert.match(diffs, /DiffPreview|aui-diff-line|snapshotAsPatchPreview/, 'diffs show patch substance')
+
+const prChecks = readFileSync(join(here, 'chatPrChecks.ts'), 'utf8')
+assert.match(prChecks, /parseGithubPrUrl|summarizePrChecks/, 'PR checks helpers')
+assert.match(prChecks, /CHAT_THREAD_DRAG_MIME/, 'drag MIME colocated with PR helpers')
 
 const runs = readFileSync(join(root, 'pages/chat/aui/ChatRunsPanel.tsx'), 'utf8')
 assert.match(runs, /formatArgv|aui-run/, 'runs show exec argv')
@@ -146,6 +151,7 @@ assert.match(tools, /onSandboxActivity/, 'tools emit sandbox activity')
 const auiCss = readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8')
 assert.match(auiCss, /\.aui-review-rail/, 'review rail styles')
 assert.match(auiCss, /aui-rail-in|aui-count-pop/, 'intentional review motions')
+assert.match(auiCss, /\.aui-pr-checks/, 'PR checks chip styles')
 assert.match(
   auiCss,
   /\.aui-composer[\s\S]*linear-gradient/,

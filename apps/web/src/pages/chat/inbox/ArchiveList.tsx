@@ -57,9 +57,9 @@ export function ArchiveList({
                   </button>
                   <button
                     type="button"
-                    className="inbox-list-del"
+                    className="inbox-list-del is-delete"
                     aria-label={`Delete ${t.title}`}
-                    title="Delete"
+                    title="Delete permanently"
                     onClick={() => onDelete(t.id)}
                   >
                     <DeleteIcon size={13} />

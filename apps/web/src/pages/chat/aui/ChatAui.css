@@ -273,13 +273,27 @@
   flex-shrink: 0;
 }
 
+.aui-thread-archive.is-archive {
+  color: var(--ds-text-2);
+}
+
 .aui-thread-archive:hover,
 .aui-thread-delete:hover {
   background: var(--ds-surface-2);
   color: var(--ds-text);
 }
 
-.aui-thread-delete:hover {
+.aui-thread-archive.is-archive:hover {
+  color: var(--ds-blue);
+  background: var(--ds-blue-soft);
+}
+
+.aui-thread-delete.is-delete {
+  color: color-mix(in srgb, var(--ds-danger) 62%, var(--ds-text-3));
+}
+
+.aui-thread-delete:hover,
+.aui-thread-delete.is-delete:hover {
   color: var(--ds-danger);
   background: color-mix(in srgb, var(--ds-danger) 10%, transparent);
 }
@@ -908,6 +922,15 @@
   flex-shrink: 0;
 }
 
+/* Quiet IDLE on the in-thread agent strip (same hide-until-hover as sidebar). */
+.aui-agent-chip .inbox-agent-status.is-idle {
+  display: none;
+}
+.aui-agent-chip:hover .inbox-agent-status.is-idle,
+.aui-agent-chip:focus-within .inbox-agent-status.is-idle {
+  display: inline-flex;
+}
+
 .aui-composer-modes {
   display: flex;
   flex-wrap: nowrap;
@@ -1011,6 +1034,80 @@
 .aui-mode-build:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.aui-mode-build--save {
+  background: var(--ds-canvas);
+  border-color: var(--ds-divider);
+  color: var(--ds-text-2);
+  font-weight: 650;
+}
+
+.aui-mode-build--save:hover:not(:disabled) {
+  border-color: var(--ds-blue-soft-border);
+  color: var(--ds-blue);
+}
+
+.aui-composer.is-drag-over {
+  outline: 2px dashed color-mix(in srgb, var(--ds-blue) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.aui-plan-artifact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0 0 0.45rem;
+  padding: 0.45rem 0.55rem 0.5rem;
+  border-radius: 0.7rem;
+  border: 1px solid color-mix(in srgb, #b45309 28%, var(--ds-divider));
+  background: color-mix(in srgb, #f59e0b 8%, var(--ds-canvas));
+  min-width: 0;
+  max-width: 100%;
+}
+
+.aui-plan-artifact-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #92400e;
+  min-width: 0;
+}
+
+.aui-plan-artifact-hint {
+  font-weight: 550;
+  color: var(--ds-text-3);
+  font-size: 0.65rem;
+}
+
+.aui-plan-artifact-saved {
+  font-weight: 650;
+  color: var(--ds-success);
+  font-size: 0.65rem;
+}
+
+.aui-plan-artifact-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 4.5rem;
+  max-height: min(28vh, 12rem);
+  resize: vertical;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  background: var(--ds-canvas);
+  color: var(--ds-text);
+}
+
+.aui-plan-artifact-input:focus {
+  outline: 2px solid color-mix(in srgb, #b45309 35%, transparent);
+  outline-offset: 1px;
 }
 
 .aui-tools-toggle {
@@ -1158,6 +1255,21 @@
   padding: 0.15rem 0.35rem;
 }
 
+.aui-at-kind.is-diff {
+  color: #0f766e;
+  background: color-mix(in srgb, #0f766e 14%, var(--ds-canvas));
+}
+
+.aui-at-kind.is-run {
+  color: #7c3aed;
+  background: color-mix(in srgb, #7c3aed 12%, var(--ds-canvas));
+}
+
+.aui-at-kind.is-chat {
+  color: #b45309;
+  background: color-mix(in srgb, #f59e0b 14%, var(--ds-canvas));
+}
+
 .aui-at-label {
   min-width: 0;
   overflow: hidden;
@@ -1245,6 +1357,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.aui-pending-thumb {
+  width: 1.55rem;
+  height: 1.55rem;
+  object-fit: cover;
+  border-radius: 0.3rem;
+  flex-shrink: 0;
 }
 
 .aui-pending-files button {
@@ -1854,9 +1974,13 @@
 
 .aui-review-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.25rem;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .aui-review-btn {
@@ -1889,6 +2013,48 @@
   border-color: var(--ds-blue-soft-border);
   background: var(--ds-blue-soft);
   color: var(--ds-blue);
+}
+
+.aui-pr-checks {
+  display: inline-flex;
+  align-items: center;
+  max-width: min(9.5rem, 42vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.22rem 0.45rem;
+  border-radius: 0.45rem;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  color: var(--ds-text-2);
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.aui-pr-checks.is-success {
+  color: var(--ds-success);
+  border-color: color-mix(in srgb, var(--ds-success) 35%, var(--ds-divider));
+  background: color-mix(in srgb, var(--ds-success) 12%, var(--ds-canvas));
+}
+
+.aui-pr-checks.is-pending {
+  color: #b45309;
+  border-color: color-mix(in srgb, #f59e0b 35%, var(--ds-divider));
+  background: color-mix(in srgb, #f59e0b 12%, var(--ds-canvas));
+}
+
+.aui-pr-checks.is-failure,
+.aui-pr-checks.is-error {
+  color: var(--ds-danger);
+  border-color: color-mix(in srgb, var(--ds-danger) 35%, var(--ds-divider));
+  background: color-mix(in srgb, var(--ds-danger) 10%, var(--ds-canvas));
+}
+
+.aui-pr-checks.is-unknown {
+  opacity: 0.85;
 }
 
 .aui-review-btn--quiet {
@@ -2248,6 +2414,26 @@
     max-height: 4.25rem;
   }
 
+  .aui-plan-artifact {
+    padding: 0.35rem 0.4rem 0.4rem;
+  }
+
+  .aui-plan-artifact-input {
+    max-height: min(22vh, 8.5rem);
+    min-height: 3.5rem;
+    font-size: 0.74rem;
+  }
+
+  .aui-review-actions {
+    flex-wrap: wrap;
+    row-gap: 0.3rem;
+  }
+
+  .aui-pr-checks {
+    max-width: min(8.5rem, 48vw);
+    font-size: 0.64rem;
+  }
+
   .aui-review-rail.is-sheet {
     height: min(42dvh, 18rem);
   }
@@ -2283,6 +2469,11 @@
 
   .aui-followups-list {
     max-height: 3.5rem;
+  }
+
+  .aui-plan-artifact-input {
+    max-height: min(18vh, 6.5rem);
+    min-height: 3rem;
   }
 
   .aui-review-rail.is-sheet {

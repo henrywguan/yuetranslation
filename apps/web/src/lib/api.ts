@@ -1439,3 +1439,36 @@ export async function openChatGithubPr(opts: {
   const data = (await res.json()) as { pr: { number: number; htmlUrl: string; title: string } }
   return data.pr
 }
+
+export type ChatGithubPrChecks = {
+  state: 'success' | 'pending' | 'failure' | 'error' | 'unknown'
+  total: number
+  success: number
+  failure: number
+  pending: number
+  headSha?: string
+  detail?: string
+}
+
+/** GET /api/chat/github/pr-checks — CI glance for an open PR (GitHub App). */
+export async function fetchChatGithubPrChecks(opts: {
+  url?: string
+  owner?: string
+  repo?: string
+  pull?: number
+}): Promise<ChatGithubPrChecks> {
+  const params = new URLSearchParams()
+  if (opts.url) params.set('url', opts.url)
+  if (opts.owner) params.set('owner', opts.owner)
+  if (opts.repo) params.set('repo', opts.repo)
+  if (opts.pull != null) params.set('pull', String(opts.pull))
+  const res = await apiFetch(`/chat/github/pr-checks?${params.toString()}`)
+  if (res.status === 501) {
+    const data = (await res.json()) as { message?: string }
+    throw new Error(data.message || 'GitHub App not configured')
+  }
+  if (!res.ok) await throwApiError(res, 'PR checks failed')
+  const data = (await res.json()) as { checks?: ChatGithubPrChecks }
+  if (!data.checks) throw new Error('PR checks returned no summary')
+  return data.checks
+}

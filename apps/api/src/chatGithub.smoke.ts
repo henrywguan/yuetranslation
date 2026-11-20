@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url'
 import {
   githubConfigured,
   githubStatus,
+  parseGithubPrUrl,
   parseGithubRepo,
   suggestChatBranch,
 } from './chatGithub.js'
@@ -32,6 +33,12 @@ assert.deepEqual(parseGithubRepo('https://github.com/henrywguan/yuetranslation.g
   repo: 'yuetranslation',
 })
 assert.equal(parseGithubRepo('not a repo'), null)
+assert.deepEqual(parseGithubPrUrl('https://github.com/henrywguan/yuetranslation/pull/800'), {
+  owner: 'henrywguan',
+  repo: 'yuetranslation',
+  number: 800,
+})
+assert.equal(parseGithubPrUrl('nope'), null)
 assert.match(suggestChatBranch('chat'), /^chat\//)
 
 const byoGithub = await saveChatPluginCredentials('smoke-github-byo', {
@@ -52,10 +59,12 @@ assert.match(routes, /GithubNotConfiguredError/)
 assert.match(routes, /fixability/)
 assert.match(routes, /postChatGithubClone/)
 assert.match(routes, /postChatGithubPr/)
+assert.match(routes, /getChatGithubPrChecks/)
 assert.match(routes, /loadChatPluginCredentials/)
 
 const app = readFileSync(path.join(here, 'app.ts'), 'utf8')
 assert.match(app, /\/api\/chat\/github\/status/)
+assert.match(app, /\/api\/chat\/github\/pr-checks/)
 assert.match(app, /\/api\/chat\/github\/pr/)
 
 const tools = readFileSync(path.join(here, 'deepseekChatTools.ts'), 'utf8')

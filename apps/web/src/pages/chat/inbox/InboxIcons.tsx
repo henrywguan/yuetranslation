@@ -41,24 +41,18 @@ export function UnarchiveIcon({ size = 14 }: { size?: number }) {
   )
 }
 
+/** Filled trash — visually distinct from the stroked Archive box on touch. */
 export function DeleteIcon({ size = 14 }: { size?: number }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M3 6h18" />
-      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M9 3h6a1 1 0 0 1 1 1v1h4a1 1 0 1 1 0 2h-1.07l-.82 12.1A2.5 2.5 0 0 1 15.62 22H8.38a2.5 2.5 0 0 1-2.49-2.9L5.07 7H4a1 1 0 1 1 0-2h4V4a1 1 0 0 1 1-1zm1 2v0h4V5h-4zm-1.93 4 .7 10.3a.5.5 0 0 0 .5.45h7.46a.5.5 0 0 0 .5-.45L17.93 9H8.07z" />
+      <path
+        d="M10 11v6M14 11v6"
+        fill="none"
+        stroke="var(--ds-canvas, #fff)"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }

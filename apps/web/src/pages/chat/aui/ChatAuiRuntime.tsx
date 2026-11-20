@@ -93,11 +93,16 @@ import {
   writeChatPluginIds,
   type ChatComposerMode,
 } from '../../../lib/chatUiPrefs'
-import { buildPlanBuildPrompt } from '../../../lib/chatComposerContext'
+import {
+  buildPlanBuildPrompt,
+  CHAT_PLAN_WORKSPACE_PATH,
+  extractPlanArtifactText,
+} from '../../../lib/chatComposerContext'
 import { chatSpeakLang } from '../../../lib/chatVoice'
 import {
   applyWorkspaceWireUpdate,
   ensureThreadWorkspace,
+  upsertWorkspaceFile,
   maybeSeedArtifactsIntoWorkspace,
   patchThreadWorkspace,
   readHarnessFlag,
@@ -144,6 +149,11 @@ export type ChatAuiSession = {
   setComposerMode: (mode: ChatComposerMode) => void
   /** Plan → Build: switch to Agent and enqueue Overseer-leaning handoff. */
   buildFromPlan: () => Promise<void>
+  /** Editable Plan artifact (seeded from last assistant; used by Build). */
+  planDraft: string
+  setPlanDraft: (text: string) => void
+  /** Persist current planDraft into the thread workspace as plans/latest.md. */
+  savePlanToWorkspace: () => { ok: boolean; path?: string; error?: string }
   richLayout: boolean
   setRichLayout: (on: boolean) => void
   harnessOn: boolean
@@ -228,6 +238,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   )
   const composerModeRef = useRef(composerMode)
   composerModeRef.current = composerMode
+  const [planDraft, setPlanDraft] = useState('')
+  const planDraftRef = useRef(planDraft)
+  planDraftRef.current = planDraft
+  /** Last assistant message id we seeded into planDraft (avoid clobbering edits). */
+  const planSeedMsgRef = useRef<string | null>(null)
   const [richLayout, setRichLayoutState] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
   const [reviewActivity, setReviewActivity] = useState<ChatReviewActivity>(() => emptyReviewActivity())
   const [reviewOpen, setReviewOpenState] = useState(false)
@@ -1105,6 +1120,28 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     }
   }, [])
 
+  const savePlanToWorkspace = useCallback((): { ok: boolean; path?: string; error?: string } => {
+    const tid = activeIdRef.current
+    const cur = threadsRef.current.find((t) => t.id === tid)
+    if (!cur || cur.id === BOOT_THREAD.id) {
+      return { ok: false, error: 'Open a chat before saving the plan.' }
+    }
+    const text = planDraftRef.current.trim()
+    if (!text) return { ok: false, error: 'Plan is empty — nothing to save.' }
+    try {
+      const seeded = ensureThreadWorkspace(cur)
+      const ws = upsertWorkspaceFile(seeded.workspace, {
+        path: CHAT_PLAN_WORKSPACE_PATH,
+        text,
+        mime: 'text/markdown',
+      })
+      persist(patchThreadWorkspace(seeded, ws))
+      return { ok: true, path: CHAT_PLAN_WORKSPACE_PATH }
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'Save failed' }
+    }
+  }, [persist])
+
   const buildFromPlan = useCallback(async () => {
     // Keep Plan selected while a reply is in flight — never silent-switch to Agent.
     if (!unlocked) return
@@ -1117,6 +1154,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     const lastAssistant = [...(thread?.messages || [])]
       .reverse()
       .find((m) => m.role === 'assistant' && m.content.trim())
+    const planText =
+      planDraftRef.current.trim() || extractPlanArtifactText(lastAssistant?.content || '')
     const inboxState = inboxRef.current?.state
     const linked = inboxState ? agentForThread(inboxState, tid) : undefined
     const inProject = Boolean(linked?.projectId)
@@ -1132,9 +1171,31 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     markChatDeepAvatarPlanBuild()
     setChatDeepAvatarPlanBuildChainBusy(inProject)
     setComposerMode('agent')
-    const prompt = buildPlanBuildPrompt(lastAssistant?.content || '', inProject)
+    const prompt = buildPlanBuildPrompt(planText, inProject)
     await enqueuePrompt(prompt, targetThreadId)
   }, [enqueuePrompt, setComposerMode, unlocked])
+
+  // Seed / refresh editable Plan artifact from the latest assistant reply while in Plan mode.
+  // One seed per assistant message id — user edits stick until a newer assistant reply lands.
+  useEffect(() => {
+    if (composerMode !== 'plan') return
+    if (busy) return
+    const thread = threads.find((t) => t.id === activeId)
+    const lastAssistant = [...(thread?.messages || [])]
+      .reverse()
+      .find((m) => m.role === 'assistant' && m.content.trim())
+    if (!lastAssistant) {
+      if (planSeedMsgRef.current?.startsWith(`${activeId}:`)) return
+      planSeedMsgRef.current = `${activeId}:`
+      setPlanDraft('')
+      return
+    }
+    const msgKey = `${activeId}:${lastAssistant.id}`
+    if (planSeedMsgRef.current === msgKey) return
+    const extracted = extractPlanArtifactText(lastAssistant.content)
+    planSeedMsgRef.current = msgKey
+    setPlanDraft(extracted)
+  }, [activeId, busy, composerMode, threads])
 
   // Flush Overseer project_message / create_agent messages sequentially, then return to Overseer.
   useEffect(() => {
@@ -1374,6 +1435,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       composerMode,
       setComposerMode,
       buildFromPlan,
+      planDraft,
+      setPlanDraft,
+      savePlanToWorkspace,
       richLayout,
       setRichLayout,
       harnessOn,
@@ -1426,6 +1490,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       clearFollowUpQueue,
       composerMode,
       deepThink,
+      planDraft,
+      savePlanToWorkspace,
       dismissFollowUp,
       enabledPlugins,
       enqueuePrompt,

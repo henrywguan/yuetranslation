@@ -210,3 +210,179 @@ export function parseGithubRepo(fullOrUrl: string): { owner: string; repo: strin
   if (!m) return null
   return { owner: m[1]!, repo: m[2]! }
 }
+
+/** Parse owner/repo/number from a github.com pull request URL. */
+export function parseGithubPrUrl(raw: string): {
+  owner: string
+  repo: string
+  number: number
+} | null {
+  const s = String(raw || '').trim()
+  const m =
+    /github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)\/pull\/(\d+)/i.exec(s) ||
+    /^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)#(\d+)$/.exec(s)
+  if (!m) return null
+  const number = Number(m[3])
+  if (!Number.isFinite(number) || number < 1) return null
+  return { owner: m[1]!, repo: m[2]!, number }
+}
+
+export type GithubPrChecksSummary = {
+  state: 'success' | 'pending' | 'failure' | 'error' | 'unknown'
+  total: number
+  success: number
+  failure: number
+  pending: number
+  headSha?: string
+  detail?: string
+}
+
+/**
+ * Combined check-runs + legacy status for a pull request head.
+ * Read-only — no paid APIs beyond GitHub App rate limits.
+ */
+export async function fetchGithubPrChecks(input: {
+  owner: string
+  repo: string
+  number: number
+  creds?: ChatPluginCredentials | null
+}): Promise<GithubPrChecksSummary> {
+  const prRes = await ghFetch(
+    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/pulls/${input.number}`,
+    undefined,
+    input.creds,
+  )
+  if (!prRes.ok) {
+    const text = await prRes.text().catch(() => '')
+    throw new Error(`PR fetch failed (${prRes.status}): ${text.slice(0, 400)}`)
+  }
+  const pr = (await prRes.json()) as { head?: { sha?: string }; html_url?: string }
+  const headSha = typeof pr.head?.sha === 'string' ? pr.head.sha : ''
+  if (!headSha) {
+    return {
+      state: 'unknown',
+      total: 0,
+      success: 0,
+      failure: 0,
+      pending: 0,
+      detail: 'No head SHA on pull request',
+    }
+  }
+
+  const checksRes = await ghFetch(
+    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/commits/${encodeURIComponent(headSha)}/check-runs?per_page=50`,
+    undefined,
+    input.creds,
+  )
+  let success = 0
+  let failure = 0
+  let pending = 0
+  let total = 0
+  const names: string[] = []
+
+  if (checksRes.ok) {
+    const json = (await checksRes.json()) as {
+      check_runs?: Array<{
+        name?: string
+        status?: string
+        conclusion?: string | null
+      }>
+    }
+    for (const run of json.check_runs || []) {
+      total += 1
+      const status = String(run.status || '').toLowerCase()
+      const conclusion = String(run.conclusion || '').toLowerCase()
+      if (run.name) names.push(run.name)
+      if (status !== 'completed') {
+        pending += 1
+        continue
+      }
+      if (
+        conclusion === 'success' ||
+        conclusion === 'neutral' ||
+        conclusion === 'skipped' ||
+        conclusion === 'stale'
+      ) {
+        success += 1
+      } else {
+        failure += 1
+      }
+    }
+  }
+
+  // Legacy combined status as a fallback signal when check-runs empty.
+  if (total === 0) {
+    const statusRes = await ghFetch(
+      `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/commits/${encodeURIComponent(headSha)}/status`,
+      undefined,
+      input.creds,
+    )
+    if (statusRes.ok) {
+      const st = (await statusRes.json()) as {
+        state?: string
+        statuses?: Array<{ state?: string; context?: string }>
+      }
+      const statuses = st.statuses || []
+      total = statuses.length
+      for (const s of statuses) {
+        const state = String(s.state || '').toLowerCase()
+        if (s.context) names.push(s.context)
+        if (state === 'success') success += 1
+        else if (state === 'pending') pending += 1
+        else failure += 1
+      }
+      if (!total) {
+        const combined = String(st.state || '').toLowerCase()
+        if (combined === 'success') {
+          return {
+            state: 'success',
+            total: 0,
+            success: 0,
+            failure: 0,
+            pending: 0,
+            headSha,
+            detail: 'Combined status success (no discrete checks)',
+          }
+        }
+        if (combined === 'pending') {
+          return {
+            state: 'pending',
+            total: 0,
+            success: 0,
+            failure: 0,
+            pending: 0,
+            headSha,
+            detail: 'Combined status pending',
+          }
+        }
+        if (combined === 'failure' || combined === 'error') {
+          return {
+            state: combined === 'error' ? 'error' : 'failure',
+            total: 0,
+            success: 0,
+            failure: 0,
+            pending: 0,
+            headSha,
+            detail: `Combined status ${combined}`,
+          }
+        }
+      }
+    }
+  }
+
+  let state: GithubPrChecksSummary['state'] = 'unknown'
+  if (failure > 0) state = 'failure'
+  else if (pending > 0) state = 'pending'
+  else if (total > 0 && success === total) state = 'success'
+  else if (total === 0) state = 'unknown'
+
+  return {
+    state,
+    total,
+    success,
+    failure,
+    pending,
+    headSha,
+    detail: names.length ? names.slice(0, 8).join(' · ') : undefined,
+  }
+}

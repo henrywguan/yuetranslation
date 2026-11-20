@@ -80,7 +80,7 @@ export function ProjectPanel({
   }
 
   return (
-    <section className="inbox-section inbox-project-panel" aria-label={`${project.title} memory`}>
+    <section className="inbox-section inbox-project-panel" aria-label={`${project.title} rules`}>
       <div className="inbox-section-head">
         {editing && onRename ? (
           <form
@@ -121,23 +121,29 @@ export function ProjectPanel({
             title="Focus Overseer chat · double-click to rename"
           >
             {project.title}
-            <span aria-hidden>· Memory</span>
+            <span aria-hidden>· Rules</span>
           </button>
         )}
       </div>
-      <p className="inbox-empty" style={{ paddingTop: 0 }}>
-        Memory only — agents nest in the project folder above. Chat the Overseer; it plans and creates
-        workers.
-      </p>
-      <label className="inbox-memory">
-        <span className="inbox-agents-label">Project memory</span>
-        <textarea
-          value={project.memory || ''}
-          rows={3}
-          placeholder="Shared notes for Overseer + workers…"
-          onChange={(e) => onMemoryChange(e.target.value)}
-        />
-      </label>
+      <div className="inbox-rules-card">
+        <div className="inbox-rules-head">
+          <span className="inbox-rules-title">Project Rules</span>
+          <span className="inbox-rules-hint">Shared with Overseer + workers</span>
+        </div>
+        <p className="inbox-empty inbox-rules-copy">
+          First-class memory for this Project — not buried. Agents nest in the folder above; chat the
+          Overseer and it plans workers from these rules.
+        </p>
+        <label className="inbox-memory inbox-memory--rules">
+          <span className="visually-hidden">Project Rules</span>
+          <textarea
+            value={project.memory || ''}
+            rows={6}
+            placeholder="Conventions, goals, repo notes, tone — anything Overseer should remember…"
+            onChange={(e) => onMemoryChange(e.target.value)}
+          />
+        </label>
+      </div>
     </section>
   )
 }

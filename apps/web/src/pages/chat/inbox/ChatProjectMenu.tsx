@@ -3,7 +3,7 @@ import type { ChatInboxProject } from '../../../lib/chatInbox'
 
 /**
  * Overflow menu to Add / Remove a chat ↔ Project (Cursor-style re-home).
- * Drag-drop is optional Phase 1 polish — menu is the required path.
+ * Drag onto a Project row is also supported (see InboxShell / ProjectList).
  */
 export function ChatProjectMenu({
   projects,
