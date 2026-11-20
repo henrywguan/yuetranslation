@@ -199,21 +199,7 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
             }
           }}
         />
-        <div className="ds-chat-sidebar-foot">
-          <button
-            type="button"
-            className="ds-chat-sidebar-link"
-            onClick={() => {
-              setChatAuiEnabled(false)
-              window.location.reload()
-            }}
-          >
-            Classic chat UI
-          </button>
-          <button type="button" className="ds-chat-sidebar-link" onClick={() => openApp()}>
-            Back to app
-          </button>
-        </div>
+        {/* Classic / Back to app / theme live in InboxSettingsMenu (header cog). */}
         {/* Desktop edge drag only — hidden on mobile drawer via CSS. */}
         {sidebarOpen ? (
           <div

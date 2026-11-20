@@ -97,7 +97,11 @@ const page = readFileSync(join(root, 'pages/chat/aui/ChatAuiPage.tsx'), 'utf8')
 assert.match(page, /ChatReviewRail/, 'AUI shell mounts review rail')
 assert.match(page, /has-review/, 'shell marks review layout')
 assert.match(page, /shouldShowReviewRail/, 'visibility gated on workspace/PR/activity')
-assert.match(page, /Classic chat UI/, 'Classic toggle preserved')
+assert.match(
+  readFileSync(join(root, 'pages/chat/inbox/InboxSettingsMenu.tsx'), 'utf8'),
+  /Classic chat UI/,
+  'Classic toggle preserved in Inbox settings',
+)
 
 const rail = readFileSync(join(root, 'pages/chat/aui/ChatReviewRail.tsx'), 'utf8')
 assert.match(rail, /ChatDiffsPanel/, 'rail hosts diffs')
