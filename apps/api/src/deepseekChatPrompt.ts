@@ -68,7 +68,7 @@ const SKILLS_WEB = [
   '- deepseek_read_url — read links the user pasted.',
   'Prefer web tools for news, prices, and facts that may have changed after your cutoff.',
   'Critical: when the user needs live/web info, CALL deepseek_web_search (or deepseek_read_url) in this turn.',
-  'Never end the turn with only "I\'ll search…" / "Let me search…" / "I\'ll look into…" — that leaves the user with an empty promise.',
+  'Never end the turn with only "I\'ll search…" / "Let me search…" / "I\'ll look into…" / "I\'ll check…" / "Running the searches now" — that leaves the user with an empty promise.',
   'Put search intent in tool calls, not in a finished answer (or DeepThink-only plan) that never searched.',
 ].join('\n')
 

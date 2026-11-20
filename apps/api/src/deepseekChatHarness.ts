@@ -53,10 +53,10 @@ export const DEEPSEEK_CHAT_WEB_TOOLS = [
 ]
 
 /**
- * True when the model finished with a short "I'll search…" / "I'll look into…"
- * style reply and never actually invoked web tools — the #/chat "stopped instead
- * of continuing" failure (Henry: Search on, DeepThink plans search, visible reply
- * stalls until the user types "continue").
+ * True when the model finished with a short "I'll search…" / "I'll look into…" /
+ * "I'll check…" / "Running the searches now" style reply and never actually invoked
+ * web tools — the #/chat "stopped instead of continuing" failure (Henry: Search on,
+ * DeepThink + Image, visible reply stalls until Continue).
  */
 export function looksLikeDeferredSearch(text: string): boolean {
   const t = String(text || '').trim()
@@ -64,10 +64,17 @@ export function looksLikeDeferredSearch(text: string): boolean {
   // Already delivered substantive content — do not treat as a deferred promise.
   if ((t.match(/\n/g) || []).length >= 4) return false
   return (
-    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,80}\b(search|look\s+(?:up|into)|investigate|research|dig\s+into|find\s+out|check (?:the )?(?:web|online|news)|find (?:the )?latest)\b/i.test(
+    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,100}\b(search(?:es|ing)?|look\s+(?:up|into)|investigate|research|dig\s+into|find\s+out|check (?:the )?(?:web|online|news)|find (?:the )?latest|check\b[\s\S]{0,40}\b(?:what'?s\s+new|latest|updates?|news|this\s+week))\b/i.test(
       t,
     ) ||
     /^(?:i(?:['’]ll| will)|let me)\s+(?:search|look\s+(?:up|into)|investigate|research)\b/i.test(
+      t,
+    ) ||
+    // Status-line stopovers: "Running the searches now" (no I'll/let me).
+    /\b(?:running|starting|doing|performing)\b[\s\S]{0,48}\bsearches?\b/i.test(t) ||
+    /\bsearches?\s+(?:now|next)\b/i.test(t) ||
+    // Bare "I'll check…" / "Let me check." with no weather/tool object.
+    /^(?:sure[,.]?\s*|ok(?:ay)?[,.]?\s*)?(?:i(?:['’]ll| will)|let me)\s+check(?:\s+(?:for\s+you|that|this|it))?[.…!\s]*$/i.test(
       t,
     )
   )
@@ -86,13 +93,17 @@ export function looksLikeDeferredSearchTurn(content: string, reasoning = ''): bo
   if (!body) return true
   // Tiny filler only ("Sure." / "One moment.") — not a real answer.
   if (body.length > 120 || (body.match(/\n/g) || []).length >= 1) return false
-  return /^(?:sure|ok|okay|one moment|hang on|got it|alright|let me (?:see|check)|i(?:['’]ll| will) (?:check|see))[.!]?\s*$/i.test(
+  // Allow … / ⋯ / multiple dots — DeepSeek often ends fillers with an ellipsis.
+  return /^(?:sure|ok|okay|one moment|hang on|got it|alright|let me (?:see|check)|i(?:['’]ll| will) (?:check|see)|one moment while i (?:search|check|look))[.!…⋯]*\s*$/i.test(
     body,
   )
 }
 
 const DEFERRED_SEARCH_NUDGE =
-  'You announced a web search but did not call deepseek_web_search (or deepseek_read_url). Call the web search tool now with concrete queries, then answer from the results. Do not stop after another "I\'ll search" / "I\'ll look into" sentence.'
+  'You announced a web search but did not call deepseek_web_search (or deepseek_read_url). Call the web search tool now with concrete queries, then answer from the results. Do not stop after another "I\'ll search" / "I\'ll look into" / "I\'ll check" / "Running the searches now" sentence.'
+
+/** Max silent-promise recoveries per turn (model sometimes re-announces after one nudge). */
+export const MAX_DEFERRED_SEARCH_RECOVERIES = 2
 
 /**
  * True when the model announced a client function tool (weather, fetch_url, etc.)
@@ -652,7 +663,7 @@ export async function* streamDeepseekChatHarness(
 
   let announcedThinking = false
   let announcedSearching = false
-  let deferredSearchRecovered = false
+  let deferredSearchRecoveries = 0
   let deferredOrchestrationRecovered = false
   let deferredToolRecovered = false
   let projectOrchestrationUsed = false
@@ -863,18 +874,22 @@ export async function* streamDeepseekChatHarness(
     }
 
     // Search was on, but the model only *announced* a search and stopped — nudge
-    // once so the turn actually calls deepseek_web_search instead of RELATED chips.
-    const didServerSearch = announcedSearching || allSources.size > 0
+    // so the turn actually calls deepseek_web_search instead of RELATED chips.
+    // Require real source URLs: a bare call_started (announcedSearching) must NOT
+    // block recovery when the visible reply is still an empty "I'll check…" promise.
+    const didServerSearch = allSources.size > 0
     if (
       searchEnabled &&
       useNativeWeb &&
-      !deferredSearchRecovered &&
+      deferredSearchRecoveries < MAX_DEFERRED_SEARCH_RECOVERIES &&
       !didServerSearch &&
       looksLikeDeferredSearchTurn(assistantContent, assistantReasoning) &&
       round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS - 1
     ) {
-      deferredSearchRecovered = true
-      console.warn('[deepseek-chat] deferred-search recovery: model announced search without tools')
+      deferredSearchRecoveries += 1
+      console.warn(
+        `[deepseek-chat] deferred-search recovery #${deferredSearchRecoveries}: model announced search without tools`,
+      )
       msgs.push({
         role: 'assistant',
         content: assistantContent || null,

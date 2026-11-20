@@ -106,17 +106,28 @@ const stall = readFileSync(
   'utf8',
 )
 assert.match(stall, /I'll look into|look into/, 'Client stall detector covers look-into phrasing')
+assert.match(stall, /Running the searches|searches\?/, 'Client covers running-searches phrasing')
 assert.match(stall, /SEARCH_STALL_ERROR/, 'Client exports search stall copy')
 assert.equal(
   looksLikeDeferredSearch("I'll look into what 'GrokBot' refers to…"),
   true,
   'Henry GrokBot phrase flagged on client',
 )
+assert.equal(looksLikeDeferredSearch("I'll check…"), true, 'Client flags I\'ll-check…')
+assert.equal(
+  looksLikeDeferredSearch('Running the searches now'),
+  true,
+  'Client flags running-the-searches',
+)
 assert.equal(
   looksLikeDeferredSearchTurn(
     "I'll look into what 'GrokBot' refers to…",
     'Let me search the web…',
   ),
+  true,
+)
+assert.equal(
+  looksLikeDeferredSearchTurn("I'll check…", 'Let me search the web for Warframe…'),
   true,
 )
 assert.match(SEARCH_STALL_ERROR, /no web search ran/i)

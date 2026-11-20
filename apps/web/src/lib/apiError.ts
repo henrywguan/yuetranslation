@@ -44,6 +44,18 @@ export function humanizeThrownError(err: unknown): string {
   return sanitizeErrorMessage(raw)
 }
 
+/** Safari / WebKit fetch aborts and proxy drops often surface as these bare strings. */
+export const CHAT_STREAM_NETWORK_MESSAGE =
+  'Connection dropped during the reply (common on long Search / DeepThink). Send again or tap Continue — any partial answer stays in the thread.'
+
+export function isTransientChatNetworkError(text: string): boolean {
+  const t = text.replace(/^Error:\s*/i, '').trim()
+  if (!t) return false
+  return /^(loading failed|load failed|failed to fetch|network ?error(?: when attempting to fetch resource)?|the internet connection appears to be offline|networkerror when attempting to fetch resource)\.?$/i.test(
+    t,
+  )
+}
+
 export function sanitizeErrorMessage(raw: string): string {
   const text = raw.replace(/^Error:\s*/i, '').trim()
   if (!text) return 'Request failed'
@@ -53,6 +65,8 @@ export function sanitizeErrorMessage(raw: string): string {
   ) {
     return SECURITY_CHECKPOINT_MESSAGE
   }
+  // Henry (deep research): red banner showed bare Safari "Loading failed" mid-Search/DeepThink.
+  if (isTransientChatNetworkError(text)) return CHAT_STREAM_NETWORK_MESSAGE
   return clampError(text)
 }
 
