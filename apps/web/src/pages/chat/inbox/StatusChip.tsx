@@ -1,6 +1,6 @@
 import { isIdleStatus, statusChipLabel } from '../../../lib/chatInbox'
 
-/** Compact status affordance: colored dot + short label. Idle hides on narrow drawers until hover/focus. */
+/** Compact status affordance: colored dot + short label. Idle hides at all densities until hover/focus. */
 export function StatusChip({ status }: { status: string }) {
   const label = statusChipLabel(status)
   const idle = isIdleStatus(status)

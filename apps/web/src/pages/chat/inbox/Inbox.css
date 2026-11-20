@@ -696,6 +696,21 @@
   border: 1px solid var(--ds-divider);
 }
 
+/* Idle is noise at every density — hide until row hover/focus (Phase 1 narrow + desktop). */
+.inbox-agent-status.is-idle {
+  display: none;
+  color: var(--ds-text-3);
+  background: transparent;
+  border: 1px solid transparent;
+  font-weight: 600;
+  opacity: 0.72;
+}
+
+.inbox-agent-row:hover .inbox-agent-status.is-idle,
+.inbox-agent-row:focus-within .inbox-agent-status.is-idle {
+  display: inline-flex;
+}
+
 .inbox-chat-menu-wrap {
   position: relative;
   flex-shrink: 0;
@@ -925,16 +940,6 @@
 
   .inbox-new-chat {
     padding: 0.45rem 0.65rem;
-  }
-
-  /* Hide idle chips by default on narrow/short drawers — reveal on hover/focus. */
-  .inbox-agent-status.is-idle {
-    display: none;
-  }
-
-  .inbox-agent-row:hover .inbox-agent-status.is-idle,
-  .inbox-agent-row:focus-within .inbox-agent-status.is-idle {
-    display: inline-flex;
   }
 
   .inbox-chat-menu-trigger {
