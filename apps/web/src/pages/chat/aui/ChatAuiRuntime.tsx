@@ -65,6 +65,7 @@ import {
   TOOL_STALL_ERROR,
 } from '../../../lib/chatSearchStall'
 import { StreamingDeepseekChatTts } from '../../../lib/chatDeepseekVoice'
+import { markChatDeepAvatarPlanBuild } from '../../../lib/chatDeepAvatarSignals'
 import { useChatInboxContextOptional } from '../inbox/ChatInboxContext'
 import {
   addScheduleJob,
@@ -1091,6 +1092,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setError('Wait for the current reply to finish, then Build.')
       return
     }
+    // Latch for companion “Deep finishes” / eureka outro (consumed when the run ends).
+    markChatDeepAvatarPlanBuild()
     const tid = activeIdRef.current
     const thread = threadsRef.current.find((t) => t.id === tid)
     const lastAssistant = [...(thread?.messages || [])]

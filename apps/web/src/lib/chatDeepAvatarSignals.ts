@@ -76,9 +76,30 @@ export function getChatDeepAvatarLipLevel(now = performance.now()): number {
   return Math.max(0, Math.min(1, a * b * gate))
 }
 
+/**
+ * One-shot latch: Plan→Build handoff started. Consumed when a run ends so
+ * “Deep finishes” / eureka / celebrate can treat it as a deep win.
+ */
+let planBuildPending = false
+
+export function markChatDeepAvatarPlanBuild() {
+  planBuildPending = true
+}
+
+export function consumeChatDeepAvatarPlanBuild(): boolean {
+  const v = planBuildPending
+  planBuildPending = false
+  return v
+}
+
+export function peekChatDeepAvatarPlanBuild(): boolean {
+  return planBuildPending
+}
+
 /** Test helper — reset bus between smoke runs. */
 export function __resetChatDeepAvatarSignalsForTests() {
   state.listening = false
   state.chatTtsPlaying = false
+  planBuildPending = false
   emit()
 }
