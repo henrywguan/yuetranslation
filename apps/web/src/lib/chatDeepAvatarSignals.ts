@@ -1,14 +1,21 @@
 /**
  * Lightweight bus for DeepSeek chat companion moods / TTS lips.
- * Decate listening + chat TTS playback are local to their modules;
+ * Dictate listening + chat TTS playback are local to their modules;
  * the avatar subscribes here without prop-drilling through AUI.
  *
  * Lip level is amplitude / vowel approx (not phonemes). Real Web Audio
  * analysis is best-effort; while TTS is marked playing we always fall back
  * to a synthetic envelope so lips still move on iPhone / speechSynthesis.
+ *
+ * Plan→Build latch lives in `chatDeepAvatarPlanBuild.ts` (re-exported here).
  */
 import { useSyncExternalStore } from 'react'
 import { isTtsPlaying } from './tts'
+import {
+  __resetChatDeepAvatarPlanBuildForTests,
+  getChatDeepAvatarPlanBuildSettleEpoch,
+  subscribeChatDeepAvatarPlanBuild,
+} from './chatDeepAvatarPlanBuild'
 
 export type ChatDeepAvatarSignals = {
   listening: boolean
@@ -76,30 +83,28 @@ export function getChatDeepAvatarLipLevel(now = performance.now()): number {
   return Math.max(0, Math.min(1, a * b * gate))
 }
 
-/**
- * One-shot latch: Plan→Build handoff started. Consumed when a run ends so
- * “Deep finishes” / eureka / celebrate can treat it as a deep win.
- */
-let planBuildPending = false
-
-export function markChatDeepAvatarPlanBuild() {
-  planBuildPending = true
-}
-
-export function consumeChatDeepAvatarPlanBuild(): boolean {
-  const v = planBuildPending
-  planBuildPending = false
-  return v
-}
-
-export function peekChatDeepAvatarPlanBuild(): boolean {
-  return planBuildPending
+export function useChatDeepAvatarPlanBuildSettleEpoch(): number {
+  return useSyncExternalStore(
+    subscribeChatDeepAvatarPlanBuild,
+    getChatDeepAvatarPlanBuildSettleEpoch,
+    () => 0,
+  )
 }
 
 /** Test helper — reset bus between smoke runs. */
 export function __resetChatDeepAvatarSignalsForTests() {
   state.listening = false
   state.chatTtsPlaying = false
-  planBuildPending = false
+  __resetChatDeepAvatarPlanBuildForTests()
   emit()
 }
+
+export {
+  abortChatDeepAvatarPlanBuild,
+  consumeChatDeepAvatarPlanBuild,
+  isChatDeepAvatarPlanBuildChainBusy,
+  markChatDeepAvatarPlanBuild,
+  peekChatDeepAvatarPlanBuild,
+  setChatDeepAvatarPlanBuildChainBusy,
+  settleChatDeepAvatarPlanBuild,
+} from './chatDeepAvatarPlanBuild'

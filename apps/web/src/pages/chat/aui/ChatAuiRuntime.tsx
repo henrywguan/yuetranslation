@@ -65,7 +65,11 @@ import {
   TOOL_STALL_ERROR,
 } from '../../../lib/chatSearchStall'
 import { StreamingDeepseekChatTts } from '../../../lib/chatDeepseekVoice'
-import { markChatDeepAvatarPlanBuild } from '../../../lib/chatDeepAvatarSignals'
+import {
+  markChatDeepAvatarPlanBuild,
+  setChatDeepAvatarPlanBuildChainBusy,
+  settleChatDeepAvatarPlanBuild,
+} from '../../../lib/chatDeepAvatarSignals'
 import { useChatInboxContextOptional } from '../inbox/ChatInboxContext'
 import {
   addScheduleJob,
@@ -317,6 +321,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           const message = typeof raw.message === 'string' ? raw.message.trim() : ''
           if (message) {
             pendingProjectMsgsRef.current.push({ agentId, message, projectId })
+            setChatDeepAvatarPlanBuildChainBusy(true)
           }
           continue
         }
@@ -334,6 +339,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             api.updateAgentStatus(agentId, 'queued')
           }
           pendingProjectMsgsRef.current.push({ agentId, message, projectId })
+          setChatDeepAvatarPlanBuildChainBusy(true)
           continue
         }
         if (type === 'set_status') {
@@ -1085,6 +1091,20 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     }
   }, [])
 
+  /**
+   * Plan→Build Deep latch: keep chainBusy while workers are queued/flushing so the
+   * Overseer handoff turn cannot consume Deep/eureka/fullscreen early. When the
+   * chain goes idle, settle (deferred outro) if credit is still armed.
+   */
+  const syncPlanBuildChain = useCallback((opts?: { settleIfIdle?: boolean }) => {
+    const chainBusy =
+      flushingProjectMsgsRef.current || pendingProjectMsgsRef.current.length > 0
+    setChatDeepAvatarPlanBuildChainBusy(chainBusy)
+    if (opts?.settleIfIdle && !chainBusy && !busyRef.current) {
+      settleChatDeepAvatarPlanBuild()
+    }
+  }, [])
+
   const buildFromPlan = useCallback(async () => {
     // Keep Plan selected while a reply is in flight — never silent-switch to Agent.
     if (!unlocked) return
@@ -1092,8 +1112,6 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setError('Wait for the current reply to finish, then Build.')
       return
     }
-    // Latch for companion “Deep finishes” / eureka outro (consumed when the run ends).
-    markChatDeepAvatarPlanBuild()
     const tid = activeIdRef.current
     const thread = threadsRef.current.find((t) => t.id === tid)
     const lastAssistant = [...(thread?.messages || [])]
@@ -1110,6 +1128,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       )
       if (overseer?.threadId) targetThreadId = overseer.threadId
     }
+    // Latch Deep credit. In-project Builds stay chain-busy until worker flush settles.
+    markChatDeepAvatarPlanBuild()
+    setChatDeepAvatarPlanBuildChainBusy(inProject)
     setComposerMode('agent')
     const prompt = buildPlanBuildPrompt(lastAssistant?.content || '', inProject)
     await enqueuePrompt(prompt, targetThreadId)
@@ -1117,9 +1138,16 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
   // Flush Overseer project_message / create_agent messages sequentially, then return to Overseer.
   useEffect(() => {
-    if (!unlocked || busy || flushingProjectMsgsRef.current) return
-    if (!pendingProjectMsgsRef.current.length) return
+    if (!unlocked || busy || flushingProjectMsgsRef.current) {
+      syncPlanBuildChain({ settleIfIdle: !busy })
+      return
+    }
+    if (!pendingProjectMsgsRef.current.length) {
+      syncPlanBuildChain({ settleIfIdle: true })
+      return
+    }
     flushingProjectMsgsRef.current = true
+    setChatDeepAvatarPlanBuildChainBusy(true)
     void (async () => {
       try {
         while (pendingProjectMsgsRef.current.length) {
@@ -1141,9 +1169,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         }
       } finally {
         flushingProjectMsgsRef.current = false
+        syncPlanBuildChain({ settleIfIdle: true })
       }
     })()
-  }, [busy, createSilentThread, enqueuePrompt, selectThread, unlocked])
+  }, [busy, createSilentThread, enqueuePrompt, selectThread, syncPlanBuildChain, unlocked])
 
   const onNew = useCallback(
     async (message: AppendMessage) => {

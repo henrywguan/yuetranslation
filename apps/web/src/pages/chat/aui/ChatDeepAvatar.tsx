@@ -27,6 +27,7 @@ import {
   CHAT_DEEP_AVATAR_CHARACTER_EVENT,
   CHAT_DEEP_AVATAR_CHARACTER_LABEL,
   CHAT_DEEP_AVATAR_CELEBRATE_MODE_EVENT,
+  CHAT_DEEP_AVATAR_DEEP_MS,
   chatDeepAvatarMoodSrc,
   chatDeepAvatarPosterSrc,
   isChatDeepAvatarDeepFinish,
@@ -44,9 +45,12 @@ import {
   type ChatDeepAvatarMood,
 } from '../../../lib/chatDeepAvatarCharacter'
 import {
+  abortChatDeepAvatarPlanBuild,
   consumeChatDeepAvatarPlanBuild,
   getChatDeepAvatarLipLevel,
   isChatAvatarTtsActive,
+  peekChatDeepAvatarPlanBuild,
+  useChatDeepAvatarPlanBuildSettleEpoch,
   useChatDeepAvatarSignals,
 } from '../../../lib/chatDeepAvatarSignals'
 import type { ChatComposerMode } from '../../../lib/chatUiPrefs'
@@ -103,58 +107,105 @@ export type ChatDeepAvatarMoodState = {
  *
  * `happy` GIF ships soft Ask/short wins via `proud` (CSS variant). Celebrate stays default.
  */
+function latchOutro(
+  setOutro: (m: ChatDeepAvatarMood | null) => void,
+  setDeepFinish: (v: boolean) => void,
+  input: {
+    durationMs: number
+    composerMode: ChatComposerMode
+    searchOn: boolean
+    planBuild: boolean
+  },
+): () => void {
+  const nextMood = pickChatDeepAvatarOutroMood(input)
+  const deep = isChatDeepAvatarDeepFinish(input)
+  setDeepFinish(deep)
+  setOutro(nextMood)
+  const hold = nextMood === 'proud' || nextMood === 'happy' ? HAPPY_MS : CELEBRATE_MS
+  const t = window.setTimeout(() => {
+    setOutro(null)
+    setDeepFinish(false)
+  }, hold)
+  return () => window.clearTimeout(t)
+}
+
 export function useChatDeepAvatarMood(opts?: ChatDeepAvatarMoodOpts): ChatDeepAvatarMoodState {
   const isRunning = useAuiState((s) => s.thread.isRunning)
   const draft = useAuiState((s) => s.composer.text)
   const isEmpty = useAuiState((s) => s.thread.isEmpty)
   const { listening, chatTtsPlaying } = useChatDeepAvatarSignals()
+  const planBuildSettleEpoch = useChatDeepAvatarPlanBuildSettleEpoch()
   const [outro, setOutro] = useState<ChatDeepAvatarMood | null>(null)
   const [deepFinish, setDeepFinish] = useState(false)
   const [azureTts, setAzureTts] = useState(false)
   const wasRunning = useRef(false)
   const runStartedAt = useRef(0)
   const runMeta = useRef({ composerMode: 'agent' as ChatComposerMode, searchOn: false })
+  const lastSettleEpoch = useRef(planBuildSettleEpoch)
+  const hasError = Boolean(opts?.error?.trim())
 
-  // Snapshot mode/search while the turn is live so mid-turn toggles don’t rewrite the outro.
+  // Session error → concern wins; drop any celebratory latch / Plan→Build credit.
   useEffect(() => {
-    if (!isRunning) return
-    runMeta.current = {
-      composerMode: opts?.composerMode ?? 'agent',
-      searchOn: Boolean(opts?.searchOn),
-    }
-  }, [isRunning, opts?.composerMode, opts?.searchOn])
+    if (!hasError) return
+    setOutro(null)
+    setDeepFinish(false)
+    abortChatDeepAvatarPlanBuild()
+  }, [hasError])
 
   useEffect(() => {
+    // Snapshot mode/search only at run **start** (stable Deep/eureka classification).
     if (isRunning && !wasRunning.current) {
       runStartedAt.current = performance.now()
+      runMeta.current = {
+        composerMode: opts?.composerMode ?? 'agent',
+        searchOn: Boolean(opts?.searchOn),
+      }
     }
     if (wasRunning.current && !isRunning) {
+      // No celebratory outro when the session already shows an error / concern.
+      if (hasError) {
+        abortChatDeepAvatarPlanBuild()
+        wasRunning.current = isRunning
+        return
+      }
       const durationMs = Math.max(0, performance.now() - (runStartedAt.current || performance.now()))
+      // Keeps latch armed while Overseer→worker chain is busy (no early Deep/fullscreen).
+      const wasPlanBuildArmed = peekChatDeepAvatarPlanBuild()
       const planBuild = consumeChatDeepAvatarPlanBuild()
-      const input = {
+      // Intermediate Overseer/worker turn: skip outro; settle epoch fires deep when chain idles.
+      if (wasPlanBuildArmed && !planBuild) {
+        wasRunning.current = isRunning
+        return
+      }
+      const clear = latchOutro(setOutro, setDeepFinish, {
         durationMs,
         composerMode: runMeta.current.composerMode,
         searchOn: runMeta.current.searchOn,
         planBuild,
-      }
-      const nextMood = pickChatDeepAvatarOutroMood(input)
-      const deep = isChatDeepAvatarDeepFinish(input)
-      setDeepFinish(deep)
-      setOutro(nextMood)
-      const hold = nextMood === 'proud' || nextMood === 'happy' ? HAPPY_MS : CELEBRATE_MS
-      const t = window.setTimeout(() => {
-        setOutro(null)
-        setDeepFinish(false)
-      }, hold)
+      })
       wasRunning.current = isRunning
-      return () => window.clearTimeout(t)
+      return clear
     }
     wasRunning.current = isRunning
     if (isRunning) {
       setOutro(null)
       setDeepFinish(false)
     }
-  }, [isRunning])
+  }, [isRunning, hasError, opts?.composerMode, opts?.searchOn])
+
+  // Deferred Plan→Build deep outro when the worker chain settles after the last turn.
+  useEffect(() => {
+    if (planBuildSettleEpoch === lastSettleEpoch.current) return
+    lastSettleEpoch.current = planBuildSettleEpoch
+    if (hasError || isRunning) return
+    const clear = latchOutro(setOutro, setDeepFinish, {
+      durationMs: CHAT_DEEP_AVATAR_DEEP_MS,
+      composerMode: runMeta.current.composerMode,
+      searchOn: runMeta.current.searchOn,
+      planBuild: true,
+    })
+    return clear
+  }, [planBuildSettleEpoch, hasError, isRunning])
 
   // Poll Azure / speechSynthesis playing flag (store path via isTtsPlaying).
   useEffect(() => {
@@ -172,13 +223,14 @@ export function useChatDeepAvatarMood(opts?: ChatDeepAvatarMoodOpts): ChatDeepAv
   // Display priority can put speak/listen over the outro clip; keep `outro` latched
   // separately so auto-speak does not cancel fullscreen celebrate.
   let mood: ChatDeepAvatarMood = 'idle'
-  if (opts?.error?.trim()) mood = 'concern'
+  if (hasError) mood = 'concern'
   else if (listening) mood = 'listen'
   else if (isRunning || ttsActive) mood = 'speak'
   else if (outro) mood = outro
   else if (!isEmpty && draft.trim().length > 0) mood = 'think'
 
-  const outroActive = Boolean(outro) && isChatDeepAvatarOutroMood(outro)
+  // Concern / error always suppresses celebratory FX even if a timer still holds `outro`.
+  const outroActive = !hasError && Boolean(outro) && isChatDeepAvatarOutroMood(outro)
   const outroMood = outroActive ? outro : null
 
   return {

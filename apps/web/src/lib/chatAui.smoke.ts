@@ -17,6 +17,15 @@ import {
   pickChatDeepAvatarOutroMood,
   shouldFullscreenCelebrate,
 } from './chatDeepAvatarCharacter'
+import {
+  __resetChatDeepAvatarPlanBuildForTests,
+  abortChatDeepAvatarPlanBuild,
+  consumeChatDeepAvatarPlanBuild,
+  markChatDeepAvatarPlanBuild,
+  peekChatDeepAvatarPlanBuild,
+  setChatDeepAvatarPlanBuildChainBusy,
+  settleChatDeepAvatarPlanBuild,
+} from './chatDeepAvatarPlanBuild'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
@@ -514,9 +523,42 @@ assert.equal(chatDeepAvatarMoodAssetStem('proud'), 'happy')
 assert.equal(chatDeepAvatarMoodAssetStem('eureka'), 'celebrate')
 const runtimeSrc = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtimeSrc, /markChatDeepAvatarPlanBuild/, 'Plan→Build latches deep celebrate')
+assert.match(runtimeSrc, /setChatDeepAvatarPlanBuildChainBusy/, 'Plan→Build gates Overseer→worker chain')
+assert.match(runtimeSrc, /settleChatDeepAvatarPlanBuild/, 'Plan→Build settles Deep credit when chain idles')
+const planBuildSrc = readFileSync(join(here, 'chatDeepAvatarPlanBuild.ts'), 'utf8')
+assert.match(planBuildSrc, /markChatDeepAvatarPlanBuild/, 'plan-build latch module')
+assert.match(planBuildSrc, /consumeChatDeepAvatarPlanBuild/, 'plan-build latch consumed on run end')
+assert.match(
+  planBuildSrc,
+  /planBuildChainBusy|setChatDeepAvatarPlanBuildChainBusy/,
+  'consume keeps latch armed while chain busy',
+)
+assert.match(planBuildSrc, /settleChatDeepAvatarPlanBuild/, 'settle bumps deferred deep outro epoch')
+assert.match(planBuildSrc, /abortChatDeepAvatarPlanBuild/, 'error path can abort plan-build latch')
 const signalsSrcCelebrate = readFileSync(join(here, 'chatDeepAvatarSignals.ts'), 'utf8')
-assert.match(signalsSrcCelebrate, /markChatDeepAvatarPlanBuild/, 'plan-build latch on signals bus')
-assert.match(signalsSrcCelebrate, /consumeChatDeepAvatarPlanBuild/, 'plan-build latch consumed on run end')
+assert.match(signalsSrcCelebrate, /chatDeepAvatarPlanBuild/, 'signals re-exports plan-build latch')
+assert.match(avatarSrc, /hasError|abortChatDeepAvatarPlanBuild/, 'error skips celebratory outro')
+assert.match(avatarSrc, /wasPlanBuildArmed && !planBuild/, 'skips outro on intermediate Plan→Build turns')
+assert.match(
+  avatarSrc,
+  /Snapshot mode\/search only at run \*\*start\*\*|run \*\*start\*\*/,
+  'run meta snapshotted at start only',
+)
+
+__resetChatDeepAvatarPlanBuildForTests()
+markChatDeepAvatarPlanBuild()
+setChatDeepAvatarPlanBuildChainBusy(true)
+assert.equal(consumeChatDeepAvatarPlanBuild(), false, 'no consume while chain busy')
+assert.equal(peekChatDeepAvatarPlanBuild(), true, 'latch stays armed while chain busy')
+setChatDeepAvatarPlanBuildChainBusy(false)
+assert.equal(settleChatDeepAvatarPlanBuild(), true, 'settle claims credit when chain idles')
+assert.equal(peekChatDeepAvatarPlanBuild(), false, 'settle clears armed latch')
+markChatDeepAvatarPlanBuild()
+abortChatDeepAvatarPlanBuild()
+assert.equal(peekChatDeepAvatarPlanBuild(), false, 'abort clears armed latch')
+markChatDeepAvatarPlanBuild()
+assert.equal(consumeChatDeepAvatarPlanBuild(), true, 'solo consume when chain idle')
+__resetChatDeepAvatarPlanBuildForTests()
 for (const character of ['boy', 'girl'] as const) {
   for (const f of [
     'deep-idle.gif',
