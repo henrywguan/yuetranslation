@@ -379,11 +379,26 @@
   display: block;
 }
 
-.aui-deep-avatar-dock {
+.aui-deep-avatar-stage {
   position: absolute;
   right: max(0.85rem, env(safe-area-inset-right));
   bottom: max(5.75rem, calc(env(safe-area-inset-bottom) + 5.1rem));
   z-index: 4;
+  display: grid;
+  justify-items: end;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.aui-deep-avatar-stage .aui-deep-avatar-dock,
+.aui-deep-avatar-stage .aui-avatar-char-picker {
+  pointer-events: auto;
+}
+
+.aui-deep-avatar-dock {
+  position: relative;
+  right: auto;
+  bottom: auto;
   width: 3.85rem;
   height: 3.85rem;
   border-radius: 1.15rem;
@@ -395,6 +410,120 @@
   place-items: center;
   overflow: hidden;
   animation: aui-rise 0.35s ease both;
+}
+
+/* DS Boy / DS Girl character switcher */
+.aui-avatar-char-picker {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin: 0.15rem auto 0.55rem;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+.aui-avatar-char-picker.is-compact {
+  margin: 0;
+  justify-content: end;
+}
+
+.aui-avatar-char-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.85rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ds-blue) 22%, var(--ds-divider));
+  background: color-mix(in srgb, var(--ds-surface-1) 90%, transparent);
+  color: var(--ds-text-2, #5a6a85);
+  font: 600 0.78rem/1.2 'Noto Sans', system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 16px color-mix(in srgb, #000 10%, transparent);
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.aui-avatar-char-trigger:hover,
+.aui-avatar-char-trigger[aria-expanded='true'] {
+  border-color: color-mix(in srgb, var(--ds-blue) 42%, var(--ds-divider));
+  color: var(--ds-text-1, #1a2744);
+  background: color-mix(in srgb, var(--ds-surface-1) 96%, var(--ds-blue));
+}
+
+.aui-avatar-char-picker.is-compact .aui-avatar-char-trigger {
+  width: 1.85rem;
+  min-height: 1.85rem;
+  padding: 0;
+  justify-content: center;
+  border-radius: 0.65rem;
+}
+
+.aui-avatar-char-cog {
+  font-size: 0.95rem;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.aui-avatar-char-chevron {
+  font-size: 0.65rem;
+  opacity: 0.7;
+}
+
+.aui-avatar-char-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 10.5rem;
+  padding: 0.35rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--ds-blue) 18%, var(--ds-divider));
+  background: color-mix(in srgb, var(--ds-surface-1) 96%, transparent);
+  box-shadow: 0 14px 32px color-mix(in srgb, #000 18%, transparent);
+  backdrop-filter: blur(12px);
+  display: grid;
+  gap: 0.2rem;
+  animation: aui-rise 0.18s ease both;
+  z-index: 6;
+}
+
+.aui-avatar-char-picker.is-compact .aui-avatar-char-menu {
+  left: auto;
+  right: 0;
+  transform: none;
+  bottom: calc(100% + 0.35rem);
+  top: auto;
+}
+
+.aui-avatar-char-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--ds-text-1, #1a2744);
+  font: 600 0.82rem/1.2 'Noto Sans', system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.aui-avatar-char-item:hover,
+.aui-avatar-char-item.is-active {
+  background: color-mix(in srgb, var(--ds-blue) 12%, transparent);
+}
+
+.aui-avatar-char-thumb {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.55rem;
+  object-fit: contain;
+  background: color-mix(in srgb, var(--ds-blue) 8%, transparent);
+  flex-shrink: 0;
 }
 
 .aui-deep-avatar.is-speaking .aui-deep-avatar-pulse,
@@ -1719,9 +1848,12 @@
 }
 
 @media (max-width: 599px) {
-  .aui-deep-avatar-dock {
+  .aui-deep-avatar-stage {
     right: max(0.55rem, env(safe-area-inset-right));
     bottom: max(6.4rem, calc(env(safe-area-inset-bottom) + 5.6rem));
+  }
+
+  .aui-deep-avatar-dock {
     width: 3.35rem;
     height: 3.35rem;
   }
