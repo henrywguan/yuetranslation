@@ -50,6 +50,70 @@
     opacity: 0;
     pointer-events: none;
   }
+
+  /* Edge drag — live width, no collapse transition while resizing. */
+  .ds-chat.aui-chat.is-inbox-resizing .ds-chat-sidebar {
+    transition: none;
+  }
+
+  .ds-chat.aui-chat .ds-chat-sidebar-resize {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 0.55rem;
+    margin-right: -0.28rem;
+    z-index: 6;
+    cursor: col-resize;
+    touch-action: none;
+    background: transparent;
+  }
+
+  .ds-chat.aui-chat .ds-chat-sidebar-resize::after {
+    content: '';
+    position: absolute;
+    top: 18%;
+    bottom: 18%;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ds-divider) 70%, transparent);
+    opacity: 0;
+    transition:
+      opacity 0.18s ease,
+      background 0.18s ease,
+      box-shadow 0.18s ease,
+      top 0.18s ease,
+      bottom 0.18s ease;
+  }
+
+  .ds-chat.aui-chat .ds-chat-sidebar:hover .ds-chat-sidebar-resize::after,
+  .ds-chat.aui-chat .ds-chat-sidebar-resize:focus-visible::after,
+  .ds-chat.aui-chat.is-inbox-resizing .ds-chat-sidebar-resize::after {
+    opacity: 1;
+  }
+
+  .ds-chat.aui-chat .ds-chat-sidebar-resize:hover::after,
+  .ds-chat.aui-chat .ds-chat-sidebar-resize:focus-visible::after,
+  .ds-chat.aui-chat.is-inbox-resizing .ds-chat-sidebar-resize::after {
+    top: 12%;
+    bottom: 12%;
+    background: color-mix(in srgb, var(--ds-blue) 55%, var(--ds-divider));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ds-blue-soft) 80%, transparent);
+  }
+
+  .ds-chat.aui-chat .ds-chat-sidebar-resize:focus-visible {
+    outline: none;
+  }
+}
+
+/* Mobile / short: keep absolute drawer — never show a resize grip. */
+@media (max-width: 899px) {
+  .ds-chat.aui-chat .ds-chat-sidebar-resize {
+    display: none !important;
+    pointer-events: none;
+  }
 }
 
 .aui-sr-only {

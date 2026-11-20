@@ -100,6 +100,9 @@ assert.doesNotMatch(
 )
 assert.match(auiShellFn, /ds-chat-menu-btn/, 'menu button collapses/expands Inbox')
 assert.match(auiShellFn, /is-inbox-collapsed|is-inbox-open/, 'shell marks Inbox collapse state')
+assert.match(auiShellFn, /ds-chat-sidebar-resize/, 'Inbox edge resize handle')
+assert.match(auiShellFn, /is-inbox-resizing/, 'shell marks live resize')
+assert.match(auiShellFn, /readChatInboxSidebarWidth|writeChatInboxSidebarWidth/, 'Inbox width persists')
 assert.doesNotMatch(auiShellFn, /aui-shell-footer|aui-classic-link/, 'no page-bottom classic link')
 assert.doesNotMatch(page, /ChatAuiStock\.css/, 'page does not import stock styles')
 assert.doesNotMatch(auiShellFn, /is-stock/, 'shell does not mark stock look')
@@ -114,6 +117,12 @@ assert.match(
   'AUI keeps menu btn on desktop to collapse Inbox',
 )
 assert.match(auiCss, /is-inbox-collapsed/, 'desktop collapsed Inbox width rules')
+assert.match(auiCss, /\.ds-chat-sidebar-resize/, 'desktop resize grip styles')
+assert.match(
+  auiCss,
+  /@media \(max-width: 899px\)[\s\S]*\.ds-chat-sidebar-resize[\s\S]*display:\s*none/,
+  'mobile drawer hides resize grip',
+)
 assert.match(
   auiCss,
   /Top bar must live inside|never becomes a full-height row sibling|flex-row sibling/i,

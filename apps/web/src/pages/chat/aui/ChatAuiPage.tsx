@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { ChatWorkspacePanel } from '../../../components/ChatWorkspacePanel'
 import { DeepSeekMark } from '../../../components/DeepSeekMark'
 import { IosHomescreenTip } from '../../../components/IosHomescreenGuide'
@@ -8,6 +8,14 @@ import { canUseDeepseekChat } from '../../../lib/chatAccess'
 import { isChatAuiEnabled, setChatAuiEnabled } from '../../../lib/chatAuiFlag'
 import { resolveActiveSandboxSessionId } from '../../../lib/chatInbox'
 import { shouldShowReviewRail } from '../../../lib/chatReviewActivity'
+import {
+  CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT,
+  CHAT_INBOX_SIDEBAR_WIDTH_MAX,
+  CHAT_INBOX_SIDEBAR_WIDTH_MIN,
+  clampChatInboxSidebarWidth,
+  readChatInboxSidebarWidth,
+  writeChatInboxSidebarWidth,
+} from '../../../lib/chatUiPrefs'
 import { openApp, openPricing } from '../../../lib/siteLinks'
 import { useYueStore } from '../../../lib/store'
 import { useAppViewportLock } from '../../../lib/useAppViewportLock'
@@ -56,6 +64,11 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
   const [sidebarOpen, setSidebarOpen] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(min-width: 900px)').matches,
   )
+  const [sidebarWidth, setSidebarWidth] = useState(() => readChatInboxSidebarWidth())
+  const [sidebarResizing, setSidebarResizing] = useState(false)
+  const resizeDrag = useRef<{ startX: number; startW: number } | null>(null)
+  const sidebarWidthRef = useRef(sidebarWidth)
+  sidebarWidthRef.current = sidebarWidth
   const {
     startNewChat,
     busy,
@@ -97,9 +110,65 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
     inReviewAgent?.reviewUrl ||
     inbox.state.agents.find((a) => a.threadId === activeId)?.reviewUrl
 
+  useEffect(() => {
+    if (!sidebarResizing) return
+    const prev = document.body.style.cursor
+    const prevSelect = document.body.style.userSelect
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    return () => {
+      document.body.style.cursor = prev
+      document.body.style.userSelect = prevSelect
+    }
+  }, [sidebarResizing])
+
+  const applySidebarWidth = (px: number, persist: boolean) => {
+    const next = clampChatInboxSidebarWidth(
+      px,
+      typeof window !== 'undefined' ? window.innerWidth : undefined,
+    )
+    sidebarWidthRef.current = next
+    setSidebarWidth(next)
+    if (persist) writeChatInboxSidebarWidth(next)
+  }
+
+  const onResizePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    // Desktop-only drag; mobile keeps the absolute drawer (no edge resize).
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 899px)').matches) return
+    if (e.button !== 0) return
+    e.preventDefault()
+    e.stopPropagation()
+    resizeDrag.current = { startX: e.clientX, startW: sidebarWidth }
+    setSidebarResizing(true)
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const onResizePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = resizeDrag.current
+    if (!drag) return
+    applySidebarWidth(drag.startW + (e.clientX - drag.startX), false)
+  }
+
+  const endResize = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!resizeDrag.current) return
+    resizeDrag.current = null
+    setSidebarResizing(false)
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      /* already released */
+    }
+    writeChatInboxSidebarWidth(sidebarWidthRef.current)
+  }
+
+  const shellStyle = {
+    ['--ds-sidebar-w' as string]: `${sidebarWidth}px`,
+  } as CSSProperties
+
   return (
     <div
-      className={`ds-chat aui-chat${showWorkspace ? ' has-workspace' : ''}${reviewVisible ? ' has-review' : ''}${harnessOn ? ' is-harness' : ''}${sidebarOpen ? ' is-inbox-open' : ' is-inbox-collapsed'}`}
+      className={`ds-chat aui-chat${showWorkspace ? ' has-workspace' : ''}${reviewVisible ? ' has-review' : ''}${harnessOn ? ' is-harness' : ''}${sidebarOpen ? ' is-inbox-open' : ' is-inbox-collapsed'}${sidebarResizing ? ' is-inbox-resizing' : ''}`}
+      style={shellStyle}
       aria-labelledby={titleId}
     >
       <h1 id={titleId} className="aui-sr-only">
@@ -145,6 +214,44 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
             Back to app
           </button>
         </div>
+        {/* Desktop edge drag only — hidden on mobile drawer via CSS. */}
+        {sidebarOpen ? (
+          <div
+            className="ds-chat-sidebar-resize"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize inbox"
+            aria-valuenow={sidebarWidth}
+            aria-valuemin={CHAT_INBOX_SIDEBAR_WIDTH_MIN}
+            aria-valuemax={CHAT_INBOX_SIDEBAR_WIDTH_MAX}
+            title="Drag to resize · double-click to reset"
+            tabIndex={0}
+            onPointerDown={onResizePointerDown}
+            onPointerMove={onResizePointerMove}
+            onPointerUp={endResize}
+            onPointerCancel={endResize}
+            onDoubleClick={() => applySidebarWidth(CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT, true)}
+            onKeyDown={(e) => {
+              const step = e.shiftKey ? 24 : 12
+              if (e.key === 'ArrowLeft') {
+                e.preventDefault()
+                applySidebarWidth(sidebarWidth - step, true)
+              } else if (e.key === 'ArrowRight') {
+                e.preventDefault()
+                applySidebarWidth(sidebarWidth + step, true)
+              } else if (e.key === 'Home') {
+                e.preventDefault()
+                applySidebarWidth(CHAT_INBOX_SIDEBAR_WIDTH_MIN, true)
+              } else if (e.key === 'End') {
+                e.preventDefault()
+                applySidebarWidth(CHAT_INBOX_SIDEBAR_WIDTH_MAX, true)
+              } else if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                applySidebarWidth(CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT, true)
+              }
+            }}
+          />
+        ) : null}
       </aside>
 
       {/* Top bar must live inside `.ds-chat-main` — `.ds-chat` is a row flex
