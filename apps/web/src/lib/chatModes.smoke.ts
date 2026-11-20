@@ -114,7 +114,17 @@ assert.ok(!mentions.some((m) => m.insert === '@chat:t2'), 'active thread exclude
 
 assert.equal(CHAT_PLAN_WORKSPACE_PATH, 'plans/latest.md')
 assert.match(extractPlanArtifactText('```plan\n## Steps\n```'), /## Steps/)
+assert.equal(
+  extractPlanArtifactText('Intro\n```ts\nconst x = 1\n```\nDone'),
+  'Intro\n```ts\nconst x = 1\n```\nDone',
+  'unlabeled fences are not stolen as the plan',
+)
 assert.equal(extractPlanArtifactText('plain plan'), 'plain plan')
+assert.match(
+  readFileSync(join(root, 'pages/chat/aui/ChatDiffsPanel.tsx'), 'utf8'),
+  /setSummary\(null\)[\s\S]*setLoading\(true\)/,
+  'PR checks clear stale summary before refetch',
+)
 
 const prRef = parseGithubPrUrl('https://github.com/henrywguan/yuetranslation/pull/800')
 assert.deepEqual(prRef, { owner: 'henrywguan', repo: 'yuetranslation', number: 800 })
@@ -157,6 +167,7 @@ assert.match(thread, /buildFromPlan/, 'Plan → Build handoff')
 assert.match(thread, /planDraft|aui-plan-artifact/, 'editable Plan artifact')
 assert.match(thread, /savePlanToWorkspace/, 'Save plan to workspace')
 assert.match(thread, /onPaste|onDrop|takeImageFromDataTransfer/, 'paste/drop image into composer')
+assert.match(thread, /types\]\.some\(\(t\) => t === 'Files'\)/, 'dragover only claims Files')
 assert.match(thread, /githubBound|@diff:|lastRun/, 'richer @ diff/run wiring')
 assert.match(thread, /disabled=\{busy\}/, 'Build disabled while busy')
 assert.match(thread, /Wait for reply/, 'Plan busy shows wait-for-reply status')

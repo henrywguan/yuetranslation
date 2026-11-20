@@ -229,8 +229,9 @@ export const CHAT_PLAN_WORKSPACE_PATH = 'plans/latest.md'
 export function extractPlanArtifactText(assistantMarkdown: string | undefined | null): string {
   const raw = String(assistantMarkdown || '').trim()
   if (!raw) return ''
-  // Prefer a fenced ```plan / ```markdown block if present.
-  const fence = /```(?:plan|markdown|md)?\s*\n([\s\S]*?)```/i.exec(raw)
-  if (fence?.[1]?.trim()) return fence[1].trim()
+  // Prefer an explicitly tagged ```plan / ```markdown / ```md fence only —
+  // never steal the first unlabeled code block (snippets are not the plan).
+  const fence = /```(plan|markdown|md)\s*\n([\s\S]*?)```/i.exec(raw)
+  if (fence?.[2]?.trim()) return fence[2].trim()
   return raw
 }

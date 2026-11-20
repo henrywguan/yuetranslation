@@ -633,12 +633,14 @@ function ComposerChrome({ error }: { error?: string | null }) {
       className={`aui-composer${harnessOn ? ' is-harness' : ''} is-mode-${composerMode}${composerDragOver ? ' is-drag-over' : ''}`}
       onDragEnter={(e) => {
         if (busy || uploadingFile) return
-        if (![...e.dataTransfer.types].some((t) => t === 'Files' || t.startsWith('image/'))) return
+        if (![...e.dataTransfer.types].some((t) => t === 'Files')) return
         e.preventDefault()
         setComposerDragOver(true)
       }}
       onDragOver={(e) => {
         if (busy || uploadingFile) return
+        // Only claim file/image drags — never block text drops into the draft.
+        if (![...e.dataTransfer.types].some((t) => t === 'Files')) return
         e.preventDefault()
         e.dataTransfer.dropEffect = 'copy'
         setComposerDragOver(true)
@@ -647,11 +649,12 @@ function ComposerChrome({ error }: { error?: string | null }) {
         if (e.currentTarget === e.target) setComposerDragOver(false)
       }}
       onDrop={(e) => {
-        e.preventDefault()
         setComposerDragOver(false)
         if (busy || uploadingFile) return
         const file = takeImageFromDataTransfer(e.dataTransfer)
-        if (file) void pickFile(file)
+        if (!file) return
+        e.preventDefault()
+        void pickFile(file)
       }}
       onPaste={(e) => {
         if (busy || uploadingFile) return

@@ -42,9 +42,12 @@ function PrChecksGlance({ reviewUrl }: { reviewUrl: string }) {
     if (!ref) {
       setSummary(null)
       setErr(null)
+      setLoading(false)
       return
     }
     let cancelled = false
+    // Clear prior PR summary immediately so we never flash stale checks.
+    setSummary(null)
     setLoading(true)
     setErr(null)
     void fetchChatGithubPrChecks({ url: reviewUrl })
