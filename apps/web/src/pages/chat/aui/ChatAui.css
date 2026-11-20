@@ -639,14 +639,24 @@
   box-shadow: none;
   box-sizing: border-box;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: stretch;
-  gap: 0.55rem;
+  gap: 0.35rem;
   transition: background 0.2s ease;
 }
 
 .aui-composer:focus-within {
   background: color-mix(in srgb, var(--ds-blue-soft) 28%, var(--ds-canvas));
+}
+
+/* Portrait | draft+toolbar — sits under the full-width modes bar. */
+.aui-composer-body {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0.55rem;
+  min-width: 0;
+  width: 100%;
 }
 
 .aui-composer-portrait {
@@ -665,6 +675,19 @@
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+}
+
+/* Message Copy — icon-only, reuse Solo .copy-btn weight next to SpeakButton. */
+.aui-actions .aui-copy-btn,
+.aui-actions-row .aui-copy-btn {
+  width: 2rem;
+  height: 2rem;
+}
+
+.aui-copy-btn .aui-copy-icon {
+  display: block;
+  width: 0.95rem;
+  height: 0.95rem;
 }
 
 .aui-agent-strip {
@@ -1716,6 +1739,10 @@
 
   .aui-composer {
     padding: 0.65rem 0.85rem 0.7rem;
+    gap: 0.4rem;
+  }
+
+  .aui-composer-body {
     gap: 0.75rem;
   }
 
@@ -1732,6 +1759,10 @@
 
   .aui-composer {
     padding: 0.45rem 0.5rem 0.5rem;
+    gap: 0.3rem;
+  }
+
+  .aui-composer-body {
     gap: 0.4rem;
   }
 

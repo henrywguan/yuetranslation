@@ -73,3 +73,40 @@ export function ToolsChevronIcon({ size = 12 }: { size?: number }) {
     </IconShell>
   )
 }
+
+/** Two overlapping pages — message Copy (matches Solo / classic chat copy glyph). */
+export function CopyIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className="aui-copy-icon"
+    >
+      <rect x="9" y="9" width="10" height="10" rx="2" />
+      <path d="M7 15H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v1" />
+    </svg>
+  )
+}
+
+/** Check mark shown briefly after Copy succeeds. */
+export function CopiedCheckIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+      className="aui-copy-icon"
+    >
+      <path d="M9.5 16.2 5.8 12.5l1.4-1.4 2.3 2.3 6.5-6.5 1.4 1.4-7.9 7.9Z" />
+    </svg>
+  )
+}
