@@ -570,10 +570,13 @@
 .inbox-agents {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  min-height: 0;
-  /* Only agents + scroll body absorb leftover drawer height. */
-  flex: 1 1 auto;
+  gap: 0.35rem;
+  /* Grow into spare drawer height, but never shrink below CHATS + list
+   * content — otherwise the label clips into / paints over thread rows when
+   * Projects + Workspaces are expanded. Overflow stays on `.inbox-scroll`. */
+  flex: 1 0 auto;
+  min-height: auto;
+  overflow: visible;
 }
 
 .inbox-agents-label {
@@ -582,8 +585,12 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ds-text-3);
-  padding: 0.15rem 0.25rem 0;
+  padding: 0.2rem 0.25rem 0.1rem;
   flex-shrink: 0;
+  /* Keep the section header above any overflow from neighboring bands. */
+  position: relative;
+  z-index: 1;
+  background: var(--ds-canvas);
 }
 
 .inbox-agent-row {

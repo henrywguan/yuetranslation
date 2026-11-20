@@ -126,8 +126,8 @@ assert.match(
 )
 assert.match(
   auiCss,
-  /\.inbox-agents \.aui-thread-list[\s\S]*flex:\s*0\s+1\s+auto/,
-  'nested inbox thread list does not steal sidebar scroll',
+  /\.inbox-agents \.aui-thread-list[\s\S]*flex:\s*0\s+0\s+auto/,
+  'nested inbox thread list does not shrink under CHATS or steal scroll',
 )
 assert.doesNotMatch(auiCss, /\.aui-shell-footer|\.aui-classic-link/, 'page-bottom classic link CSS removed')
 assert.match(

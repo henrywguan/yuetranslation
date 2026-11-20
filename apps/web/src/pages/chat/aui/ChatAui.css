@@ -97,9 +97,11 @@
   overflow: auto;
 }
 
-/* InboxShell scrolls via `.inbox-scroll` — nested thread list should not steal flex. */
+/* InboxShell scrolls via `.inbox-scroll` — nested thread list must not shrink
+ * under the CHATS label (flex-shrink:0) or steal a nested scroll region. */
 .inbox-agents .aui-thread-list {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
+  min-height: auto;
   overflow: visible;
 }
 
