@@ -1178,6 +1178,7 @@
 
 .aui-composer-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.35rem;
@@ -1276,6 +1277,9 @@
   flex-direction: column;
   gap: 0.25rem;
   max-width: 100%;
+  max-height: 5.5rem;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .aui-followups-list li {
@@ -2026,11 +2030,6 @@
     gap: 0.4rem;
   }
 
-  .aui-composer-portrait {
-    width: 5.5rem;
-    min-height: 5.5rem;
-  }
-
   /* Phone soak (~390×844): keep modes + toolbar usable beside portrait */
   .aui-deep-avatar.is-portrait,
   .aui-composer-portrait {
@@ -2064,6 +2063,11 @@
     gap: 0.25rem;
   }
 
+  .aui-composer-running-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
   .aui-send {
     padding: 0.45rem 0.7rem;
     font-size: 0.8rem;
@@ -2075,6 +2079,14 @@
 
   .aui-followups {
     padding: 0.35rem 0.4rem;
+  }
+
+  .aui-followups-list {
+    max-height: 4.25rem;
+  }
+
+  .aui-review-rail.is-sheet {
+    height: min(42dvh, 18rem);
   }
 }
 
@@ -2104,6 +2116,14 @@
 
   .aui-plugins {
     max-height: 6rem;
+  }
+
+  .aui-followups-list {
+    max-height: 3.5rem;
+  }
+
+  .aui-review-rail.is-sheet {
+    height: min(38dvh, 16rem);
   }
 
   .aui-scroll-bottom {

@@ -110,12 +110,39 @@ assert.match(
   /Stop does not clear the queue|sends after this reply|auto-send/i,
   'queue behavior documented in session type or flush',
 )
+assert.match(
+  runtime,
+  /Claim before await|followUpQueueRef\.current = rest/,
+  'follow-up flush claims head before send (no double-send)',
+)
+assert.match(
+  runtime,
+  /never mirror from render|Keep in sync only via queue helpers/,
+  'follow-up ref is not overwritten each render',
+)
+assert.match(
+  runtime,
+  /setFollowUpQueue\(\[\]\)[\s\S]*selectThread|Follow-ups are thread-local/,
+  'switching threads clears follow-up queue',
+)
+assert.match(
+  thread,
+  /ds-chat-dictate[\s\S]*return|Mic \/ dictate/,
+  'Shift+Tab skips mic/dictate',
+)
 
 const diffs = readFileSync(join(root, 'pages/chat/aui/ChatDiffsPanel.tsx'), 'utf8')
 assert.match(diffs, /DiffPreview|aui-diff-line|snapshotAsPatchPreview/, 'diffs show real patch preview')
+assert.match(
+  diffs,
+  /\{line \|\| ' '\}|\{show\.map/,
+  'diff preview uses React text children (escaped)',
+)
 
 const runs = readFileSync(join(root, 'pages/chat/aui/ChatRunsPanel.tsx'), 'utf8')
 assert.match(runs, /aui-run-toggle|No stdout/, 'runs expand with output substance')
+assert.match(runs, /\{run\.stdout\}|\{run\.stderr\}/, 'runs stdout/stderr are React text (escaped)')
+assert.doesNotMatch(diffs + runs, /dangerouslySetInnerHTML/, 'no raw HTML injection in Diffs/Runs')
 
 const auiCss = readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8')
 assert.match(auiCss, /\.aui-tool-card\b/, 'tool card styles')

@@ -462,16 +462,23 @@ function ComposerChrome({ error }: { error?: string | null }) {
     if (prefill) aui.composer.setText(prefill)
   }, [aui.composer])
 
-  // Shift+Tab cycles Agent → Ask → Plan while focus is inside the composer
-  // (does not steal focus; skips when mic/dictate owns a non-composer target).
+  // Shift+Tab cycles Agent → Ask → Plan from the draft/modes only.
+  // Keep focus where it is (preventDefault); never intercept mic/dictate or dialogs.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Tab' || !e.shiftKey) return
       if (e.altKey || e.metaKey || e.ctrlKey) return
       const t = e.target as HTMLElement | null
-      if (!t?.closest?.('.aui-composer')) return
-      // Don't cycle while the user is in a nested dialog (API keys).
+      if (!t) return
       if (t.closest?.('.ds-plugin-keys, [role="dialog"]')) return
+      // Mic / dictate owns its own keys — do not cycle modes or swallow Tab.
+      if (t.closest?.('.ds-chat-dictate, .aui-composer-running-actions')) return
+      const inDraft =
+        t.classList?.contains('aui-composer-input') ||
+        t.closest?.('.aui-composer-input') ||
+        (t.tagName === 'TEXTAREA' && Boolean(t.closest?.('.aui-composer')))
+      const inModes = Boolean(t.closest?.('.aui-composer-modes'))
+      if (!inDraft && !inModes) return
       e.preventDefault()
       e.stopPropagation()
       setComposerMode(cycleChatComposerMode(composerMode))

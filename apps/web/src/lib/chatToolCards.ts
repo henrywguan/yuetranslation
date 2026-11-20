@@ -29,9 +29,12 @@ export type ChatToolCard = {
   live?: boolean
 }
 
-const MAX_BODY = 4_000
+/** Cap expandable body text so many tool cards cannot balloon the DOM. */
+export const CHAT_TOOL_CARD_BODY_MAX = 2_000
+/** Max chips rendered under one assistant bubble. */
+export const CHAT_TOOL_CARDS_MAX = 24
 
-function clip(text: string | undefined, max = MAX_BODY): string | undefined {
+function clip(text: string | undefined, max = CHAT_TOOL_CARD_BODY_MAX): string | undefined {
   if (typeof text !== 'string') return undefined
   const t = text.trim()
   if (!t) return undefined
@@ -179,7 +182,7 @@ export function buildToolCards(opts: {
     const card = toolCardFromSandboxActivity(acts[i]!, steps.length + i, { live })
     if (card) cards.push(card)
   }
-  return cards.slice(-32)
+  return cards.slice(-CHAT_TOOL_CARDS_MAX)
 }
 
 /** Fold sandbox SSE into ChatSearchStep so tool cards persist on the message. */

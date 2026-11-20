@@ -306,6 +306,16 @@ assert.match(
   /@media \(max-height: 700px\)[\s\S]*\.aui-composer-input[\s\S]*max-height:\s*4\.5rem/,
   'short desktop soak caps composer input height',
 )
+assert.match(
+  auiCss,
+  /\.aui-followups-list[\s\S]*max-height:\s*5\.5rem[\s\S]*overflow:\s*auto/,
+  'follow-up queue list scrolls instead of crushing the WC3 bar',
+)
+assert.match(
+  auiCss,
+  /@media \(max-width: 599px\)[\s\S]*\.aui-review-rail\.is-sheet[\s\S]*42dvh/,
+  'phone soak shortens Diffs/Runs sheet',
+)
 assert.match(auiCss, /\.aui-deep-avatar\.is-portrait\b/, 'portrait size class')
 assert.match(auiCss, /\.aui-send\b/, 'DeepSeek send styles restored')
 assert.match(auiCss, /\.aui-empty\b/, 'DeepSeek empty-state styles')

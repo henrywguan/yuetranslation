@@ -227,8 +227,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [reviewOpen, setReviewOpenState] = useState(false)
   const [gitDiffBusy, setGitDiffBusy] = useState(false)
   const [followUpQueue, setFollowUpQueue] = useState<Array<{ id: string; text: string }>>([])
-  const followUpQueueRef = useRef(followUpQueue)
-  followUpQueueRef.current = followUpQueue
+  /** Keep in sync only via queue helpers — never mirror from render (avoids reclaim races). */
+  const followUpQueueRef = useRef<Array<{ id: string; text: string }>>([])
   const flushingFollowUpsRef = useRef(false)
   const [harnessOn, setHarnessOnState] = useState(() => readHarnessFlag(false))
   const [workspaceOpen, setWorkspaceOpenState] = useState(() => readHarnessFlag(false))
@@ -574,6 +574,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
   const startNewChat = useCallback(() => {
     stopGeneration()
+    setFollowUpQueue([])
+    followUpQueueRef.current = []
     const created = emptyThread()
     setThreads((prev) => upsertChatThread(created, prev.filter((t) => t.id !== BOOT_THREAD.id)))
     setActiveId(created.id)
@@ -585,6 +587,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     (id: string) => {
       if (id === activeIdRef.current) return
       stopGeneration()
+      // Follow-ups are thread-local intent — never auto-send into a different chat.
+      setFollowUpQueue([])
+      followUpQueueRef.current = []
       setActiveId(id)
       setError(null)
     },
@@ -998,34 +1003,46 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       typeof crypto !== 'undefined' && 'randomUUID' in crypto
         ? `fu_${crypto.randomUUID()}`
         : `fu_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
-    setFollowUpQueue((prev) => [...prev, { id, text: content }].slice(-8))
+    setFollowUpQueue((prev) => {
+      const next = [...prev, { id, text: content }].slice(-8)
+      followUpQueueRef.current = next
+      return next
+    })
   }, [])
 
   const dismissFollowUp = useCallback((id: string) => {
-    setFollowUpQueue((prev) => prev.filter((x) => x.id !== id))
+    setFollowUpQueue((prev) => {
+      const next = prev.filter((x) => x.id !== id)
+      followUpQueueRef.current = next
+      return next
+    })
   }, [])
 
   const clearFollowUpQueue = useCallback(() => {
+    followUpQueueRef.current = []
     setFollowUpQueue([])
   }, [])
 
   const enqueuePrompt = useCallback(
-    async (text: string, threadId?: string) => {
-      if (!unlocked || busyRef.current) return
+    async (text: string, threadId?: string): Promise<boolean> => {
+      if (!unlocked || busyRef.current) return false
       const content = text.trim().slice(0, MAX_CONTENT_CHARS)
-      if (!content) return
+      if (!content) return false
       const tid = threadId || activeIdRef.current
       if (tid !== activeIdRef.current) {
         setActiveId(tid)
         activeIdRef.current = tid
       }
       setError(null)
+      // Set busy synchronously so a concurrent follow-up flush cannot claim another send.
+      busyRef.current = true
       setBusy(true)
       let cur = threadsRef.current.find((t) => t.id === tid) || emptyThread()
       if (harnessOnRef.current) cur = ensureThreadWorkspace(cur)
       const userStep = appendChatMessage(cur, 'user', content)
       persist(userStep.thread)
       await runAssistant(userStep.thread)
+      return true
     },
     [persist, runAssistant, unlocked],
   )
@@ -1155,6 +1172,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         }
         return []
       })
+      busyRef.current = true
       setBusy(true)
       let cur =
         threadsRef.current.find((t) => t.id === activeIdRef.current) || emptyThread()
@@ -1175,7 +1193,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     [persist, queueFollowUp, runAssistant, unlocked],
   )
 
-  // Auto-send queued follow-ups after the current turn (after Overseer project msgs).
+  // Auto-send one queued follow-up after the current turn (after Overseer project msgs).
+  // One-at-a-time: claim head → send → re-queue only if send could not start.
   useEffect(() => {
     if (!unlocked || busy || flushingFollowUpsRef.current) return
     if (flushingProjectMsgsRef.current || pendingProjectMsgsRef.current.length) return
@@ -1183,13 +1202,20 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     flushingFollowUpsRef.current = true
     void (async () => {
       try {
-        while (followUpQueueRef.current.length) {
-          if (busyRef.current) break
-          const next = followUpQueueRef.current[0]
-          if (!next) break
-          setFollowUpQueue((prev) => prev.slice(1))
-          followUpQueueRef.current = followUpQueueRef.current.slice(1)
-          await enqueuePrompt(next.text)
+        if (busyRef.current) return
+        const head = followUpQueueRef.current[0]
+        if (!head) return
+        // Claim before await so a second effect pass cannot double-send the same id.
+        const rest = followUpQueueRef.current.slice(1)
+        followUpQueueRef.current = rest
+        setFollowUpQueue(rest)
+        const sent = await enqueuePrompt(head.text)
+        if (!sent) {
+          setFollowUpQueue((prev) => {
+            const next = [head, ...prev.filter((x) => x.id !== head.id)].slice(0, 8)
+            followUpQueueRef.current = next
+            return next
+          })
         }
       } finally {
         flushingFollowUpsRef.current = false
