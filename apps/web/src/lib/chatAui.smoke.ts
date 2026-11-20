@@ -280,6 +280,12 @@ assert.match(auiCss, /max-width:\s*none/, 'composer is full-bleed (no 46rem card
 assert.match(auiCss, /border-radius:\s*0/, 'composer drops floating card radius')
 assert.match(auiCss, /\.aui-composer-portrait\b/, 'WC3-style portrait slot in composer')
 assert.match(auiCss, /\.aui-composer-main\b/, 'composer main column beside portrait')
+assert.match(auiCss, /\.aui-composer-body\b/, 'portrait + draft share a body row under modes')
+assert.match(
+  auiCss,
+  /\.aui-composer\b[\s\S]*flex-direction:\s*column/,
+  'composer stacks modes above portrait|draft',
+)
 assert.match(
   auiCss,
   /\.aui-composer-modes[\s\S]*flex-wrap:\s*nowrap[\s\S]*overflow-x:\s*auto/,
@@ -290,6 +296,19 @@ assert.match(auiCss, /\.aui-send\b/, 'DeepSeek send styles restored')
 assert.match(auiCss, /\.aui-empty\b/, 'DeepSeek empty-state styles')
 assert.match(thread, /size="portrait"/, 'composer mounts portrait avatar')
 assert.match(thread, /aui-composer-portrait/, 'portrait lives inside composer')
+assert.match(
+  thread,
+  /aui-composer-modes[\s\S]*aui-composer-body[\s\S]*aui-composer-portrait/,
+  'modes bar spans above portrait + draft body',
+)
+assert.match(thread, /function AuiCopyButton|AuiCopyButton/, 'icon-only Copy control')
+assert.match(thread, /aria-label=\{isCopied \? 'Copied' : 'Copy'\}/, 'Copy aria-label Copy/Copied')
+assert.match(thread, /CopyIcon|CopiedCheckIcon/, 'Copy uses overlapping-pages / check icons')
+assert.doesNotMatch(
+  thread,
+  /ActionBarPrimitive\.Copy[^>]*>Copy</,
+  'Copy is not a literal text label in the action bar',
+)
 assert.doesNotMatch(thread, /ChatDeepAvatarBubble|ChatDeepAvatarStage/, 'floating dock stage removed')
 assert.doesNotMatch(thread, /ChatDeepAvatarCharacterPicker|size="hero"/, 'empty-state hero + picker removed')
 assert.match(thread, /useChatDeepAvatarLipLevel/, 'TTS lip level wired into portrait')
