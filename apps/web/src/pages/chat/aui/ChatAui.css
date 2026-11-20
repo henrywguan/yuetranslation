@@ -1197,6 +1197,14 @@
   margin-left: auto;
 }
 
+.aui-composer-running-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
 .aui-send {
   appearance: none;
   border: 0;
@@ -1219,6 +1227,85 @@
 .aui-send.is-stop {
   background: var(--ds-surface-2);
   color: var(--ds-text);
+}
+
+.aui-send.is-queue {
+  background: color-mix(in srgb, var(--ds-blue) 78%, #0b1f3a);
+}
+
+.aui-followups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--ds-blue-soft-border) 50%, var(--ds-divider));
+  background: color-mix(in srgb, var(--ds-blue-soft) 16%, var(--ds-canvas));
+  max-width: 100%;
+  min-width: 0;
+}
+
+.aui-followups-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  color: var(--ds-text-2);
+}
+
+.aui-followups-clear,
+.aui-followups-dismiss {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-3);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  padding: 0.1rem 0.25rem;
+}
+
+.aui-followups-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 100%;
+}
+
+.aui-followups-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--ds-text-2);
+}
+
+.aui-followups-idx {
+  flex-shrink: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
+}
+
+.aui-followups-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .aui-error {
@@ -1302,8 +1389,121 @@
   overflow: auto;
 }
 
+/* Inline tool-call cards (Cursor-like chips, DeepSeek tokens) */
+.aui-tool-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0 0 0.65rem;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.aui-tool-card {
+  margin: 0;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--ds-blue-soft-border) 55%, var(--ds-divider));
+  background: color-mix(in srgb, var(--ds-blue-soft) 22%, var(--ds-surface-1));
+  font-size: 0.75rem;
+  overflow: hidden;
+  max-width: 100%;
+  animation: aui-rise 0.22s ease both;
+}
+
+.aui-tool-card.is-live {
+  border-color: color-mix(in srgb, var(--ds-blue) 42%, var(--ds-divider));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ds-blue) 18%, transparent);
+}
+
+.aui-tool-card summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.45rem;
+  cursor: pointer;
+  padding: 0.4rem 0.55rem;
+  font-weight: 600;
+  color: var(--ds-text-2);
+  list-style: none;
+  min-width: 0;
+}
+
+.aui-tool-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.aui-tool-card-kind {
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.62rem;
+  font-weight: 750;
+  padding: 0.12rem 0.35rem;
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--ds-blue) 14%, var(--ds-canvas));
+  color: var(--ds-blue);
+}
+
+.aui-tool-card-kind[data-kind='write'],
+.aui-tool-card-kind[data-kind='exec'] {
+  color: #0f766e;
+  background: color-mix(in srgb, #0f766e 12%, var(--ds-canvas));
+}
+
+.aui-tool-card-kind[data-kind='pr'] {
+  color: #b45309;
+  background: color-mix(in srgb, #b45309 12%, var(--ds-canvas));
+}
+
+.aui-tool-card-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  color: var(--ds-text);
+}
+
+.aui-tool-card-detail {
+  min-width: 0;
+  color: var(--ds-text-3);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.aui-tool-card-live {
+  color: var(--ds-blue);
+  animation: aui-tool-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes aui-tool-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.aui-tool-card-body {
+  margin: 0;
+  padding: 0.45rem 0.55rem 0.55rem;
+  border-top: 1px solid var(--ds-divider);
+  background: color-mix(in srgb, var(--ds-canvas) 70%, transparent);
+  color: var(--ds-text-3);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  max-height: 9rem;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .aui-harness-trace {
-  margin: 0 0 0.55rem;
+  margin: 0.15rem 0 0;
   padding: 0.45rem 0.55rem;
   border-radius: 0.65rem;
   background: var(--ds-surface-1);
@@ -1620,6 +1820,64 @@
   font-family: var(--ds-mono);
 }
 
+.aui-diffs-missing {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+}
+
+.aui-diff-line {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.aui-diff-line.is-add {
+  background: color-mix(in srgb, #16a34a 12%, transparent);
+  color: color-mix(in srgb, #166534 70%, var(--ds-text));
+}
+
+.aui-diff-line.is-del {
+  background: color-mix(in srgb, #dc2626 12%, transparent);
+  color: color-mix(in srgb, #991b1b 70%, var(--ds-text));
+}
+
+.aui-diff-line.is-hunk {
+  color: var(--ds-blue);
+  font-weight: 650;
+}
+
+.aui-diff-line.is-meta {
+  color: var(--ds-text-3);
+}
+
+.aui-run-toggle {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  padding: 0;
+  min-width: 0;
+}
+
+.aui-run-body {
+  margin-top: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.aui-run-empty-out {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--ds-text-3);
+}
+
 .aui-diffs-preview,
 .aui-run-out,
 .aui-run-err {
@@ -1712,7 +1970,9 @@
   .aui-run,
   .aui-review-tab-count,
   .aui-review-count,
-  .aui-deep-avatar-pulse {
+  .aui-deep-avatar-pulse,
+  .aui-tool-card,
+  .aui-tool-card-live {
     animation: none;
   }
 
@@ -1770,4 +2030,84 @@
     width: 5.5rem;
     min-height: 5.5rem;
   }
+
+  /* Phone soak (~390×844): keep modes + toolbar usable beside portrait */
+  .aui-deep-avatar.is-portrait,
+  .aui-composer-portrait {
+    width: 4.5rem;
+    height: 4.5rem;
+    min-height: 4.5rem;
+  }
+
+  .aui-mode {
+    padding: 0.22rem 0.48rem;
+    font-size: 0.72rem;
+    gap: 0.25rem;
+  }
+
+  .aui-mode-build,
+  .aui-tools-toggle {
+    padding: 0.22rem 0.48rem;
+    font-size: 0.72rem;
+  }
+
+  .aui-status {
+    font-size: 0.68rem;
+  }
+
+  .aui-composer-input {
+    max-height: 5.75rem;
+    padding: 0.35rem 0.1rem;
+  }
+
+  .aui-composer-toolbar {
+    gap: 0.25rem;
+  }
+
+  .aui-send {
+    padding: 0.45rem 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  .aui-tool-card-body {
+    max-height: 7rem;
+  }
+
+  .aui-followups {
+    padding: 0.35rem 0.4rem;
+  }
 }
+
+/* Short desktop / landscape (~900×640): compress dialogue bar, don't crush modes */
+@media (max-height: 700px) {
+  .aui-deep-avatar.is-portrait,
+  .aui-composer-portrait {
+    width: 4rem;
+    height: 4rem;
+    min-height: 4rem;
+  }
+
+  .aui-composer {
+    padding: 0.4rem 0.55rem 0.45rem;
+    gap: 0.25rem;
+  }
+
+  .aui-composer-input {
+    max-height: 4.5rem;
+    padding: 0.3rem 0.1rem;
+  }
+
+  .aui-composer-toggles {
+    max-height: 2.75rem;
+    overflow: auto;
+  }
+
+  .aui-plugins {
+    max-height: 6rem;
+  }
+
+  .aui-scroll-bottom {
+    bottom: max(7.5rem, calc(env(safe-area-inset-bottom, 0px) + 6.5rem));
+  }
+}
+

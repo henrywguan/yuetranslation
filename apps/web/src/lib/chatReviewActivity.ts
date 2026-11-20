@@ -127,7 +127,40 @@ export function applyWorkspaceFilesToDiffs(
   return next
 }
 
-/** Parse `git diff` / `git status` stdout into synthetic diff entries (path-only when no patch). */
+/**
+ * Split a unified `git diff` into per-path patch text.
+ * Falls back to empty map when stdout is not a unified diff (e.g. status --short).
+ */
+export function splitUnifiedDiffByPath(stdout: string): Map<string, string> {
+  const text = String(stdout || '')
+  const out = new Map<string, string>()
+  if (!text.trim()) return out
+  const lines = text.split('\n')
+  let curPath: string | null = null
+  let buf: string[] = []
+  const flush = () => {
+    if (curPath && buf.length) {
+      out.set(curPath, buf.join('\n'))
+    }
+    curPath = null
+    buf = []
+  }
+  for (const line of lines) {
+    const gitHeader = /^diff --git a\/(.+?) b\/(.+)$/.exec(line)
+    if (gitHeader) {
+      flush()
+      const path = (gitHeader[2] || gitHeader[1] || '').trim()
+      curPath = path && path !== '/dev/null' ? path : null
+      if (curPath) buf = [line]
+      continue
+    }
+    if (curPath) buf.push(line)
+  }
+  flush()
+  return out
+}
+
+/** Parse `git diff` / `git status` stdout into synthetic diff entries (per-file patch when possible). */
 export function diffsFromGitOutput(
   stdout: string,
   opts?: { at?: number },
@@ -135,11 +168,22 @@ export function diffsFromGitOutput(
   const at = opts?.at ?? Date.now()
   const text = String(stdout || '')
   if (!text.trim()) return []
-  // Unified diff: extract --- a/path blocks; else treat as status list.
+
+  const byPath = splitUnifiedDiffByPath(text)
+  if (byPath.size) {
+    return [...byPath.entries()].slice(0, CHAT_REVIEW_MAX_DIFFS).map(([path, patch]) => ({
+      id: uid('diff'),
+      path,
+      text: truncateReviewText(patch),
+      source: 'git' as const,
+      at,
+    }))
+  }
+
+  // Status-style / non-unified output: path list, attach full stdout only to a single entry.
   const paths = new Set<string>()
   for (const line of text.split('\n')) {
     const m =
-      /^diff --git a\/(.+?) b\//.exec(line) ||
       /^\+\+\+ b\/(.+)$/.exec(line) ||
       /^--- a\/(.+)$/.exec(line) ||
       /^[ AM?\t]+(.+)$/.exec(line)
@@ -156,13 +200,26 @@ export function diffsFromGitOutput(
       },
     ]
   }
-  return [...paths].slice(0, CHAT_REVIEW_MAX_DIFFS).map((path) => ({
+  const pathsArr = [...paths].slice(0, CHAT_REVIEW_MAX_DIFFS)
+  return pathsArr.map((path, i) => ({
     id: uid('diff'),
     path,
-    text: truncateReviewText(text),
+    // Attach full status dump once — avoid duplicating the same blob on every path.
+    text: i === 0 ? truncateReviewText(text) : undefined,
     source: 'git' as const,
     at,
   }))
+}
+
+/** Render a sandbox/workspace file snapshot as a simple +lined preview when no unified diff. */
+export function snapshotAsPatchPreview(path: string, text: string | undefined): string {
+  const body = String(text || '')
+  if (!body) return `--- a/${path}\n+++ b/${path}\n@@ (empty write) @@\n`
+  const lines = body.split('\n')
+  const capped = lines.length > 400 ? lines.slice(0, 400) : lines
+  const numbered = capped.map((l) => `+${l}`).join('\n')
+  const more = lines.length > 400 ? `\n… (${lines.length - 400} more lines)` : ''
+  return `--- /dev/null\n+++ b/${path}\n@@\n${numbered}${more}`
 }
 
 export function mergeGitDiffs(

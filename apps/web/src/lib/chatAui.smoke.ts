@@ -227,6 +227,9 @@ assert.match(thread, /SpeakButton/, 'keeps SpeakButton')
 assert.match(thread, /DeepThink/, 'DeepThink toggle chrome')
 assert.match(thread, /CHAT_COMPOSER_MODES|aui-composer-modes/, 'Agent/Ask/Plan mode picker')
 assert.match(thread, /AgentModeIcon|AskModeIcon|PlanModeIcon/, 'mode icons')
+assert.match(thread, /cycleChatComposerMode|Shift\+Tab/, 'Shift+Tab cycles Agent/Ask/Plan')
+assert.match(thread, /ToolActivityCards|aui-tool-cards/, 'inline tool-call cards in replies')
+assert.match(thread, /followUpQueue|aui-followups/, 'follow-up queue while running')
 assert.match(thread, /aui-tools-toggle|toolsExpanded/, 'collapsible Tools')
 assert.match(thread, /aui-composer-toolbar/, 'composer toolbar under full-width input')
 assert.doesNotMatch(thread, /title="Insert @ context/, 'no dedicated @ button')
@@ -290,6 +293,18 @@ assert.match(
   auiCss,
   /\.aui-composer-modes[\s\S]*flex-wrap:\s*nowrap[\s\S]*overflow-x:\s*auto/,
   'modes + Tools share one horizontally scrollable row',
+)
+assert.match(auiCss, /\.aui-tool-card\b/, 'tool card DeepSeek chrome')
+assert.match(auiCss, /\.aui-followups\b/, 'follow-up queue chrome')
+assert.match(
+  auiCss,
+  /@media \(max-width: 599px\)[\s\S]*\.aui-composer-portrait[\s\S]*4\.5rem/,
+  'phone soak shrinks WC3 portrait',
+)
+assert.match(
+  auiCss,
+  /@media \(max-height: 700px\)[\s\S]*\.aui-composer-input[\s\S]*max-height:\s*4\.5rem/,
+  'short desktop soak caps composer input height',
 )
 assert.match(auiCss, /\.aui-deep-avatar\.is-portrait\b/, 'portrait size class')
 assert.match(auiCss, /\.aui-send\b/, 'DeepSeek send styles restored')

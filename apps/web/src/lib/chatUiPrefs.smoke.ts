@@ -13,6 +13,7 @@ import {
   CHAT_SEARCH_KEY,
   CHAT_THINK_KEY,
   clampChatInboxSidebarWidth,
+  cycleChatComposerMode,
   readChatComposerMode,
   readChatFlag,
   readChatInboxSidebarWidth,
@@ -53,6 +54,9 @@ writeChatComposerMode('ask')
 assert.equal(readChatComposerMode(), 'ask')
 writeChatComposerMode('agent')
 assert.equal(readChatComposerMode('plan'), 'agent')
+assert.equal(cycleChatComposerMode('agent'), 'ask')
+assert.equal(cycleChatComposerMode('ask'), 'plan')
+assert.equal(cycleChatComposerMode('plan'), 'agent')
 
 assert.equal(clampChatInboxSidebarWidth(100), CHAT_INBOX_SIDEBAR_WIDTH_MIN)
 assert.equal(clampChatInboxSidebarWidth(9999), CHAT_INBOX_SIDEBAR_WIDTH_MAX)

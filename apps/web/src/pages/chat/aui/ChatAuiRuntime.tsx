@@ -31,6 +31,7 @@ import {
   mergeGitDiffs,
   type ChatReviewActivity,
 } from '../../../lib/chatReviewActivity'
+import { searchStepFromSandboxActivity } from '../../../lib/chatToolCards'
 import {
   apiMessagesFromThread,
   appendChatMessage,
@@ -171,6 +172,16 @@ export type ChatAuiSession = {
   stopGeneration: () => void
   /** Enqueue a user prompt as a chat turn (scheduled jobs / Workspace). */
   enqueuePrompt: (text: string, threadId?: string) => Promise<void>
+  /**
+   * Follow-ups typed while a turn is running.
+   * Behavior: Send/Enter while busy queues the draft; after the current turn
+   * finishes (or Stop settles), the next item auto-sends. Stop does not clear
+   * the queue — dismiss chips individually or Clear all.
+   */
+  followUpQueue: Array<{ id: string; text: string }>
+  queueFollowUp: (text: string) => void
+  dismissFollowUp: (id: string) => void
+  clearFollowUpQueue: () => void
   /** Diffs + Runs activity from sandbox/workspace tools. */
   reviewActivity: ChatReviewActivity
   reviewOpen: boolean
@@ -215,6 +226,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [reviewActivity, setReviewActivity] = useState<ChatReviewActivity>(() => emptyReviewActivity())
   const [reviewOpen, setReviewOpenState] = useState(false)
   const [gitDiffBusy, setGitDiffBusy] = useState(false)
+  const [followUpQueue, setFollowUpQueue] = useState<Array<{ id: string; text: string }>>([])
+  const followUpQueueRef = useRef(followUpQueue)
+  followUpQueueRef.current = followUpQueue
+  const flushingFollowUpsRef = useRef(false)
   const [harnessOn, setHarnessOnState] = useState(() => readHarnessFlag(false))
   const [workspaceOpen, setWorkspaceOpenState] = useState(() => readHarnessFlag(false))
   /** Opening Diffs/Runs dismisses Harness sheet so Δ is never trapped under is-sheet. */
@@ -761,6 +776,17 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             if (reviewUrl && linkedAgent && inboxRef.current) {
               inboxRef.current.markInReview(linkedAgent.id, reviewUrl)
             }
+            // Mirror into searchSteps so inline tool cards stream in the reply.
+            const step = searchStepFromSandboxActivity(activity)
+            if (step) {
+              searchSteps = [...searchSteps, step].slice(-24)
+              thread = patchAssistantContent(thread, assistantId, assembled, {
+                reasoning: reasoning || undefined,
+                sources,
+                searchSteps,
+              })
+              schedulePaint()
+            }
           },
           onProject: (actions) => {
             projectActionsThisTurn += actions.length
@@ -965,6 +991,24 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     [streamingId],
   )
 
+  const queueFollowUp = useCallback((text: string) => {
+    const content = text.trim().slice(0, MAX_CONTENT_CHARS)
+    if (!content) return
+    const id =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? `fu_${crypto.randomUUID()}`
+        : `fu_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
+    setFollowUpQueue((prev) => [...prev, { id, text: content }].slice(-8))
+  }, [])
+
+  const dismissFollowUp = useCallback((id: string) => {
+    setFollowUpQueue((prev) => prev.filter((x) => x.id !== id))
+  }, [])
+
+  const clearFollowUpQueue = useCallback(() => {
+    setFollowUpQueue([])
+  }, [])
+
   const enqueuePrompt = useCallback(
     async (text: string, threadId?: string) => {
       if (!unlocked || busyRef.current) return
@@ -1079,13 +1123,23 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
   const onNew = useCallback(
     async (message: AppendMessage) => {
-      if (!unlocked || busy) return
+      if (!unlocked) return
       const textPart = message.content.find((p) => p.type === 'text')
       const content = (textPart && textPart.type === 'text' ? textPart.text : '').trim()
       const pending = pendingFilesRef.current
       if (!content && !pending.length) return
       if (content.length > MAX_CONTENT_CHARS) {
         setError(`Message is too long (max ${MAX_CONTENT_CHARS.toLocaleString()} characters).`)
+        return
+      }
+      // While a turn is running: queue text follow-ups (attachments wait until idle).
+      if (busyRef.current) {
+        if (pending.length) {
+          setError('Wait for the current reply to finish before attaching files.')
+          return
+        }
+        if (!content) return
+        queueFollowUp(content)
         return
       }
       const fileIds = pending.map((f) => f.fileId)
@@ -1118,8 +1172,30 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       persist(thread)
       await runAssistant(thread, fileIds.length ? fileIds : undefined)
     },
-    [busy, persist, runAssistant, unlocked],
+    [persist, queueFollowUp, runAssistant, unlocked],
   )
+
+  // Auto-send queued follow-ups after the current turn (after Overseer project msgs).
+  useEffect(() => {
+    if (!unlocked || busy || flushingFollowUpsRef.current) return
+    if (flushingProjectMsgsRef.current || pendingProjectMsgsRef.current.length) return
+    if (!followUpQueue.length) return
+    flushingFollowUpsRef.current = true
+    void (async () => {
+      try {
+        while (followUpQueueRef.current.length) {
+          if (busyRef.current) break
+          const next = followUpQueueRef.current[0]
+          if (!next) break
+          setFollowUpQueue((prev) => prev.slice(1))
+          followUpQueueRef.current = followUpQueueRef.current.slice(1)
+          await enqueuePrompt(next.text)
+        }
+      } finally {
+        flushingFollowUpsRef.current = false
+      }
+    })()
+  }, [busy, enqueuePrompt, followUpQueue, unlocked])
 
   // In-tab scheduled prompts (Harness Phase 3) — only while tab open + Harness on.
   useEffect(() => {
@@ -1264,6 +1340,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       archiveThread,
       stopGeneration,
       enqueuePrompt,
+      followUpQueue,
+      queueFollowUp,
+      dismissFollowUp,
+      clearFollowUpQueue,
       reviewActivity,
       reviewOpen,
       setReviewOpen,
@@ -1277,11 +1357,14 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       archiveThread,
       buildFromPlan,
       busy,
+      clearFollowUpQueue,
       composerMode,
       deepThink,
+      dismissFollowUp,
       enabledPlugins,
       enqueuePrompt,
       error,
+      followUpQueue,
       gitDiffBusy,
       harnessOn,
       historyReady,
@@ -1291,6 +1374,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       pickOcr,
       pluginCatalog,
       pluginKeyHints,
+      queueFollowUp,
       refreshGitDiff,
       refreshPlugins,
       removePendingFile,

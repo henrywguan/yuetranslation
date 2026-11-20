@@ -1,5 +1,30 @@
 import { useMemo, useState } from 'react'
 import type { ChatDiffEntry, ChatReviewActivity } from '../../../lib/chatReviewActivity'
+import { snapshotAsPatchPreview } from '../../../lib/chatReviewActivity'
+
+function DiffPreview({ text, path }: { text: string; path: string }) {
+  const lines = text.split('\n')
+  const show = lines.length > 500 ? lines.slice(0, 500) : lines
+  const truncated = lines.length > 500
+  return (
+    <pre className="aui-diffs-preview" tabIndex={0} aria-label={`Diff for ${path}`}>
+      {show.map((line, i) => {
+        let cls = 'aui-diff-line'
+        if (line.startsWith('+') && !line.startsWith('+++')) cls += ' is-add'
+        else if (line.startsWith('-') && !line.startsWith('---')) cls += ' is-del'
+        else if (line.startsWith('@@')) cls += ' is-hunk'
+        else if (line.startsWith('diff ') || line.startsWith('index ')) cls += ' is-meta'
+        return (
+          <span key={i} className={cls}>
+            {line || ' '}
+            {'\n'}
+          </span>
+        )
+      })}
+      {truncated ? <span className="aui-diff-line is-meta">… ({lines.length - 500} more lines)</span> : null}
+    </pre>
+  )
+}
 
 export function ChatDiffsPanel({
   activity,
@@ -25,6 +50,19 @@ export function ChatDiffsPanel({
   }, [diffs, selectedPath])
 
   const effectiveReview = reviewUrl || activity.reviewUrl
+
+  const previewText = useMemo(() => {
+    if (!selected) return ''
+    const raw = selected.text?.trim() || ''
+    const looksUnified = /^diff --git /m.test(raw) || /^\+\+\+ /m.test(raw)
+    if (selected.source === 'sandbox' || selected.source === 'workspace') {
+      // Sandbox/workspace SSE stores file snapshots — render as +lined preview
+      // unless we already have a real unified diff (e.g. after git refresh).
+      if (looksUnified) return raw
+      return snapshotAsPatchPreview(selected.path, selected.text)
+    }
+    return raw
+  }, [selected])
 
   return (
     <section className="aui-review-panel aui-diffs-panel" aria-label="Diffs">
@@ -66,7 +104,8 @@ export function ChatDiffsPanel({
 
       {!diffs.length ? (
         <p className="aui-review-empty">
-          Sandbox and workspace writes appear here. Open a PR from chat when GitHub is linked.
+          Sandbox and workspace writes appear here with patch text when available. Use{' '}
+          <strong>git diff</strong> on a linked Internal sandbox, or open a PR when GitHub is bound.
         </p>
       ) : (
         <div className="aui-diffs-body">
@@ -75,7 +114,7 @@ export function ChatDiffsPanel({
               <li key={d.id}>
                 <button
                   type="button"
-                  className={`aui-diffs-file${selected?.path === d.path ? ' is-on' : ''}`}
+                  className={`aui-diffs-file${selected?.path === d.path ? ' is-on' : ''}${d.text?.trim() ? ' has-text' : ''}`}
                   onClick={() => setSelectedPath(d.path)}
                 >
                   <span className="aui-diffs-source" data-source={d.source}>
@@ -87,11 +126,14 @@ export function ChatDiffsPanel({
             ))}
           </ul>
           {selected ? (
-            <pre className="aui-diffs-preview" tabIndex={0}>
-              {selected.text?.trim()
-                ? selected.text
-                : '/* written in sandbox — open git diff or re-run to see patch */'}
-            </pre>
+            previewText ? (
+              <DiffPreview text={previewText} path={selected.path} />
+            ) : (
+              <p className="aui-review-empty aui-diffs-missing">
+                No patch text for <code>{selected.path}</code> yet — re-run the write or refresh{' '}
+                <strong>git diff</strong>.
+              </p>
+            )
           ) : null}
         </div>
       )}
