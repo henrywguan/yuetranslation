@@ -4,6 +4,7 @@
  * Does not use Solo live translate / startHold.
  */
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
+import { setChatDeepAvatarListening } from '../lib/chatDeepAvatarSignals'
 import { mediaBlobToWav, transcribeDeepseekChatAudio } from '../lib/chatDeepseekVoice'
 import { chatDictateLang, mergeDictateText } from '../lib/chatVoice'
 import { isAppleTouchDevice } from '../lib/mediaAccess'
@@ -45,6 +46,11 @@ export function ChatDictateButton({ disabled, draft, onDraft, onError, onBargeIn
   const status = useYueStore((s) => s.status)
   const [listening, setListening] = useState(false)
   const [asrBusy, setAsrBusy] = useState(false)
+
+  useEffect(() => {
+    setChatDeepAvatarListening(listening || asrBusy)
+    return () => setChatDeepAvatarListening(false)
+  }, [listening, asrBusy])
   const sessionRef = useRef<LiveSession | null>(null)
   const mediaRef = useRef<{
     stream: MediaStream

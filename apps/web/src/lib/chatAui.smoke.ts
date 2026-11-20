@@ -277,19 +277,31 @@ assert.match(auiCss, /\.aui-send\b/, 'DeepSeek send styles restored')
 assert.match(auiCss, /\.aui-empty\b/, 'DeepSeek empty-state styles')
 assert.match(thread, /ChatDeepAvatar/, 'empty state uses companion avatar')
 assert.match(thread, /ChatDeepAvatarBubble|ChatDeepAvatarStage/, 'engaged thread shows compact avatar bubble')
+assert.match(thread, /useChatDeepAvatarLipLevel/, 'TTS lip level wired into avatar stage')
 assert.match(auiCss, /\.aui-deep-avatar\b/, 'companion avatar styles')
 assert.match(auiCss, /\.aui-deep-avatar-dock\b/, 'compact chat-head dock')
+assert.match(auiCss, /\.aui-deep-avatar-lips\b/, 'TTS lip overlay styles')
 const avatarSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatar.tsx'), 'utf8')
 assert.match(avatarSrc, /deep-idle\.gif/, 'idle GIF mood')
 assert.match(avatarSrc, /deep-happy\.gif/, 'happy GIF mood')
 assert.match(avatarSrc, /deep-think\.gif/, 'think GIF mood')
 assert.match(avatarSrc, /deep-speak\.gif/, 'speak GIF mood')
-assert.match(avatarSrc, /ChatDeepAvatarMood = 'idle' \| 'happy' \| 'think' \| 'speak'/, 'four mood states')
+assert.match(avatarSrc, /deep-listen\.gif/, 'listen GIF mood')
+assert.match(avatarSrc, /deep-concern\.gif/, 'concern GIF mood')
+assert.match(avatarSrc, /deep-celebrate\.gif/, 'celebrate GIF mood')
+assert.match(avatarSrc, /'listen'/, 'listen mood in type')
+assert.match(avatarSrc, /'concern'/, 'concern mood in type')
+assert.match(avatarSrc, /'celebrate'/, 'celebrate mood in type')
+assert.match(avatarSrc, /Priority \(high → low\)/, 'documents mood priority')
+assert.doesNotMatch(avatarSrc, /[Ll]ive2[Dd]|Cubism/, 'no Live2D / Cubism in avatar')
 for (const f of [
   'deep-idle.gif',
   'deep-happy.gif',
   'deep-think.gif',
   'deep-speak.gif',
+  'deep-listen.gif',
+  'deep-concern.gif',
+  'deep-celebrate.gif',
   'deep-bust.png',
 ]) {
   assert.ok(
@@ -297,6 +309,15 @@ for (const f of [
     `public/chat-avatar/${f} present`,
   )
 }
+const signalsSrc = readFileSync(join(here, 'chatDeepAvatarSignals.ts'), 'utf8')
+assert.match(signalsSrc, /setChatDeepAvatarListening/, 'dictate → listen bus')
+assert.match(signalsSrc, /setChatDeepAvatarTtsPlaying/, 'chat TTS → lips bus')
+assert.match(signalsSrc, /getChatDeepAvatarLipLevel/, 'synthetic lip envelope')
+const dictateSrc = readFileSync(join(root, 'components/ChatDictateButton.tsx'), 'utf8')
+assert.match(dictateSrc, /setChatDeepAvatarListening/, 'dictate publishes listen signal')
+const chatTtsSrc = readFileSync(join(here, 'chatDeepseekVoice.ts'), 'utf8')
+assert.match(chatTtsSrc, /setChatDeepAvatarTtsPlaying\(true\)/, 'chat TTS marks playing for lips')
+assert.match(chatTtsSrc, /setChatDeepAvatarTtsPlaying\(false\)/, 'chat TTS clears playing for lips')
 assert.doesNotMatch(thread, /WebSpeechSynthesisAdapter|speechSynthesis\.speak/, 'no browser TTS adapter')
 assert.doesNotMatch(
   thread,
