@@ -126,6 +126,26 @@ assert.match(
   'switching threads clears follow-up queue',
 )
 assert.match(
+  runtime,
+  /threadId[\s\S]*enqueuePrompt\(head\.text, head\.threadId\)|enqueuePrompt\(head\.text, head\.threadId\)/,
+  'flush sends to the queued item threadId (not whatever is active later)',
+)
+assert.match(
+  runtime,
+  /activeIdRef\.current !== head\.threadId/,
+  'flush drops in-flight item if user left the thread',
+)
+assert.match(
+  runtime,
+  /followUpQueue\.filter\(\(x\) => x\.threadId === activeId\)/,
+  'session exposes only active-thread follow-ups in UI',
+)
+assert.match(
+  thread,
+  /submitMode=\{busy \? 'none' : 'enter'\}|onKeyDown[\s\S]*queueFollowUp/,
+  'Enter while busy queues via composer keydown',
+)
+assert.match(
   thread,
   /ds-chat-dictate[\s\S]*return|Mic \/ dictate/,
   'Shift+Tab skips mic/dictate',

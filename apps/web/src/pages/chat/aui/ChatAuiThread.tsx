@@ -851,7 +851,7 @@ function ComposerChrome({ error }: { error?: string | null }) {
               className="aui-composer-input"
               placeholder={
                 busy
-                  ? 'Queue a follow-up…'
+                  ? 'Queue a follow-up (Enter)…'
                   : composerMode === 'ask'
                     ? 'Ask DeepSeek (read-only)…'
                     : composerMode === 'plan'
@@ -859,8 +859,20 @@ function ComposerChrome({ error }: { error?: string | null }) {
                       : 'Message DeepSeek…'
               }
               rows={1}
-              submitMode="enter"
+              // While running, assistant-ui blocks Submit — capture Enter here to queue.
+              submitMode={busy ? 'none' : 'enter'}
               unstable_insertNewlineOnTouchEnter
+              onKeyDown={(e) => {
+                if (!busy) return
+                if (e.key !== 'Enter' || e.shiftKey) return
+                if (e.nativeEvent.isComposing) return
+                e.preventDefault()
+                e.stopPropagation()
+                const text = draft.trim()
+                if (!text) return
+                queueFollowUp(text)
+                aui.composer.setText('')
+              }}
             />
             <div className="aui-composer-toolbar">
               <div className="aui-composer-toolbar-start">

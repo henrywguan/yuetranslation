@@ -230,6 +230,16 @@ assert.match(thread, /AgentModeIcon|AskModeIcon|PlanModeIcon/, 'mode icons')
 assert.match(thread, /cycleChatComposerMode|Shift\+Tab/, 'Shift+Tab cycles Agent/Ask/Plan')
 assert.match(thread, /ToolActivityCards|aui-tool-cards/, 'inline tool-call cards in replies')
 assert.match(thread, /followUpQueue|aui-followups/, 'follow-up queue while running')
+assert.match(
+  thread,
+  /submitMode=\{busy \? 'none' : 'enter'\}|Queue a follow-up \(Enter\)/,
+  'Enter-while-busy queues (not blocked by isRunning submit)',
+)
+assert.match(
+  runtime,
+  /enqueuePrompt\(head\.text, head\.threadId\)/,
+  'queued follow-ups flush to their stamped threadId',
+)
 assert.match(thread, /aui-tools-toggle|toolsExpanded/, 'collapsible Tools')
 assert.match(thread, /aui-composer-toolbar/, 'composer toolbar under full-width input')
 assert.doesNotMatch(thread, /title="Insert @ context/, 'no dedicated @ button')
