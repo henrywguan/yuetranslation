@@ -6,14 +6,13 @@
 /*
  * AUI typography (scoped — do not leak into Solo/Cam/landing):
  * - Body → Noto Sans (already Google-loaded; HK/Chao fallbacks for CJK + tones)
- * - Headers → Ailerons (Warframe display). Designer license is personal-use only;
- *   no binary is bundled until Henry supplies a commercial grant. Syne is the
- *   legal interim fallback so chrome still has a display face.
+ * - Headers → Orbitron (OFL / Google Fonts) — legal Ailerons lookalike until a
+ *   commercial Ailerons grant; do not ship Ailerons binaries.
  */
 .ds-chat.aui-chat {
   --ds-font: 'Noto Sans', 'Noto Sans HK', 'Noto Sans Chao', -apple-system, BlinkMacSystemFont,
     'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --ds-font-display: 'Ailerons', Syne, 'Noto Sans', system-ui, sans-serif;
+  --ds-font-display: Orbitron, 'Noto Sans', system-ui, sans-serif;
   font-family: var(--ds-font);
   flex-direction: row;
 }

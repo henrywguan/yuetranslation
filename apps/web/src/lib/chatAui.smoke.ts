@@ -113,7 +113,12 @@ assert.doesNotMatch(page, /useAuiStockDark/, 'no stock dark bridge')
 
 const auiCss = readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8')
 assert.match(auiCss, /\.ds-chat\.aui-chat/, 'AUI shell scoped under .aui-chat')
-assert.match(auiCss, /--ds-font-display:\s*'Ailerons'/, 'AUI headers target Ailerons display face')
+assert.match(auiCss, /--ds-font-display:\s*Orbitron/, 'AUI headers use Orbitron (OFL Ailerons lookalike)')
+assert.doesNotMatch(
+  auiCss,
+  /--ds-font-display:\s*[^;]*Ailerons/,
+  'AUI display stack does not name Ailerons',
+)
 assert.match(auiCss, /--ds-font:\s*'Noto Sans'/, 'AUI body uses Noto Sans')
 assert.match(auiCss, /Noto Sans Chao/, 'Chao / Jyutping face preserved under AUI')
 assert.doesNotMatch(
@@ -121,6 +126,10 @@ assert.doesNotMatch(
   /@font-face[\s\S]*Ailerons/,
   'Ailerons binary not bundled without commercial license',
 )
+
+const indexHtml = readFileSync(join(root, '../index.html'), 'utf8')
+assert.match(indexHtml, /family=Orbitron/, 'Orbitron loaded via Google Fonts')
+assert.doesNotMatch(indexHtml, /Ailerons/, 'index.html does not ship Ailerons')
 assert.match(
   auiCss,
   /\.ds-chat\.aui-chat \.ds-chat-menu-btn[\s\S]*display:\s*grid/,
