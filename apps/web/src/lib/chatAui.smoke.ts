@@ -282,32 +282,37 @@ assert.match(auiCss, /\.aui-deep-avatar\b/, 'companion avatar styles')
 assert.match(auiCss, /\.aui-deep-avatar-dock\b/, 'compact chat-head dock')
 assert.match(auiCss, /\.aui-deep-avatar-lips\b/, 'TTS lip overlay styles')
 const avatarSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatar.tsx'), 'utf8')
-assert.match(avatarSrc, /deep-idle\.gif/, 'idle GIF mood')
-assert.match(avatarSrc, /deep-happy\.gif/, 'happy GIF mood')
-assert.match(avatarSrc, /deep-think\.gif/, 'think GIF mood')
-assert.match(avatarSrc, /deep-speak\.gif/, 'speak GIF mood')
-assert.match(avatarSrc, /deep-listen\.gif/, 'listen GIF mood')
-assert.match(avatarSrc, /deep-concern\.gif/, 'concern GIF mood')
-assert.match(avatarSrc, /deep-celebrate\.gif/, 'celebrate GIF mood')
+assert.match(avatarSrc, /ChatDeepAvatarCharacterPicker/, 'character switcher UI')
+assert.match(avatarSrc, /useChatDeepAvatarCharacter/, 'persisted character hook')
 assert.match(avatarSrc, /'listen'/, 'listen mood in type')
 assert.match(avatarSrc, /'concern'/, 'concern mood in type')
 assert.match(avatarSrc, /'celebrate'/, 'celebrate mood in type')
 assert.match(avatarSrc, /Priority \(high → low\)/, 'documents mood priority')
 assert.doesNotMatch(avatarSrc, /[Ll]ive2[Dd]|Cubism/, 'no Live2D / Cubism in avatar')
-for (const f of [
-  'deep-idle.gif',
-  'deep-happy.gif',
-  'deep-think.gif',
-  'deep-speak.gif',
-  'deep-listen.gif',
-  'deep-concern.gif',
-  'deep-celebrate.gif',
-  'deep-bust.png',
-]) {
-  assert.ok(
-    existsSync(join(root, '../public/chat-avatar', f)),
-    `public/chat-avatar/${f} present`,
-  )
+assert.match(thread, /ChatDeepAvatarCharacterPicker/, 'thread wires character picker')
+assert.match(auiCss, /\.aui-avatar-char-picker\b/, 'character picker styles')
+const charSrc = readFileSync(join(here, 'chatDeepAvatarCharacter.ts'), 'utf8')
+assert.match(charSrc, /CHAT_DEEP_AVATAR_CHARACTER_KEY/, 'character localStorage key')
+assert.match(charSrc, /DS Boy/, 'DS Boy label')
+assert.match(charSrc, /DS Girl/, 'DS Girl label')
+assert.match(charSrc, /\/chat-avatar\/boy/, 'boy asset dir')
+assert.match(charSrc, /\/chat-avatar\/girl/, 'girl asset dir')
+for (const character of ['boy', 'girl'] as const) {
+  for (const f of [
+    'deep-idle.gif',
+    'deep-happy.gif',
+    'deep-think.gif',
+    'deep-speak.gif',
+    'deep-listen.gif',
+    'deep-concern.gif',
+    'deep-celebrate.gif',
+    'deep-bust.png',
+  ]) {
+    assert.ok(
+      existsSync(join(root, '../public/chat-avatar', character, f)),
+      `public/chat-avatar/${character}/${f} present`,
+    )
+  }
 }
 const signalsSrc = readFileSync(join(here, 'chatDeepAvatarSignals.ts'), 'utf8')
 assert.match(signalsSrc, /setChatDeepAvatarListening/, 'dictate → listen bus')

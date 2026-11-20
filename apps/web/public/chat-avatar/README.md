@@ -1,6 +1,15 @@
-# DeepSeek Chat companion avatar
+# DeepSeek Chat companion avatars
 
 Higgsfield `gpt_image_2_6` assets for `#/chat` AUI (Muse / Grokbot-style).
+
+Characters (user-selectable, persisted as `yue-deepseek-chat-avatar-character-v1`):
+
+| Folder | Label |
+| --- | --- |
+| `boy/` | **DS Boy** |
+| `girl/` | **DS Girl** |
+
+Each folder:
 
 | File | Role |
 | --- | --- |
@@ -14,6 +23,10 @@ Higgsfield `gpt_image_2_6` assets for `#/chat` AUI (Muse / Grokbot-style).
 | `deep-concern.gif` | Session error / apologetic |
 | `deep-bust.png` | Reduced-motion / poster still |
 
+## Quality bar
+
+Mood loops are **720×720** transparent GIFs (≈ **3×** hero CSS `min(15rem)`, well above bubble). Prefer regenerating at ≥720 rather than stretching soft ≤360 sources. Poster stills ≥1024² when available.
+
 ## Mood state machine (`ChatDeepAvatar.tsx`)
 
 Priority high → low:
@@ -25,6 +38,8 @@ Priority high → low:
 5. **think** — engaged + composer draft  
 6. **idle** — otherwise  
 
-## TTS lips (v2)
+Character pick does not change the mood / TTS lip machine — only the asset folder.
 
-While TTS plays (SpeakButton / auto-speak Azure path via `isTtsPlaying`, or DeepSeek chat TTS via `setChatDeepAvatarTtsPlaying`), a CSS mouth oval scales with a synthetic amplitude / vowel envelope (`getChatDeepAvatarLipLevel`). Not phoneme sync. `prefers-reduced-motion` hides lips and uses the static bust.
+## TTS lips
+
+While TTS plays, a CSS mouth oval scales with a synthetic amplitude / vowel envelope (`getChatDeepAvatarLipLevel`). Not phoneme sync. `prefers-reduced-motion` hides lips and uses the static bust.
