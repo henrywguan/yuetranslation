@@ -7,6 +7,7 @@ import {
   transcribeDeepseekChatAudio as apiTranscribeDeepseekChatAudio,
   type ChatTtsVoiceId,
 } from './api'
+import { setChatDeepAvatarTtsPlaying } from './chatDeepAvatarSignals'
 import { unlockTtsPlayback } from './tts'
 
 export type { ChatTtsVoiceId }
@@ -51,7 +52,12 @@ export async function playDeepseekChatTtsBlob(
   const url = URL.createObjectURL(blob)
   const audio = new Audio(url)
   audio.preload = 'auto'
+  let markedPlaying = false
   const stop = () => {
+    if (markedPlaying) {
+      markedPlaying = false
+      setChatDeepAvatarTtsPlaying(false)
+    }
     try {
       audio.pause()
     } catch {
@@ -70,7 +76,13 @@ export async function playDeepseekChatTtsBlob(
     await new Promise<void>((resolve, reject) => {
       audio.onended = () => resolve()
       audio.onerror = () => reject(new Error('TTS playback failed'))
-      void audio.play().catch(reject)
+      void audio
+        .play()
+        .then(() => {
+          markedPlaying = true
+          setChatDeepAvatarTtsPlaying(true)
+        })
+        .catch(reject)
     })
   } finally {
     stop()

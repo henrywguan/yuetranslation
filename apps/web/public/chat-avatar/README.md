@@ -6,16 +6,25 @@ Higgsfield `gpt_image_2_6` assets for `#/chat` AUI (Muse / Grokbot-style).
 | --- | --- |
 | `deep-sheet.png` | Character bible (front / ¾ / bust) |
 | `deep-idle.gif` | Empty-state + resting bubble loop |
-| `deep-happy.gif` | Brief post-reply celebrate |
+| `deep-happy.gif` | Soft smile clip (kept; post-run uses celebrate) |
+| `deep-celebrate.gif` | Brief post-reply cheer |
 | `deep-think.gif` | Composer has draft text |
-| `deep-speak.gif` | Assistant streaming (simple mouth loop) |
+| `deep-speak.gif` | Assistant streaming / TTS base mouth loop |
+| `deep-listen.gif` | Dictate mic listening |
+| `deep-concern.gif` | Session error / apologetic |
 | `deep-bust.png` | Reduced-motion / poster still |
 
-## Mood wiring (`ChatDeepAvatar.tsx`)
+## Mood state machine (`ChatDeepAvatar.tsx`)
 
-- **idle** — empty thread, or engaged with empty composer  
-- **think** — engaged + composer draft  
-- **speak** — `thread.isRunning`  
-- **happy** — ~2.2s after a run finishes  
+Priority high → low:
 
-v1 uses whole-clip GIF swaps (not phoneme lip-sync). Stretch: layered SVG mouth / Live2D / TTS sync.
+1. **concern** — session error banner  
+2. **listen** — composer dictate mic live  
+3. **speak** — `thread.isRunning` **or** Azure / DeepSeek chat TTS playing  
+4. **celebrate** — ~2.4s after a run finishes  
+5. **think** — engaged + composer draft  
+6. **idle** — otherwise  
+
+## TTS lips (v2)
+
+While TTS plays (SpeakButton / auto-speak Azure path via `isTtsPlaying`, or DeepSeek chat TTS via `setChatDeepAvatarTtsPlaying`), a CSS mouth oval scales with a synthetic amplitude / vowel envelope (`getChatDeepAvatarLipLevel`). Not phoneme sync. `prefers-reduced-motion` hides lips and uses the static bust.

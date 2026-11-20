@@ -18,6 +18,7 @@ import { SpeakButton } from '../../../components/SpeakButton'
 import {
   ChatDeepAvatar,
   ChatDeepAvatarBubble,
+  useChatDeepAvatarLipLevel,
   useChatDeepAvatarMood,
 } from './ChatDeepAvatar'
 import type { DeepseekChatPluginKeyId } from '../../../lib/api'
@@ -790,16 +791,18 @@ function ComposerChrome() {
   )
 }
 
-function ChatDeepAvatarStage() {
-  const mood = useChatDeepAvatarMood()
+function ChatDeepAvatarStage({ error }: { error?: string | null }) {
+  const mood = useChatDeepAvatarMood({ error })
+  const lipLevel = useChatDeepAvatarLipLevel(mood)
   const isEmpty = useAuiState((s) => s.thread.isEmpty)
   if (isEmpty) return null
-  return <ChatDeepAvatarBubble mood={mood} />
+  return <ChatDeepAvatarBubble mood={mood} lipLevel={lipLevel} />
 }
 
 export function ChatAuiThread() {
   const { historyReady, error, clearError, busy } = useChatAuiSession()
-  const emptyMood = useChatDeepAvatarMood()
+  const emptyMood = useChatDeepAvatarMood({ error })
+  const emptyLips = useChatDeepAvatarLipLevel(emptyMood)
 
   return (
     <div className="aui-layout">
@@ -818,6 +821,7 @@ export function ChatAuiThread() {
                   <ChatDeepAvatar
                     mood={emptyMood}
                     size="hero"
+                    lipLevel={emptyLips}
                     label="DeepSeek companion"
                     className="aui-empty-avatar"
                   />
@@ -865,7 +869,7 @@ export function ChatAuiThread() {
           </ThreadPrimitive.ViewportFooter>
         </ThreadPrimitive.Viewport>
 
-        {historyReady ? <ChatDeepAvatarStage /> : null}
+        {historyReady ? <ChatDeepAvatarStage error={error} /> : null}
 
         <ThreadPrimitive.ScrollToBottom className="aui-scroll-bottom">↓</ThreadPrimitive.ScrollToBottom>
       </ThreadPrimitive.Root>

@@ -348,7 +348,7 @@
   margin: 0 auto 1rem;
 }
 
-/* Companion avatar — Higgsfield GIF states (idle / happy / think / speak) */
+/* Companion avatar — Higgsfield GIF moods + TTS lip approx overlay */
 .aui-deep-avatar {
   position: relative;
   display: grid;
@@ -405,6 +405,42 @@
   border: 1.5px solid color-mix(in srgb, var(--ds-blue) 45%, transparent);
   animation: aui-deep-speak-ring 1.1s ease-out infinite;
   pointer-events: none;
+}
+
+/* Amplitude / vowel approx mouth — sits over the speak GIF while TTS plays. */
+.aui-deep-avatar-lips {
+  position: absolute;
+  left: 50%;
+  top: 62%;
+  width: 18%;
+  height: 10%;
+  margin-left: -9%;
+  border-radius: 50% / 60%;
+  background: color-mix(in srgb, #1a2744 78%, #5b8def);
+  box-shadow: inset 0 -1px 2px color-mix(in srgb, #000 35%, transparent);
+  transform: scaleX(var(--aui-lip-sx, 1)) scaleY(var(--aui-lip-sy, 1));
+  transform-origin: 50% 35%;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.aui-deep-avatar.is-bubble .aui-deep-avatar-lips {
+  top: 60%;
+  width: 22%;
+  height: 12%;
+  margin-left: -11%;
+}
+
+.aui-deep-avatar[data-mood='listen'] {
+  filter: drop-shadow(0 10px 22px color-mix(in srgb, var(--ds-blue) 36%, transparent));
+}
+
+.aui-deep-avatar[data-mood='concern'] {
+  filter: drop-shadow(0 10px 20px color-mix(in srgb, #c47a3a 28%, transparent));
+}
+
+.aui-deep-avatar[data-mood='celebrate'] {
+  filter: drop-shadow(0 12px 26px color-mix(in srgb, #3ecf8e 30%, transparent));
 }
 
 .aui-empty-avatar {
@@ -1667,6 +1703,10 @@
   .aui-deep-avatar-dock,
   .aui-deep-avatar-pulse {
     animation: none;
+  }
+
+  .aui-deep-avatar-lips {
+    display: none;
   }
 
   .aui-mode.is-on {
