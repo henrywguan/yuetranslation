@@ -213,10 +213,20 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   composerModeRef.current = composerMode
   const [richLayout, setRichLayoutState] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
   const [reviewActivity, setReviewActivity] = useState<ChatReviewActivity>(() => emptyReviewActivity())
-  const [reviewOpen, setReviewOpen] = useState(false)
+  const [reviewOpen, setReviewOpenState] = useState(false)
   const [gitDiffBusy, setGitDiffBusy] = useState(false)
   const [harnessOn, setHarnessOnState] = useState(() => readHarnessFlag(false))
-  const [workspaceOpen, setWorkspaceOpen] = useState(() => readHarnessFlag(false))
+  const [workspaceOpen, setWorkspaceOpenState] = useState(() => readHarnessFlag(false))
+  /** Opening Diffs/Runs dismisses Harness sheet so Δ is never trapped under is-sheet. */
+  const setReviewOpen = useCallback((on: boolean) => {
+    setReviewOpenState(on)
+    if (on) setWorkspaceOpenState(false)
+  }, [])
+  /** Opening Harness workspace dismisses the review rail (one sheet at a time). */
+  const setWorkspaceOpen = useCallback((on: boolean) => {
+    setWorkspaceOpenState(on)
+    if (on) setReviewOpenState(false)
+  }, [])
   const [scheduleJobs, setScheduleJobs] = useState<ChatScheduleJob[]>(() => readScheduleJobs())
   const [pendingFiles, setPendingFiles] = useState<PendingChatFile[]>([])
   const harnessOnRef = useRef(harnessOn)
@@ -419,7 +429,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         }
       }
     },
-    [persist],
+    [persist, setWorkspaceOpen],
   )
 
   const setActiveWorkspace = useCallback(

@@ -138,6 +138,19 @@ assert.match(
 )
 assert.doesNotMatch(auiCss, /is-stock|ChatAuiStock/, 'no stock chrome return')
 
+const chatCss = readFileSync(join(root, 'pages/ChatPage.css'), 'utf8')
+assert.match(chatCss, /--ds-chat-top-h/, 'topbar height token for sheet clearance')
+assert.match(
+  chatCss,
+  /\.ds-chat-workspace\.is-sheet\s*\{[^}]*top:\s*var\(--ds-chat-top-h\)/s,
+  'Harness is-sheet leaves topbar (Δ) uncovered',
+)
+assert.match(
+  runtime,
+  /if \(on\) setWorkspaceOpenState\(false\)/,
+  'opening Diffs/Runs auto-closes Harness workspace',
+)
+
 const shell = readFileSync(join(root, 'pages/chat/inbox/InboxShell.tsx'), 'utf8')
 assert.match(shell, /ProjectCreateWizard/, 'project create uses wizard')
 assert.match(shell, /workspace.*internal|opts\.workspace/, 'wizard binds workspace')
