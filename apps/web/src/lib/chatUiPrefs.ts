@@ -13,6 +13,12 @@ export const CHAT_RICH_LAYOUT_KEY = 'yue-deepseek-chat-rich-layout-v1'
 export const CHAT_PLUGINS_KEY = 'yue-deepseek-chat-plugins-v1'
 /** Composer Tools row expand/collapse (DeepThink / Search / Harness / …). */
 export const CHAT_TOOLS_EXPANDED_KEY = 'yue-deepseek-chat-tools-expanded-v1'
+/** Desktop Inbox sidebar width (px). Mobile drawer ignores drag; still caps via 86vw. */
+export const CHAT_INBOX_SIDEBAR_WIDTH_KEY = 'yue-chat-inbox-sidebar-w-v1'
+/** Matches ChatPage.css `--ds-sidebar-w: 17.5rem` at 16px root. */
+export const CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT = 280
+export const CHAT_INBOX_SIDEBAR_WIDTH_MIN = 220
+export const CHAT_INBOX_SIDEBAR_WIDTH_MAX = 480
 
 export const CHAT_COMPOSER_MODES: readonly ChatComposerMode[] = ['agent', 'ask', 'plan'] as const
 
@@ -113,6 +119,41 @@ export function readChatPluginIds(): string[] | null {
 export function writeChatPluginIds(ids: string[]) {
   try {
     localStorage.setItem(CHAT_PLUGINS_KEY, JSON.stringify(ids.slice(0, 16)))
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Clamp Inbox sidebar width; optional viewport keeps the thread usable. */
+export function clampChatInboxSidebarWidth(px: number, viewportWidth?: number): number {
+  const n = Math.round(Number(px))
+  if (!Number.isFinite(n)) return CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT
+  let max = CHAT_INBOX_SIDEBAR_WIDTH_MAX
+  if (typeof viewportWidth === 'number' && Number.isFinite(viewportWidth) && viewportWidth > 0) {
+    // Leave ≥55% for the thread; never below min even on short viewports.
+    max = Math.min(max, Math.max(CHAT_INBOX_SIDEBAR_WIDTH_MIN, Math.floor(viewportWidth * 0.45)))
+  }
+  return Math.min(max, Math.max(CHAT_INBOX_SIDEBAR_WIDTH_MIN, n))
+}
+
+export function readChatInboxSidebarWidth(
+  fallback = CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT,
+): number {
+  try {
+    const raw = localStorage.getItem(CHAT_INBOX_SIDEBAR_WIDTH_KEY)
+    if (raw == null || raw === '') return fallback
+    return clampChatInboxSidebarWidth(Number(raw))
+  } catch {
+    return fallback
+  }
+}
+
+export function writeChatInboxSidebarWidth(px: number) {
+  try {
+    localStorage.setItem(
+      CHAT_INBOX_SIDEBAR_WIDTH_KEY,
+      String(clampChatInboxSidebarWidth(px)),
+    )
   } catch {
     /* ignore */
   }
