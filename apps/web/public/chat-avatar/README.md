@@ -9,11 +9,10 @@ Characters (user-selectable, persisted as `yue-deepseek-chat-avatar-character-v1
 | `boy/` | **DS Boy** |
 | `girl/` | **DS Girl** |
 
-Each folder:
+Each folder (runtime assets only — shipped under `public/`):
 
 | File | Role |
 | --- | --- |
-| `deep-sheet.png` | Character bible (front / ¾ / bust) |
 | `deep-idle.gif` | Empty-state + resting bubble loop |
 | `deep-happy.gif` | Soft smile clip (kept; post-run uses celebrate) |
 | `deep-celebrate.gif` | Brief post-reply cheer |
@@ -23,9 +22,11 @@ Each folder:
 | `deep-concern.gif` | Session error / apologetic |
 | `deep-bust.png` | Reduced-motion / poster still |
 
+**Do not** put character-bible `deep-sheet.png` (or other multi‑MB generation sources) in `public/chat-avatar/`. VitePWA `injectManifest` precaches `*.png` and rejects files over 2 MiB (broke prod after #796). Keep sheets outside the web public tree; `vite.config.ts` also glob-ignores `**/chat-avatar/**/deep-sheet.png` as a belt-and-suspenders guard.
+
 ## Quality bar
 
-Mood loops are **720×720** transparent GIFs (≈ **3×** hero CSS `min(15rem)`, well above bubble). Prefer regenerating at ≥720 rather than stretching soft ≤360 sources. Poster stills ≥1024² when available.
+Mood loops are **720×720** transparent GIFs (≈ **3×** hero CSS `min(15rem)`, well above bubble). Prefer regenerating at ≥720 rather than stretching soft ≤360 sources. Poster stills ≥1024² when available. Mood GIFs may exceed 2 MiB — that is fine for runtime fetch; they are **not** in the SW precache glob (no `gif` in `globPatterns`).
 
 ## Mood state machine (`ChatDeepAvatar.tsx`)
 
