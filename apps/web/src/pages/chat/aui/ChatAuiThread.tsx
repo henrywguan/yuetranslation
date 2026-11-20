@@ -41,6 +41,7 @@ import {
   agentForThread,
   projectNestedViews,
   buildAgentViews,
+  resolveProjectGithubWorkspace,
 } from '../../../lib/chatInbox'
 import { buildToolCards } from '../../../lib/chatToolCards'
 import {
@@ -526,9 +527,11 @@ function ComposerChrome({ error }: { error?: string | null }) {
     const project = projectId
       ? inbox?.state.projects.find((p) => p.id === projectId)
       : undefined
-    const githubWs = inbox?.state.workspaces.find(
-      (w) => w.kind === 'github' && Boolean(w.ref?.trim()),
-    )
+    // Only offer `@diff:…` when *this* Project has a bound GitHub workspace.
+    const githubWs =
+      projectId && inbox?.ready
+        ? resolveProjectGithubWorkspace(inbox.state, projectId)
+        : undefined
     const lastRun = reviewActivity.runs[0] || null
     return buildChatMentionItems({
       workspace: activeWorkspace,

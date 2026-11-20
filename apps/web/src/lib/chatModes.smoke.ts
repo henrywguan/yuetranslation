@@ -171,6 +171,11 @@ assert.match(thread, /types\]\.some\(\(t\) => t === 'Files'\)/, 'dragover only c
 assert.match(thread, /githubBound|@diff:|lastRun/, 'richer @ diff/run wiring')
 assert.match(
   thread,
+  /resolveProjectGithubWorkspace/,
+  '@diff scoped to active Project GitHub workspace',
+)
+assert.match(
+  thread,
   /disabled=\{busy \|\| !planDraft\.trim\(\)\}/,
   'Build disabled while busy or empty plan',
 )

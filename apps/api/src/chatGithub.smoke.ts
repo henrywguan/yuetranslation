@@ -7,7 +7,10 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
+  GITHUB_PR_CHECKS_MAX_PAGES,
+  githubApiPathFromUrl,
   githubConfigured,
+  githubLinkNextUrl,
   githubStatus,
   parseGithubPrUrl,
   parseGithubRepo,
@@ -41,6 +44,25 @@ assert.deepEqual(parseGithubPrUrl('https://github.com/henrywguan/yuetranslation/
 assert.equal(parseGithubPrUrl('nope'), null)
 assert.match(suggestChatBranch('chat'), /^chat\//)
 
+assert.equal(GITHUB_PR_CHECKS_MAX_PAGES, 5)
+assert.equal(
+  githubLinkNextUrl(
+    '<https://api.github.com/repos/o/r/commits/abc/check-runs?page=2>; rel="next", <https://api.github.com/repos/o/r/commits/abc/check-runs?page=1>; rel="prev"',
+  ),
+  'https://api.github.com/repos/o/r/commits/abc/check-runs?page=2',
+)
+assert.equal(githubLinkNextUrl(null), null)
+assert.equal(
+  githubApiPathFromUrl('https://api.github.com/repos/o/r/commits/abc/check-runs?page=2'),
+  '/repos/o/r/commits/abc/check-runs?page=2',
+)
+assert.equal(githubApiPathFromUrl('https://evil.example/x'), null)
+
+const here = path.dirname(fileURLToPath(import.meta.url))
+const githubSrc = readFileSync(path.join(here, 'chatGithub.ts'), 'utf8')
+assert.match(githubSrc, /GITHUB_PR_CHECKS_MAX_PAGES|githubLinkNextUrl/, 'PR checks paginate')
+assert.match(githubSrc, /page=\$\{checksPages \+ 1\}|page=1/, 'check-runs page loop')
+
 const byoGithub = await saveChatPluginCredentials('smoke-github-byo', {
   github_app_id: '111',
   github_app_private_key:
@@ -53,7 +75,6 @@ assert.equal(resolvedByo?.source, 'byo')
 assert.equal(githubConfigured(byoGithub), true)
 assert.match(githubStatus(byoGithub).message, /byo/i)
 
-const here = path.dirname(fileURLToPath(import.meta.url))
 const routes = readFileSync(path.join(here, 'chatGithubRoutes.ts'), 'utf8')
 assert.match(routes, /GithubNotConfiguredError/)
 assert.match(routes, /fixability/)

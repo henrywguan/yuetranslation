@@ -25,6 +25,8 @@ import {
   ORCHESTRATION_STALL_ERROR,
   projectNestedViews,
   renameProject,
+  resolveProjectGithubWorkspace,
+  setProjectDefaultWorkspace,
   setProjectMemory,
   statusChipLabel,
   ungroupedAgentViews,
@@ -100,6 +102,37 @@ assert.ok(renamed.agents[0]?.title.includes('Harbor Quest'))
 const { state: withWs } = createWorkspace(renamed, 'internal', 'Dev sandbox', project.id)
 assert.equal(withWs.workspaces[0]?.kind, 'internal')
 assert.equal(withWs.workspaces[0]?.projectId, project.id)
+
+const { state: withGh, workspace: ghWs } = createWorkspace(
+  withWs,
+  'github',
+  'yuetranslation',
+  project.id,
+)
+const ghBound = {
+  ...withGh,
+  workspaces: withGh.workspaces.map((w) =>
+    w.id === ghWs.id ? { ...w, ref: 'henrywguan/yuetranslation' } : w,
+  ),
+}
+assert.equal(resolveProjectGithubWorkspace(ghBound, null), undefined, 'no project → no @diff')
+assert.equal(
+  resolveProjectGithubWorkspace(ghBound, project.id)?.id,
+  ghWs.id,
+  'project-linked GitHub workspace resolves',
+)
+const otherProj = createProject(ghBound, 'Other')
+assert.equal(
+  resolveProjectGithubWorkspace(otherProj.state, otherProj.project.id),
+  undefined,
+  'unrelated project does not inherit GitHub bind',
+)
+const defaulted = setProjectDefaultWorkspace(ghBound, project.id, ghWs.id)
+assert.equal(
+  resolveProjectGithubWorkspace(defaulted, project.id)?.id,
+  ghWs.id,
+  'defaultWorkspaceId GitHub bind preferred',
+)
 
 const cleared = deleteProject(withWs, project.id)
 assert.equal(cleared.projects.length, 0)
@@ -219,6 +252,11 @@ assert.match(shell, /Chats/, 'ungrouped section labeled Chats')
 assert.match(shell, /StatusChip/, 'compact status chips')
 assert.match(shell, /ChatProjectMenu|Add to Project|unlinkThread/, 'Add/Remove chat ↔ Project menu')
 assert.match(shell, /CHAT_THREAD_DRAG_MIME|draggable|is-draggable/, 'drag chat → Project')
+assert.match(
+  readFileSync(join(root, 'lib/chatInbox.ts'), 'utf8'),
+  /resolveProjectGithubWorkspace/,
+  'GitHub @diff helper exported from inbox store',
+)
 assert.match(
   shell,
   /threads\.some\(\(t\) => t\.id === tid\)/,

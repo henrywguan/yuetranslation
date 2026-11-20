@@ -477,6 +477,27 @@ export function resolveActiveSandboxSessionId(
   return internal?.ref
 }
 
+/**
+ * GitHub workspace for `@diff:…` — scoped to the active Project only.
+ * Prefer `defaultWorkspaceId` when it is a bound GitHub workspace; else a
+ * workspace with `projectId` match. Never falls back to unrelated inbox repos.
+ */
+export function resolveProjectGithubWorkspace(
+  state: ChatInboxState,
+  projectId?: string | null,
+): ChatInboxWorkspace | undefined {
+  if (!projectId) return undefined
+  const project = state.projects.find((p) => p.id === projectId)
+  if (!project) return undefined
+  if (project.defaultWorkspaceId) {
+    const def = state.workspaces.find((w) => w.id === project.defaultWorkspaceId)
+    if (def?.kind === 'github' && def.ref?.trim()) return def
+  }
+  return state.workspaces.find(
+    (w) => w.projectId === projectId && w.kind === 'github' && Boolean(w.ref?.trim()),
+  )
+}
+
 export function setAgentStatus(
   state: ChatInboxState,
   agentId: string,
