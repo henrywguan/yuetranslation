@@ -1010,7 +1010,12 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   }, [])
 
   const buildFromPlan = useCallback(async () => {
-    if (!unlocked || busyRef.current) return
+    // Keep Plan selected while a reply is in flight — never silent-switch to Agent.
+    if (!unlocked) return
+    if (busyRef.current) {
+      setError('Wait for the current reply to finish, then Build.')
+      return
+    }
     const tid = activeIdRef.current
     const thread = threadsRef.current.find((t) => t.id === tid)
     const lastAssistant = [...(thread?.messages || [])]

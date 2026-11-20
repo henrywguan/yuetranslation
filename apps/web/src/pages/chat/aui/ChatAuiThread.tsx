@@ -501,7 +501,12 @@ function ComposerChrome() {
             type="button"
             className="aui-mode-build"
             disabled={busy}
-            title="Switch to Agent and hand the plan to Overseer / workers"
+            aria-disabled={busy}
+            title={
+              busy
+                ? 'Wait for the current reply to finish, then Build'
+                : 'Switch to Agent and hand the plan to Overseer / workers'
+            }
             onClick={() => void buildFromPlan()}
           >
             Build
@@ -529,7 +534,14 @@ function ComposerChrome() {
         {thinking ? <span className="aui-status">Thinking…</span> : null}
         {searching ? <span className="aui-status">Searching…</span> : null}
         {composerMode === 'ask' ? <span className="aui-status">Ask · read-only</span> : null}
-        {composerMode === 'plan' ? <span className="aui-status">Plan · then Build</span> : null}
+        {composerMode === 'plan' && busy ? (
+          <span className="aui-status" role="status">
+            Wait for reply…
+          </span>
+        ) : null}
+        {composerMode === 'plan' && !busy ? (
+          <span className="aui-status">Plan · then Build</span>
+        ) : null}
         {toolsExpanded ? (
           <div className="aui-composer-toggles" id="aui-tools-panel" aria-label="Tools">
             <button

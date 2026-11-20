@@ -130,6 +130,13 @@ assert.doesNotMatch(
 )
 assert.match(thread, /aui-composer-toolbar/, 'toolbar row under full-width input')
 assert.match(thread, /buildFromPlan/, 'Plan → Build handoff')
+assert.match(thread, /disabled=\{busy\}/, 'Build disabled while busy')
+assert.match(thread, /Wait for reply/, 'Plan busy shows wait-for-reply status')
+assert.match(
+  thread,
+  /Wait for the current reply to finish, then Build/,
+  'Build title explains wait while busy',
+)
 assert.match(thread, /aui-tools-label/, 'DeepThink/Search nested under Tools')
 assert.match(thread, /ChatDictateButton/, 'dictate preserved')
 
@@ -144,6 +151,12 @@ const runtime = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'u
 assert.match(runtime, /chatMode: composerModeRef/, 'mode forwarded to SSE')
 assert.match(runtime, /writeChatComposerMode/, 'mode persisted')
 assert.match(runtime, /buildPlanBuildPrompt/, 'Build uses Overseer-leaning prompt')
+assert.match(
+  runtime,
+  /Wait for the current reply to finish, then Build/,
+  'buildFromPlan busy path sets wait-for-reply error (keeps Plan)',
+)
+assert.match(runtime, /if \(busyRef\.current\) \{\s*setError/, 'busy Build is not a silent no-op')
 
 const prefs = readFileSync(join(here, 'chatUiPrefs.ts'), 'utf8')
 assert.match(prefs, /CHAT_MODE_KEY/, 'mode key in shared prefs')
