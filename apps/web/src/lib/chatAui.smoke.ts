@@ -3,7 +3,7 @@
  * Run: npx tsx apps/web/src/lib/chatAui.smoke.ts
  */
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { convertChatMessage } from '../pages/chat/aui/convertChatMessage'
@@ -275,6 +275,28 @@ assert.match(thread, /blank `#root`|blank #root/, 'documents blank-#root failure
 assert.match(auiCss, /\.aui-composer\b/, 'DeepSeek composer card styles')
 assert.match(auiCss, /\.aui-send\b/, 'DeepSeek send styles restored')
 assert.match(auiCss, /\.aui-empty\b/, 'DeepSeek empty-state styles')
+assert.match(thread, /ChatDeepAvatar/, 'empty state uses companion avatar')
+assert.match(thread, /ChatDeepAvatarBubble|ChatDeepAvatarStage/, 'engaged thread shows compact avatar bubble')
+assert.match(auiCss, /\.aui-deep-avatar\b/, 'companion avatar styles')
+assert.match(auiCss, /\.aui-deep-avatar-dock\b/, 'compact chat-head dock')
+const avatarSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatar.tsx'), 'utf8')
+assert.match(avatarSrc, /deep-idle\.gif/, 'idle GIF mood')
+assert.match(avatarSrc, /deep-happy\.gif/, 'happy GIF mood')
+assert.match(avatarSrc, /deep-think\.gif/, 'think GIF mood')
+assert.match(avatarSrc, /deep-speak\.gif/, 'speak GIF mood')
+assert.match(avatarSrc, /ChatDeepAvatarMood = 'idle' \| 'happy' \| 'think' \| 'speak'/, 'four mood states')
+for (const f of [
+  'deep-idle.gif',
+  'deep-happy.gif',
+  'deep-think.gif',
+  'deep-speak.gif',
+  'deep-bust.png',
+]) {
+  assert.ok(
+    existsSync(join(root, '../public/chat-avatar', f)),
+    `public/chat-avatar/${f} present`,
+  )
+}
 assert.doesNotMatch(thread, /WebSpeechSynthesisAdapter|speechSynthesis\.speak/, 'no browser TTS adapter')
 assert.doesNotMatch(
   thread,

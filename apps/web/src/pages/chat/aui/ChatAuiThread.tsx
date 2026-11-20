@@ -15,6 +15,11 @@ import { ChatPluginKeysModal } from '../../../components/ChatPluginKeysModal'
 import { ChatSourcesList } from '../../../components/ChatShellExtras'
 import { DeepSeekMark } from '../../../components/DeepSeekMark'
 import { SpeakButton } from '../../../components/SpeakButton'
+import {
+  ChatDeepAvatar,
+  ChatDeepAvatarBubble,
+  useChatDeepAvatarMood,
+} from './ChatDeepAvatar'
 import type { DeepseekChatPluginKeyId } from '../../../lib/api'
 import {
   applyMentionInsert,
@@ -785,8 +790,16 @@ function ComposerChrome() {
   )
 }
 
+function ChatDeepAvatarStage() {
+  const mood = useChatDeepAvatarMood()
+  const isEmpty = useAuiState((s) => s.thread.isEmpty)
+  if (isEmpty) return null
+  return <ChatDeepAvatarBubble mood={mood} />
+}
+
 export function ChatAuiThread() {
   const { historyReady, error, clearError, busy } = useChatAuiSession()
+  const emptyMood = useChatDeepAvatarMood()
 
   return (
     <div className="aui-layout">
@@ -802,7 +815,12 @@ export function ChatAuiThread() {
             <>
               <AuiIf condition={(s) => s.thread.isEmpty}>
                 <div className="aui-empty">
-                  <DeepSeekMark className="aui-empty-mark" />
+                  <ChatDeepAvatar
+                    mood={emptyMood}
+                    size="hero"
+                    label="DeepSeek companion"
+                    className="aui-empty-avatar"
+                  />
                   <h1>
                     Hi, I&apos;m <strong>DeepSeek</strong>.
                   </h1>
@@ -846,6 +864,8 @@ export function ChatAuiThread() {
             <ComposerChrome />
           </ThreadPrimitive.ViewportFooter>
         </ThreadPrimitive.Viewport>
+
+        {historyReady ? <ChatDeepAvatarStage /> : null}
 
         <ThreadPrimitive.ScrollToBottom className="aui-scroll-bottom">↓</ThreadPrimitive.ScrollToBottom>
       </ThreadPrimitive.Root>
