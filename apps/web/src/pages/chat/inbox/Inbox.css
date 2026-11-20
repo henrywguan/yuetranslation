@@ -203,6 +203,28 @@
   flex-shrink: 0;
 }
 
+.inbox-settings-celebrate {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.15rem 0.45rem 0.5rem;
+}
+
+.inbox-settings-celebrate-copy {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.inbox-settings-celebrate-name {
+  font: 600 0.8125rem/1.2 'Noto Sans', system-ui, sans-serif;
+  color: var(--ds-text);
+}
+
+.inbox-settings-celebrate-hint {
+  font: 500 0.68rem/1.25 'Noto Sans', system-ui, sans-serif;
+  color: var(--ds-text-3, #7a879c);
+}
+
 .inbox-header-new:disabled,
 .inbox-section-add:disabled {
   opacity: 0.4;

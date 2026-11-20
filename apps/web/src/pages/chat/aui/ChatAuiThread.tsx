@@ -17,6 +17,9 @@ import { DeepSeekMark } from '../../../components/DeepSeekMark'
 import { SpeakButton } from '../../../components/SpeakButton'
 import {
   ChatDeepAvatar,
+  ChatDeepAvatarCelebrateFx,
+  useChatDeepAvatarCelebrateFx,
+  useChatDeepAvatarCelebrateMode,
   useChatDeepAvatarCharacter,
   useChatDeepAvatarLipLevel,
   useChatDeepAvatarMood,
@@ -417,8 +420,8 @@ function ComposerChrome({ error }: { error?: string | null }) {
   const [toolsExpanded, setToolsExpanded] = useState(() => readChatToolsExpanded())
   const inbox = useChatInboxContextOptional()
   const [avatarCharacter] = useChatDeepAvatarCharacter()
-  const portraitMood = useChatDeepAvatarMood({ error })
-  const portraitLips = useChatDeepAvatarLipLevel(portraitMood)
+  const [celebrateMode] = useChatDeepAvatarCelebrateMode()
+  const portraitRef = useRef<HTMLDivElement | null>(null)
   const {
     deepThink,
     setDeepThink,
@@ -455,6 +458,25 @@ function ComposerChrome({ error }: { error?: string | null }) {
     dismissFollowUp,
     clearFollowUpQueue,
   } = useChatAuiSession()
+  const {
+    mood: portraitMood,
+    outroMood: portraitOutroMood,
+    outroActive: portraitOutro,
+    deepFinish: portraitDeep,
+  } = useChatDeepAvatarMood({ error, composerMode, searchOn })
+  const portraitLips = useChatDeepAvatarLipLevel(portraitMood)
+  const {
+    showFx: celebrateFx,
+    fxMood: celebrateFxMood,
+    fxSessionKey: celebrateFxKey,
+    dismissFx: dismissCelebrateFx,
+    dimPortrait,
+  } = useChatDeepAvatarCelebrateFx({
+    outroMood: portraitOutroMood,
+    outroActive: portraitOutro,
+    deepFinish: portraitDeep,
+    celebrateMode,
+  })
 
   // Solo / Conversation handoff — classic ChatPage already consumed this; AUI is default.
   useEffect(() => {
@@ -811,15 +833,24 @@ function ComposerChrome({ error }: { error?: string | null }) {
       ) : null}
 
       <div className="aui-composer-body">
-        <div className="aui-composer-portrait" aria-hidden={false}>
+        <div className="aui-composer-portrait" aria-hidden={false} ref={portraitRef}>
           <ChatDeepAvatar
             mood={portraitMood}
             size="portrait"
             lipLevel={portraitLips}
             character={avatarCharacter}
             label="DeepSeek companion"
+            dimmed={dimPortrait}
           />
         </div>
+        <ChatDeepAvatarCelebrateFx
+          open={celebrateFx}
+          sessionKey={celebrateFxKey}
+          mood={celebrateFxMood}
+          character={avatarCharacter}
+          originRef={portraitRef}
+          onDismiss={dismissCelebrateFx}
+        />
         <div className="aui-composer-main">
           <div className="aui-composer-row-wrap">
             {atOpen ? (

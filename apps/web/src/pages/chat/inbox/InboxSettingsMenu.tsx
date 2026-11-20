@@ -1,6 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { ThemeToggle } from '../../../components/ThemeToggle'
 import {
+  CHAT_DEEP_AVATAR_CELEBRATE_MODE_HINT,
+  CHAT_DEEP_AVATAR_CELEBRATE_MODE_LABEL,
+  CHAT_DEEP_AVATAR_CELEBRATE_MODES,
   CHAT_DEEP_AVATAR_CHARACTER_LABEL,
   CHAT_DEEP_AVATAR_CHARACTERS,
   chatDeepAvatarPosterSrc,
@@ -8,7 +11,10 @@ import {
 import { setChatAuiEnabled } from '../../../lib/chatAuiFlag'
 import { openApp } from '../../../lib/siteLinks'
 import { useTheme } from '../../../lib/theme'
-import { useChatDeepAvatarCharacter } from '../aui/ChatDeepAvatar'
+import {
+  useChatDeepAvatarCelebrateMode,
+  useChatDeepAvatarCharacter,
+} from '../aui/ChatDeepAvatar'
 import { SettingsIcon } from './InboxIcons'
 
 /**
@@ -22,6 +28,7 @@ export function InboxSettingsMenu() {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
   const [character, setCharacter] = useChatDeepAvatarCharacter()
+  const [celebrateMode, setCelebrateMode] = useChatDeepAvatarCelebrateMode()
 
   useEffect(() => {
     if (!open) return
@@ -117,6 +124,34 @@ export function InboxSettingsMenu() {
                       draggable={false}
                     />
                     <span>{CHAT_DEEP_AVATAR_CHARACTER_LABEL[id]}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <div className="inbox-settings-celebrate" role="group" aria-label="Celebrate">
+            <span className="inbox-settings-companion-label">Celebrate</span>
+            <div className="inbox-settings-companion-row">
+              {CHAT_DEEP_AVATAR_CELEBRATE_MODES.map((id) => {
+                const active = celebrateMode === id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={active}
+                    title={CHAT_DEEP_AVATAR_CELEBRATE_MODE_HINT[id]}
+                    className={`inbox-settings-companion-item${active ? ' is-active' : ''}`}
+                    onClick={() => setCelebrateMode(id)}
+                  >
+                    <span className="inbox-settings-celebrate-copy">
+                      <span className="inbox-settings-celebrate-name">
+                        {CHAT_DEEP_AVATAR_CELEBRATE_MODE_LABEL[id]}
+                      </span>
+                      <span className="inbox-settings-celebrate-hint">
+                        {CHAT_DEEP_AVATAR_CELEBRATE_MODE_HINT[id]}
+                      </span>
+                    </span>
                   </button>
                 )
               })}

@@ -35,11 +35,13 @@ Priority high → low:
 1. **concern** — session error banner  
 2. **listen** — composer dictate mic live  
 3. **speak** — `thread.isRunning` **or** Azure / DeepSeek chat TTS playing  
-4. **celebrate** — ~2.4s after a run finishes  
+4. **celebrate** / **proud** / **eureka** — brief after a run finishes (`proud` → `deep-happy.gif`, `eureka` → `deep-celebrate.gif`; CSS variants until new GIFs)  
 5. **think** — engaged + composer draft  
 6. **idle** — otherwise  
 
 Character pick does not change the mood / TTS lip machine — only the asset folder.
+
+**Celebrate fullscreen** (Inbox settings → Celebrate): Every success · Deep finishes (≥~15s Agent/Plan/Search or Plan→Build) · Frame only. Pref `yue-deepseek-chat-avatar-celebrate-v1`. `prefers-reduced-motion` skips fullscreen + particles.
 
 ## TTS lips
 

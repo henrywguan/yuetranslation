@@ -9,6 +9,23 @@ import { fileURLToPath } from 'node:url'
 import { convertChatMessage } from '../pages/chat/aui/convertChatMessage'
 import type { ChatMessage } from './chatHistory'
 import { CHAT_AUI_FLAG_KEY, isChatAuiEnabled, setChatAuiEnabled } from './chatAuiFlag'
+import {
+  CHAT_DEEP_AVATAR_DEEP_MS,
+  chatDeepAvatarMoodAssetStem,
+  isChatDeepAvatarDeepFinish,
+  normalizeChatDeepAvatarCelebrateMode,
+  pickChatDeepAvatarOutroMood,
+  shouldFullscreenCelebrate,
+} from './chatDeepAvatarCharacter'
+import {
+  __resetChatDeepAvatarPlanBuildForTests,
+  abortChatDeepAvatarPlanBuild,
+  consumeChatDeepAvatarPlanBuild,
+  markChatDeepAvatarPlanBuild,
+  peekChatDeepAvatarPlanBuild,
+  setChatDeepAvatarPlanBuildChainBusy,
+  settleChatDeepAvatarPlanBuild,
+} from './chatDeepAvatarPlanBuild'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
@@ -100,6 +117,13 @@ assert.match(settingsMenu, /setChatAuiEnabled\(false\)/, 'classic opt-out still 
 assert.match(settingsMenu, /inbox-settings-companion|Companion/, 'settings menu has Companion section')
 assert.match(settingsMenu, /useChatDeepAvatarCharacter/, 'Companion uses persisted character hook')
 assert.match(settingsMenu, /DS Boy|CHAT_DEEP_AVATAR_CHARACTER_LABEL/, 'Companion lists DS Boy / Girl')
+assert.match(settingsMenu, /inbox-settings-celebrate|Celebrate/, 'settings menu has Celebrate section')
+assert.match(
+  settingsMenu,
+  /CHAT_DEEP_AVATAR_CELEBRATE_MODES|Every success|Deep finishes|Frame only/,
+  'Celebrate lists Every / Deep / Frame modes',
+)
+assert.match(settingsMenu, /useChatDeepAvatarCelebrateMode/, 'Celebrate uses persisted mode hook')
 const inboxShell = readFileSync(join(root, 'pages/chat/inbox/InboxShell.tsx'), 'utf8')
 assert.match(inboxShell, /InboxSettingsMenu/, 'Inbox header mounts settings cog')
 assert.match(inboxShell, /inbox-header-actions/, 'settings sits beside New project +')
@@ -354,22 +378,187 @@ const avatarSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatar.tsx'), 
 assert.match(avatarSrc, /size = 'portrait'|Size = 'portrait'/, 'portrait is default/supported size')
 assert.match(avatarSrc, /useChatDeepAvatarCharacter/, 'persisted character hook')
 assert.match(avatarSrc, /CHAT_DEEP_AVATAR_CHARACTER_EVENT/, 'same-tab character sync')
-assert.match(avatarSrc, /'listen'/, 'listen mood in type')
-assert.match(avatarSrc, /'concern'/, 'concern mood in type')
-assert.match(avatarSrc, /'celebrate'/, 'celebrate mood in type')
+assert.match(avatarSrc, /useChatDeepAvatarCelebrateMode/, 'celebrate mode hook')
+assert.match(avatarSrc, /ChatDeepAvatarCelebrateFx/, 'fullscreen celebrate FX component')
+assert.match(avatarSrc, /createPortal/, 'celebrate FX portals to body')
+assert.match(avatarSrc, /pickChatDeepAvatarOutroMood|setOutro/, 'outro latch wired in mood hook')
 assert.match(avatarSrc, /Priority \(high → low\)/, 'documents mood priority')
+assert.match(avatarSrc, /celebrate \/ proud \/ eureka|proud.*eureka/, 'documents proud/eureka outros')
 assert.doesNotMatch(avatarSrc, /[Ll]ive2[Dd]|Cubism/, 'no Live2D / Cubism in avatar')
 assert.doesNotMatch(avatarSrc, /ChatDeepAvatarCharacterPicker|ChatDeepAvatarBubble/, 'picker/bubble moved out of avatar module')
 assert.doesNotMatch(auiCss, /\.aui-avatar-char-picker\b/, 'composer-adjacent character picker CSS removed')
+assert.match(auiCss, /\.aui-deep-avatar-fx\b/, 'fullscreen celebrate overlay styles')
+assert.match(auiCss, /\.aui-deep-avatar-fx-stars\b/, 'canvas star field class')
+assert.match(auiCss, /prefers-reduced-motion[\s\S]*aui-deep-avatar-fx/, 'reduced-motion hides fullscreen FX')
+assert.match(
+  auiCss,
+  /\.aui-deep-avatar-fx-fly[\s\S]*min\(22rem,\s*78vw,\s*70vh\)/,
+  'FX avatar sized for desktop without clipping',
+)
+assert.match(
+  auiCss,
+  /@media \(max-width: 399px\)[\s\S]*\.aui-deep-avatar-fx-fly/,
+  'FX shrinks on ~390 phone widths',
+)
+assert.match(
+  auiCss,
+  /@media \(max-height: 700px\)[\s\S]*\.aui-deep-avatar-fx-fly/,
+  'FX shrinks on short viewports',
+)
+assert.match(thread, /ChatDeepAvatarCelebrateFx/, 'composer mounts celebrate FX')
+assert.match(thread, /useChatDeepAvatarCelebrateFx/, 'composer gates fullscreen via pref')
+assert.match(thread, /dimmed=\{dimPortrait\}/, 'portrait dims while FX flies')
 const inboxCss = readFileSync(join(root, 'pages/chat/inbox/Inbox.css'), 'utf8')
 assert.match(inboxCss, /\.inbox-settings-companion\b/, 'Inbox Companion settings styles')
+assert.match(inboxCss, /\.inbox-settings-celebrate\b/, 'Inbox Celebrate settings styles')
 const charSrc = readFileSync(join(here, 'chatDeepAvatarCharacter.ts'), 'utf8')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CHARACTER_KEY/, 'character localStorage key')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CHARACTER_EVENT/, 'character change event for sync')
+assert.match(charSrc, /CHAT_DEEP_AVATAR_CELEBRATE_MODE_KEY/, 'celebrate mode localStorage key')
+assert.match(charSrc, /CHAT_DEEP_AVATAR_CELEBRATE_MODE_EVENT/, 'celebrate mode change event')
+assert.match(charSrc, /shouldFullscreenCelebrate/, 'fullscreen gate helper')
+assert.match(charSrc, /pickChatDeepAvatarOutroMood/, 'outro mood picker')
+assert.match(charSrc, /isChatDeepAvatarDeepFinish/, 'deep-finish helper')
+assert.match(charSrc, /chatDeepAvatarMoodAssetStem/, 'proud/eureka map to existing GIFs')
 assert.match(charSrc, /DS Boy/, 'DS Boy label')
 assert.match(charSrc, /DS Girl/, 'DS Girl label')
 assert.match(charSrc, /\/chat-avatar\/boy/, 'boy asset dir')
 assert.match(charSrc, /\/chat-avatar\/girl/, 'girl asset dir')
+
+// Pure helpers — celebrate mode / outro / deep finish (no DOM).
+assert.equal(normalizeChatDeepAvatarCelebrateMode(''), 'every')
+assert.equal(normalizeChatDeepAvatarCelebrateMode('deep'), 'deep')
+assert.equal(normalizeChatDeepAvatarCelebrateMode('frame-only'), 'frame')
+assert.equal(
+  shouldFullscreenCelebrate({
+    celebrateMode: 'every',
+    deepFinish: false,
+    reducedMotion: false,
+    outroActive: true,
+  }),
+  true,
+)
+assert.equal(
+  shouldFullscreenCelebrate({
+    celebrateMode: 'deep',
+    deepFinish: false,
+    reducedMotion: false,
+    outroActive: true,
+  }),
+  false,
+)
+assert.equal(
+  shouldFullscreenCelebrate({
+    celebrateMode: 'deep',
+    deepFinish: true,
+    reducedMotion: false,
+    outroActive: true,
+  }),
+  true,
+)
+assert.equal(
+  shouldFullscreenCelebrate({
+    celebrateMode: 'every',
+    deepFinish: true,
+    reducedMotion: true,
+    outroActive: true,
+  }),
+  false,
+)
+assert.equal(
+  shouldFullscreenCelebrate({
+    celebrateMode: 'frame',
+    deepFinish: true,
+    reducedMotion: false,
+    outroActive: true,
+  }),
+  false,
+)
+assert.equal(
+  pickChatDeepAvatarOutroMood({
+    durationMs: 1200,
+    composerMode: 'ask',
+    searchOn: false,
+    planBuild: false,
+  }),
+  'proud',
+)
+assert.equal(
+  pickChatDeepAvatarOutroMood({
+    durationMs: 9000,
+    composerMode: 'agent',
+    searchOn: true,
+    planBuild: false,
+  }),
+  'eureka',
+)
+assert.equal(
+  pickChatDeepAvatarOutroMood({
+    durationMs: 8000,
+    composerMode: 'agent',
+    searchOn: false,
+    planBuild: false,
+  }),
+  'celebrate',
+)
+assert.equal(
+  isChatDeepAvatarDeepFinish({
+    durationMs: CHAT_DEEP_AVATAR_DEEP_MS,
+    composerMode: 'agent',
+    searchOn: false,
+    planBuild: false,
+  }),
+  true,
+)
+assert.equal(
+  isChatDeepAvatarDeepFinish({
+    durationMs: 1000,
+    composerMode: 'agent',
+    searchOn: false,
+    planBuild: true,
+  }),
+  true,
+)
+assert.equal(chatDeepAvatarMoodAssetStem('proud'), 'happy')
+assert.equal(chatDeepAvatarMoodAssetStem('eureka'), 'celebrate')
+const runtimeSrc = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
+assert.match(runtimeSrc, /markChatDeepAvatarPlanBuild/, 'Plan→Build latches deep celebrate')
+assert.match(runtimeSrc, /setChatDeepAvatarPlanBuildChainBusy/, 'Plan→Build gates Overseer→worker chain')
+assert.match(runtimeSrc, /settleChatDeepAvatarPlanBuild/, 'Plan→Build settles Deep credit when chain idles')
+const planBuildSrc = readFileSync(join(here, 'chatDeepAvatarPlanBuild.ts'), 'utf8')
+assert.match(planBuildSrc, /markChatDeepAvatarPlanBuild/, 'plan-build latch module')
+assert.match(planBuildSrc, /consumeChatDeepAvatarPlanBuild/, 'plan-build latch consumed on run end')
+assert.match(
+  planBuildSrc,
+  /planBuildChainBusy|setChatDeepAvatarPlanBuildChainBusy/,
+  'consume keeps latch armed while chain busy',
+)
+assert.match(planBuildSrc, /settleChatDeepAvatarPlanBuild/, 'settle bumps deferred deep outro epoch')
+assert.match(planBuildSrc, /abortChatDeepAvatarPlanBuild/, 'error path can abort plan-build latch')
+const signalsSrcCelebrate = readFileSync(join(here, 'chatDeepAvatarSignals.ts'), 'utf8')
+assert.match(signalsSrcCelebrate, /chatDeepAvatarPlanBuild/, 'signals re-exports plan-build latch')
+assert.match(avatarSrc, /hasError|abortChatDeepAvatarPlanBuild/, 'error skips celebratory outro')
+assert.match(avatarSrc, /wasPlanBuildArmed && !planBuild/, 'skips outro on intermediate Plan→Build turns')
+assert.match(
+  avatarSrc,
+  /Snapshot mode\/search only at run \*\*start\*\*|run \*\*start\*\*/,
+  'run meta snapshotted at start only',
+)
+
+__resetChatDeepAvatarPlanBuildForTests()
+markChatDeepAvatarPlanBuild()
+setChatDeepAvatarPlanBuildChainBusy(true)
+assert.equal(consumeChatDeepAvatarPlanBuild(), false, 'no consume while chain busy')
+assert.equal(peekChatDeepAvatarPlanBuild(), true, 'latch stays armed while chain busy')
+setChatDeepAvatarPlanBuildChainBusy(false)
+assert.equal(settleChatDeepAvatarPlanBuild(), true, 'settle claims credit when chain idles')
+assert.equal(peekChatDeepAvatarPlanBuild(), false, 'settle clears armed latch')
+markChatDeepAvatarPlanBuild()
+abortChatDeepAvatarPlanBuild()
+assert.equal(peekChatDeepAvatarPlanBuild(), false, 'abort clears armed latch')
+markChatDeepAvatarPlanBuild()
+assert.equal(consumeChatDeepAvatarPlanBuild(), true, 'solo consume when chain idle')
+__resetChatDeepAvatarPlanBuildForTests()
 for (const character of ['boy', 'girl'] as const) {
   for (const f of [
     'deep-idle.gif',
