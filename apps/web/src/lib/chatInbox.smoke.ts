@@ -219,6 +219,11 @@ assert.match(shell, /Chats/, 'ungrouped section labeled Chats')
 assert.match(shell, /StatusChip/, 'compact status chips')
 assert.match(shell, /ChatProjectMenu|Add to Project|unlinkThread/, 'Add/Remove chat ↔ Project menu')
 assert.match(shell, /CHAT_THREAD_DRAG_MIME|draggable|is-draggable/, 'drag chat → Project')
+assert.match(
+  shell,
+  /threads\.some\(\(t\) => t\.id === tid\)/,
+  'Add-to-Project validates real thread ids',
+)
 assert.match(shell, /is-archive|is-delete/, 'Archive vs Delete contrast classes')
 assert.match(shell, /inboxZero|inbox-empty--hero/, 'distinct empty Inbox state')
 assert.match(shell, /No ungrouped chats|New chat/, 'distinct empty Chats CTA')
@@ -237,6 +242,12 @@ assert.match(projectList, /onOpenView/, 'nested rows open Overseer/workers/chats
 assert.match(projectList, /StatusChip/, 'nested rows use compact status chips')
 assert.match(projectList, /ChatProjectMenu|onAddChatToProject|onRemoveChatFromProject/, 'project nest Add/Remove menu')
 assert.match(projectList, /onDrop|is-drop-target|CHAT_THREAD_DRAG_MIME/, 'Project rows accept chat drops')
+assert.match(projectList, /isChatThreadDrag/, 'drop target only claims chat MIME')
+assert.doesNotMatch(
+  projectList,
+  /getData\('text\/plain'\)/,
+  'Project drop ignores arbitrary text/plain',
+)
 assert.match(projectList, /is-archive|is-delete/, 'nested Archive/Delete contrast')
 assert.match(projectList, /New project|inbox-empty-cta/, 'empty Projects CTA')
 assert.match(projectList, /is-dimmed|dimEmpty/, 'dim empty folders under filter')

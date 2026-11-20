@@ -66,12 +66,12 @@ export function ProjectList({
     setEditingId(null)
   }
 
+  const isChatThreadDrag = (dt: DataTransfer): boolean =>
+    [...dt.types].includes(CHAT_THREAD_DRAG_MIME)
+
   const readDraggedThreadId = (dt: DataTransfer): string => {
-    return (
-      dt.getData(CHAT_THREAD_DRAG_MIME) ||
-      dt.getData('text/plain') ||
-      ''
-    ).trim()
+    // Only our MIME — never treat arbitrary text/plain as a thread id.
+    return (dt.getData(CHAT_THREAD_DRAG_MIME) || '').trim()
   }
 
   return (
@@ -109,18 +109,12 @@ export function ProjectList({
                   key={p.id}
                   className={`inbox-project-node${active ? ' is-active' : ''}${dimmed ? ' is-dimmed' : ''}${dropTargetId === p.id ? ' is-drop-target' : ''}`}
                   onDragEnter={(e) => {
-                    if (!onAddChatToProject) return
-                    if (
-                      ![...e.dataTransfer.types].includes(CHAT_THREAD_DRAG_MIME) &&
-                      ![...e.dataTransfer.types].includes('text/plain')
-                    ) {
-                      return
-                    }
+                    if (!onAddChatToProject || !isChatThreadDrag(e.dataTransfer)) return
                     e.preventDefault()
                     setDropTargetId(p.id)
                   }}
                   onDragOver={(e) => {
-                    if (!onAddChatToProject) return
+                    if (!onAddChatToProject || !isChatThreadDrag(e.dataTransfer)) return
                     e.preventDefault()
                     e.dataTransfer.dropEffect = 'move'
                     setDropTargetId(p.id)
@@ -129,9 +123,9 @@ export function ProjectList({
                     if (e.currentTarget === e.target) setDropTargetId((cur) => (cur === p.id ? null : cur))
                   }}
                   onDrop={(e) => {
-                    e.preventDefault()
                     setDropTargetId(null)
-                    if (!onAddChatToProject) return
+                    if (!onAddChatToProject || !isChatThreadDrag(e.dataTransfer)) return
+                    e.preventDefault()
                     const threadId = readDraggedThreadId(e.dataTransfer)
                     if (!threadId) return
                     onAddChatToProject(threadId, p.id)

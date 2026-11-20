@@ -238,11 +238,21 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   )
   const composerModeRef = useRef(composerMode)
   composerModeRef.current = composerMode
-  const [planDraft, setPlanDraft] = useState('')
+  /** Per-thread Plan drafts — survive thread switches without clobbering edits. */
+  const planDraftsByThreadRef = useRef<Record<string, string>>({})
+  /** Per-thread last seeded assistant message id (empty string = seeded empty). */
+  const planSeedByThreadRef = useRef<Record<string, string>>({})
+  const [planDraft, setPlanDraftState] = useState('')
   const planDraftRef = useRef(planDraft)
   planDraftRef.current = planDraft
-  /** Last assistant message id we seeded into planDraft (avoid clobbering edits). */
-  const planSeedMsgRef = useRef<string | null>(null)
+  const setPlanDraft = useCallback((text: string) => {
+    const tid = activeIdRef.current
+    if (tid && tid !== BOOT_THREAD.id) {
+      planDraftsByThreadRef.current[tid] = text
+    }
+    planDraftRef.current = text
+    setPlanDraftState(text)
+  }, [])
   const [richLayout, setRichLayoutState] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
   const [reviewActivity, setReviewActivity] = useState<ChatReviewActivity>(() => emptyReviewActivity())
   const [reviewOpen, setReviewOpenState] = useState(false)
@@ -1149,13 +1159,12 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setError('Wait for the current reply to finish, then Build.')
       return
     }
+    const planText = planDraftRef.current.trim()
+    if (!planText) {
+      setError('Plan is empty — write or restore a plan before Build.')
+      return
+    }
     const tid = activeIdRef.current
-    const thread = threadsRef.current.find((t) => t.id === tid)
-    const lastAssistant = [...(thread?.messages || [])]
-      .reverse()
-      .find((m) => m.role === 'assistant' && m.content.trim())
-    const planText =
-      planDraftRef.current.trim() || extractPlanArtifactText(lastAssistant?.content || '')
     const inboxState = inboxRef.current?.state
     const linked = inboxState ? agentForThread(inboxState, tid) : undefined
     const inProject = Boolean(linked?.projectId)
@@ -1175,26 +1184,37 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     await enqueuePrompt(prompt, targetThreadId)
   }, [enqueuePrompt, setComposerMode, unlocked])
 
+  // Load the active thread's Plan draft when switching chats (edits are keyed by threadId).
+  useEffect(() => {
+    if (activeId === BOOT_THREAD.id) {
+      setPlanDraftState('')
+      planDraftRef.current = ''
+      return
+    }
+    const stored = planDraftsByThreadRef.current[activeId] ?? ''
+    setPlanDraftState(stored)
+    planDraftRef.current = stored
+  }, [activeId])
+
   // Seed / refresh editable Plan artifact from the latest assistant reply while in Plan mode.
-  // One seed per assistant message id — user edits stick until a newer assistant reply lands.
+  // Seed key is per-thread — switching away and back keeps user edits for that thread.
   useEffect(() => {
     if (composerMode !== 'plan') return
     if (busy) return
+    if (activeId === BOOT_THREAD.id) return
     const thread = threads.find((t) => t.id === activeId)
     const lastAssistant = [...(thread?.messages || [])]
       .reverse()
       .find((m) => m.role === 'assistant' && m.content.trim())
-    if (!lastAssistant) {
-      if (planSeedMsgRef.current?.startsWith(`${activeId}:`)) return
-      planSeedMsgRef.current = `${activeId}:`
-      setPlanDraft('')
-      return
-    }
-    const msgKey = `${activeId}:${lastAssistant.id}`
-    if (planSeedMsgRef.current === msgKey) return
-    const extracted = extractPlanArtifactText(lastAssistant.content)
-    planSeedMsgRef.current = msgKey
-    setPlanDraft(extracted)
+    const msgKey = lastAssistant ? lastAssistant.id : ''
+    if (planSeedByThreadRef.current[activeId] === msgKey) return
+    const extracted = lastAssistant
+      ? extractPlanArtifactText(lastAssistant.content)
+      : ''
+    planSeedByThreadRef.current[activeId] = msgKey
+    planDraftsByThreadRef.current[activeId] = extracted
+    planDraftRef.current = extracted
+    setPlanDraftState(extracted)
   }, [activeId, busy, composerMode, threads])
 
   // Flush Overseer project_message / create_agent messages sequentially, then return to Overseer.

@@ -214,7 +214,9 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   const addChatToProject = (threadId: string, projectId: string) => {
-    linkThread(projectId, threadId)
+    const tid = String(threadId || '').trim()
+    if (!tid || !threads.some((t) => t.id === tid)) return
+    linkThread(projectId, tid)
     expandProject(projectId)
     setProjectsOpen(true)
   }

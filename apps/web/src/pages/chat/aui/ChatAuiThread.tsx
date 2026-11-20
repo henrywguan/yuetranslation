@@ -724,12 +724,14 @@ function ComposerChrome({ error }: { error?: string | null }) {
             <button
               type="button"
               className="aui-mode-build"
-              disabled={busy}
-              aria-disabled={busy}
+              disabled={busy || !planDraft.trim()}
+              aria-disabled={busy || !planDraft.trim()}
               title={
                 busy
                   ? 'Wait for the current reply to finish, then Build'
-                  : 'Switch to Agent and hand the plan to Overseer / workers'
+                  : !planDraft.trim()
+                    ? 'Plan is empty — write a plan before Build'
+                    : 'Switch to Agent and hand the plan to Overseer / workers'
               }
               onClick={() => void buildFromPlan()}
             >

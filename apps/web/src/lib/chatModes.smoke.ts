@@ -169,12 +169,16 @@ assert.match(thread, /savePlanToWorkspace/, 'Save plan to workspace')
 assert.match(thread, /onPaste|onDrop|takeImageFromDataTransfer/, 'paste/drop image into composer')
 assert.match(thread, /types\]\.some\(\(t\) => t === 'Files'\)/, 'dragover only claims Files')
 assert.match(thread, /githubBound|@diff:|lastRun/, 'richer @ diff/run wiring')
-assert.match(thread, /disabled=\{busy\}/, 'Build disabled while busy')
+assert.match(
+  thread,
+  /disabled=\{busy \|\| !planDraft\.trim\(\)\}/,
+  'Build disabled while busy or empty plan',
+)
 assert.match(thread, /Wait for reply/, 'Plan busy shows wait-for-reply status')
 assert.match(
   thread,
-  /Wait for the current reply to finish, then Build/,
-  'Build title explains wait while busy',
+  /Wait for the current reply to finish, then Build|Plan is empty/,
+  'Build title explains wait / empty plan',
 )
 assert.match(thread, /aui-tools-label/, 'DeepThink/Search nested under Tools')
 assert.match(thread, /ChatDictateButton/, 'dictate preserved')
@@ -196,6 +200,12 @@ assert.match(runtime, /chatMode: composerModeRef/, 'mode forwarded to SSE')
 assert.match(runtime, /writeChatComposerMode/, 'mode persisted')
 assert.match(runtime, /buildPlanBuildPrompt/, 'Build uses Overseer-leaning prompt')
 assert.match(runtime, /planDraft|savePlanToWorkspace|CHAT_PLAN_WORKSPACE_PATH/, 'Plan artifact session APIs')
+assert.match(runtime, /planDraftsByThreadRef|planSeedByThreadRef/, 'Plan drafts keyed per thread')
+assert.match(
+  runtime,
+  /Plan is empty — write or restore a plan before Build/,
+  'Build refuses empty plan (no silent fallback to last assistant)',
+)
 assert.match(
   runtime,
   /Wait for the current reply to finish, then Build/,
