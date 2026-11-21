@@ -45,8 +45,8 @@ Avatar VO is pre-baked Higgsfield `text2speech_v2` (ElevenLabs variant) with **o
 
 | Character | Preset | `voice_id` |
 | --- | --- | --- |
-| DS Boy | **Benji** | `e6f9b893-51b1-51d3-afe9-9e0482cb7ac1` |
-| DS Girl | **Brielle** | `a00bc7f3-0236-5e76-ac65-90137ce0f5a4` |
+| DS Boy | **Archie** (cute anime boy) | `bd072316-f77c-588b-b6e5-e46b9b03d008` |
+| DS Girl | **Pixie** (cute chibi anime girl) | `0178ef57-ada4-43d9-992b-8d9221045bb4` |
 
 VO copy (same words, distinct takes): idle `Hey.` · think `Hmm.` · listen `I am listening.` · speak `Okay.` · happy `Nice!` · proud `Done.` · celebrate `Hooray!` · eureka `Got it!` · concern `Oh no.` · bow `Thank you!` · fist `Let's go!` · wave `Hi!` · nod `Yes.` · relieved `Phew.` · sleepy `Zzz.`
 

@@ -2,7 +2,7 @@
  * Fullscreen companion SFX + character VO (intro-style).
  * Pre-baked mp3 under `public/chat-avatar/sfx` and `{boy,girl}/vo`.
  *
- * VO is each character’s personal Higgsfield voice (boy = Benji, girl = Brielle),
+ * VO is each character’s personal Higgsfield voice (boy = Archie, girl = Pixie),
  * baked offline — never Azure Speech and never `/api/tts` at runtime.
  */
 import {
@@ -73,28 +73,40 @@ type PlayOpts = {
 }
 
 type Session = {
+  /** Monotonic play token — abandoned async plays must not touch a newer session. */
+  gen: number
   sfx: HTMLAudioElement | null
   vo: HTMLAudioElement | null
   lips: boolean
 }
 
 let active: Session | null = null
+/** Bumped on every stop / new play so Strict Mode remounts cannot double-fire beds. */
+let playGen = 0
+
+function disposeAudio(a: HTMLAudioElement | null) {
+  if (!a) return
+  try {
+    a.pause()
+    a.removeAttribute('src')
+    a.load()
+  } catch {
+    /* ignore */
+  }
+}
 
 function stopSession() {
+  playGen += 1
   const s = active
   active = null
   if (!s) return
-  for (const a of [s.sfx, s.vo]) {
-    if (!a) continue
-    try {
-      a.pause()
-      a.removeAttribute('src')
-      a.load()
-    } catch {
-      /* ignore */
-    }
-  }
+  disposeAudio(s.sfx)
+  disposeAudio(s.vo)
   if (s.lips) lipBus?.setPlaying(false)
+}
+
+function isCurrent(gen: number): boolean {
+  return active?.gen === gen
 }
 
 export function stopChatDeepAvatarEmotionAudio() {
@@ -103,7 +115,8 @@ export function stopChatDeepAvatarEmotionAudio() {
 
 /**
  * Play SFX (+ VO when not talking over reply TTS).
- * Returns whether VO started (for unmute UI) and a promise that settles when audio ends.
+ * One call owns one SFX bed + one VO line; superseded plays no-op mid-flight
+ * (React Strict Mode double-mount, effect re-entry, stacked outro+play).
  */
 export async function playChatDeepAvatarEmotionAudio(opts: PlayOpts): Promise<{
   played: boolean
@@ -116,7 +129,14 @@ export async function playChatDeepAvatarEmotionAudio(opts: PlayOpts): Promise<{
     return { played: false, needsUnmute: false, stop: stopSession }
   }
 
+  const myGen = playGen
   unlockAudioPlayback()
+
+  // Another stop/play may have run during unlock — abandon orphans.
+  if (myGen !== playGen) {
+    return { played: false, needsUnmute: false, stop: stopSession }
+  }
+
   const ttsBusy = Boolean(lipBus?.isBusy())
   const sfx = new Audio(chatDeepAvatarSfxSrc(opts.mood))
   sfx.preload = 'auto'
@@ -129,48 +149,65 @@ export async function playChatDeepAvatarEmotionAudio(opts: PlayOpts): Promise<{
     vo.volume = 0.9
   }
 
-  active = { sfx, vo, lips: false }
+  if (myGen !== playGen) {
+    disposeAudio(sfx)
+    disposeAudio(vo)
+    return { played: false, needsUnmute: false, stop: stopSession }
+  }
+
+  active = { gen: myGen, sfx, vo, lips: false }
 
   const tryPlay = async (audio: HTMLAudioElement, muted: boolean) => {
+    if (!isCurrent(myGen)) return false
     audio.muted = muted
     await audio.play()
+    return isCurrent(myGen)
   }
 
   let needsUnmute = false
   try {
-    await tryPlay(sfx, false)
+    const ok = await tryPlay(sfx, false)
+    if (!ok) return { played: false, needsUnmute: false, stop: stopSession }
   } catch {
     try {
-      await tryPlay(sfx, true)
+      const ok = await tryPlay(sfx, true)
+      if (!ok) return { played: false, needsUnmute: false, stop: stopSession }
       needsUnmute = true
     } catch {
-      stopSession()
+      if (isCurrent(myGen)) stopSession()
       return { played: false, needsUnmute: false, stop: stopSession }
     }
   }
 
-  if (vo) {
+  if (vo && isCurrent(myGen)) {
     try {
-      await tryPlay(vo, needsUnmute)
-      if (active) active.lips = true
-      lipBus?.setPlaying(true)
-      vo.onended = () => {
-        if (active?.vo === vo) {
-          lipBus?.setPlaying(false)
-          if (active) active.lips = false
+      const ok = await tryPlay(vo, needsUnmute)
+      if (ok && isCurrent(myGen) && active) {
+        active.lips = true
+        lipBus?.setPlaying(true)
+        vo.onended = () => {
+          if (active?.gen === myGen && active.vo === vo) {
+            lipBus?.setPlaying(false)
+            active.lips = false
+          }
         }
       }
     } catch {
       try {
-        await tryPlay(vo, true)
-        needsUnmute = true
-        if (active) active.lips = true
-        lipBus?.setPlaying(true)
+        const ok = await tryPlay(vo, true)
+        if (ok && isCurrent(myGen) && active) {
+          needsUnmute = true
+          active.lips = true
+          lipBus?.setPlaying(true)
+        }
       } catch {
-        vo = null
-        if (active) active.vo = null
+        if (isCurrent(myGen) && active) active.vo = null
       }
     }
+  }
+
+  if (!isCurrent(myGen)) {
+    return { played: false, needsUnmute: false, stop: stopSession }
   }
 
   return { played: true, needsUnmute, stop: stopSession }

@@ -669,6 +669,10 @@ export function ChatDeepAvatarCelebrateFx({
   const [needsUnmute, setNeedsUnmute] = useState(false)
   const flyRef = useRef<HTMLDivElement | null>(null)
   const [soundEnabled] = useChatDeepAvatarSoundEnabled()
+  // Keep dismiss identity out of the audio effect deps — playReq churn must not
+  // restart SFX+VO mid-performance (heard as a double play).
+  const onDismissRef = useRef(onDismiss)
+  onDismissRef.current = onDismiss
 
   useEffect(() => {
     bindChatDeepAvatarAudioLipBus({
@@ -677,7 +681,8 @@ export function ChatDeepAvatarCelebrateFx({
     })
   }, [])
 
-  // Restart timers on every new session (same mood can celebrate again while open stays true).
+  // Restart timers/audio only on a new fullscreen session (open + sessionKey),
+  // or when character / mood / sound pref for that session changes.
   useEffect(() => {
     if (!open) {
       setMounted(false)
@@ -689,20 +694,17 @@ export function ChatDeepAvatarCelebrateFx({
     setMounted(true)
     setPhase('enter')
     setNeedsUnmute(false)
-    let stopAudio = () => {}
     void playChatDeepAvatarEmotionAudio({ character, mood, soundEnabled }).then((res) => {
-      stopAudio = res.stop
       if (res.needsUnmute) setNeedsUnmute(true)
     })
     const hold = window.setTimeout(() => setPhase('exit'), FULLSCREEN_MS - 420)
-    const done = window.setTimeout(() => onDismiss(), FULLSCREEN_MS)
+    const done = window.setTimeout(() => onDismissRef.current(), FULLSCREEN_MS)
     return () => {
       window.clearTimeout(hold)
       window.clearTimeout(done)
-      stopAudio()
       stopChatDeepAvatarEmotionAudio()
     }
-  }, [open, sessionKey, onDismiss, character, mood, soundEnabled])
+  }, [open, sessionKey, character, mood, soundEnabled])
 
   useEffect(() => {
     if (!open) return
@@ -797,11 +799,20 @@ export function useChatDeepAvatarCelebrateFx(opts: {
     deepFinish: boolean
   } | null>(null)
   const sessionId = useRef(0)
+  const sessionRef = useRef(session)
+  sessionRef.current = session
+  const playReqRef = useRef(playReq)
+  playReqRef.current = playReq
 
   useEffect(() => {
     const rising = opts.outroActive && !prevOutro.current
     prevOutro.current = opts.outroActive
     if (!rising || !opts.outroMood) return
+    // avatar_play / high-energy avatar_react already owns fullscreen — stacking
+    // outro celebrate on top restarts SFX+VO (Henry's double-sound bug).
+    const forced = playReqRef.current
+    if (forced?.forceFullscreen) return
+    if (sessionRef.current) return
     const start = shouldFullscreenCelebrate({
       celebrateMode: opts.celebrateMode,
       deepFinish: opts.deepFinish,
@@ -832,6 +843,10 @@ export function useChatDeepAvatarCelebrateFx(opts: {
       clearChatDeepAvatarPlay(playReq.id)
       return
     }
+    // Same mood already on screen from a near-simultaneous outro — keep session
+    // (and its audio) instead of bumping sessionKey and replaying beds.
+    const cur = sessionRef.current
+    if (cur && cur.mood === playReq.mood) return
     sessionId.current += 1
     setSession({
       id: sessionId.current,
@@ -843,8 +858,9 @@ export function useChatDeepAvatarCelebrateFx(opts: {
   const dismissFx = useCallback(() => {
     setSession(null)
     stopChatDeepAvatarEmotionAudio()
-    if (playReq) clearChatDeepAvatarPlay(playReq.id)
-  }, [playReq])
+    const req = playReqRef.current
+    if (req) clearChatDeepAvatarPlay(req.id)
+  }, [])
   const showFx = Boolean(session)
   return {
     showFx,

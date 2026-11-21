@@ -448,11 +448,32 @@ assert.match(auiCss, /\.aui-deep-avatar\b/, 'companion avatar styles')
 assert.doesNotMatch(auiCss, /\.aui-deep-avatar-dock\b|\.aui-deep-avatar-stage\b/, 'dock/stage CSS removed')
 assert.match(auiCss, /\.aui-deep-avatar-lips\b/, 'TTS lip overlay styles')
 const avatarSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatar.tsx'), 'utf8')
+const audioSrc = readFileSync(join(here, 'chatDeepAvatarAudio.ts'), 'utf8')
 assert.match(avatarSrc, /size = 'portrait'|Size = 'portrait'/, 'portrait is default/supported size')
 assert.match(avatarSrc, /useChatDeepAvatarCharacter/, 'persisted character hook')
 assert.match(avatarSrc, /CHAT_DEEP_AVATAR_CHARACTER_EVENT/, 'same-tab character sync')
 assert.match(avatarSrc, /useChatDeepAvatarCelebrateMode/, 'celebrate mode hook')
 assert.match(avatarSrc, /ChatDeepAvatarCelebrateFx/, 'fullscreen celebrate FX component')
+assert.match(
+  avatarSrc,
+  /forced\?\.forceFullscreen[\s\S]*sessionRef\.current/,
+  'outro celebrate skips when forced play already owns fullscreen',
+)
+assert.match(
+  avatarSrc,
+  /onDismissRef\.current/,
+  'CelebrateFx dismiss via ref so playReq churn does not restart audio',
+)
+assert.match(
+  audioSrc,
+  /let playGen[\s\S]*isCurrent\(myGen\)/,
+  'emotion audio uses generation token against Strict Mode double-play',
+)
+assert.doesNotMatch(
+  audioSrc,
+  /fetch\([^)]*\/api\/tts|new Audio\([^)]*\/api\/tts/,
+  'companion VO never fetches /api/tts',
+)
 assert.match(avatarSrc, /createPortal/, 'celebrate FX portals to body')
 assert.match(avatarSrc, /pickChatDeepAvatarOutroMood|setOutro/, 'outro latch wired in mood hook')
 assert.match(avatarSrc, /Priority \(high → low\)/, 'documents mood priority')
