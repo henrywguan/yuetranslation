@@ -417,7 +417,8 @@ type ComposerChromeProps = {
   error?: string | null
   dock: ChatDeepAvatarDockMode
   onToggleDock: () => void
-  dockRef: RefObject<HTMLButtonElement | null>
+  /** Celebrate FLIP origin — avatar bounds, not the full-height stage button. */
+  dockRef: RefObject<HTMLElement | null>
   portraitMood: ChatDeepAvatarMood
   portraitLips: number
   avatarCharacter: ChatDeepAvatarCharacterId
@@ -982,18 +983,19 @@ function ComposerChrome({
           <button
             type="button"
             className="aui-composer-portrait"
-            ref={dockRef}
             onClick={onToggleDock}
             aria-label="Show large companion"
           >
-            <ChatDeepAvatar
-              mood={portraitMood}
-              size="portrait"
-              lipLevel={portraitLips}
-              character={avatarCharacter}
-              label="DeepSeek companion"
-              dimmed={dimPortrait}
-            />
+            <span className="aui-avatar-dock-origin" ref={dockRef}>
+              <ChatDeepAvatar
+                mood={portraitMood}
+                size="portrait"
+                lipLevel={portraitLips}
+                character={avatarCharacter}
+                label="DeepSeek companion"
+                dimmed={dimPortrait}
+              />
+            </span>
           </button>
         ) : null}
         <div className="aui-composer-main">
@@ -1134,7 +1136,7 @@ export function ChatAuiThread() {
   const [dock, setDock] = useChatDeepAvatarDock()
   const [avatarCharacter] = useChatDeepAvatarCharacter()
   const [celebrateMode] = useChatDeepAvatarCelebrateMode()
-  const dockRef = useRef<HTMLButtonElement | null>(null)
+  const dockRef = useRef<HTMLElement | null>(null)
   const {
     mood: portraitMood,
     outroMood: portraitOutroMood,
@@ -1168,18 +1170,19 @@ export function ChatAuiThread() {
           <button
             type="button"
             className="aui-avatar-stage-toggle"
-            ref={dockRef}
             onClick={onToggleDock}
             aria-label="Dock companion to composer"
           >
-            <ChatDeepAvatar
-              mood={portraitMood}
-              size="stage"
-              lipLevel={portraitLips}
-              character={avatarCharacter}
-              label="DeepSeek companion"
-              dimmed={dimPortrait}
-            />
+            <span className="aui-avatar-dock-origin" ref={dockRef}>
+              <ChatDeepAvatar
+                mood={portraitMood}
+                size="stage"
+                lipLevel={portraitLips}
+                character={avatarCharacter}
+                label="DeepSeek companion"
+                dimmed={dimPortrait}
+              />
+            </span>
           </button>
         </aside>
       ) : null}

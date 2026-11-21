@@ -238,6 +238,15 @@
   color: inherit;
 }
 
+/* Celebrate FLIP origin — sizes to the visible avatar, not the stage hit target. */
+.aui-avatar-dock-origin {
+  display: grid;
+  place-items: center;
+  width: fit-content;
+  max-width: 100%;
+  max-height: 100%;
+}
+
 .aui-avatar-stage-toggle:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--ds-blue) 70%, transparent);
   outline-offset: 3px;

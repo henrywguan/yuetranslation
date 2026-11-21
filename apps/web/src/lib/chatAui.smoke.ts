@@ -579,6 +579,16 @@ assert.match(
 assert.match(thread, /ChatDeepAvatarCelebrateFx/, 'thread mounts celebrate FX')
 assert.match(thread, /useChatDeepAvatarCelebrateFx/, 'thread gates fullscreen via pref')
 assert.match(thread, /originRef=\{dockRef\}/, 'celebrate FLIP origin follows active dock')
+assert.match(
+  thread,
+  /className="aui-avatar-dock-origin"\s+ref=\{dockRef\}/,
+  'celebrate origin wraps avatar (not full-height stage toggle)',
+)
+assert.doesNotMatch(
+  thread,
+  /className="aui-avatar-stage-toggle"[^>]*ref=\{dockRef\}/,
+  'stage toggle button is not the celebrate origin',
+)
 assert.match(thread, /dimmed=\{dimPortrait\}/, 'portrait dims while FX flies')
 const inboxCss = readFileSync(join(root, 'pages/chat/inbox/Inbox.css'), 'utf8')
 assert.match(inboxCss, /\.inbox-settings-companion\b/, 'Inbox Companion settings styles')
