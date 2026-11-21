@@ -230,7 +230,7 @@ export function useChatDeepAvatarMood(opts?: ChatDeepAvatarMoodOpts): ChatDeepAv
   else if (!isEmpty && draft.trim().length > 0) mood = 'think'
 
   // Concern / error always suppresses celebratory FX even if a timer still holds `outro`.
-  const outroActive = !hasError && Boolean(outro) && isChatDeepAvatarOutroMood(outro)
+  const outroActive = !hasError && outro != null && isChatDeepAvatarOutroMood(outro)
   const outroMood = outroActive ? outro : null
 
   return {
