@@ -174,6 +174,60 @@ export function chatDeepAvatarPosterSrc(character: ChatDeepAvatarCharacterId): s
   return `${CHAT_DEEP_AVATAR_DIR[character]}/deep-bust.png`
 }
 
+/**
+ * Fullscreen companion intro MP4 under `public/chat-avatar/{id}/intro.mp4`.
+ * Returns null only if a character folder has no shipped clip yet.
+ */
+export function chatDeepAvatarIntroSrc(character: ChatDeepAvatarCharacterId): string | null {
+  const id = normalizeChatDeepAvatarCharacter(character)
+  return `${CHAT_DEEP_AVATAR_DIR[id]}/intro.mp4`
+}
+
+/** Optional still shown while the intro MP4 buffers. */
+export function chatDeepAvatarIntroPosterSrc(character: ChatDeepAvatarCharacterId): string | null {
+  const id = normalizeChatDeepAvatarCharacter(character)
+  return `${CHAT_DEEP_AVATAR_DIR[id]}/intro-poster.jpg`
+}
+
+/** Per-character “intro already seen” map — once until cleared / storage wipe. */
+export const CHAT_DEEP_AVATAR_INTRO_SEEN_KEY = 'yue-deepseek-chat-avatar-intro-seen-v1'
+
+type IntroSeenMap = Partial<Record<ChatDeepAvatarCharacterId, boolean>>
+
+function readChatDeepAvatarIntroSeen(): IntroSeenMap {
+  try {
+    const raw = localStorage.getItem(CHAT_DEEP_AVATAR_INTRO_SEEN_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as unknown
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    const out: IntroSeenMap = {}
+    for (const id of CHAT_DEEP_AVATAR_CHARACTERS) {
+      if ((parsed as Record<string, unknown>)[id] === true) out[id] = true
+    }
+    return out
+  } catch {
+    return {}
+  }
+}
+
+export function hasSeenChatDeepAvatarIntro(character: ChatDeepAvatarCharacterId): boolean {
+  return readChatDeepAvatarIntroSeen()[character] === true
+}
+
+export function markChatDeepAvatarIntroSeen(character: ChatDeepAvatarCharacterId) {
+  try {
+    const next = { ...readChatDeepAvatarIntroSeen(), [character]: true }
+    localStorage.setItem(CHAT_DEEP_AVATAR_INTRO_SEEN_KEY, JSON.stringify(next))
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+/** Whether this character should attempt the fullscreen intro overlay. */
+export function shouldPlayChatDeepAvatarIntro(character: ChatDeepAvatarCharacterId): boolean {
+  return Boolean(chatDeepAvatarIntroSrc(character)) && !hasSeenChatDeepAvatarIntro(character)
+}
+
 /** All mood + poster paths for a character (smoke / preload). */
 export function chatDeepAvatarAssetPaths(character: ChatDeepAvatarCharacterId): string[] {
   const dir = CHAT_DEEP_AVATAR_DIR[character]

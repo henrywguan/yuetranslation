@@ -44,6 +44,9 @@ export default defineConfig({
         globIgnores: [
           '**/assets/harbor-quest/**',
           '**/chat-avatar/**/deep-sheet.png',
+          // Companion intro MP4/poster — multi‑MB runtime fetch; keep out of SW (2 MiB cap).
+          '**/chat-avatar/**/intro.mp4',
+          '**/chat-avatar/**/intro-poster.*',
         ],
         maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
         additionalManifestEntries: [

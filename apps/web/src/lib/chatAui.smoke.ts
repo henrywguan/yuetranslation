@@ -11,11 +11,15 @@ import type { ChatMessage } from './chatHistory'
 import { CHAT_AUI_FLAG_KEY, isChatAuiEnabled, setChatAuiEnabled } from './chatAuiFlag'
 import {
   CHAT_DEEP_AVATAR_DEEP_MS,
+  chatDeepAvatarIntroSrc,
   chatDeepAvatarMoodAssetStem,
+  hasSeenChatDeepAvatarIntro,
   isChatDeepAvatarDeepFinish,
+  markChatDeepAvatarIntroSeen,
   normalizeChatDeepAvatarCelebrateMode,
   pickChatDeepAvatarOutroMood,
   shouldFullscreenCelebrate,
+  shouldPlayChatDeepAvatarIntro,
 } from './chatDeepAvatarCharacter'
 import {
   __resetChatDeepAvatarPlanBuildForTests,
@@ -479,9 +483,67 @@ assert.match(thread, /dimmed=\{dimPortrait\}/, 'portrait dims while FX flies')
 const inboxCss = readFileSync(join(root, 'pages/chat/inbox/Inbox.css'), 'utf8')
 assert.match(inboxCss, /\.inbox-settings-companion\b/, 'Inbox Companion settings styles')
 assert.match(inboxCss, /\.inbox-settings-celebrate\b/, 'Inbox Celebrate settings styles')
+assert.match(page, /ChatDeepAvatarIntroOverlay/, 'AUI shell mounts companion intro overlay')
+assert.match(auiCss, /\.aui-deep-avatar-intro\b/, 'companion intro overlay styles')
+assert.match(
+  auiCss,
+  /\.aui-deep-avatar-intro\b[\s\S]*z-index:\s*140/,
+  'intro sits above celebrate FX (130)',
+)
+assert.match(auiCss, /prefers-reduced-motion[\s\S]*aui-deep-avatar-intro/, 'reduced-motion softens intro')
+const introSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatarIntro.tsx'), 'utf8')
+assert.match(introSrc, /shouldPlayChatDeepAvatarIntro|markChatDeepAvatarIntroSeen/, 'intro seen gate')
+assert.match(introSrc, /chatDeepAvatarIntroSrc/, 'intro resolves per-character MP4')
+assert.match(introSrc, /useReducedMotion/, 'intro respects reduced motion')
+assert.match(introSrc, /Tap to skip|beginExit/, 'intro is skippable')
+assert.match(introSrc, /markSeen:\s*false/, 'buffer/autoplay fail does not burn seen latch')
+assert.match(introSrc, /is-reduced/, 'reduced-motion wash class')
+assert.match(
+  introSrc,
+  /setPhase\('enter'\)[\s\S]*REDUCED_HOLD_MS/,
+  'reduced-motion starts visible (enter) before exit fade',
+)
 const charSrc = readFileSync(join(here, 'chatDeepAvatarCharacter.ts'), 'utf8')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CHARACTER_KEY/, 'character localStorage key')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CHARACTER_EVENT/, 'character change event for sync')
+assert.match(charSrc, /chatDeepAvatarIntroSrc/, 'intro src helper')
+assert.match(charSrc, /CHAT_DEEP_AVATAR_INTRO_SEEN_KEY/, 'intro seen localStorage key')
+assert.match(charSrc, /shouldPlayChatDeepAvatarIntro/, 'intro play gate')
+assert.equal(chatDeepAvatarIntroSrc('boy'), '/chat-avatar/boy/intro.mp4', 'boy intro path')
+assert.equal(chatDeepAvatarIntroSrc('girl'), '/chat-avatar/girl/intro.mp4', 'girl intro path')
+assert.equal(hasSeenChatDeepAvatarIntro('boy'), false, 'boy intro unseen by default')
+assert.equal(hasSeenChatDeepAvatarIntro('girl'), false, 'girl intro unseen by default')
+assert.equal(shouldPlayChatDeepAvatarIntro('boy'), true, 'boy should play when unseen')
+assert.equal(shouldPlayChatDeepAvatarIntro('girl'), true, 'girl should play when unseen')
+markChatDeepAvatarIntroSeen('boy')
+assert.equal(hasSeenChatDeepAvatarIntro('boy'), true, 'boy intro marked seen')
+assert.equal(shouldPlayChatDeepAvatarIntro('boy'), false, 'boy skips after seen')
+assert.equal(shouldPlayChatDeepAvatarIntro('girl'), true, 'girl still plays after boy seen')
+markChatDeepAvatarIntroSeen('girl')
+assert.equal(shouldPlayChatDeepAvatarIntro('girl'), false, 'girl skips after seen')
+assert.equal(
+  existsSync(join(root, '../public/chat-avatar/boy/intro.mp4')),
+  true,
+  'boy intro.mp4 is committed under public/',
+)
+assert.equal(
+  existsSync(join(root, '../public/chat-avatar/girl/intro.mp4')),
+  true,
+  'girl intro.mp4 is committed under public/',
+)
+assert.equal(
+  existsSync(join(root, '../public/chat-avatar/boy/intro-poster.jpg')),
+  true,
+  'boy intro poster committed',
+)
+assert.equal(
+  existsSync(join(root, '../public/chat-avatar/girl/intro-poster.jpg')),
+  true,
+  'girl intro poster committed',
+)
+const viteCfg = readFileSync(join(root, '../vite.config.ts'), 'utf8')
+assert.match(viteCfg, /chat-avatar\/\*\*\/intro\.mp4/, 'SW globIgnores intro mp4')
+assert.match(viteCfg, /intro-poster/, 'SW globIgnores intro poster')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CELEBRATE_MODE_KEY/, 'celebrate mode localStorage key')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CELEBRATE_MODE_EVENT/, 'celebrate mode change event')
 assert.match(charSrc, /shouldFullscreenCelebrate/, 'fullscreen gate helper')

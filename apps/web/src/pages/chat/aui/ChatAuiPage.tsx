@@ -27,6 +27,7 @@ import { ChatInboxProvider, useChatInboxContext } from '../inbox/ChatInboxContex
 import { InboxShell } from '../inbox/InboxShell'
 import { ChatAuiRuntimeProvider, useChatAuiSession } from './ChatAuiRuntime'
 import { ChatAuiThread } from './ChatAuiThread'
+import { ChatDeepAvatarIntroOverlay } from './ChatDeepAvatarIntro'
 import { ChatReviewRail } from './ChatReviewRail'
 
 const MENU_ICON = (
@@ -321,6 +322,8 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           onToggleSchedule={toggleSchedule}
         />
       ) : null}
+      {/* Companion intro — once per character until seen (boy / girl by pick). */}
+      <ChatDeepAvatarIntroOverlay />
     </div>
   )
 }

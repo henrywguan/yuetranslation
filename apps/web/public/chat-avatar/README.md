@@ -21,8 +21,14 @@ Each folder (runtime assets only — shipped under `public/`):
 | `deep-listen.gif` | Dictate mic listening |
 | `deep-concern.gif` | Session error / apologetic |
 | `deep-bust.png` | Reduced-motion / poster still |
+| `intro.mp4` | Fullscreen enter intro (boy + girl) |
+| `intro-poster.jpg` | Intro buffer still |
 
-**Do not** put character-bible `deep-sheet.png` (or other multi‑MB generation sources) in `public/chat-avatar/`. VitePWA `injectManifest` precaches `*.png` and rejects files over 2 MiB (broke prod after #796). Keep sheets outside the web public tree; `vite.config.ts` also glob-ignores `**/chat-avatar/**/deep-sheet.png` as a belt-and-suspenders guard.
+**Do not** put character-bible `deep-sheet.png` (or other multi‑MB generation sources) in `public/chat-avatar/`. VitePWA `injectManifest` precaches `*.png` and rejects files over 2 MiB (broke prod after #796). Keep sheets outside the web public tree; `vite.config.ts` also glob-ignores `**/chat-avatar/**/deep-sheet.png` as a belt-and-suspenders guard. Intro `*.mp4` / `intro-poster.*` are similarly excluded from the SW precache — runtime-fetch only.
+
+## Enter intro (`ChatDeepAvatarIntro.tsx`)
+
+On `#/chat` (AUI shell), play `intro.mp4` for the selected companion once per character until dismissed (localStorage `yue-deepseek-chat-avatar-intro-seen-v1`). Tap / Esc / video end fades the black overlay into chat chrome. `prefers-reduced-motion` skips the clip (brief black wash only).
 
 ## Quality bar
 
