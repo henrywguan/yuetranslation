@@ -185,6 +185,113 @@
   overflow-x: hidden;
 }
 
+/* Companion stage — left column beside the thread (tap portrait to dock). */
+.aui-layout.is-avatar-stage {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: stretch;
+}
+
+.aui-avatar-stage {
+  grid-column: 1;
+  grid-row: 1;
+  width: min(32vw, 22rem);
+  min-width: 10rem;
+  max-width: 22rem;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0.75rem 0.5rem 1rem;
+  box-sizing: border-box;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ds-canvas) 88%, var(--ds-blue)) 0%,
+      var(--ds-canvas) 42%,
+      color-mix(in srgb, var(--ds-canvas) 92%, #000) 100%
+    );
+  border-right: 1px solid color-mix(in srgb, var(--ds-divider) 80%, transparent);
+  overflow: hidden;
+  transition: width 0.22s ease, opacity 0.18s ease;
+}
+
+.aui-layout.is-avatar-stage > .aui-thread {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.aui-avatar-stage-toggle {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: end center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  color: inherit;
+}
+
+.aui-avatar-stage-toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ds-blue) 70%, transparent);
+  outline-offset: 3px;
+  border-radius: 0.75rem;
+}
+
+.aui-deep-avatar.is-stage {
+  width: min(100%, 20rem);
+  height: min(72vh, 100%);
+  max-height: calc(100% - 0.25rem);
+  filter: drop-shadow(0 18px 36px color-mix(in srgb, var(--ds-blue) 28%, transparent));
+}
+
+.aui-deep-avatar.is-stage .aui-deep-avatar-img {
+  object-fit: contain;
+}
+
+@media (max-width: 700px) {
+  .aui-layout.is-avatar-stage {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .aui-avatar-stage {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    height: min(28vh, 12rem);
+    min-height: 7.5rem;
+    padding: 0.35rem 0.75rem 0.45rem;
+    border-right: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--ds-divider) 80%, transparent);
+    align-items: center;
+  }
+
+  .aui-layout.is-avatar-stage > .aui-thread {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .aui-deep-avatar.is-stage {
+    width: min(100%, 14rem);
+    height: min(26vh, 11rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aui-avatar-stage {
+    transition: none;
+  }
+}
+
 /* History drawer uses classic `.ds-chat-sidebar` (absolute under `.ds-chat`) —
  * do not nest an in-flow/absolute panel under `.aui-layout` (left gap). */
 
@@ -959,13 +1066,32 @@
 }
 
 .aui-composer-portrait {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
   flex: 0 0 auto;
   align-self: flex-end;
   display: grid;
   place-items: end center;
   width: 5.5rem;
   min-height: 5.5rem;
+  padding: 0;
   padding-bottom: 0.1rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.aui-composer-portrait:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ds-blue) 70%, transparent);
+  outline-offset: 2px;
+  border-radius: 0.65rem;
+}
+
+/* Stage dock — composer loses the left tile; draft row goes full width. */
+.aui-composer-body.is-avatar-staged .aui-composer-main {
+  flex: 1 1 auto;
+  width: 100%;
 }
 
 .aui-composer-main {

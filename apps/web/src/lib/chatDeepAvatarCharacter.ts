@@ -180,6 +180,49 @@ export function writeChatDeepAvatarCelebrateMode(mode: ChatDeepAvatarCelebrateMo
   }
 }
 
+/** Composer bar tile vs large left stage beside the message thread. */
+export type ChatDeepAvatarDockMode = 'bar' | 'stage'
+
+export const CHAT_DEEP_AVATAR_DOCK_KEY = 'yue-deepseek-chat-avatar-dock-v1'
+
+export const CHAT_DEEP_AVATAR_DOCK_MODES: readonly ChatDeepAvatarDockMode[] = ['bar', 'stage'] as const
+
+export function normalizeChatDeepAvatarDockMode(raw: unknown): ChatDeepAvatarDockMode {
+  const v = String(raw || '')
+    .trim()
+    .toLowerCase()
+  if (v === 'stage' || v === 'left' || v === 'panel' || v === 'large') return 'stage'
+  return 'bar'
+}
+
+export function readChatDeepAvatarDockMode(
+  fallback: ChatDeepAvatarDockMode = 'bar',
+): ChatDeepAvatarDockMode {
+  try {
+    const raw = localStorage.getItem(CHAT_DEEP_AVATAR_DOCK_KEY)
+    if (raw == null || raw === '') return fallback
+    return normalizeChatDeepAvatarDockMode(raw)
+  } catch {
+    return fallback
+  }
+}
+
+export const CHAT_DEEP_AVATAR_DOCK_EVENT = 'yue-deepseek-chat-avatar-dock'
+
+export function writeChatDeepAvatarDockMode(mode: ChatDeepAvatarDockMode) {
+  const next = normalizeChatDeepAvatarDockMode(mode)
+  try {
+    localStorage.setItem(CHAT_DEEP_AVATAR_DOCK_KEY, next)
+    localStorage.setItem('yue-deepseek-chat-avatar-cloud-updated-v1', new Date().toISOString())
+  } catch {
+    /* ignore quota / private mode */
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(CHAT_DEEP_AVATAR_DOCK_EVENT, { detail: next }))
+    window.dispatchEvent(new CustomEvent('yue-deepseek-chat-avatar-prefs-changed'))
+  }
+}
+
 /** Closest shipped GIF when a dedicated performance clip is missing at runtime. */
 const RUNTIME_STEM_FALLBACK: Record<string, (typeof ASSET_MOODS)[number]> = {
   bow: 'proud',
