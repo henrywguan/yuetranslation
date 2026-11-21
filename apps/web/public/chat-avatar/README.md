@@ -14,8 +14,10 @@ Each folder (runtime assets only — shipped under `public/`):
 | File | Role |
 | --- | --- |
 | `deep-idle.gif` | Empty-state + resting bubble loop |
-| `deep-happy.gif` | Soft smile clip (kept; post-run uses celebrate) |
+| `deep-happy.gif` | Soft smile clip (kept; Ask/short wins use proud) |
+| `deep-proud.gif` | Clean Ask / short-win outro (softer than celebrate) |
 | `deep-celebrate.gif` | Brief post-reply cheer |
+| `deep-eureka.gif` | Search / long-research finish outro |
 | `deep-think.gif` | Composer has draft text |
 | `deep-speak.gif` | Assistant streaming / TTS base mouth loop |
 | `deep-listen.gif` | Dictate mic listening |
@@ -41,7 +43,7 @@ Priority high → low:
 1. **concern** — session error banner  
 2. **listen** — composer dictate mic live  
 3. **speak** — `thread.isRunning` **or** Azure / DeepSeek chat TTS playing  
-4. **celebrate** / **proud** / **eureka** — brief after a run finishes (`proud` → `deep-happy.gif`, `eureka` → `deep-celebrate.gif`; CSS variants until new GIFs)  
+4. **celebrate** / **proud** / **eureka** — brief after a run finishes (`deep-celebrate.gif` / `deep-proud.gif` / `deep-eureka.gif`)  
 5. **think** — engaged + composer draft  
 6. **idle** — otherwise  
 

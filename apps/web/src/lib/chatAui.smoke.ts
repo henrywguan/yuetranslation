@@ -13,6 +13,7 @@ import {
   CHAT_DEEP_AVATAR_DEEP_MS,
   chatDeepAvatarIntroSrc,
   chatDeepAvatarMoodAssetStem,
+  chatDeepAvatarMoodSrc,
   hasSeenChatDeepAvatarIntro,
   isChatDeepAvatarDeepFinish,
   markChatDeepAvatarIntroSeen,
@@ -549,7 +550,7 @@ assert.match(charSrc, /CHAT_DEEP_AVATAR_CELEBRATE_MODE_EVENT/, 'celebrate mode c
 assert.match(charSrc, /shouldFullscreenCelebrate/, 'fullscreen gate helper')
 assert.match(charSrc, /pickChatDeepAvatarOutroMood/, 'outro mood picker')
 assert.match(charSrc, /isChatDeepAvatarDeepFinish/, 'deep-finish helper')
-assert.match(charSrc, /chatDeepAvatarMoodAssetStem/, 'proud/eureka map to existing GIFs')
+assert.match(charSrc, /chatDeepAvatarMoodAssetStem/, 'mood → GIF stem helper')
 assert.match(charSrc, /DS Boy/, 'DS Boy label')
 assert.match(charSrc, /DS Girl/, 'DS Girl label')
 assert.match(charSrc, /\/chat-avatar\/boy/, 'boy asset dir')
@@ -649,8 +650,17 @@ assert.equal(
   }),
   true,
 )
-assert.equal(chatDeepAvatarMoodAssetStem('proud'), 'happy')
-assert.equal(chatDeepAvatarMoodAssetStem('eureka'), 'celebrate')
+assert.equal(chatDeepAvatarMoodAssetStem('proud'), 'proud')
+assert.equal(chatDeepAvatarMoodAssetStem('eureka'), 'eureka')
+assert.equal(chatDeepAvatarMoodAssetStem('celebrate'), 'celebrate')
+assert.equal(
+  chatDeepAvatarMoodSrc('boy', 'proud'),
+  '/chat-avatar/boy/deep-proud.gif',
+)
+assert.equal(
+  chatDeepAvatarMoodSrc('girl', 'eureka'),
+  '/chat-avatar/girl/deep-eureka.gif',
+)
 const runtimeSrc = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtimeSrc, /markChatDeepAvatarPlanBuild/, 'Plan→Build latches deep celebrate')
 assert.match(runtimeSrc, /setChatDeepAvatarPlanBuildChainBusy/, 'Plan→Build gates Overseer→worker chain')
@@ -698,6 +708,8 @@ for (const character of ['boy', 'girl'] as const) {
     'deep-listen.gif',
     'deep-concern.gif',
     'deep-celebrate.gif',
+    'deep-proud.gif',
+    'deep-eureka.gif',
     'deep-bust.png',
   ]) {
     assert.ok(

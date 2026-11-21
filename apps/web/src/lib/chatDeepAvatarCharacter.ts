@@ -45,8 +45,8 @@ export const CHAT_DEEP_AVATAR_CELEBRATE_MODE_HINT: Record<ChatDeepAvatarCelebrat
 }
 
 /**
- * Clip moods + CSS-variant outros (`proud` / `eureka` reuse happy/celebrate GIFs
- * until Henry OKs new Higgsfield assets).
+ * Clip moods under `public/chat-avatar/{boy,girl}/deep-{mood}.gif`.
+ * Outros: `proud` (Ask / short win), `eureka` (Search / long research), `celebrate` (default).
  */
 export type ChatDeepAvatarMood =
   | 'idle'
@@ -68,6 +68,8 @@ const ASSET_MOODS = [
   'listen',
   'concern',
   'celebrate',
+  'proud',
+  'eureka',
 ] as const satisfies readonly ChatDeepAvatarMood[]
 
 /** Public asset folder per character (`apps/web/public/chat-avatar/...`). */
@@ -79,7 +81,7 @@ export const CHAT_DEEP_AVATAR_DIR: Record<ChatDeepAvatarCharacterId, string> = {
 /** Agent/Plan/Search run length that counts as a “deep finish”. */
 export const CHAT_DEEP_AVATAR_DEEP_MS = 15_000
 
-/** Ask / very short wins latch `proud` (happy GIF) instead of celebrate. */
+/** Ask / very short wins latch `proud` instead of celebrate. */
 export const CHAT_DEEP_AVATAR_SHORT_MS = 4_000
 
 export function normalizeChatDeepAvatarCharacter(raw: unknown): ChatDeepAvatarCharacterId {
@@ -153,10 +155,8 @@ export function writeChatDeepAvatarCelebrateMode(mode: ChatDeepAvatarCelebrateMo
   }
 }
 
-/** Map display/CSS moods onto shipped GIF filenames (no new public assets). */
+/** Map display moods onto shipped GIF stems (`deep-{stem}.gif`). */
 export function chatDeepAvatarMoodAssetStem(mood: ChatDeepAvatarMood): (typeof ASSET_MOODS)[number] {
-  if (mood === 'proud') return 'happy'
-  if (mood === 'eureka') return 'celebrate'
   if ((ASSET_MOODS as readonly string[]).includes(mood)) {
     return mood as (typeof ASSET_MOODS)[number]
   }
@@ -249,8 +249,8 @@ export function isChatDeepAvatarDeepFinish(input: ChatDeepAvatarOutroPickInput):
 }
 
 /**
- * Post-run outro mood. `proud` / `eureka` are CSS variants on happy/celebrate GIFs.
- * Default remains celebrate.
+ * Post-run outro mood. `proud` = Ask/short win; `eureka` = Search/long research;
+ * default `celebrate`.
  */
 export function pickChatDeepAvatarOutroMood(input: ChatDeepAvatarOutroPickInput): ChatDeepAvatarMood {
   if (input.searchOn && (input.planBuild || input.durationMs >= CHAT_DEEP_AVATAR_SHORT_MS)) {
