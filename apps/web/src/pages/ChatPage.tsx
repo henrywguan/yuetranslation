@@ -724,6 +724,13 @@ export function ChatPage() {
   const [draft, setDraft] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [newChatBusy, setNewChatBusy] = useState(false)
+  const creatingNewChatRef = useRef(false)
+  const newChatCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const threadsRef = useRef(threads)
+  const activeIdRef = useRef(activeId)
+  threadsRef.current = threads
+  activeIdRef.current = activeId
   const [error, setError] = useState<string | null>(null)
   const [streamingId, setStreamingId] = useState<string | null>(null)
   const [thinking, setThinking] = useState(false)
@@ -944,18 +951,50 @@ export function ChatPage() {
     setThreads((prev) => upsertChatThread(thread, prev))
   }
 
+  const armNewChatCooldown = () => {
+    if (newChatCooldownTimerRef.current) clearTimeout(newChatCooldownTimerRef.current)
+    setNewChatBusy(true)
+    newChatCooldownTimerRef.current = setTimeout(() => {
+      setNewChatBusy(false)
+      newChatCooldownTimerRef.current = null
+    }, 450)
+  }
+
   const startNewChat = () => {
-    if (busy) return
+    if (busy || creatingNewChatRef.current) return
     clearRevealTimers()
     revealGenRef.current += 1
-    const created = emptyThread()
-    setThreads((prev) => upsertChatThread(created, prev))
-    setActiveId(created.id)
-    setRevealCount(0)
     setDraft('')
     setError(null)
     setSidebarOpen(false)
+    setRevealCount(0)
+
+    const active = threadsRef.current.find((t) => t.id === activeIdRef.current)
+    if (active && active.id !== BOOT_THREAD.id && !active.archived && active.messages.length === 0) {
+      armNewChatCooldown()
+      return
+    }
+
+    creatingNewChatRef.current = true
+    try {
+      const created = emptyThread()
+      const next = upsertChatThread(created, threadsRef.current)
+      threadsRef.current = next
+      setThreads(next)
+      activeIdRef.current = created.id
+      setActiveId(created.id)
+      armNewChatCooldown()
+    } finally {
+      creatingNewChatRef.current = false
+    }
   }
+
+  useEffect(
+    () => () => {
+      if (newChatCooldownTimerRef.current) clearTimeout(newChatCooldownTimerRef.current)
+    },
+    [],
+  )
 
   const selectThread = (id: string) => {
     if (busy) return
@@ -1546,7 +1585,13 @@ export function ChatPage() {
             Deep<span>Seek</span>
           </span>
         </div>
-        <button type="button" className="ds-chat-new" onClick={startNewChat} disabled={busy}>
+        <button
+          type="button"
+          className="ds-chat-new"
+          onClick={startNewChat}
+          disabled={busy || newChatBusy}
+          aria-busy={newChatBusy || undefined}
+        >
           <span aria-hidden="true">+</span> New chat
         </button>
         <label className="ds-chat-sidebar-search">
@@ -1660,7 +1705,8 @@ export function ChatPage() {
           type="button"
           className="ds-chat-icon-btn"
           aria-label="New chat"
-          disabled={busy}
+          aria-busy={newChatBusy || undefined}
+          disabled={busy || newChatBusy}
           onClick={startNewChat}
         >
           {PLUS_ICON}

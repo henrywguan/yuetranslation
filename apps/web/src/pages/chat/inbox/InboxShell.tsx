@@ -52,6 +52,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     threads,
     activeId,
     busy,
+    newChatBusy,
     startNewChat,
     selectThread,
     archiveThread,
@@ -370,6 +371,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
           : 'Working'
 
   const startUngroupedChat = () => {
+    if (newChatBusy) return
     startNewChat()
     onNavigate?.()
   }
@@ -519,7 +521,13 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
           ) : null}
         </div>
 
-        <button type="button" className="inbox-new-chat" onClick={startUngroupedChat}>
+        <button
+          type="button"
+          className="inbox-new-chat"
+          onClick={startUngroupedChat}
+          disabled={newChatBusy}
+          aria-busy={newChatBusy || undefined}
+        >
           + New chat
         </button>
 
@@ -548,7 +556,13 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
                   : 'No ungrouped chats match this filter.'}
               </p>
               {filter === 'all' ? (
-                <button type="button" className="inbox-empty-cta" onClick={startUngroupedChat}>
+                <button
+                  type="button"
+                  className="inbox-empty-cta"
+                  onClick={startUngroupedChat}
+                  disabled={newChatBusy}
+                  aria-busy={newChatBusy || undefined}
+                >
                   New chat
                 </button>
               ) : null}
