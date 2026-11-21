@@ -126,6 +126,8 @@ assert.match(
 assert.match(settingsMenu, /useChatDeepAvatarCelebrateMode/, 'Celebrate uses persisted mode hook')
 assert.match(settingsMenu, /createPortal/, 'Celebrate/Companion settings portal past sidebar overflow')
 assert.match(settingsMenu, /is-portaled/, 'portaled settings menu class')
+assert.match(settingsMenu, /first\?\.focus\(\)|querySelector.*menuitem/, 'portaled menu focuses first item on open')
+assert.match(settingsMenu, /triggerRef\.current\?\.focus/, 'Esc/dismiss restores focus to cog')
 assert.match(
   settingsMenu,
   /inbox-settings-companion[\s\S]*inbox-settings-celebrate/,

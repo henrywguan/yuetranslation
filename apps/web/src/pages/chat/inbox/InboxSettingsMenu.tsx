@@ -66,6 +66,13 @@ export function InboxSettingsMenu() {
     }
   }, [open])
 
+  const closeMenu = (restoreFocus = true) => {
+    setOpen(false)
+    if (restoreFocus) {
+      window.requestAnimationFrame(() => triggerRef.current?.focus())
+    }
+  }
+
   useEffect(() => {
     if (!open) return
     const onPointer = (e: MouseEvent | PointerEvent) => {
@@ -73,10 +80,10 @@ export function InboxSettingsMenu() {
       if (!(t instanceof Node)) return
       if (wrapRef.current?.contains(t)) return
       if (menuRef.current?.contains(t)) return
-      setOpen(false)
+      closeMenu(true)
     }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key === 'Escape') closeMenu(true)
     }
     document.addEventListener('pointerdown', onPointer)
     document.addEventListener('keydown', onKey)
@@ -85,6 +92,15 @@ export function InboxSettingsMenu() {
       document.removeEventListener('keydown', onKey)
     }
   }, [open])
+
+  // Portaled menu leaves the sidebar tab order — move focus in on open (Account Hub pattern).
+  useEffect(() => {
+    if (!open || !menuPos) return
+    const first = menuRef.current?.querySelector<HTMLButtonElement>(
+      'button[role="menuitem"], button[role="menuitemradio"], button',
+    )
+    first?.focus()
+  }, [open, menuPos])
 
   const menu =
     open && menuPos && typeof document !== 'undefined'
@@ -106,7 +122,7 @@ export function InboxSettingsMenu() {
               role="menuitem"
               className="inbox-ws-menu-item"
               onClick={() => {
-                setOpen(false)
+                closeMenu(false)
                 setChatAuiEnabled(false)
                 window.location.reload()
               }}
@@ -118,7 +134,7 @@ export function InboxSettingsMenu() {
               role="menuitem"
               className="inbox-ws-menu-item"
               onClick={() => {
-                setOpen(false)
+                closeMenu(false)
                 openApp()
               }}
             >
