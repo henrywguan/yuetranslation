@@ -123,7 +123,6 @@ export async function playChatDeepAvatarEmotionAudio(opts: PlayOpts): Promise<{
   sfx.volume = ttsBusy ? Math.min(0.35, opts.busySfxVolume ?? 0.28) : 0.55
 
   let vo: HTMLAudioElement | null = null
-  let lips = false
   if (!ttsBusy) {
     vo = new Audio(chatDeepAvatarVoSrc(opts.character, opts.mood))
     vo.preload = 'auto'
@@ -153,7 +152,6 @@ export async function playChatDeepAvatarEmotionAudio(opts: PlayOpts): Promise<{
   if (vo) {
     try {
       await tryPlay(vo, needsUnmute)
-      lips = true
       if (active) active.lips = true
       lipBus?.setPlaying(true)
       vo.onended = () => {
@@ -166,7 +164,6 @@ export async function playChatDeepAvatarEmotionAudio(opts: PlayOpts): Promise<{
       try {
         await tryPlay(vo, true)
         needsUnmute = true
-        lips = true
         if (active) active.lips = true
         lipBus?.setPlaying(true)
       } catch {
