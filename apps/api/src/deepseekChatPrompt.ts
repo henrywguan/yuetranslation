@@ -63,7 +63,7 @@ const FRESHNESS = [
   'If a tool is available for date/time, call it rather than claiming you have no clock.',
 ].join(' ')
 
-const SKILLS_TOOLS = [
+const SKILLS_TOOLS_CORE = [
   'Available tools this turn (call them when they match):',
   '- Clock/calendar: get_date, get_now, calendar_math.',
   '- Math/units: calc, convert_units.',
@@ -71,10 +71,22 @@ const SKILLS_TOOLS = [
   '- Web page: fetch_url (public https only).',
   '- Companion avatar: avatar_list, avatar_play, avatar_react (list / demo / soft mood — no billing).',
   '- JyutTranslate: jyut_plan_limits, jyut_phrase_lookup (en↔yue offline only), jyut_learn_hint.',
+]
+
+const SKILLS_TOOLS = [
+  ...SKILLS_TOOLS_CORE,
   '- Image (when enabled): generate_image (Gemini by default) — then paste the returned markdown into your reply.',
   '- Generation MCPs (when enabled): Higgsfield / Adobe / Cursor tools are namespaced mcp__<id>__… — prefer them for video or multi-step creative work; include any returned image markdown in your reply.',
   'Do not invent JyutTranslate plan numbers — call jyut_plan_limits.',
   'For Cantonese/Jyutping phrase help, try jyut_phrase_lookup first; if miss, answer normally and suggest Solo translate in the app.',
+].join('\n')
+
+/** Ask/Plan — same core tools, no image/MCP (those are stripped from the wire list). */
+const SKILLS_TOOLS_READONLY = [
+  ...SKILLS_TOOLS_CORE,
+  'Do not invent JyutTranslate plan numbers — call jyut_plan_limits.',
+  'For Cantonese/Jyutping phrase help, try jyut_phrase_lookup first; if miss, answer normally and suggest Solo translate in the app.',
+  'Prefer answering from knowledge when tools are unnecessary — do not stall on "I\'ll look that up" without a tool call.',
 ].join('\n')
 
 const SKILLS_WEB = [
@@ -213,7 +225,12 @@ export function formatPlanSnapshot(): string {
 export function buildDeepseekChatSystem(ctx: DeepseekChatPromptContext = {}): string {
   const chatMode = ctx.chatMode === 'ask' || ctx.chatMode === 'plan' ? ctx.chatMode : 'agent'
   const readOnly = chatMode === 'ask' || chatMode === 'plan'
-  const parts = [BASE, FRESHNESS, formatTemporalBlock(ctx), SKILLS_TOOLS]
+  const parts = [
+    BASE,
+    FRESHNESS,
+    formatTemporalBlock(ctx),
+    readOnly ? SKILLS_TOOLS_READONLY : SKILLS_TOOLS,
+  ]
   // Only advertise server web tools when the request will actually declare them.
   if (ctx.searchEnabled && /deepseek/i.test(`${env.openaiBaseUrl} ${env.openaiModel} ${env.chatModel}`)) {
     parts.push(SKILLS_WEB)

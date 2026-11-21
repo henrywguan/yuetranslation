@@ -76,7 +76,8 @@ export function convertChatMessage(
       ? { type: 'running' }
       : message.content.trim()
         ? { type: 'complete', reason: 'stop' }
-        : { type: 'running' },
+        : // Empty settled rows must not stay `running` — that leaves Stop/caret stuck after Ask hangs.
+          { type: 'incomplete', reason: 'cancelled' },
     metadata: {
       custom: {
         thoughtMs: message.thoughtMs,
