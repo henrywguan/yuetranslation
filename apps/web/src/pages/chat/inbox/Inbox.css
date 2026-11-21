@@ -107,6 +107,21 @@
   animation: inbox-settings-in 0.16s ease;
 }
 
+/*
+ * Portaled above `.ds-chat` (z-index 120) so Companion + Celebrate are never
+ * clipped by sidebar / inbox-shell `overflow: hidden`.
+ */
+.inbox-settings-menu.is-portaled {
+  position: fixed;
+  left: auto;
+  z-index: 130;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
 @keyframes inbox-settings-in {
   from {
     opacity: 0;
@@ -205,13 +220,22 @@
 
 .inbox-settings-celebrate {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.3rem;
   padding: 0.15rem 0.45rem 0.5rem;
+  border-top: 1px solid var(--ds-divider);
+  margin-top: 0.15rem;
+  padding-top: 0.45rem;
+}
+
+.inbox-settings-celebrate-item {
+  align-items: flex-start;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
 }
 
 .inbox-settings-celebrate-copy {
   display: grid;
-  gap: 0.1rem;
+  gap: 0.08rem;
   min-width: 0;
 }
 
@@ -221,8 +245,13 @@
 }
 
 .inbox-settings-celebrate-hint {
-  font: 500 0.68rem/1.25 'Noto Sans', system-ui, sans-serif;
+  font: 500 0.65rem/1.3 'Noto Sans', system-ui, sans-serif;
   color: var(--ds-text-3, #7a879c);
+  /* Keep Deep finishes hint to ~2 lines in the narrow menu. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .inbox-header-new:disabled,

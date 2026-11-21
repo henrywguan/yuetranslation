@@ -460,11 +460,12 @@
   opacity: 0;
 }
 
-/* Fullscreen celebrate FLIP + gold star field (portaled to body). */
+/* Fullscreen celebrate FLIP + gold star field (portaled to body).
+ * Must sit above `.ds-chat` (z-index 120) — z-index 80 painted under the opaque shell. */
 .aui-deep-avatar-fx {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 130;
   pointer-events: none;
   --aui-fx-sx: 1;
   --aui-fx-sy: 1;
