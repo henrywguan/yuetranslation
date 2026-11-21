@@ -47,7 +47,15 @@ function inboxSecondaryDefaultOpen(): boolean {
   }
 }
 
-export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
+export function InboxShell({
+  onNavigate,
+  onOpenFilesWorkspace,
+  onDeleteWorkspace,
+}: {
+  onNavigate?: () => void
+  onOpenFilesWorkspace?: (workspaceId: string) => void
+  onDeleteWorkspace?: (workspaceId: string) => void
+}) {
   const {
     threads,
     activeId,
@@ -227,6 +235,8 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   const createWorkspaceKind = async (kind: ChatInboxWorkspaceKind) => {
+    // `files` entries are created via Thread files → Save to Workspaces only.
+    if (kind === 'files') return
     if (kind === 'internal') {
       if (sandboxBusy) return
       setSandboxBusy(true)
@@ -488,7 +498,13 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
             onCreate={(kind) => {
               void createWorkspaceKind(kind)
             }}
-            onDelete={removeWorkspace}
+            onDelete={(id) => {
+              ;(onDeleteWorkspace || removeWorkspace)(id)
+            }}
+            onOpen={(id) => {
+              onOpenFilesWorkspace?.(id)
+              onNavigate?.()
+            }}
           />
           {sandboxBusy ? <p className="inbox-empty">Starting sandbox…</p> : null}
           {sandboxNote ? <p className="inbox-empty">{sandboxNote}</p> : null}

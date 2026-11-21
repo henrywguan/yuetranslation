@@ -5,9 +5,10 @@ const KIND_LABEL: Record<ChatInboxWorkspaceKind, string> = {
   internal: 'Sandbox',
   local: 'Local',
   github: 'GitHub',
+  files: 'Files',
 }
 
-const CREATE_OPTIONS: { kind: ChatInboxWorkspaceKind; label: string }[] = [
+const CREATE_OPTIONS: { kind: Exclude<ChatInboxWorkspaceKind, 'files'>; label: string }[] = [
   { kind: 'internal', label: 'Internal sandbox' },
   { kind: 'local', label: 'Local folder' },
   { kind: 'github', label: 'GitHub repo' },
@@ -19,12 +20,15 @@ export function WorkspaceList({
   onToggle,
   onCreate,
   onDelete,
+  onOpen,
 }: {
   workspaces: ChatInboxWorkspace[]
   open: boolean
   onToggle: () => void
   onCreate: (kind: ChatInboxWorkspaceKind) => void
   onDelete: (workspaceId: string) => void
+  /** Open a promoted Thread files workspace into the Harness panel. */
+  onOpen?: (workspaceId: string) => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
@@ -98,9 +102,16 @@ export function WorkspaceList({
           <ul className="inbox-list">
             {workspaces.map((w) => (
               <li key={w.id} className="inbox-list-item">
-                <button type="button" className="inbox-list-btn" title={w.ref || w.title}>
+                <button
+                  type="button"
+                  className="inbox-list-btn"
+                  title={w.kind === 'files' ? `Open ${w.title}` : w.ref || w.title}
+                  onClick={() => {
+                    if (w.kind === 'files') onOpen?.(w.id)
+                  }}
+                >
                   {w.title}
-                  {w.ref ? ` · ${w.ref.slice(0, 12)}…` : ''}
+                  {w.kind !== 'files' && w.ref ? ` · ${w.ref.slice(0, 12)}…` : ''}
                 </button>
                 <span className="inbox-workspace-kind">{KIND_LABEL[w.kind]}</span>
                 <button
@@ -116,8 +127,8 @@ export function WorkspaceList({
           </ul>
         ) : (
           <p className="inbox-empty">
-            Sandboxes, local folders, and GitHub repos attach here. Coding runners land in later
-            phases.
+            Sandboxes, local folders, GitHub repos, and saved Thread files attach here. Promote a
+            Harness tree with Save to Workspaces.
           </p>
         )
       ) : null}

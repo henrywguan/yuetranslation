@@ -2,6 +2,7 @@
  * Per-thread Workspace files for Harness mode on `#/chat`.
  * Device-local; caps keep hydrate under existing localStorage budgets.
  */
+import { zipSync } from 'fflate'
 import { extractChatArtifacts } from './chatArtifacts.js'
 import type { ChatFileMeta, ChatMessage, ChatThread } from './chatHistory.js'
 
@@ -255,6 +256,58 @@ export function patchThreadWorkspace(thread: ChatThread, workspace: ChatWorkspac
     workspace: pruned,
     updatedAt: Date.now(),
   }
+}
+
+function basenamePath(path: string): string {
+  const parts = path.split('/')
+  return parts[parts.length - 1] || path || 'file.txt'
+}
+
+function triggerBrowserDownload(blob: Blob, filename: string) {
+  if (typeof document === 'undefined') return
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.rel = 'noopener'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 2_000)
+}
+
+/** Download one workspace file as a text/blob attachment. */
+export function downloadWorkspaceFile(file: ChatWorkspaceFile): void {
+  const text = typeof file.text === 'string' ? file.text : ''
+  const mime = file.mime || 'text/plain;charset=utf-8'
+  const blob = new Blob([text], { type: mime })
+  triggerBrowserDownload(blob, basenamePath(file.path))
+}
+
+/**
+ * Zip selected (or all) workspace files and download.
+ * Paths become zip entry names; empty selection no-ops.
+ */
+export function downloadWorkspaceZip(
+  files: ChatWorkspaceFile[],
+  zipName = 'workspace-files.zip',
+): void {
+  const entries: Record<string, Uint8Array> = {}
+  const enc = new TextEncoder()
+  for (const f of files) {
+    const path = normalizeWorkspacePath(f.path)
+    if (!path || entries[path]) continue
+    entries[path] = enc.encode(typeof f.text === 'string' ? f.text : '')
+  }
+  if (!Object.keys(entries).length) return
+  const zipped = zipSync(entries, { level: 6 })
+  const name = zipName.replace(/[^\w.\u3400-\u9fff-]+/g, '_').slice(0, 80) || 'workspace-files.zip'
+  const copy = new Uint8Array(zipped.byteLength)
+  copy.set(zipped)
+  triggerBrowserDownload(
+    new Blob([copy], { type: 'application/zip' }),
+    name.endsWith('.zip') ? name : `${name}.zip`,
+  )
 }
 
 /** Latest assistant message helper for re-seed after a turn. */

@@ -103,6 +103,15 @@ const { state: withWs } = createWorkspace(renamed, 'internal', 'Dev sandbox', pr
 assert.equal(withWs.workspaces[0]?.kind, 'internal')
 assert.equal(withWs.workspaces[0]?.projectId, project.id)
 
+const { state: withFiles, workspace: filesWs } = createWorkspace(
+  withWs,
+  'files',
+  'Rainmeter Splash',
+  project.id,
+)
+assert.equal(filesWs.kind, 'files')
+assert.equal(withFiles.workspaces[0]?.title, 'Rainmeter Splash')
+
 const { state: withGh, workspace: ghWs } = createWorkspace(
   withWs,
   'github',
@@ -302,6 +311,14 @@ assert.match(workspaceList, /inbox-ws-menu/, 'workspaces + opens create menu')
 assert.match(workspaceList, /Local folder/, 'local create still available')
 assert.match(workspaceList, /GitHub repo/, 'github create still available')
 assert.match(workspaceList, /Internal sandbox/, 'internal sandbox create still available')
+assert.match(workspaceList, /files: 'Files'/, 'promoted Thread files kind label')
+assert.match(workspaceList, /onOpen/, 'open promoted files workspace')
+assert.match(workspaceList, /Save to Workspaces/, 'empty copy mentions promote path')
+assert.doesNotMatch(
+  workspaceList,
+  /kind: 'files'/,
+  'files kind is promote-only — not in + create menu',
+)
 assert.doesNotMatch(
   workspaceList,
   /className="inbox-new-chat"[\s\S]*Local folder|className="inbox-new-chat"[\s\S]*GitHub repo/,

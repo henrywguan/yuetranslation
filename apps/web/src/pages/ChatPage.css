@@ -1848,8 +1848,12 @@ html[data-theme='light'] .ds-chat-assistant-body code {
 }
 
 /* Harness Workspace panel (right pane / mobile sheet) */
+.ds-chat {
+  --ds-workspace-w: 27.5rem;
+}
+
 .ds-chat.has-workspace .ds-chat-main {
-  margin-right: min(26rem, 92vw);
+  margin-right: min(var(--ds-workspace-w), 92vw);
 }
 
 .ds-chat-workspace {
@@ -1857,13 +1861,18 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   top: 0;
   right: 0;
   bottom: 0;
-  width: min(26rem, 92vw);
+  width: min(var(--ds-workspace-w), 92vw);
   z-index: 9;
   background: var(--ds-canvas);
   border-left: 1px solid var(--ds-divider);
   display: flex;
   flex-direction: column;
   box-shadow: -12px 0 40px rgba(0, 0, 0, 0.08);
+  transition: width 0.18s ease;
+}
+
+.ds-chat-workspace.is-resizing {
+  transition: none;
 }
 
 .ds-chat-workspace.is-sheet {
@@ -1871,6 +1880,57 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   top: var(--ds-chat-top-h);
   width: 100%;
   z-index: 12;
+}
+
+.ds-chat-workspace-resize {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0.55rem;
+  margin-left: -0.28rem;
+  z-index: 6;
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+}
+
+.ds-chat-workspace-resize::after {
+  content: '';
+  position: absolute;
+  top: 18%;
+  bottom: 18%;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ds-divider) 70%, transparent);
+  opacity: 0;
+  transition:
+    opacity 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    top 0.18s ease,
+    bottom 0.18s ease;
+}
+
+.ds-chat-workspace:hover .ds-chat-workspace-resize::after,
+.ds-chat-workspace-resize:focus-visible::after,
+.ds-chat-workspace.is-resizing .ds-chat-workspace-resize::after {
+  opacity: 1;
+}
+
+.ds-chat-workspace-resize:hover::after,
+.ds-chat-workspace-resize:focus-visible::after,
+.ds-chat-workspace.is-resizing .ds-chat-workspace-resize::after {
+  top: 12%;
+  bottom: 12%;
+  background: color-mix(in srgb, var(--ds-blue) 55%, var(--ds-divider));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ds-blue-soft) 80%, transparent);
+}
+
+.ds-chat-workspace-resize:focus-visible {
+  outline: none;
 }
 
 .ds-chat-workspace-head {
@@ -1927,6 +1987,12 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   color: var(--ds-text-3);
 }
 
+.ds-chat-workspace-btn.is-accent {
+  border-color: color-mix(in srgb, var(--ds-blue) 45%, var(--ds-divider));
+  color: var(--ds-blue);
+  background: color-mix(in srgb, var(--ds-blue-soft) 70%, var(--ds-surface-1));
+}
+
 .ds-chat-workspace-path,
 .ds-chat-workspace-select {
   width: 100%;
@@ -1949,9 +2015,23 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   gap: 0.2rem;
 }
 
+.ds-chat-workspace-file-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ds-chat-workspace-check {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  padding: 0.15rem;
+}
+
 .ds-chat-workspace-file {
   appearance: none;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   text-align: left;
   border: 0;
   background: transparent;
@@ -1961,6 +2041,9 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   padding: 0.35rem 0.45rem;
   border-radius: 0.45rem;
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ds-chat-workspace-file.is-on {
@@ -1970,20 +2053,38 @@ html[data-theme='light'] .ds-chat-assistant-body code {
 
 .ds-chat-workspace-preview {
   flex: 1;
-  min-height: 10rem;
+  min-height: 12rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
 
+.ds-chat-workspace-preview-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .ds-chat-workspace-preview-meta {
   font-size: 0.72rem;
   color: var(--ds-text-3);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ds-chat-workspace-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  flex: 0 0 auto;
 }
 
 .ds-chat-workspace-editor {
   flex: 1;
-  min-height: 8rem;
+  min-height: 10rem;
   resize: vertical;
   border: 1px solid var(--ds-divider);
   border-radius: 0.55rem;
@@ -1996,10 +2097,38 @@ html[data-theme='light'] .ds-chat-assistant-body code {
 
 .ds-chat-workspace-frame {
   width: 100%;
-  min-height: 10rem;
+  flex: 1;
+  min-height: 14rem;
   border: 1px solid var(--ds-divider);
   border-radius: 0.55rem;
   background: #fff;
+}
+
+.ds-chat-workspace-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--ds-canvas) 92%, #000);
+  padding: 0.75rem;
+  gap: 0.5rem;
+}
+
+.ds-chat-workspace-preview-overlay-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--ds-text-2);
+  font-size: 0.8125rem;
+}
+
+.ds-chat-workspace-frame.is-fullscreen {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  border-radius: 0.75rem;
 }
 
 .ds-chat-workspace-empty,
@@ -2049,6 +2178,11 @@ html[data-theme='light'] .ds-chat-assistant-body code {
 
   .ds-chat-workspace {
     width: 100%;
+  }
+
+  .ds-chat-workspace-resize {
+    display: none !important;
+    pointer-events: none;
   }
 }
 
