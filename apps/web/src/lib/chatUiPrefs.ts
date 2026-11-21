@@ -19,6 +19,8 @@ export const CHAT_INBOX_SIDEBAR_WIDTH_KEY = 'yue-chat-inbox-sidebar-w-v1'
 export const CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT = 280
 export const CHAT_INBOX_SIDEBAR_WIDTH_MIN = 220
 export const CHAT_INBOX_SIDEBAR_WIDTH_MAX = 480
+/** Inbox settings → Companion block expand/collapse. */
+export const CHAT_INBOX_COMPANION_OPEN_KEY = 'yue-chat-inbox-companion-open-v1'
 
 export const CHAT_COMPOSER_MODES: readonly ChatComposerMode[] = ['agent', 'ask', 'plan'] as const
 

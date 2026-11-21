@@ -125,6 +125,26 @@ assert.match(
   'Companion shows renameable character names',
 )
 assert.match(settingsMenu, /inbox-settings-rename|Rename/, 'Companion rename field')
+assert.match(
+  settingsMenu,
+  /PencilIcon|Edit name|inbox-settings-rename-view/,
+  'Companion name is static until pencil/edit',
+)
+assert.match(
+  settingsMenu,
+  /CheckIcon|Save name|commitRename|inbox-settings-rename-edit/,
+  'Companion name edit commits via save/check',
+)
+assert.match(
+  settingsMenu,
+  /cancelRename|CloseIcon|Escape/,
+  'Companion name edit cancels via Esc/close',
+)
+assert.match(
+  settingsMenu,
+  /CHAT_INBOX_COMPANION_OPEN_KEY|companionOpen|aria-expanded/,
+  'Companion block collapses and persists open state',
+)
 assert.match(settingsMenu, /CHAT_DEEP_AVATAR_TRAITS|Trait/, 'Companion trait presets')
 assert.match(settingsMenu, /Sound /, 'Companion sound toggle')
 assert.match(settingsMenu, /inbox-settings-celebrate|Celebrate/, 'settings menu has Celebrate section')
@@ -510,6 +530,31 @@ assert.match(thread, /dimmed=\{dimPortrait\}/, 'portrait dims while FX flies')
 const inboxCss = readFileSync(join(root, 'pages/chat/inbox/Inbox.css'), 'utf8')
 assert.match(inboxCss, /\.inbox-settings-companion\b/, 'Inbox Companion settings styles')
 assert.match(inboxCss, /\.inbox-settings-celebrate\b/, 'Inbox Celebrate settings styles')
+assert.match(
+  inboxCss,
+  /\.inbox-settings-rename-input[\s\S]*background:\s*var\(--ds-surface-1\)/,
+  'rename input uses DS surface-1 (readable in dark + light)',
+)
+assert.match(
+  inboxCss,
+  /\.inbox-settings-rename-text[\s\S]*color:\s*var\(--ds-text\)/,
+  'static companion name uses DS text token',
+)
+assert.match(
+  inboxCss,
+  /\.inbox-band[\s\S]*color-mix\(in srgb,\s*var\(--ds-blue\)/,
+  'Inbox section bands use themed glow seams',
+)
+assert.match(
+  inboxCss,
+  /\.inbox-settings-menu\.is-portaled[\s\S]*--ds-surface:\s*var\(--ds-surface-1\)/,
+  'portaled settings aliases --ds-surface to surface-1',
+)
+assert.match(
+  inboxCss,
+  /\.inbox-settings-companion-toggle\b/,
+  'Companion settings has collapse toggle styles',
+)
 assert.match(page, /ChatDeepAvatarIntroOverlay/, 'AUI shell mounts companion intro overlay')
 assert.match(auiCss, /\.aui-deep-avatar-intro\b/, 'companion intro overlay styles')
 assert.match(

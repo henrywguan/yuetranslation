@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   CHAT_EMPTY_SUGGESTIONS,
+  CHAT_INBOX_COMPANION_OPEN_KEY,
   CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT,
   CHAT_INBOX_SIDEBAR_WIDTH_KEY,
   CHAT_INBOX_SIDEBAR_WIDTH_MAX,
@@ -26,6 +27,7 @@ assert.equal(CHAT_THINK_KEY, 'yue-deepseek-chat-deepthink-v1')
 assert.equal(CHAT_SEARCH_KEY, 'yue-deepseek-chat-search-v1')
 assert.equal(CHAT_MODE_KEY, 'yue-deepseek-chat-mode-v1')
 assert.equal(CHAT_INBOX_SIDEBAR_WIDTH_KEY, 'yue-chat-inbox-sidebar-w-v1')
+assert.equal(CHAT_INBOX_COMPANION_OPEN_KEY, 'yue-chat-inbox-companion-open-v1')
 assert.equal(CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT, 280)
 assert.ok(CHAT_INBOX_SIDEBAR_WIDTH_MIN < CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT)
 assert.ok(CHAT_INBOX_SIDEBAR_WIDTH_MAX > CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT)
@@ -50,6 +52,10 @@ writeChatFlag(CHAT_THINK_KEY, false)
 assert.equal(readChatFlag(CHAT_THINK_KEY, true), false)
 writeChatFlag(CHAT_THINK_KEY, true)
 assert.equal(readChatFlag(CHAT_THINK_KEY, false), true)
+writeChatFlag(CHAT_INBOX_COMPANION_OPEN_KEY, false)
+assert.equal(readChatFlag(CHAT_INBOX_COMPANION_OPEN_KEY, true), false)
+writeChatFlag(CHAT_INBOX_COMPANION_OPEN_KEY, true)
+assert.equal(readChatFlag(CHAT_INBOX_COMPANION_OPEN_KEY, false), true)
 writeChatComposerMode('ask')
 assert.equal(readChatComposerMode(), 'ask')
 writeChatComposerMode('agent')

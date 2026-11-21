@@ -16,6 +16,11 @@ import {
   CHAT_DEEP_AVATAR_TRAITS,
 } from '../../../lib/chatDeepAvatarPersona'
 import { setChatAuiEnabled } from '../../../lib/chatAuiFlag'
+import {
+  CHAT_INBOX_COMPANION_OPEN_KEY,
+  readChatFlag,
+  writeChatFlag,
+} from '../../../lib/chatUiPrefs'
 import { openApp } from '../../../lib/siteLinks'
 import { useTheme } from '../../../lib/theme'
 import {
@@ -26,7 +31,7 @@ import {
   useChatDeepAvatarSoundEnabled,
   useChatDeepAvatarTrait,
 } from '../aui/ChatDeepAvatar'
-import { SettingsIcon } from './InboxIcons'
+import { CheckIcon, CloseIcon, PencilIcon, SettingsIcon } from './InboxIcons'
 
 type MenuPos = { top: number; right: number; maxHeight: number }
 
@@ -42,6 +47,8 @@ export function InboxSettingsMenu() {
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
+  const nameInputRef = useRef<HTMLInputElement | null>(null)
+  const renamingRef = useRef(false)
   const menuId = useId()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
@@ -52,6 +59,13 @@ export function InboxSettingsMenu() {
   const [notes, setNotes] = useChatDeepAvatarNotes()
   const [soundOn, setSoundOn] = useChatDeepAvatarSoundEnabled()
   const [menuPos, setMenuPos] = useState<MenuPos | null>(null)
+  const [companionOpen, setCompanionOpen] = useState(() =>
+    readChatFlag(CHAT_INBOX_COMPANION_OPEN_KEY, true),
+  )
+  const [renaming, setRenaming] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
+
+  renamingRef.current = renaming
 
   const placeMenu = () => {
     const trigger = triggerRef.current
@@ -79,14 +93,53 @@ export function InboxSettingsMenu() {
       window.visualViewport?.removeEventListener('resize', onReposition)
       window.visualViewport?.removeEventListener('scroll', onReposition)
     }
-  }, [open])
+  }, [open, companionOpen, renaming])
 
   const closeMenu = (restoreFocus = true) => {
+    setRenaming(false)
     setOpen(false)
     if (restoreFocus) {
       window.requestAnimationFrame(() => triggerRef.current?.focus())
     }
   }
+
+  const beginRename = () => {
+    setNameDraft(names[character])
+    setRenaming(true)
+  }
+
+  const cancelRename = () => {
+    setNameDraft(names[character])
+    setRenaming(false)
+  }
+
+  const commitRename = () => {
+    setName(character, nameDraft)
+    setRenaming(false)
+  }
+
+  const toggleCompanion = () => {
+    setCompanionOpen((prev) => {
+      const next = !prev
+      writeChatFlag(CHAT_INBOX_COMPANION_OPEN_KEY, next)
+      if (!next) setRenaming(false)
+      return next
+    })
+  }
+
+  useEffect(() => {
+    if (!renaming) return
+    setNameDraft(names[character])
+  }, [character, names, renaming])
+
+  useEffect(() => {
+    if (!renaming) return
+    const id = window.requestAnimationFrame(() => {
+      nameInputRef.current?.focus()
+      nameInputRef.current?.select()
+    })
+    return () => window.cancelAnimationFrame(id)
+  }, [renaming])
 
   useEffect(() => {
     if (!open) return
@@ -98,7 +151,13 @@ export function InboxSettingsMenu() {
       closeMenu(true)
     }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeMenu(true)
+      if (e.key !== 'Escape') return
+      if (renamingRef.current) {
+        e.preventDefault()
+        cancelRename()
+        return
+      }
+      closeMenu(true)
     }
     document.addEventListener('pointerdown', onPointer)
     document.addEventListener('keydown', onKey)
@@ -106,10 +165,11 @@ export function InboxSettingsMenu() {
       document.removeEventListener('pointerdown', onPointer)
       document.removeEventListener('keydown', onKey)
     }
-  }, [open])
+  }, [open, names, character])
 
   useEffect(() => {
     if (!open || !menuPos) return
+    // Initial open only — do not steal focus when rename edit ends (Save/Esc).
     const first = menuRef.current?.querySelector<HTMLButtonElement>(
       'button[role="menuitem"], button[role="menuitemradio"], button',
     )
@@ -168,97 +228,165 @@ export function InboxSettingsMenu() {
             </div>
             <div className="inbox-settings-divider" role="separator" />
             <div className="inbox-settings-companion" role="group" aria-label="Companion">
-              <span className="inbox-settings-companion-label">Companion</span>
-              <div className="inbox-settings-companion-row">
-                {CHAT_DEEP_AVATAR_CHARACTERS.map((id) => {
-                  const active = character === id
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      role="menuitemradio"
-                      aria-checked={active}
-                      className={`inbox-settings-companion-item${active ? ' is-active' : ''}`}
-                      onClick={() => setCharacter(id)}
-                    >
-                      <img
-                        className="inbox-settings-companion-thumb"
-                        src={chatDeepAvatarPosterSrc(id)}
-                        alt=""
-                        width={36}
-                        height={36}
-                        decoding="async"
-                        draggable={false}
-                      />
-                      <span>{names[id]}</span>
-                    </button>
-                  )
-                })}
-              </div>
-              <label className="inbox-settings-rename">
-                <span className="inbox-settings-companion-label">Name</span>
-                <input
-                  type="text"
-                  className="inbox-settings-rename-input"
-                  maxLength={CHAT_DEEP_AVATAR_NAME_MAX}
-                  value={names[character]}
-                  aria-label={`Rename ${names[character]}`}
-                  onChange={(e) => setName(character, e.target.value)}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </label>
-              <div className="inbox-settings-trait" role="group" aria-label="Trait">
-                <span className="inbox-settings-companion-label">Trait</span>
-                <div className="inbox-settings-companion-row">
-                  {CHAT_DEEP_AVATAR_TRAITS.map((id) => {
-                    const active = trait === id
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        role="menuitemradio"
-                        aria-checked={active}
-                        title={CHAT_DEEP_AVATAR_TRAIT_HINT[id]}
-                        className={`inbox-settings-companion-item inbox-settings-celebrate-item${active ? ' is-active' : ''}`}
-                        onClick={() => setTrait(id)}
-                      >
-                        <span className="inbox-settings-celebrate-copy">
-                          <span className="inbox-settings-celebrate-name">
-                            {CHAT_DEEP_AVATAR_TRAIT_LABEL[id]}
-                          </span>
-                          <span className="inbox-settings-celebrate-hint">
-                            {CHAT_DEEP_AVATAR_TRAIT_HINT[id]}
-                          </span>
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-              <label className="inbox-settings-notes">
-                <span className="inbox-settings-companion-label">Notes</span>
-                <textarea
-                  className="inbox-settings-notes-input"
-                  maxLength={CHAT_DEEP_AVATAR_NOTES_MAX}
-                  rows={2}
-                  value={notes}
-                  placeholder="Things to remember about how I should be with you"
-                  aria-label="Companion notes"
-                  onChange={(e) => setNotes(e.target.value)}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </label>
               <button
                 type="button"
-                role="menuitemcheckbox"
-                aria-checked={soundOn}
-                className={`inbox-settings-companion-item inbox-settings-sound${soundOn ? ' is-active' : ''}`}
-                onClick={() => setSoundOn(!soundOn)}
+                className="inbox-settings-companion-toggle"
+                aria-expanded={companionOpen}
+                aria-controls={`${menuId}-companion-body`}
+                onClick={toggleCompanion}
               >
-                Sound {soundOn ? 'on' : 'off'}
+                <span
+                  className={`inbox-section-chevron${companionOpen ? ' is-open' : ''}`}
+                  aria-hidden
+                >
+                  ▸
+                </span>
+                <span className="inbox-settings-companion-label">Companion</span>
               </button>
+              {companionOpen ? (
+                <div id={`${menuId}-companion-body`} className="inbox-settings-companion-body">
+                  <div className="inbox-settings-companion-row">
+                    {CHAT_DEEP_AVATAR_CHARACTERS.map((id) => {
+                      const active = character === id
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          role="menuitemradio"
+                          aria-checked={active}
+                          className={`inbox-settings-companion-item${active ? ' is-active' : ''}`}
+                          onClick={() => {
+                            if (id !== character) setRenaming(false)
+                            setCharacter(id)
+                          }}
+                        >
+                          <img
+                            className="inbox-settings-companion-thumb"
+                            src={chatDeepAvatarPosterSrc(id)}
+                            alt=""
+                            width={36}
+                            height={36}
+                            decoding="async"
+                            draggable={false}
+                          />
+                          <span>{names[id]}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div className="inbox-settings-rename">
+                    <span className="inbox-settings-companion-label">Name</span>
+                    {renaming ? (
+                      <div className="inbox-settings-rename-edit">
+                        <input
+                          ref={nameInputRef}
+                          type="text"
+                          className="inbox-settings-rename-input"
+                          maxLength={CHAT_DEEP_AVATAR_NAME_MAX}
+                          value={nameDraft}
+                          aria-label={`Rename ${names[character]}`}
+                          onChange={(e) =>
+                            setNameDraft(e.target.value.slice(0, CHAT_DEEP_AVATAR_NAME_MAX))
+                          }
+                          onKeyDown={(e) => {
+                            e.stopPropagation()
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              commitRename()
+                            } else if (e.key === 'Escape') {
+                              e.preventDefault()
+                              cancelRename()
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <button
+                          type="button"
+                          className="inbox-settings-rename-btn"
+                          title="Save name"
+                          aria-label="Save name"
+                          onClick={commitRename}
+                        >
+                          <CheckIcon size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="inbox-settings-rename-btn"
+                          title="Cancel"
+                          aria-label="Cancel rename"
+                          onClick={cancelRename}
+                        >
+                          <CloseIcon size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="inbox-settings-rename-view">
+                        <span className="inbox-settings-rename-text">{names[character]}</span>
+                        <button
+                          type="button"
+                          className="inbox-settings-rename-btn"
+                          title="Edit name"
+                          aria-label={`Edit name ${names[character]}`}
+                          onClick={beginRename}
+                        >
+                          <PencilIcon size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="inbox-settings-trait" role="group" aria-label="Trait">
+                    <span className="inbox-settings-companion-label">Trait</span>
+                    <div className="inbox-settings-companion-row">
+                      {CHAT_DEEP_AVATAR_TRAITS.map((id) => {
+                        const active = trait === id
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            role="menuitemradio"
+                            aria-checked={active}
+                            title={CHAT_DEEP_AVATAR_TRAIT_HINT[id]}
+                            className={`inbox-settings-companion-item inbox-settings-celebrate-item${active ? ' is-active' : ''}`}
+                            onClick={() => setTrait(id)}
+                          >
+                            <span className="inbox-settings-celebrate-copy">
+                              <span className="inbox-settings-celebrate-name">
+                                {CHAT_DEEP_AVATAR_TRAIT_LABEL[id]}
+                              </span>
+                              <span className="inbox-settings-celebrate-hint">
+                                {CHAT_DEEP_AVATAR_TRAIT_HINT[id]}
+                              </span>
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <label className="inbox-settings-notes">
+                    <span className="inbox-settings-companion-label">Notes</span>
+                    <textarea
+                      className="inbox-settings-notes-input"
+                      maxLength={CHAT_DEEP_AVATAR_NOTES_MAX}
+                      rows={2}
+                      value={notes}
+                      placeholder="Things to remember about how I should be with you"
+                      aria-label="Companion notes"
+                      onChange={(e) => setNotes(e.target.value)}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    role="menuitemcheckbox"
+                    aria-checked={soundOn}
+                    className={`inbox-settings-companion-item inbox-settings-sound${soundOn ? ' is-active' : ''}`}
+                    onClick={() => setSoundOn(!soundOn)}
+                  >
+                    Sound {soundOn ? 'on' : 'off'}
+                  </button>
+                </div>
+              ) : null}
             </div>
             <div className="inbox-settings-celebrate" role="group" aria-label="Celebrate">
               <span className="inbox-settings-companion-label">Celebrate</span>
@@ -305,7 +433,12 @@ export function InboxSettingsMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() =>
+          setOpen((v) => {
+            if (v) setRenaming(false)
+            return !v
+          })
+        }
       >
         <SettingsIcon size={16} />
       </button>
