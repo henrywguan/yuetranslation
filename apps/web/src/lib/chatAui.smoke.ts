@@ -491,6 +491,8 @@ assert.doesNotMatch(
 )
 assert.doesNotMatch(thread, /ChatDeepAvatarBubble|ChatDeepAvatarStage/, 'floating dock stage removed')
 assert.doesNotMatch(thread, /ChatDeepAvatarCharacterPicker|size="hero"/, 'empty-state hero + picker removed')
+assert.doesNotMatch(thread, /ChatAuiSidebar/, 'deprecated ChatAuiSidebar re-export removed')
+assert.match(thread, /FALLBACK_PLUGINS|EMPTY_THREADS_FOR_MENTIONS/, 'composer uses stable fallback/mention sentinels')
 assert.match(thread, /useChatDeepAvatarLipLevel/, 'TTS lip level wired into portrait')
 assert.match(thread, /useChatDeepAvatarDock/, 'persisted bar|stage dock hook')
 assert.match(thread, /aui-avatar-stage/, 'stage panel uses aui-avatar-stage (not revived deep-avatar-stage)')
@@ -516,11 +518,22 @@ assert.match(
   'phone soak: stage becomes top strip',
 )
 assert.match(auiCss, /\.aui-composer-body\.is-avatar-staged\b/, 'composer full-width when staged')
+assert.doesNotMatch(auiCss, /\.aui-new-thread\b|\.aui-deep-avatar\.is-bubble\b/, 'dead new-thread + bubble size CSS removed')
 assert.match(auiCss, /\.aui-deep-avatar-lips\b/, 'TTS lip overlay styles')
 const avatarSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatar.tsx'), 'utf8')
 const audioSrc = readFileSync(join(here, 'chatDeepAvatarAudio.ts'), 'utf8')
 assert.match(avatarSrc, /size = 'portrait'|Size = 'portrait'/, 'portrait is default/supported size')
 assert.match(avatarSrc, /'stage'|size === 'stage'/, 'stage size supported on ChatDeepAvatar')
+assert.doesNotMatch(
+  avatarSrc,
+  /'bubble'|CHAT_DEEP_AVATAR_HAPPY_MS|CHAT_DEEP_AVATAR_POSTER|useChatDeepAvatarDisplayName/,
+  'dead bubble size + deprecated avatar exports removed',
+)
+assert.match(
+  readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8'),
+  /visibleThreads|activeFollowUps|clearError = useCallback/,
+  'runtime memoizes visible threads / follow-ups / clearError',
+)
 assert.match(avatarSrc, /useChatDeepAvatarCharacter/, 'persisted character hook')
 assert.match(avatarSrc, /CHAT_DEEP_AVATAR_CHARACTER_EVENT/, 'same-tab character sync')
 assert.match(avatarSrc, /useChatDeepAvatarCelebrateMode/, 'celebrate mode hook')

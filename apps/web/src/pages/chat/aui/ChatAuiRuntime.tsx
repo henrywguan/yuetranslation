@@ -136,19 +136,11 @@ const BOOT_THREAD: ChatThread = {
   messages: [],
 }
 
-const THINK_KEY = CHAT_THINK_KEY
-const SEARCH_KEY = CHAT_SEARCH_KEY
-const RICH_LAYOUT_KEY = CHAT_RICH_LAYOUT_KEY
 const STREAM_PAINT_MS = 100
 /** Ignore spam-clicks on New chat after a create settles (sync latch + short UI cooldown). */
 const NEW_CHAT_COOLDOWN_MS = 450
 
 export type PendingChatFile = ChatFileMeta & { previewUrl?: string }
-
-const readFlag = readChatFlag
-const writeFlag = writeChatFlag
-const readPluginIds = readChatPluginIds
-const writePluginIds = writeChatPluginIds
 
 export type ChatAuiSession = {
   threads: ChatThread[]
@@ -261,8 +253,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [streamingId, setStreamingId] = useState<string | null>(null)
   const [thinking, setThinking] = useState(false)
   const [searching, setSearching] = useState(false)
-  const [deepThink, setDeepThinkState] = useState(() => readFlag(THINK_KEY, true))
-  const [searchOn, setSearchOnState] = useState(() => readFlag(SEARCH_KEY, false))
+  const [deepThink, setDeepThinkState] = useState(() => readChatFlag(CHAT_THINK_KEY, true))
+  const [searchOn, setSearchOnState] = useState(() => readChatFlag(CHAT_SEARCH_KEY, false))
   const [composerMode, setComposerModeState] = useState<ChatComposerMode>(() =>
     readChatComposerMode('agent'),
   )
@@ -295,7 +287,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     planDraftRef.current = stored
     setPlanDraftState(stored)
   }, [])
-  const [richLayout, setRichLayoutState] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
+  const [richLayout, setRichLayoutState] = useState(() => readChatFlag(CHAT_RICH_LAYOUT_KEY, false))
   const [reviewActivity, setReviewActivity] = useState<ChatReviewActivity>(() => emptyReviewActivity())
   const [reviewOpen, setReviewOpenState] = useState(false)
   const [gitDiffBusy, setGitDiffBusy] = useState(false)
@@ -326,7 +318,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [ocrBusy, setOcrBusy] = useState(false)
   const [pluginCatalog, setPluginCatalog] = useState<DeepseekChatPlugin[]>([])
   const [enabledPlugins, setEnabledPlugins] = useState<string[]>(
-    () => readPluginIds() || ['image'],
+    () => readChatPluginIds() || ['image'],
   )
   const [pluginKeyHints, setPluginKeyHints] = useState<
     Record<DeepseekChatPluginKeyId, DeepseekChatPluginKeyHint>
@@ -491,12 +483,12 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
   const setDeepThink = useCallback((on: boolean) => {
     setDeepThinkState(on)
-    writeFlag(THINK_KEY, on)
+    writeChatFlag(CHAT_THINK_KEY, on)
   }, [])
 
   const setSearchOn = useCallback((on: boolean) => {
     setSearchOnState(on)
-    writeFlag(SEARCH_KEY, on)
+    writeChatFlag(CHAT_SEARCH_KEY, on)
   }, [])
 
   const setComposerMode = useCallback((mode: ChatComposerMode) => {
@@ -564,13 +556,13 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
   const setRichLayout = useCallback((on: boolean) => {
     setRichLayoutState(on)
-    writeFlag(RICH_LAYOUT_KEY, on)
+    writeChatFlag(CHAT_RICH_LAYOUT_KEY, on)
   }, [])
 
   const togglePlugin = useCallback((id: string) => {
     setEnabledPlugins((prev) => {
       const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id].slice(0, 16)
-      writePluginIds(next)
+      writeChatPluginIds(next)
       return next
     })
   }, [])
@@ -1569,15 +1561,27 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     [activeId, scheduleJobs],
   )
 
+  const visibleThreads = useMemo(
+    () => threads.filter((t) => t.id !== BOOT_THREAD.id),
+    [threads],
+  )
+
+  const activeFollowUps = useMemo(
+    () => followUpQueue.filter((x) => x.threadId === activeId),
+    [followUpQueue, activeId],
+  )
+
+  const clearError = useCallback(() => setError(null), [])
+
   const session = useMemo<ChatAuiSession>(
     () => ({
-      threads: threads.filter((t) => t.id !== BOOT_THREAD.id),
+      threads: visibleThreads,
       activeId,
       historyReady,
       busy,
       newChatBusy,
       error,
-      clearError: () => setError(null),
+      clearError,
       setError,
       deepThink,
       setDeepThink,
@@ -1621,7 +1625,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       archiveThread,
       stopGeneration,
       enqueuePrompt,
-      followUpQueue: followUpQueue.filter((x) => x.threadId === activeId),
+      followUpQueue: activeFollowUps,
       queueFollowUp,
       dismissFollowUp,
       clearFollowUpQueue,
@@ -1632,14 +1636,16 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       gitDiffBusy,
     }),
     [
+      activeFollowUps,
       activeId,
       activeWorkspace,
       addSchedule,
       archiveThread,
       buildFromPlan,
       busy,
-      newChatBusy,
+      clearError,
       clearFollowUpQueue,
+      newChatBusy,
       composerMode,
       deepThink,
       planDraft,
@@ -1648,7 +1654,6 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       enabledPlugins,
       enqueuePrompt,
       error,
-      followUpQueue,
       gitDiffBusy,
       harnessOn,
       historyReady,
@@ -1681,10 +1686,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       streamingId,
       thinking,
       threadScheduleJobs,
-      threads,
       togglePlugin,
       toggleSchedule,
       uploadingFile,
+      visibleThreads,
       workspaceOpen,
     ],
   )

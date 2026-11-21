@@ -101,7 +101,8 @@ const CELEBRATE_MS = 2400
 const HAPPY_MS = 2200
 const FULLSCREEN_MS = 2800
 
-type Size = 'portrait' | 'hero' | 'bubble' | 'stage'
+/** `portrait` = WC3 bar tile; `stage` = left dock panel; `hero` = celebrate FLIP. */
+type Size = 'portrait' | 'hero' | 'stage'
 
 type Props = {
   mood: ChatDeepAvatarMood
@@ -374,16 +375,6 @@ export function useChatDeepAvatarDock(): [
   return [dock, setDock]
 }
 
-export function useChatDeepAvatarDisplayName(character: ChatDeepAvatarCharacterId): string {
-  const [names, setNames] = useState(() => readChatDeepAvatarNames())
-  useEffect(() => {
-    const onChange = () => setNames(readChatDeepAvatarNames())
-    window.addEventListener(CHAT_DEEP_AVATAR_NAMES_EVENT, onChange)
-    return () => window.removeEventListener(CHAT_DEEP_AVATAR_NAMES_EVENT, onChange)
-  }, [])
-  return displayChatDeepAvatarName(character, names)
-}
-
 export function useChatDeepAvatarNameEditor(): [
   ReturnType<typeof readChatDeepAvatarNames>,
   (character: ChatDeepAvatarCharacterId, name: string) => void,
@@ -481,7 +472,6 @@ function usePrefersReducedMotion(): boolean {
 }
 
 function sizeClassName(size: Size): string {
-  if (size === 'bubble') return 'aui-deep-avatar is-bubble'
   if (size === 'hero') return 'aui-deep-avatar is-hero'
   if (size === 'stage') return 'aui-deep-avatar is-stage'
   return 'aui-deep-avatar is-portrait'
@@ -506,7 +496,7 @@ export function ChatDeepAvatar({
   const lipScaleY = 0.35 + lipLevel * 1.15
   const lipScaleX = 0.85 + lipLevel * 0.35
   const charLabel = displayChatDeepAvatarName(character)
-  const imgPx = size === 'bubble' ? 112 : size === 'portrait' ? 224 : size === 'stage' ? 720 : 720
+  const imgPx = size === 'portrait' ? 224 : 720
 
   return (
     <div
@@ -908,8 +898,3 @@ export function useChatDeepAvatarCelebrateFx(opts: {
   }
 }
 
-/** @deprecated Prefer CELEBRATE_MS; kept for smoke / callers that referenced the old timer. */
-export const CHAT_DEEP_AVATAR_HAPPY_MS = HAPPY_MS
-
-/** @deprecated Use chatDeepAvatarPosterSrc(character). */
-export const CHAT_DEEP_AVATAR_POSTER = '/chat-avatar/boy/deep-bust.png'
