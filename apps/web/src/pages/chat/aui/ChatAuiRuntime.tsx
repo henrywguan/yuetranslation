@@ -131,6 +131,10 @@ import {
   writeHarnessFlag,
   type ChatWorkspace,
 } from '../../../lib/chatWorkspace'
+import {
+  evaluateWorkspaceBuildConsent,
+  writeWorkspaceLsConsent,
+} from '../../../lib/chatWorkspaceConsent'
 import { useYueStore } from '../../../lib/store'
 import { convertChatMessage } from './convertChatMessage'
 
@@ -231,6 +235,15 @@ export type ChatAuiSession = {
   setReviewOpen: (on: boolean) => void
   refreshGitDiff: () => Promise<void>
   gitDiffBusy: boolean
+  /**
+   * Agent + harness write gate: bind local folder OR localStorage consent.
+   * Highlight pulses the WS tab/panel until resolved.
+   */
+  workspaceBuildConsentOpen: boolean
+  workspaceBuildConsentHighlight: boolean
+  dismissWorkspaceBuildConsent: () => void
+  acceptWorkspaceLsConsent: () => void
+  notifyWorkspaceFolderBound: () => void
 }
 
 const ChatAuiSessionContext = createContext<ChatAuiSession | null>(null)
@@ -326,6 +339,18 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   }, [])
   const [scheduleJobs, setScheduleJobs] = useState<ChatScheduleJob[]>(() => readScheduleJobs())
   const [pendingFiles, setPendingFiles] = useState<PendingChatFile[]>([])
+  const [workspaceBuildConsentOpen, setWorkspaceBuildConsentOpen] = useState(false)
+  const [workspaceBuildConsentHighlight, setWorkspaceBuildConsentHighlight] = useState(false)
+  type PendingAfterConsent =
+    | { kind: 'build' }
+    | { kind: 'prompt'; text: string; threadId?: string }
+    | {
+        kind: 'composer'
+        content: string
+        fileIds: string[]
+        filesMeta: ChatFileMeta[]
+      }
+  const pendingAfterConsentRef = useRef<PendingAfterConsent | null>(null)
   const harnessOnRef = useRef(harnessOn)
   harnessOnRef.current = harnessOn
   const busyRef = useRef(busy)
@@ -552,6 +577,113 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     },
     [persist],
   )
+
+  const localWorkspaceIdsForConsent = useCallback((): string[] => {
+    const state = inboxRef.current?.state
+    if (!state) return []
+    return state.workspaces.filter((w) => w.kind === 'local').map((w) => w.id)
+  }, [])
+
+  const buildFromPlanRef = useRef<(() => Promise<void>) | null>(null)
+  const enqueuePromptRef = useRef<
+    ((text: string, threadId?: string) => Promise<boolean>) | null
+  >(null)
+  const runAssistantRef = useRef<
+    ((baseThread: ChatThread, fileIds?: string[]) => Promise<void>) | null
+  >(null)
+
+  const openWorkspaceBuildConsentGate = useCallback(() => {
+    // Surface the WS affordance so the red shake is visible.
+    setHarnessOn(true)
+    setWorkspaceOpen(true)
+    setWorkspaceBuildConsentOpen(true)
+    setWorkspaceBuildConsentHighlight(true)
+  }, [setHarnessOn, setWorkspaceOpen])
+
+  const clearWorkspaceBuildConsentUi = useCallback(() => {
+    setWorkspaceBuildConsentOpen(false)
+    setWorkspaceBuildConsentHighlight(false)
+  }, [])
+
+  const resumeAfterWorkspaceConsent = useCallback(() => {
+    const pending = pendingAfterConsentRef.current
+    pendingAfterConsentRef.current = null
+    clearWorkspaceBuildConsentUi()
+    if (!pending) return
+    if (pending.kind === 'build') {
+      void buildFromPlanRef.current?.()
+      return
+    }
+    if (pending.kind === 'prompt') {
+      void enqueuePromptRef.current?.(pending.text, pending.threadId)
+      return
+    }
+    if (pending.kind === 'composer') {
+      void (async () => {
+        if (!unlocked || busyRef.current) return
+        const run = runAssistantRef.current
+        if (!run) return
+        setPendingFiles((prev) => {
+          for (const f of prev) {
+            if (f.previewUrl) URL.revokeObjectURL(f.previewUrl)
+          }
+          return []
+        })
+        busyRef.current = true
+        setBusy(true)
+        let cur =
+          threadsRef.current.find((t) => t.id === activeIdRef.current) || emptyThread()
+        if (harnessOnRef.current) cur = ensureThreadWorkspace(cur)
+        const userStep = appendChatMessage(
+          cur,
+          'user',
+          pending.content || '(attached file)',
+        )
+        let thread = userStep.thread
+        if (pending.fileIds.length) {
+          thread = {
+            ...thread,
+            messages: thread.messages.map((m) =>
+              m.id === userStep.message.id
+                ? { ...m, fileIds: pending.fileIds, files: pending.filesMeta }
+                : m,
+            ),
+          }
+        }
+        persist(thread)
+        await run(thread, pending.fileIds.length ? pending.fileIds : undefined)
+      })()
+    }
+  }, [clearWorkspaceBuildConsentUi, persist, unlocked])
+
+  /** Returns true when the Agent+harness write path may proceed. */
+  const ensureWorkspaceBuildConsent = useCallback(async (): Promise<boolean> => {
+    const check = await evaluateWorkspaceBuildConsent({
+      harnessOn: harnessOnRef.current,
+      composerMode: composerModeRef.current,
+      localWorkspaceIds: localWorkspaceIdsForConsent(),
+    })
+    if (check.ok) return true
+    openWorkspaceBuildConsentGate()
+    return false
+  }, [localWorkspaceIdsForConsent, openWorkspaceBuildConsentGate])
+
+  const dismissWorkspaceBuildConsent = useCallback(() => {
+    pendingAfterConsentRef.current = null
+    clearWorkspaceBuildConsentUi()
+    setError(
+      'Agent builds need a local folder or browser-storage consent — open WS to choose.',
+    )
+  }, [clearWorkspaceBuildConsentUi])
+
+  const acceptWorkspaceLsConsent = useCallback(() => {
+    writeWorkspaceLsConsent(true)
+    resumeAfterWorkspaceConsent()
+  }, [resumeAfterWorkspaceConsent])
+
+  const notifyWorkspaceFolderBound = useCallback(() => {
+    resumeAfterWorkspaceConsent()
+  }, [resumeAfterWorkspaceConsent])
 
   const refreshSchedules = useCallback(() => {
     setScheduleJobs(readScheduleJobs())
@@ -1191,6 +1323,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       speakManual,
     ],
   )
+  runAssistantRef.current = runAssistant
 
   const active =
     threads.find((t) => t.id === activeId) ||
@@ -1241,6 +1374,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       if (!unlocked || busyRef.current) return false
       const content = text.trim().slice(0, MAX_CONTENT_CHARS)
       if (!content) return false
+      if (!(await ensureWorkspaceBuildConsent())) {
+        pendingAfterConsentRef.current = { kind: 'prompt', text: content, threadId }
+        return false
+      }
       const tid = threadId || activeIdRef.current
       if (tid !== activeIdRef.current) {
         activeIdRef.current = tid
@@ -1258,8 +1395,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       await runAssistant(userStep.thread)
       return true
     },
-    [applyPlanDraftForThread, persist, runAssistant, unlocked],
+    [applyPlanDraftForThread, ensureWorkspaceBuildConsent, persist, runAssistant, unlocked],
   )
+  enqueuePromptRef.current = enqueuePrompt
 
   const refreshGitDiff = useCallback(async () => {
     const inboxState = inboxRef.current?.state
@@ -1342,6 +1480,18 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setError('Plan is empty — write or restore a plan before Build.')
       return
     }
+    // Build always enables Agent + harness writes — require storage consent first.
+    const consent = await evaluateWorkspaceBuildConsent({
+      harnessOn: true,
+      composerMode: 'agent',
+      localWorkspaceIds: localWorkspaceIdsForConsent(),
+    })
+    if (!consent.ok) {
+      pendingAfterConsentRef.current = { kind: 'build' }
+      openWorkspaceBuildConsentGate()
+      return
+    }
+    if (!harnessOnRef.current) setHarnessOn(true)
     const tid = activeIdRef.current
     const inboxState = inboxRef.current?.state
     const linked = inboxState ? agentForThread(inboxState, tid) : undefined
@@ -1360,7 +1510,15 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     setComposerMode('agent')
     const prompt = buildPlanBuildPrompt(planText, inProject)
     await enqueuePrompt(prompt, targetThreadId)
-  }, [enqueuePrompt, setComposerMode, unlocked])
+  }, [
+    enqueuePrompt,
+    localWorkspaceIdsForConsent,
+    openWorkspaceBuildConsentGate,
+    setComposerMode,
+    setHarnessOn,
+    unlocked,
+  ])
+  buildFromPlanRef.current = buildFromPlan
 
   // Load the active thread's Plan draft when switching chats (edits are keyed by threadId).
   useEffect(() => {
@@ -1469,6 +1627,21 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         queueFollowUp(content)
         return
       }
+      if (!(await ensureWorkspaceBuildConsent())) {
+        const fileIds = pending.map((f) => f.fileId)
+        const filesMeta: ChatFileMeta[] = pending.map(({ fileId, filename, mime }) => ({
+          fileId,
+          filename,
+          mime,
+        }))
+        pendingAfterConsentRef.current = {
+          kind: 'composer',
+          content,
+          fileIds,
+          filesMeta,
+        }
+        return
+      }
       const fileIds = pending.map((f) => f.fileId)
       const filesMeta: ChatFileMeta[] = pending.map(({ fileId, filename, mime }) => ({
         fileId,
@@ -1500,7 +1673,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       persist(thread)
       await runAssistant(thread, fileIds.length ? fileIds : undefined)
     },
-    [persist, queueFollowUp, runAssistant, unlocked],
+    [ensureWorkspaceBuildConsent, persist, queueFollowUp, runAssistant, unlocked],
   )
 
   // Auto-send one queued follow-up for the **active** thread after the turn settles.
@@ -1709,8 +1882,14 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setReviewOpen,
       refreshGitDiff,
       gitDiffBusy,
+      workspaceBuildConsentOpen,
+      workspaceBuildConsentHighlight,
+      dismissWorkspaceBuildConsent,
+      acceptWorkspaceLsConsent,
+      notifyWorkspaceFolderBound,
     }),
     [
+      acceptWorkspaceLsConsent,
       activeFollowUps,
       activeId,
       activeWorkspace,
@@ -1727,12 +1906,14 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       planDraft,
       savePlanToWorkspace,
       dismissFollowUp,
+      dismissWorkspaceBuildConsent,
       enabledPlugins,
       enqueuePrompt,
       error,
       gitDiffBusy,
       harnessOn,
       historyReady,
+      notifyWorkspaceFolderBound,
       ocrBusy,
       pendingFiles,
       pickFile,
@@ -1769,6 +1950,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       toggleSchedule,
       uploadingFile,
       visibleThreads,
+      workspaceBuildConsentHighlight,
+      workspaceBuildConsentOpen,
       workspaceOpen,
     ],
   )

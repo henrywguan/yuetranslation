@@ -2191,6 +2191,62 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   }
 }
 
+/* Agent workspace-write consent — red shaky highlight on WS + panel */
+@keyframes ds-ws-consent-shake {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  20% {
+    transform: translate3d(-2px, 1px, 0) rotate(-0.6deg);
+  }
+  40% {
+    transform: translate3d(3px, -1px, 0) rotate(0.7deg);
+  }
+  60% {
+    transform: translate3d(-2px, 0, 0) rotate(-0.4deg);
+  }
+  80% {
+    transform: translate3d(2px, 1px, 0) rotate(0.5deg);
+  }
+}
+
+@keyframes ds-ws-consent-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, #c43b3b 45%, transparent),
+      0 0 0 1px color-mix(in srgb, #c43b3b 70%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px color-mix(in srgb, #c43b3b 0%, transparent),
+      0 0 18px 2px color-mix(in srgb, #c43b3b 35%, transparent);
+  }
+}
+
+.ds-chat-icon-btn.is-ws-consent-shake,
+.ds-chat-workspace.is-ws-consent-shake {
+  border-color: #c43b3b !important;
+  animation:
+    ds-ws-consent-shake 0.42s ease-in-out infinite,
+    ds-ws-consent-pulse 1.35s ease-in-out infinite;
+  outline: 2px solid color-mix(in srgb, #c43b3b 80%, transparent);
+  outline-offset: 2px;
+  z-index: 14;
+}
+
+.ds-chat-workspace.is-ws-consent-shake {
+  border-left-color: #c43b3b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-chat-icon-btn.is-ws-consent-shake,
+  .ds-chat-workspace.is-ws-consent-shake {
+    animation: ds-ws-consent-pulse 1.6s ease-in-out infinite;
+  }
+}
+
 .ds-md-img {
   display: block;
   max-width: min(100%, 28rem);
