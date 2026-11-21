@@ -496,6 +496,26 @@ assert.match(
   /\.aui-deep-avatar-intro\b[\s\S]*z-index:\s*140/,
   'intro sits above celebrate FX (130)',
 )
+assert.match(
+  auiCss,
+  /\.aui-deep-avatar-intro-video\s*\{[^}]*object-fit:\s*contain/,
+  'intro video uses contain so desktop landscape does not crop the portrait character',
+)
+assert.match(
+  auiCss,
+  /\.aui-deep-avatar-intro-video\s*\{[^}]*max-width:\s*100%/,
+  'intro video max-width fits viewport',
+)
+assert.match(
+  auiCss,
+  /\.aui-deep-avatar-intro-video\s*\{[^}]*max-height:\s*100%/,
+  'intro video max-height fits viewport',
+)
+assert.doesNotMatch(
+  auiCss,
+  /\.aui-deep-avatar-intro-video\s*\{[^}]*object-fit:\s*cover/,
+  'intro video must not use cover (clips head/body on ~1680×1050)',
+)
 assert.match(auiCss, /prefers-reduced-motion[\s\S]*aui-deep-avatar-intro/, 'reduced-motion softens intro')
 const introSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatarIntro.tsx'), 'utf8')
 assert.match(introSrc, /shouldPlayChatDeepAvatarIntro/, 'intro play gate on every mount')
