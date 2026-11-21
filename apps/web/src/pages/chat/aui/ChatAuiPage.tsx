@@ -323,7 +323,7 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           onToggleSchedule={toggleSchedule}
         />
       ) : null}
-      {/* Companion intro — once per character until seen (boy / girl by pick). */}
+      {/* Companion intro — every #/chat mount (boy / girl by pick); skip dismisses this visit. */}
       <ChatDeepAvatarIntroOverlay />
     </div>
   )

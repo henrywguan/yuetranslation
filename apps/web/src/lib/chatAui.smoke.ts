@@ -14,9 +14,7 @@ import {
   chatDeepAvatarIntroSrc,
   chatDeepAvatarMoodAssetStem,
   chatDeepAvatarMoodSrc,
-  hasSeenChatDeepAvatarIntro,
   isChatDeepAvatarDeepFinish,
-  markChatDeepAvatarIntroSeen,
   normalizeChatDeepAvatarCelebrateMode,
   pickChatDeepAvatarOutroMood,
   shouldFullscreenCelebrate,
@@ -500,35 +498,33 @@ assert.match(
 )
 assert.match(auiCss, /prefers-reduced-motion[\s\S]*aui-deep-avatar-intro/, 'reduced-motion softens intro')
 const introSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatarIntro.tsx'), 'utf8')
-assert.match(introSrc, /shouldPlayChatDeepAvatarIntro|markChatDeepAvatarIntroSeen/, 'intro seen gate')
+assert.match(introSrc, /shouldPlayChatDeepAvatarIntro/, 'intro play gate on every mount')
+assert.doesNotMatch(introSrc, /markChatDeepAvatarIntroSeen|hasSeenChatDeepAvatarIntro/, 'no once-per-character seen latch')
 assert.match(introSrc, /chatDeepAvatarIntroSrc/, 'intro resolves per-character MP4')
 assert.match(introSrc, /useReducedMotion/, 'intro respects reduced motion')
 assert.match(introSrc, /Tap to skip|beginExit/, 'intro is skippable')
-assert.match(introSrc, /markSeen:\s*false/, 'buffer/autoplay fail does not burn seen latch')
 assert.match(introSrc, /is-reduced/, 'reduced-motion wash class')
 assert.match(
   introSrc,
   /setPhase\('enter'\)[\s\S]*REDUCED_HOLD_MS/,
   'reduced-motion starts visible (enter) before exit fade',
 )
+assert.match(
+  introSrc,
+  /every `#\/chat` enter|every #\/chat|no persistent/,
+  'intro docs: play on every chat enter',
+)
+assert.match(page, /every #\/chat mount/, 'AUI page notes intro every mount')
 const charSrc = readFileSync(join(here, 'chatDeepAvatarCharacter.ts'), 'utf8')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CHARACTER_KEY/, 'character localStorage key')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CHARACTER_EVENT/, 'character change event for sync')
 assert.match(charSrc, /chatDeepAvatarIntroSrc/, 'intro src helper')
-assert.match(charSrc, /CHAT_DEEP_AVATAR_INTRO_SEEN_KEY/, 'intro seen localStorage key')
+assert.doesNotMatch(charSrc, /CHAT_DEEP_AVATAR_INTRO_SEEN_KEY|intro-seen-v1/, 'intro seen localStorage key removed')
 assert.match(charSrc, /shouldPlayChatDeepAvatarIntro/, 'intro play gate')
 assert.equal(chatDeepAvatarIntroSrc('boy'), '/chat-avatar/boy/intro.mp4', 'boy intro path')
 assert.equal(chatDeepAvatarIntroSrc('girl'), '/chat-avatar/girl/intro.mp4', 'girl intro path')
-assert.equal(hasSeenChatDeepAvatarIntro('boy'), false, 'boy intro unseen by default')
-assert.equal(hasSeenChatDeepAvatarIntro('girl'), false, 'girl intro unseen by default')
-assert.equal(shouldPlayChatDeepAvatarIntro('boy'), true, 'boy should play when unseen')
-assert.equal(shouldPlayChatDeepAvatarIntro('girl'), true, 'girl should play when unseen')
-markChatDeepAvatarIntroSeen('boy')
-assert.equal(hasSeenChatDeepAvatarIntro('boy'), true, 'boy intro marked seen')
-assert.equal(shouldPlayChatDeepAvatarIntro('boy'), false, 'boy skips after seen')
-assert.equal(shouldPlayChatDeepAvatarIntro('girl'), true, 'girl still plays after boy seen')
-markChatDeepAvatarIntroSeen('girl')
-assert.equal(shouldPlayChatDeepAvatarIntro('girl'), false, 'girl skips after seen')
+assert.equal(shouldPlayChatDeepAvatarIntro('boy'), true, 'boy intro plays whenever chat mounts')
+assert.equal(shouldPlayChatDeepAvatarIntro('girl'), true, 'girl intro plays whenever chat mounts')
 assert.equal(
   existsSync(join(root, '../public/chat-avatar/boy/intro.mp4')),
   true,
