@@ -1,59 +1,68 @@
 /**
- * Reliable fullscreen cover math for the `#/chat` companion intro.
+ * Reliable contain-fit math for the `#/chat` companion intro.
  *
- * CSS `width/height: 100%` + `object-fit: cover` on `<video>` is flaky across
- * desktop viewports (grid + replaced-element sizing). We size the element to
- * the exact cover rectangle in pixels and let the stage `overflow: hidden`
- * crop — guaranteed fill, no letterbox / half-screen gaps.
+ * Portrait MP4 (1080×1920) must FIT every viewport — letterbox on landscape
+ * desktops rather than cover-cropping head/legs. We size the element to the
+ * exact contain rectangle in pixels and center it on the black stage.
  */
+import { agentDebugLog } from './agentDebugLog'
 
-export type IntroCoverSize = {
+export type IntroContainSize = {
   width: number
   height: number
   scale: number
 }
 
-/** Cover scale so the media fully paints `stageW`×`stageH` (may overflow). */
-export function introCoverSize(
+/** @deprecated Alias — prefer IntroContainSize (contain fit, not cover). */
+export type IntroCoverSize = IntroContainSize
+
+/** Contain scale so the media fully fits inside `stageW`×`stageH` (may letterbox). */
+export function introContainSize(
   stageW: number,
   stageH: number,
   mediaW: number,
   mediaH: number,
-): IntroCoverSize {
+): IntroContainSize {
   const sw = Math.max(1, stageW)
   const sh = Math.max(1, stageH)
   const mw = Math.max(1, mediaW)
   const mh = Math.max(1, mediaH)
-  const scale = Math.max(sw / mw, sh / mh)
+  const scale = Math.min(sw / mw, sh / mh)
   return {
-    width: Math.ceil(mw * scale),
-    height: Math.ceil(mh * scale),
+    width: Math.floor(mw * scale),
+    height: Math.floor(mh * scale),
     scale,
   }
 }
 
-/** True when the sized media fully covers the stage (no letterbox gaps). */
-export function introCoverFillsStage(
+/** @deprecated Prefer introContainSize. */
+export const introCoverSize = introContainSize
+
+/** True when the sized media fits entirely inside the stage (no overflow crop). */
+export function introContainFitsStage(
   stageW: number,
   stageH: number,
-  sized: Pick<IntroCoverSize, 'width' | 'height'>,
+  sized: Pick<IntroContainSize, 'width' | 'height'>,
 ): boolean {
-  return sized.width >= stageW - 1 && sized.height >= stageH - 1
+  return sized.width <= stageW + 1 && sized.height <= stageH + 1
 }
+
+/** @deprecated Prefer introContainFitsStage. */
+export const introCoverFillsStage = introContainFitsStage
 
 const DEFAULT_INTRO_MEDIA_W = 1080
 const DEFAULT_INTRO_MEDIA_H = 1920
 
 /**
- * Apply pixel cover layout to a video (or fill) element inside an overflow-hidden stage.
+ * Apply pixel contain layout to a video (or fill) element inside a stage.
  * Call on metadata, resize, and orientation changes.
  */
-export function layoutIntroCoverElement(
+export function layoutIntroContainElement(
   el: HTMLElement,
   stage: HTMLElement,
   mediaW?: number,
   mediaH?: number,
-): IntroCoverSize {
+): IntroContainSize {
   const stageW = stage.clientWidth || stage.getBoundingClientRect().width || 1
   const stageH = stage.clientHeight || stage.getBoundingClientRect().height || 1
   const mw =
@@ -68,16 +77,35 @@ export function layoutIntroCoverElement(
       : el instanceof HTMLVideoElement && el.videoHeight > 0
         ? el.videoHeight
         : DEFAULT_INTRO_MEDIA_H
-  const sized = introCoverSize(stageW, stageH, mw, mh)
+  const sized = introContainSize(stageW, stageH, mw, mh)
+  // #region agent log
+  agentDebugLog('D', 'chatDeepAvatarIntroLayout.ts:layoutIntroContainElement', 'contain layout applied', {
+    stageW,
+    stageH,
+    mw,
+    mh,
+    scale: sized.scale,
+    sizedW: sized.width,
+    sizedH: sized.height,
+    cropsW: sized.width > stageW + 1,
+    cropsH: sized.height > stageH + 1,
+    fits: introContainFitsStage(stageW, stageH, sized),
+    mode: 'contain-min',
+    runId: 'post-fix',
+  })
+  // #endregion
   el.style.position = 'absolute'
   el.style.left = '50%'
   el.style.top = '50%'
   el.style.width = `${sized.width}px`
   el.style.height = `${sized.height}px`
-  el.style.maxWidth = 'none'
-  el.style.maxHeight = 'none'
+  el.style.maxWidth = '100%'
+  el.style.maxHeight = '100%'
   el.style.transform = 'translate(-50%, -50%)'
-  el.style.objectFit = 'cover'
+  el.style.objectFit = 'contain'
   el.style.objectPosition = 'center center'
   return sized
 }
+
+/** @deprecated Prefer layoutIntroContainElement. */
+export const layoutIntroCoverElement = layoutIntroContainElement

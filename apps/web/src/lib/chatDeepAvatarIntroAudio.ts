@@ -12,6 +12,7 @@ import {
   type ChatDeepAvatarCharacterId,
 } from './chatDeepAvatarCharacter'
 import { readChatDeepAvatarSoundEnabled } from './chatDeepAvatarPersona'
+import { agentDebugLog } from './agentDebugLog'
 
 export type PrimedChatIntro = {
   character: ChatDeepAvatarCharacterId
@@ -49,7 +50,14 @@ export function clearPrimedChatDeepAvatarIntro() {
  */
 export function primeChatDeepAvatarIntro(character?: ChatDeepAvatarCharacterId) {
   if (typeof document === 'undefined') return
-  if (!readChatDeepAvatarSoundEnabled()) {
+  // #region agent log
+  const soundOn = readChatDeepAvatarSoundEnabled()
+  agentDebugLog('B', 'chatDeepAvatarIntroAudio.ts:prime', 'primeChatDeepAvatarIntro called', {
+    soundOn,
+    hasDoc: true,
+  })
+  // #endregion
+  if (!soundOn) {
     clearPrimedChatDeepAvatarIntro()
     return
   }
@@ -78,9 +86,22 @@ export function primeChatDeepAvatarIntro(character?: ChatDeepAvatarCharacterId) 
     void attempt
       .then(() => {
         if (primed?.video === video) primed.unmuted = !video.muted
+        // #region agent log
+        agentDebugLog('B', 'chatDeepAvatarIntroAudio.ts:prime.then', 'prime unmuted play accepted', {
+          muted: video.muted,
+          paused: video.paused,
+          unmuted: primed?.unmuted,
+        })
+        // #endregion
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         // Unmuted blocked even in-gesture (rare) — keep element for adopt; overlay retries.
+        // #region agent log
+        agentDebugLog('A', 'chatDeepAvatarIntroAudio.ts:prime.catch', 'prime unmuted play rejected', {
+          err: String(err),
+          name: (err as { name?: string })?.name,
+        })
+        // #endregion
         video.muted = true
         void video.play().catch(() => {
           /* overlay will remount its own element */
@@ -96,9 +117,25 @@ export function primeChatDeepAvatarIntro(character?: ChatDeepAvatarCharacterId) 
 export function takePrimedChatDeepAvatarIntro(
   character: ChatDeepAvatarCharacterId,
 ): PrimedChatIntro | null {
-  if (!primed || primed.character !== character) return null
+  if (!primed || primed.character !== character) {
+    // #region agent log
+    agentDebugLog('B', 'chatDeepAvatarIntroAudio.ts:take', 'takePrimed miss', {
+      wanted: character,
+      had: primed?.character ?? null,
+    })
+    // #endregion
+    return null
+  }
   const out = primed
   primed = null
+  // #region agent log
+  agentDebugLog('B', 'chatDeepAvatarIntroAudio.ts:take', 'takePrimed hit', {
+    character: out.character,
+    unmuted: out.unmuted,
+    muted: out.video.muted,
+    paused: out.video.paused,
+  })
+  // #endregion
   return out
 }
 

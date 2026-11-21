@@ -3,21 +3,23 @@
  * Tap / Esc / video end dismisses for this visit only — no persistent “seen” latch.
  * Character from Companion pick (`readChatDeepAvatarCharacter`).
  *
- * Audio follows Companion Sound (default ON). Fresh users / missing pref play with
- * sound; only an explicit Sound-off toggle stays silent. Prefer unmuted playback
- * from the start (chat-open gesture primes via `primeChatDeepAvatarIntro`). Tap the
- * Mute control to silence — never an unmute-first chip as the primary path.
+ * Audio follows Companion Sound (default ON). Prefer unmuted playback from the
+ * start (`primeChatDeepAvatarIntro` inside `openDeepseekChat`). When the browser
+ * blocks unmuted autoplay (direct `#/chat` / hard refresh), play muted briefly
+ * then unlock on the first gesture without dismissing. Mute control reflects
+ * actual silence (Unmute while policy-locked). Tap Mute to silence once audible.
  *
- * Layout: JS pixel cover (`layoutIntroCoverElement`) so the stage is always filled
- * on every viewport (incl. 1920×1080) — no letterbox / half-screen gaps.
+ * Layout: JS pixel contain (`layoutIntroContainElement`) so the portrait clip
+ * FITs every viewport — letterbox on landscape, never cover-crop head/legs.
  */
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { createPortal } from 'react-dom'
+import { agentDebugLog } from '../../../lib/agentDebugLog'
 import {
   clearPrimedChatDeepAvatarIntro,
   takePrimedChatDeepAvatarIntro,
 } from '../../../lib/chatDeepAvatarIntroAudio'
-import { layoutIntroCoverElement } from '../../../lib/chatDeepAvatarIntroLayout'
+import { layoutIntroContainElement } from '../../../lib/chatDeepAvatarIntroLayout'
 import {
   chatDeepAvatarIntroPosterSrc,
   chatDeepAvatarIntroSrc,
@@ -45,13 +47,15 @@ export function ChatDeepAvatarIntroOverlay() {
   const [phase, setPhase] = useState<Phase>('enter')
   /** User tapped Mute on this visit (Sound pref still on). */
   const [sessionMuted, setSessionMuted] = useState(false)
-  /** Browser blocked unmuted autoplay — unlock on next gesture (no unmute chip). */
+  /** Browser blocked unmuted autoplay — unlock on next gesture (no dismiss). */
   const [policyMuted, setPolicyMuted] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const stageRef = useRef<HTMLDivElement | null>(null)
   const exitTimer = useRef<number | null>(null)
   const finishing = useRef(false)
   const played = useRef(false)
+  /** Swallow the click that unlocked policy-muted audio so we don't dismiss. */
+  const unlockConsumedClick = useRef(false)
   const soundEnabledRef = useRef(soundEnabled)
   soundEnabledRef.current = soundEnabled
   const sessionMutedRef = useRef(sessionMuted)
@@ -70,6 +74,17 @@ export function ChatDeepAvatarIntroOverlay() {
   const beginExit = () => {
     const cur = sessionRef.current
     if (!cur || finishing.current) return
+    // #region agent log
+    const vv = videoRef.current
+    agentDebugLog('C', 'ChatDeepAvatarIntro.tsx:beginExit', 'beginExit', {
+      policyMuted: policyMutedRef.current,
+      sessionMuted: sessionMutedRef.current,
+      muted: vv?.muted ?? null,
+      paused: vv?.paused ?? null,
+      currentTime: vv?.currentTime ?? null,
+      runId: 'post-fix',
+    })
+    // #endregion
     setPhase('exit')
     const v = videoRef.current
     if (v) {
@@ -93,6 +108,15 @@ export function ChatDeepAvatarIntroOverlay() {
   const tryUnlockUnmuted = () => {
     const v = videoRef.current
     if (!v || !wantAudible()) return false
+    // #region agent log
+    agentDebugLog('C', 'ChatDeepAvatarIntro.tsx:tryUnlockUnmuted', 'gesture unlock attempt', {
+      policyMuted: policyMutedRef.current,
+      sessionMuted: sessionMutedRef.current,
+      wasMuted: v.muted,
+      paused: v.paused,
+      runId: 'post-fix',
+    })
+    // #endregion
     setPolicyLock(false)
     v.muted = false
     void v.play().catch(() => {
@@ -117,6 +141,7 @@ export function ChatDeepAvatarIntroOverlay() {
     }
     finishing.current = false
     played.current = false
+    unlockConsumedClick.current = false
     policyMutedRef.current = false
     setPolicyMuted(false)
     setSessionMuted(false)
@@ -190,13 +215,25 @@ export function ChatDeepAvatarIntroOverlay() {
 
     stage.replaceChildren(v)
     videoRef.current = v
-    layoutIntroCoverElement(v, stage)
+    layoutIntroContainElement(v, stage)
 
     const start = async () => {
       if (cancelled || finishing.current) return
-      layoutIntroCoverElement(v, stage)
+      layoutIntroContainElement(v, stage)
       setPhase('play')
       const audible = wantAudible()
+      // #region agent log
+      agentDebugLog('A', 'ChatDeepAvatarIntro.tsx:start', 'start playback', {
+        fromPrime,
+        audible,
+        muted: v.muted,
+        paused: v.paused,
+        readyState: v.readyState,
+        soundEnabled: soundEnabledRef.current,
+        sessionMuted: sessionMutedRef.current,
+        runId: 'post-fix',
+      })
+      // #endregion
       if (!audible) {
         setPolicyLock(false)
         v.muted = true
@@ -212,6 +249,13 @@ export function ChatDeepAvatarIntroOverlay() {
       if (fromPrime && !v.paused && !v.muted) {
         played.current = true
         setPolicyLock(false)
+        // #region agent log
+        agentDebugLog('B', 'ChatDeepAvatarIntro.tsx:start.primeOk', 'adopted playing unmuted prime', {
+          muted: v.muted,
+          paused: v.paused,
+          runId: 'post-fix',
+        })
+        // #endregion
         return
       }
 
@@ -222,9 +266,24 @@ export function ChatDeepAvatarIntroOverlay() {
         if (cancelled) return
         played.current = true
         setPolicyLock(false)
-      } catch {
+        // #region agent log
+        agentDebugLog('A', 'ChatDeepAvatarIntro.tsx:start.unmutedOk', 'unmuted play succeeded', {
+          muted: v.muted,
+          paused: v.paused,
+          runId: 'post-fix',
+        })
+        // #endregion
+      } catch (err: unknown) {
         if (cancelled) return
-        // Autoplay with sound blocked — keep picture; unlock on next gesture (no chip).
+        // Autoplay with sound blocked — keep picture; unlock on next gesture (no dismiss).
+        // #region agent log
+        agentDebugLog('A', 'ChatDeepAvatarIntro.tsx:start.unmutedFail', 'unmuted play blocked → muted fallback', {
+          err: String(err),
+          name: (err as { name?: string })?.name,
+          fromPrime,
+          runId: 'post-fix',
+        })
+        // #endregion
         setPolicyLock(true)
         v.muted = true
         try {
@@ -237,7 +296,7 @@ export function ChatDeepAvatarIntroOverlay() {
     }
 
     const onMeta = () => {
-      if (!cancelled) layoutIntroCoverElement(v, stage)
+      if (!cancelled) layoutIntroContainElement(v, stage)
     }
     v.addEventListener('loadedmetadata', onMeta)
     if (v.readyState >= 1) onMeta()
@@ -258,7 +317,7 @@ export function ChatDeepAvatarIntroOverlay() {
     }, BUFFER_FAIL_MS)
 
     const onResize = () => {
-      if (!cancelled) layoutIntroCoverElement(v, stage)
+      if (!cancelled) layoutIntroContainElement(v, stage)
     }
     window.addEventListener('resize', onResize)
     window.visualViewport?.addEventListener('resize', onResize)
@@ -318,11 +377,12 @@ export function ChatDeepAvatarIntroOverlay() {
     }
   }, [session, reducedMotion, soundEnabled, sessionMuted])
 
-  // Opportunistic unlock: any gesture unmutes without a dedicated “turn sound on” control.
+  // Opportunistic unlock: first gesture unmutes without dismissing the intro.
   useEffect(() => {
     if (!session || reducedMotion) return
     const onGesture = () => {
       if (!policyMutedRef.current || !wantAudible()) return
+      unlockConsumedClick.current = true
       tryUnlockUnmuted()
     }
     window.addEventListener('pointerdown', onGesture, true)
@@ -343,8 +403,22 @@ export function ChatDeepAvatarIntroOverlay() {
   useEffect(() => {
     if (!session || reducedMotion) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+      if (e.key === 'Escape') {
         e.preventDefault()
+        beginExit()
+        return
+      }
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        if (policyMutedRef.current && wantAudible()) {
+          unlockConsumedClick.current = true
+          tryUnlockUnmuted()
+          return
+        }
+        if (unlockConsumedClick.current) {
+          unlockConsumedClick.current = false
+          return
+        }
         beginExit()
       }
     }
@@ -368,6 +442,12 @@ export function ChatDeepAvatarIntroOverlay() {
   const toggleMute = (e: ReactMouseEvent) => {
     e.stopPropagation()
     if (!soundEnabled) return
+    // Policy-locked silence: this control is the unlock affordance (shows Unmute).
+    if (policyMutedRef.current && !sessionMutedRef.current) {
+      unlockConsumedClick.current = true
+      tryUnlockUnmuted()
+      return
+    }
     const next = !sessionMutedRef.current
     sessionMutedRef.current = next
     setSessionMuted(next)
@@ -387,31 +467,70 @@ export function ChatDeepAvatarIntroOverlay() {
   }
 
   const showMuteControl = soundEnabled
-  // Primary path is Mute; Unmute only after the user chose Mute (not policy lock).
-  const muteLabel = sessionMuted ? 'Unmute' : 'Mute'
+  // Honest label: Unmute while policy-locked or after user Mute — never Mute-while-silent.
+  const muteLabel = sessionMuted || policyMuted ? 'Unmute' : 'Mute'
+  // #region agent log
+  agentDebugLog('A', 'ChatDeepAvatarIntro.tsx:render', 'mute UI vs actual audio', {
+    muteLabel,
+    sessionMuted,
+    policyMuted,
+    soundEnabled,
+    videoMuted: videoRef.current?.muted ?? null,
+    videoPaused: videoRef.current?.paused ?? null,
+    misleadingMute: !sessionMuted && policyMuted && muteLabel === 'Mute',
+    runId: 'post-fix',
+  })
+  // #endregion
+
+  const onOverlayClick = () => {
+    // #region agent log
+    agentDebugLog('C', 'ChatDeepAvatarIntro.tsx:overlayClick', 'overlay click', {
+      policyMuted: policyMutedRef.current,
+      sessionMuted: sessionMutedRef.current,
+      unlockConsumed: unlockConsumedClick.current,
+      runId: 'post-fix',
+    })
+    // #endregion
+    if (unlockConsumedClick.current) {
+      unlockConsumedClick.current = false
+      return
+    }
+    if (policyMutedRef.current && wantAudible()) {
+      unlockConsumedClick.current = true
+      tryUnlockUnmuted()
+      return
+    }
+    beginExit()
+  }
 
   return createPortal(
     <div
       className={`aui-deep-avatar-intro is-${phase}`}
       role="dialog"
       aria-modal="true"
-      aria-label="Companion intro — tap to skip"
-      onClick={() => beginExit()}
+      aria-label={
+        policyMuted
+          ? 'Companion intro — tap for sound, tap again to skip'
+          : 'Companion intro — tap to skip'
+      }
+      onClick={onOverlayClick}
     >
-      {/* Video is mounted imperatively (gesture prime adopt + JS cover layout). */}
+      {/* Video is mounted imperatively (gesture prime adopt + JS contain layout). */}
       <div ref={stageRef} className="aui-deep-avatar-intro-stage" aria-hidden />
       {showMuteControl ? (
         <button
           type="button"
           className="aui-deep-avatar-intro-mute"
           aria-label={muteLabel}
-          aria-pressed={sessionMuted}
+          aria-pressed={sessionMuted || policyMuted}
           onClick={toggleMute}
         >
           {muteLabel}
         </button>
       ) : null}
-      <p className="aui-deep-avatar-intro-hint">Tap to skip</p>
+      <p className="aui-deep-avatar-intro-hint">
+        {policyMuted ? 'Tap for sound · again to skip' : 'Tap to skip'}
+      </p>
     </div>,
     document.body,
   )
