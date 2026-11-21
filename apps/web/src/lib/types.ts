@@ -192,6 +192,7 @@ export type Entitlement = {
     primaryLang?: VoiceLang
     username?: string | null
     usernameChangedAt?: string | null
+    chatDeepAvatar?: Record<string, unknown> | null
   }
   /** Family/Business household seats with pooled monthly usage. */
   household?: HouseholdSummary | null

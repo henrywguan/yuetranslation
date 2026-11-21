@@ -2,6 +2,12 @@
  * Dynamic system prompt for DeepSeek Chat — temporal grounding, freshness rules,
  * and JyutTranslate-native skill catalog (no paid APIs).
  */
+import {
+  buildChatDeepAvatarPersonaPromptBlock,
+  normalizeChatDeepAvatarCharacter,
+  normalizeChatDeepAvatarTrait,
+  sanitizeChatDeepAvatarName,
+} from './chatDeepAvatarPersona.js'
 import { env } from './env.js'
 
 export type DeepseekChatPromptContext = {
@@ -14,6 +20,14 @@ export type DeepseekChatPromptContext = {
    * Feeds DeepSeek `latest_reminder` Language + system grounding.
    */
   primaryLang?: string
+  /** Active chat companion character. */
+  avatarCharacter?: 'boy' | 'girl'
+  /** User-facing companion display name. */
+  avatarName?: string
+  /** Companion trait preset. */
+  avatarTrait?: 'cheerful' | 'calm' | 'witty' | 'coach'
+  /** Short user notes for the companion. */
+  avatarNotes?: string
   /** Plan label for product-skill hints (family / business / admin). */
   plan?: string
   now?: Date
@@ -55,6 +69,7 @@ const SKILLS_TOOLS = [
   '- Math/units: calc, convert_units.',
   '- Weather: get_weather (Open-Meteo).',
   '- Web page: fetch_url (public https only).',
+  '- Companion avatar: avatar_list, avatar_play, avatar_react (list / demo / soft mood — no billing).',
   '- JyutTranslate: jyut_plan_limits, jyut_phrase_lookup (en↔yue offline only), jyut_learn_hint.',
   '- Image (when enabled): generate_image (Gemini by default) — then paste the returned markdown into your reply.',
   '- Generation MCPs (when enabled): Higgsfield / Adobe / Cursor tools are namespaced mcp__<id>__… — prefer them for video or multi-step creative work; include any returned image markdown in your reply.',
@@ -232,6 +247,20 @@ export function buildDeepseekChatSystem(ctx: DeepseekChatPromptContext = {}): st
       `User primary language preference: ${primary}. Prefer this language for answers when the user does not specify another.`,
     )
   }
+  const avatarCharacter = normalizeChatDeepAvatarCharacter(ctx.avatarCharacter)
+  const avatarName = sanitizeChatDeepAvatarName(
+    ctx.avatarName,
+    avatarCharacter === 'girl' ? 'DS Girl' : 'DS Boy',
+  )
+  const avatarTrait = normalizeChatDeepAvatarTrait(ctx.avatarTrait)
+  parts.push(
+    buildChatDeepAvatarPersonaPromptBlock({
+      character: avatarCharacter,
+      name: avatarName,
+      trait: avatarTrait,
+      notes: ctx.avatarNotes,
+    }),
+  )
   return parts.join('\n\n')
 }
 

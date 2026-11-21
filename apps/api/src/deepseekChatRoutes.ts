@@ -79,6 +79,7 @@ async function* chatStreamEvents(
   | { kind: 'search_step'; step: unknown }
   | { kind: 'title'; title: string }
   | { kind: 'image'; url: string; prompt: string; id: string }
+  | { kind: 'avatar'; action: 'list' | 'play' | 'react'; mood?: string }
   | { kind: 'workspace'; files: import('./deepseekChatWorkspace.js').ChatWorkspaceFileWire[] }
   | { kind: 'project'; actions: import('./deepseekChatProject.js').ProjectAction[] }
   | { kind: 'sandbox'; activity: Record<string, unknown> },
@@ -242,6 +243,10 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     timeZone: parsed.data.timeZone,
     locale: parsed.data.locale,
     primaryLang: parsed.data.primaryLang,
+    avatarCharacter: parsed.data.avatarCharacter,
+    avatarName: parsed.data.avatarName,
+    avatarTrait: parsed.data.avatarTrait,
+    avatarNotes: parsed.data.avatarNotes,
     plan: entitlement.isAdmin ? `admin (${entitlement.plan})` : entitlement.plan,
     searchEnabled,
     harnessEnabled,
@@ -386,6 +391,15 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
           writeSse(
             res,
             `data: ${JSON.stringify({ image: { url: event.url, prompt: event.prompt, id: event.id } })}\n\n`,
+          )
+          continue
+        }
+        if (event.kind === 'avatar') {
+          writeSse(
+            res,
+            `data: ${JSON.stringify({
+              avatar: { action: event.action, ...(event.mood ? { mood: event.mood } : null) },
+            })}\n\n`,
           )
           continue
         }

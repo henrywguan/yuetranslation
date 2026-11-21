@@ -276,6 +276,44 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
   flex-shrink: 0;
 }
 
+.inbox-settings-rename,
+.inbox-settings-notes {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+}
+
+.inbox-settings-rename-input,
+.inbox-settings-notes-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--ds-surface, #fff) 92%, transparent);
+  color: var(--ds-text);
+  font: 500 0.8125rem/1.35 'Noto Sans', system-ui, sans-serif;
+  resize: vertical;
+}
+
+.inbox-settings-rename-input:focus,
+.inbox-settings-notes-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--ds-blue) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.inbox-settings-trait {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+}
+
+.inbox-settings-sound {
+  margin-top: 0.35rem;
+  justify-content: center;
+}
+
 .inbox-settings-celebrate {
   display: grid;
   gap: 0.3rem;

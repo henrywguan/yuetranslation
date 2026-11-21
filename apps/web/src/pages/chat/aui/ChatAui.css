@@ -550,6 +550,31 @@
   outline: none;
 }
 
+.aui-deep-avatar-fx-unmute {
+  position: absolute;
+  top: max(0.85rem, calc(env(safe-area-inset-top, 0px) + 0.65rem));
+  right: max(0.85rem, calc(env(safe-area-inset-right, 0px) + 0.65rem));
+  z-index: 2;
+  margin: 0;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid color-mix(in srgb, #fff 28%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, #000 55%, transparent);
+  color: #fff;
+  font-family: var(--ds-sans, 'Noto Sans', system-ui, sans-serif);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+
+.aui-deep-avatar-fx-unmute:hover,
+.aui-deep-avatar-fx-unmute:focus-visible {
+  border-color: color-mix(in srgb, #fff 55%, transparent);
+  outline: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .aui-deep-avatar-intro {
     transition-duration: 0.2s;

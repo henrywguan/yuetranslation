@@ -33,11 +33,18 @@ import {
   type ChatProjectStore,
   type ProjectAction,
 } from './deepseekChatProject.js'
+import {
+  CHAT_DEEP_AVATAR_SHOWCASE,
+  isChatDeepAvatarMoodId,
+  normalizeChatDeepAvatarMoodId,
+} from './chatDeepAvatarPersona.js'
 
 export type ChatToolContext = DeepseekChatPromptContext & {
   signal?: AbortSignal
   /** Optional sink so the harness can emit SSE image events. */
   onImage?: (image: { url: string; prompt: string; id: string }) => void
+  /** Companion avatar play / react — client paints GIF + optional fullscreen. */
+  onAvatar?: (event: { action: 'list' | 'play' | 'react'; mood?: string }) => void
   /** Per-user BYOK secrets for image + MCP presets. */
   pluginCreds?: ChatPluginCredentials
   /** Mutable thread workspace when Harness mode is on. */
@@ -467,6 +474,51 @@ export const DEEPSEEK_CHAT_TOOLS: OpenAiTool[] = [
       name: 'jyut_learn_hint',
       description: 'How to open Harbor Quest / Learn (#/learn) for Jyutping practice.',
       parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'avatar_list',
+      description:
+        'List the companion avatar animation / emotion catalog (ids, labels, blurbs). Use when the user asks what animations or emotions you can show.',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'avatar_play',
+      description:
+        'Play a companion animation fullscreen with sound (user-requested demo). Prefer asking which mood they want after avatar_list.',
+      parameters: {
+        type: 'object',
+        properties: {
+          mood: {
+            type: 'string',
+            description: `One of: ${CHAT_DEEP_AVATAR_SHOWCASE.map((e) => e.id).join(', ')}`,
+          },
+        },
+        required: ['mood'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'avatar_react',
+      description:
+        'Set the companion portrait mood for this reply (soft in-frame, or fullscreen for high-energy moods). Call once near the end of emotionally clear answers.',
+      parameters: {
+        type: 'object',
+        properties: {
+          mood: {
+            type: 'string',
+            description: `One of: ${CHAT_DEEP_AVATAR_SHOWCASE.map((e) => e.id).join(', ')}`,
+          },
+        },
+        required: ['mood'],
+      },
     },
   },
 ]
@@ -959,6 +1011,39 @@ export async function executeDeepseekChatTool(
             error: err instanceof Error ? err.message : 'Open PR failed',
           })
         }
+      }
+      case 'avatar_list': {
+        ctx.onAvatar?.({ action: 'list' })
+        return JSON.stringify({
+          ok: true,
+          animations: CHAT_DEEP_AVATAR_SHOWCASE.map((e) => ({
+            id: e.id,
+            label: e.label,
+            blurb: e.blurb,
+            highEnergy: e.highEnergy,
+          })),
+          hint: 'Ask which mood to play, then call avatar_play.',
+        })
+      }
+      case 'avatar_play': {
+        const mood = normalizeChatDeepAvatarMoodId(args.mood)
+        if (!isChatDeepAvatarMoodId(String(args.mood || '').trim().toLowerCase())) {
+          return JSON.stringify({
+            error: `Unknown mood. Valid: ${CHAT_DEEP_AVATAR_SHOWCASE.map((e) => e.id).join(', ')}`,
+          })
+        }
+        ctx.onAvatar?.({ action: 'play', mood })
+        return JSON.stringify({ ok: true, action: 'play', mood })
+      }
+      case 'avatar_react': {
+        const mood = normalizeChatDeepAvatarMoodId(args.mood)
+        if (!isChatDeepAvatarMoodId(String(args.mood || '').trim().toLowerCase())) {
+          return JSON.stringify({
+            error: `Unknown mood. Valid: ${CHAT_DEEP_AVATAR_SHOWCASE.map((e) => e.id).join(', ')}`,
+          })
+        }
+        ctx.onAvatar?.({ action: 'react', mood })
+        return JSON.stringify({ ok: true, action: 'react', mood })
       }
       case 'get_date':
         return JSON.stringify({

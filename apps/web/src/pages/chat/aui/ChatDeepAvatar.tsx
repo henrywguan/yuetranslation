@@ -25,7 +25,6 @@ import {
 import { createPortal } from 'react-dom'
 import {
   CHAT_DEEP_AVATAR_CHARACTER_EVENT,
-  CHAT_DEEP_AVATAR_CHARACTER_LABEL,
   CHAT_DEEP_AVATAR_CELEBRATE_MODE_EVENT,
   CHAT_DEEP_AVATAR_DEEP_MS,
   chatDeepAvatarMoodSrc,
@@ -45,11 +44,39 @@ import {
   type ChatDeepAvatarMood,
 } from '../../../lib/chatDeepAvatarCharacter'
 import {
+  bindChatDeepAvatarAudioLipBus,
+  playChatDeepAvatarEmotionAudio,
+  stopChatDeepAvatarEmotionAudio,
+  unmuteChatDeepAvatarEmotionAudio,
+} from '../../../lib/chatDeepAvatarAudio'
+import {
+  CHAT_DEEP_AVATAR_NAMES_EVENT,
+  CHAT_DEEP_AVATAR_NOTES_EVENT,
+  CHAT_DEEP_AVATAR_SOUND_EVENT,
+  CHAT_DEEP_AVATAR_TRAIT_EVENT,
+  displayChatDeepAvatarName,
+  highEnergyAvatarMood,
+  readChatDeepAvatarNames,
+  readChatDeepAvatarNotes,
+  readChatDeepAvatarSoundEnabled,
+  readChatDeepAvatarTrait,
+  writeChatDeepAvatarNames,
+  writeChatDeepAvatarNotes,
+  writeChatDeepAvatarSoundEnabled,
+  writeChatDeepAvatarTrait,
+  type ChatDeepAvatarTrait,
+} from '../../../lib/chatDeepAvatarPersona'
+import {
+  clearChatDeepAvatarPlay,
+  useChatDeepAvatarPlayRequest,
+} from '../../../lib/chatDeepAvatarPlayBus'
+import {
   abortChatDeepAvatarPlanBuild,
   consumeChatDeepAvatarPlanBuild,
   getChatDeepAvatarLipLevel,
   isChatAvatarTtsActive,
   peekChatDeepAvatarPlanBuild,
+  setChatDeepAvatarTtsPlaying,
   useChatDeepAvatarPlanBuildSettleEpoch,
   useChatDeepAvatarSignals,
 } from '../../../lib/chatDeepAvatarSignals'
@@ -135,6 +162,7 @@ export function useChatDeepAvatarMood(opts?: ChatDeepAvatarMoodOpts): ChatDeepAv
   const isEmpty = useAuiState((s) => s.thread.isEmpty)
   const { listening, chatTtsPlaying } = useChatDeepAvatarSignals()
   const planBuildSettleEpoch = useChatDeepAvatarPlanBuildSettleEpoch()
+  const playReq = useChatDeepAvatarPlayRequest()
   const [outro, setOutro] = useState<ChatDeepAvatarMood | null>(null)
   const [deepFinish, setDeepFinish] = useState(false)
   const [azureTts, setAzureTts] = useState(false)
@@ -142,7 +170,24 @@ export function useChatDeepAvatarMood(opts?: ChatDeepAvatarMoodOpts): ChatDeepAv
   const runStartedAt = useRef(0)
   const runMeta = useRef({ composerMode: 'agent' as ChatComposerMode, searchOn: false })
   const lastSettleEpoch = useRef(planBuildSettleEpoch)
+  const lastPlayId = useRef(0)
   const hasError = Boolean(opts?.error?.trim())
+
+  // Tool / sentiment forced moods latch like outros (in-frame when not fullscreen).
+  useEffect(() => {
+    if (!playReq || playReq.id === lastPlayId.current) return
+    lastPlayId.current = playReq.id
+    if (hasError) return
+    if (playReq.forceFullscreen) return // FX hook owns the latch
+    setOutro(playReq.mood)
+    setDeepFinish(false)
+    const hold = highEnergyAvatarMood(playReq.mood) ? CELEBRATE_MS : HAPPY_MS
+    const t = window.setTimeout(() => {
+      setOutro(null)
+      clearChatDeepAvatarPlay(playReq.id)
+    }, hold)
+    return () => window.clearTimeout(t)
+  }, [playReq, hasError])
 
   // Session error → concern wins; drop any celebratory latch / Plan→Build credit.
   useEffect(() => {
@@ -293,6 +338,77 @@ export function useChatDeepAvatarCelebrateMode(): [
   return [mode, setMode]
 }
 
+export function useChatDeepAvatarDisplayName(character: ChatDeepAvatarCharacterId): string {
+  const [names, setNames] = useState(() => readChatDeepAvatarNames())
+  useEffect(() => {
+    const onChange = () => setNames(readChatDeepAvatarNames())
+    window.addEventListener(CHAT_DEEP_AVATAR_NAMES_EVENT, onChange)
+    return () => window.removeEventListener(CHAT_DEEP_AVATAR_NAMES_EVENT, onChange)
+  }, [])
+  return displayChatDeepAvatarName(character, names)
+}
+
+export function useChatDeepAvatarNameEditor(): [
+  ReturnType<typeof readChatDeepAvatarNames>,
+  (character: ChatDeepAvatarCharacterId, name: string) => void,
+] {
+  const [names, setNames] = useState(() => readChatDeepAvatarNames())
+  useEffect(() => {
+    const onChange = () => setNames(readChatDeepAvatarNames())
+    window.addEventListener(CHAT_DEEP_AVATAR_NAMES_EVENT, onChange)
+    return () => window.removeEventListener(CHAT_DEEP_AVATAR_NAMES_EVENT, onChange)
+  }, [])
+  const setName = (character: ChatDeepAvatarCharacterId, name: string) => {
+    setNames(writeChatDeepAvatarNames({ [character]: name }))
+  }
+  return [names, setName]
+}
+
+export function useChatDeepAvatarTrait(): [ChatDeepAvatarTrait, (t: ChatDeepAvatarTrait) => void] {
+  const [trait, setTraitState] = useState(() => readChatDeepAvatarTrait())
+  useEffect(() => {
+    const onChange = () => setTraitState(readChatDeepAvatarTrait())
+    window.addEventListener(CHAT_DEEP_AVATAR_TRAIT_EVENT, onChange)
+    return () => window.removeEventListener(CHAT_DEEP_AVATAR_TRAIT_EVENT, onChange)
+  }, [])
+  return [
+    trait,
+    (t) => {
+      setTraitState(writeChatDeepAvatarTrait(t))
+    },
+  ]
+}
+
+export function useChatDeepAvatarNotes(): [string, (notes: string) => void] {
+  const [notes, setNotesState] = useState(() => readChatDeepAvatarNotes())
+  useEffect(() => {
+    const onChange = () => setNotesState(readChatDeepAvatarNotes())
+    window.addEventListener(CHAT_DEEP_AVATAR_NOTES_EVENT, onChange)
+    return () => window.removeEventListener(CHAT_DEEP_AVATAR_NOTES_EVENT, onChange)
+  }, [])
+  return [
+    notes,
+    (n) => {
+      setNotesState(writeChatDeepAvatarNotes(n))
+    },
+  ]
+}
+
+export function useChatDeepAvatarSoundEnabled(): [boolean, (on: boolean) => void] {
+  const [on, setOn] = useState(() => readChatDeepAvatarSoundEnabled())
+  useEffect(() => {
+    const onChange = () => setOn(readChatDeepAvatarSoundEnabled())
+    window.addEventListener(CHAT_DEEP_AVATAR_SOUND_EVENT, onChange)
+    return () => window.removeEventListener(CHAT_DEEP_AVATAR_SOUND_EVENT, onChange)
+  }, [])
+  return [
+    on,
+    (v) => {
+      setOn(writeChatDeepAvatarSoundEnabled(v))
+    },
+  ]
+}
+
 /** rAF lip level while TTS is active; 0 otherwise. */
 export function useChatDeepAvatarLipLevel(mood: ChatDeepAvatarMood): number {
   const [level, setLevel] = useState(0)
@@ -352,7 +468,7 @@ export function ChatDeepAvatar({
   const lipsOn = speaking && !reduceMotion && lipLevel > 0.04
   const lipScaleY = 0.35 + lipLevel * 1.15
   const lipScaleX = 0.85 + lipLevel * 0.35
-  const charLabel = CHAT_DEEP_AVATAR_CHARACTER_LABEL[character]
+  const charLabel = displayChatDeepAvatarName(character)
   const imgPx = size === 'bubble' ? 112 : size === 'portrait' ? 224 : 720
 
   return (
@@ -550,24 +666,43 @@ export function ChatDeepAvatarCelebrateFx({
   const [mounted, setMounted] = useState(false)
   const [phase, setPhase] = useState<'enter' | 'hold' | 'exit'>('enter')
   const [flip, setFlip] = useState<CSSProperties>({})
+  const [needsUnmute, setNeedsUnmute] = useState(false)
   const flyRef = useRef<HTMLDivElement | null>(null)
+  const [soundEnabled] = useChatDeepAvatarSoundEnabled()
+
+  useEffect(() => {
+    bindChatDeepAvatarAudioLipBus({
+      setPlaying: setChatDeepAvatarTtsPlaying,
+      isBusy: isChatAvatarTtsActive,
+    })
+  }, [])
 
   // Restart timers on every new session (same mood can celebrate again while open stays true).
   useEffect(() => {
     if (!open) {
       setMounted(false)
       setPhase('enter')
+      setNeedsUnmute(false)
+      stopChatDeepAvatarEmotionAudio()
       return
     }
     setMounted(true)
     setPhase('enter')
+    setNeedsUnmute(false)
+    let stopAudio = () => {}
+    void playChatDeepAvatarEmotionAudio({ character, mood, soundEnabled }).then((res) => {
+      stopAudio = res.stop
+      if (res.needsUnmute) setNeedsUnmute(true)
+    })
     const hold = window.setTimeout(() => setPhase('exit'), FULLSCREEN_MS - 420)
     const done = window.setTimeout(() => onDismiss(), FULLSCREEN_MS)
     return () => {
       window.clearTimeout(hold)
       window.clearTimeout(done)
+      stopAudio()
+      stopChatDeepAvatarEmotionAudio()
     }
-  }, [open, sessionKey, onDismiss])
+  }, [open, sessionKey, onDismiss, character, mood, soundEnabled])
 
   useEffect(() => {
     if (!open) return
@@ -618,6 +753,20 @@ export function ChatDeepAvatarCelebrateFx({
           <ChatDeepAvatar mood={mood} size="hero" character={character} className="is-fx-pop" />
         </div>
       </div>
+      {needsUnmute ? (
+        <button
+          type="button"
+          className="aui-deep-avatar-fx-unmute"
+          aria-label="Unmute companion"
+          onClick={(e) => {
+            e.stopPropagation()
+            unmuteChatDeepAvatarEmotionAudio()
+            setNeedsUnmute(false)
+          }}
+        >
+          Tap for sound
+        </button>
+      ) : null}
     </div>,
     document.body,
   )
@@ -638,7 +787,9 @@ export function useChatDeepAvatarCelebrateFx(opts: {
   dimPortrait: boolean
 } {
   const reduceMotion = usePrefersReducedMotion()
+  const playReq = useChatDeepAvatarPlayRequest()
   const prevOutro = useRef(false)
+  const lastForcedPlayId = useRef(0)
   /** Independent of outro timer — lives until dismiss or CelebrateFx FULLSCREEN_MS. */
   const [session, setSession] = useState<{
     id: number
@@ -672,7 +823,28 @@ export function useChatDeepAvatarCelebrateFx(opts: {
     reduceMotion,
   ])
 
-  const dismissFx = useCallback(() => setSession(null), [])
+  // Tool demos / high-energy reacts — always fullscreen unless reduced-motion.
+  useEffect(() => {
+    if (!playReq || playReq.id === lastForcedPlayId.current) return
+    if (!playReq.forceFullscreen) return
+    lastForcedPlayId.current = playReq.id
+    if (reduceMotion) {
+      clearChatDeepAvatarPlay(playReq.id)
+      return
+    }
+    sessionId.current += 1
+    setSession({
+      id: sessionId.current,
+      mood: playReq.mood,
+      deepFinish: true,
+    })
+  }, [playReq, reduceMotion])
+
+  const dismissFx = useCallback(() => {
+    setSession(null)
+    stopChatDeepAvatarEmotionAudio()
+    if (playReq) clearChatDeepAvatarPlay(playReq.id)
+  }, [playReq])
   const showFx = Boolean(session)
   return {
     showFx,

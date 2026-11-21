@@ -16,6 +16,7 @@ import {
   readChatInboxSidebarWidth,
   writeChatInboxSidebarWidth,
 } from '../../../lib/chatUiPrefs'
+import { startChatDeepAvatarCloudSync } from '../../../lib/chatDeepAvatarCloudSync'
 import { openApp, openPricing } from '../../../lib/siteLinks'
 import { useYueStore } from '../../../lib/store'
 import { useAppViewportLock } from '../../../lib/useAppViewportLock'
@@ -415,6 +416,11 @@ export function ChatAuiPage() {
   const entitlement = useYueStore((s) => s.entitlement)
   const loggedIn = Boolean(entitlement?.loggedIn)
   const unlocked = canUseDeepseekChat(entitlement)
+
+  useEffect(() => {
+    if (!entitlement?.loggedIn) return
+    startChatDeepAvatarCloudSync(entitlement.prefs?.chatDeepAvatar ?? null)
+  }, [entitlement?.loggedIn, entitlement?.prefs?.chatDeepAvatar])
 
   if (entitlement && !loggedIn) {
     return (
