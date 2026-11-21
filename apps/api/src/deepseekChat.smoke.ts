@@ -96,11 +96,22 @@ const routes = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatRoutes.ts'),
   'utf8',
 )
-assert.match(routes, /shouldAutoEnableSearch/, 'Routes auto-enable search for freshness intents')
+assert.match(routes, /resolveChatCapabilities/, 'Routes resolve Auto DeepThink/Search capabilities')
+assert.match(routes, /thinkingAuto/, 'Routes emit Auto thinking SSE when heuristic fires')
+assert.match(routes, /searchAuto/, 'Routes emit Auto searching SSE when heuristic fires')
 assert.match(routes, /streamDeepseekChatHarness/, 'Routes use unified Completions harness')
 assert.match(routes, /streamDeepseekChatAgent/, 'Routes keep tool agent as fallback')
 assert.match(routes, /inboxRole/, 'Routes forward Inbox agent role into prompt')
 assert.match(routes, /projectMemory/, 'Routes forward Project memory into prompt')
+
+const autoBody = DeepseekChatBodySchema.safeParse({
+  messages: [{ role: 'user', content: 'Hello' }],
+  thinking: 'auto',
+  search: 'auto',
+})
+assert.equal(autoBody.success, true, 'Body accepts thinking/search auto')
+assert.equal(autoBody.data?.thinking, 'auto')
+assert.equal(autoBody.data?.search, 'auto')
 
 const agent = readFileSync(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), './deepseekChatAgent.ts'),

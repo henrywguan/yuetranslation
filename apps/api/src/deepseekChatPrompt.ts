@@ -288,4 +288,115 @@ export function shouldAutoEnableSearch(userText: string): boolean {
   return false
 }
 
+/**
+ * Heuristic: auto-enable DeepThink only for clear hard asks.
+ * Default false — Auto must save reasoning tokens on greetings, drafts, and simple Q&A.
+ */
+export function shouldAutoEnableThinking(userText: string): boolean {
+  const t = userText.trim().toLowerCase()
+  if (!t) return false
+  if (
+    /\b(step by step|think (carefully|hard|deeply)|reason (step by step|carefully|through)|chain of thought|deep ?think)\b/i.test(
+      t,
+    )
+  ) {
+    return true
+  }
+  if (/\b(prove|derive|integrate|differentiate|solve for|quadratic|theorem|induction)\b/i.test(t)) {
+    return true
+  }
+  if (/\b(calculate|compute|evaluate)\b.{0,80}\b(and|then|given that|show that)\b/i.test(t)) {
+    return true
+  }
+  if (
+    /\b(debug|root cause|why (is|does|did) (this|it|my)|stack trace|segfault|race condition)\b/i.test(t)
+  ) {
+    return true
+  }
+  if (
+    /\b(trade-?offs?|system design|architecture|design (a|an|the) (system|api|schema|service))\b/i.test(
+      t,
+    )
+  ) {
+    return true
+  }
+  if (/\bcompare\b.{0,60}\bvs\.?\b/i.test(t) || /\bpros and cons\b/i.test(t)) return true
+  if (/\b(algorithm|big[- ]?o|time complexity|optimize (this|the)|refactor (this|the))\b/i.test(t)) {
+    return true
+  }
+  return false
+}
+
+export type ChatCapabilityFlag = boolean | 'auto'
+
+export type ResolveChatCapabilitiesInput = {
+  thinking?: ChatCapabilityFlag
+  search?: ChatCapabilityFlag
+  userText: string
+  continueReply?: boolean
+  supportsSearch?: boolean
+}
+
+export type ResolveChatCapabilitiesResult = {
+  thinkingEnabled: boolean
+  searchEnabled: boolean
+  /** True when Auto (or omit-safety) turned DeepThink on — for SSE `auto: true`. */
+  thinkingAuto: boolean
+  /** True when Auto / safety-net turned Search on — for SSE `auto: true`. */
+  searchAuto: boolean
+}
+
+/**
+ * Resolve DeepThink + Search for a turn.
+ * - `'auto'`: heuristic only (token-saving Auto profile).
+ * - boolean / omit: legacy semantics (DeepThink default on; Search = force-on or freshness safety net).
+ */
+export function resolveChatCapabilities(
+  opts: ResolveChatCapabilitiesInput,
+): ResolveChatCapabilitiesResult {
+  const supportsSearch = opts.supportsSearch !== false
+  const thinkingIsAuto = opts.thinking === 'auto'
+  const searchIsAuto = opts.search === 'auto'
+
+  const thinkingEnabled = thinkingIsAuto
+    ? shouldAutoEnableThinking(opts.userText)
+    : opts.thinking !== false
+
+  if (opts.continueReply) {
+    return {
+      thinkingEnabled,
+      searchEnabled: false,
+      thinkingAuto: thinkingIsAuto && thinkingEnabled,
+      searchAuto: false,
+    }
+  }
+
+  if (opts.search === true) {
+    return {
+      thinkingEnabled,
+      searchEnabled: true,
+      thinkingAuto: thinkingIsAuto && thinkingEnabled,
+      searchAuto: false,
+    }
+  }
+
+  const heuristicSearch = supportsSearch && shouldAutoEnableSearch(opts.userText)
+  if (searchIsAuto) {
+    return {
+      thinkingEnabled,
+      searchEnabled: heuristicSearch,
+      thinkingAuto: thinkingIsAuto && thinkingEnabled,
+      searchAuto: heuristicSearch,
+    }
+  }
+
+  // Manual off / omit — keep freshness safety net (pre-Auto behavior).
+  return {
+    thinkingEnabled,
+    searchEnabled: heuristicSearch,
+    thinkingAuto: thinkingIsAuto && thinkingEnabled,
+    searchAuto: heuristicSearch,
+  }
+}
+
 export { resolveTimeZone }

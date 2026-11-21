@@ -25,7 +25,7 @@ import {
   streamDeepseekChatHarness,
 } from './deepseekChatHarness.js'
 import { summarizeHarnessToolWork } from './deepseekChatWorkRecovery.js'
-import { shouldAutoEnableSearch, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
+import { resolveChatCapabilities, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
 import {
   deepseekChatSupportsSearch,
   streamDeepseekChatWithSearch,
@@ -213,15 +213,21 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
   }
 
   const stream = wantsStream(req)
-  const thinkingEnabled = parsed.data.thinking !== false
-  const userAskedSearch = parsed.data.search === true
   const lastUser =
     [...parsed.data.messages].reverse().find((m) => m.role === 'user') || last
   // Prefix continue must not declare native web tools (wrong wire shape on /beta).
-  const searchEnabled = continueReply
-    ? false
-    : userAskedSearch ||
-      (deepseekChatSupportsSearch() && shouldAutoEnableSearch(lastUser.content))
+  const {
+    thinkingEnabled,
+    searchEnabled,
+    thinkingAuto,
+    searchAuto,
+  } = resolveChatCapabilities({
+    thinking: parsed.data.thinking,
+    search: parsed.data.search,
+    userText: lastUser.content,
+    continueReply,
+    supportsSearch: deepseekChatSupportsSearch(),
+  })
 
   const harnessEnabled = parsed.data.harness === true
   const chatMode =
@@ -322,7 +328,10 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
 
     writeSse(res, `: open\n\n`)
     writeSse(res, `data: ${JSON.stringify({ status: 'started' })}\n\n`)
-    if (searchEnabled && !userAskedSearch) {
+    if (thinkingAuto) {
+      writeSse(res, `data: ${JSON.stringify({ status: 'thinking', auto: true })}\n\n`)
+    }
+    if (searchAuto) {
       writeSse(res, `data: ${JSON.stringify({ status: 'searching', auto: true })}\n\n`)
     }
 

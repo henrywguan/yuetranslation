@@ -1051,6 +1051,11 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   color: var(--ds-blue);
 }
 
+.ds-chat-toggle.is-managed {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
 .ds-chat-quota {
   margin-left: auto;
   align-self: center;

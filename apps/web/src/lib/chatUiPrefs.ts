@@ -7,6 +7,8 @@
 export type ChatComposerMode = 'agent' | 'ask' | 'plan'
 
 export const CHAT_MODE_KEY = 'yue-deepseek-chat-mode-v1'
+/** Cursor-like Auto profile — server picks DeepThink / Search per turn. Default on. */
+export const CHAT_AUTO_KEY = 'yue-deepseek-chat-auto-v1'
 export const CHAT_THINK_KEY = 'yue-deepseek-chat-deepthink-v1'
 export const CHAT_SEARCH_KEY = 'yue-deepseek-chat-search-v1'
 export const CHAT_RICH_LAYOUT_KEY = 'yue-deepseek-chat-rich-layout-v1'
