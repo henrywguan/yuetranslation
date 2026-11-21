@@ -81,4 +81,21 @@ assert.ok(
 const appTsx = readFileSync(join(webRoot, 'src/App.tsx'), 'utf8')
 assert.match(appTsx, /syncPwaManifestLink/, 'App swaps manifest by route')
 
+const installBtn = readFileSync(join(webRoot, 'src/components/PwaInstallButton.tsx'), 'utf8')
+assert.match(installBtn, /pwaInstallChat/, 'Install button labels chat package')
+
+const hub = readFileSync(join(webRoot, 'src/components/PwaCapabilitiesPanel.tsx'), 'utf8')
+assert.match(hub, /pwaOpenChatToInstall/, 'Account Hub links chat install surface')
+assert.match(hub, /openDeepseekChat/, 'Hub navigates to #/chat for chat PWA')
+assert.match(hub, /pwa-chat-192\.png/, 'Hub shows chat icon')
+assert.match(hub, /pwa-192\.png/, 'Hub shows translator icon')
+
+const ios = readFileSync(join(webRoot, 'src/components/IosHomescreenGuide.tsx'), 'utf8')
+assert.match(ios, /iosHomescreenTipTitleChat/, 'iOS tip has chat copy')
+assert.match(ios, /apple-touch-icon-chat\.png/, 'iOS preview uses chat icon')
+
+const copy = readFileSync(join(webRoot, 'src/lib/uiCopy.ts'), 'utf8')
+assert.match(copy, /pwaInstallChat:/, 'uiCopy has chat install string')
+assert.match(copy, /pwaCapabilitiesHint:[\s\S]*two Home Screen apps/, 'hub hint mentions two PWAs')
+
 console.log('pwaDualManifest.smoke: ok')

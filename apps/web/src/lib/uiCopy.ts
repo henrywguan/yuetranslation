@@ -1273,10 +1273,20 @@ export const ui = {
     zh: '將 JyutTranslate 加到主畫面',
     jp: 'zoeng1 JyutTranslate gaa1 dou3 zyu2 waa2 min6',
   },
+  iosHomescreenTipTitleChat: {
+    en: 'Add DeepSeek Chat to your Home Screen',
+    zh: '將 DeepSeek Chat 加到主畫面',
+    jp: 'zoeng1 DeepSeek Chat gaa1 dou3 zyu2 waa2 min6',
+  },
   iosHomescreenTipBody: {
     en: 'Install JyutTranslate to your Home Screen — Open like any other app!',
     zh: '將 JyutTranslate 裝到主畫面——好似其他應用咁開！',
     jp: 'zoeng1 JyutTranslate zong1 dou3 zyu2 waa2 min6 — hou2 ci5 kei4 taa1 jing3 jung6 gam2 hoi1!',
+  },
+  iosHomescreenTipBodyChat: {
+    en: 'Install DeepSeek Chat as its own Home Screen app — separate from the translator.',
+    zh: '將 DeepSeek Chat 裝成獨立主畫面應用——同翻譯器分開。',
+    jp: 'zoeng1 DeepSeek Chat zong1 sing4 duk6 laap6 zyu2 waa2 min6 jing3 jung6 — tung4 faan1 jik6 hei3 fan1 hoi1.',
   },
   iosHomescreenShowSteps: {
     en: 'How',
@@ -1298,6 +1308,11 @@ export const ui = {
     zh: '先打開翻譯器（唔好喺主頁），再喺 Safari 撳「分享」（方框向上箭嘴）。',
     jp: 'sin1 daa2 hoi1 faan1 jik6 hei3 (m4 hou2 hai2 zyu2 jip6), zoi3 hai2 Safari gam2 “fan1 hoeng2” (fong1 kwaang1 hoeng3 soeng6 zin3 zeoi2).',
   },
+  iosHomescreenStep1Chat: {
+    en: 'Stay on DeepSeek Chat (this page), then tap Share in Safari (box with an arrow up).',
+    zh: '留喺 DeepSeek Chat（呢一頁），再喺 Safari 撳「分享」（方框向上箭嘴）。',
+    jp: 'lau4 hai2 DeepSeek Chat (ni1 jat1 jip6), zoi3 hai2 Safari gam2 “fan1 hoeng2” (fong1 kwaang1 hoeng3 soeng6 zin3 zeoi2).',
+  },
   iosHomescreenStep2: {
     en: 'Select Add to Home Screen.',
     zh: '揀「加到主畫面」。',
@@ -1313,6 +1328,11 @@ export const ui = {
     zh: '確認「加入」——JyutTranslate 會用呢個圖示出現喺主畫面。',
     jp: 'kok3 jing6 “gaa1 jap6” — JyutTranslate wui5 jung6 ni1 go3 tou4 si6 ceot1 jin6 hai2 zyu2 waa2 min6.',
   },
+  iosHomescreenStep3Chat: {
+    en: 'Confirm Add — DeepSeek Chat appears as its own Home Screen icon (separate from the translator).',
+    zh: '確認「加入」——DeepSeek Chat 會用獨立圖示出現喺主畫面（同翻譯器分開）。',
+    jp: 'kok3 jing6 “gaa1 jap6” — DeepSeek Chat wui5 jung6 duk6 laap6 tou4 si6 ceot1 jin6 hai2 zyu2 waa2 min6 (tung4 faan1 jik6 hei3 fan1 hoi1).',
+  },
   iosHomescreenGuideTitle: {
     en: 'Install on iPhone',
     zh: '裝到 iPhone',
@@ -1322,6 +1342,16 @@ export const ui = {
     en: 'Install app',
     zh: '安裝應用',
     jp: 'on1 zong1 jing3 jung6',
+  },
+  pwaInstallChat: {
+    en: 'Install DeepSeek Chat',
+    zh: '安裝 DeepSeek Chat',
+    jp: 'on1 zong1 DeepSeek Chat',
+  },
+  pwaInstallTranslator: {
+    en: 'Install translator',
+    zh: '安裝翻譯器',
+    jp: 'on1 zong1 faan1 jik6 hei3',
   },
   pwaInstalled: {
     en: 'Running as installed app',
@@ -1334,9 +1364,19 @@ export const ui = {
     jp: 'zyu2 waa2 min6 jing3 jung6',
   },
   pwaCapabilitiesHint: {
-    en: 'Installed JyutTranslate can receive shared text, open photos/PDFs, and use Home Screen shortcuts.',
-    zh: '安裝後可以接收分享文字、打開相片／PDF，同埋用主畫面捷徑。',
-    jp: 'on1 zong1 hau6 ho2 ji5 zip3 sau1 fan1 hoeng2 man4 zi6, daa2 hoi1 soeng3 pin2 / PDF, tung4 maai4 jung6 zyu2 waa2 min6 zit3 ging3.',
+    en: 'You can install two Home Screen apps: JyutTranslate (translator) and DeepSeek Chat — each with its own icon and start screen.',
+    zh: '可以裝兩個主畫面應用：JyutTranslate（翻譯器）同 DeepSeek Chat——各自圖示同啟動頁。',
+    jp: 'ho2 ji5 zong1 loeng5 go3 zyu2 waa2 min6 jing3 jung6: JyutTranslate (faan1 jik6 hei3) tung4 DeepSeek Chat — gok3 zi6 tou4 si6 tung4 hei2 dung6 jip6.',
+  },
+  pwaOpenChatToInstall: {
+    en: 'Open DeepSeek Chat to install its Home Screen app',
+    zh: '打開 DeepSeek Chat 安裝佢嘅主畫面應用',
+    jp: 'daa2 hoi1 DeepSeek Chat on1 zong1 keoi5 ge3 zyu2 waa2 min6 jing3 jung6',
+  },
+  pwaDualBrowserHint: {
+    en: 'To add the second icon, use a browser tab (not an already-installed app window).',
+    zh: '要加第二個圖示，請用瀏覽器分頁（唔好喺已安裝應用入面裝）。',
+    jp: 'jiu3 gaa1 dai6 ji6 go3 tou4 si6, cing2 jung6 lau4 laam5 hei3 fan1 jip6 (m4 hou2 hai2 ji5 on1 zong1 jing3 jung6 jap6 min6 zong1).',
   },
   pwaCapShare: {
     en: 'Share text into Solo from other apps (Share → JyutTranslate).',
