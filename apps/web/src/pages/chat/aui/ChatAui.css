@@ -243,8 +243,11 @@
   padding: 0;
   margin: 0;
   cursor: pointer;
-  display: grid;
-  place-items: end center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -311,6 +314,16 @@
   .aui-deep-avatar.is-stage {
     width: min(100%, 14rem);
     height: min(26vh, 11rem);
+  }
+
+  /* Keep stage status readable in the short phone strip above the portrait. */
+  .aui-status-cluster.is-stage {
+    padding: 0.1rem 0.35rem 0.15rem;
+    gap: 0.15rem 0.4rem;
+  }
+
+  .aui-status-cluster.is-stage .aui-status {
+    font-size: 0.68rem;
   }
 }
 
@@ -1719,6 +1732,39 @@
   color: var(--ds-text-3);
   margin-left: 0;
   white-space: nowrap;
+}
+
+/* Live status chips — bar: above composer; stage: above avatar head in stage toggle. */
+.aui-status-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.55rem;
+  min-width: 0;
+}
+
+.aui-status-cluster.is-bar {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.2rem 0.65rem 0.1rem;
+  justify-content: flex-start;
+}
+
+.aui-status-cluster.is-stage {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-bottom: auto;
+  padding: 0.2rem 0.4rem 0.3rem;
+  justify-content: center;
+  text-align: center;
+}
+
+.aui-status-cluster.is-stage .aui-status {
+  white-space: normal;
+  line-height: 1.25;
+  text-wrap: balance;
 }
 
 .aui-composer-input {
