@@ -11,8 +11,10 @@ import { captureDiagnostic } from './diagnostics'
 import { guestDeviceHeaders } from './guestDevice'
 import { messageFromApiBody } from './apiError'
 import {
+  CHAT_STREAM_FIRST_PROGRESS_MS,
   CHAT_STREAM_IDLE_MS,
   CHAT_STREAM_STALL_ERROR,
+  chatStreamEventIsMeaningfulProgress,
   sanitizeDeepseekChatVisibleText,
 } from './chatVisibleSanitize'
 import { hasOfflinePack, offlineTranslate } from './offlineLexicon'
@@ -1111,7 +1113,12 @@ export async function streamDeepseekChat(
   const avatarNotes = String(handlers.avatarNotes || '').trim().slice(0, 280) || undefined
   // Local controller so idle watchdog can abort the fetch (AbortSignal is read-only).
   const streamAbort = new AbortController()
-  const onParentAbort = () => streamAbort.abort()
+  /** Cancel the body reader too — Safari often leaves `reader.read()` hung after fetch abort alone. */
+  let cancelStreamReader: (() => void) | null = null
+  const onParentAbort = () => {
+    streamAbort.abort()
+    cancelStreamReader?.()
+  }
   if (handlers.signal?.aborted) streamAbort.abort()
   else handlers.signal?.addEventListener('abort', onParentAbort, { once: true })
 
@@ -1188,17 +1195,24 @@ export async function streamDeepseekChat(
   }
 
   const reader = res.body.getReader()
+  cancelStreamReader = () => {
+    void reader.cancel().catch(() => undefined)
+  }
   const decoder = new TextDecoder()
   let buffer = ''
   let model: string | undefined
-  // Heartbeats are SSE comments — without a data-event watchdog, Image/tool hangs spin forever.
+  // Heartbeats are SSE comments — without a meaningful-progress watchdog, leak
+  // scrub / empty contentReplace / tool silence can leave Ask · Stop stuck forever.
   let lastMeaningfulAt = Date.now()
+  let sawMeaningfulProgress = false
   let stalled = false
+  const idleLimitMs = () =>
+    sawMeaningfulProgress ? CHAT_STREAM_IDLE_MS : CHAT_STREAM_FIRST_PROGRESS_MS
   const idleWatch = setInterval(() => {
-    if (Date.now() - lastMeaningfulAt > CHAT_STREAM_IDLE_MS) {
+    if (Date.now() - lastMeaningfulAt > idleLimitMs()) {
       stalled = true
       streamAbort.abort()
-      void reader.cancel().catch(() => undefined)
+      cancelStreamReader?.()
     }
   }, 2_000)
   if (typeof idleWatch.unref === 'function') idleWatch.unref()
@@ -1247,7 +1261,10 @@ export async function streamDeepseekChat(
         } catch {
           continue
         }
-        lastMeaningfulAt = Date.now()
+        if (chatStreamEventIsMeaningfulProgress(parsed)) {
+          lastMeaningfulAt = Date.now()
+          sawMeaningfulProgress = true
+        }
         if (parsed.error) throw new Error(parsed.error)
         if (parsed.status === 'thinking' || parsed.status === 'searching') {
           handlers.onStatus?.(parsed.status, parsed.auto === true ? { auto: true } : undefined)
@@ -1276,6 +1293,7 @@ export async function streamDeepseekChat(
     if (stalled) throw new Error(CHAT_STREAM_STALL_ERROR)
   } finally {
     clearInterval(idleWatch)
+    cancelStreamReader = null
     handlers.signal?.removeEventListener('abort', onParentAbort)
   }
 

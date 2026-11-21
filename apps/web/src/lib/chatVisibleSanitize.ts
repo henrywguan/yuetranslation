@@ -60,10 +60,53 @@ export function deepseekChatTextLooksLeaked(text: string): boolean {
 }
 
 /**
- * Idle SSE with only heartbeats / no data events — auto-abort so UI never spins forever.
+ * Idle SSE with only heartbeats / no *meaningful* data events — auto-abort so UI never spins forever.
  * Must exceed image tool deadline (~95s) so legitimate generate_image does not trip the client.
  */
 export const CHAT_STREAM_IDLE_MS = 150_000
 
+/**
+ * Before the first visible token / reasoning / tool status, fail faster than the full idle window.
+ * Empty `contentReplace` (leak scrub / deferred-recovery wipe) must not keep the spinner alive.
+ */
+export const CHAT_STREAM_FIRST_PROGRESS_MS = 75_000
+
 export const CHAT_STREAM_STALL_ERROR =
   'Reply stalled (no progress for too long — often Image / tools). Tap Stop working, then Send again or Continue.'
+
+/** True when an SSE payload should reset the client idle watchdog. */
+export function chatStreamEventIsMeaningfulProgress(parsed: {
+  delta?: string
+  contentReplace?: string
+  reasoning?: string
+  error?: string
+  status?: string
+  sources?: unknown[]
+  searchStep?: unknown
+  image?: { url?: string }
+  avatar?: { action?: string }
+  workspace?: { files?: unknown[] }
+  project?: { actions?: unknown[] }
+  sandbox?: unknown
+  title?: string
+}): boolean {
+  if (parsed.error) return true
+  if (parsed.status === 'thinking' || parsed.status === 'searching') return true
+  if (parsed.reasoning) return true
+  if (parsed.sources?.length) return true
+  if (parsed.searchStep) return true
+  if (parsed.image?.url) return true
+  if (parsed.avatar?.action) return true
+  if (parsed.workspace?.files?.length) return true
+  if (parsed.project?.actions?.length) return true
+  if (parsed.sandbox) return true
+  if (typeof parsed.contentReplace === 'string') {
+    // Empty replace (leak hold / deferred wipe) is not progress — do not reset idle.
+    return Boolean(sanitizeDeepseekChatVisibleText(parsed.contentReplace).trim())
+  }
+  if (parsed.delta) {
+    return Boolean(sanitizeDeepseekChatVisibleText(parsed.delta).trim())
+  }
+  // Bare title / started / done without visible text must not keep Ask hangs alive.
+  return false
+}

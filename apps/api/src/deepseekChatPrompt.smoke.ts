@@ -83,6 +83,9 @@ assert.match(askMode, /Ask mode is ON/)
 assert.match(askMode, /read-only/)
 assert.doesNotMatch(askMode, /Project Overseer for JyutTranslate/, 'Ask skips Overseer spawn skills')
 assert.match(askMode, /workspace_list, workspace_read only/)
+assert.doesNotMatch(askMode, /generate_image/, 'Ask must not advertise image tools')
+assert.doesNotMatch(askMode, /mcp__/, 'Ask must not advertise MCP generation tools')
+assert.match(askMode, /do not stall/i, 'Ask prompt warns against empty look-up promises')
 
 const planMode = buildDeepseekChatSystem({
   chatMode: 'plan',

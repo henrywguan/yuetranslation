@@ -3,8 +3,10 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
+  CHAT_STREAM_FIRST_PROGRESS_MS,
   CHAT_STREAM_IDLE_MS,
   CHAT_STREAM_STALL_ERROR,
+  chatStreamEventIsMeaningfulProgress,
   deepseekChatTextLooksLeaked,
   sanitizeDeepseekChatStreamBuffer,
   sanitizeDeepseekChatVisibleText,
@@ -27,8 +29,43 @@ assert.equal(deepseekChatTextLooksLeaked(henryLeak), true)
 assert.equal(deepseekChatTextLooksLeaked(cleaned), false)
 
 assert.ok(CHAT_STREAM_IDLE_MS >= 60_000)
+assert.ok(
+  CHAT_STREAM_FIRST_PROGRESS_MS < CHAT_STREAM_IDLE_MS,
+  'First-progress watchdog is stricter than full idle',
+)
 assert.match(CHAT_STREAM_STALL_ERROR, /stalled/i)
 assert.match(CHAT_STREAM_STALL_ERROR, /Stop working/i)
+
+assert.equal(
+  chatStreamEventIsMeaningfulProgress({ contentReplace: '' }),
+  false,
+  'Empty contentReplace must not reset idle (Ask leak / deferred wipe)',
+)
+assert.equal(
+  chatStreamEventIsMeaningfulProgress({ contentReplace: 'Hello from Ask' }),
+  true,
+  'Non-empty contentReplace resets idle',
+)
+assert.equal(
+  chatStreamEventIsMeaningfulProgress({ delta: '   ' }),
+  false,
+  'Whitespace-only delta is not progress',
+)
+assert.equal(
+  chatStreamEventIsMeaningfulProgress({ status: 'searching' }),
+  true,
+  'Tool/search status resets idle',
+)
+assert.equal(
+  chatStreamEventIsMeaningfulProgress({ status: 'started' }),
+  false,
+  'Bare started does not extend the hang window',
+)
+assert.equal(
+  chatStreamEventIsMeaningfulProgress({ title: 'Proxmox Steam' }),
+  false,
+  'Title-only events do not keep an empty Ask bubble alive',
+)
 
 assert.equal(
   looksLikeDeferredToolUse(
@@ -50,6 +87,9 @@ assert.match(mid.hold, /<sys/)
 const here = path.dirname(fileURLToPath(import.meta.url))
 const apiSrc = readFileSync(path.resolve(here, './api.ts'), 'utf8')
 assert.match(apiSrc, /CHAT_STREAM_IDLE_MS/, 'streamDeepseekChat has idle watchdog')
+assert.match(apiSrc, /CHAT_STREAM_FIRST_PROGRESS_MS/, 'streamDeepseekChat has first-progress watchdog')
+assert.match(apiSrc, /chatStreamEventIsMeaningfulProgress/, 'idle only resets on meaningful progress')
+assert.match(apiSrc, /cancelStreamReader/, 'Stop/abort cancels the SSE reader (Safari)')
 assert.match(apiSrc, /sanitizeDeepseekChatVisibleText/, 'stream sanitizes deltas')
 
 const runtime = readFileSync(

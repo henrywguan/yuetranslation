@@ -244,6 +244,17 @@ assert.equal(
 assert.match(harnessSrc, /looksLikeDeferredSearchTurn/, 'Harness uses reply+reasoning deferred search')
 assert.match(harnessSrc, /deferredToolRecovered|deferred-tool recovery/, 'Harness recovers empty tool promises')
 assert.match(harnessSrc, /looksLikeDeferredToolUse/, 'Harness detects I\'ll-check-weather stopovers')
+assert.match(harnessSrc, /DEFERRED_TOOL_NUDGE_READONLY/, 'Ask/Plan get read-only deferred-tool nudge')
+assert.match(
+  harnessSrc,
+  /pluginTools\s*=\s*\n?\s*chatMode === 'ask' \|\| chatMode === 'plan'\s*\n?\s*\?\s*\[\]\s*\n?\s*:\s*await buildPluginTools/,
+  'Ask/Plan skip MCP plugin tool build before first token',
+)
+assert.match(
+  harnessSrc,
+  /for \(const call of pendingToolCalls\)[\s\S]*?yield \{ kind: 'searching' \}/,
+  'Every client tool yields searching so Ask idle watchdog stays alive',
+)
 assert.match(harnessSrc, /executeDeepseekChatToolWithTimeout/, 'Harness wraps tools with timeout')
 assert.match(harnessSrc, /sanitizeDeepseekChatVisibleText/, 'Harness strips leaked system tags')
 

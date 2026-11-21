@@ -137,6 +137,9 @@ export function looksLikeDeferredToolUse(text: string): boolean {
 const DEFERRED_TOOL_NUDGE =
   'You announced using a tool but did not emit any tool_calls. Call the matching function tool now (for example get_weather, fetch_url, get_date, calc, workspace_*, or project_*), then answer from the tool result. Do not stop after another "I\'ll check…" sentence.'
 
+const DEFERRED_TOOL_NUDGE_READONLY =
+  'You announced using a tool but did not emit any tool_calls. Call a read-only function tool now (for example get_weather, fetch_url, get_date, calc, workspace_list, workspace_read), then answer from the tool result. Do not write files, spawn workers, or stop after another "I\'ll check…" sentence.'
+
 /**
  * True when the Overseer finished with a short "I'll set up workers…" reply and never
  * called project_create_agent / project_message_agent — silent Needs Attention stall.
@@ -622,7 +625,12 @@ export async function* streamDeepseekChatHarness(
   const projectId = String(opts.projectId || '').trim()
   const projectAttached = opts.prompt.inboxRole === 'overseer' && Boolean(projectId)
   const useNativeWeb = searchEnabled && deepseekChatSupportsNativeWebTools()
-  const pluginTools = await buildPluginTools(opts.plugins, opts.signal, opts.pluginCreds)
+  // Ask/Plan strip plugins anyway — skip MCP tools/list so a hung plugin catalog
+  // cannot freeze a read-only turn before the first token.
+  const pluginTools =
+    chatMode === 'ask' || chatMode === 'plan'
+      ? []
+      : await buildPluginTools(opts.plugins, opts.signal, opts.pluginCreds)
   const tools = buildDeepseekChatToolList(
     searchEnabled,
     pluginTools,
@@ -872,11 +880,10 @@ export async function* streamDeepseekChatHarness(
         if (toolName === 'project_create_agent' || toolName === 'project_message_agent') {
           projectOrchestrationUsed = true
         }
-        // Keep the SSE data channel alive while slow tools (esp. generate_image) run —
-        // heartbeats are comments and do not reset the client idle watchdog.
-        if (toolName === 'generate_image') {
-          yield { kind: 'searching' }
-        }
+        // Keep the SSE data channel alive while tools run — comment heartbeats do not
+        // reset the client idle watchdog. Ask/Plan fetch_url loops especially need a
+        // data event before each tool or the bubble stays empty until stall.
+        yield { kind: 'searching' }
         const result = await executeDeepseekChatToolWithTimeout(
           toolName,
           call.function.arguments || '{}',
@@ -1011,7 +1018,10 @@ export async function* streamDeepseekChatHarness(
         content: assistantContent || null,
         reasoning_content: assistantReasoning || null,
       })
-      msgs.push({ role: 'user', content: DEFERRED_TOOL_NUDGE })
+      msgs.push({
+        role: 'user',
+        content: chatMode === 'ask' || chatMode === 'plan' ? DEFERRED_TOOL_NUDGE_READONLY : DEFERRED_TOOL_NUDGE,
+      })
       yield { kind: 'content_replace', text: '' }
       assistantContent = ''
       continue

@@ -1166,6 +1166,16 @@ assert.ok(parts.some((p) => p.type === 'source'))
 const live = convertChatMessage(assistant, { streamingId: 'a1' })
 assert.equal(live.status?.type, 'running')
 
+const emptySettled = convertChatMessage(
+  { id: 'a-empty', role: 'assistant', content: '', createdAt: 3 },
+  { streamingId: null },
+)
+assert.equal(
+  emptySettled.status?.type,
+  'incomplete',
+  'Empty settled assistant must not stay running (Ask Stop/caret stuck)',
+)
+
 // Citation rewriter: bare [n] → <a class="ds-md-cite" href=…> when sources[n-1] exists.
 const mdSrc = readFileSync(join(here, 'renderChatMarkdown.tsx'), 'utf8')
 assert.match(

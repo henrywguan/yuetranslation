@@ -45,6 +45,17 @@ assert.match(history, /pendingDiskWrite/, 'Disk writes coalesce via pending payl
 const auiThread = readFileSync(join(root, '../pages/chat/aui/ChatAuiThread.tsx'), 'utf8')
 assert.match(auiThread, /LIVE_REASONING_PAINT/, 'AUI DeepThink paints a live tail (no full-pre freeze)')
 
+const convert = readFileSync(join(root, '../pages/chat/aui/convertChatMessage.ts'), 'utf8')
+assert.match(
+  convert,
+  /incomplete[\s\S]*cancelled/,
+  'Empty settled assistant is incomplete — not running (Ask Stop stuck)',
+)
+
+const apiTs = readFileSync(join(root, './api.ts'), 'utf8')
+assert.match(apiTs, /chatStreamEventIsMeaningfulProgress/, 'Idle watchdog ignores empty contentReplace')
+assert.match(apiTs, /CHAT_STREAM_FIRST_PROGRESS_MS/, 'Faster fail before first Ask progress')
+
 const apiChat = readFileSync(join(root, '../../../../apps/api/src/deepseekChat.ts'), 'utf8')
 assert.match(apiChat, /DEEPSEEK_CHAT_MAX_TOKENS\s*=\s*16_384/, 'API max_tokens raised for long DeepThink')
 
