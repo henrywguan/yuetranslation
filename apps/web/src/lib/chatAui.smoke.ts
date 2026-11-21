@@ -126,6 +126,11 @@ assert.match(
 assert.match(settingsMenu, /useChatDeepAvatarCelebrateMode/, 'Celebrate uses persisted mode hook')
 assert.match(settingsMenu, /createPortal/, 'Celebrate/Companion settings portal past sidebar overflow')
 assert.match(settingsMenu, /is-portaled/, 'portaled settings menu class')
+assert.match(
+  settingsMenu,
+  /querySelector\('\.ds-chat'\)|querySelector\("\.ds-chat"\)/,
+  'settings portal prefers .ds-chat so DS tokens stay in scope',
+)
 assert.match(settingsMenu, /first\?\.focus\(\)|querySelector.*menuitem/, 'portaled menu focuses first item on open')
 assert.match(settingsMenu, /triggerRef\.current\?\.focus/, 'Esc/dismiss restores focus to cog')
 assert.match(
@@ -138,7 +143,27 @@ assert.match(settingsInboxCss, /inbox-settings-menu\.is-portaled/, 'portaled set
 assert.match(
   settingsInboxCss,
   /\.inbox-settings-menu\.is-portaled[\s\S]*z-index:\s*130/,
-  'portaled settings sits above .ds-chat (120)',
+  'portaled settings sits above sidebar chrome (and at body fallback above .ds-chat 120)',
+)
+assert.match(
+  settingsInboxCss,
+  /\.inbox-settings-menu\.is-portaled[\s\S]*--ds-canvas:\s*#ffffff/,
+  'portaled settings redeclares --ds-canvas (body fallback opaque panel)',
+)
+assert.match(
+  settingsInboxCss,
+  /\.inbox-settings-menu\.is-portaled[\s\S]*background:\s*var\(--ds-canvas\)/,
+  'portaled settings forces solid canvas background',
+)
+assert.match(
+  settingsInboxCss,
+  /html\[data-theme='dark'\]\s*\.inbox-settings-menu\.is-portaled[\s\S]*--ds-canvas:\s*#0e0e10/,
+  'portaled settings dark theme canvas',
+)
+assert.match(
+  readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8'),
+  /\.aui-deep-avatar-fx[\s\S]*z-index:\s*130/,
+  'celebrate FX stays above .ds-chat (120)',
 )
 const inboxShell = readFileSync(join(root, 'pages/chat/inbox/InboxShell.tsx'), 'utf8')
 assert.match(inboxShell, /InboxSettingsMenu/, 'Inbox header mounts settings cog')

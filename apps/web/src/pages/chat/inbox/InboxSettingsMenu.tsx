@@ -22,8 +22,10 @@ type MenuPos = { top: number; right: number; maxHeight: number }
 
 /**
  * Inbox header cog — Classic / Back to app / theme / Companion / Celebrate.
- * Menu portals to `document.body` so sidebar `overflow: hidden` cannot clip
- * Celebrate below Companion (was invisible on phone/short viewports).
+ * Menu portals out of the sidebar so `overflow: hidden` cannot clip Celebrate
+ * below Companion (was invisible on phone/short viewports). Host prefers
+ * `.ds-chat` for token inheritance; CSS also redeclares panel tokens for the
+ * `body` fallback.
  */
 export function InboxSettingsMenu() {
   const [open, setOpen] = useState(false)
@@ -102,8 +104,13 @@ export function InboxSettingsMenu() {
     first?.focus()
   }, [open, menuPos])
 
+  const portalHost =
+    typeof document !== 'undefined'
+      ? ((document.querySelector('.ds-chat') as HTMLElement | null) ?? document.body)
+      : null
+
   const menu =
-    open && menuPos && typeof document !== 'undefined'
+    open && menuPos && portalHost
       ? createPortal(
           <div
             ref={menuRef}
@@ -207,7 +214,7 @@ export function InboxSettingsMenu() {
               </div>
             </div>
           </div>,
-          document.body,
+          portalHost,
         )
       : null
 
