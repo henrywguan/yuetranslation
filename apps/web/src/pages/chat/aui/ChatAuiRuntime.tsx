@@ -140,6 +140,8 @@ const THINK_KEY = CHAT_THINK_KEY
 const SEARCH_KEY = CHAT_SEARCH_KEY
 const RICH_LAYOUT_KEY = CHAT_RICH_LAYOUT_KEY
 const STREAM_PAINT_MS = 100
+/** Ignore spam-clicks on New chat after a create settles (sync latch + short UI cooldown). */
+const NEW_CHAT_COOLDOWN_MS = 450
 
 export type PendingChatFile = ChatFileMeta & { previewUrl?: string }
 
@@ -153,6 +155,8 @@ export type ChatAuiSession = {
   activeId: string
   historyReady: boolean
   busy: boolean
+  /** True while New chat create is latched / in post-create cooldown. */
+  newChatBusy: boolean
   error: string | null
   clearError: () => void
   setError: (message: string | null) => void
@@ -243,6 +247,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [activeId, setActiveId] = useState(BOOT_THREAD.id)
   const [historyReady, setHistoryReady] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [newChatBusy, setNewChatBusy] = useState(false)
+  /** Sync reentry guard only (pre-paint double fire). UI cooldown uses newChatBusy. */
+  const creatingNewChatRef = useRef(false)
+  const newChatCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [streamingId, setStreamingId] = useState<string | null>(null)
   const [thinking, setThinking] = useState(false)
@@ -634,18 +642,66 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     streamTtsRef.current = null
   }, [])
 
+  const armNewChatCooldown = useCallback(() => {
+    if (newChatCooldownTimerRef.current) clearTimeout(newChatCooldownTimerRef.current)
+    setNewChatBusy(true)
+    newChatCooldownTimerRef.current = setTimeout(() => {
+      setNewChatBusy(false)
+      newChatCooldownTimerRef.current = null
+    }, NEW_CHAT_COOLDOWN_MS)
+  }, [])
+
+  useEffect(
+    () => () => {
+      if (newChatCooldownTimerRef.current) clearTimeout(newChatCooldownTimerRef.current)
+    },
+    [],
+  )
+
   const startNewChat = useCallback(() => {
-    stopGeneration()
-    setFollowUpQueue([])
-    followUpQueueRef.current = []
-    const created = emptyThread()
-    setThreads((prev) => upsertChatThread(created, prev.filter((t) => t.id !== BOOT_THREAD.id)))
-    activeIdRef.current = created.id
-    setActiveId(created.id)
-    applyPlanDraftForThread(created.id)
-    setError(null)
-    return created.id
-  }, [applyPlanDraftForThread, stopGeneration])
+    // Sync latch: nested / same-stack reentry cannot spawn parallel empties.
+    if (creatingNewChatRef.current) return activeIdRef.current
+
+    // Already on a blank draft — reuse it instead of stacking empties.
+    const active = threadsRef.current.find((t) => t.id === activeIdRef.current)
+    if (
+      active &&
+      active.id !== BOOT_THREAD.id &&
+      !active.archived &&
+      active.messages.length === 0
+    ) {
+      stopGeneration()
+      setFollowUpQueue([])
+      followUpQueueRef.current = []
+      applyPlanDraftForThread(active.id)
+      setError(null)
+      armNewChatCooldown()
+      return active.id
+    }
+
+    creatingNewChatRef.current = true
+    try {
+      stopGeneration()
+      setFollowUpQueue([])
+      followUpQueueRef.current = []
+      const created = emptyThread()
+      // Keep threadsRef in sync before paint so a rapid second click sees the empty draft.
+      const next = upsertChatThread(
+        created,
+        threadsRef.current.filter((t) => t.id !== BOOT_THREAD.id),
+      )
+      threadsRef.current = next
+      setThreads(next)
+      activeIdRef.current = created.id
+      setActiveId(created.id)
+      applyPlanDraftForThread(created.id)
+      setError(null)
+      armNewChatCooldown()
+      return created.id
+    } finally {
+      creatingNewChatRef.current = false
+    }
+  }, [applyPlanDraftForThread, armNewChatCooldown, stopGeneration])
 
   const selectThread = useCallback(
     (id: string) => {
@@ -1525,6 +1581,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       activeId,
       historyReady,
       busy,
+      newChatBusy,
       error,
       clearError: () => setError(null),
       setError,
@@ -1587,6 +1644,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       archiveThread,
       buildFromPlan,
       busy,
+      newChatBusy,
       clearFollowUpQueue,
       composerMode,
       deepThink,

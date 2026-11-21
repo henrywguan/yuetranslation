@@ -105,6 +105,21 @@ assert.match(
 assert.match(auiShellFn, /InboxShell/, 'Inbox chrome lives in shell sidebar')
 assert.match(auiShellFn, /aria-label="Inbox"/, 'sidebar is the Chat Inbox')
 assert.match(page, /ChatInboxProvider/, 'Inbox provider wraps AUI runtime')
+// New chat (+) must latch / debounce so spam-clicks cannot stack empty threads.
+assert.match(
+  auiShellFn,
+  /aria-label="New chat"[\s\S]*aria-busy=\{newChatBusy \|\| undefined\}[\s\S]*disabled=\{busy \|\| newChatBusy/,
+  'header New chat uses aria-busy + disabled while creating',
+)
+const runtimeSrc = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
+assert.match(runtimeSrc, /NEW_CHAT_COOLDOWN_MS/, 'runtime defines new-chat cooldown')
+assert.match(runtimeSrc, /creatingNewChatRef/, 'runtime sync-latches new-chat create')
+assert.match(
+  runtimeSrc,
+  /messages\.length === 0[\s\S]*return active\.id/,
+  'startNewChat reuses empty active draft instead of stacking',
+)
+assert.match(runtimeSrc, /newChatBusy/, 'session exposes newChatBusy for header a11y')
 // Classic / Back to app / theme live in Inbox header cog (not sidebar foot / top bar).
 assert.doesNotMatch(auiShellFn, /ds-chat-sidebar-foot/, 'sidebar foot chrome removed')
 assert.doesNotMatch(
@@ -750,7 +765,6 @@ assert.equal(
   chatDeepAvatarMoodSrc('girl', 'eureka'),
   '/chat-avatar/girl/deep-eureka.gif',
 )
-const runtimeSrc = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtimeSrc, /markChatDeepAvatarPlanBuild/, 'Plan→Build latches deep celebrate')
 assert.match(runtimeSrc, /setChatDeepAvatarPlanBuildChainBusy/, 'Plan→Build gates Overseer→worker chain')
 assert.match(runtimeSrc, /settleChatDeepAvatarPlanBuild/, 'Plan→Build settles Deep credit when chain idles')

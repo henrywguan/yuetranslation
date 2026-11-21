@@ -74,6 +74,7 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
   const {
     startNewChat,
     busy,
+    newChatBusy,
     harnessOn,
     workspaceOpen,
     setWorkspaceOpen,
@@ -284,8 +285,10 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
             type="button"
             className="ds-chat-icon-btn"
             aria-label="New chat"
-            disabled={busy || !unlocked}
+            aria-busy={newChatBusy || undefined}
+            disabled={busy || newChatBusy || !unlocked}
             onClick={() => {
+              if (newChatBusy) return
               startNewChat()
               if (typeof window !== 'undefined' && window.matchMedia('(max-width: 899px)').matches) {
                 setSidebarOpen(false)
