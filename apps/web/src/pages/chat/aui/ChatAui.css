@@ -585,16 +585,19 @@
 
 /* Companion enter intro — full-viewport black → video → fade into chat.
  * Above celebrate (130) and settings portal so first paint owns the screen.
- * Always 100vw × 100vh (cinematic cover) — letterbox contain left desktop half-empty. */
+ * Always 100vw × 100dvh; video sized via JS pixel cover (see layoutIntroCoverElement)
+ * so every resolution fills with cover — no letterbox / half-screen gaps. */
 .aui-deep-avatar-intro {
   position: fixed;
   inset: 0;
   width: 100vw;
+  width: 100dvw;
   height: 100vh;
   height: 100dvh;
+  max-width: 100vw;
+  max-height: 100dvh;
   z-index: 140;
-  display: grid;
-  place-items: center;
+  display: block;
   background: #000;
   color: #fff;
   cursor: pointer;
@@ -613,20 +616,26 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  display: grid;
-  place-items: center;
   overflow: hidden;
+  background: #000;
 }
 
 .aui-deep-avatar-intro-video {
-  /* Full-bleed cinematic: cover every viewport (incl. 1920×1080). Portrait MP4 may crop sides. */
+  /* Pixel cover applied in JS (width/height/transform). CSS fallback still cover-fills. */
+  position: absolute;
+  left: 50%;
+  top: 50%;
   width: 100%;
   height: 100%;
+  min-width: 100%;
+  min-height: 100%;
+  transform: translate(-50%, -50%);
   object-fit: cover;
-  object-position: center;
+  object-position: center center;
   opacity: 0;
   transition: opacity 0.55s ease;
   background: #000;
+  pointer-events: none;
 }
 
 .aui-deep-avatar-intro.is-play .aui-deep-avatar-intro-video,
@@ -652,17 +661,19 @@
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.35s ease 0.4s;
+  z-index: 1;
 }
 
 .aui-deep-avatar-intro.is-play .aui-deep-avatar-intro-hint {
   opacity: 1;
 }
 
-.aui-deep-avatar-intro-unmute {
+/* Sound on by default → Mute control (not “Tap for sound”). */
+.aui-deep-avatar-intro-mute {
   position: absolute;
   top: max(0.85rem, calc(env(safe-area-inset-top, 0px) + 0.65rem));
   right: max(0.85rem, calc(env(safe-area-inset-right, 0px) + 0.65rem));
-  z-index: 1;
+  z-index: 2;
   margin: 0;
   padding: 0.45rem 0.8rem;
   border: 1px solid color-mix(in srgb, #fff 28%, transparent);
@@ -676,8 +687,8 @@
   backdrop-filter: blur(8px);
 }
 
-.aui-deep-avatar-intro-unmute:hover,
-.aui-deep-avatar-intro-unmute:focus-visible {
+.aui-deep-avatar-intro-mute:hover,
+.aui-deep-avatar-intro-mute:focus-visible {
   border-color: color-mix(in srgb, #fff 55%, transparent);
   outline: none;
 }
