@@ -1,4 +1,5 @@
 import { stashChatPrefill } from './chatExport'
+import { primeChatDeepAvatarIntro } from './chatDeepAvatarIntroAudio'
 import { navigate } from './useHashRoute'
 import { sanitizeLeaveUrl } from './safeUrl'
 
@@ -139,12 +140,15 @@ export function openPracticePartner() {
 
 /** Open DeepSeek general chat (`#/chat`) from Account Hub. */
 export function openDeepseekChat() {
+  // Same-tick unmute prime — must stay sync inside the click gesture.
+  primeChatDeepAvatarIntro()
   navigate('chat')
 }
 
 /** Open `#/chat` with a composer prefill (Solo / Conversation handoff). */
 export function openDeepseekChatWithPrefill(text: string) {
   stashChatPrefill(text)
+  primeChatDeepAvatarIntro()
   navigate('chat')
 }
 
