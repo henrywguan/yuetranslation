@@ -101,10 +101,10 @@ export function sanitizeChatDeepAvatarName(raw: unknown, fallback: string): stri
   return cleaned || fallback
 }
 
+/** Cap + strip controls; no trim (live notes textarea re-sanitizes each key). */
 export function sanitizeChatDeepAvatarNotes(raw: unknown): string {
   return String(raw ?? '')
     .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '')
-    .trim()
     .slice(0, NOTES_MAX)
 }
 
@@ -186,7 +186,7 @@ export function buildChatDeepAvatarPersonaPromptBlock(opts: {
   notes?: string
 }): string {
   const body = opts.character === 'girl' ? 'DS Girl' : 'DS Boy'
-  const notes = sanitizeChatDeepAvatarNotes(opts.notes || '')
+  const notes = sanitizeChatDeepAvatarNotes(opts.notes || '').trim()
   const lines = [
     `You are ${opts.name}, the on-screen JyutTranslate DeepSeek Chat companion (${body} GIF avatar).`,
     'Speak in the first person as this companion. Never deny being the avatar the user sees in the chat portrait.',

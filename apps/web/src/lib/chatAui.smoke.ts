@@ -174,6 +174,16 @@ assert.match(
   'Companion block collapses and persists open state',
 )
 assert.match(settingsMenu, /CHAT_DEEP_AVATAR_TRAITS|Trait/, 'Companion trait presets')
+assert.match(
+  settingsMenu,
+  /inbox-settings-notes-input|useChatDeepAvatarNotes|Companion notes/,
+  'Companion notes textarea',
+)
+assert.match(
+  settingsMenu,
+  /onBlur[\s\S]*notes\.trim\(\)|trimmed !== notes/,
+  'Companion notes trim on blur only (Space works while typing)',
+)
 assert.match(settingsMenu, /Sound /, 'Companion sound toggle')
 assert.match(settingsMenu, /inbox-settings-celebrate|Celebrate/, 'settings menu has Celebrate section')
 assert.match(

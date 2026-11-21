@@ -372,6 +372,10 @@ export function InboxSettingsMenu() {
                       placeholder="Things to remember about how I should be with you"
                       aria-label="Companion notes"
                       onChange={(e) => setNotes(e.target.value)}
+                      onBlur={() => {
+                        const trimmed = notes.trim()
+                        if (trimmed !== notes) setNotes(trimmed)
+                      }}
                       onKeyDown={(e) => e.stopPropagation()}
                       onClick={(e) => e.stopPropagation()}
                     />

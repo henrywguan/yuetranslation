@@ -231,6 +231,12 @@ const settings = readFileSync(join(root, 'pages/chat/inbox/InboxSettingsMenu.tsx
 assert.match(settings, /Classic chat UI/, 'classic toggle preserved in settings')
 assert.match(settings, /Back to app/, 'Back to app preserved in settings')
 assert.match(settings, /ThemeToggle/, 'theme toggle in settings')
+assert.match(settings, /inbox-settings-notes-input/, 'Companion notes field in settings')
+assert.match(
+  settings,
+  /onBlur[\s\S]*notes\.trim\(\)|trimmed !== notes/,
+  'notes trim on blur so Space works mid-type',
+)
 assert.match(shell, /createChatSandbox/, 'Inbox creates internal sandboxes via API')
 assert.match(shell, /needs_attention|in_review/, 'tile filter ids used')
 assert.match(shell, /inboxSecondaryDefaultOpen|max-width: 899px/, 'narrow/short drawers collapse secondary')
