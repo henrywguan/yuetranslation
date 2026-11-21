@@ -210,7 +210,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0.75rem 0.5rem 1rem;
+  padding: 0.75rem 0.5rem 1.15rem;
   box-sizing: border-box;
   background:
     linear-gradient(
@@ -220,6 +220,7 @@
       color-mix(in srgb, var(--ds-canvas) 92%, #000) 100%
     );
   border-right: 1px solid color-mix(in srgb, var(--ds-divider) 80%, transparent);
+  /* Keep nameplate inside the panel — height budget leaves room under the bust. */
   overflow: hidden;
   transition: width 0.22s ease, opacity 0.18s ease;
 }
@@ -261,6 +262,35 @@
   width: fit-content;
   max-width: 100%;
   max-height: 100%;
+  min-height: 0;
+}
+
+/* Avatar + MapleStory nameplate stack (nameplate sits outside FLIP origin). */
+.aui-avatar-dock-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  pointer-events: none;
+}
+
+.aui-avatar-dock-frame.is-stage {
+  flex: 1 1 auto;
+  height: 100%;
+  max-height: 100%;
+}
+
+.aui-avatar-dock-frame.is-fx-dimmed {
+  opacity: 0;
+}
+
+.aui-avatar-dock-frame.is-fx-dimmed .aui-deep-avatar.is-fx-dimmed {
+  /* Frame already hides the stack; avoid double-fading the bust alone. */
+  opacity: 1;
 }
 
 .aui-avatar-stage-toggle:focus-visible {
@@ -271,8 +301,8 @@
 
 .aui-deep-avatar.is-stage {
   width: min(100%, 20rem);
-  height: min(72vh, 100%);
-  max-height: calc(100% - 0.25rem);
+  height: min(68vh, calc(100% - 1.55rem));
+  max-height: calc(100% - 1.55rem);
   filter: drop-shadow(0 18px 36px color-mix(in srgb, var(--ds-blue) 28%, transparent));
 }
 
@@ -313,7 +343,15 @@
 
   .aui-deep-avatar.is-stage {
     width: min(100%, 14rem);
-    height: min(26vh, 11rem);
+    height: min(22vh, 9.25rem);
+    max-height: calc(100% - 1.35rem);
+  }
+
+  .aui-deep-avatar-nameplate.is-stage {
+    margin-top: -0.28rem;
+    padding: 0.12rem 0.5rem 0.14rem;
+    font-size: 0.68rem;
+    max-width: min(100%, 10rem);
   }
 
   /* Keep stage status readable in the short phone strip above the portrait. */
@@ -581,6 +619,104 @@
 
 .aui-deep-avatar.is-fx-dimmed {
   opacity: 0;
+}
+
+/* MapleStory-style companion nameplate — bordered plate under the bust.
+ * pointer-events none so tap-to-toggle / celebrate / mic stay on parent chrome. */
+.aui-deep-avatar-nameplate {
+  --aui-tag-ink: color-mix(in srgb, var(--ds-canvas) 55%, #0c1220);
+  --aui-tag-edge: color-mix(in srgb, #e8c547 72%, #fff6c8);
+  --aui-tag-rim: color-mix(in srgb, #8a6a18 55%, #1a2744);
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  margin-top: -0.42rem;
+  padding: 0.14rem 0.48rem 0.18rem;
+  box-sizing: border-box;
+  border-radius: 0.38rem;
+  border: 1.5px solid var(--aui-tag-edge);
+  outline: 1px solid var(--aui-tag-rim);
+  outline-offset: 1px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #2a3a58 55%, transparent) 0%,
+      transparent 42%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--aui-tag-ink) 88%, #1e3a5f) 0%,
+      color-mix(in srgb, var(--aui-tag-ink) 96%, #000) 100%
+    );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #000 35%, transparent),
+    0 4px 10px color-mix(in srgb, #000 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, #000 28%, transparent),
+    0 0 12px color-mix(in srgb, #e8c547 18%, transparent);
+  color: color-mix(in srgb, #fff8e7 88%, #e8c547);
+  font-family: var(--ds-font-display);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  text-shadow: 0 1px 0 color-mix(in srgb, #000 55%, transparent);
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+.aui-deep-avatar-nameplate-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    color-mix(in srgb, #fff 28%, transparent) 0%,
+    transparent 28%,
+    transparent 62%,
+    color-mix(in srgb, #e8c547 12%, transparent) 100%
+  );
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.aui-deep-avatar-nameplate-text {
+  position: relative;
+  z-index: 1;
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aui-deep-avatar-nameplate.is-portrait {
+  max-width: calc(100% + 0.35rem);
+  min-width: 0;
+}
+
+.aui-deep-avatar-nameplate.is-stage {
+  margin-top: -0.2rem;
+  max-width: min(100%, 12rem);
+  padding: 0.2rem 0.7rem 0.24rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  border-radius: 0.45rem;
+}
+
+.aui-deep-avatar-nameplate.is-char-girl,
+.aui-deep-avatar-nameplate[data-character='girl'] {
+  --aui-tag-edge: color-mix(in srgb, #f0a8c8 55%, #e8c547);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #000 35%, transparent),
+    0 4px 10px color-mix(in srgb, #000 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, #000 28%, transparent),
+    0 0 14px color-mix(in srgb, #f0a8c8 16%, transparent);
 }
 
 /* Companion enter intro — full-viewport black → video → fade into chat.
@@ -1143,9 +1279,11 @@
   display: grid;
   place-items: end center;
   width: 5.5rem;
+  /* Bust square + nameplate under feet — height grows with the plate. */
   min-height: 5.5rem;
+  height: auto;
   padding: 0;
-  padding-bottom: 0.1rem;
+  padding-bottom: 0.05rem;
   margin: 0;
   cursor: pointer;
 }
@@ -2681,17 +2819,27 @@
     display: none !important;
   }
 
-  .aui-deep-avatar.is-fx-dimmed {
+  .aui-deep-avatar.is-fx-dimmed,
+  .aui-avatar-dock-frame.is-fx-dimmed {
     opacity: 1;
   }
 }
 
 @media (min-width: 600px) {
-  .aui-deep-avatar.is-portrait,
-  .aui-composer-portrait {
+  .aui-deep-avatar.is-portrait {
     width: 7rem;
     height: 7rem;
+  }
+
+  .aui-composer-portrait {
+    width: 7rem;
     min-height: 7rem;
+    height: auto;
+  }
+
+  .aui-deep-avatar-nameplate.is-portrait {
+    font-size: 0.68rem;
+    padding: 0.16rem 0.55rem 0.2rem;
   }
 
   .aui-composer {
@@ -2724,11 +2872,22 @@
   }
 
   /* Phone soak (~390×844): keep modes + toolbar usable beside portrait */
-  .aui-deep-avatar.is-portrait,
-  .aui-composer-portrait {
+  .aui-deep-avatar.is-portrait {
     width: 4.5rem;
     height: 4.5rem;
+  }
+
+  .aui-composer-portrait {
+    width: 4.5rem;
     min-height: 4.5rem;
+    height: auto;
+  }
+
+  .aui-deep-avatar-nameplate.is-portrait {
+    margin-top: -0.35rem;
+    padding: 0.1rem 0.34rem 0.12rem;
+    font-size: 0.54rem;
+    letter-spacing: 0.03em;
   }
 
   .aui-mode {
@@ -2813,11 +2972,30 @@
 
 /* Short desktop / landscape (~900×640): compress dialogue bar, don't crush modes */
 @media (max-height: 700px) {
-  .aui-deep-avatar.is-portrait,
-  .aui-composer-portrait {
+  .aui-deep-avatar.is-portrait {
     width: 4rem;
     height: 4rem;
+  }
+
+  .aui-composer-portrait {
+    width: 4rem;
     min-height: 4rem;
+    height: auto;
+  }
+
+  .aui-deep-avatar-nameplate.is-portrait {
+    margin-top: -0.3rem;
+    font-size: 0.52rem;
+    padding: 0.08rem 0.3rem 0.1rem;
+  }
+
+  .aui-avatar-stage {
+    padding-bottom: 0.65rem;
+  }
+
+  .aui-deep-avatar.is-stage {
+    height: min(60vh, calc(100% - 1.4rem));
+    max-height: calc(100% - 1.4rem);
   }
 
   .aui-composer {

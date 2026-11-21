@@ -18,6 +18,7 @@ import { SpeakButton } from '../../../components/SpeakButton'
 import {
   ChatDeepAvatar,
   ChatDeepAvatarCelebrateFx,
+  ChatDeepAvatarNameplate,
   useChatDeepAvatarCelebrateFx,
   useChatDeepAvatarCelebrateMode,
   useChatDeepAvatarCharacter,
@@ -1047,15 +1048,18 @@ function ComposerChrome({
             onClick={onToggleDock}
             aria-label="Show large companion"
           >
-            <span className="aui-avatar-dock-origin" ref={dockRef}>
-              <ChatDeepAvatar
-                mood={portraitMood}
-                size="portrait"
-                lipLevel={portraitLips}
-                character={avatarCharacter}
-                label="DeepSeek companion"
-                dimmed={dimPortrait}
-              />
+            <span className={`aui-avatar-dock-frame${dimPortrait ? ' is-fx-dimmed' : ''}`}>
+              <span className="aui-avatar-dock-origin" ref={dockRef}>
+                <ChatDeepAvatar
+                  mood={portraitMood}
+                  size="portrait"
+                  lipLevel={portraitLips}
+                  character={avatarCharacter}
+                  label="DeepSeek companion"
+                  dimmed={dimPortrait}
+                />
+              </span>
+              <ChatDeepAvatarNameplate character={avatarCharacter} size="portrait" />
             </span>
           </button>
         ) : null}
@@ -1235,15 +1239,20 @@ export function ChatAuiThread() {
             aria-label="Dock companion to composer"
           >
             <ComposerStatusCluster placement="stage" />
-            <span className="aui-avatar-dock-origin" ref={dockRef}>
-              <ChatDeepAvatar
-                mood={portraitMood}
-                size="stage"
-                lipLevel={portraitLips}
-                character={avatarCharacter}
-                label="DeepSeek companion"
-                dimmed={dimPortrait}
-              />
+            <span
+              className={`aui-avatar-dock-frame is-stage${dimPortrait ? ' is-fx-dimmed' : ''}`}
+            >
+              <span className="aui-avatar-dock-origin" ref={dockRef}>
+                <ChatDeepAvatar
+                  mood={portraitMood}
+                  size="stage"
+                  lipLevel={portraitLips}
+                  character={avatarCharacter}
+                  label="DeepSeek companion"
+                  dimmed={dimPortrait}
+                />
+              </span>
+              <ChatDeepAvatarNameplate character={avatarCharacter} size="stage" />
             </span>
           </button>
         </aside>
