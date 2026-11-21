@@ -2,6 +2,11 @@
  * Fullscreen DS Boy / Girl intro on every `#/chat` enter (AUI shell mount).
  * Tap / Esc / video end dismisses for this visit only — no persistent “seen” latch.
  * Character from Companion pick (`readChatDeepAvatarCharacter`).
+ *
+ * Audio follows Companion Sound (default ON). Fresh users / missing pref play with
+ * sound; only an explicit Sound-off toggle stays silent. If the browser blocks
+ * unmuted autoplay while Sound is on, we mute briefly then unlock on the next
+ * user gesture (overlay tap or document pointer/key) — not “always muted video”.
  */
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { createPortal } from 'react-dom'
@@ -12,7 +17,7 @@ import {
   type ChatDeepAvatarCharacterId,
 } from '../../../lib/chatDeepAvatarCharacter'
 import { useReducedMotion } from '../../../lib/useReducedMotion'
-import { useChatDeepAvatarCharacter } from './ChatDeepAvatar'
+import { useChatDeepAvatarCharacter, useChatDeepAvatarSoundEnabled } from './ChatDeepAvatar'
 
 const EXIT_MS = 480
 const REDUCED_HOLD_MS = 320
@@ -22,6 +27,7 @@ type Phase = 'enter' | 'play' | 'exit'
 
 export function ChatDeepAvatarIntroOverlay() {
   const [character] = useChatDeepAvatarCharacter()
+  const [soundEnabled] = useChatDeepAvatarSoundEnabled()
   const reducedMotion = useReducedMotion()
   const [session, setSession] = useState<{
     character: ChatDeepAvatarCharacterId
@@ -29,11 +35,16 @@ export function ChatDeepAvatarIntroOverlay() {
     poster: string | null
   } | null>(null)
   const [phase, setPhase] = useState<Phase>('enter')
-  const [muted, setMuted] = useState(false)
+  /** True only when Sound is on but autoplay forced a mute — show unlock UI. */
+  const [needsGestureUnmute, setNeedsGestureUnmute] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const exitTimer = useRef<number | null>(null)
   const finishing = useRef(false)
   const played = useRef(false)
+  const soundEnabledRef = useRef(soundEnabled)
+  soundEnabledRef.current = soundEnabled
+  const needsGestureUnmuteRef = useRef(needsGestureUnmute)
+  needsGestureUnmuteRef.current = needsGestureUnmute
   const sessionRef = useRef(session)
   sessionRef.current = session
 
@@ -59,6 +70,29 @@ export function ChatDeepAvatarIntroOverlay() {
     exitTimer.current = window.setTimeout(() => clearSession(), EXIT_MS)
   }
 
+  const applyWantedMute = (v: HTMLVideoElement, wantSound: boolean) => {
+    v.muted = !wantSound
+    if (!wantSound) {
+      needsGestureUnmuteRef.current = false
+      setNeedsGestureUnmute(false)
+    }
+  }
+
+  const tryUnmuteWithGesture = () => {
+    const v = videoRef.current
+    if (!v || !soundEnabledRef.current) return false
+    v.muted = false
+    needsGestureUnmuteRef.current = false
+    setNeedsGestureUnmute(false)
+    void v.play().catch(() => {
+      // Gesture still blocked (rare) — stay muted and keep unlock affordance.
+      v.muted = true
+      needsGestureUnmuteRef.current = true
+      setNeedsGestureUnmute(true)
+    })
+    return true
+  }
+
   // Arm whenever `#/chat` mounts (or companion pick changes) if an intro clip ships.
   useEffect(() => {
     if (!shouldPlayChatDeepAvatarIntro(character)) {
@@ -72,7 +106,8 @@ export function ChatDeepAvatarIntroOverlay() {
     }
     finishing.current = false
     played.current = false
-    setMuted(false)
+    needsGestureUnmuteRef.current = false
+    setNeedsGestureUnmute(false)
     setPhase('enter')
     setSession({
       character,
@@ -94,6 +129,7 @@ export function ChatDeepAvatarIntroOverlay() {
   }, [session, reducedMotion])
 
   // Normal path: fade in + play once the element can buffer.
+  // Sound-on (default) tries unmuted first; Sound-off stays silent by product pref.
   useEffect(() => {
     if (!session || reducedMotion) return
     const v = videoRef.current
@@ -104,16 +140,30 @@ export function ChatDeepAvatarIntroOverlay() {
     const start = async () => {
       if (cancelled || finishing.current) return
       setPhase('play')
-      v.muted = false
+      const wantSound = soundEnabledRef.current
+      applyWantedMute(v, wantSound)
+      if (!wantSound) {
+        try {
+          await v.play()
+          if (!cancelled) played.current = true
+        } catch {
+          beginExit()
+        }
+        return
+      }
+
       try {
         await v.play()
         if (cancelled) return
         played.current = true
-        setMuted(false)
+        needsGestureUnmuteRef.current = false
+        setNeedsGestureUnmute(false)
       } catch {
         if (cancelled) return
+        // Autoplay with sound blocked — keep picture, unlock on next gesture.
         v.muted = true
-        setMuted(true)
+        needsGestureUnmuteRef.current = true
+        setNeedsGestureUnmute(true)
         try {
           await v.play()
           if (!cancelled) played.current = true
@@ -148,6 +198,32 @@ export function ChatDeepAvatarIntroOverlay() {
     }
   }, [session, reducedMotion])
 
+  // Live Sound toggle while intro is up: off → silent; on → try unmuted (+ gesture unlock).
+  useEffect(() => {
+    if (!session || reducedMotion) return
+    const v = videoRef.current
+    if (!v) return
+    if (!soundEnabled) {
+      v.muted = true
+      needsGestureUnmuteRef.current = false
+      setNeedsGestureUnmute(false)
+      return
+    }
+    if (v.muted) {
+      v.muted = false
+      void v.play()
+        .then(() => {
+          needsGestureUnmuteRef.current = false
+          setNeedsGestureUnmute(false)
+        })
+        .catch(() => {
+          v.muted = true
+          needsGestureUnmuteRef.current = true
+          setNeedsGestureUnmute(true)
+        })
+    }
+  }, [session, reducedMotion, soundEnabled])
+
   useEffect(() => {
     return () => {
       if (exitTimer.current != null) window.clearTimeout(exitTimer.current)
@@ -159,6 +235,16 @@ export function ChatDeepAvatarIntroOverlay() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
+        // Esc always skips; Enter/Space unmute first when Sound-on was policy-muted.
+        // (No window pointerdown unlock — that races React flush into the same-tap skip.)
+        if (
+          (e.key === 'Enter' || e.key === ' ') &&
+          needsGestureUnmuteRef.current &&
+          soundEnabledRef.current
+        ) {
+          tryUnmuteWithGesture()
+          return
+        }
         beginExit()
       }
     }
@@ -181,14 +267,17 @@ export function ChatDeepAvatarIntroOverlay() {
 
   const unmute = (e: ReactMouseEvent) => {
     e.stopPropagation()
-    const v = videoRef.current
-    if (!v) return
-    v.muted = false
-    setMuted(false)
-    void v.play().catch(() => {
-      setMuted(true)
-      v.muted = true
-    })
+    tryUnmuteWithGesture()
+  }
+
+  const onOverlayClick = () => {
+    // First tap with Sound on + policy mute → unlock audio (keep watching).
+    // Second tap (or Sound off / already unmuted) → skip.
+    if (needsGestureUnmuteRef.current && soundEnabledRef.current) {
+      tryUnmuteWithGesture()
+      return
+    }
+    beginExit()
   }
 
   return createPortal(
@@ -197,7 +286,7 @@ export function ChatDeepAvatarIntroOverlay() {
       role="dialog"
       aria-modal="true"
       aria-label="Companion intro — tap to skip"
-      onClick={() => beginExit()}
+      onClick={onOverlayClick}
     >
       <div className="aui-deep-avatar-intro-stage" aria-hidden>
         <video
@@ -207,11 +296,13 @@ export function ChatDeepAvatarIntroOverlay() {
           poster={session.poster ?? undefined}
           playsInline
           preload="auto"
+          // Controlled mute: Sound-off pref, or temporary autoplay lock until gesture.
+          muted={!soundEnabled || needsGestureUnmute}
           onEnded={() => beginExit()}
           onError={() => beginExit()}
         />
       </div>
-      {muted ? (
+      {needsGestureUnmute && soundEnabled ? (
         <button
           type="button"
           className="aui-deep-avatar-intro-unmute"
@@ -221,7 +312,9 @@ export function ChatDeepAvatarIntroOverlay() {
           Tap for sound
         </button>
       ) : null}
-      <p className="aui-deep-avatar-intro-hint">Tap to skip</p>
+      <p className="aui-deep-avatar-intro-hint">
+        {needsGestureUnmute && soundEnabled ? 'Tap for sound · tap again to skip' : 'Tap to skip'}
+      </p>
     </div>,
     document.body,
   )
