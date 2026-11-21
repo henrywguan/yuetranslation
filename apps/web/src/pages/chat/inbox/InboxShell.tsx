@@ -121,7 +121,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
       onNavigate?.()
       return
     }
-    const threadId = startNewChat()
+    const threadId = startNewChat({ force: true })
     bindAgentThread(agent.id, threadId)
     if (agent.projectId) linkThread(agent.projectId, threadId)
     onNavigate?.()
@@ -160,7 +160,7 @@ export function InboxShell({ onNavigate }: { onNavigate?: () => void }) {
     setWizardError(null)
     try {
       const { project, overseer } = addProject(opts.title)
-      const threadId = startNewChat()
+      const threadId = startNewChat({ force: true })
       bindAgentThread(overseer.id, threadId)
       linkThread(project.id, threadId)
       setActiveProjectId(project.id)

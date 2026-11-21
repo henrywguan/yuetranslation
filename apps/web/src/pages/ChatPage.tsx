@@ -726,6 +726,7 @@ export function ChatPage() {
   const [busy, setBusy] = useState(false)
   const [newChatBusy, setNewChatBusy] = useState(false)
   const creatingNewChatRef = useRef(false)
+  const newChatBusyRef = useRef(false)
   const newChatCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const threadsRef = useRef(threads)
   const activeIdRef = useRef(activeId)
@@ -953,27 +954,23 @@ export function ChatPage() {
 
   const armNewChatCooldown = () => {
     if (newChatCooldownTimerRef.current) clearTimeout(newChatCooldownTimerRef.current)
+    newChatBusyRef.current = true
     setNewChatBusy(true)
     newChatCooldownTimerRef.current = setTimeout(() => {
+      newChatBusyRef.current = false
       setNewChatBusy(false)
       newChatCooldownTimerRef.current = null
     }, 450)
   }
 
   const startNewChat = () => {
-    if (busy || creatingNewChatRef.current) return
+    if (busy || creatingNewChatRef.current || newChatBusyRef.current) return
     clearRevealTimers()
     revealGenRef.current += 1
     setDraft('')
     setError(null)
     setSidebarOpen(false)
     setRevealCount(0)
-
-    const active = threadsRef.current.find((t) => t.id === activeIdRef.current)
-    if (active && active.id !== BOOT_THREAD.id && !active.archived && active.messages.length === 0) {
-      armNewChatCooldown()
-      return
-    }
 
     creatingNewChatRef.current = true
     try {
