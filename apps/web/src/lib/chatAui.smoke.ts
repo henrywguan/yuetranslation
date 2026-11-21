@@ -241,22 +241,22 @@ assert.match(
 )
 assert.match(
   classicCss,
-  /\.ds-md-table-wrap[\s\S]*overflow-x:\s*auto/,
+  /\.ds-md-table-wrap\s*\{[^}]*overflow-x:\s*auto/,
   'markdown tables scroll horizontally inside the wrap',
 )
 assert.match(
   classicCss,
-  /\.ds-md-table\s*\{[\s\S]*width:\s*max-content[\s\S]*min-width:\s*100%/,
+  /\.ds-md-table\s*\{[^}]*width:\s*max-content[^}]*min-width:\s*100%/,
   'tables keep intrinsic column width (no letter-crush fit)',
 )
 assert.match(
   classicCss,
-  /\.ds-md-table th,\s*\.ds-md-table td[\s\S]*white-space:\s*nowrap[\s\S]*min-width:\s*6ch/,
+  /\.ds-md-table th,\s*\.ds-md-table td\s*\{[^}]*white-space:\s*nowrap[^}]*min-width:\s*6ch/,
   'table cells keep words intact with a floor min-width',
 )
 assert.match(
   classicCss,
-  /\.ds-md-code\s*\{[\s\S]*?overflow-x:\s*auto[\s\S]*?white-space:\s*pre/,
+  /\.ds-md-code\s*\{[^}]*overflow-x:\s*auto[^}]*white-space:\s*pre/,
   'code fences scroll horizontally without soft-wrapping',
 )
 
