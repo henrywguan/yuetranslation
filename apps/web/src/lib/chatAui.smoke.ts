@@ -471,6 +471,13 @@ assert.match(introSrc, /shouldPlayChatDeepAvatarIntro|markChatDeepAvatarIntroSee
 assert.match(introSrc, /chatDeepAvatarIntroSrc/, 'intro resolves per-character MP4')
 assert.match(introSrc, /useReducedMotion/, 'intro respects reduced motion')
 assert.match(introSrc, /Tap to skip|beginExit/, 'intro is skippable')
+assert.match(introSrc, /markSeen:\s*false/, 'buffer/autoplay fail does not burn seen latch')
+assert.match(introSrc, /is-reduced/, 'reduced-motion wash class')
+assert.match(
+  introSrc,
+  /setPhase\('enter'\)[\s\S]*REDUCED_HOLD_MS/,
+  'reduced-motion starts visible (enter) before exit fade',
+)
 const charSrc = readFileSync(join(here, 'chatDeepAvatarCharacter.ts'), 'utf8')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CHARACTER_KEY/, 'character localStorage key')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CHARACTER_EVENT/, 'character change event for sync')

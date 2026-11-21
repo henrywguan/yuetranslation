@@ -17,6 +17,7 @@ import { useChatDeepAvatarCharacter } from './ChatDeepAvatar'
 
 const EXIT_MS = 480
 const REDUCED_HOLD_MS = 320
+const BUFFER_FAIL_MS = 8_000
 
 type Phase = 'enter' | 'play' | 'exit'
 
@@ -33,17 +34,24 @@ export function ChatDeepAvatarIntroOverlay() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const exitTimer = useRef<number | null>(null)
   const finishing = useRef(false)
+  const played = useRef(false)
   const sessionRef = useRef(session)
   sessionRef.current = session
 
-  const finish = (id: ChatDeepAvatarCharacterId) => {
+  const clearSession = () => {
+    finishing.current = true
+    setSession(null)
+  }
+
+  const finishSeen = (id: ChatDeepAvatarCharacterId) => {
     if (finishing.current) return
     finishing.current = true
     markChatDeepAvatarIntroSeen(id)
     setSession(null)
   }
 
-  const beginExit = () => {
+  /** Fade out then optionally mark seen (skip / ended). Abort path omits mark. */
+  const beginExit = (opts: { markSeen: boolean }) => {
     const cur = sessionRef.current
     if (!cur || finishing.current) return
     setPhase('exit')
@@ -57,7 +65,10 @@ export function ChatDeepAvatarIntroOverlay() {
     }
     if (exitTimer.current != null) window.clearTimeout(exitTimer.current)
     const id = cur.character
-    exitTimer.current = window.setTimeout(() => finish(id), EXIT_MS)
+    exitTimer.current = window.setTimeout(() => {
+      if (opts.markSeen) finishSeen(id)
+      else clearSession()
+    }, EXIT_MS)
   }
 
   // Arm once per character that still has an unseen shipped intro.
@@ -72,8 +83,9 @@ export function ChatDeepAvatarIntroOverlay() {
       return
     }
     finishing.current = false
+    played.current = false
     setMuted(false)
-    setPhase(reducedMotion ? 'exit' : 'enter')
+    setPhase('enter')
     setSession({
       character,
       src,
@@ -81,19 +93,20 @@ export function ChatDeepAvatarIntroOverlay() {
     })
   }, [character, reducedMotion])
 
-  // Reduced motion: brief black wash only — no video.
+  // Reduced motion: visible black wash → fade out → mark seen (no video).
   useEffect(() => {
     if (!session || !reducedMotion) return
     const id = session.character
-    markChatDeepAvatarIntroSeen(id)
-    const t = window.setTimeout(() => {
-      finishing.current = true
-      setSession(null)
-    }, REDUCED_HOLD_MS)
-    return () => window.clearTimeout(t)
+    setPhase('enter')
+    const hold = window.setTimeout(() => setPhase('exit'), REDUCED_HOLD_MS)
+    const done = window.setTimeout(() => finishSeen(id), REDUCED_HOLD_MS + EXIT_MS)
+    return () => {
+      window.clearTimeout(hold)
+      window.clearTimeout(done)
+    }
   }, [session, reducedMotion])
 
-  // Normal path: fade in + play once the element mounts.
+  // Normal path: fade in + play once the element can buffer.
   useEffect(() => {
     if (!session || reducedMotion) return
     const v = videoRef.current
@@ -107,40 +120,44 @@ export function ChatDeepAvatarIntroOverlay() {
       v.muted = false
       try {
         await v.play()
-        if (!cancelled) setMuted(false)
+        if (cancelled) return
+        played.current = true
+        setMuted(false)
       } catch {
         if (cancelled) return
         v.muted = true
         setMuted(true)
         try {
           await v.play()
+          if (!cancelled) played.current = true
         } catch {
-          beginExit()
+          // Autoplay blocked entirely — dismiss without burning the "seen" latch.
+          beginExit({ markSeen: false })
         }
       }
+    }
+
+    const onReady = () => {
+      v.removeEventListener('canplay', onReady)
+      void start()
     }
 
     if (v.readyState >= 2) {
       void start()
     } else {
-      const onReady = () => {
-        v.removeEventListener('canplay', onReady)
-        void start()
-      }
       v.addEventListener('canplay', onReady)
-      // If canplay never fires (bad file), bail after a beat.
-      const failSafe = window.setTimeout(() => {
-        if (!cancelled && v.paused) beginExit()
-      }, 8_000)
-      return () => {
-        cancelled = true
-        v.removeEventListener('canplay', onReady)
-        window.clearTimeout(failSafe)
-      }
     }
+
+    // Slow buffer: drop overlay without marking seen so the next visit retries.
+    const failSafe = window.setTimeout(() => {
+      if (cancelled || finishing.current || played.current) return
+      beginExit({ markSeen: false })
+    }, BUFFER_FAIL_MS)
 
     return () => {
       cancelled = true
+      v.removeEventListener('canplay', onReady)
+      window.clearTimeout(failSafe)
     }
   }, [session, reducedMotion])
 
@@ -155,7 +172,7 @@ export function ChatDeepAvatarIntroOverlay() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
-        beginExit()
+        beginExit({ markSeen: true })
       }
     }
     window.addEventListener('keydown', onKey)
@@ -166,7 +183,11 @@ export function ChatDeepAvatarIntroOverlay() {
 
   if (reducedMotion) {
     return createPortal(
-      <div className="aui-deep-avatar-intro is-exit is-reduced" role="presentation" aria-hidden />,
+      <div
+        className={`aui-deep-avatar-intro is-${phase} is-reduced`}
+        role="presentation"
+        aria-hidden
+      />,
       document.body,
     )
   }
@@ -189,7 +210,7 @@ export function ChatDeepAvatarIntroOverlay() {
       role="dialog"
       aria-modal="true"
       aria-label="Companion intro — tap to skip"
-      onClick={beginExit}
+      onClick={() => beginExit({ markSeen: true })}
     >
       <div className="aui-deep-avatar-intro-stage" aria-hidden>
         <video
@@ -199,8 +220,8 @@ export function ChatDeepAvatarIntroOverlay() {
           poster={session.poster ?? undefined}
           playsInline
           preload="auto"
-          onEnded={beginExit}
-          onError={beginExit}
+          onEnded={() => beginExit({ markSeen: true })}
+          onError={() => beginExit({ markSeen: false })}
         />
       </div>
       {muted ? (
