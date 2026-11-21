@@ -29,6 +29,21 @@ assert.equal(sanitizeChatDeepAvatarName('  Ada  ', 'DS Boy'), 'Ada')
 assert.equal(sanitizeChatDeepAvatarName('', 'DS Boy'), 'DS Boy')
 assert.equal(sanitizeChatDeepAvatarName('x'.repeat(40), 'DS Boy').length, 24)
 assert.ok(sanitizeChatDeepAvatarNotes('hi\nthere').includes('hi'))
+// Live notes field re-sanitizes every keystroke — keep trailing Space.
+assert.equal(sanitizeChatDeepAvatarNotes('Please '), 'Please ')
+assert.equal(sanitizeChatDeepAvatarNotes('  Henry-Sama  '), '  Henry-Sama  ')
+assert.equal(
+  sanitizeChatDeepAvatarNotes('Please always refer to me as Henry-Sama'),
+  'Please always refer to me as Henry-Sama',
+)
+const paddedPrompt = buildChatDeepAvatarPersonaPromptBlock({
+  character: 'boy',
+  name: 'Kai',
+  trait: 'cheerful',
+  notes: '  remember spaces  ',
+})
+assert.match(paddedPrompt, /\nremember spaces$/)
+assert.doesNotMatch(paddedPrompt, /  remember spaces  /)
 
 const names = normalizeChatDeepAvatarNames({ boy: 'Kai', girl: '' })
 assert.equal(names.boy, 'Kai')

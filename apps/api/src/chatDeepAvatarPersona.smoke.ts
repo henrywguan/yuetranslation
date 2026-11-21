@@ -11,6 +11,7 @@ import {
   buildChatDeepAvatarPersonaPromptBlock,
   isChatDeepAvatarMoodId,
   normalizeChatDeepAvatarMoodId,
+  sanitizeChatDeepAvatarNotes,
 } from './chatDeepAvatarPersona.js'
 
 assert.ok(CHAT_DEEP_AVATAR_SHOWCASE.length >= 15)
@@ -28,13 +29,19 @@ assert.ok(isChatDeepAvatarMoodId('eureka!'))
 assert.ok(isChatDeepAvatarMoodId('zzz'))
 assert.equal(isChatDeepAvatarMoodId('nope'), false)
 
+assert.equal(sanitizeChatDeepAvatarNotes('Please '), 'Please ')
+assert.equal(sanitizeChatDeepAvatarNotes('  Henry-Sama  '), '  Henry-Sama  ')
+
 const block = buildChatDeepAvatarPersonaPromptBlock({
   character: 'boy',
   name: 'Scout',
   trait: 'coach',
+  notes: '  remember spaces  ',
 })
 assert.match(block, /Scout/)
 assert.match(block, /avatar_list/)
+assert.match(block, /\nremember spaces$/)
+assert.doesNotMatch(block, /  remember spaces  /)
 
 const here = dirname(fileURLToPath(import.meta.url))
 const tools = readFileSync(join(here, 'deepseekChatTools.ts'), 'utf8')
