@@ -14,6 +14,7 @@ import { CHAT_DEFERRED_FEATURES } from './chatDeferred.js'
 import {
   looksLikeDeferredSearch,
   looksLikeDeferredSearchTurn,
+  looksLikeDeferredToolUse,
   SEARCH_STALL_ERROR,
 } from './chatSearchStall.js'
 
@@ -131,6 +132,19 @@ assert.equal(
   true,
 )
 assert.match(SEARCH_STALL_ERROR, /no web search ran/i)
+assert.equal(
+  looksLikeDeferredToolUse(
+    "Let me pull up those exact widgets and the guide so the mockup matches.",
+  ),
+  true,
+  'Client flags ricing widgets/guide announce',
+)
+assert.equal(
+  looksLikeDeferredToolUse("I'll find images for your gallery below."),
+  false,
+  'Client does not false-stall ordinary find-images answers',
+)
+assert.match(stall, /pull\\s\+up|widgets\?/, 'Client deferred-tool covers pull-up widgets')
 
 const harness = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '../../../api/src/deepseekChatHarness.ts'),

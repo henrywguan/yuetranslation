@@ -783,6 +783,59 @@ function parseDateInput(raw: string | undefined, timeZone: string, now: Date): D
   return d
 }
 
+/** Per-tool deadline so a hung Image / MCP / fetch cannot freeze the SSE turn. */
+export function deepseekChatToolTimeoutMs(name: string): number {
+  const n = String(name || '')
+  if (n === 'generate_image') return 95_000
+  if (n.startsWith('mcp__')) return 60_000
+  if (n === 'sandbox_exec' || n === 'github_open_pr') return 120_000
+  if (n === 'fetch_url') return 20_000
+  return 45_000
+}
+
+/**
+ * Run a tool with AbortSignal deadline. Timeout returns a tool-error JSON string
+ * so the harness can continue (never hang the chat spinner forever).
+ */
+export async function executeDeepseekChatToolWithTimeout(
+  name: string,
+  argsJson: string,
+  ctx: ChatToolContext,
+  ms = deepseekChatToolTimeoutMs(name),
+): Promise<string> {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), ms)
+  if (typeof timer.unref === 'function') timer.unref()
+  const onParent = () => ctrl.abort()
+  ctx.signal?.addEventListener('abort', onParent)
+  try {
+    return await Promise.race([
+      executeDeepseekChatTool(name, argsJson, { ...ctx, signal: ctrl.signal }),
+      new Promise<string>((resolve) => {
+        ctrl.signal.addEventListener(
+          'abort',
+          () => {
+            if (ctx.signal?.aborted) {
+              resolve(JSON.stringify({ error: 'Aborted', code: 'aborted' }))
+              return
+            }
+            resolve(
+              JSON.stringify({
+                error: `Tool ${name} timed out after ${Math.round(ms / 1000)}s.`,
+                code: 'tool_timeout',
+              }),
+            )
+          },
+          { once: true },
+        )
+      }),
+    ])
+  } finally {
+    clearTimeout(timer)
+    ctx.signal?.removeEventListener('abort', onParent)
+  }
+}
+
 export async function executeDeepseekChatTool(
   name: string,
   argsJson: string,

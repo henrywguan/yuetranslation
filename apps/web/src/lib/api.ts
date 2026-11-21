@@ -10,6 +10,11 @@ import { getAccessToken } from './auth'
 import { captureDiagnostic } from './diagnostics'
 import { guestDeviceHeaders } from './guestDevice'
 import { messageFromApiBody } from './apiError'
+import {
+  CHAT_STREAM_IDLE_MS,
+  CHAT_STREAM_STALL_ERROR,
+  sanitizeDeepseekChatVisibleText,
+} from './chatVisibleSanitize'
 import { hasOfflinePack, offlineTranslate } from './offlineLexicon'
 import { sanitizeApiBase, sanitizeLeaveUrl } from './safeUrl'
 
@@ -1102,67 +1107,81 @@ export async function streamDeepseekChat(
   const avatarName = String(handlers.avatarName || '').trim().slice(0, 24) || undefined
   const avatarTrait = String(handlers.avatarTrait || '').trim().slice(0, 16) || undefined
   const avatarNotes = String(handlers.avatarNotes || '').trim().slice(0, 280) || undefined
-  const res = await apiFetch('/chat?stream=1', {
-    method: 'POST',
-    body: JSON.stringify({
-      messages: safeMessages,
-      thinking: handlers.thinking !== false,
-      search: handlers.search === true,
-      ...(handlers.harness === true ? { harness: true } : null),
-      ...(handlers.chatMode === 'ask' || handlers.chatMode === 'plan'
-        ? { chatMode: handlers.chatMode }
-        : handlers.chatMode === 'agent'
-          ? { chatMode: 'agent' }
+  // Local controller so idle watchdog can abort the fetch (AbortSignal is read-only).
+  const streamAbort = new AbortController()
+  const onParentAbort = () => streamAbort.abort()
+  if (handlers.signal?.aborted) streamAbort.abort()
+  else handlers.signal?.addEventListener('abort', onParentAbort, { once: true })
+
+  let res: Response
+  try {
+    res = await apiFetch('/chat?stream=1', {
+      method: 'POST',
+      body: JSON.stringify({
+        messages: safeMessages,
+        thinking: handlers.thinking !== false,
+        search: handlers.search === true,
+        ...(handlers.harness === true ? { harness: true } : null),
+        ...(handlers.chatMode === 'ask' || handlers.chatMode === 'plan'
+          ? { chatMode: handlers.chatMode }
+          : handlers.chatMode === 'agent'
+            ? { chatMode: 'agent' }
+            : null),
+        ...(handlers.harness === true && handlers.workspace?.files?.length
+          ? { workspace: handlers.workspace }
           : null),
-      ...(handlers.harness === true && handlers.workspace?.files?.length
-        ? { workspace: handlers.workspace }
-        : null),
-      timeZone,
-      locale,
-      ...(primaryLang ? { primaryLang } : null),
-      ...(avatarCharacter ? { avatarCharacter } : null),
-      ...(avatarName ? { avatarName } : null),
-      ...(avatarTrait ? { avatarTrait } : null),
-      ...(avatarNotes ? { avatarNotes } : null),
-      ...(handlers.inboxRole === 'overseer' || handlers.inboxRole === 'worker'
-        ? { inboxRole: handlers.inboxRole }
-        : null),
-      ...(handlers.projectMemory?.trim()
-        ? { projectMemory: handlers.projectMemory.trim().slice(0, 8_000) }
-        : null),
-      ...(handlers.sandboxSessionId && /^sbx_[a-zA-Z0-9]+$/.test(handlers.sandboxSessionId)
-        ? { sandboxSessionId: handlers.sandboxSessionId }
-        : null),
-      ...(handlers.inboxRole === 'overseer' && handlers.projectId?.trim()
-        ? {
-            projectId: handlers.projectId.trim().slice(0, 80),
-            ...(handlers.projectAgents?.length
-              ? {
-                  projectAgents: handlers.projectAgents.slice(0, 80).map((a) => ({
-                    id: String(a.id).slice(0, 80),
-                    title: String(a.title || 'Agent').slice(0, 120),
-                    status: String(a.status || 'idle').slice(0, 32),
-                    role:
-                      a.role === 'overseer' || a.role === 'worker' || a.role === 'thread'
-                        ? a.role
-                        : 'thread',
-                    ...(a.threadId ? { threadId: String(a.threadId).slice(0, 80) } : null),
-                  })),
-                }
-              : null),
-          }
-        : null),
-      ...(fileIds.length ? { fileIds } : null),
-      ...(plugins.length ? { plugins } : null),
-      ...(handlers.continueReply ? { continue: true } : null),
-    }),
-    headers: { Accept: 'text/event-stream' },
-    signal: handlers.signal,
-  })
+        timeZone,
+        locale,
+        ...(primaryLang ? { primaryLang } : null),
+        ...(avatarCharacter ? { avatarCharacter } : null),
+        ...(avatarName ? { avatarName } : null),
+        ...(avatarTrait ? { avatarTrait } : null),
+        ...(avatarNotes ? { avatarNotes } : null),
+        ...(handlers.inboxRole === 'overseer' || handlers.inboxRole === 'worker'
+          ? { inboxRole: handlers.inboxRole }
+          : null),
+        ...(handlers.projectMemory?.trim()
+          ? { projectMemory: handlers.projectMemory.trim().slice(0, 8_000) }
+          : null),
+        ...(handlers.sandboxSessionId && /^sbx_[a-zA-Z0-9]+$/.test(handlers.sandboxSessionId)
+          ? { sandboxSessionId: handlers.sandboxSessionId }
+          : null),
+        ...(handlers.inboxRole === 'overseer' && handlers.projectId?.trim()
+          ? {
+              projectId: handlers.projectId.trim().slice(0, 80),
+              ...(handlers.projectAgents?.length
+                ? {
+                    projectAgents: handlers.projectAgents.slice(0, 80).map((a) => ({
+                      id: String(a.id).slice(0, 80),
+                      title: String(a.title || 'Agent').slice(0, 120),
+                      status: String(a.status || 'idle').slice(0, 32),
+                      role:
+                        a.role === 'overseer' || a.role === 'worker' || a.role === 'thread'
+                          ? a.role
+                          : 'thread',
+                      ...(a.threadId ? { threadId: String(a.threadId).slice(0, 80) } : null),
+                    })),
+                  }
+                : null),
+            }
+          : null),
+        ...(fileIds.length ? { fileIds } : null),
+        ...(plugins.length ? { plugins } : null),
+        ...(handlers.continueReply ? { continue: true } : null),
+      }),
+      headers: { Accept: 'text/event-stream' },
+      signal: streamAbort.signal,
+    })
+  } catch (err) {
+    handlers.signal?.removeEventListener('abort', onParentAbort)
+    throw err
+  }
   if (!res.ok) {
+    handlers.signal?.removeEventListener('abort', onParentAbort)
     await throwApiError(res, 'Chat failed')
   }
   if (!res.body) {
+    handlers.signal?.removeEventListener('abort', onParentAbort)
     throw new Error('Chat stream unavailable')
   }
 
@@ -1170,67 +1189,91 @@ export async function streamDeepseekChat(
   const decoder = new TextDecoder()
   let buffer = ''
   let model: string | undefined
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-    const parts = buffer.split('\n')
-    buffer = parts.pop() || ''
-    for (const line of parts) {
-      const trimmed = line.trim()
-      if (!trimmed.startsWith('data:')) continue
-      const payload = trimmed.slice(5).trim()
-      if (!payload || payload === '[DONE]') continue
-      let parsed: {
-        delta?: string
-        contentReplace?: string
-        reasoning?: string
-        done?: boolean
-        model?: string
-        error?: string
-        status?: string
-        sources?: DeepseekChatSource[]
-        searchStep?: DeepseekChatSearchStep
-        title?: string
-        image?: DeepseekChatImageEvent
-        avatar?: { action: 'list' | 'play' | 'react'; mood?: string }
-        workspace?: {
-          files?: Array<{
-            id: string
-            path: string
-            mime?: string
-            text?: string
-            updatedAt: number
-          }>
-        }
-        project?: { actions?: Array<Record<string, unknown>> }
-        sandbox?: Record<string, unknown>
-      }
-      try {
-        parsed = JSON.parse(payload) as typeof parsed
-      } catch {
-        continue
-      }
-      if (parsed.error) throw new Error(parsed.error)
-      if (parsed.status === 'thinking' || parsed.status === 'searching') {
-        handlers.onStatus?.(parsed.status)
-      }
-      if (parsed.reasoning) handlers.onReasoning?.(parsed.reasoning)
-      if (parsed.sources?.length) handlers.onSources?.(parsed.sources)
-      if (parsed.searchStep) handlers.onSearchStep?.(parsed.searchStep)
-      if (parsed.title?.trim()) handlers.onTitle?.(parsed.title.trim())
-      if (parsed.image?.url) handlers.onImage?.(parsed.image)
-      if (parsed.avatar?.action) handlers.onAvatar?.(parsed.avatar)
-      if (parsed.workspace?.files?.length) handlers.onWorkspace?.(parsed.workspace.files)
-      if (parsed.project?.actions?.length) handlers.onProject?.(parsed.project.actions)
-      if (parsed.sandbox) handlers.onSandbox?.(parsed.sandbox)
-      if (typeof parsed.contentReplace === 'string') {
-        handlers.onContentReplace?.(parsed.contentReplace)
-      }
-      if (parsed.delta) handlers.onDelta(parsed.delta)
-      if (parsed.model) model = parsed.model
+  // Heartbeats are SSE comments — without a data-event watchdog, Image/tool hangs spin forever.
+  let lastMeaningfulAt = Date.now()
+  let stalled = false
+  const idleWatch = setInterval(() => {
+    if (Date.now() - lastMeaningfulAt > CHAT_STREAM_IDLE_MS) {
+      stalled = true
+      streamAbort.abort()
+      void reader.cancel().catch(() => undefined)
     }
+  }, 2_000)
+  if (typeof idleWatch.unref === 'function') idleWatch.unref()
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      if (stalled) break
+      buffer += decoder.decode(value, { stream: true })
+      const parts = buffer.split('\n')
+      buffer = parts.pop() || ''
+      for (const line of parts) {
+        const trimmed = line.trim()
+        if (!trimmed.startsWith('data:')) continue
+        const payload = trimmed.slice(5).trim()
+        if (!payload || payload === '[DONE]') continue
+        let parsed: {
+          delta?: string
+          contentReplace?: string
+          reasoning?: string
+          done?: boolean
+          model?: string
+          error?: string
+          status?: string
+          sources?: DeepseekChatSource[]
+          searchStep?: DeepseekChatSearchStep
+          title?: string
+          image?: DeepseekChatImageEvent
+          avatar?: { action: 'list' | 'play' | 'react'; mood?: string }
+          workspace?: {
+            files?: Array<{
+              id: string
+              path: string
+              mime?: string
+              text?: string
+              updatedAt: number
+            }>
+          }
+          project?: { actions?: Array<Record<string, unknown>> }
+          sandbox?: Record<string, unknown>
+        }
+        try {
+          parsed = JSON.parse(payload) as typeof parsed
+        } catch {
+          continue
+        }
+        lastMeaningfulAt = Date.now()
+        if (parsed.error) throw new Error(parsed.error)
+        if (parsed.status === 'thinking' || parsed.status === 'searching') {
+          handlers.onStatus?.(parsed.status)
+        }
+        if (parsed.reasoning) {
+          handlers.onReasoning?.(sanitizeDeepseekChatVisibleText(parsed.reasoning))
+        }
+        if (parsed.sources?.length) handlers.onSources?.(parsed.sources)
+        if (parsed.searchStep) handlers.onSearchStep?.(parsed.searchStep)
+        if (parsed.title?.trim()) handlers.onTitle?.(parsed.title.trim())
+        if (parsed.image?.url) handlers.onImage?.(parsed.image)
+        if (parsed.avatar?.action) handlers.onAvatar?.(parsed.avatar)
+        if (parsed.workspace?.files?.length) handlers.onWorkspace?.(parsed.workspace.files)
+        if (parsed.project?.actions?.length) handlers.onProject?.(parsed.project.actions)
+        if (parsed.sandbox) handlers.onSandbox?.(parsed.sandbox)
+        if (typeof parsed.contentReplace === 'string') {
+          handlers.onContentReplace?.(sanitizeDeepseekChatVisibleText(parsed.contentReplace))
+        }
+        if (parsed.delta) {
+          // Per-chunk best-effort; runtimes also re-sanitize the assembled buffer.
+          handlers.onDelta(sanitizeDeepseekChatVisibleText(parsed.delta))
+        }
+        if (parsed.model) model = parsed.model
+      }
+    }
+    if (stalled) throw new Error(CHAT_STREAM_STALL_ERROR)
+  } finally {
+    clearInterval(idleWatch)
+    handlers.signal?.removeEventListener('abort', onParentAbort)
   }
 
   return { model }

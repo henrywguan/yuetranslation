@@ -222,6 +222,18 @@ assert.equal(
 )
 assert.equal(looksLikeDeferredToolUse('Calling get_weather next.'), true)
 assert.equal(
+  looksLikeDeferredToolUse(
+    "Let me pull up those exact widgets and the guide so the mockup and the build steps actually match what you'll install.",
+  ),
+  true,
+  'Henry ricing widgets/guide announce is deferred-tool',
+)
+assert.equal(
+  looksLikeDeferredToolUse("I'll find images for your gallery below."),
+  false,
+  'Ordinary find-images answers are not deferred-tool',
+)
+assert.equal(
   looksLikeDeferredToolUse('It is 28°C and humid in Hong Kong this afternoon.'),
   false,
   'real weather answers are not deferred-tool',
@@ -229,6 +241,8 @@ assert.equal(
 assert.match(harnessSrc, /looksLikeDeferredSearchTurn/, 'Harness uses reply+reasoning deferred search')
 assert.match(harnessSrc, /deferredToolRecovered|deferred-tool recovery/, 'Harness recovers empty tool promises')
 assert.match(harnessSrc, /looksLikeDeferredToolUse/, 'Harness detects I\'ll-check-weather stopovers')
+assert.match(harnessSrc, /executeDeepseekChatToolWithTimeout/, 'Harness wraps tools with timeout')
+assert.match(harnessSrc, /sanitizeDeepseekChatVisibleText/, 'Harness strips leaked system tags')
 
 assert.equal(
   looksLikeDeferredOrchestration(

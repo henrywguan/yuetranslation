@@ -3,9 +3,12 @@ import {
   convertUnits,
   DEEPSEEK_CHAT_TOOLS,
   DEEPSEEK_CHAT_WORKSPACE_TOOLS,
+  deepseekChatToolTimeoutMs,
   executeDeepseekChatTool,
+  executeDeepseekChatToolWithTimeout,
   safeCalc,
 } from './deepseekChatTools.js'
+import { CHAT_IMAGE_TIMEOUT_MS } from './deepseekChatImage.js'
 import { createWorkspaceStore } from './deepseekChatWorkspace.js'
 
 assert.ok(DEEPSEEK_CHAT_TOOLS.some((t) => t.function.name === 'get_date'))
@@ -103,5 +106,25 @@ const read = JSON.parse(
   ),
 ) as { text?: string }
 assert.equal(read.text, 'hello harness')
+
+assert.ok(deepseekChatToolTimeoutMs('generate_image') >= CHAT_IMAGE_TIMEOUT_MS)
+assert.ok(deepseekChatToolTimeoutMs('fetch_url') <= 30_000)
+assert.ok(typeof executeDeepseekChatToolWithTimeout === 'function')
+
+const timed = JSON.parse(
+  await executeDeepseekChatToolWithTimeout(
+    'get_date',
+    '{}',
+    { timeZone: 'UTC', now: fixed },
+    5_000,
+  ),
+) as { date?: string }
+assert.match(String(timed.date || ''), /^\d{4}-\d{2}-\d{2}$/)
+
+const imageSrc = await import('node:fs').then((fs) =>
+  fs.readFileSync(new URL('./deepseekChatImage.ts', import.meta.url), 'utf8'),
+)
+assert.match(imageSrc, /CHAT_IMAGE_TIMEOUT_MS/, 'Image gen has timeout')
+assert.match(imageSrc, /signalWithTimeout|AbortSignal\.timeout/, 'Image gen aborts on deadline')
 
 console.log('deepseekChatTools.smoke: ok')

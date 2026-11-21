@@ -54,6 +54,10 @@ import {
   SEARCH_STALL_ERROR,
   TOOL_STALL_ERROR,
 } from '../lib/chatSearchStall'
+import {
+  deepseekChatTextLooksLeaked,
+  sanitizeDeepseekChatVisibleText,
+} from '../lib/chatVisibleSanitize'
 import { parseAnyChatImport } from '../lib/chatDeepseekImport'
 import {
   consumeChatPrefill,
@@ -1116,6 +1120,7 @@ export function ChatPage() {
         onReasoning: (delta) => {
           markThinking()
           reasoning += delta
+          reasoning = sanitizeDeepseekChatVisibleText(reasoning)
           if (reasoning.length > LIVE_REASONING_KEEP) {
             reasoning = reasoning.slice(-LIVE_REASONING_KEEP)
           }
@@ -1158,7 +1163,7 @@ export function ChatPage() {
           }
         },
         onContentReplace: (text) => {
-          assembled = text.slice(0, MAX_CONTENT_CHARS)
+          assembled = sanitizeDeepseekChatVisibleText(text).slice(0, MAX_CONTENT_CHARS)
           thread = patchAssistantContent(thread, assistantId, assembled, {
             reasoning: reasoning || undefined,
             sources,
@@ -1173,10 +1178,11 @@ export function ChatPage() {
             setSearching(false)
           }
           assembled += delta
+          assembled = sanitizeDeepseekChatVisibleText(assembled)
           if (assembled.length > MAX_CONTENT_CHARS) {
             assembled = assembled.slice(0, MAX_CONTENT_CHARS)
           }
-          liveTts?.feed(delta)
+          if (!deepseekChatTextLooksLeaked(delta)) liveTts?.feed(delta)
           thread = firstToken
             ? patchAssistantContent(thread, assistantId, assembled, {
                 reasoning: reasoning || undefined,
@@ -1189,6 +1195,7 @@ export function ChatPage() {
         },
       })
       flushPaint()
+      assembled = sanitizeDeepseekChatVisibleText(assembled).slice(0, MAX_CONTENT_CHARS)
       if (!assembled.trim()) {
         liveTts?.stop()
         thread = dropEmptyAssistant(thread)
@@ -2204,7 +2211,8 @@ export function ChatPage() {
                 <button
                   type="button"
                   className="ds-chat-send is-stop"
-                  aria-label="Stop generating"
+                  aria-label="Stop working"
+                  title="Stop working — cancel the in-flight reply"
                   onClick={stopGeneration}
                 >
                   {STOP_ICON}

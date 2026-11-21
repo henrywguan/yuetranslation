@@ -22,6 +22,33 @@ export type GeneratedChatImage = {
   provider?: 'gemini' | 'openai'
 }
 
+/** Cap hung Gemini/OpenAI image calls so DeepThink+Image turns cannot spin forever. */
+export const CHAT_IMAGE_TIMEOUT_MS = 90_000
+
+function signalWithTimeout(parent: AbortSignal | undefined, ms: number): AbortSignal {
+  const timeout =
+    typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+      ? AbortSignal.timeout(ms)
+      : (() => {
+          const c = new AbortController()
+          setTimeout(() => c.abort(), ms).unref?.()
+          return c.signal
+        })()
+  if (!parent) return timeout
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.any === 'function') {
+    return AbortSignal.any([parent, timeout])
+  }
+  const merged = new AbortController()
+  const forward = () => merged.abort()
+  if (parent.aborted || timeout.aborted) {
+    merged.abort()
+    return merged.signal
+  }
+  parent.addEventListener('abort', forward, { once: true })
+  timeout.addEventListener('abort', forward, { once: true })
+  return merged.signal
+}
+
 const STORE = new Map<string, GeneratedChatImage>()
 const TTL_MS = 24 * 60 * 60 * 1000
 const MAX_STORE = 40
@@ -227,32 +254,48 @@ export async function generateChatImage(
   const openaiKey = openaiImageApiKey(opts?.apiKey || opts?.pluginCreds?.image)
 
   pruneStore()
+  const signal = signalWithTimeout(opts?.signal, CHAT_IMAGE_TIMEOUT_MS)
+  const isAbortLike = (err: unknown) =>
+    (err as Error)?.name === 'AbortError' ||
+    /aborted|timeout|timed out/i.test(String((err as Error)?.message || err))
+  const timeoutError = () =>
+    new Error(`Image generation timed out after ${CHAT_IMAGE_TIMEOUT_MS / 1000}s.`)
+
   let image: GeneratedChatImage
   if (geminiKey) {
     try {
       image = await generateViaGemini(cleaned, {
-        signal: opts?.signal,
+        signal,
         size: opts?.size,
         apiKey: geminiKey,
       })
     } catch (err) {
+      // Deadline AbortSignal must not fall through to a second 90s OpenAI attempt.
+      if (opts?.signal?.aborted) throw err
+      if (signal.aborted || isAbortLike(err)) throw timeoutError()
       if (!openaiKey) throw err
       console.warn(
         '[deepseek-chat] Gemini image failed, falling back to OpenAI:',
         err instanceof Error ? err.message : err,
       )
       image = await generateViaOpenAI(cleaned, {
-        signal: opts?.signal,
+        signal: signalWithTimeout(opts?.signal, CHAT_IMAGE_TIMEOUT_MS),
         size: opts?.size,
         apiKey: openaiKey,
       })
     }
   } else if (openaiKey) {
-    image = await generateViaOpenAI(cleaned, {
-      signal: opts?.signal,
-      size: opts?.size,
-      apiKey: openaiKey,
-    })
+    try {
+      image = await generateViaOpenAI(cleaned, {
+        signal,
+        size: opts?.size,
+        apiKey: openaiKey,
+      })
+    } catch (err) {
+      if (opts?.signal?.aborted) throw err
+      if (signal.aborted || isAbortLike(err)) throw timeoutError()
+      throw err
+    }
   } else {
     throw new Error(
       'Image generation is not configured. Set GEMINI_API_KEY on the API (preferred), or add a key in Plugins → API keys.',
