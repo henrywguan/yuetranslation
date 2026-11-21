@@ -17,6 +17,17 @@ The web manifest in `apps/web/pwa-manifest.ts` includes:
 - `protocol_handlers` (`web+jyuttranslate:`)
 - `edge_side_panel` (Edge sidebar preferred width)
 
+### Dual PWAs (translator + DeepSeek chat)
+
+Chromium can install **two** origin PWAs when manifests differ by `id` / `name` / `start_url` / icons:
+
+| Surface | Manifest | `id` | `start_url` | Icons |
+| --- | --- | --- | --- | --- |
+| Translator | `/manifest.webmanifest` (VitePWA) | `/` | `/#/app` | `pwa-192` / `pwa-512` (粵 chop) |
+| DeepSeek chat | `/manifest-chat.webmanifest` | `/chat` | `/chat` → `#/chat` | `pwa-chat-192` / `pwa-chat-512` |
+
+`App` swaps `<link rel="manifest">` on `#/chat` so Install / Add to Home Screen targets the chat package. Play TWA packaging still uses the **translator** manifest.
+
 Service worker: Workbox offline shell + **inline** registration in `index.html` (so PWA Builder HTML/Puppeteer scanners can find `/sw.js`).
 
 Launch handling: `apps/web/src/lib/pwaLaunch.ts`.
