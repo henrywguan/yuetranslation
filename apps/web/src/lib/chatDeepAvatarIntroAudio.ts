@@ -7,8 +7,9 @@
  * so `#/chat` can adopt an already-playing unmuted element.
  *
  * Gesture trick: start `play()` muted (always allowed), then unmute in the
- * same synchronous turn — Chrome/Safari often keep the unlock. Never leave a
- * Sound-on intro stuck on muted playback from the prime path.
+ * same synchronous turn — Chrome/Safari often keep the unlock. If the browser
+ * remutes or rejects audible play, keep muted motion going so the overlay
+ * never lands on a frozen hold frame.
  */
 import {
   chatDeepAvatarIntroSrc,
@@ -45,6 +46,13 @@ function disposePrimed(entry: PrimedChatIntro | null) {
 export function clearPrimedChatDeepAvatarIntro() {
   disposePrimed(primed)
   primed = null
+}
+
+function keepMutedMotion(video: HTMLVideoElement) {
+  video.muted = true
+  void video.play().catch(() => {
+    /* overlay will retry */
+  })
 }
 
 /**
@@ -85,28 +93,17 @@ export function primeChatDeepAvatarIntro(character?: ChatDeepAvatarCharacterId) 
     void attempt
       .then(() => {
         if (primed?.video !== video) return
-        // If the browser re-muted us, stay honest — overlay will wait for a tap.
+        // Browser remuted us — keep motion; overlay shows Unmute.
         if (video.muted) {
-          try {
-            video.pause()
-            video.currentTime = 0
-          } catch {
-            /* ignore */
-          }
+          keepMutedMotion(video)
           primed.unmuted = false
           return
         }
         primed.unmuted = true
       })
       .catch(() => {
-        // Do not fall back to muted playback — hold frame 0 for overlay unlock.
-        try {
-          video.pause()
-          video.currentTime = 0
-        } catch {
-          /* ignore */
-        }
-        video.muted = false
+        // Audible play rejected — fall back to muted motion (never hold frame 0).
+        keepMutedMotion(video)
         if (primed?.video === video) primed.unmuted = false
       })
   }
