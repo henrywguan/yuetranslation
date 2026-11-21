@@ -6,13 +6,16 @@ import assert from 'node:assert/strict'
 import {
   CHAT_DEEP_AVATAR_SHOWCASE,
   CHAT_DEEP_AVATAR_SHOWCASE_IDS,
+  CHAT_DEEP_AVATAR_SOUND_KEY,
   buildChatDeepAvatarPersonaPromptBlock,
   highEnergyAvatarMood,
   normalizeChatDeepAvatarCloudPrefs,
   normalizeChatDeepAvatarNames,
   normalizeChatDeepAvatarShowcaseMood,
+  readChatDeepAvatarSoundEnabled,
   sanitizeChatDeepAvatarName,
   sanitizeChatDeepAvatarNotes,
+  writeChatDeepAvatarSoundEnabled,
 } from './chatDeepAvatarPersona.ts'
 import { chatDeepAvatarMoodAssetStem, chatDeepAvatarMoodSrc } from './chatDeepAvatarCharacter.ts'
 import {
@@ -83,6 +86,33 @@ const cloud = normalizeChatDeepAvatarCloudPrefs({
 assert.equal(cloud?.character, 'girl')
 assert.equal(cloud?.trait, 'coach')
 assert.equal(cloud?.soundEnabled, false)
+
+// Companion Sound defaults ON when unset; only explicit off is silent.
+{
+  const g = globalThis as { localStorage?: Storage; window?: unknown }
+  const mem = new Map<string, string>()
+  const ls = {
+    getItem: (k: string) => (mem.has(k) ? mem.get(k)! : null),
+    setItem: (k: string, v: string) => {
+      mem.set(k, String(v))
+    },
+    removeItem: (k: string) => {
+      mem.delete(k)
+    },
+  } as Storage
+  g.localStorage = ls
+  g.window = {
+    dispatchEvent: () => true,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }
+  mem.delete(CHAT_DEEP_AVATAR_SOUND_KEY)
+  assert.equal(readChatDeepAvatarSoundEnabled(), true, 'missing sound pref → on')
+  assert.equal(writeChatDeepAvatarSoundEnabled(false), false)
+  assert.equal(readChatDeepAvatarSoundEnabled(), false, 'explicit sound off')
+  assert.equal(writeChatDeepAvatarSoundEnabled(true), true)
+  assert.equal(readChatDeepAvatarSoundEnabled(), true, 'explicit sound on')
+}
 
 assert.equal(inferChatDeepAvatarMoodFromText('Hooray, we shipped it!'), 'celebrate')
 assert.equal(inferChatDeepAvatarMoodFromText('Sorry, that failed.'), 'concern')

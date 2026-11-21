@@ -731,6 +731,19 @@ assert.match(introSrc, /chatDeepAvatarIntroSrc/, 'intro resolves per-character M
 assert.match(introSrc, /useReducedMotion/, 'intro respects reduced motion')
 assert.match(introSrc, /Tap to skip|beginExit/, 'intro is skippable')
 assert.match(introSrc, /is-reduced/, 'reduced-motion wash class')
+assert.match(introSrc, /useChatDeepAvatarSoundEnabled/, 'intro follows Companion Sound pref')
+assert.match(introSrc, /needsGestureUnmute/, 'intro unlocks sound after autoplay mute')
+assert.match(introSrc, /soundEnabledRef/, 'intro sound pref is live during playback')
+assert.doesNotMatch(
+  introSrc,
+  /<video[^>]*\bmuted\b(?!\s*=)/,
+  'intro video must not hard-code muted without binding to Sound pref',
+)
+assert.match(
+  introSrc,
+  /muted=\{!soundEnabled \|\| needsGestureUnmute\}/,
+  'intro mute tracks Sound-off or temporary autoplay lock only',
+)
 assert.match(
   introSrc,
   /setPhase\('enter'\)[\s\S]*REDUCED_HOLD_MS/,
