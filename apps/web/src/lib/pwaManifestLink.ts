@@ -1,6 +1,10 @@
 /**
  * Point `<link rel="manifest">` at the translator or chat PWA manifest.
  * Distinct `id` + `start_url` let Chromium install two Home Screen / desktop icons.
+ *
+ * iOS Add to Home Screen bookmarks the **document URL** and often strips the hash.
+ * Chat therefore keeps pathname `/chat` while on that route so A2HS survives as
+ * `…/chat` (→ `#/chat`), not bare `/` which standalone boot maps to `#/app`.
  */
 import { clearDeferredInstallPrompt } from './pwaInstallPrompt'
 
@@ -12,6 +16,20 @@ const APPLE_TITLE_CHAT = 'DeepSeek Chat'
 
 export function pwaManifestHref(variant: PwaManifestVariant): string {
   return variant === 'chat' ? '/manifest-chat.webmanifest' : '/manifest.webmanifest'
+}
+
+/** Pathname iOS / Chromium should bookmark for this install surface. */
+export function pwaInstallPathnameForVariant(variant: PwaManifestVariant): string {
+  return variant === 'chat' ? '/chat' : '/'
+}
+
+/**
+ * Standalone launch with an empty hash: prefer chat when the saved path is `/chat`
+ * (iOS A2HS after hash strip), otherwise the translator.
+ */
+export function standaloneDefaultRoute(pathname: string): 'app' | 'chat' {
+  const path = pathname.replace(/\/+$/, '') || '/'
+  return path === '/chat' ? 'chat' : 'app'
 }
 
 let activeVariant: PwaManifestVariant | null = null
@@ -48,9 +66,37 @@ function setAppleTitle(variant: PwaManifestVariant): void {
   if (meta.content !== title) meta.content = title
 }
 
+/**
+ * Keep `/chat` in the address bar on the chat route so iOS A2HS does not collapse
+ * `/#/chat` → `/` (which then opens as the translator).
+ */
+export function syncPwaInstallPathname(variant: PwaManifestVariant): void {
+  if (typeof window === 'undefined') return
+  const wanted = pwaInstallPathnameForVariant(variant)
+  const url = new URL(window.location.href)
+  const current = url.pathname.replace(/\/+$/, '') || '/'
+  if (variant === 'chat') {
+    if (current === wanted) return
+    url.pathname = wanted
+    if (!/^#\/chat(?:\?|$)/.test(url.hash || '')) url.hash = '#/chat'
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+    return
+  }
+  // Leaving chat: drop `/chat` so translator A2HS does not bookmark the chat path.
+  if (current === '/chat') {
+    url.pathname = '/'
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+  }
+}
+
 /** Sync document install surface to `app` or `chat` based on the current route. */
 export function syncPwaManifestLink(variant: PwaManifestVariant): void {
   if (typeof document === 'undefined') return
+
+  // Pathname must stay correct even when variant is unchanged (e.g. soft nav
+  // restored `/#/chat` without `/chat`, or first paint before a prior swap).
+  syncPwaInstallPathname(variant)
+
   if (activeVariant === variant) return
 
   const link = ensureManifestLink()

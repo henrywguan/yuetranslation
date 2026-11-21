@@ -1284,9 +1284,9 @@ export const ui = {
     jp: 'zoeng1 JyutTranslate zong1 dou3 zyu2 waa2 min6 — hou2 ci5 kei4 taa1 jing3 jung6 gam2 hoi1!',
   },
   iosHomescreenTipBodyChat: {
-    en: 'Install DeepSeek Chat as its own Home Screen app — separate from the translator.',
-    zh: '將 DeepSeek Chat 裝成獨立主畫面應用——同翻譯器分開。',
-    jp: 'zoeng1 DeepSeek Chat zong1 sing4 duk6 laap6 zyu2 waa2 min6 jing3 jung6 — tung4 faan1 jik6 hei3 fan1 hoi1.',
+    en: 'Install DeepSeek Chat as its own Home Screen app — separate from the translator. Confirm the address shows /chat before you add.',
+    zh: '將 DeepSeek Chat 裝成獨立主畫面應用——同翻譯器分開。加入前確認網址係 /chat。',
+    jp: 'zoeng1 DeepSeek Chat zong1 sing4 duk6 laap6 zyu2 waa2 min6 jing3 jung6 — tung4 faan1 jik6 hei3 fan1 hoi1. gaa1 jap6 cin4 kok3 jing6 mong5 zi2 hai6 /chat.',
   },
   iosHomescreenShowSteps: {
     en: 'How',

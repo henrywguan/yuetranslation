@@ -28,12 +28,14 @@ Chromium can install **two** origin PWAs when manifests differ by `id` / `name` 
 
 `App` swaps `<link rel="manifest">` on `#/chat` so Install / Add to Home Screen targets the chat package. Play TWA packaging still uses the **translator** manifest.
 
+**iOS Add to Home Screen:** Safari bookmarks the document URL and often **strips the hash**. While on chat, the SPA keeps pathname `/chat` (via `syncPwaInstallPathname`) so the Home Screen icon opens `/chat` → `#/chat`, not bare `/` → `#/app`. Re-add the chat icon after that fix if an older bookmark still shows `#/app`.
+
 **How users get each icon**
 
 | App | Where to install | Opens |
 | --- | --- | --- |
 | JyutTranslate | `#/app` (Account Hub Home Screen panel, landing iOS tip, Chromium Install) | `/#/app` |
-| DeepSeek Chat | `#/chat` (chat header Install / iOS tip; Hub “Open DeepSeek Chat to install…”) | `/chat` → `#/chat` |
+| DeepSeek Chat | `#/chat` (address bar shows `/chat`; chat header Install / iOS tip; Hub “Open DeepSeek Chat to install…”) | `/chat` → `#/chat` |
 
 Add the second icon from a **browser tab**, not from an already-installed PWA window.
 
