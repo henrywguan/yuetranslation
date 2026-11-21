@@ -312,24 +312,6 @@
   overflow: visible;
 }
 
-.aui-new-thread {
-  appearance: none;
-  border: 1px solid var(--ds-divider);
-  background: var(--ds-canvas);
-  color: var(--ds-text);
-  border-radius: 0.65rem;
-  padding: 0.55rem 0.75rem;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
-}
-
-.aui-new-thread:hover {
-  border-color: var(--ds-blue-soft-border);
-  background: var(--ds-blue-soft);
-}
-
 .aui-thread-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto auto;
@@ -492,12 +474,6 @@
   filter: drop-shadow(0 18px 36px color-mix(in srgb, var(--ds-blue) 28%, transparent));
 }
 
-.aui-deep-avatar.is-bubble {
-  width: 3.5rem;
-  height: 3.5rem;
-  filter: drop-shadow(0 8px 18px color-mix(in srgb, var(--ds-blue) 32%, transparent));
-}
-
 .aui-deep-avatar-img {
   width: 100%;
   height: 100%;
@@ -532,8 +508,7 @@
   will-change: transform, opacity;
 }
 
-.aui-deep-avatar.is-portrait .aui-deep-avatar-lips,
-.aui-deep-avatar.is-bubble .aui-deep-avatar-lips {
+.aui-deep-avatar.is-portrait .aui-deep-avatar-lips {
   top: 60%;
   width: 22%;
   height: 12%;

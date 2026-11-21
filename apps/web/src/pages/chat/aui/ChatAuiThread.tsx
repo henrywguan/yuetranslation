@@ -79,6 +79,29 @@ const MODE_ICONS = {
 
 const SUGGESTIONS = CHAT_EMPTY_SUGGESTIONS
 const EMPTY_SOURCES: ChatSource[] = []
+/** Stable empty sentinel — avoid stream-paint churn while `@` menu is closed. */
+const EMPTY_THREADS_FOR_MENTIONS: Array<{ id: string; title: string; archived?: boolean }> = []
+
+const FALLBACK_PLUGINS = [
+  {
+    id: 'image',
+    name: 'Image generation',
+    description: 'Gemini images',
+    kind: 'builtin' as const,
+    configured: false,
+    category: 'generation' as const,
+    status: 'needs_token' as const,
+  },
+  {
+    id: 'mcp:higgsfield',
+    name: 'Higgsfield',
+    description: 'Image / video MCP',
+    kind: 'mcp' as const,
+    configured: false,
+    category: 'generation' as const,
+    status: 'needs_token' as const,
+  },
+]
 
 /**
  * URL source parts on the current assistant message (1-indexed `[n]` chips).
@@ -319,9 +342,6 @@ function EditComposer() {
   )
 }
 
-/** @deprecated Phase A Inbox — use `InboxShell` from `pages/chat/inbox/InboxShell`. */
-export { InboxShell as ChatAuiSidebar } from '../inbox/InboxShell'
-
 /** In-thread Project agents (Overseer + workers) — jump without leaving the composer. */
 function ProjectAgentStrip() {
   const inbox = useChatInboxContextOptional()
@@ -519,6 +539,9 @@ function ComposerChrome({
   }, [composerMode, setComposerMode])
 
   const atMatch = detectAtQuery(draft)
+  // While `@` is closed, use a stable empty dep so 100ms stream paints do not
+  // invalidate this memo (Composer still re-renders for Thinking/Searching UI).
+  const threadsDepForMentions = atMatch ? threads : EMPTY_THREADS_FOR_MENTIONS
   const mentionItems = useMemo(() => {
     if (!atMatch) return []
     const linked = inbox?.ready ? agentForThread(inbox.state, activeId) : undefined
@@ -538,7 +561,11 @@ function ComposerChrome({
     return buildChatMentionItems({
       workspace: activeWorkspace,
       workspaces: inbox?.state.workspaces,
-      threads: threads.map((t) => ({ id: t.id, title: t.title, archived: t.archived })),
+      threads: threadsDepForMentions.map((t) => ({
+        id: t.id,
+        title: t.title,
+        archived: t.archived,
+      })),
       agents: inbox?.state.agents,
       activeThreadId: activeId,
       projectId,
@@ -555,7 +582,7 @@ function ComposerChrome({
     atMatch,
     inbox,
     reviewActivity.runs,
-    threads,
+    threadsDepForMentions,
   ])
 
   useEffect(() => {
@@ -589,28 +616,7 @@ function ComposerChrome({
     Number(richLayout) +
     enabledPlugins.length
 
-  const fallbackPlugins = [
-    {
-      id: 'image',
-      name: 'Image generation',
-      description: 'Gemini images',
-      kind: 'builtin' as const,
-      configured: false,
-      category: 'generation' as const,
-      status: 'needs_token' as const,
-    },
-    {
-      id: 'mcp:higgsfield',
-      name: 'Higgsfield',
-      description: 'Image / video MCP',
-      kind: 'mcp' as const,
-      configured: false,
-      category: 'generation' as const,
-      status: 'needs_token' as const,
-    },
-  ]
-
-  const catalog = pluginCatalog.length ? pluginCatalog : fallbackPlugins
+  const catalog = pluginCatalog.length ? pluginCatalog : FALLBACK_PLUGINS
   const official = catalog.filter((p) => p.kind === 'builtin' || p.id === 'image')
   const installed = catalog.filter((p) => !official.includes(p))
 
