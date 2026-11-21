@@ -434,7 +434,6 @@ function AtMentionMenu({
 }
 
 type ComposerChromeProps = {
-  error?: string | null
   dock: ChatDeepAvatarDockMode
   onToggleDock: () => void
   dockRef: RefObject<HTMLButtonElement | null>
@@ -445,7 +444,6 @@ type ComposerChromeProps = {
 }
 
 function ComposerChrome({
-  error,
   dock,
   onToggleDock,
   dockRef,
@@ -1242,7 +1240,6 @@ export function ChatAuiThread() {
               </div>
             ) : null}
             <ComposerChrome
-              error={error}
               dock={dock}
               onToggleDock={onToggleDock}
               dockRef={dockRef}
