@@ -38,6 +38,14 @@ export const DeepseekChatBodySchema = z.object({
   locale: z.string().trim().max(32).optional(),
   /** Account Hub primary language (`yue`, `cmn`, `en`, …). */
   primaryLang: z.string().trim().max(24).optional(),
+  /** Active companion character (`boy` / `girl`). */
+  avatarCharacter: z.enum(['boy', 'girl']).optional(),
+  /** User-renamed companion display name. */
+  avatarName: z.string().trim().max(24).optional(),
+  /** Companion trait preset. */
+  avatarTrait: z.enum(['cheerful', 'calm', 'witty', 'coach']).optional(),
+  /** Short companion notes from the user. */
+  avatarNotes: z.string().trim().max(280).optional(),
   /** Convenience: merge onto the last user message if that row omitted fileIds. */
   fileIds: z.array(z.string().regex(/^file-api-/)).max(5).optional(),
   /**

@@ -1612,6 +1612,49 @@ app.patch('/api/prefs/auto-speak', async (req: AuthedRequest, res) => {
   }
 })
 
+/** Save DeepSeek chat companion prefs (names / trait / sound / character). */
+app.patch('/api/prefs/chat-avatar', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  const { normalizeChatDeepAvatarCloudPrefs } = await import('./chatDeepAvatarPersona.js')
+  const blob = normalizeChatDeepAvatarCloudPrefs(req.body?.chatDeepAvatar ?? req.body)
+  if (!blob) {
+    res.status(400).json({ message: 'chatDeepAvatar object is required.' })
+    return
+  }
+  const withStamp = {
+    ...blob,
+    updatedAt: blob.updatedAt || new Date().toISOString(),
+  }
+
+  if (env.openMode || !req.auth?.userId) {
+    if (!ent.loggedIn && !env.openMode) {
+      res.status(401).json({ message: 'Sign in to sync companion prefs.', entitlement: ent })
+      return
+    }
+    if (env.openMode) {
+      const prefs = { ...ent.prefs, chatDeepAvatar: withStamp }
+      res.json({ ok: true, prefs, entitlement: { ...ent, prefs } })
+      return
+    }
+    res.status(401).json({ message: 'Sign in to sync companion prefs.', entitlement: ent })
+    return
+  }
+
+  try {
+    await upsertProfilePlan(req.auth.userId, { chat_deep_avatar: withStamp })
+    const next = await entitlementFor(req)
+    res.json({
+      ok: true,
+      prefs: next.prefs,
+      entitlement: next,
+    })
+  } catch (e) {
+    res.status(500).json({
+      message: e instanceof Error ? e.message : 'Failed to save companion prefs',
+    })
+  }
+})
+
 /** Save cross-device primary language preference (signed-in only). */
 app.patch('/api/prefs/primary-lang', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)

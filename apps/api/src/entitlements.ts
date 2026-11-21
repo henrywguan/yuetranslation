@@ -460,6 +460,8 @@ export type Entitlement = {
     username: string | null
     /** ISO timestamp of last username change; null if never set. */
     usernameChangedAt: string | null
+    /** DeepSeek chat companion prefs (names, trait, sound, …). */
+    chatDeepAvatar: Record<string, unknown> | null
   }
   /** Present when the user owns or belongs to a Family/Business household with pooled usage. */
   household: HouseholdSummary | null
@@ -688,6 +690,7 @@ function buildSnapshot(
     household?: HouseholdSummary | null
     username?: string | null
     usernameChangedAt?: string | null
+    chatDeepAvatar?: Record<string, unknown> | null
     usageSelf?: Entitlement['usageSelf']
   } = {},
 ): Entitlement {
@@ -782,6 +785,10 @@ function buildSnapshot(
     primaryLang: normalizePrimaryLang(opts.primaryLang),
     username: opts.username?.trim() || null,
     usernameChangedAt: opts.usernameChangedAt || null,
+    chatDeepAvatar:
+      opts.chatDeepAvatar && typeof opts.chatDeepAvatar === 'object' && !Array.isArray(opts.chatDeepAvatar)
+        ? (opts.chatDeepAvatar as Record<string, unknown>)
+        : null,
   }
 
   if (disabled && loggedIn) {
@@ -971,6 +978,7 @@ function buildSnapshot(
         primaryLang: 'yue',
         username: null,
         usernameChangedAt: null,
+        chatDeepAvatar: null,
       },
       household: null,
     }
@@ -1188,6 +1196,7 @@ function localEntitlement(): Entitlement {
         primaryLang: 'yue',
         username: null,
         usernameChangedAt: null,
+        chatDeepAvatar: null,
       },
       household: null,
     }
@@ -1345,6 +1354,7 @@ export async function resolveEntitlement(
     household,
     username: profile?.username,
     usernameChangedAt: profile?.username_changed_at,
+    chatDeepAvatar: profile?.chat_deep_avatar ?? null,
     usageSelf,
   })
   if (snap.allowed.chat) {

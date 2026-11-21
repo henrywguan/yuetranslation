@@ -66,6 +66,18 @@ import {
 } from '../../../lib/chatSearchStall'
 import { StreamingDeepseekChatTts } from '../../../lib/chatDeepseekVoice'
 import {
+  displayChatDeepAvatarName,
+  readChatDeepAvatarNames,
+  readChatDeepAvatarNotes,
+  readChatDeepAvatarTrait,
+} from '../../../lib/chatDeepAvatarPersona'
+import {
+  inferChatDeepAvatarMoodFromText,
+  requestChatDeepAvatarPlay,
+  requestChatDeepAvatarReact,
+} from '../../../lib/chatDeepAvatarPlayBus'
+import { readChatDeepAvatarCharacter } from '../../../lib/chatDeepAvatarCharacter'
+import {
   markChatDeepAvatarPlanBuild,
   setChatDeepAvatarPlanBuildChainBusy,
   settleChatDeepAvatarPlanBuild,
@@ -804,6 +816,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         if (linkedAgent?.role === 'overseer') {
           overseerReturnThreadRef.current = thread.id
         }
+        const avatarCharacter = readChatDeepAvatarCharacter()
+        const avatarName = displayChatDeepAvatarName(avatarCharacter, readChatDeepAvatarNames())
+        const avatarTrait = readChatDeepAvatarTrait()
+        const avatarNotes = readChatDeepAvatarNotes()
+        let avatarReacted = false
         await streamDeepseekChat(wireMessages, {
           thinking: deepThink,
           search: searchOn,
@@ -815,12 +832,25 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           fileIds,
           plugins: enabledPluginsRef.current,
           primaryLang: primaryLanguage,
+          avatarCharacter,
+          avatarName,
+          avatarTrait,
+          avatarNotes,
           inboxRole,
           projectMemory,
           sandboxSessionId,
           projectId,
           projectAgents,
           signal: controller.signal,
+          onAvatar: (event) => {
+            if (event.action === 'play' && event.mood) {
+              avatarReacted = true
+              requestChatDeepAvatarPlay(event.mood, { forceFullscreen: true, source: 'play' })
+            } else if (event.action === 'react' && event.mood) {
+              avatarReacted = true
+              requestChatDeepAvatarReact(event.mood)
+            }
+          },
           onWorkspace: (files) => {
             thread = patchThreadWorkspace(
               thread,
@@ -939,6 +969,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           },
         })
         flushPaint()
+        if (!avatarReacted && assembled.trim()) {
+          const inferred = inferChatDeepAvatarMoodFromText(assembled)
+          if (inferred) requestChatDeepAvatarReact(inferred)
+        }
         if (!assembled.trim()) {
           liveTts?.stop()
           thread = dropEmpty(thread)

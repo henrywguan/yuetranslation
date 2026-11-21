@@ -130,6 +130,8 @@ export type ProfileRow = {
   auto_speak: boolean
   /** Primary non-English language (Solo lower / Conversation partner / Cam / brand). */
   primary_lang: string
+  /** DeepSeek chat companion prefs blob. */
+  chat_deep_avatar: Record<string, unknown> | null
   username: string | null
   username_changed_at: string | null
   updated_at: string
@@ -412,6 +414,10 @@ function normalizeProfile(data: unknown): ProfileRow {
     tts_voice_am: typeof row.tts_voice_am === 'string' ? row.tts_voice_am : null,
     tts_voice_ps: typeof row.tts_voice_ps === 'string' ? row.tts_voice_ps : null,
     auto_speak: Boolean(row.auto_speak),
+    chat_deep_avatar:
+      row.chat_deep_avatar && typeof row.chat_deep_avatar === 'object' && !Array.isArray(row.chat_deep_avatar)
+        ? (row.chat_deep_avatar as Record<string, unknown>)
+        : null,
     primary_lang: primary,
   }
 }
@@ -517,6 +523,7 @@ export async function upsertProfilePlan(
       | 'tts_voice_ps'
       | 'auto_speak'
       | 'primary_lang'
+      | 'chat_deep_avatar'
       | 'username'
       | 'username_changed_at'
     >

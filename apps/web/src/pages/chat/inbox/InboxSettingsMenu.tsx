@@ -5,16 +5,26 @@ import {
   CHAT_DEEP_AVATAR_CELEBRATE_MODE_HINT,
   CHAT_DEEP_AVATAR_CELEBRATE_MODE_LABEL,
   CHAT_DEEP_AVATAR_CELEBRATE_MODES,
-  CHAT_DEEP_AVATAR_CHARACTER_LABEL,
   CHAT_DEEP_AVATAR_CHARACTERS,
   chatDeepAvatarPosterSrc,
 } from '../../../lib/chatDeepAvatarCharacter'
+import {
+  CHAT_DEEP_AVATAR_NAME_MAX,
+  CHAT_DEEP_AVATAR_NOTES_MAX,
+  CHAT_DEEP_AVATAR_TRAIT_HINT,
+  CHAT_DEEP_AVATAR_TRAIT_LABEL,
+  CHAT_DEEP_AVATAR_TRAITS,
+} from '../../../lib/chatDeepAvatarPersona'
 import { setChatAuiEnabled } from '../../../lib/chatAuiFlag'
 import { openApp } from '../../../lib/siteLinks'
 import { useTheme } from '../../../lib/theme'
 import {
   useChatDeepAvatarCelebrateMode,
   useChatDeepAvatarCharacter,
+  useChatDeepAvatarNameEditor,
+  useChatDeepAvatarNotes,
+  useChatDeepAvatarSoundEnabled,
+  useChatDeepAvatarTrait,
 } from '../aui/ChatDeepAvatar'
 import { SettingsIcon } from './InboxIcons'
 
@@ -37,6 +47,10 @@ export function InboxSettingsMenu() {
   const isDark = theme === 'dark'
   const [character, setCharacter] = useChatDeepAvatarCharacter()
   const [celebrateMode, setCelebrateMode] = useChatDeepAvatarCelebrateMode()
+  const [names, setName] = useChatDeepAvatarNameEditor()
+  const [trait, setTrait] = useChatDeepAvatarTrait()
+  const [notes, setNotes] = useChatDeepAvatarNotes()
+  const [soundOn, setSoundOn] = useChatDeepAvatarSoundEnabled()
   const [menuPos, setMenuPos] = useState<MenuPos | null>(null)
 
   const placeMenu = () => {
@@ -58,7 +72,6 @@ export function InboxSettingsMenu() {
     placeMenu()
     const onReposition = () => placeMenu()
     window.addEventListener('resize', onReposition)
-    // Sidebar / visualViewport shifts on mobile keyboard / chrome.
     window.visualViewport?.addEventListener('resize', onReposition)
     window.visualViewport?.addEventListener('scroll', onReposition)
     return () => {
@@ -95,7 +108,6 @@ export function InboxSettingsMenu() {
     }
   }, [open])
 
-  // Portaled menu leaves the sidebar tab order — move focus in on open (Account Hub pattern).
   useEffect(() => {
     if (!open || !menuPos) return
     const first = menuRef.current?.querySelector<HTMLButtonElement>(
@@ -178,11 +190,75 @@ export function InboxSettingsMenu() {
                         decoding="async"
                         draggable={false}
                       />
-                      <span>{CHAT_DEEP_AVATAR_CHARACTER_LABEL[id]}</span>
+                      <span>{names[id]}</span>
                     </button>
                   )
                 })}
               </div>
+              <label className="inbox-settings-rename">
+                <span className="inbox-settings-companion-label">Name</span>
+                <input
+                  type="text"
+                  className="inbox-settings-rename-input"
+                  maxLength={CHAT_DEEP_AVATAR_NAME_MAX}
+                  value={names[character]}
+                  aria-label={`Rename ${names[character]}`}
+                  onChange={(e) => setName(character, e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </label>
+              <div className="inbox-settings-trait" role="group" aria-label="Trait">
+                <span className="inbox-settings-companion-label">Trait</span>
+                <div className="inbox-settings-companion-row">
+                  {CHAT_DEEP_AVATAR_TRAITS.map((id) => {
+                    const active = trait === id
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={active}
+                        title={CHAT_DEEP_AVATAR_TRAIT_HINT[id]}
+                        className={`inbox-settings-companion-item inbox-settings-celebrate-item${active ? ' is-active' : ''}`}
+                        onClick={() => setTrait(id)}
+                      >
+                        <span className="inbox-settings-celebrate-copy">
+                          <span className="inbox-settings-celebrate-name">
+                            {CHAT_DEEP_AVATAR_TRAIT_LABEL[id]}
+                          </span>
+                          <span className="inbox-settings-celebrate-hint">
+                            {CHAT_DEEP_AVATAR_TRAIT_HINT[id]}
+                          </span>
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <label className="inbox-settings-notes">
+                <span className="inbox-settings-companion-label">Notes</span>
+                <textarea
+                  className="inbox-settings-notes-input"
+                  maxLength={CHAT_DEEP_AVATAR_NOTES_MAX}
+                  rows={2}
+                  value={notes}
+                  placeholder="Things to remember about how I should be with you"
+                  aria-label="Companion notes"
+                  onChange={(e) => setNotes(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </label>
+              <button
+                type="button"
+                role="menuitemcheckbox"
+                aria-checked={soundOn}
+                className={`inbox-settings-companion-item inbox-settings-sound${soundOn ? ' is-active' : ''}`}
+                onClick={() => setSoundOn(!soundOn)}
+              >
+                Sound {soundOn ? 'on' : 'off'}
+              </button>
             </div>
             <div className="inbox-settings-celebrate" role="group" aria-label="Celebrate">
               <span className="inbox-settings-companion-label">Celebrate</span>

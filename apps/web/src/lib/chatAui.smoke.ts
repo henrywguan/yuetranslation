@@ -121,7 +121,14 @@ assert.match(settingsMenu, /ThemeToggle|toggleTheme/, 'settings menu wires theme
 assert.match(settingsMenu, /setChatAuiEnabled\(false\)/, 'classic opt-out still flips flag')
 assert.match(settingsMenu, /inbox-settings-companion|Companion/, 'settings menu has Companion section')
 assert.match(settingsMenu, /useChatDeepAvatarCharacter/, 'Companion uses persisted character hook')
-assert.match(settingsMenu, /DS Boy|CHAT_DEEP_AVATAR_CHARACTER_LABEL/, 'Companion lists DS Boy / Girl')
+assert.match(
+  settingsMenu,
+  /names\[id\]|useChatDeepAvatarNameEditor|CHAT_DEEP_AVATAR_CHARACTER_LABEL/,
+  'Companion shows renameable character names',
+)
+assert.match(settingsMenu, /inbox-settings-rename|Rename/, 'Companion rename field')
+assert.match(settingsMenu, /CHAT_DEEP_AVATAR_TRAITS|Trait/, 'Companion trait presets')
+assert.match(settingsMenu, /Sound /, 'Companion sound toggle')
 assert.match(settingsMenu, /inbox-settings-celebrate|Celebrate/, 'settings menu has Celebrate section')
 assert.match(
   settingsMenu,
@@ -710,6 +717,12 @@ for (const character of ['boy', 'girl'] as const) {
     'deep-celebrate.gif',
     'deep-proud.gif',
     'deep-eureka.gif',
+    'deep-bow.gif',
+    'deep-fist.gif',
+    'deep-wave.gif',
+    'deep-nod.gif',
+    'deep-relieved.gif',
+    'deep-sleepy.gif',
     'deep-bust.png',
   ]) {
     assert.ok(
@@ -717,7 +730,22 @@ for (const character of ['boy', 'girl'] as const) {
       `public/chat-avatar/${character}/${f} present`,
     )
   }
+  for (const mood of ['celebrate', 'fist', 'bow'] as const) {
+    assert.ok(
+      existsSync(join(root, '../public/chat-avatar', character, 'vo', `${mood}.mp3`)),
+      `public/chat-avatar/${character}/vo/${mood}.mp3 present`,
+    )
+  }
 }
+assert.ok(existsSync(join(root, '../public/chat-avatar/sfx/celebrate.mp3')), 'shared celebrate sfx')
+assert.ok(existsSync(join(root, '../public/chat-avatar/sfx/fist.mp3')), 'shared fist sfx')
+assert.equal(chatDeepAvatarMoodAssetStem('bow'), 'bow')
+assert.equal(chatDeepAvatarMoodAssetStem('fist'), 'fist')
+assert.match(
+  readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8'),
+  /onAvatar|requestChatDeepAvatarPlay/,
+  'runtime wires avatar SSE play/react',
+)
 const signalsSrc = readFileSync(join(here, 'chatDeepAvatarSignals.ts'), 'utf8')
 assert.match(signalsSrc, /setChatDeepAvatarListening/, 'dictate → listen bus')
 assert.match(signalsSrc, /setChatDeepAvatarTtsPlaying/, 'chat TTS → lips bus')

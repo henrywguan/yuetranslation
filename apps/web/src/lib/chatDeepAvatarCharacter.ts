@@ -47,6 +47,7 @@ export const CHAT_DEEP_AVATAR_CELEBRATE_MODE_HINT: Record<ChatDeepAvatarCelebrat
 /**
  * Clip moods under `public/chat-avatar/{boy,girl}/deep-{mood}.gif`.
  * Outros: `proud` (Ask / short win), `eureka` (Search / long research), `celebrate` (default).
+ * Performance moods: bow / fist / wave / nod / relieved / sleepy (showcase + tools).
  */
 export type ChatDeepAvatarMood =
   | 'idle'
@@ -58,6 +59,12 @@ export type ChatDeepAvatarMood =
   | 'celebrate'
   | 'proud'
   | 'eureka'
+  | 'bow'
+  | 'fist'
+  | 'wave'
+  | 'nod'
+  | 'relieved'
+  | 'sleepy'
 
 /** On-disk GIF stems under `public/chat-avatar/{boy,girl}/`. */
 const ASSET_MOODS = [
@@ -70,7 +77,21 @@ const ASSET_MOODS = [
   'celebrate',
   'proud',
   'eureka',
+  'bow',
+  'fist',
+  'wave',
+  'nod',
+  'relieved',
+  'sleepy',
 ] as const satisfies readonly ChatDeepAvatarMood[]
+
+/**
+ * Fallback stem when a dedicated GIF is not shipped yet.
+ * New performance moods map onto closest existing clips until Higgsfield replaces them.
+ */
+const ASSET_STEM_FALLBACK: Partial<Record<ChatDeepAvatarMood, (typeof ASSET_MOODS)[number]>> = {
+  // Prefer dedicated files when present; stem helper checks ASSET_MOODS first.
+}
 
 /** Public asset folder per character (`apps/web/public/chat-avatar/...`). */
 export const CHAT_DEEP_AVATAR_DIR: Record<ChatDeepAvatarCharacterId, string> = {
@@ -111,11 +132,13 @@ export function writeChatDeepAvatarCharacter(id: ChatDeepAvatarCharacterId) {
   const next = normalizeChatDeepAvatarCharacter(id)
   try {
     localStorage.setItem(CHAT_DEEP_AVATAR_CHARACTER_KEY, next)
+    localStorage.setItem('yue-deepseek-chat-avatar-cloud-updated-v1', new Date().toISOString())
   } catch {
     /* ignore quota / private mode */
   }
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent(CHAT_DEEP_AVATAR_CHARACTER_EVENT, { detail: next }))
+    window.dispatchEvent(new CustomEvent('yue-deepseek-chat-avatar-prefs-changed'))
   }
 }
 
@@ -147,12 +170,24 @@ export function writeChatDeepAvatarCelebrateMode(mode: ChatDeepAvatarCelebrateMo
   const next = normalizeChatDeepAvatarCelebrateMode(mode)
   try {
     localStorage.setItem(CHAT_DEEP_AVATAR_CELEBRATE_MODE_KEY, next)
+    localStorage.setItem('yue-deepseek-chat-avatar-cloud-updated-v1', new Date().toISOString())
   } catch {
     /* ignore quota / private mode */
   }
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent(CHAT_DEEP_AVATAR_CELEBRATE_MODE_EVENT, { detail: next }))
+    window.dispatchEvent(new CustomEvent('yue-deepseek-chat-avatar-prefs-changed'))
   }
+}
+
+/** Closest shipped GIF when a dedicated performance clip is missing at runtime. */
+const RUNTIME_STEM_FALLBACK: Record<string, (typeof ASSET_MOODS)[number]> = {
+  bow: 'proud',
+  fist: 'celebrate',
+  wave: 'happy',
+  nod: 'proud',
+  relieved: 'happy',
+  sleepy: 'idle',
 }
 
 /** Map display moods onto shipped GIF stems (`deep-{stem}.gif`). */
@@ -160,6 +195,8 @@ export function chatDeepAvatarMoodAssetStem(mood: ChatDeepAvatarMood): (typeof A
   if ((ASSET_MOODS as readonly string[]).includes(mood)) {
     return mood as (typeof ASSET_MOODS)[number]
   }
+  const fb = RUNTIME_STEM_FALLBACK[mood] || ASSET_STEM_FALLBACK[mood]
+  if (fb) return fb
   return 'idle'
 }
 
@@ -263,7 +300,18 @@ export function pickChatDeepAvatarOutroMood(input: ChatDeepAvatarOutroPickInput)
 }
 
 export function isChatDeepAvatarOutroMood(mood: ChatDeepAvatarMood): boolean {
-  return mood === 'celebrate' || mood === 'happy' || mood === 'proud' || mood === 'eureka'
+  return (
+    mood === 'celebrate' ||
+    mood === 'happy' ||
+    mood === 'proud' ||
+    mood === 'eureka' ||
+    mood === 'bow' ||
+    mood === 'fist' ||
+    mood === 'wave' ||
+    mood === 'nod' ||
+    mood === 'relieved' ||
+    mood === 'sleepy'
+  )
 }
 
 /** Fullscreen pop-out gate from sidebar pref + reduced-motion + deep latch. */

@@ -496,6 +496,24 @@ export async function savePrimaryLangPref(
   return data
 }
 
+export async function saveChatDeepAvatarPrefs(
+  chatDeepAvatar: Record<string, unknown>,
+): Promise<{ prefs: Entitlement['prefs']; entitlement?: Entitlement }> {
+  const res = await apiFetch('/prefs/chat-avatar', {
+    method: 'PATCH',
+    body: JSON.stringify({ chatDeepAvatar }),
+    keepalive: true,
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw Object.assign(new Error(data.message || 'Failed to save companion prefs'), {
+      code: res.status,
+      entitlement: data.entitlement,
+    })
+  }
+  return data
+}
+
 export async function fetchHousehold(): Promise<{ household: HouseholdSummary | null }> {
   const res = await apiFetch('/household')
   const data = await res.json().catch(() => ({}))
@@ -868,6 +886,12 @@ export type DeepseekChatStreamHandlers = {
   plugins?: string[]
   /** Account Hub primary language for DeepSeek user metadata. */
   primaryLang?: string
+  /** DeepSeek chat companion identity for the system prompt. */
+  avatarCharacter?: 'boy' | 'girl'
+  avatarName?: string
+  avatarTrait?: 'cheerful' | 'calm' | 'witty' | 'coach'
+  avatarNotes?: string
+  onAvatar?: (event: { action: 'list' | 'play' | 'react'; mood?: string }) => void
   /** Chat Inbox agent role (Overseer / worker). */
   inboxRole?: 'overseer' | 'worker'
   /** Shared Project memory for Inbox multi-agent turns. */
@@ -1071,6 +1095,13 @@ export async function streamDeepseekChat(
   const fileIds = (handlers.fileIds || []).filter((id) => /^file-api-/.test(id)).slice(0, 5)
   const plugins = (handlers.plugins || []).map(String).filter(Boolean).slice(0, 16)
   const primaryLang = String(handlers.primaryLang || '').trim().slice(0, 24) || undefined
+  const avatarCharacter =
+    handlers.avatarCharacter === 'girl' || handlers.avatarCharacter === 'boy'
+      ? handlers.avatarCharacter
+      : undefined
+  const avatarName = String(handlers.avatarName || '').trim().slice(0, 24) || undefined
+  const avatarTrait = String(handlers.avatarTrait || '').trim().slice(0, 16) || undefined
+  const avatarNotes = String(handlers.avatarNotes || '').trim().slice(0, 280) || undefined
   const res = await apiFetch('/chat?stream=1', {
     method: 'POST',
     body: JSON.stringify({
@@ -1089,6 +1120,10 @@ export async function streamDeepseekChat(
       timeZone,
       locale,
       ...(primaryLang ? { primaryLang } : null),
+      ...(avatarCharacter ? { avatarCharacter } : null),
+      ...(avatarName ? { avatarName } : null),
+      ...(avatarTrait ? { avatarTrait } : null),
+      ...(avatarNotes ? { avatarNotes } : null),
       ...(handlers.inboxRole === 'overseer' || handlers.inboxRole === 'worker'
         ? { inboxRole: handlers.inboxRole }
         : null),
@@ -1159,6 +1194,7 @@ export async function streamDeepseekChat(
         searchStep?: DeepseekChatSearchStep
         title?: string
         image?: DeepseekChatImageEvent
+        avatar?: { action: 'list' | 'play' | 'react'; mood?: string }
         workspace?: {
           files?: Array<{
             id: string
@@ -1185,6 +1221,7 @@ export async function streamDeepseekChat(
       if (parsed.searchStep) handlers.onSearchStep?.(parsed.searchStep)
       if (parsed.title?.trim()) handlers.onTitle?.(parsed.title.trim())
       if (parsed.image?.url) handlers.onImage?.(parsed.image)
+      if (parsed.avatar?.action) handlers.onAvatar?.(parsed.avatar)
       if (parsed.workspace?.files?.length) handlers.onWorkspace?.(parsed.workspace.files)
       if (parsed.project?.actions?.length) handlers.onProject?.(parsed.project.actions)
       if (parsed.sandbox) handlers.onSandbox?.(parsed.sandbox)

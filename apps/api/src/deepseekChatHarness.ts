@@ -178,6 +178,7 @@ export type DeepseekChatHarnessEvent =
   | { kind: 'search_step'; step: DeepseekChatSearchStep }
   | { kind: 'title'; title: string }
   | { kind: 'image'; url: string; prompt: string; id: string }
+  | { kind: 'avatar'; action: 'list' | 'play' | 'react'; mood?: string }
   | { kind: 'workspace'; files: ChatWorkspaceFileWire[] }
   | { kind: 'project'; actions: ProjectAction[] }
   | {
@@ -670,6 +671,7 @@ export async function* streamDeepseekChatHarness(
   let clientToolsUsed = false
   const allSources = new Map<string, string>()
   const pendingImages: Array<{ url: string; prompt: string; id: string }> = []
+  const pendingAvatar: Array<{ action: 'list' | 'play' | 'react'; mood?: string }> = []
 
   for (let round = 0; round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS; round += 1) {
     if (opts.signal?.aborted) {
@@ -836,6 +838,9 @@ export async function* streamDeepseekChatHarness(
           onImage: (image) => {
             pendingImages.push(image)
           },
+          onAvatar: (event) => {
+            pendingAvatar.push(event)
+          },
           onWorkspaceWrite: (file) => {
             pendingWorkspaceWrites.push(file)
           },
@@ -855,6 +860,10 @@ export async function* streamDeepseekChatHarness(
       while (pendingImages.length) {
         const image = pendingImages.shift()!
         yield { kind: 'image', ...image }
+      }
+      while (pendingAvatar.length) {
+        const avatar = pendingAvatar.shift()!
+        yield { kind: 'avatar', ...avatar }
       }
       if (pendingWorkspaceWrites.length) {
         const files = pendingWorkspaceWrites.splice(0, pendingWorkspaceWrites.length)
