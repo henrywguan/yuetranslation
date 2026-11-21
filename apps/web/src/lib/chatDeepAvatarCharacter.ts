@@ -226,43 +226,12 @@ export function chatDeepAvatarIntroPosterSrc(character: ChatDeepAvatarCharacterI
   return `${CHAT_DEEP_AVATAR_DIR[id]}/intro-poster.jpg`
 }
 
-/** Per-character “intro already seen” map — once until cleared / storage wipe. */
-export const CHAT_DEEP_AVATAR_INTRO_SEEN_KEY = 'yue-deepseek-chat-avatar-intro-seen-v1'
-
-type IntroSeenMap = Partial<Record<ChatDeepAvatarCharacterId, boolean>>
-
-function readChatDeepAvatarIntroSeen(): IntroSeenMap {
-  try {
-    const raw = localStorage.getItem(CHAT_DEEP_AVATAR_INTRO_SEEN_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw) as unknown
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-    const out: IntroSeenMap = {}
-    for (const id of CHAT_DEEP_AVATAR_CHARACTERS) {
-      if ((parsed as Record<string, unknown>)[id] === true) out[id] = true
-    }
-    return out
-  } catch {
-    return {}
-  }
-}
-
-export function hasSeenChatDeepAvatarIntro(character: ChatDeepAvatarCharacterId): boolean {
-  return readChatDeepAvatarIntroSeen()[character] === true
-}
-
-export function markChatDeepAvatarIntroSeen(character: ChatDeepAvatarCharacterId) {
-  try {
-    const next = { ...readChatDeepAvatarIntroSeen(), [character]: true }
-    localStorage.setItem(CHAT_DEEP_AVATAR_INTRO_SEEN_KEY, JSON.stringify(next))
-  } catch {
-    /* ignore quota / private mode */
-  }
-}
-
-/** Whether this character should attempt the fullscreen intro overlay. */
+/**
+ * Whether this character has a shipped fullscreen intro clip.
+ * Plays on every `#/chat` mount (no once-per-character localStorage latch).
+ */
 export function shouldPlayChatDeepAvatarIntro(character: ChatDeepAvatarCharacterId): boolean {
-  return Boolean(chatDeepAvatarIntroSrc(character)) && !hasSeenChatDeepAvatarIntro(character)
+  return Boolean(chatDeepAvatarIntroSrc(character))
 }
 
 /** All mood + poster paths for a character (smoke / preload). */

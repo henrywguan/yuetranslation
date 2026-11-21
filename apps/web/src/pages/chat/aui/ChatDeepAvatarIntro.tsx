@@ -1,6 +1,6 @@
 /**
- * Fullscreen DS Boy / Girl intro on `#/chat` enter.
- * Once per character until seen (localStorage); tap or video end dismisses.
+ * Fullscreen DS Boy / Girl intro on every `#/chat` enter (AUI shell mount).
+ * Tap / Esc / video end dismisses for this visit only — no persistent “seen” latch.
  * Character from Companion pick (`readChatDeepAvatarCharacter`).
  */
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
@@ -8,7 +8,6 @@ import { createPortal } from 'react-dom'
 import {
   chatDeepAvatarIntroPosterSrc,
   chatDeepAvatarIntroSrc,
-  markChatDeepAvatarIntroSeen,
   shouldPlayChatDeepAvatarIntro,
   type ChatDeepAvatarCharacterId,
 } from '../../../lib/chatDeepAvatarCharacter'
@@ -43,15 +42,8 @@ export function ChatDeepAvatarIntroOverlay() {
     setSession(null)
   }
 
-  const finishSeen = (id: ChatDeepAvatarCharacterId) => {
-    if (finishing.current) return
-    finishing.current = true
-    markChatDeepAvatarIntroSeen(id)
-    setSession(null)
-  }
-
-  /** Fade out then optionally mark seen (skip / ended). Abort path omits mark. */
-  const beginExit = (opts: { markSeen: boolean }) => {
+  /** Fade out then dismiss for this visit (skip / ended / fail). */
+  const beginExit = () => {
     const cur = sessionRef.current
     if (!cur || finishing.current) return
     setPhase('exit')
@@ -64,14 +56,10 @@ export function ChatDeepAvatarIntroOverlay() {
       }
     }
     if (exitTimer.current != null) window.clearTimeout(exitTimer.current)
-    const id = cur.character
-    exitTimer.current = window.setTimeout(() => {
-      if (opts.markSeen) finishSeen(id)
-      else clearSession()
-    }, EXIT_MS)
+    exitTimer.current = window.setTimeout(() => clearSession(), EXIT_MS)
   }
 
-  // Arm once per character that still has an unseen shipped intro.
+  // Arm whenever `#/chat` mounts (or companion pick changes) if an intro clip ships.
   useEffect(() => {
     if (!shouldPlayChatDeepAvatarIntro(character)) {
       setSession(null)
@@ -93,13 +81,12 @@ export function ChatDeepAvatarIntroOverlay() {
     })
   }, [character, reducedMotion])
 
-  // Reduced motion: visible black wash → fade out → mark seen (no video).
+  // Reduced motion: brief black wash → fade out (no video).
   useEffect(() => {
     if (!session || !reducedMotion) return
-    const id = session.character
     setPhase('enter')
     const hold = window.setTimeout(() => setPhase('exit'), REDUCED_HOLD_MS)
-    const done = window.setTimeout(() => finishSeen(id), REDUCED_HOLD_MS + EXIT_MS)
+    const done = window.setTimeout(() => clearSession(), REDUCED_HOLD_MS + EXIT_MS)
     return () => {
       window.clearTimeout(hold)
       window.clearTimeout(done)
@@ -131,8 +118,8 @@ export function ChatDeepAvatarIntroOverlay() {
           await v.play()
           if (!cancelled) played.current = true
         } catch {
-          // Autoplay blocked entirely — dismiss without burning the "seen" latch.
-          beginExit({ markSeen: false })
+          // Autoplay blocked entirely — dismiss; next #/chat visit retries.
+          beginExit()
         }
       }
     }
@@ -148,10 +135,10 @@ export function ChatDeepAvatarIntroOverlay() {
       v.addEventListener('canplay', onReady)
     }
 
-    // Slow buffer: drop overlay without marking seen so the next visit retries.
+    // Slow buffer: drop overlay so chat is usable; next visit retries.
     const failSafe = window.setTimeout(() => {
       if (cancelled || finishing.current || played.current) return
-      beginExit({ markSeen: false })
+      beginExit()
     }, BUFFER_FAIL_MS)
 
     return () => {
@@ -172,7 +159,7 @@ export function ChatDeepAvatarIntroOverlay() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
-        beginExit({ markSeen: true })
+        beginExit()
       }
     }
     window.addEventListener('keydown', onKey)
@@ -210,7 +197,7 @@ export function ChatDeepAvatarIntroOverlay() {
       role="dialog"
       aria-modal="true"
       aria-label="Companion intro — tap to skip"
-      onClick={() => beginExit({ markSeen: true })}
+      onClick={() => beginExit()}
     >
       <div className="aui-deep-avatar-intro-stage" aria-hidden>
         <video
@@ -220,8 +207,8 @@ export function ChatDeepAvatarIntroOverlay() {
           poster={session.poster ?? undefined}
           playsInline
           preload="auto"
-          onEnded={() => beginExit({ markSeen: true })}
-          onError={() => beginExit({ markSeen: false })}
+          onEnded={() => beginExit()}
+          onError={() => beginExit()}
         />
       </div>
       {muted ? (

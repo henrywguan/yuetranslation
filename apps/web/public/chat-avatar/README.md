@@ -52,7 +52,7 @@ VO copy (same words, distinct takes): idle `Hey.` · think `Hmm.` · listen `I a
 
 ## Enter intro (`ChatDeepAvatarIntro.tsx`)
 
-On `#/chat` (AUI shell), play `intro.mp4` for the selected companion once per character until dismissed (localStorage `yue-deepseek-chat-avatar-intro-seen-v1`). Tap / Esc / video end fades the black overlay into chat chrome. `prefers-reduced-motion` skips the clip (brief black wash only). Tries unmuted playback; shows **Tap for sound** if autoplay is blocked.
+On `#/chat` (AUI shell), play `intro.mp4` for the selected companion **every time** the route mounts (including return from another hash route). Tap / Esc / video end fades the black overlay into chat chrome for that visit only — no persistent “seen” latch. `prefers-reduced-motion` soft-skips the clip (brief black wash only). Tries unmuted playback; shows **Tap for sound** if autoplay is blocked.
 
 ## Persona / tools
 
