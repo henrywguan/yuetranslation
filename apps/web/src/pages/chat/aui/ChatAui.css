@@ -713,6 +713,36 @@
   transition: opacity 0.28s ease;
 }
 
+/* Soft moods (sleepy / bow / wave…) — quiet wash, no gold cheer bloom. */
+.aui-deep-avatar-fx.is-soft .aui-deep-avatar-fx-wash {
+  background: radial-gradient(
+    ellipse 65% 55% at 50% 45%,
+    color-mix(in srgb, var(--ds-blue) 14%, transparent),
+    color-mix(in srgb, var(--ds-canvas) 62%, transparent) 74%
+  );
+}
+
+.aui-deep-avatar-fx.is-soft .aui-deep-avatar.is-hero,
+.aui-deep-avatar-fx.is-soft .aui-deep-avatar.is-fx-pop {
+  filter: drop-shadow(0 14px 28px color-mix(in srgb, var(--ds-blue) 28%, transparent));
+}
+
+.aui-deep-avatar[data-mood='sleepy'] {
+  filter: drop-shadow(0 10px 20px color-mix(in srgb, var(--ds-blue) 22%, transparent));
+}
+
+.aui-deep-avatar[data-mood='bow'],
+.aui-deep-avatar[data-mood='wave'],
+.aui-deep-avatar[data-mood='nod'],
+.aui-deep-avatar[data-mood='relieved'] {
+  filter: drop-shadow(0 10px 20px color-mix(in srgb, var(--ds-blue) 20%, transparent));
+}
+
+.aui-deep-avatar[data-mood='fist'] {
+  filter: drop-shadow(0 12px 26px color-mix(in srgb, #E8C547 28%, transparent))
+    drop-shadow(0 8px 16px color-mix(in srgb, #3ecf8e 18%, transparent));
+}
+
 .aui-deep-avatar-fx.is-hold .aui-deep-avatar-fx-wash,
 .aui-deep-avatar-fx.is-enter .aui-deep-avatar-fx-wash {
   opacity: 1;

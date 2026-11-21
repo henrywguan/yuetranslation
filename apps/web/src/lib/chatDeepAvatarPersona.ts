@@ -89,7 +89,7 @@ export const CHAT_DEEP_AVATAR_SHOWCASE: readonly ChatDeepAvatarShowcaseEntry[] =
   { id: 'listen', label: 'Listen', blurb: 'Mic is open — I’m listening', highEnergy: false },
   { id: 'speak', label: 'Speak', blurb: 'Talking / streaming a reply', highEnergy: false },
   { id: 'happy', label: 'Happy', blurb: 'Soft smile', highEnergy: false },
-  { id: 'proud', label: 'Proud', blurb: 'Clean short win', highEnergy: false },
+  { id: 'proud', label: 'Proud', blurb: 'Clean short win', highEnergy: true },
   { id: 'celebrate', label: 'Celebrate', blurb: 'Hooray cheer', highEnergy: true },
   { id: 'eureka', label: 'Eureka', blurb: 'Research breakthrough', highEnergy: true },
   { id: 'concern', label: 'Concern', blurb: 'Something went wrong', highEnergy: false },
@@ -100,6 +100,57 @@ export const CHAT_DEEP_AVATAR_SHOWCASE: readonly ChatDeepAvatarShowcaseEntry[] =
   { id: 'relieved', label: 'Relieved', blurb: 'Hard problem solved', highEnergy: false },
   { id: 'sleepy', label: 'Sleepy', blurb: 'Long wait / late-night', highEnergy: false },
 ] as const
+
+/**
+ * Model / user aliases → canonical showcase ids.
+ * Prevents “eureka!” / “hooray” / “zzz” collapsing to the celebrate fallback.
+ */
+export const CHAT_DEEP_AVATAR_MOOD_ALIASES: Record<string, ChatDeepAvatarShowcaseMood> = {
+  hooray: 'celebrate',
+  hurray: 'celebrate',
+  cheer: 'celebrate',
+  celebration: 'celebrate',
+  party: 'celebrate',
+  aha: 'eureka',
+  breakthrough: 'eureka',
+  insight: 'eureka',
+  discovery: 'eureka',
+  sleep: 'sleepy',
+  sleeping: 'sleepy',
+  zzz: 'sleepy',
+  tired: 'sleepy',
+  yawn: 'sleepy',
+  goodnight: 'sleepy',
+  'good night': 'sleepy',
+  smile: 'happy',
+  glad: 'happy',
+  thanks: 'bow',
+  thankyou: 'bow',
+  'thank you': 'bow',
+  hi: 'wave',
+  hello: 'wave',
+  bye: 'wave',
+  goodbye: 'wave',
+  yes: 'nod',
+  agree: 'nod',
+  phew: 'relieved',
+  relief: 'relieved',
+  hype: 'fist',
+  'lets go': 'fist',
+  "let's go": 'fist',
+  pump: 'fist',
+  sorry: 'concern',
+  oops: 'concern',
+  thinking: 'think',
+  hmm: 'think',
+  listen: 'listen',
+  listening: 'listen',
+  talk: 'speak',
+  talking: 'speak',
+  rest: 'idle',
+  done: 'proud',
+  win: 'proud',
+}
 
 export const CHAT_DEEP_AVATAR_SHOWCASE_IDS: readonly ChatDeepAvatarShowcaseMood[] =
   CHAT_DEEP_AVATAR_SHOWCASE.map((e) => e.id)
@@ -352,14 +403,28 @@ export function isChatDeepAvatarShowcaseMood(raw: unknown): raw is ChatDeepAvata
   return CHAT_DEEP_AVATAR_SHOWCASE_IDS.includes(raw as ChatDeepAvatarShowcaseMood)
 }
 
+/** Strip punctuation / spaces so `eureka!` and `good night` resolve. */
+export function canonicalizeChatDeepAvatarMoodToken(raw: unknown): string {
+  return String(raw || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[_/]+/g, ' ')
+    .replace(/[^a-z0-9\s'-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export function normalizeChatDeepAvatarShowcaseMood(
   raw: unknown,
   fallback: ChatDeepAvatarShowcaseMood = 'celebrate',
 ): ChatDeepAvatarShowcaseMood {
-  const v = String(raw || '')
-    .trim()
-    .toLowerCase()
+  const v = canonicalizeChatDeepAvatarMoodToken(raw)
+  if (!v) return fallback
   if (isChatDeepAvatarShowcaseMood(v)) return v
+  const compact = v.replace(/[\s'-]/g, '')
+  if (isChatDeepAvatarShowcaseMood(compact)) return compact
+  const aliased = CHAT_DEEP_AVATAR_MOOD_ALIASES[v] || CHAT_DEEP_AVATAR_MOOD_ALIASES[compact]
+  if (aliased) return aliased
   return fallback
 }
 
@@ -404,7 +469,8 @@ export function buildChatDeepAvatarPersonaPromptBlock(opts: {
     'Speak in the first person as this companion. Never deny being the avatar the user sees in the chat portrait.',
     `Trait: ${CHAT_DEEP_AVATAR_TRAIT_LABEL[opts.trait]} — ${traitHint}.`,
     'Stay helpful and accurate for Agent / Ask / Plan work (coding, search, plans). Persona never blocks real answers.',
-    'You know your full animation / emotion catalog. When users ask to see animations or emotions, call avatar_list (or list from memory), ask which they want, then call avatar_play.',
+    'You know your full animation / emotion catalog. When users ask to see animations or emotions, call avatar_list (or list from memory), ask which they want, then call avatar_play with that exact mood id.',
+    'Never substitute celebrate/hooray when the user asked for another mood (eureka, sleepy, proud, bow, …). Each id has its own GIF + voice line.',
     'After a play, add one short in-character caption matching the mood (not a wall of text).',
     'At the end of emotionally clear replies, call avatar_react with the best mood. Soft moods stay in-frame; high-energy moods fullscreen with sound when the client allows.',
     'If the user prefers reduced motion, be honest that the still portrait may show instead of a fullscreen pop.',

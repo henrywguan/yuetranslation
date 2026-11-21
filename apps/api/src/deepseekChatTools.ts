@@ -1079,22 +1079,22 @@ export async function executeDeepseekChatTool(
         })
       }
       case 'avatar_play': {
-        const mood = normalizeChatDeepAvatarMoodId(args.mood)
-        if (!isChatDeepAvatarMoodId(String(args.mood || '').trim().toLowerCase())) {
+        if (!isChatDeepAvatarMoodId(args.mood)) {
           return JSON.stringify({
             error: `Unknown mood. Valid: ${CHAT_DEEP_AVATAR_SHOWCASE.map((e) => e.id).join(', ')}`,
           })
         }
+        const mood = normalizeChatDeepAvatarMoodId(args.mood)
         ctx.onAvatar?.({ action: 'play', mood })
         return JSON.stringify({ ok: true, action: 'play', mood })
       }
       case 'avatar_react': {
-        const mood = normalizeChatDeepAvatarMoodId(args.mood)
-        if (!isChatDeepAvatarMoodId(String(args.mood || '').trim().toLowerCase())) {
+        if (!isChatDeepAvatarMoodId(args.mood)) {
           return JSON.stringify({
             error: `Unknown mood. Valid: ${CHAT_DEEP_AVATAR_SHOWCASE.map((e) => e.id).join(', ')}`,
           })
         }
+        const mood = normalizeChatDeepAvatarMoodId(args.mood)
         ctx.onAvatar?.({ action: 'react', mood })
         return JSON.stringify({ ok: true, action: 'react', mood })
       }

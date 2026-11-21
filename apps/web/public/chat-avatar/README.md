@@ -60,6 +60,7 @@ On `#/chat` (AUI shell), play `intro.mp4` for the selected companion **every tim
 - System prompt injects first-person companion identity + animation catalog.
 - Tools: `avatar_list`, `avatar_play` (fullscreen + SFX/VO), `avatar_react` (soft or high-energy).
 - Client sentiment heuristic fills in when the model skips `avatar_react`.
+- Mood routing: each showcase id maps to its own `deep-{id}.gif` + `vo/{id}.mp3`. Soft demos (sleepy / bow / …) beat speak/TTS on the portrait and skip celebrate stars; high-energy keeps cheer wash. SFX beds use energy class (`soft` / `cheer` / `hype`) so eureka does not share the celebrate whoosh. `avatar_play` / `avatar_react` suppress the automatic post-run celebrate latch for that turn.
 
 ## Quality bar
 
