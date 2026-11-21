@@ -832,6 +832,8 @@ html[data-theme='light'] .ds-chat {
   margin: 0.2rem 0;
 }
 
+/* Wide markdown (tables / code / mermaid) scrolls inside the block —
+ * never force columns into the bubble width (letter-by-letter crush). */
 .ds-md-table-wrap {
   overflow-x: auto;
   overflow-y: hidden;
@@ -841,12 +843,18 @@ html[data-theme='light'] .ds-chat {
   border: 1px solid var(--ds-divider);
   border-radius: 0.65rem;
   box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .ds-md-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
+  /* Beat parent .aui-md / .ds-chat-assistant-body overflow-wrap:anywhere */
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 .ds-md-table th,
@@ -855,6 +863,10 @@ html[data-theme='light'] .ds-chat {
   border-bottom: 1px solid var(--ds-divider);
   text-align: left;
   vertical-align: top;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  min-width: 6ch;
 }
 
 .ds-md-table th {
@@ -921,6 +933,10 @@ html[data-theme='light'] .ds-chat {
   font-size: 0.8125rem;
   line-height: 1.5;
   box-sizing: border-box;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ds-md-code code {
@@ -1215,7 +1231,12 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   padding: 0.75rem;
   border-radius: 0.75rem;
   background: var(--ds-surface-1);
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-width: 100%;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .ds-md-mermaid img {

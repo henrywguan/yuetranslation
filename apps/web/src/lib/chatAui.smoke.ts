@@ -239,6 +239,26 @@ assert.match(
   /\.ds-md-code-wrap[\s\S]*max-width:\s*100%/,
   'code blocks stay within chat width',
 )
+assert.match(
+  classicCss,
+  /\.ds-md-table-wrap[\s\S]*overflow-x:\s*auto/,
+  'markdown tables scroll horizontally inside the wrap',
+)
+assert.match(
+  classicCss,
+  /\.ds-md-table\s*\{[\s\S]*width:\s*max-content[\s\S]*min-width:\s*100%/,
+  'tables keep intrinsic column width (no letter-crush fit)',
+)
+assert.match(
+  classicCss,
+  /\.ds-md-table th,\s*\.ds-md-table td[\s\S]*white-space:\s*nowrap[\s\S]*min-width:\s*6ch/,
+  'table cells keep words intact with a floor min-width',
+)
+assert.match(
+  classicCss,
+  /\.ds-md-code\s*\{[\s\S]*?overflow-x:\s*auto[\s\S]*?white-space:\s*pre/,
+  'code fences scroll horizontally without soft-wrapping',
+)
 
 const runtime = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtime, /useExternalStoreRuntime/, 'ExternalStoreRuntime bridge')
