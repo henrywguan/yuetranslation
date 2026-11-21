@@ -31,13 +31,24 @@ Each folder (runtime assets only — shipped under `public/`):
 | `deep-bust.png` | Reduced-motion / poster still |
 | `intro.mp4` | Fullscreen enter intro (boy + girl) |
 | `intro-poster.jpg` | Intro buffer still |
-| `vo/{mood}.mp3` | Character voice line for fullscreen demos |
+| `vo/{mood}.mp3` | Character voice line for fullscreen demos (**Higgsfield personal voice**, not Azure) |
 
 Shared SFX: `sfx/{mood}.mp3` (whoosh / cheer / hype beds under the pop).
 
 **Do not** put character-bible `deep-sheet.png` (or other multi‑MB generation sources) in `public/chat-avatar/`. VitePWA `injectManifest` precaches `*.png` and rejects files over 2 MiB (broke prod after #796). Keep sheets outside the web public tree; `vite.config.ts` also glob-ignores `**/chat-avatar/**/deep-sheet.png` as a belt-and-suspenders guard. Intro `*.mp4` / `intro-poster.*` are similarly excluded from the SW precache — runtime-fetch only.
 
-Performance moods (`bow` / `fist` / `wave` / `nod` / `relieved` / `sleepy`) currently ship as closest-clip stand-ins until dedicated Higgsfield regenerations replace them. Runtime stem fallbacks remain in `chatDeepAvatarMoodAssetStem` if a file is missing.
+Performance moods (`bow` / `fist` / `wave` / `nod` / `relieved` / `sleepy`) ship dedicated 720×720 Higgsfield `gpt_image_2_6` GIFs (same recipe as proud/eureka). Runtime stem fallbacks remain in `chatDeepAvatarMoodAssetStem` if a file is missing.
+
+### Personal voices (locked — never Azure)
+
+Avatar VO is pre-baked Higgsfield `text2speech_v2` (ElevenLabs variant) with **one locked preset per character**. Runtime playback only loads `public/…/vo/*.mp3` — it must **never** call `/api/tts` or Azure Speech for companion lines.
+
+| Character | Preset | `voice_id` |
+| --- | --- | --- |
+| DS Boy | **Benji** | `e6f9b893-51b1-51d3-afe9-9e0482cb7ac1` |
+| DS Girl | **Brielle** | `a00bc7f3-0236-5e76-ac65-90137ce0f5a4` |
+
+VO copy (same words, distinct takes): idle `Hey.` · think `Hmm.` · listen `I am listening.` · speak `Okay.` · happy `Nice!` · proud `Done.` · celebrate `Hooray!` · eureka `Got it!` · concern `Oh no.` · bow `Thank you!` · fist `Let's go!` · wave `Hi!` · nod `Yes.` · relieved `Phew.` · sleepy `Zzz.`
 
 ## Enter intro (`ChatDeepAvatarIntro.tsx`)
 

@@ -1,7 +1,9 @@
 /**
  * Fullscreen companion SFX + character VO (intro-style).
  * Pre-baked mp3 under `public/chat-avatar/sfx` and `{boy,girl}/vo`.
- * Never calls metered /api/tts at runtime.
+ *
+ * VO is each character’s personal Higgsfield voice (boy = Benji, girl = Brielle),
+ * baked offline — never Azure Speech and never `/api/tts` at runtime.
  */
 import {
   CHAT_DEEP_AVATAR_DIR,
