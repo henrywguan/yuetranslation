@@ -5,6 +5,10 @@
  * (React mount + `canplay` are outside the gesture). Priming inside
  * `openDeepseekChat` / same-tick navigation starts playback under the gesture
  * so `#/chat` can adopt an already-playing unmuted element.
+ *
+ * Gesture trick: start `play()` muted (always allowed), then unmute in the
+ * same synchronous turn — Chrome/Safari often keep the unlock. Never leave a
+ * Sound-on intro stuck on muted playback from the prime path.
  */
 import {
   chatDeepAvatarIntroSrc,
@@ -69,34 +73,54 @@ export function primeChatDeepAvatarIntro(character?: ChatDeepAvatarCharacterId) 
   video.preload = 'auto'
   video.setAttribute('playsinline', '')
   video.setAttribute('webkit-playsinline', '')
+  video.volume = 1
+  // Muted play first (gesture-safe), then unmute in the same turn.
+  video.muted = true
+
+  const attempt = video.play()
   video.muted = false
   video.volume = 1
 
-  // Fire play() inside the gesture — do not await canplay.
-  const attempt = video.play()
   if (attempt && typeof attempt.then === 'function') {
     void attempt
       .then(() => {
-        if (primed?.video === video) primed.unmuted = !video.muted
+        if (primed?.video !== video) return
+        // If the browser re-muted us, stay honest — overlay will wait for a tap.
+        if (video.muted) {
+          try {
+            video.pause()
+            video.currentTime = 0
+          } catch {
+            /* ignore */
+          }
+          primed.unmuted = false
+          return
+        }
+        primed.unmuted = true
       })
       .catch(() => {
-        // Unmuted blocked even in-gesture (rare) — keep element for adopt; overlay retries.
-        video.muted = true
-        void video.play().catch(() => {
-          /* overlay will remount its own element */
-        })
+        // Do not fall back to muted playback — hold frame 0 for overlay unlock.
+        try {
+          video.pause()
+          video.currentTime = 0
+        } catch {
+          /* ignore */
+        }
+        video.muted = false
         if (primed?.video === video) primed.unmuted = false
       })
   }
 
-  primed = { character: id, video, unmuted: !video.muted }
+  primed = { character: id, video, unmuted: !video.muted && !video.paused }
 }
 
 /** Hand the primed element to the intro overlay (once). */
 export function takePrimedChatDeepAvatarIntro(
   character: ChatDeepAvatarCharacterId,
 ): PrimedChatIntro | null {
-  if (!primed || primed.character !== character) return null
+  if (!primed || primed.character !== character) {
+    return null
+  }
   const out = primed
   primed = null
   return out

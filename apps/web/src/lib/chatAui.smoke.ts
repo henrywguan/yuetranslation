@@ -733,27 +733,27 @@ assert.match(
 )
 assert.match(
   auiCss,
-  /\.aui-deep-avatar-intro-video\s*\{[^}]*object-fit:\s*cover/,
-  'intro video uses cover for fullscreen cinematic fill on all sizes',
-)
-assert.match(
-  auiCss,
-  /\.aui-deep-avatar-intro-video\s*\{[^}]*min-width:\s*100%/,
-  'intro video min-width cover fallback',
-)
-assert.match(
-  auiCss,
-  /\.aui-deep-avatar-intro-video\s*\{[^}]*min-height:\s*100%/,
-  'intro video min-height cover fallback',
+  /\.aui-deep-avatar-intro-video\s*\{[^}]*object-fit:\s*contain/,
+  'intro video uses contain so portrait fits all viewports without crop',
 )
 assert.doesNotMatch(
   auiCss,
-  /\.aui-deep-avatar-intro-video\s*\{[^}]*object-fit:\s*contain/,
-  'intro video must not use contain (letterboxes / half-empty on 1920×1080)',
+  /\.aui-deep-avatar-intro-video\s*\{[^}]*object-fit:\s*cover/,
+  'intro video must not cover-crop on desktop landscape',
+)
+assert.doesNotMatch(
+  auiCss,
+  /\.aui-deep-avatar-intro-video\s*\{[^}]*min-width:\s*100%/,
+  'intro video must not force min-width cover fill',
+)
+assert.doesNotMatch(
+  auiCss,
+  /\.aui-deep-avatar-intro-video\s*\{[^}]*min-height:\s*100%/,
+  'intro video must not force min-height cover fill',
 )
 assert.match(auiCss, /prefers-reduced-motion[\s\S]*aui-deep-avatar-intro/, 'reduced-motion softens intro')
 assert.match(auiCss, /\.aui-deep-avatar-intro-mute\b/, 'intro Mute control styles')
-assert.doesNotMatch(auiCss, /\.aui-deep-avatar-intro-unmute\b/, 'Tap-for-sound unmute chip removed from CSS')
+assert.doesNotMatch(auiCss, /\.aui-deep-avatar-intro-unmute\b/, 'dedicated unmute chip class removed from CSS')
 const introSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatarIntro.tsx'), 'utf8')
 assert.match(introSrc, /shouldPlayChatDeepAvatarIntro/, 'intro play gate on every mount')
 assert.doesNotMatch(introSrc, /markChatDeepAvatarIntroSeen|hasSeenChatDeepAvatarIntro/, 'no once-per-character seen latch')
@@ -762,10 +762,12 @@ assert.match(introSrc, /useReducedMotion/, 'intro respects reduced motion')
 assert.match(introSrc, /Tap to skip|beginExit/, 'intro is skippable')
 assert.match(introSrc, /is-reduced/, 'reduced-motion wash class')
 assert.match(introSrc, /useChatDeepAvatarSoundEnabled/, 'intro follows Companion Sound pref')
-assert.match(introSrc, /layoutIntroCoverElement/, 'intro uses JS pixel cover layout')
+assert.match(introSrc, /layoutIntroContainElement/, 'intro uses JS pixel contain layout')
 assert.match(introSrc, /sessionMuted/, 'intro tap-to-mute')
+assert.match(introSrc, /policyMuted/, 'intro tracks autoplay policy mute')
+assert.match(introSrc, /unlockConsumedClick/, 'first unlock gesture does not dismiss')
 assert.match(introSrc, /primeChatDeepAvatarIntro|takePrimedChatDeepAvatarIntro/, 'intro adopts chat-open gesture prime')
-assert.doesNotMatch(introSrc, /Tap for sound/, 'intro must not ship tap-to-unmute chip copy')
+assert.match(introSrc, /sessionMuted \|\| policyMuted \? 'Unmute'/, 'Mute label honest while policy-silent')
 assert.doesNotMatch(introSrc, /needsGestureUnmute/, 'old needsGestureUnmute unlock chip removed')
 assert.doesNotMatch(introSrc, /aui-deep-avatar-intro-unmute/, 'intro unmute chip class removed')
 assert.match(introSrc, /soundEnabledRef/, 'intro sound pref is live during playback')
@@ -774,10 +776,11 @@ assert.doesNotMatch(
   /<video[^>]*\bmuted\b(?!\s*=)/,
   'intro video must not hard-code muted without binding to Sound pref',
 )
+assert.match(introSrc, /HOLD at frame 0|hold for gesture|never play.*muted/i, 'Sound-on never plays intro muted')
 assert.match(
   introSrc,
-  /v\.muted = !soundEnabled \|\| sessionMuted \|\| policyMuted/,
-  'intro mute tracks Sound-off, user Mute, or brief autoplay lock only',
+  /if \(!soundEnabled \|\| sessionMuted\) \{\s*v\.muted = true/s,
+  'intro mute tracks Sound-off or user Mute (policy hold stays unmuted+paused)',
 )
 assert.match(
   introSrc,
