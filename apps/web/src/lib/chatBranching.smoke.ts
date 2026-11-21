@@ -139,6 +139,11 @@ assert.equal(
   true,
   'Client flags ricing widgets/guide announce',
 )
+assert.equal(
+  looksLikeDeferredToolUse("I'll find images for your gallery below."),
+  false,
+  'Client does not false-stall ordinary find-images answers',
+)
 assert.match(stall, /pull\\s\+up|widgets\?/, 'Client deferred-tool covers pull-up widgets')
 
 const harness = readFileSync(

@@ -229,6 +229,11 @@ assert.equal(
   'Henry ricing widgets/guide announce is deferred-tool',
 )
 assert.equal(
+  looksLikeDeferredToolUse("I'll find images for your gallery below."),
+  false,
+  'Ordinary find-images answers are not deferred-tool',
+)
+assert.equal(
   looksLikeDeferredToolUse('It is 28°C and humid in Hong Kong this afternoon.'),
   false,
   'real weather answers are not deferred-tool',

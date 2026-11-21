@@ -37,6 +37,11 @@ assert.equal(
   true,
   'Ricing announce is deferred-tool',
 )
+assert.equal(
+  looksLikeDeferredToolUse("I'll find images for your gallery below."),
+  false,
+  'Ordinary find-images answers are not deferred-tool',
+)
 
 const mid = sanitizeDeepseekChatStreamBuffer('Nice.\n\n<sys')
 assert.equal(mid.visible.trim(), 'Nice.')

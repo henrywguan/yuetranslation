@@ -255,6 +255,12 @@ export async function generateChatImage(
 
   pruneStore()
   const signal = signalWithTimeout(opts?.signal, CHAT_IMAGE_TIMEOUT_MS)
+  const isAbortLike = (err: unknown) =>
+    (err as Error)?.name === 'AbortError' ||
+    /aborted|timeout|timed out/i.test(String((err as Error)?.message || err))
+  const timeoutError = () =>
+    new Error(`Image generation timed out after ${CHAT_IMAGE_TIMEOUT_MS / 1000}s.`)
+
   let image: GeneratedChatImage
   if (geminiKey) {
     try {
@@ -264,13 +270,10 @@ export async function generateChatImage(
         apiKey: geminiKey,
       })
     } catch (err) {
+      // Deadline AbortSignal must not fall through to a second 90s OpenAI attempt.
       if (opts?.signal?.aborted) throw err
-      if (!openaiKey) {
-        if ((err as Error)?.name === 'AbortError' || /aborted|timeout/i.test(String((err as Error)?.message || err))) {
-          throw new Error(`Image generation timed out after ${CHAT_IMAGE_TIMEOUT_MS / 1000}s.`)
-        }
-        throw err
-      }
+      if (signal.aborted || isAbortLike(err)) throw timeoutError()
+      if (!openaiKey) throw err
       console.warn(
         '[deepseek-chat] Gemini image failed, falling back to OpenAI:',
         err instanceof Error ? err.message : err,
@@ -290,9 +293,7 @@ export async function generateChatImage(
       })
     } catch (err) {
       if (opts?.signal?.aborted) throw err
-      if ((err as Error)?.name === 'AbortError' || /aborted|timeout/i.test(String((err as Error)?.message || err))) {
-        throw new Error(`Image generation timed out after ${CHAT_IMAGE_TIMEOUT_MS / 1000}s.`)
-      }
+      if (signal.aborted || isAbortLike(err)) throw timeoutError()
       throw err
     }
   } else {

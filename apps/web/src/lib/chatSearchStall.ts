@@ -49,7 +49,8 @@ export function looksLikeDeferredToolUse(text: string): boolean {
       t,
     ) ||
     // Ricing / mockup path: "Let me pull up those exact widgets and the guide…"
-    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,100}\b(pull\s+up|grab|find|open|gather|look\s+up)\b[\s\S]{0,120}\b(widgets?|guides?|links?|mockups?|images?|splash|screenshots?|deviantart|medium)\b/i.test(
+    // Narrow verbs (pull up / grab) — avoid false TOOL_STALL on "I'll find images…" answers.
+    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,100}\b(pull\s+up|grab)\b[\s\S]{0,120}\b(widgets?|guides?|mockups?|splash|deviantart|medium)\b/i.test(
       t,
     ) ||
     /\b(get_weather|fetch_url|get_date|get_now|calc|convert_units|jyut_plan_limits|jyut_phrase_lookup|jyut_learn_hint|generate_image|workspace_|sandbox_|project_)\w*\b/i.test(

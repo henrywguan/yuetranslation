@@ -41,6 +41,7 @@ import {
 } from './deepseekChatTools.js'
 import {
   deepseekChatTextLooksLeaked,
+  sanitizeDeepseekChatStreamBuffer,
   sanitizeDeepseekChatVisibleText,
 } from './deepseekChatSanitize.js'
 import {
@@ -122,7 +123,8 @@ export function looksLikeDeferredToolUse(text: string): boolean {
       t,
     ) ||
     // Henry ricing / mockup path: "Let me pull up those exact widgets and the guide…"
-    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,100}\b(pull\s+up|grab|find|open|gather|look\s+up)\b[\s\S]{0,120}\b(widgets?|guides?|links?|mockups?|images?|splash|screenshots?|deviantart|medium)\b/i.test(
+    // Keep verbs narrow (pull up / grab) so "I'll find images…" answers do not false-stall.
+    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,100}\b(pull\s+up|grab)\b[\s\S]{0,120}\b(widgets?|guides?|mockups?|splash|deviantart|medium)\b/i.test(
       t,
     ) ||
     /\b(get_weather|fetch_url|get_date|get_now|calc|convert_units|jyut_plan_limits|jyut_phrase_lookup|jyut_learn_hint|generate_image|workspace_|sandbox_|project_)\w*\b/i.test(
@@ -763,15 +765,16 @@ export async function* streamDeepseekChatHarness(
       const content = delta.content
       if (typeof content === 'string' && content) {
         assistantContent += content
-        // Strip leaked system_reminder / reasoning_effort as soon as it appears in the buffer.
-        if (deepseekChatTextLooksLeaked(assistantContent)) {
-          const cleaned = sanitizeDeepseekChatVisibleText(assistantContent)
-          if (cleaned !== assistantContent) {
-            assistantContent = cleaned
-            yield { kind: 'content_replace', text: cleaned }
-          } else {
-            yield { kind: 'delta', text: content }
-          }
+        // Strip leaked system_reminder / reasoning_effort; hold incomplete tags back.
+        // Never yield a raw chunk that still contains leak chrome.
+        if (
+          deepseekChatTextLooksLeaked(assistantContent) ||
+          /<\s*\/?\s*sys/i.test(assistantContent) ||
+          /(?:^|\n)[ \t]*system[_-]?rem/i.test(assistantContent)
+        ) {
+          const { visible, hold } = sanitizeDeepseekChatStreamBuffer(assistantContent)
+          assistantContent = visible + hold
+          yield { kind: 'content_replace', text: visible }
         } else {
           yield { kind: 'delta', text: content }
         }

@@ -1107,67 +1107,81 @@ export async function streamDeepseekChat(
   const avatarName = String(handlers.avatarName || '').trim().slice(0, 24) || undefined
   const avatarTrait = String(handlers.avatarTrait || '').trim().slice(0, 16) || undefined
   const avatarNotes = String(handlers.avatarNotes || '').trim().slice(0, 280) || undefined
-  const res = await apiFetch('/chat?stream=1', {
-    method: 'POST',
-    body: JSON.stringify({
-      messages: safeMessages,
-      thinking: handlers.thinking !== false,
-      search: handlers.search === true,
-      ...(handlers.harness === true ? { harness: true } : null),
-      ...(handlers.chatMode === 'ask' || handlers.chatMode === 'plan'
-        ? { chatMode: handlers.chatMode }
-        : handlers.chatMode === 'agent'
-          ? { chatMode: 'agent' }
+  // Local controller so idle watchdog can abort the fetch (AbortSignal is read-only).
+  const streamAbort = new AbortController()
+  const onParentAbort = () => streamAbort.abort()
+  if (handlers.signal?.aborted) streamAbort.abort()
+  else handlers.signal?.addEventListener('abort', onParentAbort, { once: true })
+
+  let res: Response
+  try {
+    res = await apiFetch('/chat?stream=1', {
+      method: 'POST',
+      body: JSON.stringify({
+        messages: safeMessages,
+        thinking: handlers.thinking !== false,
+        search: handlers.search === true,
+        ...(handlers.harness === true ? { harness: true } : null),
+        ...(handlers.chatMode === 'ask' || handlers.chatMode === 'plan'
+          ? { chatMode: handlers.chatMode }
+          : handlers.chatMode === 'agent'
+            ? { chatMode: 'agent' }
+            : null),
+        ...(handlers.harness === true && handlers.workspace?.files?.length
+          ? { workspace: handlers.workspace }
           : null),
-      ...(handlers.harness === true && handlers.workspace?.files?.length
-        ? { workspace: handlers.workspace }
-        : null),
-      timeZone,
-      locale,
-      ...(primaryLang ? { primaryLang } : null),
-      ...(avatarCharacter ? { avatarCharacter } : null),
-      ...(avatarName ? { avatarName } : null),
-      ...(avatarTrait ? { avatarTrait } : null),
-      ...(avatarNotes ? { avatarNotes } : null),
-      ...(handlers.inboxRole === 'overseer' || handlers.inboxRole === 'worker'
-        ? { inboxRole: handlers.inboxRole }
-        : null),
-      ...(handlers.projectMemory?.trim()
-        ? { projectMemory: handlers.projectMemory.trim().slice(0, 8_000) }
-        : null),
-      ...(handlers.sandboxSessionId && /^sbx_[a-zA-Z0-9]+$/.test(handlers.sandboxSessionId)
-        ? { sandboxSessionId: handlers.sandboxSessionId }
-        : null),
-      ...(handlers.inboxRole === 'overseer' && handlers.projectId?.trim()
-        ? {
-            projectId: handlers.projectId.trim().slice(0, 80),
-            ...(handlers.projectAgents?.length
-              ? {
-                  projectAgents: handlers.projectAgents.slice(0, 80).map((a) => ({
-                    id: String(a.id).slice(0, 80),
-                    title: String(a.title || 'Agent').slice(0, 120),
-                    status: String(a.status || 'idle').slice(0, 32),
-                    role:
-                      a.role === 'overseer' || a.role === 'worker' || a.role === 'thread'
-                        ? a.role
-                        : 'thread',
-                    ...(a.threadId ? { threadId: String(a.threadId).slice(0, 80) } : null),
-                  })),
-                }
-              : null),
-          }
-        : null),
-      ...(fileIds.length ? { fileIds } : null),
-      ...(plugins.length ? { plugins } : null),
-      ...(handlers.continueReply ? { continue: true } : null),
-    }),
-    headers: { Accept: 'text/event-stream' },
-    signal: handlers.signal,
-  })
+        timeZone,
+        locale,
+        ...(primaryLang ? { primaryLang } : null),
+        ...(avatarCharacter ? { avatarCharacter } : null),
+        ...(avatarName ? { avatarName } : null),
+        ...(avatarTrait ? { avatarTrait } : null),
+        ...(avatarNotes ? { avatarNotes } : null),
+        ...(handlers.inboxRole === 'overseer' || handlers.inboxRole === 'worker'
+          ? { inboxRole: handlers.inboxRole }
+          : null),
+        ...(handlers.projectMemory?.trim()
+          ? { projectMemory: handlers.projectMemory.trim().slice(0, 8_000) }
+          : null),
+        ...(handlers.sandboxSessionId && /^sbx_[a-zA-Z0-9]+$/.test(handlers.sandboxSessionId)
+          ? { sandboxSessionId: handlers.sandboxSessionId }
+          : null),
+        ...(handlers.inboxRole === 'overseer' && handlers.projectId?.trim()
+          ? {
+              projectId: handlers.projectId.trim().slice(0, 80),
+              ...(handlers.projectAgents?.length
+                ? {
+                    projectAgents: handlers.projectAgents.slice(0, 80).map((a) => ({
+                      id: String(a.id).slice(0, 80),
+                      title: String(a.title || 'Agent').slice(0, 120),
+                      status: String(a.status || 'idle').slice(0, 32),
+                      role:
+                        a.role === 'overseer' || a.role === 'worker' || a.role === 'thread'
+                          ? a.role
+                          : 'thread',
+                      ...(a.threadId ? { threadId: String(a.threadId).slice(0, 80) } : null),
+                    })),
+                  }
+                : null),
+            }
+          : null),
+        ...(fileIds.length ? { fileIds } : null),
+        ...(plugins.length ? { plugins } : null),
+        ...(handlers.continueReply ? { continue: true } : null),
+      }),
+      headers: { Accept: 'text/event-stream' },
+      signal: streamAbort.signal,
+    })
+  } catch (err) {
+    handlers.signal?.removeEventListener('abort', onParentAbort)
+    throw err
+  }
   if (!res.ok) {
+    handlers.signal?.removeEventListener('abort', onParentAbort)
     await throwApiError(res, 'Chat failed')
   }
   if (!res.body) {
+    handlers.signal?.removeEventListener('abort', onParentAbort)
     throw new Error('Chat stream unavailable')
   }
 
@@ -1181,6 +1195,7 @@ export async function streamDeepseekChat(
   const idleWatch = setInterval(() => {
     if (Date.now() - lastMeaningfulAt > CHAT_STREAM_IDLE_MS) {
       stalled = true
+      streamAbort.abort()
       void reader.cancel().catch(() => undefined)
     }
   }, 2_000)
@@ -1258,6 +1273,7 @@ export async function streamDeepseekChat(
     if (stalled) throw new Error(CHAT_STREAM_STALL_ERROR)
   } finally {
     clearInterval(idleWatch)
+    handlers.signal?.removeEventListener('abort', onParentAbort)
   }
 
   return { model }
