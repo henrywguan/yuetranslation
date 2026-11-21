@@ -9,13 +9,25 @@ import { isChatAuiEnabled, setChatAuiEnabled } from '../../../lib/chatAuiFlag'
 import { resolveActiveSandboxSessionId } from '../../../lib/chatInbox'
 import { shouldShowReviewRail } from '../../../lib/chatReviewActivity'
 import {
+  deletePromotedWorkspaceSnapshot,
+  loadPromotedWorkspaceSnapshot,
+  parsePromotedWorkspaceRef,
+  promotedWorkspaceRef,
+  savePromotedWorkspaceSnapshot,
+  snapshotToChatWorkspace,
+} from '../../../lib/chatPromotedWorkspace'
+import {
   CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT,
   CHAT_INBOX_SIDEBAR_WIDTH_MAX,
   CHAT_INBOX_SIDEBAR_WIDTH_MIN,
   clampChatInboxSidebarWidth,
+  clampChatWorkspacePanelWidth,
   readChatInboxSidebarWidth,
+  readChatWorkspacePanelWidth,
   writeChatInboxSidebarWidth,
+  writeChatWorkspacePanelWidth,
 } from '../../../lib/chatUiPrefs'
+import type { ChatWorkspace } from '../../../lib/chatWorkspace'
 import { startChatDeepAvatarCloudSync } from '../../../lib/chatDeepAvatarCloudSync'
 import { openApp, openPricing } from '../../../lib/siteLinks'
 import { useYueStore } from '../../../lib/store'
@@ -68,6 +80,9 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
   )
   const [sidebarWidth, setSidebarWidth] = useState(() => readChatInboxSidebarWidth())
   const [sidebarResizing, setSidebarResizing] = useState(false)
+  const [workspacePanelWidth, setWorkspacePanelWidth] = useState(() =>
+    readChatWorkspacePanelWidth(),
+  )
   const resizeDrag = useRef<{ startX: number; startW: number } | null>(null)
   const sidebarWidthRef = useRef(sidebarWidth)
   sidebarWidthRef.current = sidebarWidth
@@ -76,6 +91,7 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
     busy,
     newChatBusy,
     harnessOn,
+    setHarnessOn,
     workspaceOpen,
     setWorkspaceOpen,
     activeWorkspace,
@@ -93,6 +109,43 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
   } = useChatAuiSession()
   const inbox = useChatInboxContext()
   const showWorkspace = harnessOn && workspaceOpen
+
+  const promoteThreadWorkspace = async (opts: {
+    title: string
+    workspace: ChatWorkspace
+  }) => {
+    const ws = inbox.addWorkspace('files', opts.title, undefined)
+    await savePromotedWorkspaceSnapshot({
+      workspaceId: ws.id,
+      title: opts.title,
+      files: opts.workspace.files || [],
+      updatedAt: Date.now(),
+      threadId: activeId,
+    })
+    inbox.bindWorkspaceRef(ws.id, promotedWorkspaceRef(ws.id))
+    return ws.id
+  }
+
+  const openFilesWorkspace = async (workspaceId: string) => {
+    const entry = inbox.state.workspaces.find((w) => w.id === workspaceId)
+    if (!entry || entry.kind !== 'files') return
+    const id = parsePromotedWorkspaceRef(entry.ref) || workspaceId
+    const snap = await loadPromotedWorkspaceSnapshot(id)
+    if (!snap?.files.length) return
+    setHarnessOn(true)
+    setActiveWorkspace(snapshotToChatWorkspace(snap))
+    setWorkspaceOpen(true)
+  }
+
+  const removeInboxWorkspace = (workspaceId: string) => {
+    const entry = inbox.state.workspaces.find((w) => w.id === workspaceId)
+    if (entry?.kind === 'files') {
+      void deletePromotedWorkspaceSnapshot(
+        parsePromotedWorkspaceRef(entry.ref) || workspaceId,
+      )
+    }
+    inbox.removeWorkspace(workspaceId)
+  }
 
   const sandboxSessionId = useMemo(
     () => resolveActiveSandboxSessionId(inbox.state),
@@ -164,8 +217,20 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
     writeChatInboxSidebarWidth(sidebarWidthRef.current)
   }
 
+  const applyWorkspacePanelWidth = (px: number, persist: boolean) => {
+    const next = clampChatWorkspacePanelWidth(
+      px,
+      typeof window !== 'undefined' ? window.innerWidth : undefined,
+    )
+    setWorkspacePanelWidth(next)
+    if (persist) writeChatWorkspacePanelWidth(next)
+  }
+
   const shellStyle = {
     ['--ds-sidebar-w' as string]: `${sidebarWidth}px`,
+    ...(showWorkspace
+      ? { ['--ds-workspace-w' as string]: `${workspacePanelWidth}px` }
+      : null),
   } as CSSProperties
 
   return (
@@ -201,6 +266,10 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
               setSidebarOpen(false)
             }
           }}
+          onOpenFilesWorkspace={(workspaceId) => {
+            void openFilesWorkspace(workspaceId)
+          }}
+          onDeleteWorkspace={removeInboxWorkspace}
         />
         {/* Classic / Back to app / theme live in InboxSettingsMenu (header cog). */}
         {/* Desktop edge drag only — hidden on mobile drawer via CSS. */}
@@ -324,6 +393,9 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           onAddSchedule={addSchedule}
           onRemoveSchedule={removeSchedule}
           onToggleSchedule={toggleSchedule}
+          onPromoteToWorkspaces={promoteThreadWorkspace}
+          panelWidth={workspacePanelWidth}
+          onPanelWidthChange={applyWorkspacePanelWidth}
         />
       ) : null}
       {/* Companion intro — every #/chat mount (boy / girl by pick); skip dismisses this visit. */}

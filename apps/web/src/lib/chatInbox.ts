@@ -43,7 +43,8 @@ export type ChatInboxAgent = {
   reviewUrl?: string
 }
 
-export type ChatInboxWorkspaceKind = 'internal' | 'local' | 'github'
+/** `files` = promoted Thread files snapshot (device-local IDB). */
+export type ChatInboxWorkspaceKind = 'internal' | 'local' | 'github' | 'files'
 
 export type ChatInboxWorkspace = {
   id: string
@@ -99,7 +100,7 @@ function asRole(v: unknown): ChatInboxAgentRole {
 }
 
 function asKind(v: unknown): ChatInboxWorkspaceKind {
-  if (v === 'internal' || v === 'local' || v === 'github') return v
+  if (v === 'internal' || v === 'local' || v === 'github' || v === 'files') return v
   return 'internal'
 }
 
@@ -398,6 +399,7 @@ export function createWorkspace(
     internal: 'Internal sandbox',
     local: 'Local folder',
     github: 'GitHub repo',
+    files: 'Thread files',
   }
   const workspace: ChatInboxWorkspace = {
     id: uid('ws'),

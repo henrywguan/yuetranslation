@@ -13,14 +13,21 @@ import {
   CHAT_MODE_KEY,
   CHAT_SEARCH_KEY,
   CHAT_THINK_KEY,
+  CHAT_WORKSPACE_PANEL_WIDTH_DEFAULT,
+  CHAT_WORKSPACE_PANEL_WIDTH_KEY,
+  CHAT_WORKSPACE_PANEL_WIDTH_MAX,
+  CHAT_WORKSPACE_PANEL_WIDTH_MIN,
   clampChatInboxSidebarWidth,
+  clampChatWorkspacePanelWidth,
   cycleChatComposerMode,
   readChatComposerMode,
   readChatFlag,
   readChatInboxSidebarWidth,
+  readChatWorkspacePanelWidth,
   writeChatComposerMode,
   writeChatFlag,
   writeChatInboxSidebarWidth,
+  writeChatWorkspacePanelWidth,
 } from './chatUiPrefs.js'
 
 assert.equal(CHAT_THINK_KEY, 'yue-deepseek-chat-deepthink-v1')
@@ -73,15 +80,29 @@ assert.equal(readChatInboxSidebarWidth(), 360)
 writeChatInboxSidebarWidth(50)
 assert.equal(readChatInboxSidebarWidth(), CHAT_INBOX_SIDEBAR_WIDTH_MIN)
 
+assert.equal(CHAT_WORKSPACE_PANEL_WIDTH_KEY, 'yue-chat-workspace-panel-w-v1')
+assert.ok(CHAT_WORKSPACE_PANEL_WIDTH_MIN < CHAT_WORKSPACE_PANEL_WIDTH_DEFAULT)
+assert.ok(CHAT_WORKSPACE_PANEL_WIDTH_MAX > CHAT_WORKSPACE_PANEL_WIDTH_DEFAULT)
+assert.equal(clampChatWorkspacePanelWidth(100), CHAT_WORKSPACE_PANEL_WIDTH_MIN)
+assert.equal(clampChatWorkspacePanelWidth(9999), CHAT_WORKSPACE_PANEL_WIDTH_MAX)
+assert.equal(clampChatWorkspacePanelWidth(500, 700), Math.floor(700 * 0.6))
+writeChatWorkspacePanelWidth(520)
+assert.equal(readChatWorkspacePanelWidth(), 520)
+writeChatWorkspacePanelWidth(50)
+assert.equal(readChatWorkspacePanelWidth(), CHAT_WORKSPACE_PANEL_WIDTH_MIN)
+
 const here = dirname(fileURLToPath(import.meta.url))
 const chatPage = readFileSync(join(here, '../pages/ChatPage.tsx'), 'utf8')
 const aui = readFileSync(join(here, '../pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 const auiPage = readFileSync(join(here, '../pages/chat/aui/ChatAuiPage.tsx'), 'utf8')
 const auiCss = readFileSync(join(here, '../pages/chat/aui/ChatAui.css'), 'utf8')
 assert.match(chatPage, /chatUiPrefs/, 'Classic chat shares prefs module')
+assert.match(chatPage, /readChatWorkspacePanelWidth/, 'Classic persists workspace panel width')
 assert.match(aui, /chatUiPrefs/, 'AUI chat shares prefs module')
 assert.match(auiPage, /ds-chat-sidebar-resize/, 'AUI Inbox has resize handle')
 assert.match(auiPage, /readChatInboxSidebarWidth/, 'AUI reads persisted Inbox width')
+assert.match(auiPage, /readChatWorkspacePanelWidth/, 'AUI reads workspace panel width')
+assert.match(auiPage, /onPromoteToWorkspaces|promoteThreadWorkspace/, 'AUI promotes thread files')
 assert.match(auiPage, /max-width: 899px/, 'resize drag skipped on mobile drawer')
 assert.match(auiCss, /\.ds-chat-sidebar-resize/, 'resize handle styles')
 assert.match(auiCss, /display:\s*none\s*!important/, 'mobile hides resize grip')

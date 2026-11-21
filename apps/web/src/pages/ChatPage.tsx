@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react'
 import { ChatDictateButton } from '../components/ChatDictateButton'
 import {
   ChatArtifactPanel,
@@ -105,10 +105,13 @@ import {
   CHAT_RICH_LAYOUT_KEY,
   CHAT_SEARCH_KEY,
   CHAT_THINK_KEY,
+  clampChatWorkspacePanelWidth,
   readChatFlag,
   readChatPluginIds,
+  readChatWorkspacePanelWidth,
   writeChatFlag,
   writeChatPluginIds,
+  writeChatWorkspacePanelWidth,
 } from '../lib/chatUiPrefs'
 import { openAuthScreen } from '../lib/auth'
 import { canUseDeepseekChat } from '../lib/chatAccess'
@@ -745,6 +748,9 @@ export function ChatPage() {
   const [richLayout, setRichLayout] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
   const [harnessOn, setHarnessOn] = useState(() => readHarnessFlag(false))
   const [workspaceOpen, setWorkspaceOpen] = useState(() => readHarnessFlag(false))
+  const [workspacePanelWidth, setWorkspacePanelWidth] = useState(() =>
+    readChatWorkspacePanelWidth(),
+  )
   const [scheduleJobs, setScheduleJobs] = useState<ChatScheduleJob[]>(() => readScheduleJobs())
   const harnessOnRef = useRef(harnessOn)
   harnessOnRef.current = harnessOn
@@ -1795,9 +1801,17 @@ export function ChatPage() {
     )
   }
 
+  const showWorkspace = harnessOn && workspaceOpen
+  const chatShellStyle = (
+    showWorkspace
+      ? { ['--ds-workspace-w' as string]: `${workspacePanelWidth}px` }
+      : undefined
+  ) as CSSProperties | undefined
+
   return (
     <div
-      className={`ds-chat${artifact ? ' has-artifact' : ''}${harnessOn && workspaceOpen ? ' has-workspace' : ''}${harnessOn ? ' is-harness' : ''}${dragOver ? ' is-dragover' : ''}`}
+      className={`ds-chat${artifact ? ' has-artifact' : ''}${showWorkspace ? ' has-workspace' : ''}${harnessOn ? ' is-harness' : ''}${dragOver ? ' is-dragover' : ''}`}
+      style={chatShellStyle}
       onDragEnter={(e) => {
         if (!unlocked || busy) return
         if ([...e.dataTransfer.types].includes('Files')) setDragOver(true)
@@ -2318,7 +2332,7 @@ export function ChatPage() {
       </div>
 
       <ChatArtifactPanel artifact={artifact} onClose={() => setArtifact(null)} />
-      {harnessOn && workspaceOpen ? (
+      {showWorkspace ? (
         <ChatWorkspacePanel
           workspace={active.workspace}
           onChange={(ws) => persist(patchThreadWorkspace(active, ws))}
@@ -2335,6 +2349,15 @@ export function ChatPage() {
           onToggleSchedule={(id, enabled) => {
             setScheduleJobEnabled(id, enabled)
             setScheduleJobs(readScheduleJobs())
+          }}
+          panelWidth={workspacePanelWidth}
+          onPanelWidthChange={(px, persistWidth) => {
+            const next = clampChatWorkspacePanelWidth(
+              px,
+              typeof window !== 'undefined' ? window.innerWidth : undefined,
+            )
+            setWorkspacePanelWidth(next)
+            if (persistWidth) writeChatWorkspacePanelWidth(next)
           }}
         />
       ) : null}

@@ -1,5 +1,15 @@
 import assert from 'node:assert/strict'
 import { emptyThread } from './chatHistory.js'
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { unzipSync, zipSync } from 'fflate'
+import {
+  CHAT_PROMOTED_WS_REF_PREFIX,
+  parsePromotedWorkspaceRef,
+  promotedWorkspaceRef,
+  suggestPromotedWorkspaceTitle,
+} from './chatPromotedWorkspace.js'
 import {
   CHAT_HARNESS_FLAG_KEY,
   CHAT_WORKSPACE_MAX_FILES,
@@ -57,5 +67,42 @@ const wire = workspaceWirePayload(seeded)
 assert.ok(wire?.files.length)
 
 assert.equal(CHAT_HARNESS_FLAG_KEY, 'yue-deepseek-chat-harness-v1')
+
+assert.equal(
+  suggestPromotedWorkspaceTitle({
+    files: [
+      { id: '1', path: 'Rainmeter Splash/preview.html', updatedAt: 1, text: '<h1/>' },
+      { id: '2', path: 'Rainmeter Splash/skin.ini', updatedAt: 1, text: 'x' },
+      { id: '3', path: 'Rainmeter Splash/notes.md', updatedAt: 1, text: 'y' },
+    ],
+    updatedAt: 1,
+  }),
+  'Rainmeter Splash',
+)
+
+assert.equal(promotedWorkspaceRef('ws_abc'), `${CHAT_PROMOTED_WS_REF_PREFIX}ws_abc`)
+assert.equal(parsePromotedWorkspaceRef('files:ws_abc'), 'ws_abc')
+assert.equal(parsePromotedWorkspaceRef('sbx_1'), null)
+
+const enc = new TextEncoder()
+const zipped = zipSync({
+  'a/hello.txt': enc.encode('hi'),
+  'a/bye.txt': enc.encode('bye'),
+})
+const unzipped = unzipSync(zipped)
+assert.equal(new TextDecoder().decode(unzipped['a/hello.txt']!), 'hi')
+
+const here = dirname(fileURLToPath(import.meta.url))
+const panel = readFileSync(join(here, '../components/ChatWorkspacePanel.tsx'), 'utf8')
+assert.match(panel, /Download all/, 'panel exports zip download')
+assert.match(panel, /Select all/, 'panel select-all')
+assert.match(panel, /Save to Workspaces/, 'panel promote to Inbox Workspaces')
+assert.match(panel, /ds-chat-workspace-resize/, 'panel resize handle')
+assert.match(panel, /Expand preview/, 'HTML fullscreen preview')
+
+const css = readFileSync(join(here, '../pages/ChatPage.css'), 'utf8')
+assert.match(css, /--ds-workspace-w/, 'resizable workspace CSS var')
+assert.match(css, /\.ds-chat-workspace-resize/, 'workspace resize styles')
+assert.match(css, /preview-overlay/, 'fullscreen HTML overlay')
 
 console.log('chatWorkspace.smoke: ok')

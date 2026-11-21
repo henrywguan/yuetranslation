@@ -19,6 +19,13 @@ export const CHAT_INBOX_SIDEBAR_WIDTH_KEY = 'yue-chat-inbox-sidebar-w-v1'
 export const CHAT_INBOX_SIDEBAR_WIDTH_DEFAULT = 280
 export const CHAT_INBOX_SIDEBAR_WIDTH_MIN = 220
 export const CHAT_INBOX_SIDEBAR_WIDTH_MAX = 480
+
+/** Desktop Harness Workspace (Thread files) panel width (px). Sheets ignore drag. */
+export const CHAT_WORKSPACE_PANEL_WIDTH_KEY = 'yue-chat-workspace-panel-w-v1'
+/** Wider default so HTML previews are usable (was fixed ~26rem / 416px). */
+export const CHAT_WORKSPACE_PANEL_WIDTH_DEFAULT = 440
+export const CHAT_WORKSPACE_PANEL_WIDTH_MIN = 300
+export const CHAT_WORKSPACE_PANEL_WIDTH_MAX = 760
 /** Inbox settings → Companion block expand/collapse. */
 export const CHAT_INBOX_COMPANION_OPEN_KEY = 'yue-chat-inbox-companion-open-v1'
 
@@ -163,6 +170,41 @@ export function writeChatInboxSidebarWidth(px: number) {
     localStorage.setItem(
       CHAT_INBOX_SIDEBAR_WIDTH_KEY,
       String(clampChatInboxSidebarWidth(px)),
+    )
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Clamp Workspace panel width; leave room for the thread column. */
+export function clampChatWorkspacePanelWidth(px: number, viewportWidth?: number): number {
+  const n = Math.round(Number(px))
+  if (!Number.isFinite(n)) return CHAT_WORKSPACE_PANEL_WIDTH_DEFAULT
+  let max = CHAT_WORKSPACE_PANEL_WIDTH_MAX
+  if (typeof viewportWidth === 'number' && Number.isFinite(viewportWidth) && viewportWidth > 0) {
+    // Leave ≥40% for the thread; never below min even on short viewports.
+    max = Math.min(max, Math.max(CHAT_WORKSPACE_PANEL_WIDTH_MIN, Math.floor(viewportWidth * 0.6)))
+  }
+  return Math.min(max, Math.max(CHAT_WORKSPACE_PANEL_WIDTH_MIN, n))
+}
+
+export function readChatWorkspacePanelWidth(
+  fallback = CHAT_WORKSPACE_PANEL_WIDTH_DEFAULT,
+): number {
+  try {
+    const raw = localStorage.getItem(CHAT_WORKSPACE_PANEL_WIDTH_KEY)
+    if (raw == null || raw === '') return fallback
+    return clampChatWorkspacePanelWidth(Number(raw))
+  } catch {
+    return fallback
+  }
+}
+
+export function writeChatWorkspacePanelWidth(px: number) {
+  try {
+    localStorage.setItem(
+      CHAT_WORKSPACE_PANEL_WIDTH_KEY,
+      String(clampChatWorkspacePanelWidth(px)),
     )
   } catch {
     /* ignore */
