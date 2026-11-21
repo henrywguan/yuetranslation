@@ -10,6 +10,11 @@ import { getAccessToken } from './auth'
 import { captureDiagnostic } from './diagnostics'
 import { guestDeviceHeaders } from './guestDevice'
 import { messageFromApiBody } from './apiError'
+import {
+  CHAT_STREAM_IDLE_MS,
+  CHAT_STREAM_STALL_ERROR,
+  sanitizeDeepseekChatVisibleText,
+} from './chatVisibleSanitize'
 import { hasOfflinePack, offlineTranslate } from './offlineLexicon'
 import { sanitizeApiBase, sanitizeLeaveUrl } from './safeUrl'
 
@@ -1170,67 +1175,89 @@ export async function streamDeepseekChat(
   const decoder = new TextDecoder()
   let buffer = ''
   let model: string | undefined
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-    const parts = buffer.split('\n')
-    buffer = parts.pop() || ''
-    for (const line of parts) {
-      const trimmed = line.trim()
-      if (!trimmed.startsWith('data:')) continue
-      const payload = trimmed.slice(5).trim()
-      if (!payload || payload === '[DONE]') continue
-      let parsed: {
-        delta?: string
-        contentReplace?: string
-        reasoning?: string
-        done?: boolean
-        model?: string
-        error?: string
-        status?: string
-        sources?: DeepseekChatSource[]
-        searchStep?: DeepseekChatSearchStep
-        title?: string
-        image?: DeepseekChatImageEvent
-        avatar?: { action: 'list' | 'play' | 'react'; mood?: string }
-        workspace?: {
-          files?: Array<{
-            id: string
-            path: string
-            mime?: string
-            text?: string
-            updatedAt: number
-          }>
-        }
-        project?: { actions?: Array<Record<string, unknown>> }
-        sandbox?: Record<string, unknown>
-      }
-      try {
-        parsed = JSON.parse(payload) as typeof parsed
-      } catch {
-        continue
-      }
-      if (parsed.error) throw new Error(parsed.error)
-      if (parsed.status === 'thinking' || parsed.status === 'searching') {
-        handlers.onStatus?.(parsed.status)
-      }
-      if (parsed.reasoning) handlers.onReasoning?.(parsed.reasoning)
-      if (parsed.sources?.length) handlers.onSources?.(parsed.sources)
-      if (parsed.searchStep) handlers.onSearchStep?.(parsed.searchStep)
-      if (parsed.title?.trim()) handlers.onTitle?.(parsed.title.trim())
-      if (parsed.image?.url) handlers.onImage?.(parsed.image)
-      if (parsed.avatar?.action) handlers.onAvatar?.(parsed.avatar)
-      if (parsed.workspace?.files?.length) handlers.onWorkspace?.(parsed.workspace.files)
-      if (parsed.project?.actions?.length) handlers.onProject?.(parsed.project.actions)
-      if (parsed.sandbox) handlers.onSandbox?.(parsed.sandbox)
-      if (typeof parsed.contentReplace === 'string') {
-        handlers.onContentReplace?.(parsed.contentReplace)
-      }
-      if (parsed.delta) handlers.onDelta(parsed.delta)
-      if (parsed.model) model = parsed.model
+  // Heartbeats are SSE comments — without a data-event watchdog, Image/tool hangs spin forever.
+  let lastMeaningfulAt = Date.now()
+  let stalled = false
+  const idleWatch = setInterval(() => {
+    if (Date.now() - lastMeaningfulAt > CHAT_STREAM_IDLE_MS) {
+      stalled = true
+      void reader.cancel().catch(() => undefined)
     }
+  }, 2_000)
+  if (typeof idleWatch.unref === 'function') idleWatch.unref()
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      if (stalled) break
+      buffer += decoder.decode(value, { stream: true })
+      const parts = buffer.split('\n')
+      buffer = parts.pop() || ''
+      for (const line of parts) {
+        const trimmed = line.trim()
+        if (!trimmed.startsWith('data:')) continue
+        const payload = trimmed.slice(5).trim()
+        if (!payload || payload === '[DONE]') continue
+        let parsed: {
+          delta?: string
+          contentReplace?: string
+          reasoning?: string
+          done?: boolean
+          model?: string
+          error?: string
+          status?: string
+          sources?: DeepseekChatSource[]
+          searchStep?: DeepseekChatSearchStep
+          title?: string
+          image?: DeepseekChatImageEvent
+          avatar?: { action: 'list' | 'play' | 'react'; mood?: string }
+          workspace?: {
+            files?: Array<{
+              id: string
+              path: string
+              mime?: string
+              text?: string
+              updatedAt: number
+            }>
+          }
+          project?: { actions?: Array<Record<string, unknown>> }
+          sandbox?: Record<string, unknown>
+        }
+        try {
+          parsed = JSON.parse(payload) as typeof parsed
+        } catch {
+          continue
+        }
+        lastMeaningfulAt = Date.now()
+        if (parsed.error) throw new Error(parsed.error)
+        if (parsed.status === 'thinking' || parsed.status === 'searching') {
+          handlers.onStatus?.(parsed.status)
+        }
+        if (parsed.reasoning) {
+          handlers.onReasoning?.(sanitizeDeepseekChatVisibleText(parsed.reasoning))
+        }
+        if (parsed.sources?.length) handlers.onSources?.(parsed.sources)
+        if (parsed.searchStep) handlers.onSearchStep?.(parsed.searchStep)
+        if (parsed.title?.trim()) handlers.onTitle?.(parsed.title.trim())
+        if (parsed.image?.url) handlers.onImage?.(parsed.image)
+        if (parsed.avatar?.action) handlers.onAvatar?.(parsed.avatar)
+        if (parsed.workspace?.files?.length) handlers.onWorkspace?.(parsed.workspace.files)
+        if (parsed.project?.actions?.length) handlers.onProject?.(parsed.project.actions)
+        if (parsed.sandbox) handlers.onSandbox?.(parsed.sandbox)
+        if (typeof parsed.contentReplace === 'string') {
+          handlers.onContentReplace?.(sanitizeDeepseekChatVisibleText(parsed.contentReplace))
+        }
+        if (parsed.delta) {
+          // Per-chunk best-effort; runtimes also re-sanitize the assembled buffer.
+          handlers.onDelta(sanitizeDeepseekChatVisibleText(parsed.delta))
+        }
+        if (parsed.model) model = parsed.model
+      }
+    }
+    if (stalled) throw new Error(CHAT_STREAM_STALL_ERROR)
+  } finally {
+    clearInterval(idleWatch)
   }
 
   return { model }

@@ -1082,8 +1082,10 @@ function ComposerChrome({ error }: { error?: string | null }) {
                     <ComposerPrimitive.Cancel
                       className="aui-send is-stop"
                       onClick={() => stopGeneration()}
+                      aria-label="Stop working"
+                      title="Stop working — cancel the in-flight reply"
                     >
-                      Stop
+                      Stop working
                     </ComposerPrimitive.Cancel>
                     <button
                       type="button"

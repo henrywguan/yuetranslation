@@ -1,0 +1,69 @@
+/**
+ * Client mirror of apps/api `deepseekChatSanitize.ts`.
+ * Strip leaked system_reminder / reasoning_effort from #/chat bubbles.
+ */
+
+/** Opening tag only — `<\/?` would treat closers as openers and swallow trailing prose. */
+const SYSTEM_REMINDER_BLOCK =
+  /<system[_-]?reminder\b[^>]*>[\s\S]*?(?:<\/system[_-]?reminder\s*>|$)/gi
+
+const SYSTEM_REMINDER_CLOSE = /<\/system[_-]?reminder\s*>/gi
+
+const BARE_SYSTEM_REMINDER =
+  /(?:^|\n)[ \t]*system[_-]?reminder\s*>[\s\S]*?(?:<\/system[_-]?reminder\s*>|(?=\n[ \t]*\n)|$)/gi
+
+const REASONING_EFFORT_BLOCK =
+  /(?:^|\n)[ \t]*(?:You are running\s+)?reasoning_effort\s*=\s*\S+[^\n]*(?:\n(?![ \t]*\n)[^\n]*)*/gi
+
+const AGENT_JUNK_TAGS =
+  /<\/?(?:think|thinking|assistant_scratchpad|tool_calls?|minimax:tool_call)(?:\s[^>]*)?>/gi
+
+const INCOMPLETE_LEAK_SUFFIX =
+  /(?:<+\s*\/?\s*sys(?:tem(?:[_-]?rem(?:inder)?)?)?|<\s*$|(?:^|\n)[ \t]*system[_-]?rem(?:inder)?\s*>?)$/i
+
+export function sanitizeDeepseekChatVisibleText(text: string): string {
+  let s = String(text || '')
+  if (!s) return s
+  s = s.replace(SYSTEM_REMINDER_BLOCK, '')
+  s = s.replace(BARE_SYSTEM_REMINDER, '\n')
+  s = s.replace(SYSTEM_REMINDER_CLOSE, '')
+  s = s.replace(REASONING_EFFORT_BLOCK, '\n')
+  s = s.replace(/\breasoning_effort\s*=\s*\w+/gi, '')
+  s = s.replace(AGENT_JUNK_TAGS, '')
+  const trailingNl = /\n$/.test(s)
+  s = s.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n')
+  if (trailingNl && !s.endsWith('\n')) s += '\n'
+  return s
+}
+
+export function sanitizeDeepseekChatStreamBuffer(assembled: string): {
+  visible: string
+  hold: string
+} {
+  const raw = String(assembled || '')
+  const m = raw.match(INCOMPLETE_LEAK_SUFFIX)
+  if (m && m.index != null) {
+    const hold = raw.slice(m.index)
+    const visible = sanitizeDeepseekChatVisibleText(raw.slice(0, m.index))
+    return { visible, hold }
+  }
+  return { visible: sanitizeDeepseekChatVisibleText(raw), hold: '' }
+}
+
+export function deepseekChatTextLooksLeaked(text: string): boolean {
+  const t = String(text || '')
+  return (
+    /system[_-]?reminder/i.test(t) ||
+    /reasoning_effort\s*=/i.test(t) ||
+    /<\/?(?:think|thinking|assistant_scratchpad)\b/i.test(t)
+  )
+}
+
+/**
+ * Idle SSE with only heartbeats / no data events — auto-abort so UI never spins forever.
+ * Must exceed image tool deadline (~95s) so legitimate generate_image does not trip the client.
+ */
+export const CHAT_STREAM_IDLE_MS = 150_000
+
+export const CHAT_STREAM_STALL_ERROR =
+  'Reply stalled (no progress for too long — often Image / tools). Tap Stop working, then Send again or Continue.'

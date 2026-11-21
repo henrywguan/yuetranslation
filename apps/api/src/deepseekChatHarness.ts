@@ -37,8 +37,12 @@ import {
   DEEPSEEK_CHAT_TOOLS,
   DEEPSEEK_CHAT_WORKSPACE_TOOLS,
   filterToolsForChatMode,
-  executeDeepseekChatTool,
+  executeDeepseekChatToolWithTimeout,
 } from './deepseekChatTools.js'
+import {
+  deepseekChatTextLooksLeaked,
+  sanitizeDeepseekChatVisibleText,
+} from './deepseekChatSanitize.js'
 import {
   createWorkspaceStore,
   type ChatWorkspaceFileWire,
@@ -115,6 +119,10 @@ export function looksLikeDeferredToolUse(text: string): boolean {
   if ((t.match(/\n/g) || []).length >= 4) return false
   return (
     /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,80}\b(check|fetch|look up|get|call|use|run|calculate|convert)\b[\s\S]{0,100}\b(weather|forecast|url|page|link|calendar|date|time|math|units?|tool|jyut|phrase|temperature)\b/i.test(
+      t,
+    ) ||
+    // Henry ricing / mockup path: "Let me pull up those exact widgets and the guide…"
+    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to)\b[\s\S]{0,100}\b(pull\s+up|grab|find|open|gather|look\s+up)\b[\s\S]{0,120}\b(widgets?|guides?|links?|mockups?|images?|splash|screenshots?|deviantart|medium)\b/i.test(
       t,
     ) ||
     /\b(get_weather|fetch_url|get_date|get_now|calc|convert_units|jyut_plan_limits|jyut_phrase_lookup|jyut_learn_hint|generate_image|workspace_|sandbox_|project_)\w*\b/i.test(
@@ -755,7 +763,18 @@ export async function* streamDeepseekChatHarness(
       const content = delta.content
       if (typeof content === 'string' && content) {
         assistantContent += content
-        yield { kind: 'delta', text: content }
+        // Strip leaked system_reminder / reasoning_effort as soon as it appears in the buffer.
+        if (deepseekChatTextLooksLeaked(assistantContent)) {
+          const cleaned = sanitizeDeepseekChatVisibleText(assistantContent)
+          if (cleaned !== assistantContent) {
+            assistantContent = cleaned
+            yield { kind: 'content_replace', text: cleaned }
+          } else {
+            yield { kind: 'delta', text: content }
+          }
+        } else {
+          yield { kind: 'delta', text: content }
+        }
       }
 
       const title = delta.title
@@ -826,31 +845,40 @@ export async function* streamDeepseekChatHarness(
         if (toolName === 'project_create_agent' || toolName === 'project_message_agent') {
           projectOrchestrationUsed = true
         }
-        const result = await executeDeepseekChatTool(toolName, call.function.arguments || '{}', {
-          ...opts.prompt,
-          chatMode,
-          signal: opts.signal,
-          pluginCreds: opts.pluginCreds,
-          workspace: workspaceStore,
-          project: projectStore,
-          userId: opts.userId,
-          sandboxSessionId,
-          onImage: (image) => {
-            pendingImages.push(image)
+        // Keep the SSE data channel alive while slow tools (esp. generate_image) run —
+        // heartbeats are comments and do not reset the client idle watchdog.
+        if (toolName === 'generate_image') {
+          yield { kind: 'searching' }
+        }
+        const result = await executeDeepseekChatToolWithTimeout(
+          toolName,
+          call.function.arguments || '{}',
+          {
+            ...opts.prompt,
+            chatMode,
+            signal: opts.signal,
+            pluginCreds: opts.pluginCreds,
+            workspace: workspaceStore,
+            project: projectStore,
+            userId: opts.userId,
+            sandboxSessionId,
+            onImage: (image) => {
+              pendingImages.push(image)
+            },
+            onAvatar: (event) => {
+              pendingAvatar.push(event)
+            },
+            onWorkspaceWrite: (file) => {
+              pendingWorkspaceWrites.push(file)
+            },
+            onProjectActions: (actions) => {
+              pendingProjectActions.push(...actions)
+            },
+            onSandboxActivity: (activity) => {
+              pendingSandboxActivity.push(activity)
+            },
           },
-          onAvatar: (event) => {
-            pendingAvatar.push(event)
-          },
-          onWorkspaceWrite: (file) => {
-            pendingWorkspaceWrites.push(file)
-          },
-          onProjectActions: (actions) => {
-            pendingProjectActions.push(...actions)
-          },
-          onSandboxActivity: (activity) => {
-            pendingSandboxActivity.push(activity)
-          },
-        })
+        )
         msgs.push({
           role: 'tool',
           tool_call_id: call.id,
@@ -957,6 +985,15 @@ export async function* streamDeepseekChatHarness(
       yield { kind: 'content_replace', text: '' }
       assistantContent = ''
       continue
+    }
+
+    // Final pass: never leave system_reminder / reasoning_effort in the visible reply.
+    if (deepseekChatTextLooksLeaked(assistantContent)) {
+      const cleaned = sanitizeDeepseekChatVisibleText(assistantContent)
+      if (cleaned !== assistantContent) {
+        assistantContent = cleaned
+        yield { kind: 'content_replace', text: cleaned }
+      }
     }
 
     // Final answer: inject `[n]` markers once annotations are available.

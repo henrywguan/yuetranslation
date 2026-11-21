@@ -64,6 +64,10 @@ import {
   SEARCH_STALL_ERROR,
   TOOL_STALL_ERROR,
 } from '../../../lib/chatSearchStall'
+import {
+  deepseekChatTextLooksLeaked,
+  sanitizeDeepseekChatVisibleText,
+} from '../../../lib/chatVisibleSanitize'
 import { StreamingDeepseekChatTts } from '../../../lib/chatDeepseekVoice'
 import {
   displayChatDeepAvatarName,
@@ -894,6 +898,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           onReasoning: (delta) => {
             markThinking()
             reasoning += delta
+            reasoning = sanitizeDeepseekChatVisibleText(reasoning)
             if (reasoning.length > LIVE_REASONING_KEEP) {
               reasoning = reasoning.slice(-LIVE_REASONING_KEEP)
             }
@@ -936,7 +941,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             }
           },
           onContentReplace: (text) => {
-            assembled = text.slice(0, MAX_CONTENT_CHARS)
+            assembled = sanitizeDeepseekChatVisibleText(text).slice(0, MAX_CONTENT_CHARS)
             thread = patchAssistantContent(thread, assistantId, assembled, {
               reasoning: reasoning || undefined,
               sources,
@@ -951,10 +956,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
               setSearching(false)
             }
             assembled += delta
+            assembled = sanitizeDeepseekChatVisibleText(assembled)
             if (assembled.length > MAX_CONTENT_CHARS) {
               assembled = assembled.slice(0, MAX_CONTENT_CHARS)
             }
-            liveTts?.feed(delta)
+            if (!deepseekChatTextLooksLeaked(delta)) liveTts?.feed(delta)
             thread = firstToken
               ? patchAssistantContent(thread, assistantId, assembled, {
                   reasoning: reasoning || undefined,
@@ -969,6 +975,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           },
         })
         flushPaint()
+        assembled = sanitizeDeepseekChatVisibleText(assembled).slice(0, MAX_CONTENT_CHARS)
         if (!avatarReacted && assembled.trim()) {
           const inferred = inferChatDeepAvatarMoodFromText(assembled)
           if (inferred) requestChatDeepAvatarReact(inferred)
