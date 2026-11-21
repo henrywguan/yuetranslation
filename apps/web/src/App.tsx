@@ -12,6 +12,7 @@ import { isDisplayStandalone } from './lib/pwaInstall'
 import { bootstrapPwaLaunch } from './lib/pwaLaunch'
 import {
   pwaManifestVariantForRoute,
+  standaloneDefaultRoute,
   syncPwaManifestLink,
 } from './lib/pwaManifestLink'
 import { hydrateOfflinePack } from './lib/offlinePackClient'
@@ -65,9 +66,9 @@ export default function App() {
     void Promise.all([loadSiteConfig(), bootstrapAuthSession()]).finally(() => {
       // After OAuth is consumed — never rewrite `#access_token=...` to `#/app` first
       // (that race signed users back into the app without a session).
-      // Chat PWA start_url is `/chat` (→ `#/chat`); only default empty hash to translator.
+      // Empty-hash standalone: `/chat` → chat (iOS A2HS often strips `#/…`); else translator.
       if (isDisplayStandalone() && !hashPath() && !isAuthCallback()) {
-        navigate('app')
+        navigate(standaloneDefaultRoute(window.location.pathname))
       }
       consumeAuthScreenDeepLink()
       setReady(true)

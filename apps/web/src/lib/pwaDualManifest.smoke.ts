@@ -8,8 +8,10 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createPwaManifest } from '../../pwa-manifest.js'
 import {
+  pwaInstallPathnameForVariant,
   pwaManifestHref,
   pwaManifestVariantForRoute,
+  standaloneDefaultRoute,
 } from './pwaManifestLink.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -54,6 +56,12 @@ assert.equal(pwaManifestHref('chat'), '/manifest-chat.webmanifest')
 assert.equal(pwaManifestVariantForRoute('chat'), 'chat')
 assert.equal(pwaManifestVariantForRoute('app'), 'app')
 assert.equal(pwaManifestVariantForRoute('home'), 'app')
+assert.equal(pwaInstallPathnameForVariant('chat'), '/chat', 'chat A2HS path survives hash strip')
+assert.equal(pwaInstallPathnameForVariant('app'), '/', 'translator A2HS stays origin path')
+assert.equal(standaloneDefaultRoute('/chat'), 'chat', 'standalone /chat opens chat')
+assert.equal(standaloneDefaultRoute('/chat/'), 'chat', 'trailing slash /chat opens chat')
+assert.equal(standaloneDefaultRoute('/'), 'app', 'standalone / opens translator')
+assert.equal(standaloneDefaultRoute('/app'), 'app', 'standalone /app opens translator')
 
 for (const name of [
   'pwa-chat-192.png',
@@ -80,6 +88,10 @@ assert.ok(
 
 const appTsx = readFileSync(join(webRoot, 'src/App.tsx'), 'utf8')
 assert.match(appTsx, /syncPwaManifestLink/, 'App swaps manifest by route')
+assert.match(appTsx, /standaloneDefaultRoute/, 'standalone empty-hash respects /chat path')
+
+const linkTs = readFileSync(join(webRoot, 'src/lib/pwaManifestLink.ts'), 'utf8')
+assert.match(linkTs, /syncPwaInstallPathname/, 'manifest sync keeps /chat pathname for iOS A2HS')
 
 const installBtn = readFileSync(join(webRoot, 'src/components/PwaInstallButton.tsx'), 'utf8')
 assert.match(installBtn, /pwaInstallChat/, 'Install button labels chat package')
