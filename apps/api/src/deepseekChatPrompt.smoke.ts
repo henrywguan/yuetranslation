@@ -2,7 +2,9 @@ import assert from 'node:assert/strict'
 import {
   buildDeepseekChatSystem,
   formatTemporalBlock,
+  resolveChatCapabilities,
   shouldAutoEnableSearch,
+  shouldAutoEnableThinking,
   DEEPSEEK_CHAT_SYSTEM_BASE,
 } from './deepseekChatPrompt.js'
 
@@ -99,5 +101,91 @@ assert.equal(shouldAutoEnableSearch('Explain quantum computing'), false)
 assert.equal(shouldAutoEnableSearch('Explain how the stock market works'), false, 'no bare stock keyword')
 assert.equal(shouldAutoEnableSearch('What does a test score mean?'), false)
 assert.equal(shouldAutoEnableSearch('stock price of AAPL'), true)
+
+assert.equal(shouldAutoEnableThinking('hi'), false, 'greetings stay fast')
+assert.equal(shouldAutoEnableThinking('Draft a polite follow-up email'), false, 'short drafts stay fast')
+assert.equal(shouldAutoEnableThinking('Explain quantum computing simply'), false, 'simple explain stays fast')
+assert.equal(shouldAutoEnableThinking('Prove that √2 is irrational'), true, 'proofs need DeepThink')
+assert.equal(
+  shouldAutoEnableThinking('Debug why this race condition hangs'),
+  true,
+  'debug needs DeepThink',
+)
+assert.equal(
+  shouldAutoEnableThinking('Please reason step by step about this puzzle'),
+  true,
+  'explicit step-by-step',
+)
+assert.equal(
+  shouldAutoEnableThinking('Compare Postgres vs MySQL trade-offs for multi-tenant SaaS'),
+  true,
+  'tradeoff compare',
+)
+
+const autoEasy = resolveChatCapabilities({
+  thinking: 'auto',
+  search: 'auto',
+  userText: 'Draft a polite follow-up email',
+  supportsSearch: true,
+})
+assert.equal(autoEasy.thinkingEnabled, false, 'Auto disables DeepThink on drafts')
+assert.equal(autoEasy.searchEnabled, false, 'Auto disables Search on drafts')
+assert.equal(autoEasy.thinkingAuto, false)
+assert.equal(autoEasy.searchAuto, false)
+
+const autoHard = resolveChatCapabilities({
+  thinking: 'auto',
+  search: 'auto',
+  userText: 'Prove the quadratic formula step by step',
+  supportsSearch: true,
+})
+assert.equal(autoHard.thinkingEnabled, true, 'Auto enables DeepThink on hard asks')
+assert.equal(autoHard.thinkingAuto, true)
+assert.equal(autoHard.searchEnabled, false)
+
+const autoNews = resolveChatCapabilities({
+  thinking: 'auto',
+  search: 'auto',
+  userText: "what's the latest news on AI?",
+  supportsSearch: true,
+})
+assert.equal(autoNews.searchEnabled, true)
+assert.equal(autoNews.searchAuto, true)
+assert.equal(autoNews.thinkingEnabled, false, 'news alone does not force DeepThink')
+
+const forceThink = resolveChatCapabilities({
+  thinking: true,
+  search: false,
+  userText: 'hi',
+  supportsSearch: true,
+})
+assert.equal(forceThink.thinkingEnabled, true, 'manual DeepThink on')
+assert.equal(forceThink.searchEnabled, false, 'no freshness → search stays off')
+
+const omitDefaults = resolveChatCapabilities({
+  userText: 'hi',
+  supportsSearch: true,
+})
+assert.equal(omitDefaults.thinkingEnabled, true, 'omit thinking defaults on (legacy)')
+
+const continueOff = resolveChatCapabilities({
+  thinking: 'auto',
+  search: 'auto',
+  userText: "what's the latest news on AI?",
+  continueReply: true,
+  supportsSearch: true,
+})
+assert.equal(continueOff.searchEnabled, false, 'continue forces search off')
+assert.equal(continueOff.searchAuto, false)
+
+const forceSearch = resolveChatCapabilities({
+  thinking: false,
+  search: true,
+  userText: 'hi',
+  supportsSearch: true,
+})
+assert.equal(forceSearch.thinkingEnabled, false)
+assert.equal(forceSearch.searchEnabled, true)
+assert.equal(forceSearch.searchAuto, false)
 
 console.log('deepseekChatPrompt.smoke: ok')

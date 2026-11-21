@@ -102,6 +102,7 @@ import {
   type ChatScheduleJob,
 } from '../../../lib/chatSchedule'
 import {
+  CHAT_AUTO_KEY,
   CHAT_RICH_LAYOUT_KEY,
   CHAT_SEARCH_KEY,
   CHAT_THINK_KEY,
@@ -156,6 +157,9 @@ export type ChatAuiSession = {
   error: string | null
   clearError: () => void
   setError: (message: string | null) => void
+  /** Cursor-like Auto — server picks DeepThink / Search per turn. */
+  autoOn: boolean
+  setAutoOn: (on: boolean) => void
   deepThink: boolean
   setDeepThink: (on: boolean) => void
   searchOn: boolean
@@ -184,6 +188,9 @@ export type ChatAuiSession = {
   toggleSchedule: (id: string, enabled: boolean) => void
   thinking: boolean
   searching: boolean
+  /** SSE marked this Thinking / Searching turn as Auto-resolved. */
+  thinkingAuto: boolean
+  searchingAuto: boolean
   streamingId: string | null
   pendingFiles: PendingChatFile[]
   uploadingFile: boolean
@@ -257,6 +264,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [streamingId, setStreamingId] = useState<string | null>(null)
   const [thinking, setThinking] = useState(false)
   const [searching, setSearching] = useState(false)
+  const [thinkingAuto, setThinkingAuto] = useState(false)
+  const [searchingAuto, setSearchingAuto] = useState(false)
+  const [autoOn, setAutoOnState] = useState(() => readChatFlag(CHAT_AUTO_KEY, true))
+  const autoOnRef = useRef(autoOn)
+  autoOnRef.current = autoOn
   const [deepThink, setDeepThinkState] = useState(() => readChatFlag(CHAT_THINK_KEY, true))
   const [searchOn, setSearchOnState] = useState(() => readChatFlag(CHAT_SEARCH_KEY, false))
   const [composerMode, setComposerModeState] = useState<ChatComposerMode>(() =>
@@ -485,12 +497,25 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     })
   }, [])
 
+  const setAutoOn = useCallback((on: boolean) => {
+    setAutoOnState(on)
+    autoOnRef.current = on
+    writeChatFlag(CHAT_AUTO_KEY, on)
+  }, [])
+
   const setDeepThink = useCallback((on: boolean) => {
+    // Leaving Auto when the user forces DeepThink manually.
+    setAutoOnState(false)
+    autoOnRef.current = false
+    writeChatFlag(CHAT_AUTO_KEY, false)
     setDeepThinkState(on)
     writeChatFlag(CHAT_THINK_KEY, on)
   }, [])
 
   const setSearchOn = useCallback((on: boolean) => {
+    setAutoOnState(false)
+    autoOnRef.current = false
+    writeChatFlag(CHAT_AUTO_KEY, false)
     setSearchOnState(on)
     writeChatFlag(CHAT_SEARCH_KEY, on)
   }, [])
@@ -776,6 +801,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setStreamingId(assistantId)
       setThinking(false)
       setSearching(false)
+      setThinkingAuto(false)
+      setSearchingAuto(false)
       thinkStartedAt.current = null
 
       const controller = new AbortController()
@@ -889,8 +916,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         const avatarNotes = readChatDeepAvatarNotes()
         let avatarReacted = false
         await streamDeepseekChat(wireMessages, {
-          thinking: deepThink,
-          search: searchOn,
+          thinking: autoOnRef.current ? 'auto' : deepThink,
+          search: autoOnRef.current ? 'auto' : searchOn,
           harness: harnessOnRef.current,
           chatMode: composerModeRef.current,
           workspace: harnessOnRef.current
@@ -954,11 +981,13 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             projectActionsThisTurn += actions.length
             if (projectId) applyProjectActions(actions, projectId)
           },
-          onStatus: (status) => {
+          onStatus: (status, meta) => {
             if (status === 'searching') {
               setSearching(true)
+              if (meta?.auto) setSearchingAuto(true)
               return
             }
+            if (meta?.auto) setThinkingAuto(true)
             markThinking()
           },
           onReasoning: (delta) => {
@@ -1124,6 +1153,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         setStreamingId(null)
         setThinking(false)
         setSearching(false)
+        setThinkingAuto(false)
+        setSearchingAuto(false)
         setBusy(false)
         abortRef.current = null
         if (streamTtsRef.current === liveTts) streamTtsRef.current = null
@@ -1623,6 +1654,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       error,
       clearError,
       setError,
+      autoOn,
+      setAutoOn,
       deepThink,
       setDeepThink,
       searchOn,
@@ -1647,6 +1680,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       toggleSchedule,
       thinking,
       searching,
+      thinkingAuto,
+      searchingAuto,
       streamingId,
       pendingFiles,
       uploadingFile,
@@ -1686,6 +1721,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       clearError,
       clearFollowUpQueue,
       newChatBusy,
+      autoOn,
       composerMode,
       deepThink,
       planDraft,
@@ -1714,8 +1750,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       richLayout,
       searchOn,
       searching,
+      searchingAuto,
       selectThread,
       setActiveWorkspace,
+      setAutoOn,
       setComposerMode,
       setDeepThink,
       setHarnessOn,
@@ -1725,6 +1763,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       stopGeneration,
       streamingId,
       thinking,
+      thinkingAuto,
       threadScheduleJobs,
       togglePlugin,
       toggleSchedule,

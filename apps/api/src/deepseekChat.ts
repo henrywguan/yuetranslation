@@ -28,10 +28,16 @@ export const DeepseekChatMessageSchema = z.object({
 
 export const DeepseekChatBodySchema = z.object({
   messages: z.array(DeepseekChatMessageSchema).min(1).max(DEEPSEEK_CHAT_MESSAGES_MAX),
-  /** DeepThink toggle — default on for DeepSeek hosts. */
-  thinking: z.boolean().optional(),
-  /** Search toggle — native deepseek_web_search / read_url when host supports it. */
-  search: z.boolean().optional(),
+  /**
+   * DeepThink toggle — default on for DeepSeek hosts when boolean/omit.
+   * `'auto'` = server heuristic (token-saving Auto profile).
+   */
+  thinking: z.union([z.boolean(), z.literal('auto')]).optional(),
+  /**
+   * Search toggle — native deepseek_web_search / read_url when host supports it.
+   * `'auto'` = server heuristic (token-saving Auto profile).
+   */
+  search: z.union([z.boolean(), z.literal('auto')]).optional(),
   /** IANA timezone from the browser (temporal grounding). */
   timeZone: z.string().trim().max(80).optional(),
   /** BCP-47 locale hint. */

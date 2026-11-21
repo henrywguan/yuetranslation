@@ -1738,6 +1738,11 @@
   color: var(--ds-blue);
 }
 
+.aui-toggle.is-managed {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
 .aui-status {
   font-size: 0.75rem;
   color: var(--ds-text-3);

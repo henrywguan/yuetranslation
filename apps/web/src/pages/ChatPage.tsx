@@ -101,6 +101,7 @@ import {
   type ChatSkill,
 } from '../lib/chatSkills'
 import {
+  CHAT_AUTO_KEY,
   CHAT_EMPTY_SUGGESTIONS,
   CHAT_RICH_LAYOUT_KEY,
   CHAT_SEARCH_KEY,
@@ -128,6 +129,7 @@ type PendingChatFile = ChatFileMeta & { previewUrl?: string }
 
 const SUGGESTIONS = CHAT_EMPTY_SUGGESTIONS
 
+const AUTO_KEY = CHAT_AUTO_KEY
 const THINK_KEY = CHAT_THINK_KEY
 const SEARCH_KEY = CHAT_SEARCH_KEY
 const RICH_LAYOUT_KEY = CHAT_RICH_LAYOUT_KEY
@@ -597,6 +599,8 @@ function AssistantBody({
   streaming,
   thinking,
   searching,
+  thinkingAuto,
+  searchingAuto,
   thinkStartedAt,
   onOpenArtifact,
 }: {
@@ -604,6 +608,8 @@ function AssistantBody({
   streaming?: boolean
   thinking?: boolean
   searching?: boolean
+  thinkingAuto?: boolean
+  searchingAuto?: boolean
   thinkStartedAt?: number | null
   onOpenArtifact?: (lang: string, source: string) => void
 }) {
@@ -647,9 +653,13 @@ function AssistantBody({
             })
           )
         ) : streaming && searching && !thinking ? (
-          <span className="ds-chat-thinking-line">Searching…</span>
+          <span className="ds-chat-thinking-line">
+            {searchingAuto ? 'Auto · Searching…' : 'Searching…'}
+          </span>
         ) : streaming && thinking ? (
-          <span className="ds-chat-thinking-line">Thinking…</span>
+          <span className="ds-chat-thinking-line">
+            {thinkingAuto ? 'Auto · Thinking…' : 'Thinking…'}
+          </span>
         ) : streaming ? (
           ''
         ) : (
@@ -743,6 +753,11 @@ export function ChatPage() {
   const [streamingId, setStreamingId] = useState<string | null>(null)
   const [thinking, setThinking] = useState(false)
   const [searching, setSearching] = useState(false)
+  const [thinkingAuto, setThinkingAuto] = useState(false)
+  const [searchingAuto, setSearchingAuto] = useState(false)
+  const [autoOn, setAutoOn] = useState(() => readFlag(AUTO_KEY, true))
+  const autoOnRef = useRef(autoOn)
+  autoOnRef.current = autoOn
   const [deepThink, setDeepThink] = useState(() => readFlag(THINK_KEY, true))
   const [searchOn, setSearchOn] = useState(() => readFlag(SEARCH_KEY, false))
   const [richLayout, setRichLayout] = useState(() => readFlag(RICH_LAYOUT_KEY, false))
@@ -1082,6 +1097,8 @@ export function ChatPage() {
     setStreamingId(assistantId)
     setThinking(false)
     setSearching(false)
+    setThinkingAuto(false)
+    setSearchingAuto(false)
     thinkStartedAt.current = null
     setThinkClock(null)
 
@@ -1154,8 +1171,8 @@ export function ChatPage() {
         ? apiMessagesFromThread(thread).filter((m) => m.content.trim())
         : apiMessagesFromThread(thread).filter((m) => m.content.trim())
       await streamDeepseekChat(wireMessages, {
-        thinking: deepThink,
-        search: searchOn,
+        thinking: autoOnRef.current ? 'auto' : deepThink,
+        search: autoOnRef.current ? 'auto' : searchOn,
         harness: harnessOnRef.current,
         workspace: harnessOnRef.current
           ? workspaceWirePayload(thread.workspace)
@@ -1175,11 +1192,13 @@ export function ChatPage() {
           )
           schedulePaint()
         },
-        onStatus: (status) => {
+        onStatus: (status, meta) => {
           if (status === 'searching') {
             setSearching(true)
+            if (meta?.auto) setSearchingAuto(true)
             return
           }
+          if (meta?.auto) setThinkingAuto(true)
           markThinking()
         },
         onReasoning: (delta) => {
@@ -1332,6 +1351,8 @@ export function ChatPage() {
       setStreamingId(null)
       setThinking(false)
       setSearching(false)
+      setThinkingAuto(false)
+      setSearchingAuto(false)
       setBusy(false)
       busyRef.current = false
       setThinkClock(null)
@@ -1933,6 +1954,8 @@ export function ChatPage() {
                       streaming={isLive}
                       thinking={isLive && thinking}
                       searching={isLive && searching}
+                      thinkingAuto={isLive && thinkingAuto}
+                      searchingAuto={isLive && searchingAuto}
                       thinkStartedAt={isLive ? thinkClock : null}
                       onOpenArtifact={openArtifactFromFence}
                     />
@@ -1991,11 +2014,33 @@ export function ChatPage() {
             <div className="ds-chat-toggles">
               <button
                 type="button"
-                className={`ds-chat-toggle${deepThink ? ' is-on' : ''}`}
-                aria-pressed={deepThink}
+                className={`ds-chat-toggle${autoOn ? ' is-on' : ''}`}
+                aria-pressed={autoOn}
+                title="Auto — pick DeepThink / Search per turn (saves tokens)"
                 onClick={() => {
-                  setDeepThink((v) => {
+                  setAutoOn((v) => {
                     const next = !v
+                    writeFlag(AUTO_KEY, next)
+                    return next
+                  })
+                }}
+              >
+                Auto
+              </button>
+              <button
+                type="button"
+                className={`ds-chat-toggle${autoOn ? ' is-managed' : ''}${!autoOn && deepThink ? ' is-on' : ''}`}
+                aria-pressed={autoOn ? false : deepThink}
+                title={
+                  autoOn
+                    ? 'Managed by Auto — click to force DeepThink and exit Auto'
+                    : 'DeepThink'
+                }
+                onClick={() => {
+                  writeFlag(AUTO_KEY, false)
+                  setAutoOn(false)
+                  setDeepThink((v) => {
+                    const next = autoOn ? true : !v
                     writeFlag(THINK_KEY, next)
                     return next
                   })
@@ -2006,12 +2051,18 @@ export function ChatPage() {
               </button>
               <button
                 type="button"
-                className={`ds-chat-toggle${searchOn ? ' is-on' : ''}`}
-                aria-pressed={searchOn}
-                title="Search + DeepThink = deep thinking search"
+                className={`ds-chat-toggle${autoOn ? ' is-managed' : ''}${!autoOn && searchOn ? ' is-on' : ''}`}
+                aria-pressed={autoOn ? false : searchOn}
+                title={
+                  autoOn
+                    ? 'Managed by Auto — click to force Search and exit Auto'
+                    : 'Search + DeepThink = deep thinking search'
+                }
                 onClick={() => {
+                  writeFlag(AUTO_KEY, false)
+                  setAutoOn(false)
                   setSearchOn((v) => {
-                    const next = !v
+                    const next = autoOn ? true : !v
                     writeFlag(SEARCH_KEY, next)
                     return next
                   })

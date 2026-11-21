@@ -446,10 +446,23 @@ type ComposerChromeProps = {
 
 /** Live mode / busy chips — placement follows companion dock (bar above composer, stage above portrait). */
 function ComposerStatusCluster({ placement }: { placement: 'bar' | 'stage' }) {
-  const { thinking, searching, composerMode, busy } = useChatAuiSession()
+  const { thinking, searching, thinkingAuto, searchingAuto, composerMode, busy } =
+    useChatAuiSession()
   const chips: ReactNode[] = []
-  if (thinking) chips.push(<span key="thinking" className="aui-status">Thinking…</span>)
-  if (searching) chips.push(<span key="searching" className="aui-status">Searching…</span>)
+  if (thinking) {
+    chips.push(
+      <span key="thinking" className="aui-status">
+        {thinkingAuto ? 'Auto · Thinking…' : 'Thinking…'}
+      </span>,
+    )
+  }
+  if (searching) {
+    chips.push(
+      <span key="searching" className="aui-status">
+        {searchingAuto ? 'Auto · Searching…' : 'Searching…'}
+      </span>,
+    )
+  }
   if (composerMode === 'ask') {
     chips.push(
       <span key="ask" className="aui-status">
@@ -498,6 +511,8 @@ function ComposerChrome({
   const [toolsExpanded, setToolsExpanded] = useState(() => readChatToolsExpanded())
   const inbox = useChatInboxContextOptional()
   const {
+    autoOn,
+    setAutoOn,
     deepThink,
     setDeepThink,
     searchOn,
@@ -641,8 +656,7 @@ function ComposerChrome({
   }
 
   const toolsOnCount =
-    Number(deepThink) +
-    Number(searchOn) +
+    (autoOn ? 1 : Number(deepThink) + Number(searchOn)) +
     Number(harnessOn) +
     Number(richLayout) +
     enabledPlugins.length
@@ -802,19 +816,41 @@ function ComposerChrome({
         <div className="aui-composer-toggles" id="aui-tools-panel" aria-label="Tools">
           <button
             type="button"
-            className={`aui-toggle${deepThink ? ' is-on' : ''}`}
-            aria-pressed={deepThink}
+            className={`aui-toggle${autoOn ? ' is-on' : ''}`}
+            aria-pressed={autoOn}
             disabled={busy}
-            onClick={() => setDeepThink(!deepThink)}
+            title="Auto — pick DeepThink / Search per turn (saves tokens)"
+            onClick={() => setAutoOn(!autoOn)}
+          >
+            Auto
+          </button>
+          <button
+            type="button"
+            className={`aui-toggle${autoOn ? ' is-managed' : ''}${!autoOn && deepThink ? ' is-on' : ''}`}
+            aria-pressed={autoOn ? false : deepThink}
+            aria-disabled={autoOn || busy}
+            disabled={busy}
+            title={
+              autoOn
+                ? 'Managed by Auto — click to force DeepThink and exit Auto'
+                : 'DeepThink'
+            }
+            onClick={() => setDeepThink(autoOn ? true : !deepThink)}
           >
             DeepThink
           </button>
           <button
             type="button"
-            className={`aui-toggle${searchOn ? ' is-on' : ''}`}
-            aria-pressed={searchOn}
+            className={`aui-toggle${autoOn ? ' is-managed' : ''}${!autoOn && searchOn ? ' is-on' : ''}`}
+            aria-pressed={autoOn ? false : searchOn}
+            aria-disabled={autoOn || busy}
             disabled={busy}
-            onClick={() => setSearchOn(!searchOn)}
+            title={
+              autoOn
+                ? 'Managed by Auto — click to force Search and exit Auto'
+                : 'Search'
+            }
+            onClick={() => setSearchOn(autoOn ? true : !searchOn)}
           >
             Search
           </button>

@@ -872,13 +872,15 @@ export type DeepseekChatStreamHandlers = {
   /** Final answer rewrite with inline `[n]` citation chips. */
   onContentReplace?: (text: string) => void
   onReasoning?: (delta: string) => void
-  onStatus?: (status: 'thinking' | 'searching') => void
+  onStatus?: (status: 'thinking' | 'searching', meta?: { auto?: boolean }) => void
   onSources?: (sources: DeepseekChatSource[]) => void
   onSearchStep?: (step: DeepseekChatSearchStep) => void
   onTitle?: (title: string) => void
   onImage?: (image: DeepseekChatImageEvent) => void
-  thinking?: boolean
-  search?: boolean
+  /** DeepThink — boolean force, or `'auto'` for server heuristic. */
+  thinking?: boolean | 'auto'
+  /** Search — boolean force, or `'auto'` for server heuristic. */
+  search?: boolean | 'auto'
   /** Harness mode — workspace tools + prompt nudge. */
   harness?: boolean
   /** Composer Agent / Ask / Plan (Ask & Plan are read-only on the server). */
@@ -1119,8 +1121,8 @@ export async function streamDeepseekChat(
       method: 'POST',
       body: JSON.stringify({
         messages: safeMessages,
-        thinking: handlers.thinking !== false,
-        search: handlers.search === true,
+        thinking: handlers.thinking === 'auto' ? 'auto' : handlers.thinking !== false,
+        search: handlers.search === 'auto' ? 'auto' : handlers.search === true,
         ...(handlers.harness === true ? { harness: true } : null),
         ...(handlers.chatMode === 'ask' || handlers.chatMode === 'plan'
           ? { chatMode: handlers.chatMode }
@@ -1222,6 +1224,7 @@ export async function streamDeepseekChat(
           model?: string
           error?: string
           status?: string
+          auto?: boolean
           sources?: DeepseekChatSource[]
           searchStep?: DeepseekChatSearchStep
           title?: string
@@ -1247,7 +1250,7 @@ export async function streamDeepseekChat(
         lastMeaningfulAt = Date.now()
         if (parsed.error) throw new Error(parsed.error)
         if (parsed.status === 'thinking' || parsed.status === 'searching') {
-          handlers.onStatus?.(parsed.status)
+          handlers.onStatus?.(parsed.status, parsed.auto === true ? { auto: true } : undefined)
         }
         if (parsed.reasoning) {
           handlers.onReasoning?.(sanitizeDeepseekChatVisibleText(parsed.reasoning))
