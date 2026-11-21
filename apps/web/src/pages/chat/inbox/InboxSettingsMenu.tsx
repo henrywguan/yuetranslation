@@ -168,12 +168,13 @@ export function InboxSettingsMenu() {
   }, [open, names, character])
 
   useEffect(() => {
-    if (!open || !menuPos || renaming) return
+    if (!open || !menuPos) return
+    // Initial open only — do not steal focus when rename edit ends (Save/Esc).
     const first = menuRef.current?.querySelector<HTMLButtonElement>(
       'button[role="menuitem"], button[role="menuitemradio"], button',
     )
     first?.focus()
-  }, [open, menuPos, renaming])
+  }, [open, menuPos])
 
   const portalHost =
     typeof document !== 'undefined'
