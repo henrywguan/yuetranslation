@@ -124,6 +124,22 @@ assert.match(
   'Celebrate lists Every / Deep / Frame modes',
 )
 assert.match(settingsMenu, /useChatDeepAvatarCelebrateMode/, 'Celebrate uses persisted mode hook')
+assert.match(settingsMenu, /createPortal/, 'Celebrate/Companion settings portal past sidebar overflow')
+assert.match(settingsMenu, /is-portaled/, 'portaled settings menu class')
+assert.match(settingsMenu, /first\?\.focus\(\)|querySelector.*menuitem/, 'portaled menu focuses first item on open')
+assert.match(settingsMenu, /triggerRef\.current\?\.focus/, 'Esc/dismiss restores focus to cog')
+assert.match(
+  settingsMenu,
+  /inbox-settings-companion[\s\S]*inbox-settings-celebrate/,
+  'Celebrate renders after Companion in the cog menu',
+)
+const settingsInboxCss = readFileSync(join(root, 'pages/chat/inbox/Inbox.css'), 'utf8')
+assert.match(settingsInboxCss, /inbox-settings-menu\.is-portaled/, 'portaled settings CSS')
+assert.match(
+  settingsInboxCss,
+  /\.inbox-settings-menu\.is-portaled[\s\S]*z-index:\s*130/,
+  'portaled settings sits above .ds-chat (120)',
+)
 const inboxShell = readFileSync(join(root, 'pages/chat/inbox/InboxShell.tsx'), 'utf8')
 assert.match(inboxShell, /InboxSettingsMenu/, 'Inbox header mounts settings cog')
 assert.match(inboxShell, /inbox-header-actions/, 'settings sits beside New project +')
@@ -391,6 +407,11 @@ assert.doesNotMatch(avatarSrc, /ChatDeepAvatarCharacterPicker|ChatDeepAvatarBubb
 assert.doesNotMatch(auiCss, /\.aui-avatar-char-picker\b/, 'composer-adjacent character picker CSS removed')
 assert.match(auiCss, /\.aui-deep-avatar-fx\b/, 'fullscreen celebrate overlay styles')
 assert.match(auiCss, /\.aui-deep-avatar-fx-stars\b/, 'canvas star field class')
+assert.match(
+  auiCss,
+  /\.aui-deep-avatar-fx\b[\s\S]*z-index:\s*130/,
+  'celebrate FX above .ds-chat (120) so body portal is visible',
+)
 assert.match(auiCss, /prefers-reduced-motion[\s\S]*aui-deep-avatar-fx/, 'reduced-motion hides fullscreen FX')
 assert.match(
   auiCss,
