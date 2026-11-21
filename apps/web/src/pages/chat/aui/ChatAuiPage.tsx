@@ -42,6 +42,7 @@ import { ChatAuiRuntimeProvider, useChatAuiSession } from './ChatAuiRuntime'
 import { ChatAuiThread } from './ChatAuiThread'
 import { ChatDeepAvatarIntroOverlay } from './ChatDeepAvatarIntro'
 import { ChatReviewRail } from './ChatReviewRail'
+import { ChatWorkspaceBuildConsentGate } from './ChatWorkspaceBuildConsentGate'
 
 const MENU_ICON = (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
@@ -106,6 +107,11 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
     refreshGitDiff,
     gitDiffBusy,
     activeId,
+    workspaceBuildConsentOpen,
+    workspaceBuildConsentHighlight,
+    dismissWorkspaceBuildConsent,
+    acceptWorkspaceLsConsent,
+    notifyWorkspaceFolderBound,
   } = useChatAuiSession()
   const inbox = useChatInboxContext()
   const showWorkspace = harnessOn && workspaceOpen
@@ -235,7 +241,7 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
 
   return (
     <div
-      className={`ds-chat aui-chat${showWorkspace ? ' has-workspace' : ''}${reviewVisible ? ' has-review' : ''}${harnessOn ? ' is-harness' : ''}${sidebarOpen ? ' is-inbox-open' : ' is-inbox-collapsed'}${sidebarResizing ? ' is-inbox-resizing' : ''}`}
+      className={`ds-chat aui-chat${showWorkspace ? ' has-workspace' : ''}${reviewVisible ? ' has-review' : ''}${harnessOn ? ' is-harness' : ''}${sidebarOpen ? ' is-inbox-open' : ' is-inbox-collapsed'}${sidebarResizing ? ' is-inbox-resizing' : ''}${workspaceBuildConsentHighlight ? ' is-ws-consent-pulse' : ''}`}
       style={shellStyle}
       aria-labelledby={titleId}
     >
@@ -342,8 +348,14 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           {harnessOn ? (
             <button
               type="button"
-              className={`ds-chat-icon-btn${workspaceOpen ? ' is-on' : ''}`}
-              aria-label={workspaceOpen ? 'Hide workspace' : 'Show workspace'}
+              className={`ds-chat-icon-btn${workspaceOpen ? ' is-on' : ''}${workspaceBuildConsentHighlight ? ' is-ws-consent-shake' : ''}`}
+              aria-label={
+                workspaceBuildConsentHighlight
+                  ? 'Workspace needs storage consent'
+                  : workspaceOpen
+                    ? 'Hide workspace'
+                    : 'Show workspace'
+              }
               aria-pressed={workspaceOpen}
               onClick={() => setWorkspaceOpen(!workspaceOpen)}
             >
@@ -396,8 +408,15 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           onPromoteToWorkspaces={promoteThreadWorkspace}
           panelWidth={workspacePanelWidth}
           onPanelWidthChange={applyWorkspacePanelWidth}
+          consentHighlight={workspaceBuildConsentHighlight}
         />
       ) : null}
+      <ChatWorkspaceBuildConsentGate
+        open={workspaceBuildConsentOpen}
+        onAcceptLs={acceptWorkspaceLsConsent}
+        onFolderBound={notifyWorkspaceFolderBound}
+        onDismiss={dismissWorkspaceBuildConsent}
+      />
       {/* Companion intro — every #/chat mount (boy / girl by pick); skip dismisses this visit. */}
       <ChatDeepAvatarIntroOverlay />
     </div>

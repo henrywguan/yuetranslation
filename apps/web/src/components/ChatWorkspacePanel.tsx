@@ -47,6 +47,8 @@ type Props = {
   /** Optional live width override from parent shell (keeps main margin in sync). */
   panelWidth?: number
   onPanelWidthChange?: (px: number, persist: boolean) => void
+  /** Agent workspace-write consent gate — red shake pulse on panel chrome. */
+  consentHighlight?: boolean
 }
 
 function previewMime(file: ChatWorkspaceFile): 'html' | 'text' {
@@ -71,6 +73,7 @@ export function ChatWorkspacePanel({
   onPromoteToWorkspaces,
   panelWidth: panelWidthProp,
   onPanelWidthChange,
+  consentHighlight = false,
 }: Props) {
   const files = workspace?.files || []
   const [selectedPath, setSelectedPath] = useState<string | null>(files[0]?.path || null)
@@ -250,7 +253,7 @@ export function ChatWorkspacePanel({
 
   return (
     <aside
-      className={`ds-chat-workspace${sheet ? ' is-sheet' : ''}${resizing ? ' is-resizing' : ''}${previewExpanded ? ' is-preview-expanded' : ''}`}
+      className={`ds-chat-workspace${sheet ? ' is-sheet' : ''}${resizing ? ' is-resizing' : ''}${previewExpanded ? ' is-preview-expanded' : ''}${consentHighlight ? ' is-ws-consent-shake' : ''}`}
       style={panelStyle}
       aria-label="Harness workspace"
     >
