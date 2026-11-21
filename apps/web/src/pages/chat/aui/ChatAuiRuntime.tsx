@@ -59,6 +59,10 @@ import {
 } from '../../../lib/chatInbox'
 import { humanizeThrownError } from '../../../lib/apiError'
 import {
+  isEmptyAgentReplyRecoverableError,
+  summarizeAgentToolWork,
+} from '../../../lib/chatAgentWorkRecovery'
+import {
   looksLikeDeferredSearchTurn,
   looksLikeDeferredToolUse,
   SEARCH_STALL_ERROR,
@@ -789,6 +793,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       let searchSteps: ChatSearchStep[] = []
       let paintTimer: number | null = null
       let needsPaint = false
+      const workspacePathsThisTurn: string[] = []
+      let imagesThisTurn = 0
+      let projectActionsThisTurn = 0
+      let overseerTurn = false
 
       const schedulePaint = () => {
         needsPaint = true
@@ -816,9 +824,22 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         ...t,
         messages: t.messages.filter((m) => m.id !== assistantId),
       })
+      const recoverEmptyFromWork = (): boolean => {
+        const summary = summarizeAgentToolWork({
+          workspacePaths: workspacePathsThisTurn,
+          imageCount: imagesThisTurn,
+          projectActions: projectActionsThisTurn,
+        })
+        if (!summary) return false
+        assembled = summary.slice(0, MAX_CONTENT_CHARS)
+        thread = patchAssistantContent(thread, assistantId, assembled, {
+          reasoning: reasoning || undefined,
+          sources,
+          searchSteps: searchSteps.length ? searchSteps : undefined,
+        })
+        return true
+      }
 
-      let projectActionsThisTurn = 0
-      let overseerTurn = false
       try {
         const wireMessages = apiMessagesFromThread(thread).filter((m) => m.content.trim())
         const inboxState = inboxRef.current?.state
@@ -898,6 +919,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             }
           },
           onWorkspace: (files) => {
+            for (const f of files) {
+              if (f?.path) workspacePathsThisTurn.push(f.path)
+            }
             thread = patchThreadWorkspace(
               thread,
               applyWorkspaceWireUpdate(thread.workspace, files),
@@ -971,6 +995,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             schedulePaint()
           },
           onImage: (image) => {
+            imagesThisTurn += 1
             const md = `\n\n![${image.prompt.slice(0, 80)}](${image.url})`
             if (!assembled.includes(image.url)) {
               assembled = `${assembled}${md}`.slice(0, MAX_CONTENT_CHARS)
@@ -1018,6 +1043,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         })
         flushPaint()
         assembled = sanitizeDeepseekChatVisibleText(assembled).slice(0, MAX_CONTENT_CHARS)
+        if (!assembled.trim()) {
+          // Agent tools often land workspace files before a final prose bubble.
+          // Prefer a durable summary over a false "No reply" + concern mood.
+          recoverEmptyFromWork()
+        }
         if (!avatarReacted && assembled.trim()) {
           const inferred = inferChatDeepAvatarMoodFromText(assembled)
           if (inferred) requestChatDeepAvatarReact(inferred)
@@ -1069,15 +1099,25 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         flushPaint()
         liveTts?.stop()
         if ((err as Error)?.name === 'AbortError') {
-          if (!assembled.trim()) thread = dropEmpty(thread)
+          if (!assembled.trim() && !recoverEmptyFromWork()) thread = dropEmpty(thread)
           persist(thread)
         } else {
-          setError(humanizeThrownError(err))
-          thread = {
-            ...thread,
-            messages: thread.messages.filter((m) => m.id !== assistantId || m.content.trim()),
+          const message = humanizeThrownError(err)
+          if (
+            !assembled.trim() &&
+            isEmptyAgentReplyRecoverableError(message) &&
+            recoverEmptyFromWork()
+          ) {
+            // Tools already wrote files / images — keep the recovery bubble, no red banner.
+            persist(thread)
+          } else {
+            setError(message)
+            thread = {
+              ...thread,
+              messages: thread.messages.filter((m) => m.id !== assistantId || m.content.trim()),
+            }
+            persist(thread)
           }
-          persist(thread)
         }
       } finally {
         if (paintTimer != null) window.clearTimeout(paintTimer)

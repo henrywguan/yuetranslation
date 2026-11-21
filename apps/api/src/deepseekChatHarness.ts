@@ -49,6 +49,7 @@ import {
   type ChatWorkspaceFileWire,
   type ChatWorkspaceStore,
 } from './deepseekChatWorkspace.js'
+import { summarizeHarnessToolWork } from './deepseekChatWorkRecovery.js'
 
 export { DEEPSEEK_CHAT_MAX_TOOL_ROUNDS }
 
@@ -635,6 +636,10 @@ export async function* streamDeepseekChatHarness(
     ? createWorkspaceStore(opts.workspaceFiles)
     : undefined
   const pendingWorkspaceWrites: ChatWorkspaceFileWire[] = []
+  /** Paths written this turn — used if the model ends with empty final text. */
+  const writtenWorkspacePaths: string[] = []
+  let imagesEmitted = 0
+  let projectActionsEmitted = 0
   const projectStore = projectAttached
     ? createProjectStore({
         projectId,
@@ -682,6 +687,25 @@ export async function* streamDeepseekChatHarness(
   const allSources = new Map<string, string>()
   const pendingImages: Array<{ url: string; prompt: string; id: string }> = []
   const pendingAvatar: Array<{ action: 'list' | 'play' | 'react'; mood?: string }> = []
+
+  const yieldEmptyFinalRecovery = function* (): Generator<
+    { kind: 'content_replace'; text: string },
+    boolean,
+    unknown
+  > {
+    const summary = summarizeHarnessToolWork({
+      workspacePaths: writtenWorkspacePaths,
+      imageCount: imagesEmitted,
+      projectActions: projectActionsEmitted,
+      toolsUsed: clientToolsUsed,
+    })
+    if (!summary) return false
+    console.warn(
+      '[deepseek-chat] empty-final recovery: tools landed work without a visible reply',
+    )
+    yield { kind: 'content_replace', text: summary }
+    return true
+  }
 
   for (let round = 0; round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS; round += 1) {
     if (opts.signal?.aborted) {
@@ -873,9 +897,11 @@ export async function* streamDeepseekChatHarness(
             },
             onWorkspaceWrite: (file) => {
               pendingWorkspaceWrites.push(file)
+              if (file?.path) writtenWorkspacePaths.push(file.path)
             },
             onProjectActions: (actions) => {
               pendingProjectActions.push(...actions)
+              projectActionsEmitted += actions.length
             },
             onSandboxActivity: (activity) => {
               pendingSandboxActivity.push(activity)
@@ -890,6 +916,7 @@ export async function* streamDeepseekChatHarness(
       }
       while (pendingImages.length) {
         const image = pendingImages.shift()!
+        imagesEmitted += 1
         yield { kind: 'image', ...image }
       }
       while (pendingAvatar.length) {
@@ -999,6 +1026,22 @@ export async function* streamDeepseekChatHarness(
       }
     }
 
+    // Tools (workspace_write / images / project_*) succeeded but the model returned
+    // no final prose — synthesize a durable bubble instead of an empty turn.
+    if (!sanitizeDeepseekChatVisibleText(assistantContent).trim()) {
+      const recovered = yield* yieldEmptyFinalRecovery()
+      if (recovered) {
+        // Sources still useful below; skip citation rewrite on synthetic text.
+        if (allSources.size) {
+          yield {
+            kind: 'sources',
+            sources: [...allSources.entries()].map(([url, title]) => ({ url, title })),
+          }
+        }
+        return
+      }
+    }
+
     // Final answer: inject `[n]` markers once annotations are available.
     // Sources emitted here MUST match chip order (`sources[n-1]` ↔ `[n]`).
     let orderedSources: { url: string; title: string }[] | null = null
@@ -1037,6 +1080,9 @@ export async function* streamDeepseekChatHarness(
     }
     return
   }
+
+  // Cap: every round ended in tool_calls — still surface what landed.
+  yield* yieldEmptyFinalRecovery()
 }
 
 export async function generateDeepseekChatHarnessReply(

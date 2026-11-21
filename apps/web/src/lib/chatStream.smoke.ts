@@ -24,6 +24,8 @@ assert.match(chat, /canUseDeepseekChat/, 'Chat gate shares canUseDeepseekChat he
 assert.match(chat, /requestAnimationFrame\(stickMessagesToBottom\)/, 'Stream paints stick scroll via rAF')
 assert.match(chat, /slice\(-LIVE_REASONING_PAINT\)/, 'Live reasoning panel paints a shared tail only')
 assert.match(chat, /dropEmptyAssistant/, 'Empty assistant cleanup is shared on abort/empty reply')
+assert.match(chat, /summarizeAgentToolWork|recoverEmptyFromWork/, 'Empty reply recovers when Agent tools landed work')
+assert.match(chat, /workspacePathsThisTurn/, 'Classic tracks workspace writes for empty-reply recovery')
 
 // No persist inside onDelta / onReasoning bodies (disk only at stream end / abort).
 const onReasoningBlock = chat.match(/onReasoning:\s*\([^)]*\)\s*=>\s*\{[\s\S]*?\n\s*\},/)
