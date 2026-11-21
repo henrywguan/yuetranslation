@@ -7,11 +7,46 @@ import {
   isIosHomescreenTipDismissed,
   shouldOfferIosHomescreenGuide,
 } from '../lib/pwaInstall'
-import { biPlain, ui } from '../lib/uiCopy'
+import type { PwaManifestVariant } from '../lib/pwaManifestLink'
+import { pwaManifestVariantForRoute } from '../lib/pwaManifestLink'
+import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
+import { useRoute } from '../lib/useHashRoute'
 import './iosHomescreen.css'
 
 const TIP_DELAY_MS = 4500
+
+function publicAsset(path: string): string {
+  return `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`.replace(/\/{2,}/g, '/')
+}
+
+function homescreenCopy(variant: PwaManifestVariant): {
+  tipTitle: Bi
+  tipBody: Bi
+  step1: Bi
+  step3: Bi
+  iconSrc: string
+  iconLabel: string
+} {
+  if (variant === 'chat') {
+    return {
+      tipTitle: ui.iosHomescreenTipTitleChat,
+      tipBody: ui.iosHomescreenTipBodyChat,
+      step1: ui.iosHomescreenStep1Chat,
+      step3: ui.iosHomescreenStep3Chat,
+      iconSrc: publicAsset('apple-touch-icon-chat.png'),
+      iconLabel: 'DeepSeek Chat',
+    }
+  }
+  return {
+    tipTitle: ui.iosHomescreenTipTitle,
+    tipBody: ui.iosHomescreenTipBody,
+    step1: ui.iosHomescreenStep1,
+    step3: ui.iosHomescreenStep3,
+    iconSrc: publicAsset('apple-touch-icon.png'),
+    iconLabel: 'JyutTranslate',
+  }
+}
 
 /** iOS Share (square.and.arrow.up) — arrow rises out of the tray, not into it. */
 function IosShareGlyph({ className }: { className?: string }) {
@@ -89,7 +124,8 @@ function ShareSheetAddRow() {
   )
 }
 
-function HomescreenSteps() {
+function HomescreenSteps({ variant = 'app' }: { variant?: PwaManifestVariant }) {
+  const copy = homescreenCopy(variant)
   return (
     <ol className="ios-hs-steps">
       <li className="ios-hs-step">
@@ -97,7 +133,7 @@ function HomescreenSteps() {
           <IosShareGlyph />
         </span>
         <div className="ios-hs-step-body">
-          <BiText copy={ui.iosHomescreenStep1} size="sm" hideJp />
+          <BiText copy={copy.step1} size="sm" hideJp />
         </div>
       </li>
       <li className="ios-hs-step ios-hs-step--with-sheet">
@@ -114,16 +150,16 @@ function HomescreenSteps() {
           3
         </span>
         <div className="ios-hs-step-body">
-          <BiText copy={ui.iosHomescreenStep3} size="sm" hideJp />
+          <BiText copy={copy.step3} size="sm" hideJp />
           <div className="ios-hs-home-preview" aria-hidden="true">
             <img
               className="ios-hs-home-preview-icon"
-              src={`${import.meta.env.BASE_URL}apple-touch-icon.png`.replace(/\/{2,}/g, '/')}
+              src={copy.iconSrc}
               alt=""
               width={48}
               height={48}
             />
-            <span className="ios-hs-home-preview-label">JyutTranslate</span>
+            <span className="ios-hs-home-preview-label">{copy.iconLabel}</span>
           </div>
         </div>
       </li>
@@ -134,11 +170,18 @@ function HomescreenSteps() {
 type GuideDialogProps = {
   open: boolean
   onClose: () => void
+  /** Which Home Screen package the steps describe. */
+  variant?: PwaManifestVariant
 }
 
 /** Modal instructions — used from account hub / footer. */
-export function IosHomescreenGuideDialog({ open, onClose }: GuideDialogProps) {
+export function IosHomescreenGuideDialog({
+  open,
+  onClose,
+  variant = 'app',
+}: GuideDialogProps) {
   const titleId = useId()
+  const copy = homescreenCopy(variant)
 
   useEffect(() => {
     if (!open) return
@@ -189,9 +232,9 @@ export function IosHomescreenGuideDialog({ open, onClose }: GuideDialogProps) {
               </button>
             </header>
             <p className="ios-hs-dialog-lead">
-              <BiText copy={ui.iosHomescreenTipBody} size="sm" hideJp />
+              <BiText copy={copy.tipBody} size="sm" hideJp />
             </p>
-            <HomescreenSteps />
+            <HomescreenSteps variant={variant} />
             <button type="button" className="ios-hs-dialog-done" onClick={onClose}>
               <BiText copy={ui.iosHomescreenGotIt} size="sm" hideJp />
             </button>
@@ -208,6 +251,9 @@ export function IosHomescreenGuideDialog({ open, onClose }: GuideDialogProps) {
  * and never again after dismiss.
  */
 export function IosHomescreenTip() {
+  const route = useRoute()
+  const variant = pwaManifestVariantForRoute(route)
+  const copy = homescreenCopy(variant)
   const [eligible, setEligible] = useState(false)
   const [visible, setVisible] = useState(false)
   const [expanded, setExpanded] = useState(false)
@@ -243,11 +289,11 @@ export function IosHomescreenTip() {
           <div className="ios-hs-tip-main">
             <div className="ios-hs-tip-copy">
               <p id={tipId} className="ios-hs-tip-title">
-                <BiText copy={ui.iosHomescreenTipTitle} size="sm" hideJp />
+                <BiText copy={copy.tipTitle} size="sm" hideJp />
               </p>
               {!expanded ? (
                 <p className="ios-hs-tip-body">
-                  <BiText copy={ui.iosHomescreenTipBody} size="sm" hideJp />
+                  <BiText copy={copy.tipBody} size="sm" hideJp />
                 </p>
               ) : null}
             </div>
@@ -275,7 +321,7 @@ export function IosHomescreenTip() {
               </button>
             </div>
           </div>
-          {expanded ? <HomescreenSteps /> : null}
+          {expanded ? <HomescreenSteps variant={variant} /> : null}
         </motion.aside>
       ) : null}
     </AnimatePresence>
