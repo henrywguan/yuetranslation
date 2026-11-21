@@ -802,6 +802,12 @@ assert.equal(
 assert.equal(chatDeepAvatarMoodAssetStem('proud'), 'proud')
 assert.equal(chatDeepAvatarMoodAssetStem('eureka'), 'eureka')
 assert.equal(chatDeepAvatarMoodAssetStem('celebrate'), 'celebrate')
+assert.equal(chatDeepAvatarMoodAssetStem('sleepy'), 'sleepy')
+assert.notEqual(
+  chatDeepAvatarMoodSrc('boy', 'eureka'),
+  chatDeepAvatarMoodSrc('boy', 'celebrate'),
+  'eureka must not collapse to celebrate GIF',
+)
 assert.equal(
   chatDeepAvatarMoodSrc('boy', 'proud'),
   '/chat-avatar/boy/deep-proud.gif',
@@ -810,6 +816,27 @@ assert.equal(
   chatDeepAvatarMoodSrc('girl', 'eureka'),
   '/chat-avatar/girl/deep-eureka.gif',
 )
+assert.equal(
+  chatDeepAvatarMoodSrc('boy', 'sleepy'),
+  '/chat-avatar/boy/deep-sleepy.gif',
+)
+assert.match(
+  avatarSrc,
+  /consumeChatDeepAvatarOutroSuppression/,
+  'tool play/react suppresses natural celebrate outro',
+)
+assert.match(
+  avatarSrc,
+  /softOutroVisible/,
+  'soft moods beat speak/TTS so sleepy GIFs paint',
+)
+assert.match(
+  avatarSrc,
+  /is-cheer|is-soft/,
+  'fullscreen FX distinguishes cheer vs soft moods',
+)
+assert.match(auiCss, /\.aui-deep-avatar-fx\.is-soft\b/, 'soft FX wash styles')
+assert.match(audioSrc, /chatDeepAvatarSfxEnergy|\/sfx\/\$\{energy\}/, 'SFX routes by energy class')
 assert.match(runtimeSrc, /markChatDeepAvatarPlanBuild/, 'Plan→Build latches deep celebrate')
 assert.match(runtimeSrc, /setChatDeepAvatarPlanBuildChainBusy/, 'Plan→Build gates Overseer→worker chain')
 assert.match(runtimeSrc, /settleChatDeepAvatarPlanBuild/, 'Plan→Build settles Deep credit when chain idles')
@@ -880,8 +907,14 @@ for (const character of ['boy', 'girl'] as const) {
 }
 assert.ok(existsSync(join(root, '../public/chat-avatar/sfx/celebrate.mp3')), 'shared celebrate sfx')
 assert.ok(existsSync(join(root, '../public/chat-avatar/sfx/fist.mp3')), 'shared fist sfx')
+assert.ok(existsSync(join(root, '../public/chat-avatar/sfx/soft.mp3')), 'soft energy sfx')
+assert.ok(existsSync(join(root, '../public/chat-avatar/sfx/cheer.mp3')), 'cheer energy sfx')
+assert.ok(existsSync(join(root, '../public/chat-avatar/sfx/hype.mp3')), 'hype energy sfx')
+assert.ok(existsSync(join(root, '../public/chat-avatar/boy/vo/sleepy.mp3')), 'boy sleepy VO')
+assert.ok(existsSync(join(root, '../public/chat-avatar/boy/vo/eureka.mp3')), 'boy eureka VO')
 assert.equal(chatDeepAvatarMoodAssetStem('bow'), 'bow')
 assert.equal(chatDeepAvatarMoodAssetStem('fist'), 'fist')
+assert.equal(chatDeepAvatarMoodAssetStem('sleepy'), 'sleepy')
 assert.match(
   readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8'),
   /onAvatar|requestChatDeepAvatarPlay/,

@@ -3,8 +3,10 @@
  * Characters: DS Boy / DS Girl under `apps/web/public/chat-avatar/{boy,girl}/`
  * (Higgsfield gpt_image_2_6, 720² transparent loops ≈ 3× hero CSS).
  *
- * Moods: idle / think / listen / speak / happy / celebrate / proud / eureka / concern.
- * `proud` / `eureka` ship dedicated GIFs (Ask/short win · Search/research finish).
+ * Moods: idle / think / listen / speak / happy / celebrate / proud / eureka / concern
+ * plus performance clips (bow / fist / wave / nod / relieved / sleepy).
+ * Each mood has its own GIF (+ VO on fullscreen). Soft play/react beats speak/TTS so
+ * sleepy is visible; tool demos suppress the automatic celebrate outro for that turn.
  * TTS lips: amplitude/vowel envelope overlay while Azure or DeepSeek chat TTS plays
  * (not phoneme lip-sync — GIF clip swaps + CSS mouth only).
  *
@@ -75,6 +77,7 @@ import {
 } from '../../../lib/chatDeepAvatarPersona'
 import {
   clearChatDeepAvatarPlay,
+  consumeChatDeepAvatarOutroSuppression,
   useChatDeepAvatarPlayRequest,
 } from '../../../lib/chatDeepAvatarPlayBus'
 import {
@@ -185,18 +188,19 @@ export function useChatDeepAvatarMood(opts?: ChatDeepAvatarMoodOpts): ChatDeepAv
   const lastPlayId = useRef(0)
   const hasError = Boolean(opts?.error?.trim())
 
-  // Tool / sentiment forced moods latch like outros (in-frame when not fullscreen).
+  // Tool / sentiment forced moods latch like outros.
+  // Always latch in-frame (even when fullscreen) so soft demos survive speak/TTS
+  // priority and reduced-motion / post-FX still show the requested GIF — not celebrate.
   useEffect(() => {
     if (!playReq || playReq.id === lastPlayId.current) return
     lastPlayId.current = playReq.id
     if (hasError) return
-    if (playReq.forceFullscreen) return // FX hook owns the latch
     setOutro(playReq.mood)
-    setDeepFinish(false)
-    const hold = highEnergyAvatarMood(playReq.mood) ? CELEBRATE_MS : HAPPY_MS
+    setDeepFinish(highEnergyAvatarMood(playReq.mood))
+    const hold = highEnergyAvatarMood(playReq.mood) ? CELEBRATE_MS : Math.max(HAPPY_MS, 2600)
     const t = window.setTimeout(() => {
-      setOutro(null)
-      clearChatDeepAvatarPlay(playReq.id)
+      setOutro((cur) => (cur === playReq.mood ? null : cur))
+      if (!playReq.forceFullscreen) clearChatDeepAvatarPlay(playReq.id)
     }, hold)
     return () => window.clearTimeout(t)
   }, [playReq, hasError])
@@ -222,6 +226,7 @@ export function useChatDeepAvatarMood(opts?: ChatDeepAvatarMoodOpts): ChatDeepAv
       // No celebratory outro when the session already shows an error / concern.
       if (hasError) {
         abortChatDeepAvatarPlanBuild()
+        consumeChatDeepAvatarOutroSuppression()
         wasRunning.current = isRunning
         return
       }
@@ -231,6 +236,11 @@ export function useChatDeepAvatarMood(opts?: ChatDeepAvatarMoodOpts): ChatDeepAv
       const planBuild = consumeChatDeepAvatarPlanBuild()
       // Intermediate Overseer/worker turn: skip outro; settle epoch fires deep when chain idles.
       if (wasPlanBuildArmed && !planBuild) {
+        wasRunning.current = isRunning
+        return
+      }
+      // avatar_play / avatar_react already picked the mood — do not overwrite with celebrate.
+      if (consumeChatDeepAvatarOutroSuppression()) {
         wasRunning.current = isRunning
         return
       }
@@ -255,6 +265,7 @@ export function useChatDeepAvatarMood(opts?: ChatDeepAvatarMoodOpts): ChatDeepAv
     if (planBuildSettleEpoch === lastSettleEpoch.current) return
     lastSettleEpoch.current = planBuildSettleEpoch
     if (hasError || isRunning) return
+    if (consumeChatDeepAvatarOutroSuppression()) return
     const clear = latchOutro(setOutro, setDeepFinish, {
       durationMs: CHAT_DEEP_AVATAR_DEEP_MS,
       composerMode: runMeta.current.composerMode,
@@ -277,11 +288,18 @@ export function useChatDeepAvatarMood(opts?: ChatDeepAvatarMoodOpts): ChatDeepAv
 
   const ttsActive = chatTtsPlaying || azureTts || isChatAvatarTtsActive()
 
-  // Display priority can put speak/listen over the outro clip; keep `outro` latched
-  // separately so auto-speak does not cancel fullscreen celebrate.
+  // Soft play/react moods must beat speak/TTS — otherwise sleepy/happy never paint
+  // while auto-speak runs (Henry: “no sleepy GIF”). High-energy outros still defer
+  // to speak on the portrait because CelebrateFx owns the visible clip.
+  const softOutroVisible =
+    outro != null && isChatDeepAvatarOutroMood(outro) && !highEnergyAvatarMood(outro)
+
+  // Display priority: concern → listen → soft outro → speak → high-energy outro → think → idle.
+  // Keep `outro` latched separately so auto-speak does not cancel fullscreen celebrate.
   let mood: ChatDeepAvatarMood = 'idle'
   if (hasError) mood = 'concern'
   else if (listening) mood = 'listen'
+  else if (softOutroVisible && outro) mood = outro
   else if (isRunning || ttsActive) mood = 'speak'
   else if (outro) mood = outro
   else if (!isEmpty && draft.trim().length > 0) mood = 'think'
@@ -777,14 +795,23 @@ export function ChatDeepAvatarCelebrateFx({
 
   if (!open || !mounted || typeof document === 'undefined') return null
 
+  // Soft demos (sleepy / bow / wave…) skip gold stars + cheer wash so they do not
+  // read as the celebrate/hurray path. High-energy keeps the full pop.
+  const cheerFx = highEnergyAvatarMood(mood)
+
   return createPortal(
-    <div className={`aui-deep-avatar-fx is-${phase}`} data-mood={mood} style={flip} role="presentation">
+    <div
+      className={`aui-deep-avatar-fx is-${phase}${cheerFx ? ' is-cheer' : ' is-soft'}`}
+      data-mood={mood}
+      style={flip}
+      role="presentation"
+    >
       <div className="aui-deep-avatar-fx-wash" aria-hidden />
-      <ChatDeepAvatarStarField active={phase !== 'exit'} />
+      {cheerFx ? <ChatDeepAvatarStarField active={phase !== 'exit'} /> : null}
       <button
         type="button"
         className="aui-deep-avatar-fx-scrim"
-        aria-label="Dismiss celebration"
+        aria-label="Dismiss companion performance"
         onClick={onDismiss}
       />
       <div className="aui-deep-avatar-fx-stage" aria-hidden>
@@ -872,6 +899,8 @@ export function useChatDeepAvatarCelebrateFx(opts: {
   ])
 
   // Tool demos / high-energy reacts — always fullscreen unless reduced-motion.
+  // Reduced-motion keeps the in-frame latch from the mood hook (do not clear play
+  // before the portrait can show sleepy/eureka/etc.).
   useEffect(() => {
     if (!playReq || playReq.id === lastForcedPlayId.current) return
     if (!playReq.forceFullscreen) return
@@ -888,7 +917,7 @@ export function useChatDeepAvatarCelebrateFx(opts: {
     setSession({
       id: sessionId.current,
       mood: playReq.mood,
-      deepFinish: true,
+      deepFinish: highEnergyAvatarMood(playReq.mood),
     })
   }, [playReq, reduceMotion])
 

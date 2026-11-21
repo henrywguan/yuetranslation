@@ -10,7 +10,11 @@ import {
   type ChatDeepAvatarCharacterId,
   type ChatDeepAvatarMood,
 } from './chatDeepAvatarCharacter'
-import { readChatDeepAvatarSoundEnabled } from './chatDeepAvatarPersona'
+import {
+  highEnergyAvatarMood,
+  normalizeChatDeepAvatarShowcaseMood,
+  readChatDeepAvatarSoundEnabled,
+} from './chatDeepAvatarPersona'
 
 /** Best-effort unlock without importing `tts.ts` (keeps smokes free of Vite `import.meta`). */
 function unlockAudioPlayback() {
@@ -43,23 +47,30 @@ const SFX_DIR = '/chat-avatar/sfx'
 
 export type ChatDeepAvatarAudioEnergy = 'soft' | 'cheer' | 'hype'
 
+/**
+ * Energy class for the SFX bed. Per-mood mp3 files were often identical stand-ins;
+ * route through soft / cheer / hype so eureka does not share the celebrate bed.
+ */
+export function chatDeepAvatarSfxEnergy(mood: ChatDeepAvatarMood | string): ChatDeepAvatarAudioEnergy {
+  const id = normalizeChatDeepAvatarShowcaseMood(mood, 'idle')
+  if (id === 'celebrate') return 'cheer'
+  if (id === 'eureka' || id === 'fist' || id === 'proud') return 'hype'
+  if (highEnergyAvatarMood(id)) return 'cheer'
+  return 'soft'
+}
+
 export function chatDeepAvatarSfxSrc(mood: ChatDeepAvatarMood | string): string {
-  const id = String(mood || 'celebrate')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]/g, '')
-  return `${SFX_DIR}/${id || 'celebrate'}.mp3`
+  // Prefer energy-class beds so distinct moods do not collapse to one cheer whoosh.
+  const energy = chatDeepAvatarSfxEnergy(mood)
+  return `${SFX_DIR}/${energy}.mp3`
 }
 
 export function chatDeepAvatarVoSrc(
   character: ChatDeepAvatarCharacterId,
   mood: ChatDeepAvatarMood | string,
 ): string {
-  const id = String(mood || 'celebrate')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]/g, '')
-  return `${CHAT_DEEP_AVATAR_DIR[character]}/vo/${id || 'celebrate'}.mp3`
+  const id = normalizeChatDeepAvatarShowcaseMood(mood, 'celebrate')
+  return `${CHAT_DEEP_AVATAR_DIR[character]}/vo/${id}.mp3`
 }
 
 type PlayOpts = {

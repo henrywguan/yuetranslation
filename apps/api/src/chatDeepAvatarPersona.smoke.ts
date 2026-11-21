@@ -18,6 +18,15 @@ assert.equal(isChatDeepAvatarMoodId('fist'), true)
 assert.equal(isChatDeepAvatarMoodId('nope'), false)
 assert.equal(normalizeChatDeepAvatarMoodId('BOW'), 'bow')
 assert.equal(normalizeChatDeepAvatarMoodId('???'), 'celebrate')
+assert.equal(normalizeChatDeepAvatarMoodId('eureka!'), 'eureka')
+assert.equal(normalizeChatDeepAvatarMoodId('Hooray'), 'celebrate')
+assert.equal(normalizeChatDeepAvatarMoodId('zzz'), 'sleepy')
+assert.equal(normalizeChatDeepAvatarMoodId('sleep'), 'sleepy')
+assert.equal(normalizeChatDeepAvatarMoodId('aha'), 'eureka')
+assert.ok(isChatDeepAvatarMoodId('sleepy'))
+assert.ok(isChatDeepAvatarMoodId('eureka!'))
+assert.ok(isChatDeepAvatarMoodId('zzz'))
+assert.equal(isChatDeepAvatarMoodId('nope'), false)
 
 const block = buildChatDeepAvatarPersonaPromptBlock({
   character: 'boy',
