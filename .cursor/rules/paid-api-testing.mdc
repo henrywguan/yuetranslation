@@ -1,0 +1,22 @@
+---
+description: Cloud paid DeepSeek/Azure — allowed for testing/Bugbot without per-call re-ask
+alwaysApply: true
+---
+
+# Paid API testing (cloud only)
+
+Applies **only** to Cursor Cloud agent testing. Does **not** restrict Henry’s local use of DeepSeek or Azure.
+
+Full detail: **`AGENTS.md` → Paid / external API usage (cloud testing only)**.
+
+## Allowed without re-asking
+
+Testing / Bugbot uses of DeepSeek + Azure when needed to verify a fix — including `#/chat` debugging & repro, Ask/Agent stream smokes, Bugbot / quality-bot live-model cases, and live translate/STT/TTS/Vision paths (e.g. `test:translate:live`) for that purpose.
+
+## Still ask first
+
+- Social / Higgsfield / Recordly **demo shoots** that bill `/api/tts` or metered paths for content production
+- Large-scale cost burn
+- Anything outside testing / Bugbot
+
+Free paths (health, `smoke:canto`, lexicon-only, lint/tsc, local Vite/API) stay always-OK.

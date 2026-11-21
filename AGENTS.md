@@ -108,16 +108,20 @@ For **all** future social, Higgsfield, Recordly, or instructional demo work that
 
 This rule applies **only** to Cursor Cloud agent testing. It does **not** restrict Henry’s local use of DeepSeek or Azure.
 
-Do **not** call DeepSeek, Azure Speech, Azure Vision, Cam Documents OCR/translate paths that hit paid APIs, or other metered providers unless Henry has **explicitly allowed that specific request** in the current turn.
+**Allowed without re-asking** (testing / Bugbot — no per-call confirmation):
 
-Before each outbound cloud-agent call that would use those keys (including `curl` to `/api/translate` when it would miss phrase/lexicon, `/api/tts`, `/api/speech-token`, `/api/camera/scan`, `/api/docs/*` when it bills Vision/model, live mic STT, quality-bot cases that require OpenAI, etc.):
+- `#/chat` / DeepSeek chat debugging & repro (Ask/Agent streams, tool loops, hang fixes)
+- Bugbot / quality-bot cases that need a live model
+- Smoke of Ask/Agent streams and other **testing/Bugbot** uses of DeepSeek + Azure when needed to verify a fix
+- Live translate/STT/TTS/Vision paths (including `npm run test:translate`, `npm run test:translate:live`, `/api/translate` model misses, `/api/tts`, `/api/speech-token`, camera/docs that bill Vision/model, live mic STT) **when** the call is part of testing or Bugbot verification
 
-1. Ask Henry for confirmation
-2. Name the exact endpoint / action and why
-3. Wait for a clear yes for **that** request
-4. Do not batch “blanket forever” permission — ask again for the next call
+**Still ask first** (content production / cost burn / out of scope):
 
-Allowed without asking (cloud):
+- Social / Higgsfield / Recordly demo shoots that bill `/api/tts` or other metered paths for content production (see **Social / Higgsfield / Recordly demos — auto-speak** above)
+- Large-scale cost burn (bulk sweeps, long unattended loops, mass generation)
+- Anything outside testing / Bugbot
+
+Always-free without asking (cloud):
 
 - `/api/health` (readiness only)
 - `npm run security:api-health` (health + auth-config shape only)
@@ -126,7 +130,7 @@ Allowed without asking (cloud):
 - Local Vite / Express process management
 - Lint / `tsc`
 
-If unsure whether a cloud command would bill DeepSeek or Azure — **ask first**.
+If unsure whether a cloud command is testing/Bugbot vs content production or large-scale burn — **ask first**. Cursor rule: [`.cursor/rules/paid-api-testing.mdc`](.cursor/rules/paid-api-testing.mdc).
 
 ### Dev servers (fixed ports)
 
@@ -146,7 +150,7 @@ npm run security:api-health
 npm run smoke:canto
 ```
 
-Do **not** run `npm run test:translate`, `npm run test:translate:live`, or any live translate/STT/TTS/Vision that can hit DeepSeek/Azure unless Henry approved that run.
+For live translate/STT/TTS/Vision that can hit DeepSeek/Azure (`npm run test:translate`, `npm run test:translate:live`, etc.): OK without re-asking when doing **testing/Bugbot**; still ask for content-production shoots or large-scale burn (see paid-API section above).
 
 In DEV, `window.__yueStore` is exposed for seeding UI state from the console.
 
