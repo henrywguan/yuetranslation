@@ -9,7 +9,7 @@ import {
   useMessagePartReasoning,
   useMessagePartText,
 } from '@assistant-ui/react'
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { ChatDictateButton } from '../../../components/ChatDictateButton'
 import { ChatPluginKeysModal } from '../../../components/ChatPluginKeysModal'
 import { ChatSourcesList } from '../../../components/ChatShellExtras'
@@ -444,6 +444,40 @@ type ComposerChromeProps = {
   dimPortrait: boolean
 }
 
+/** Live mode / busy chips — placement follows companion dock (bar above composer, stage above portrait). */
+function ComposerStatusCluster({ placement }: { placement: 'bar' | 'stage' }) {
+  const { thinking, searching, composerMode, busy } = useChatAuiSession()
+  const chips: ReactNode[] = []
+  if (thinking) chips.push(<span key="thinking" className="aui-status">Thinking…</span>)
+  if (searching) chips.push(<span key="searching" className="aui-status">Searching…</span>)
+  if (composerMode === 'ask') {
+    chips.push(
+      <span key="ask" className="aui-status">
+        Ask · read-only
+      </span>,
+    )
+  }
+  if (composerMode === 'plan' && busy) {
+    chips.push(
+      <span key="plan-busy" className="aui-status" role="status">
+        Wait for reply…
+      </span>,
+    )
+  } else if (composerMode === 'plan') {
+    chips.push(
+      <span key="plan" className="aui-status">
+        Plan · then Build
+      </span>,
+    )
+  }
+  if (!chips.length) return null
+  return (
+    <div className={`aui-status-cluster is-${placement}`} aria-live="polite">
+      {chips}
+    </div>
+  )
+}
+
 function ComposerChrome({
   dock,
   onToggleDock,
@@ -479,8 +513,6 @@ function ComposerChrome({
     harnessOn,
     setHarnessOn,
     busy,
-    thinking,
-    searching,
     stopGeneration,
     pendingFiles,
     uploadingFile,
@@ -764,17 +796,6 @@ function ComposerChrome({
           ) : null}
           <ToolsChevronIcon size={12} />
         </button>
-        {thinking ? <span className="aui-status">Thinking…</span> : null}
-        {searching ? <span className="aui-status">Searching…</span> : null}
-        {composerMode === 'ask' ? <span className="aui-status">Ask · read-only</span> : null}
-        {composerMode === 'plan' && busy ? (
-          <span className="aui-status" role="status">
-            Wait for reply…
-          </span>
-        ) : null}
-        {composerMode === 'plan' && !busy ? (
-          <span className="aui-status">Plan · then Build</span>
-        ) : null}
       </div>
 
       {toolsExpanded ? (
@@ -1177,6 +1198,7 @@ export function ChatAuiThread() {
             onClick={onToggleDock}
             aria-label="Dock companion to composer"
           >
+            <ComposerStatusCluster placement="stage" />
             <span className="aui-avatar-dock-origin" ref={dockRef}>
               <ChatDeepAvatar
                 mood={portraitMood}
@@ -1242,6 +1264,7 @@ export function ChatAuiThread() {
                 </button>
               </div>
             ) : null}
+            {dock === 'bar' ? <ComposerStatusCluster placement="bar" /> : null}
             <ComposerChrome
               dock={dock}
               onToggleDock={onToggleDock}

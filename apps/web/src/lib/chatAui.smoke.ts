@@ -558,6 +558,34 @@ assert.match(
   'phone soak: stage becomes top strip',
 )
 assert.match(auiCss, /\.aui-composer-body\.is-avatar-staged\b/, 'composer full-width when staged')
+assert.match(thread, /ComposerStatusCluster/, 'status chips extracted for dock-aware placement')
+assert.match(
+  thread,
+  /aui-avatar-stage-toggle[\s\S]*ComposerStatusCluster placement="stage"/,
+  'stage dock: status cluster sits in stage toggle above portrait',
+)
+assert.match(
+  thread,
+  /dock === 'bar' \? <ComposerStatusCluster placement="bar" \/>/,
+  'bar dock: status cluster mounts above composer harness',
+)
+assert.doesNotMatch(
+  thread,
+  /aui-composer-modes[\s\S]*className="aui-status"/,
+  'status chips no longer live in the modes row',
+)
+assert.match(auiCss, /\.aui-status-cluster\.is-bar\b/, 'bar status cluster styles')
+assert.match(auiCss, /\.aui-status-cluster\.is-stage\b/, 'stage status cluster styles')
+assert.match(
+  auiCss,
+  /\.aui-avatar-stage-toggle\s*\{[^}]*flex-direction:\s*column/s,
+  'stage toggle stacks status above avatar',
+)
+assert.match(
+  auiCss,
+  /@media \(max-width: 700px\)[\s\S]*\.aui-status-cluster\.is-stage/,
+  'phone soak: stage status stays readable in top strip',
+)
 assert.match(
   thread,
   /ThreadPrimitive\.ViewportFooter[\s\S]*className="aui-footer"[\s\S]*ComposerChrome/,
