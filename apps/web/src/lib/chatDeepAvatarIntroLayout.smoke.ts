@@ -74,14 +74,17 @@ assert.match(introSrc, /sessionMuted \|\| policyMuted \? 'Unmute'/, 'Mute label 
 assert.doesNotMatch(introSrc, /needsGestureUnmute/, 'old gesture-unmute chip path removed')
 assert.doesNotMatch(introSrc, /aui-deep-avatar-intro-unmute/, 'intro unmute chip class removed')
 assert.match(introSrc, /useChatDeepAvatarSoundEnabled/, 'intro follows Companion Sound')
-assert.match(introSrc, /HOLD at frame 0|hold for gesture|never play.*muted/i, 'Sound-on never plays intro muted')
-assert.match(introSrc, /policyMuted/, 'intro tracks autoplay policy hold')
+assert.match(introSrc, /playMutedMotion|muted motion/i, 'policy block falls back to muted motion')
+assert.doesNotMatch(introSrc, /HOLD at frame 0/, 'no hold-frame-0 wait for Unmute')
+assert.match(introSrc, /removeAttribute\('poster'\)/, 'intro skips poster still')
+assert.match(introSrc, /policyMuted/, 'intro tracks autoplay policy mute')
 assert.match(
   introSrc,
-  /if \(!soundEnabled \|\| sessionMuted\) \{\s*v\.muted = true/s,
-  'mute only for Sound-off or user Mute (policy hold stays unmuted+paused)',
+  /if \(!soundEnabled \|\| sessionMuted \|\| policyMuted\) \{\s*v\.muted = true/s,
+  'mute for Sound-off, user Mute, or policy-silent muted motion',
 )
 assert.match(introSrc, /replaceChildren|createElement\('video'\)/, 'intro mounts video imperatively for prime adopt')
+assert.match(audioSrc, /keepMutedMotion|never hold frame/i, 'prime keeps muted motion when audible unlock fails')
 
 assert.match(auiCss, /\.aui-deep-avatar-intro-video\s*\{[^}]*object-fit:\s*contain/, 'CSS contain fallback')
 assert.doesNotMatch(

@@ -5,10 +5,10 @@
  *
  * Audio follows Companion Sound (default ON). Prefer unmuted playback from the
  * start (`primeChatDeepAvatarIntro` inside `openDeepseekChat`). When the browser
- * blocks unmuted autoplay (direct `#/chat` / hard refresh), HOLD at frame 0 —
- * never play the intro muted while Sound is on. First tap starts unmuted from
- * the beginning (does not dismiss); second tap skips. Mute control reflects
- * actual silence (Unmute while waiting). Tap Mute to silence once audible.
+ * blocks unmuted autoplay (direct `#/chat` / hard refresh), play muted motion
+ * immediately — never hold a static frame / poster that looks like a broken
+ * load. First tap Unmutes from the beginning (does not dismiss); second tap
+ * skips. Mute control reflects actual silence (Unmute while policy-silent).
  *
  * Layout: JS pixel contain (`layoutIntroContainElement`) so the portrait clip
  * FITs every viewport — letterbox on landscape, never cover-crop head/legs.
@@ -21,7 +21,6 @@ import {
 } from '../../../lib/chatDeepAvatarIntroAudio'
 import { layoutIntroContainElement } from '../../../lib/chatDeepAvatarIntroLayout'
 import {
-  chatDeepAvatarIntroPosterSrc,
   chatDeepAvatarIntroSrc,
   shouldPlayChatDeepAvatarIntro,
   type ChatDeepAvatarCharacterId,
@@ -42,12 +41,11 @@ export function ChatDeepAvatarIntroOverlay() {
   const [session, setSession] = useState<{
     character: ChatDeepAvatarCharacterId
     src: string
-    poster: string | null
   } | null>(null)
   const [phase, setPhase] = useState<Phase>('enter')
   /** User tapped Mute on this visit (Sound pref still on). */
   const [sessionMuted, setSessionMuted] = useState(false)
-  /** Browser blocked unmuted autoplay — unlock on next gesture (no dismiss). */
+  /** Browser blocked unmuted autoplay — playing muted until unlock. */
   const [policyMuted, setPolicyMuted] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const stageRef = useRef<HTMLDivElement | null>(null)
@@ -94,6 +92,19 @@ export function ChatDeepAvatarIntroOverlay() {
     setPolicyMuted(on)
   }
 
+  /** Policy-blocked: keep motion with muted play (never freeze on frame 0). */
+  const playMutedMotion = async (v: HTMLVideoElement) => {
+    setPolicyLock(true)
+    v.muted = true
+    try {
+      await v.play()
+      played.current = true
+      setPhase('play')
+    } catch {
+      beginExit()
+    }
+  }
+
   const tryUnlockUnmuted = () => {
     const v = videoRef.current
     if (!v || !wantAudible()) return false
@@ -113,14 +124,7 @@ export function ChatDeepAvatarIntroOverlay() {
         setPolicyLock(false)
       })
       .catch(() => {
-        setPolicyLock(true)
-        try {
-          v.pause()
-          v.currentTime = 0
-        } catch {
-          /* ignore */
-        }
-        v.muted = false
+        void playMutedMotion(v)
       })
     return true
   }
@@ -148,7 +152,6 @@ export function ChatDeepAvatarIntroOverlay() {
     setSession({
       character,
       src,
-      poster: chatDeepAvatarIntroPosterSrc(character),
     })
   }, [character, reducedMotion])
 
@@ -182,11 +185,12 @@ export function ChatDeepAvatarIntroOverlay() {
       v.className = 'aui-deep-avatar-intro-video'
       v.setAttribute('playsinline', '')
       v.setAttribute('webkit-playsinline', '')
-      if (session.poster) v.poster = session.poster
+      v.removeAttribute('poster')
       if (wantAudible() && primed.unmuted) {
         v.muted = false
         setPolicyLock(false)
       } else if (wantAudible()) {
+        // Prime kept muted motion — adopt and wait for Unmute gesture.
         v.muted = true
         setPolicyLock(true)
       } else {
@@ -202,7 +206,8 @@ export function ChatDeepAvatarIntroOverlay() {
       v.setAttribute('webkit-playsinline', '')
       v.preload = 'auto'
       v.src = session.src
-      if (session.poster) v.poster = session.poster
+      // No poster — avoid a static still that looks like a broken / tap-to-start load.
+      v.removeAttribute('poster')
       v.muted = !wantAudible()
       setPolicyLock(false)
     }
@@ -239,6 +244,13 @@ export function ChatDeepAvatarIntroOverlay() {
         return
       }
 
+      // Adopted muted-but-playing prime: keep motion; Unmute on next gesture.
+      if (fromPrime && !v.paused && v.muted) {
+        played.current = true
+        setPolicyLock(true)
+        return
+      }
+
       setPolicyLock(false)
       v.muted = false
       try {
@@ -248,19 +260,8 @@ export function ChatDeepAvatarIntroOverlay() {
         setPolicyLock(false)
       } catch {
         if (cancelled) return
-        // Autoplay with sound blocked — HOLD frame 0 (never play muted while Sound on).
-        setPolicyLock(true)
-        try {
-          v.pause()
-          v.currentTime = 0
-        } catch {
-          /* ignore */
-        }
-        // Keep unmuted intent so the next gesture can start audible play.
-        v.muted = false
-        // Mark "armed" so failSafe does not dismiss while waiting for tap.
-        played.current = true
-        setPhase('play')
+        // Autoplay with sound blocked — play muted motion (never hold frame 0).
+        await playMutedMotion(v)
       }
     }
 
@@ -314,16 +315,15 @@ export function ChatDeepAvatarIntroOverlay() {
     }
   }, [session, reducedMotion])
 
-  // Keep imperative muted flag in sync with Sound pref / user Mute.
-  // While policy-locked we leave muted=false (paused hold) so the next gesture can unlock.
+  // Keep imperative muted flag in sync with Sound pref / user Mute / policy silence.
   useEffect(() => {
     const v = videoRef.current
     if (!v) return
-    if (!soundEnabled || sessionMuted) {
+    if (!soundEnabled || sessionMuted || policyMuted) {
       v.muted = true
       return
     }
-    if (!policyMuted) v.muted = false
+    v.muted = false
   }, [soundEnabled, sessionMuted, policyMuted, session])
 
   // Live Sound toggle / session mute while intro is up.
@@ -334,11 +334,13 @@ export function ChatDeepAvatarIntroOverlay() {
     if (!soundEnabled || sessionMuted) {
       setPolicyLock(false)
       v.muted = true
+      if (v.paused) void v.play().catch(() => {})
       return
     }
     if (policyMutedRef.current) {
-      // Pref flipped back on while waiting — stay held; gesture still required.
-      v.muted = false
+      // Pref on but policy-locked — keep muted motion until gesture Unmute.
+      v.muted = true
+      if (v.paused) void v.play().catch(() => {})
       return
     }
     if (v.muted) {
@@ -349,14 +351,7 @@ export function ChatDeepAvatarIntroOverlay() {
           setPolicyLock(false)
         })
         .catch(() => {
-          setPolicyLock(true)
-          try {
-            v.pause()
-            v.currentTime = 0
-          } catch {
-            /* ignore */
-          }
-          v.muted = false
+          void playMutedMotion(v)
         })
     }
   }, [session, reducedMotion, soundEnabled, sessionMuted])
@@ -444,8 +439,7 @@ export function ChatDeepAvatarIntroOverlay() {
       setPolicyLock(false)
       v.muted = false
       void v.play().catch(() => {
-        setPolicyLock(true)
-        v.muted = true
+        void playMutedMotion(v)
       })
     }
   }

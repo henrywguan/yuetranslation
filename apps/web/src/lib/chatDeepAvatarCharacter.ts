@@ -263,7 +263,10 @@ export function chatDeepAvatarIntroSrc(character: ChatDeepAvatarCharacterId): st
   return `${CHAT_DEEP_AVATAR_DIR[id]}/intro.mp4`
 }
 
-/** Optional still shown while the intro MP4 buffers. */
+/**
+ * Optional still asset path (committed under public/). Intro overlay no longer
+ * applies this as `video.poster` — a static hold looked like a broken load.
+ */
 export function chatDeepAvatarIntroPosterSrc(character: ChatDeepAvatarCharacterId): string | null {
   const id = normalizeChatDeepAvatarCharacter(character)
   return `${CHAT_DEEP_AVATAR_DIR[id]}/intro-poster.jpg`

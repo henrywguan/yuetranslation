@@ -776,11 +776,13 @@ assert.doesNotMatch(
   /<video[^>]*\bmuted\b(?!\s*=)/,
   'intro video must not hard-code muted without binding to Sound pref',
 )
-assert.match(introSrc, /HOLD at frame 0|hold for gesture|never play.*muted/i, 'Sound-on never plays intro muted')
+assert.match(introSrc, /playMutedMotion|muted motion/i, 'policy block falls back to muted motion (no hold frame)')
+assert.doesNotMatch(introSrc, /HOLD at frame 0/, 'no hold-frame-0 wait for Unmute')
+assert.match(introSrc, /removeAttribute\('poster'\)/, 'intro skips poster still on mount')
 assert.match(
   introSrc,
-  /if \(!soundEnabled \|\| sessionMuted\) \{\s*v\.muted = true/s,
-  'intro mute tracks Sound-off or user Mute (policy hold stays unmuted+paused)',
+  /if \(!soundEnabled \|\| sessionMuted \|\| policyMuted\) \{\s*v\.muted = true/s,
+  'intro mute tracks Sound-off, user Mute, or policy-silent muted motion',
 )
 assert.match(
   introSrc,
