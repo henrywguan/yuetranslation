@@ -185,11 +185,16 @@
   overflow-x: hidden;
 }
 
-/* Companion stage — left column beside the thread (tap portrait to dock). */
+/* Companion stage — left column beside the thread (tap portrait to dock).
+ * Grid row MUST be minmax(0, 1fr) so `.aui-thread` stays viewport-tall.
+ * Content-sized rows let messages grow the column; sticky `.aui-footer`
+ * then follows `.aui-msg.is-assistant` instead of pinning under the scrollport. */
 .aui-layout.is-avatar-stage {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
+  overflow: hidden;
 }
 
 .aui-avatar-stage {
@@ -200,6 +205,8 @@
   max-width: 22rem;
   min-height: 0;
   height: 100%;
+  max-height: 100%;
+  align-self: stretch;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -221,6 +228,12 @@
   grid-column: 2;
   grid-row: 1;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  align-self: stretch;
+  /* Contain scroll to `.aui-viewport`; keep sticky footer in this column. */
+  overflow: hidden;
 }
 
 .aui-avatar-stage-toggle {
@@ -266,8 +279,9 @@
 
 @media (max-width: 700px) {
   .aui-layout.is-avatar-stage {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    /* Top stage strip + constrained thread column (composer stays pinned). */
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .aui-avatar-stage {
@@ -277,6 +291,7 @@
     max-width: none;
     min-width: 0;
     height: min(28vh, 12rem);
+    max-height: min(28vh, 12rem);
     min-height: 7.5rem;
     padding: 0.35rem 0.75rem 0.45rem;
     border-right: 0;
@@ -287,6 +302,10 @@
   .aui-layout.is-avatar-stage > .aui-thread {
     grid-column: 1;
     grid-row: 2;
+    min-height: 0;
+    height: auto;
+    max-height: 100%;
+    overflow: hidden;
   }
 
   .aui-deep-avatar.is-stage {
@@ -1040,11 +1059,18 @@
   color: var(--ds-text);
 }
 
+/* Sticky under the message scrollport (incl. stage + harness/agent composer).
+ * Relies on `.aui-viewport` being the overflow-y scroller — stage grid must
+ * not let `.aui-thread` grow with `.aui-msg` (see `.aui-layout.is-avatar-stage`). */
 .aui-footer {
   position: sticky;
   bottom: 0;
+  z-index: 2;
+  flex-shrink: 0;
+  margin-top: auto;
   min-width: 0;
   max-width: 100%;
+  width: 100%;
   padding: 0 0 calc(env(safe-area-inset-bottom, 0px));
   background: var(--ds-canvas);
   box-sizing: border-box;

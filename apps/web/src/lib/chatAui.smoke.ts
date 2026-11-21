@@ -514,10 +514,50 @@ assert.match(auiCss, /\.aui-layout\.is-avatar-stage\b/, 'layout grid when stage 
 assert.match(auiCss, /\.aui-deep-avatar\.is-stage\b/, 'stage size class')
 assert.match(
   auiCss,
+  /\.aui-layout\.is-avatar-stage\s*\{[^}]*grid-template-rows:\s*minmax\(0,\s*1fr\)/,
+  'stage grid row is minmax(0,1fr) so thread stays viewport-tall',
+)
+assert.match(
+  auiCss,
+  /\.aui-layout\.is-avatar-stage\s*\{[^}]*overflow:\s*hidden/,
+  'stage layout clips/contains so composer cannot drift with messages',
+)
+assert.match(
+  auiCss,
+  /\.aui-layout\.is-avatar-stage\s*>\s*\.aui-thread\s*\{[^}]*min-height:\s*0[^}]*overflow:\s*hidden/s,
+  'stage thread column min-height 0 + overflow hidden (scroll in viewport)',
+)
+assert.match(
+  auiCss,
+  /\.aui-footer\s*\{[^}]*position:\s*sticky[^}]*bottom:\s*0/s,
+  'composer footer sticky bottom under message viewport',
+)
+assert.match(
+  auiCss,
+  /\.aui-footer\s*\{[^}]*margin-top:\s*auto/s,
+  'footer margin-top auto pins composer when thread is short',
+)
+assert.match(
+  auiCss,
+  /@media \(max-width: 700px\)[\s\S]*\.aui-layout\.is-avatar-stage\s*\{[\s\S]*grid-template-rows:\s*auto\s+minmax\(0,\s*1fr\)/,
+  'phone soak: stage strip + constrained thread row',
+)
+assert.match(
+  auiCss,
   /@media \(max-width: 700px\)[\s\S]*\.aui-avatar-stage/,
   'phone soak: stage becomes top strip',
 )
 assert.match(auiCss, /\.aui-composer-body\.is-avatar-staged\b/, 'composer full-width when staged')
+assert.match(
+  thread,
+  /ThreadPrimitive\.ViewportFooter[\s\S]*className="aui-footer"[\s\S]*ComposerChrome/,
+  'composer stays in ViewportFooter (sticky under scrollport, not after messages)',
+)
+assert.match(
+  thread,
+  /ThreadPrimitive\.Viewport[\s\S]*aui-viewport[\s\S]*ThreadPrimitive\.Messages[\s\S]*ViewportFooter/s,
+  'messages scroll in viewport; footer sibling under messages inside viewport',
+)
 assert.doesNotMatch(auiCss, /\.aui-new-thread\b|\.aui-deep-avatar\.is-bubble\b/, 'dead new-thread + bubble size CSS removed')
 assert.match(auiCss, /\.aui-deep-avatar-lips\b/, 'TTS lip overlay styles')
 const avatarSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatar.tsx'), 'utf8')
