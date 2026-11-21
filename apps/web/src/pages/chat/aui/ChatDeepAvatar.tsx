@@ -4,7 +4,7 @@
  * (Higgsfield gpt_image_2_6, 720² transparent loops ≈ 3× hero CSS).
  *
  * Moods: idle / think / listen / speak / happy / celebrate / proud / eureka / concern.
- * `proud` / `eureka` are CSS variants on happy/celebrate GIFs (no new public sheets).
+ * `proud` / `eureka` ship dedicated GIFs (Ask/short win · Search/research finish).
  * TTS lips: amplitude/vowel envelope overlay while Azure or DeepSeek chat TTS plays
  * (not phoneme lip-sync — GIF clip swaps + CSS mouth only).
  *
@@ -105,7 +105,7 @@ export type ChatDeepAvatarMoodState = {
  * 5. think — composer has draft (engaged thread)
  * 6. idle
  *
- * `happy` GIF ships soft Ask/short wins via `proud` (CSS variant). Celebrate stays default.
+ * `proud` / `eureka` use dedicated GIFs; Celebrate stays default for mid-length Agent wins.
  */
 function latchOutro(
   setOutro: (m: ChatDeepAvatarMood | null) => void,
