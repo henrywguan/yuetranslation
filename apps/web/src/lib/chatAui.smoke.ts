@@ -16,6 +16,7 @@ import {
   chatDeepAvatarMoodSrc,
   isChatDeepAvatarDeepFinish,
   normalizeChatDeepAvatarCelebrateMode,
+  normalizeChatDeepAvatarDockMode,
   pickChatDeepAvatarOutroMood,
   shouldFullscreenCelebrate,
   shouldPlayChatDeepAvatarIntro,
@@ -479,15 +480,39 @@ assert.doesNotMatch(
 assert.doesNotMatch(thread, /ChatDeepAvatarBubble|ChatDeepAvatarStage/, 'floating dock stage removed')
 assert.doesNotMatch(thread, /ChatDeepAvatarCharacterPicker|size="hero"/, 'empty-state hero + picker removed')
 assert.match(thread, /useChatDeepAvatarLipLevel/, 'TTS lip level wired into portrait')
+assert.match(thread, /useChatDeepAvatarDock/, 'persisted bar|stage dock hook')
+assert.match(thread, /aui-avatar-stage/, 'stage panel uses aui-avatar-stage (not revived deep-avatar-stage)')
+assert.match(thread, /size="stage"/, 'stage dock mounts size=stage avatar')
+assert.match(
+  thread,
+  /Show large companion|Dock companion to composer/,
+  'portrait toggle aria-labels for bar↔stage',
+)
+assert.match(
+  thread,
+  /celebrateFx[\s\S]*setDock|if \(celebrateFx\) return/,
+  'dock toggle ignored while celebrate FX owns the screen',
+)
 assert.match(auiCss, /\.aui-deep-avatar\b/, 'companion avatar styles')
-assert.doesNotMatch(auiCss, /\.aui-deep-avatar-dock\b|\.aui-deep-avatar-stage\b/, 'dock/stage CSS removed')
+assert.doesNotMatch(auiCss, /\.aui-deep-avatar-dock\b|\.aui-deep-avatar-stage\b/, 'old dock/stage CSS stay removed')
+assert.match(auiCss, /\.aui-avatar-stage\b/, 'new stage panel class aui-avatar-stage')
+assert.match(auiCss, /\.aui-layout\.is-avatar-stage\b/, 'layout grid when stage docked')
+assert.match(auiCss, /\.aui-deep-avatar\.is-stage\b/, 'stage size class')
+assert.match(
+  auiCss,
+  /@media \(max-width: 700px\)[\s\S]*\.aui-avatar-stage/,
+  'phone soak: stage becomes top strip',
+)
+assert.match(auiCss, /\.aui-composer-body\.is-avatar-staged\b/, 'composer full-width when staged')
 assert.match(auiCss, /\.aui-deep-avatar-lips\b/, 'TTS lip overlay styles')
 const avatarSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatar.tsx'), 'utf8')
 const audioSrc = readFileSync(join(here, 'chatDeepAvatarAudio.ts'), 'utf8')
 assert.match(avatarSrc, /size = 'portrait'|Size = 'portrait'/, 'portrait is default/supported size')
+assert.match(avatarSrc, /'stage'|size === 'stage'/, 'stage size supported on ChatDeepAvatar')
 assert.match(avatarSrc, /useChatDeepAvatarCharacter/, 'persisted character hook')
 assert.match(avatarSrc, /CHAT_DEEP_AVATAR_CHARACTER_EVENT/, 'same-tab character sync')
 assert.match(avatarSrc, /useChatDeepAvatarCelebrateMode/, 'celebrate mode hook')
+assert.match(avatarSrc, /useChatDeepAvatarDock/, 'dock mode hook')
 assert.match(avatarSrc, /ChatDeepAvatarCelebrateFx/, 'fullscreen celebrate FX component')
 assert.match(
   avatarSrc,
@@ -539,8 +564,9 @@ assert.match(
   /@media \(max-height: 700px\)[\s\S]*\.aui-deep-avatar-fx-fly/,
   'FX shrinks on short viewports',
 )
-assert.match(thread, /ChatDeepAvatarCelebrateFx/, 'composer mounts celebrate FX')
-assert.match(thread, /useChatDeepAvatarCelebrateFx/, 'composer gates fullscreen via pref')
+assert.match(thread, /ChatDeepAvatarCelebrateFx/, 'thread mounts celebrate FX')
+assert.match(thread, /useChatDeepAvatarCelebrateFx/, 'thread gates fullscreen via pref')
+assert.match(thread, /originRef=\{dockRef\}/, 'celebrate FLIP origin follows active dock')
 assert.match(thread, /dimmed=\{dimPortrait\}/, 'portrait dims while FX flies')
 const inboxCss = readFileSync(join(root, 'pages/chat/inbox/Inbox.css'), 'utf8')
 assert.match(inboxCss, /\.inbox-settings-companion\b/, 'Inbox Companion settings styles')
@@ -619,6 +645,13 @@ assert.match(page, /every #\/chat mount/, 'AUI page notes intro every mount')
 const charSrc = readFileSync(join(here, 'chatDeepAvatarCharacter.ts'), 'utf8')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CHARACTER_KEY/, 'character localStorage key')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CHARACTER_EVENT/, 'character change event for sync')
+assert.match(charSrc, /CHAT_DEEP_AVATAR_DOCK_KEY/, 'dock mode localStorage key')
+assert.match(charSrc, /CHAT_DEEP_AVATAR_DOCK_EVENT/, 'dock mode change event')
+assert.match(charSrc, /ChatDeepAvatarDockMode/, 'dock mode type')
+assert.equal(normalizeChatDeepAvatarDockMode(''), 'bar')
+assert.equal(normalizeChatDeepAvatarDockMode('stage'), 'stage')
+assert.equal(normalizeChatDeepAvatarDockMode('panel'), 'stage')
+assert.equal(normalizeChatDeepAvatarDockMode('bar'), 'bar')
 assert.match(charSrc, /chatDeepAvatarIntroSrc/, 'intro src helper')
 assert.doesNotMatch(charSrc, /CHAT_DEEP_AVATAR_INTRO_SEEN_KEY|intro-seen-v1/, 'intro seen localStorage key removed')
 assert.match(charSrc, /shouldPlayChatDeepAvatarIntro/, 'intro play gate')

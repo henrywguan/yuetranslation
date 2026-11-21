@@ -8,9 +8,11 @@
  * TTS lips: amplitude/vowel envelope overlay while Azure or DeepSeek chat TTS plays
  * (not phoneme lip-sync — GIF clip swaps + CSS mouth only).
  *
- * Layout: WC3-style portrait lives inside the full-bleed composer bar
- * (`size="portrait"`). Character + Celebrate mode pick: Inbox settings → Companion.
- * Fullscreen FLIP pop-out + canvas gold stars on successful outros (pref-gated).
+ * Layout: WC3-style portrait docks in the composer bar (`size="portrait"`) or a
+ * large left stage panel (`size="stage"`, `.aui-avatar-stage`). Tap the visible
+ * portrait to flip; dock pref persists like character / Celebrate. Character +
+ * Celebrate mode pick: Inbox settings → Companion. Fullscreen FLIP pop-out +
+ * canvas gold stars on successful outros (pref-gated).
  */
 import { useAuiState } from '@assistant-ui/react'
 import {
@@ -27,20 +29,25 @@ import {
   CHAT_DEEP_AVATAR_CHARACTER_EVENT,
   CHAT_DEEP_AVATAR_CELEBRATE_MODE_EVENT,
   CHAT_DEEP_AVATAR_DEEP_MS,
+  CHAT_DEEP_AVATAR_DOCK_EVENT,
   chatDeepAvatarMoodSrc,
   chatDeepAvatarPosterSrc,
   isChatDeepAvatarDeepFinish,
   isChatDeepAvatarOutroMood,
   normalizeChatDeepAvatarCelebrateMode,
   normalizeChatDeepAvatarCharacter,
+  normalizeChatDeepAvatarDockMode,
   pickChatDeepAvatarOutroMood,
   readChatDeepAvatarCelebrateMode,
   readChatDeepAvatarCharacter,
+  readChatDeepAvatarDockMode,
   shouldFullscreenCelebrate,
   writeChatDeepAvatarCelebrateMode,
   writeChatDeepAvatarCharacter,
+  writeChatDeepAvatarDockMode,
   type ChatDeepAvatarCelebrateMode,
   type ChatDeepAvatarCharacterId,
+  type ChatDeepAvatarDockMode,
   type ChatDeepAvatarMood,
 } from '../../../lib/chatDeepAvatarCharacter'
 import {
@@ -83,13 +90,18 @@ import {
 import type { ChatComposerMode } from '../../../lib/chatUiPrefs'
 import { isTtsPlaying } from '../../../lib/tts'
 
-export type { ChatDeepAvatarMood, ChatDeepAvatarCharacterId, ChatDeepAvatarCelebrateMode }
+export type {
+  ChatDeepAvatarMood,
+  ChatDeepAvatarCharacterId,
+  ChatDeepAvatarCelebrateMode,
+  ChatDeepAvatarDockMode,
+}
 
 const CELEBRATE_MS = 2400
 const HAPPY_MS = 2200
 const FULLSCREEN_MS = 2800
 
-type Size = 'portrait' | 'hero' | 'bubble'
+type Size = 'portrait' | 'hero' | 'bubble' | 'stage'
 
 type Props = {
   mood: ChatDeepAvatarMood
@@ -338,6 +350,30 @@ export function useChatDeepAvatarCelebrateMode(): [
   return [mode, setMode]
 }
 
+/** Persisted bar | stage companion dock — tap portrait to flip. */
+export function useChatDeepAvatarDock(): [
+  ChatDeepAvatarDockMode,
+  (mode: ChatDeepAvatarDockMode) => void,
+] {
+  const [dock, setDockState] = useState<ChatDeepAvatarDockMode>(() => readChatDeepAvatarDockMode())
+
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent<unknown>).detail
+      setDockState(normalizeChatDeepAvatarDockMode(detail))
+    }
+    window.addEventListener(CHAT_DEEP_AVATAR_DOCK_EVENT, onChange)
+    return () => window.removeEventListener(CHAT_DEEP_AVATAR_DOCK_EVENT, onChange)
+  }, [])
+
+  const setDock = (next: ChatDeepAvatarDockMode) => {
+    writeChatDeepAvatarDockMode(next)
+    setDockState(normalizeChatDeepAvatarDockMode(next))
+  }
+
+  return [dock, setDock]
+}
+
 export function useChatDeepAvatarDisplayName(character: ChatDeepAvatarCharacterId): string {
   const [names, setNames] = useState(() => readChatDeepAvatarNames())
   useEffect(() => {
@@ -447,6 +483,7 @@ function usePrefersReducedMotion(): boolean {
 function sizeClassName(size: Size): string {
   if (size === 'bubble') return 'aui-deep-avatar is-bubble'
   if (size === 'hero') return 'aui-deep-avatar is-hero'
+  if (size === 'stage') return 'aui-deep-avatar is-stage'
   return 'aui-deep-avatar is-portrait'
 }
 
@@ -469,7 +506,7 @@ export function ChatDeepAvatar({
   const lipScaleY = 0.35 + lipLevel * 1.15
   const lipScaleX = 0.85 + lipLevel * 0.35
   const charLabel = displayChatDeepAvatarName(character)
-  const imgPx = size === 'bubble' ? 112 : size === 'portrait' ? 224 : 720
+  const imgPx = size === 'bubble' ? 112 : size === 'portrait' ? 224 : size === 'stage' ? 720 : 720
 
   return (
     <div

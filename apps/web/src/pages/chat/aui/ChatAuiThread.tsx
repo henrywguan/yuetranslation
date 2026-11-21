@@ -9,7 +9,7 @@ import {
   useMessagePartReasoning,
   useMessagePartText,
 } from '@assistant-ui/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { ChatDictateButton } from '../../../components/ChatDictateButton'
 import { ChatPluginKeysModal } from '../../../components/ChatPluginKeysModal'
 import { ChatSourcesList } from '../../../components/ChatShellExtras'
@@ -21,8 +21,12 @@ import {
   useChatDeepAvatarCelebrateFx,
   useChatDeepAvatarCelebrateMode,
   useChatDeepAvatarCharacter,
+  useChatDeepAvatarDock,
   useChatDeepAvatarLipLevel,
   useChatDeepAvatarMood,
+  type ChatDeepAvatarCharacterId,
+  type ChatDeepAvatarDockMode,
+  type ChatDeepAvatarMood,
 } from './ChatDeepAvatar'
 import type { DeepseekChatPluginKeyId } from '../../../lib/api'
 import {
@@ -409,7 +413,27 @@ function AtMentionMenu({
   )
 }
 
-function ComposerChrome({ error }: { error?: string | null }) {
+type ComposerChromeProps = {
+  error?: string | null
+  dock: ChatDeepAvatarDockMode
+  onToggleDock: () => void
+  dockRef: RefObject<HTMLButtonElement | null>
+  portraitMood: ChatDeepAvatarMood
+  portraitLips: number
+  avatarCharacter: ChatDeepAvatarCharacterId
+  dimPortrait: boolean
+}
+
+function ComposerChrome({
+  error,
+  dock,
+  onToggleDock,
+  dockRef,
+  portraitMood,
+  portraitLips,
+  avatarCharacter,
+  dimPortrait,
+}: ComposerChromeProps) {
   const aui = useAui()
   const draft = useAuiState((s) => s.composer.text)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -420,9 +444,6 @@ function ComposerChrome({ error }: { error?: string | null }) {
   const [atOpen, setAtOpen] = useState(false)
   const [toolsExpanded, setToolsExpanded] = useState(() => readChatToolsExpanded())
   const inbox = useChatInboxContextOptional()
-  const [avatarCharacter] = useChatDeepAvatarCharacter()
-  const [celebrateMode] = useChatDeepAvatarCelebrateMode()
-  const portraitRef = useRef<HTMLDivElement | null>(null)
   const {
     deepThink,
     setDeepThink,
@@ -463,25 +484,6 @@ function ComposerChrome({ error }: { error?: string | null }) {
     clearFollowUpQueue,
     reviewActivity,
   } = useChatAuiSession()
-  const {
-    mood: portraitMood,
-    outroMood: portraitOutroMood,
-    outroActive: portraitOutro,
-    deepFinish: portraitDeep,
-  } = useChatDeepAvatarMood({ error, composerMode, searchOn })
-  const portraitLips = useChatDeepAvatarLipLevel(portraitMood)
-  const {
-    showFx: celebrateFx,
-    fxMood: celebrateFxMood,
-    fxSessionKey: celebrateFxKey,
-    dismissFx: dismissCelebrateFx,
-    dimPortrait,
-  } = useChatDeepAvatarCelebrateFx({
-    outroMood: portraitOutroMood,
-    outroActive: portraitOutro,
-    deepFinish: portraitDeep,
-    celebrateMode,
-  })
   const [composerDragOver, setComposerDragOver] = useState(false)
   const [planSaveNote, setPlanSaveNote] = useState<string | null>(null)
 
@@ -975,25 +977,25 @@ function ComposerChrome({ error }: { error?: string | null }) {
         </div>
       ) : null}
 
-      <div className="aui-composer-body">
-        <div className="aui-composer-portrait" aria-hidden={false} ref={portraitRef}>
-          <ChatDeepAvatar
-            mood={portraitMood}
-            size="portrait"
-            lipLevel={portraitLips}
-            character={avatarCharacter}
-            label="DeepSeek companion"
-            dimmed={dimPortrait}
-          />
-        </div>
-        <ChatDeepAvatarCelebrateFx
-          open={celebrateFx}
-          sessionKey={celebrateFxKey}
-          mood={celebrateFxMood}
-          character={avatarCharacter}
-          originRef={portraitRef}
-          onDismiss={dismissCelebrateFx}
-        />
+      <div className={`aui-composer-body${dock === 'stage' ? ' is-avatar-staged' : ''}`}>
+        {dock === 'bar' ? (
+          <button
+            type="button"
+            className="aui-composer-portrait"
+            ref={dockRef}
+            onClick={onToggleDock}
+            aria-label="Show large companion"
+          >
+            <ChatDeepAvatar
+              mood={portraitMood}
+              size="portrait"
+              lipLevel={portraitLips}
+              character={avatarCharacter}
+              label="DeepSeek companion"
+              dimmed={dimPortrait}
+            />
+          </button>
+        ) : null}
         <div className="aui-composer-main">
           <div className="aui-composer-row-wrap">
             {atOpen ? (
@@ -1128,10 +1130,59 @@ function ComposerChrome({ error }: { error?: string | null }) {
 }
 
 export function ChatAuiThread() {
-  const { historyReady, error, clearError, busy } = useChatAuiSession()
+  const { historyReady, error, clearError, busy, composerMode, searchOn } = useChatAuiSession()
+  const [dock, setDock] = useChatDeepAvatarDock()
+  const [avatarCharacter] = useChatDeepAvatarCharacter()
+  const [celebrateMode] = useChatDeepAvatarCelebrateMode()
+  const dockRef = useRef<HTMLButtonElement | null>(null)
+  const {
+    mood: portraitMood,
+    outroMood: portraitOutroMood,
+    outroActive: portraitOutro,
+    deepFinish: portraitDeep,
+  } = useChatDeepAvatarMood({ error, composerMode, searchOn })
+  const portraitLips = useChatDeepAvatarLipLevel(portraitMood)
+  const {
+    showFx: celebrateFx,
+    fxMood: celebrateFxMood,
+    fxSessionKey: celebrateFxKey,
+    dismissFx: dismissCelebrateFx,
+    dimPortrait,
+  } = useChatDeepAvatarCelebrateFx({
+    outroMood: portraitOutroMood,
+    outroActive: portraitOutro,
+    deepFinish: portraitDeep,
+    celebrateMode,
+  })
+
+  const onToggleDock = () => {
+    // Prefer ignore while fullscreen celebrate owns the screen.
+    if (celebrateFx) return
+    setDock(dock === 'bar' ? 'stage' : 'bar')
+  }
 
   return (
-    <div className="aui-layout">
+    <div className={`aui-layout${dock === 'stage' ? ' is-avatar-stage' : ''}`}>
+      {dock === 'stage' ? (
+        <aside className="aui-avatar-stage" aria-label="Companion stage">
+          <button
+            type="button"
+            className="aui-avatar-stage-toggle"
+            ref={dockRef}
+            onClick={onToggleDock}
+            aria-label="Dock companion to composer"
+          >
+            <ChatDeepAvatar
+              mood={portraitMood}
+              size="stage"
+              lipLevel={portraitLips}
+              character={avatarCharacter}
+              label="DeepSeek companion"
+              dimmed={dimPortrait}
+            />
+          </button>
+        </aside>
+      ) : null}
       <ThreadPrimitive.Root className="aui-thread">
         <ThreadPrimitive.Viewport className="aui-viewport" autoScroll>
           {!historyReady ? (
@@ -1184,12 +1235,29 @@ export function ChatAuiThread() {
                 </button>
               </div>
             ) : null}
-            <ComposerChrome error={error} />
+            <ComposerChrome
+              error={error}
+              dock={dock}
+              onToggleDock={onToggleDock}
+              dockRef={dockRef}
+              portraitMood={portraitMood}
+              portraitLips={portraitLips}
+              avatarCharacter={avatarCharacter}
+              dimPortrait={dimPortrait}
+            />
           </ThreadPrimitive.ViewportFooter>
         </ThreadPrimitive.Viewport>
 
         <ThreadPrimitive.ScrollToBottom className="aui-scroll-bottom">↓</ThreadPrimitive.ScrollToBottom>
       </ThreadPrimitive.Root>
+      <ChatDeepAvatarCelebrateFx
+        open={celebrateFx}
+        sessionKey={celebrateFxKey}
+        mood={celebrateFxMood}
+        character={avatarCharacter}
+        originRef={dockRef}
+        onDismiss={dismissCelebrateFx}
+      />
     </div>
   )
 }
