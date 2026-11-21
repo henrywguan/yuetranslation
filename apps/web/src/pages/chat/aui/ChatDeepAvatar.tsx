@@ -409,6 +409,42 @@ export function useChatDeepAvatarNameEditor(): [
   return [names, setName]
 }
 
+/** Live companion display name — Inbox rename + defaults (`DS Boy` / `DS Girl`). */
+export function useChatDeepAvatarDisplayName(character: ChatDeepAvatarCharacterId): string {
+  const [names] = useChatDeepAvatarNameEditor()
+  return displayChatDeepAvatarName(character, names)
+}
+
+type NameplateSize = 'portrait' | 'stage'
+
+/**
+ * MapleStory-style bordered nameplate under the companion bust.
+ * Decorative only (`aria-hidden`) — parent toggle keeps the hit target.
+ * Name from `readChatDeepAvatarNames` / Inbox Companion rename (no second store).
+ */
+export function ChatDeepAvatarNameplate({
+  character,
+  size = 'portrait',
+  className = '',
+}: {
+  character: ChatDeepAvatarCharacterId
+  size?: NameplateSize
+  className?: string
+}) {
+  const name = useChatDeepAvatarDisplayName(character)
+  return (
+    <span
+      className={`aui-deep-avatar-nameplate is-${size}${className ? ` ${className}` : ''}`}
+      data-character={character}
+      title={name}
+      aria-hidden
+    >
+      <span className="aui-deep-avatar-nameplate-shine" />
+      <span className="aui-deep-avatar-nameplate-text">{name}</span>
+    </span>
+  )
+}
+
 export function useChatDeepAvatarTrait(): [ChatDeepAvatarTrait, (t: ChatDeepAvatarTrait) => void] {
   const [trait, setTraitState] = useState(() => readChatDeepAvatarTrait())
   useEffect(() => {
@@ -505,6 +541,7 @@ export function ChatDeepAvatar({
   dimmed = false,
 }: Props) {
   const reduceMotion = usePrefersReducedMotion()
+  const charLabel = useChatDeepAvatarDisplayName(character)
   const src = reduceMotion
     ? chatDeepAvatarPosterSrc(character)
     : chatDeepAvatarMoodSrc(character, mood)
@@ -513,7 +550,6 @@ export function ChatDeepAvatar({
   const lipsOn = speaking && !reduceMotion && lipLevel > 0.04
   const lipScaleY = 0.35 + lipLevel * 1.15
   const lipScaleX = 0.85 + lipLevel * 0.35
-  const charLabel = displayChatDeepAvatarName(character)
   const imgPx = size === 'portrait' ? 224 : 720
 
   return (

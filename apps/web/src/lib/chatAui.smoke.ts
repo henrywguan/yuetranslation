@@ -604,8 +604,13 @@ assert.match(avatarSrc, /size = 'portrait'|Size = 'portrait'/, 'portrait is defa
 assert.match(avatarSrc, /'stage'|size === 'stage'/, 'stage size supported on ChatDeepAvatar')
 assert.doesNotMatch(
   avatarSrc,
-  /'bubble'|CHAT_DEEP_AVATAR_HAPPY_MS|CHAT_DEEP_AVATAR_POSTER|useChatDeepAvatarDisplayName/,
+  /'bubble'|CHAT_DEEP_AVATAR_HAPPY_MS|CHAT_DEEP_AVATAR_POSTER/,
   'dead bubble size + deprecated avatar exports removed',
+)
+assert.match(
+  avatarSrc,
+  /useChatDeepAvatarDisplayName/,
+  'live companion display-name hook for nameplate + aria',
 )
 assert.match(
   readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8'),
@@ -681,6 +686,47 @@ assert.doesNotMatch(
   'stage toggle button is not the celebrate origin',
 )
 assert.match(thread, /dimmed=\{dimPortrait\}/, 'portrait dims while FX flies')
+assert.match(thread, /ChatDeepAvatarNameplate/, 'MapleStory nameplate under companion')
+assert.match(
+  thread,
+  /aui-avatar-dock-frame[\s\S]*ChatDeepAvatarNameplate[\s\S]*size="portrait"/,
+  'bar dock: nameplate under portrait outside FLIP origin',
+)
+assert.match(
+  thread,
+  /aui-avatar-dock-frame is-stage[\s\S]*ChatDeepAvatarNameplate[\s\S]*size="stage"/,
+  'stage dock: nameplate under staged avatar',
+)
+assert.match(
+  auiCss,
+  /\.aui-deep-avatar-nameplate\b/,
+  'companion nameplate styles',
+)
+assert.match(
+  auiCss,
+  /\.aui-deep-avatar-nameplate-text[\s\S]*text-overflow:\s*ellipsis/,
+  'nameplate ellipsizes long names',
+)
+assert.match(
+  auiCss,
+  /\.aui-deep-avatar-nameplate\b[\s\S]*pointer-events:\s*none/,
+  'nameplate does not steal dock tap / mic hits',
+)
+assert.match(
+  auiCss,
+  /\.aui-avatar-dock-frame\b/,
+  'dock frame stacks bust + nameplate',
+)
+assert.match(
+  avatarSrc,
+  /useChatDeepAvatarDisplayName|ChatDeepAvatarNameplate/,
+  'nameplate reads live companion display name',
+)
+assert.match(
+  avatarSrc,
+  /displayChatDeepAvatarName/,
+  'nameplate reuses persona display name helper (no second store)',
+)
 const inboxCss = readFileSync(join(root, 'pages/chat/inbox/Inbox.css'), 'utf8')
 assert.match(inboxCss, /\.inbox-settings-companion\b/, 'Inbox Companion settings styles')
 assert.match(inboxCss, /\.inbox-settings-celebrate\b/, 'Inbox Celebrate settings styles')
