@@ -153,6 +153,9 @@ assert.match(harnessSrc, /looksLikeDeferredOrchestration/, 'Harness detects I\'l
 assert.match(harnessSrc, /DEEPSEEK_CHAT_WORKSPACE_TOOLS/, 'Harness can attach workspace tools')
 assert.match(harnessSrc, /harnessEnabled/, 'Harness mode flag wired')
 assert.match(harnessSrc, /kind: 'workspace'/, 'Harness yields workspace SSE events')
+assert.match(harnessSrc, /summarizeHarnessToolWork/, 'Harness recovers empty final after tool work')
+assert.match(harnessSrc, /writtenWorkspacePaths/, 'Harness tracks workspace paths for recovery')
+assert.match(harnessSrc, /empty-final recovery/, 'Harness logs empty-final recovery')
 
 assert.equal(
   looksLikeDeferredSearch("I'll search for the latest Warframe news and updates from the past week."),

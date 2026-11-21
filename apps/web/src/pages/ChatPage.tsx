@@ -49,6 +49,10 @@ import {
 } from '../lib/chatBranching'
 import { humanizeThrownError } from '../lib/apiError'
 import {
+  isEmptyAgentReplyRecoverableError,
+  summarizeAgentToolWork,
+} from '../lib/chatAgentWorkRecovery'
+import {
   looksLikeDeferredSearchTurn,
   looksLikeDeferredToolUse,
   SEARCH_STALL_ERROR,
@@ -1088,6 +1092,8 @@ export function ChatPage() {
     let paintTimer: number | null = null
     let needsPaint = false
     const STREAM_PAINT_MS = 80
+    const workspacePathsThisTurn: string[] = []
+    let imagesThisTurn = 0
     const scrollAfterPaint = () => {
       window.requestAnimationFrame(stickMessagesToBottom)
     }
@@ -1122,6 +1128,20 @@ export function ChatPage() {
       ...t,
       messages: t.messages.filter((m) => m.id !== assistantId),
     })
+    const recoverEmptyFromWork = (): boolean => {
+      const summary = summarizeAgentToolWork({
+        workspacePaths: workspacePathsThisTurn,
+        imageCount: imagesThisTurn,
+      })
+      if (!summary) return false
+      assembled = summary.slice(0, MAX_CONTENT_CHARS)
+      thread = patchAssistantContent(thread, assistantId, assembled, {
+        reasoning: reasoning || undefined,
+        sources,
+        searchSteps: searchSteps.length ? searchSteps : undefined,
+      })
+      return true
+    }
 
     try {
       const wireMessages = continueFromId
@@ -1140,6 +1160,9 @@ export function ChatPage() {
         continueReply: Boolean(continueFromId),
         signal: controller.signal,
         onWorkspace: (files) => {
+          for (const f of files) {
+            if (f?.path) workspacePathsThisTurn.push(f.path)
+          }
           thread = patchThreadWorkspace(
             thread,
             applyWorkspaceWireUpdate(thread.workspace, files),
@@ -1187,6 +1210,7 @@ export function ChatPage() {
           schedulePaint()
         },
         onImage: (image) => {
+          imagesThisTurn += 1
           const md = `\n\n![${image.prompt.slice(0, 80)}](${image.url})`
           if (!assembled.includes(image.url)) {
             assembled = `${assembled}${md}`.slice(0, MAX_CONTENT_CHARS)
@@ -1233,6 +1257,10 @@ export function ChatPage() {
       flushPaint()
       assembled = sanitizeDeepseekChatVisibleText(assembled).slice(0, MAX_CONTENT_CHARS)
       if (!assembled.trim()) {
+        // Agent tools often land workspace files before a final prose bubble.
+        recoverEmptyFromWork()
+      }
+      if (!assembled.trim()) {
         liveTts?.stop()
         thread = dropEmptyAssistant(thread)
         persist(thread)
@@ -1274,15 +1302,24 @@ export function ChatPage() {
       flushPaint()
       liveTts?.stop()
       if ((err as Error)?.name === 'AbortError') {
-        if (!assembled.trim()) thread = dropEmptyAssistant(thread)
+        if (!assembled.trim() && !recoverEmptyFromWork()) thread = dropEmptyAssistant(thread)
         persist(thread)
       } else {
-        setError(humanizeThrownError(err))
-        thread = {
-          ...thread,
-          messages: thread.messages.filter((m) => m.id !== assistantId || m.content.trim()),
+        const message = humanizeThrownError(err)
+        if (
+          !assembled.trim() &&
+          isEmptyAgentReplyRecoverableError(message) &&
+          recoverEmptyFromWork()
+        ) {
+          persist(thread)
+        } else {
+          setError(message)
+          thread = {
+            ...thread,
+            messages: thread.messages.filter((m) => m.id !== assistantId || m.content.trim()),
+          }
+          persist(thread)
         }
-        persist(thread)
       }
     } finally {
       if (paintTimer != null) window.clearTimeout(paintTimer)

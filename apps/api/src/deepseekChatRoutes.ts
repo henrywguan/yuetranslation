@@ -24,6 +24,7 @@ import {
   generateDeepseekChatHarnessReply,
   streamDeepseekChatHarness,
 } from './deepseekChatHarness.js'
+import { summarizeHarnessToolWork } from './deepseekChatWorkRecovery.js'
 import { shouldAutoEnableSearch, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
 import {
   deepseekChatSupportsSearch,
@@ -331,6 +332,10 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     if (typeof heartbeat.unref === 'function') heartbeat.unref()
 
     let full = ''
+    const workspacePathsSeen: string[] = []
+    let imagesSeen = 0
+    let projectActionsSeen = 0
+    let toolsSideEffects = false
     try {
       for await (const event of chatStreamEvents(
         parsed.data.messages,
@@ -376,18 +381,27 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
           continue
         }
         if (event.kind === 'workspace') {
+          for (const f of event.files || []) {
+            if (f?.path) workspacePathsSeen.push(f.path)
+          }
+          toolsSideEffects = true
           writeSse(res, `data: ${JSON.stringify({ workspace: { files: event.files } })}\n\n`)
           continue
         }
         if (event.kind === 'project') {
+          projectActionsSeen += event.actions?.length || 0
+          toolsSideEffects = true
           writeSse(res, `data: ${JSON.stringify({ project: { actions: event.actions } })}\n\n`)
           continue
         }
         if (event.kind === 'sandbox') {
+          toolsSideEffects = true
           writeSse(res, `data: ${JSON.stringify({ sandbox: event.activity })}\n\n`)
           continue
         }
         if (event.kind === 'image') {
+          imagesSeen += 1
+          toolsSideEffects = true
           writeSse(
             res,
             `data: ${JSON.stringify({ image: { url: event.url, prompt: event.prompt, id: event.id } })}\n\n`,
@@ -419,10 +433,23 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
       }
 
       if (!full.trim()) {
-        writeSse(res, `data: ${JSON.stringify({ error: 'Empty model reply.' })}\n\n`)
-        writeSse(res, 'data: [DONE]\n\n')
-        res.end()
-        return
+        // Defense in depth: harness should already recover, but if the stream ended
+        // empty after workspace/image/project side-effects, never hard-fail the turn.
+        const recovery = summarizeHarnessToolWork({
+          workspacePaths: workspacePathsSeen,
+          imageCount: imagesSeen,
+          projectActions: projectActionsSeen,
+          toolsUsed: toolsSideEffects,
+        })
+        if (recovery) {
+          full = recovery
+          writeSse(res, `data: ${JSON.stringify({ contentReplace: recovery })}\n\n`)
+        } else {
+          writeSse(res, `data: ${JSON.stringify({ error: 'Empty model reply.' })}\n\n`)
+          writeSse(res, 'data: [DONE]\n\n')
+          res.end()
+          return
+        }
       }
       void addDeepseekChatTurns(auth.userId, 1)
       writeSse(res, `data: ${JSON.stringify({ done: true, model: deepseekChatModel() })}\n\n`)
