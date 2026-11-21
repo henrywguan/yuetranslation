@@ -640,23 +640,38 @@ assert.match(
 )
 assert.match(
   auiCss,
-  /\.aui-deep-avatar-intro-video\s*\{[^}]*object-fit:\s*contain/,
-  'intro video uses contain so desktop landscape does not crop the portrait character',
+  /\.aui-deep-avatar-intro\s*\{[^}]*width:\s*100vw/,
+  'intro overlay spans full viewport width',
 )
 assert.match(
   auiCss,
-  /\.aui-deep-avatar-intro-video\s*\{[^}]*max-width:\s*100%/,
-  'intro video max-width fits viewport',
+  /\.aui-deep-avatar-intro\s*\{[^}]*height:\s*100vh/,
+  'intro overlay spans full viewport height',
 )
 assert.match(
   auiCss,
-  /\.aui-deep-avatar-intro-video\s*\{[^}]*max-height:\s*100%/,
-  'intro video max-height fits viewport',
+  /\.aui-deep-avatar-intro-stage\s*\{[^}]*inset:\s*0/,
+  'intro stage fills the fixed overlay',
+)
+assert.match(
+  auiCss,
+  /\.aui-deep-avatar-intro-video\s*\{[^}]*width:\s*100%/,
+  'intro video width fills stage',
+)
+assert.match(
+  auiCss,
+  /\.aui-deep-avatar-intro-video\s*\{[^}]*height:\s*100%/,
+  'intro video height fills stage',
+)
+assert.match(
+  auiCss,
+  /\.aui-deep-avatar-intro-video\s*\{[^}]*object-fit:\s*cover/,
+  'intro video uses cover for fullscreen cinematic fill on all sizes',
 )
 assert.doesNotMatch(
   auiCss,
-  /\.aui-deep-avatar-intro-video\s*\{[^}]*object-fit:\s*cover/,
-  'intro video must not use cover (clips head/body on ~1680×1050)',
+  /\.aui-deep-avatar-intro-video\s*\{[^}]*object-fit:\s*contain/,
+  'intro video must not use contain (letterboxes / half-empty on 1920×1080)',
 )
 assert.match(auiCss, /prefers-reduced-motion[\s\S]*aui-deep-avatar-intro/, 'reduced-motion softens intro')
 const introSrc = readFileSync(join(root, 'pages/chat/aui/ChatDeepAvatarIntro.tsx'), 'utf8')
