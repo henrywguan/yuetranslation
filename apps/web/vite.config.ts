@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import type { ManifestOptions } from 'vite-plugin-pwa'
@@ -10,6 +10,34 @@ const base = process.env.VITE_BASE_PATH || '/'
 const appBuild = '2026-09-03-pwa-builder-followup'
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
+/** Second installable PWA (DeepSeek chat) — distinct id / start_url / icons. */
+function emitChatPwaManifest(): Plugin {
+  const chatBody = () => `${JSON.stringify(createPwaManifest(base, 'chat'), null, 2)}\n`
+  const chatPath = '/manifest-chat.webmanifest'
+  return {
+    name: 'emit-chat-pwa-manifest',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = req.url?.split('?')[0] || ''
+        const baseNoSlash = base.replace(/\/$/, '')
+        if (url !== chatPath && url !== `${baseNoSlash}${chatPath}`) {
+          next()
+          return
+        }
+        res.setHeader('Content-Type', 'application/manifest+json')
+        res.end(chatBody())
+      })
+    },
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'manifest-chat.webmanifest',
+        source: chatBody(),
+      })
+    },
+  }
+}
+
 export default defineConfig({
   base,
   resolve: {
@@ -19,6 +47,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    emitChatPwaManifest(),
     VitePWA({
       strategies: 'injectManifest',
       srcDir: 'src',
@@ -30,6 +59,10 @@ export default defineConfig({
       includeAssets: [
         'favicon.svg',
         'apple-touch-icon.png',
+        'apple-touch-icon-chat.png',
+        'pwa-chat-192.png',
+        'pwa-chat-512.png',
+        'pwa-chat-512-maskable.png',
         'app-build.txt',
         'pwa-screenshots/mobile-app-narrow.png',
         'pwa-screenshots/desktop-app-wide.png',
@@ -53,7 +86,7 @@ export default defineConfig({
           { url: `${base}app-build.txt`.replace(/\/+/g, '/'), revision: appBuild },
         ],
       },
-      manifest: createPwaManifest(base) as unknown as ManifestOptions,
+      manifest: createPwaManifest(base, 'app') as unknown as ManifestOptions,
     }),
   ],
   server: {

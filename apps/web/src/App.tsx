@@ -10,6 +10,10 @@ import {
 } from './lib/auth'
 import { isDisplayStandalone } from './lib/pwaInstall'
 import { bootstrapPwaLaunch } from './lib/pwaLaunch'
+import {
+  pwaManifestVariantForRoute,
+  syncPwaManifestLink,
+} from './lib/pwaManifestLink'
 import { hydrateOfflinePack } from './lib/offlinePackClient'
 import { listenPushNavigate, syncPushSubscriptionIfEnabled } from './lib/pushNotifications'
 import { requestPersistentStorage } from './lib/storagePersist'
@@ -61,6 +65,7 @@ export default function App() {
     void Promise.all([loadSiteConfig(), bootstrapAuthSession()]).finally(() => {
       // After OAuth is consumed — never rewrite `#access_token=...` to `#/app` first
       // (that race signed users back into the app without a session).
+      // Chat PWA start_url is `/chat` (→ `#/chat`); only default empty hash to translator.
       if (isDisplayStandalone() && !hashPath() && !isAuthCallback()) {
         navigate('app')
       }
@@ -71,6 +76,11 @@ export default function App() {
       void navigator.serviceWorker.getRegistration().then((reg) => reg?.update())
     }
   }, [])
+
+  // Swap installable manifest so #/chat can be a second Home Screen / desktop icon.
+  useEffect(() => {
+    syncPwaManifestLink(pwaManifestVariantForRoute(route))
+  }, [route])
 
   useEffect(() => {
     if (!ready) return
