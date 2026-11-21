@@ -200,7 +200,11 @@ export type ChatAuiSession = {
   pickFile: (file: File | null) => Promise<void>
   pickOcr: (file: File | null, setDraft: (text: string) => void) => Promise<void>
   removePendingFile: (fileId: string) => void
-  startNewChat: () => string
+  /**
+   * Create (or ignore during UI cooldown) a new empty thread.
+   * Pass `{ force: true }` for project/agent binds so an empty active draft is never reused.
+   */
+  startNewChat: (opts?: { force?: boolean }) => string
   selectThread: (id: string) => void
   removeThread: (id: string) => void
   archiveThread: (id: string, archived: boolean) => void
@@ -248,8 +252,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [historyReady, setHistoryReady] = useState(false)
   const [busy, setBusy] = useState(false)
   const [newChatBusy, setNewChatBusy] = useState(false)
-  /** Sync reentry guard only (pre-paint double fire). UI cooldown uses newChatBusy. */
+  /** Sync reentry guard (pre-paint double fire). */
   const creatingNewChatRef = useRef(false)
+  /** Sync mirror of newChatBusy so UI spam is ignored before the disable re-render. */
+  const newChatBusyRef = useRef(false)
   const newChatCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [streamingId, setStreamingId] = useState<string | null>(null)
@@ -644,8 +650,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
   const armNewChatCooldown = useCallback(() => {
     if (newChatCooldownTimerRef.current) clearTimeout(newChatCooldownTimerRef.current)
+    newChatBusyRef.current = true
     setNewChatBusy(true)
     newChatCooldownTimerRef.current = setTimeout(() => {
+      newChatBusyRef.current = false
       setNewChatBusy(false)
       newChatCooldownTimerRef.current = null
     }, NEW_CHAT_COOLDOWN_MS)
@@ -658,25 +666,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     [],
   )
 
-  const startNewChat = useCallback(() => {
-    // Sync latch: nested / same-stack reentry cannot spawn parallel empties.
-    if (creatingNewChatRef.current) return activeIdRef.current
-
-    // Already on a blank draft — reuse it instead of stacking empties.
-    const active = threadsRef.current.find((t) => t.id === activeIdRef.current)
-    if (
-      active &&
-      active.id !== BOOT_THREAD.id &&
-      !active.archived &&
-      active.messages.length === 0
-    ) {
-      stopGeneration()
-      setFollowUpQueue([])
-      followUpQueueRef.current = []
-      applyPlanDraftForThread(active.id)
-      setError(null)
-      armNewChatCooldown()
-      return active.id
+  const startNewChat = useCallback((opts?: { force?: boolean }) => {
+    const force = Boolean(opts?.force)
+    // UI spam latch — never block forced project/agent creates.
+    if (!force && (creatingNewChatRef.current || newChatBusyRef.current)) {
+      return activeIdRef.current
     }
 
     creatingNewChatRef.current = true
@@ -685,7 +679,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setFollowUpQueue([])
       followUpQueueRef.current = []
       const created = emptyThread()
-      // Keep threadsRef in sync before paint so a rapid second click sees the empty draft.
+      // Keep threadsRef in sync before paint so a rapid second UI click hits the latch.
       const next = upsertChatThread(
         created,
         threadsRef.current.filter((t) => t.id !== BOOT_THREAD.id),
@@ -696,7 +690,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setActiveId(created.id)
       applyPlanDraftForThread(created.id)
       setError(null)
-      armNewChatCooldown()
+      if (!force) armNewChatCooldown()
       return created.id
     } finally {
       creatingNewChatRef.current = false

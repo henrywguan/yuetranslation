@@ -115,12 +115,24 @@ assert.match(
 const runtimeSrc = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtimeSrc, /NEW_CHAT_COOLDOWN_MS/, 'runtime defines new-chat cooldown')
 assert.match(runtimeSrc, /creatingNewChatRef/, 'runtime sync-latches new-chat create')
+assert.match(runtimeSrc, /newChatBusyRef/, 'runtime mirrors cooldown for pre-paint spam')
 assert.match(
   runtimeSrc,
+  /force\?: boolean|opts\?\.force/,
+  'startNewChat accepts force for project/agent binds',
+)
+assert.doesNotMatch(
+  runtimeSrc,
   /messages\.length === 0[\s\S]*return active\.id/,
-  'startNewChat reuses empty active draft instead of stacking',
+  'startNewChat must not reuse empty drafts (steals project/agent threads)',
 )
 assert.match(runtimeSrc, /newChatBusy/, 'session exposes newChatBusy for header a11y')
+const inboxShellForNew = readFileSync(join(root, 'pages/chat/inbox/InboxShell.tsx'), 'utf8')
+assert.match(
+  inboxShellForNew,
+  /startNewChat\(\{\s*force:\s*true\s*\}\)/,
+  'project/agent opens force a fresh thread',
+)
 // Classic / Back to app / theme live in Inbox header cog (not sidebar foot / top bar).
 assert.doesNotMatch(auiShellFn, /ds-chat-sidebar-foot/, 'sidebar foot chrome removed')
 assert.doesNotMatch(
