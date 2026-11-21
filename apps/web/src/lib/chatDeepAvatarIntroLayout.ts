@@ -5,7 +5,6 @@
  * desktops rather than cover-cropping head/legs. We size the element to the
  * exact contain rectangle in pixels and center it on the black stage.
  */
-import { agentDebugLog } from './agentDebugLog'
 
 export type IntroContainSize = {
   width: number
@@ -78,22 +77,6 @@ export function layoutIntroContainElement(
         ? el.videoHeight
         : DEFAULT_INTRO_MEDIA_H
   const sized = introContainSize(stageW, stageH, mw, mh)
-  // #region agent log
-  agentDebugLog('D', 'chatDeepAvatarIntroLayout.ts:layoutIntroContainElement', 'contain layout applied', {
-    stageW,
-    stageH,
-    mw,
-    mh,
-    scale: sized.scale,
-    sizedW: sized.width,
-    sizedH: sized.height,
-    cropsW: sized.width > stageW + 1,
-    cropsH: sized.height > stageH + 1,
-    fits: introContainFitsStage(stageW, stageH, sized),
-    mode: 'contain-min',
-    runId: 'post-fix',
-  })
-  // #endregion
   el.style.position = 'absolute'
   el.style.left = '50%'
   el.style.top = '50%'

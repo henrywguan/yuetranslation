@@ -74,10 +74,12 @@ assert.match(introSrc, /sessionMuted \|\| policyMuted \? 'Unmute'/, 'Mute label 
 assert.doesNotMatch(introSrc, /needsGestureUnmute/, 'old gesture-unmute chip path removed')
 assert.doesNotMatch(introSrc, /aui-deep-avatar-intro-unmute/, 'intro unmute chip class removed')
 assert.match(introSrc, /useChatDeepAvatarSoundEnabled/, 'intro follows Companion Sound')
+assert.match(introSrc, /HOLD at frame 0|hold for gesture|never play.*muted/i, 'Sound-on never plays intro muted')
+assert.match(introSrc, /policyMuted/, 'intro tracks autoplay policy hold')
 assert.match(
   introSrc,
-  /v\.muted = !soundEnabled \|\| sessionMuted \|\| policyMuted/,
-  'mute only for Sound-off, user Mute, or brief autoplay lock',
+  /if \(!soundEnabled \|\| sessionMuted\) \{\s*v\.muted = true/s,
+  'mute only for Sound-off or user Mute (policy hold stays unmuted+paused)',
 )
 assert.match(introSrc, /replaceChildren|createElement\('video'\)/, 'intro mounts video imperatively for prime adopt')
 

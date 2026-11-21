@@ -776,10 +776,11 @@ assert.doesNotMatch(
   /<video[^>]*\bmuted\b(?!\s*=)/,
   'intro video must not hard-code muted without binding to Sound pref',
 )
+assert.match(introSrc, /HOLD at frame 0|hold for gesture|never play.*muted/i, 'Sound-on never plays intro muted')
 assert.match(
   introSrc,
-  /v\.muted = !soundEnabled \|\| sessionMuted \|\| policyMuted/,
-  'intro mute tracks Sound-off, user Mute, or brief autoplay lock only',
+  /if \(!soundEnabled \|\| sessionMuted\) \{\s*v\.muted = true/s,
+  'intro mute tracks Sound-off or user Mute (policy hold stays unmuted+paused)',
 )
 assert.match(
   introSrc,

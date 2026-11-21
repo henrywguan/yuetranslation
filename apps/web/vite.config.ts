@@ -2,7 +2,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import type { ManifestOptions } from 'vite-plugin-pwa'
-import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createPwaManifest } from './pwa-manifest.js'
@@ -10,34 +9,6 @@ import { createPwaManifest } from './pwa-manifest.js'
 const base = process.env.VITE_BASE_PATH || '/'
 const appBuild = '2026-09-03-pwa-builder-followup'
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
-const AGENT_DEBUG_LOG = '/opt/cursor/logs/debug.log'
-
-/** TEMP: browser → NDJSON file for debug-mode intro investigation (session 13d1). */
-function agentDebugLogPlugin() {
-  return {
-    name: 'agent-debug-log',
-    configureServer(server: { middlewares: { use: (fn: unknown) => void } }) {
-      server.middlewares.use((req: { url?: string; method?: string }, res: { statusCode: number; end: (s?: string) => void; setHeader: (k: string, v: string) => void }, next: () => void) => {
-        if (req.url !== '/__agent_debug_log' || req.method !== 'POST') {
-          next()
-          return
-        }
-        const chunks: Buffer[] = []
-        ;(req as NodeJS.ReadableStream).on('data', (c: Buffer) => chunks.push(c))
-        ;(req as NodeJS.ReadableStream).on('end', () => {
-          try {
-            const line = Buffer.concat(chunks).toString('utf8').trim()
-            if (line) fs.appendFileSync(AGENT_DEBUG_LOG, line + '\n')
-          } catch {
-            /* ignore */
-          }
-          res.statusCode = 204
-          res.end()
-        })
-      })
-    },
-  }
-}
 
 export default defineConfig({
   base,
@@ -47,7 +18,6 @@ export default defineConfig({
     },
   },
   plugins: [
-    agentDebugLogPlugin(),
     react(),
     VitePWA({
       strategies: 'injectManifest',

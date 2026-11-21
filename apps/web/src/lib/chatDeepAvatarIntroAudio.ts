@@ -5,6 +5,10 @@
  * (React mount + `canplay` are outside the gesture). Priming inside
  * `openDeepseekChat` / same-tick navigation starts playback under the gesture
  * so `#/chat` can adopt an already-playing unmuted element.
+ *
+ * Gesture trick: start `play()` muted (always allowed), then unmute in the
+ * same synchronous turn — Chrome/Safari often keep the unlock. Never leave a
+ * Sound-on intro stuck on muted playback from the prime path.
  */
 import {
   chatDeepAvatarIntroSrc,
@@ -12,7 +16,6 @@ import {
   type ChatDeepAvatarCharacterId,
 } from './chatDeepAvatarCharacter'
 import { readChatDeepAvatarSoundEnabled } from './chatDeepAvatarPersona'
-import { agentDebugLog } from './agentDebugLog'
 
 export type PrimedChatIntro = {
   character: ChatDeepAvatarCharacterId
@@ -50,14 +53,7 @@ export function clearPrimedChatDeepAvatarIntro() {
  */
 export function primeChatDeepAvatarIntro(character?: ChatDeepAvatarCharacterId) {
   if (typeof document === 'undefined') return
-  // #region agent log
-  const soundOn = readChatDeepAvatarSoundEnabled()
-  agentDebugLog('B', 'chatDeepAvatarIntroAudio.ts:prime', 'primeChatDeepAvatarIntro called', {
-    soundOn,
-    hasDoc: true,
-  })
-  // #endregion
-  if (!soundOn) {
+  if (!readChatDeepAvatarSoundEnabled()) {
     clearPrimedChatDeepAvatarIntro()
     return
   }
@@ -77,40 +73,45 @@ export function primeChatDeepAvatarIntro(character?: ChatDeepAvatarCharacterId) 
   video.preload = 'auto'
   video.setAttribute('playsinline', '')
   video.setAttribute('webkit-playsinline', '')
+  video.volume = 1
+  // Muted play first (gesture-safe), then unmute in the same turn.
+  video.muted = true
+
+  const attempt = video.play()
   video.muted = false
   video.volume = 1
 
-  // Fire play() inside the gesture — do not await canplay.
-  const attempt = video.play()
   if (attempt && typeof attempt.then === 'function') {
     void attempt
       .then(() => {
-        if (primed?.video === video) primed.unmuted = !video.muted
-        // #region agent log
-        agentDebugLog('B', 'chatDeepAvatarIntroAudio.ts:prime.then', 'prime unmuted play accepted', {
-          muted: video.muted,
-          paused: video.paused,
-          unmuted: primed?.unmuted,
-        })
-        // #endregion
+        if (primed?.video !== video) return
+        // If the browser re-muted us, stay honest — overlay will wait for a tap.
+        if (video.muted) {
+          try {
+            video.pause()
+            video.currentTime = 0
+          } catch {
+            /* ignore */
+          }
+          primed.unmuted = false
+          return
+        }
+        primed.unmuted = true
       })
-      .catch((err: unknown) => {
-        // Unmuted blocked even in-gesture (rare) — keep element for adopt; overlay retries.
-        // #region agent log
-        agentDebugLog('A', 'chatDeepAvatarIntroAudio.ts:prime.catch', 'prime unmuted play rejected', {
-          err: String(err),
-          name: (err as { name?: string })?.name,
-        })
-        // #endregion
-        video.muted = true
-        void video.play().catch(() => {
-          /* overlay will remount its own element */
-        })
+      .catch(() => {
+        // Do not fall back to muted playback — hold frame 0 for overlay unlock.
+        try {
+          video.pause()
+          video.currentTime = 0
+        } catch {
+          /* ignore */
+        }
+        video.muted = false
         if (primed?.video === video) primed.unmuted = false
       })
   }
 
-  primed = { character: id, video, unmuted: !video.muted }
+  primed = { character: id, video, unmuted: !video.muted && !video.paused }
 }
 
 /** Hand the primed element to the intro overlay (once). */
@@ -118,24 +119,10 @@ export function takePrimedChatDeepAvatarIntro(
   character: ChatDeepAvatarCharacterId,
 ): PrimedChatIntro | null {
   if (!primed || primed.character !== character) {
-    // #region agent log
-    agentDebugLog('B', 'chatDeepAvatarIntroAudio.ts:take', 'takePrimed miss', {
-      wanted: character,
-      had: primed?.character ?? null,
-    })
-    // #endregion
     return null
   }
   const out = primed
   primed = null
-  // #region agent log
-  agentDebugLog('B', 'chatDeepAvatarIntroAudio.ts:take', 'takePrimed hit', {
-    character: out.character,
-    unmuted: out.unmuted,
-    muted: out.video.muted,
-    paused: out.video.paused,
-  })
-  // #endregion
   return out
 }
 

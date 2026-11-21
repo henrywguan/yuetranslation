@@ -5,16 +5,16 @@
  *
  * Audio follows Companion Sound (default ON). Prefer unmuted playback from the
  * start (`primeChatDeepAvatarIntro` inside `openDeepseekChat`). When the browser
- * blocks unmuted autoplay (direct `#/chat` / hard refresh), play muted briefly
- * then unlock on the first gesture without dismissing. Mute control reflects
- * actual silence (Unmute while policy-locked). Tap Mute to silence once audible.
+ * blocks unmuted autoplay (direct `#/chat` / hard refresh), HOLD at frame 0 —
+ * never play the intro muted while Sound is on. First tap starts unmuted from
+ * the beginning (does not dismiss); second tap skips. Mute control reflects
+ * actual silence (Unmute while waiting). Tap Mute to silence once audible.
  *
  * Layout: JS pixel contain (`layoutIntroContainElement`) so the portrait clip
  * FITs every viewport — letterbox on landscape, never cover-crop head/legs.
  */
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { agentDebugLog } from '../../../lib/agentDebugLog'
 import {
   clearPrimedChatDeepAvatarIntro,
   takePrimedChatDeepAvatarIntro,
@@ -74,17 +74,6 @@ export function ChatDeepAvatarIntroOverlay() {
   const beginExit = () => {
     const cur = sessionRef.current
     if (!cur || finishing.current) return
-    // #region agent log
-    const vv = videoRef.current
-    agentDebugLog('C', 'ChatDeepAvatarIntro.tsx:beginExit', 'beginExit', {
-      policyMuted: policyMutedRef.current,
-      sessionMuted: sessionMutedRef.current,
-      muted: vv?.muted ?? null,
-      paused: vv?.paused ?? null,
-      currentTime: vv?.currentTime ?? null,
-      runId: 'post-fix',
-    })
-    // #endregion
     setPhase('exit')
     const v = videoRef.current
     if (v) {
@@ -108,21 +97,31 @@ export function ChatDeepAvatarIntroOverlay() {
   const tryUnlockUnmuted = () => {
     const v = videoRef.current
     if (!v || !wantAudible()) return false
-    // #region agent log
-    agentDebugLog('C', 'ChatDeepAvatarIntro.tsx:tryUnlockUnmuted', 'gesture unlock attempt', {
-      policyMuted: policyMutedRef.current,
-      sessionMuted: sessionMutedRef.current,
-      wasMuted: v.muted,
-      paused: v.paused,
-      runId: 'post-fix',
-    })
-    // #endregion
     setPolicyLock(false)
     v.muted = false
-    void v.play().catch(() => {
-      setPolicyLock(true)
-      v.muted = true
-    })
+    v.volume = 1
+    try {
+      // Restart so the full clip plays with sound (never mid-silent).
+      if (v.currentTime > 0.05) v.currentTime = 0
+    } catch {
+      /* ignore */
+    }
+    void v
+      .play()
+      .then(() => {
+        played.current = true
+        setPolicyLock(false)
+      })
+      .catch(() => {
+        setPolicyLock(true)
+        try {
+          v.pause()
+          v.currentTime = 0
+        } catch {
+          /* ignore */
+        }
+        v.muted = false
+      })
     return true
   }
 
@@ -222,18 +221,6 @@ export function ChatDeepAvatarIntroOverlay() {
       layoutIntroContainElement(v, stage)
       setPhase('play')
       const audible = wantAudible()
-      // #region agent log
-      agentDebugLog('A', 'ChatDeepAvatarIntro.tsx:start', 'start playback', {
-        fromPrime,
-        audible,
-        muted: v.muted,
-        paused: v.paused,
-        readyState: v.readyState,
-        soundEnabled: soundEnabledRef.current,
-        sessionMuted: sessionMutedRef.current,
-        runId: 'post-fix',
-      })
-      // #endregion
       if (!audible) {
         setPolicyLock(false)
         v.muted = true
@@ -249,13 +236,6 @@ export function ChatDeepAvatarIntroOverlay() {
       if (fromPrime && !v.paused && !v.muted) {
         played.current = true
         setPolicyLock(false)
-        // #region agent log
-        agentDebugLog('B', 'ChatDeepAvatarIntro.tsx:start.primeOk', 'adopted playing unmuted prime', {
-          muted: v.muted,
-          paused: v.paused,
-          runId: 'post-fix',
-        })
-        // #endregion
         return
       }
 
@@ -266,32 +246,21 @@ export function ChatDeepAvatarIntroOverlay() {
         if (cancelled) return
         played.current = true
         setPolicyLock(false)
-        // #region agent log
-        agentDebugLog('A', 'ChatDeepAvatarIntro.tsx:start.unmutedOk', 'unmuted play succeeded', {
-          muted: v.muted,
-          paused: v.paused,
-          runId: 'post-fix',
-        })
-        // #endregion
-      } catch (err: unknown) {
+      } catch {
         if (cancelled) return
-        // Autoplay with sound blocked — keep picture; unlock on next gesture (no dismiss).
-        // #region agent log
-        agentDebugLog('A', 'ChatDeepAvatarIntro.tsx:start.unmutedFail', 'unmuted play blocked → muted fallback', {
-          err: String(err),
-          name: (err as { name?: string })?.name,
-          fromPrime,
-          runId: 'post-fix',
-        })
-        // #endregion
+        // Autoplay with sound blocked — HOLD frame 0 (never play muted while Sound on).
         setPolicyLock(true)
-        v.muted = true
         try {
-          await v.play()
-          if (!cancelled) played.current = true
+          v.pause()
+          v.currentTime = 0
         } catch {
-          beginExit()
+          /* ignore */
         }
+        // Keep unmuted intent so the next gesture can start audible play.
+        v.muted = false
+        // Mark "armed" so failSafe does not dismiss while waiting for tap.
+        played.current = true
+        setPhase('play')
       }
     }
 
@@ -345,11 +314,16 @@ export function ChatDeepAvatarIntroOverlay() {
     }
   }, [session, reducedMotion])
 
-  // Keep imperative muted flag in sync with Sound pref / Mute / policy lock.
+  // Keep imperative muted flag in sync with Sound pref / user Mute.
+  // While policy-locked we leave muted=false (paused hold) so the next gesture can unlock.
   useEffect(() => {
     const v = videoRef.current
     if (!v) return
-    v.muted = !soundEnabled || sessionMuted || policyMuted
+    if (!soundEnabled || sessionMuted) {
+      v.muted = true
+      return
+    }
+    if (!policyMuted) v.muted = false
   }, [soundEnabled, sessionMuted, policyMuted, session])
 
   // Live Sound toggle / session mute while intro is up.
@@ -362,8 +336,12 @@ export function ChatDeepAvatarIntroOverlay() {
       v.muted = true
       return
     }
-    if (v.muted || policyMutedRef.current) {
-      setPolicyLock(false)
+    if (policyMutedRef.current) {
+      // Pref flipped back on while waiting — stay held; gesture still required.
+      v.muted = false
+      return
+    }
+    if (v.muted) {
       v.muted = false
       void v
         .play()
@@ -372,7 +350,13 @@ export function ChatDeepAvatarIntroOverlay() {
         })
         .catch(() => {
           setPolicyLock(true)
-          v.muted = true
+          try {
+            v.pause()
+            v.currentTime = 0
+          } catch {
+            /* ignore */
+          }
+          v.muted = false
         })
     }
   }, [session, reducedMotion, soundEnabled, sessionMuted])
@@ -469,28 +453,8 @@ export function ChatDeepAvatarIntroOverlay() {
   const showMuteControl = soundEnabled
   // Honest label: Unmute while policy-locked or after user Mute — never Mute-while-silent.
   const muteLabel = sessionMuted || policyMuted ? 'Unmute' : 'Mute'
-  // #region agent log
-  agentDebugLog('A', 'ChatDeepAvatarIntro.tsx:render', 'mute UI vs actual audio', {
-    muteLabel,
-    sessionMuted,
-    policyMuted,
-    soundEnabled,
-    videoMuted: videoRef.current?.muted ?? null,
-    videoPaused: videoRef.current?.paused ?? null,
-    misleadingMute: !sessionMuted && policyMuted && muteLabel === 'Mute',
-    runId: 'post-fix',
-  })
-  // #endregion
 
   const onOverlayClick = () => {
-    // #region agent log
-    agentDebugLog('C', 'ChatDeepAvatarIntro.tsx:overlayClick', 'overlay click', {
-      policyMuted: policyMutedRef.current,
-      sessionMuted: sessionMutedRef.current,
-      unlockConsumed: unlockConsumedClick.current,
-      runId: 'post-fix',
-    })
-    // #endregion
     if (unlockConsumedClick.current) {
       unlockConsumedClick.current = false
       return
