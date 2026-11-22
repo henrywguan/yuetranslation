@@ -13,21 +13,33 @@ import {
   CHAT_MODE_KEY,
   CHAT_SEARCH_KEY,
   CHAT_THINK_KEY,
+  CHAT_WORKSPACE_ACTIVE_TAB_KEY,
+  CHAT_WORKSPACE_FILES_VIEW_KEY,
   CHAT_WORKSPACE_PANEL_WIDTH_DEFAULT,
   CHAT_WORKSPACE_PANEL_WIDTH_KEY,
   CHAT_WORKSPACE_PANEL_WIDTH_MAX,
   CHAT_WORKSPACE_PANEL_WIDTH_MIN,
+  CHAT_WORKSPACE_SCHEDULE_OPEN_KEY,
+  CHAT_WORKSPACE_TABS_KEY,
   clampChatInboxSidebarWidth,
   clampChatWorkspacePanelWidth,
   cycleChatComposerMode,
   readChatComposerMode,
   readChatFlag,
   readChatInboxSidebarWidth,
+  readChatWorkspaceActiveTab,
+  readChatWorkspaceFilesView,
+  readChatWorkspaceOpenTabs,
   readChatWorkspacePanelWidth,
+  readChatWorkspaceScheduleOpen,
   writeChatComposerMode,
   writeChatFlag,
   writeChatInboxSidebarWidth,
+  writeChatWorkspaceActiveTab,
+  writeChatWorkspaceFilesView,
+  writeChatWorkspaceOpenTabs,
   writeChatWorkspacePanelWidth,
+  writeChatWorkspaceScheduleOpen,
 } from './chatUiPrefs.js'
 
 assert.equal(CHAT_THINK_KEY, 'yue-deepseek-chat-deepthink-v1')
@@ -90,6 +102,19 @@ writeChatWorkspacePanelWidth(520)
 assert.equal(readChatWorkspacePanelWidth(), 520)
 writeChatWorkspacePanelWidth(50)
 assert.equal(readChatWorkspacePanelWidth(), CHAT_WORKSPACE_PANEL_WIDTH_MIN)
+
+assert.equal(CHAT_WORKSPACE_TABS_KEY, 'yue-chat-workspace-tabs-v1')
+assert.equal(CHAT_WORKSPACE_ACTIVE_TAB_KEY, 'yue-chat-workspace-active-tab-v1')
+assert.equal(CHAT_WORKSPACE_FILES_VIEW_KEY, 'yue-chat-workspace-files-view-v1')
+assert.equal(CHAT_WORKSPACE_SCHEDULE_OPEN_KEY, 'yue-chat-workspace-schedule-open-v1')
+writeChatWorkspaceOpenTabs(['files', 'tasks'])
+assert.deepEqual(readChatWorkspaceOpenTabs(), ['files', 'tasks'])
+writeChatWorkspaceActiveTab('tasks')
+assert.equal(readChatWorkspaceActiveTab(), 'tasks')
+writeChatWorkspaceFilesView('riced')
+assert.equal(readChatWorkspaceFilesView(), 'riced')
+writeChatWorkspaceScheduleOpen(true)
+assert.equal(readChatWorkspaceScheduleOpen(false), true)
 
 const here = dirname(fileURLToPath(import.meta.url))
 const chatPage = readFileSync(join(here, '../pages/ChatPage.tsx'), 'utf8')

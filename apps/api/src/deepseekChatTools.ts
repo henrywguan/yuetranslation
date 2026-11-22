@@ -25,6 +25,7 @@ import {
   parseGithubRepo,
 } from './chatGithub.js'
 import {
+  projectCloseAgent,
   projectCreateAgent,
   projectListJson,
   projectMessageAgent,
@@ -89,6 +90,7 @@ export const DEEPSEEK_CHAT_MUTATING_TOOL_NAMES = new Set([
   'github_open_pr',
   'project_create_agent',
   'project_message_agent',
+  'project_close_agent',
   'project_update_memory',
   'generate_image',
 ])
@@ -173,18 +175,51 @@ export const DEEPSEEK_CHAT_PROJECT_TOOLS: OpenAiTool[] = [
     function: {
       name: 'project_set_status',
       description:
-        'Update an agent status so Inbox tiles stay accurate (working / needs_attention / in_review / done / queued / idle).',
+        'Update an agent status so Inbox tiles stay accurate (working / needs_attention / in_review / done / canceled / queued / idle). Prefer project_close_agent when finishing a worker so context is compacted.',
       parameters: {
         type: 'object',
         properties: {
           agentId: { type: 'string' },
           status: {
             type: 'string',
-            enum: ['queued', 'working', 'needs_attention', 'in_review', 'done', 'idle'],
+            enum: [
+              'queued',
+              'working',
+              'needs_attention',
+              'in_review',
+              'done',
+              'canceled',
+              'idle',
+            ],
           },
           reviewUrl: { type: 'string', description: 'Optional PR / review URL for in_review' },
         },
         required: ['agentId', 'status'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'project_close_agent',
+      description:
+        'Close a finished or irrelevant worker: set done/canceled, archive its thread, and compact its transcript into a short summary (Project memory + Tasks). Prefer this over leaving stale working/idle workers.',
+      parameters: {
+        type: 'object',
+        properties: {
+          agentId: { type: 'string' },
+          status: {
+            type: 'string',
+            enum: ['done', 'canceled'],
+            description: 'done = finished successfully; canceled = no longer relevant',
+          },
+          summary: {
+            type: 'string',
+            description:
+              'Crisp compact summary of what the worker accomplished or why it was canceled (required for later context).',
+          },
+        },
+        required: ['agentId', 'status', 'summary'],
       },
     },
   },
@@ -964,6 +999,28 @@ export async function executeDeepseekChatTool(
           agentId: set.action.agentId,
           status: set.action.status,
           reviewUrl: set.action.reviewUrl,
+        })
+      }
+      case 'project_close_agent': {
+        if (!ctx.project) {
+          return JSON.stringify({
+            error: 'No Project attached. Open a Project Overseer chat from the Inbox.',
+          })
+        }
+        const closed = projectCloseAgent(
+          ctx.project,
+          String(args.agentId || ''),
+          String(args.status || ''),
+          String(args.summary || ''),
+        )
+        if (!closed.ok) return JSON.stringify({ error: closed.error })
+        ctx.onProjectActions?.(closed.actions)
+        return JSON.stringify({
+          ok: true,
+          agentId: String(args.agentId || ''),
+          status: String(args.status || ''),
+          compacted: true,
+          archived: true,
         })
       }
       case 'project_update_memory': {

@@ -159,8 +159,24 @@ export function looksLikeDeferredOrchestration(text: string): boolean {
   )
 }
 
+/** Overseer said it would close/archive workers but never called project_close_agent. */
+export function looksLikeDeferredClose(text: string): boolean {
+  const t = String(text || '').trim()
+  if (!t || t.length > 600) return false
+  if ((t.match(/\n/g) || []).length >= 4) return false
+  return (
+    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to|i(?:['’]m| am) about to)\b[\s\S]{0,120}\b(close|archive|compact|retire|dismiss|shut down|wrap up)\b[\s\S]{0,120}\b(workers?|agents?|threads?)\b/i.test(
+      t,
+    ) ||
+    /\b(project_close_agent)\b/i.test(t)
+  )
+}
+
 const DEFERRED_ORCHESTRATION_NUDGE =
   'You announced creating or messaging Project workers but did not call project_create_agent (with a message) or project_message_agent. Call those tools now to spawn/resume workers. Do not stop after another "I\'ll set up workers" sentence — the Inbox only updates when tools run.'
+
+const DEFERRED_CLOSE_NUDGE =
+  'You announced closing, archiving, or compacting Project workers but did not call project_close_agent (with status done|canceled and a summary). Call project_close_agent now for each finished or irrelevant worker. Do not stop after another "I\'ll close workers" sentence — Tasks only update when that tool runs.'
 
 export type DeepseekChatSearchImage = {
   imageUrl: string
@@ -689,8 +705,10 @@ export async function* streamDeepseekChatHarness(
   let announcedSearching = false
   let deferredSearchRecoveries = 0
   let deferredOrchestrationRecovered = false
+  let deferredCloseRecovered = false
   let deferredToolRecovered = false
   let projectOrchestrationUsed = false
+  let projectCloseUsed = false
   let clientToolsUsed = false
   const allSources = new Map<string, string>()
   const pendingImages: Array<{ url: string; prompt: string; id: string }> = []
@@ -877,8 +895,15 @@ export async function* streamDeepseekChatHarness(
       for (const call of pendingToolCalls) {
         const toolName = call.function.name
         clientToolsUsed = true
-        if (toolName === 'project_create_agent' || toolName === 'project_message_agent') {
+        if (
+          toolName === 'project_create_agent' ||
+          toolName === 'project_message_agent' ||
+          toolName === 'project_close_agent'
+        ) {
           projectOrchestrationUsed = true
+        }
+        if (toolName === 'project_close_agent') {
+          projectCloseUsed = true
         }
         // Keep the SSE data channel alive while tools run — comment heartbeats do not
         // reset the client idle watchdog. Ask/Plan fetch_url loops especially need a
@@ -999,6 +1024,29 @@ export async function* streamDeepseekChatHarness(
       continue
     }
 
+    // Overseer announced close/archive but never called project_close_agent.
+    if (
+      projectAttached &&
+      !deferredCloseRecovered &&
+      !projectCloseUsed &&
+      looksLikeDeferredClose(assistantContent) &&
+      round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS - 1
+    ) {
+      deferredCloseRecovered = true
+      console.warn(
+        '[deepseek-chat] deferred-close recovery: Overseer announced close without project_close_agent',
+      )
+      msgs.push({
+        role: 'assistant',
+        content: assistantContent || null,
+        reasoning_content: assistantReasoning || null,
+      })
+      msgs.push({ role: 'user', content: DEFERRED_CLOSE_NUDGE })
+      yield { kind: 'content_replace', text: '' }
+      assistantContent = ''
+      continue
+    }
+
     // General client-tool deferral: announced weather/fetch/etc. without tool_calls.
     if (
       tools.length > 0 &&
@@ -1009,6 +1057,7 @@ export async function* streamDeepseekChatHarness(
       // Prefer search/orchestration recoveries when those intents also match.
       !(searchEnabled && useNativeWeb && looksLikeDeferredSearchTurn(assistantContent, assistantReasoning)) &&
       !(projectAttached && looksLikeDeferredOrchestration(assistantContent)) &&
+      !(projectAttached && looksLikeDeferredClose(assistantContent)) &&
       round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS - 1
     ) {
       deferredToolRecovered = true

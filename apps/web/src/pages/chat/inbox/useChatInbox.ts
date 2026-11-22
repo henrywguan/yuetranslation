@@ -3,6 +3,7 @@ import {
   attachThreadToProject,
   createProject,
   createWorker,
+  setAgentCompactSummary,
   createWorkspace,
   deleteProject,
   deleteWorkspace,
@@ -181,6 +182,13 @@ export function useChatInbox() {
     [commit],
   )
 
+  const compactAgent = useCallback(
+    (agentId: string, summary: string, status?: 'done' | 'canceled') => {
+      commit(setAgentCompactSummary(stateRef.current, agentId, summary, status))
+    },
+    [commit],
+  )
+
   return {
     ready,
     state,
@@ -197,5 +205,6 @@ export function useChatInbox() {
     updateAgentStatus,
     markInReview,
     updateProjectMemory,
+    compactAgent,
   }
 }

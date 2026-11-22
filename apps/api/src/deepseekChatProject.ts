@@ -35,6 +35,13 @@ export type ProjectAction =
       type: 'update_memory'
       memory: string
     }
+  | {
+      type: 'compact_agent'
+      agentId: string
+      summary: string
+      archive: boolean
+      status: 'done' | 'canceled'
+    }
 
 const STATUS_OK = new Set([
   'queued',
@@ -43,7 +50,10 @@ const STATUS_OK = new Set([
   'in_review',
   'done',
   'idle',
+  'canceled',
 ])
+
+const CLOSE_STATUS_OK = new Set(['done', 'canceled'])
 
 export type ChatProjectStore = {
   projectId: string
@@ -185,6 +195,68 @@ export function projectUpdateMemory(
   const action: ProjectAction = { type: 'update_memory', memory: store.memory }
   store.pendingActions.push(action)
   return { ok: true, action }
+}
+
+/**
+ * Close a worker: set done/canceled, append a compact summary into Project memory,
+ * and emit compact_agent so the client archives the thread + stops sending full history.
+ */
+export function projectCloseAgent(
+  store: ChatProjectStore,
+  agentId: string,
+  status: string,
+  summary: string,
+):
+  | {
+      ok: true
+      actions: Array<
+        | Extract<ProjectAction, { type: 'set_status' }>
+        | Extract<ProjectAction, { type: 'compact_agent' }>
+        | Extract<ProjectAction, { type: 'update_memory' }>
+      >
+    }
+  | { ok: false; error: string } {
+  const id = String(agentId || '').trim()
+  const next = String(status || '')
+    .trim()
+    .toLowerCase()
+  const note = String(summary || '').trim().slice(0, 2_000)
+  if (!id) return { ok: false, error: 'agentId required' }
+  if (!CLOSE_STATUS_OK.has(next)) {
+    return { ok: false, error: "status must be 'done' or 'canceled'" }
+  }
+  if (!note) return { ok: false, error: 'summary required (compact context for later turns)' }
+  const agent = store.agents.find((a) => a.id === id)
+  if (!agent) return { ok: false, error: 'Agent not found in this Project.' }
+  if (agent.role === 'overseer') {
+    return { ok: false, error: 'Cannot close the Overseer — close workers only.' }
+  }
+  agent.status = next
+  const closeStatus = next as 'done' | 'canceled'
+  const setAction: Extract<ProjectAction, { type: 'set_status' }> = {
+    type: 'set_status',
+    agentId: id,
+    status: closeStatus,
+  }
+  const compactAction: Extract<ProjectAction, { type: 'compact_agent' }> = {
+    type: 'compact_agent',
+    agentId: id,
+    summary: note,
+    archive: true,
+    status: closeStatus,
+  }
+  const memLine = `[${closeStatus}] ${agent.title}: ${note}`
+  const joined = store.memory.trim()
+    ? `${store.memory.trim()}\n${memLine}`
+    : memLine
+  store.memory = joined.slice(-8_000)
+  const memAction: Extract<ProjectAction, { type: 'update_memory' }> = {
+    type: 'update_memory',
+    memory: store.memory,
+  }
+  const actions = [setAction, compactAction, memAction] as const
+  store.pendingActions.push(...actions)
+  return { ok: true, actions: [...actions] }
 }
 
 export function drainProjectActions(store: ChatProjectStore): ProjectAction[] {

@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url'
 import {
   createProjectStore,
   drainProjectActions,
+  projectCloseAgent,
   projectCreateAgent,
   projectListJson,
   projectMessageAgent,
@@ -18,6 +19,7 @@ import {
 import { DEEPSEEK_CHAT_PROJECT_TOOLS, executeDeepseekChatTool } from './deepseekChatTools.js'
 import {
   buildDeepseekChatToolList,
+  looksLikeDeferredClose,
   looksLikeDeferredOrchestration,
 } from './deepseekChatHarness.js'
 import { buildDeepseekChatSystem } from './deepseekChatPrompt.js'
@@ -28,6 +30,7 @@ assert.ok(DEEPSEEK_CHAT_PROJECT_TOOLS.some((t) => t.function.name === 'project_c
 assert.ok(DEEPSEEK_CHAT_PROJECT_TOOLS.some((t) => t.function.name === 'project_message_agent'))
 assert.ok(DEEPSEEK_CHAT_PROJECT_TOOLS.some((t) => t.function.name === 'project_list_agents'))
 assert.ok(DEEPSEEK_CHAT_PROJECT_TOOLS.some((t) => t.function.name === 'project_set_status'))
+assert.ok(DEEPSEEK_CHAT_PROJECT_TOOLS.some((t) => t.function.name === 'project_close_agent'))
 assert.ok(DEEPSEEK_CHAT_PROJECT_TOOLS.some((t) => t.function.name === 'project_update_memory'))
 
 const tools = buildDeepseekChatToolList(false, [], false, false, true) as Array<{
@@ -101,9 +104,23 @@ const overseerPrompt = buildDeepseekChatSystem({
   mode: 'tools',
 })
 assert.match(overseerPrompt, /project_create_agent/)
+assert.match(overseerPrompt, /project_close_agent/)
 assert.match(overseerPrompt, /Never ask the user to click Spawn/)
 assert.match(overseerPrompt, /never announce that you will create/)
+assert.match(overseerPrompt, /Prefer project_close_agent|call project_close_agent/i)
 assert.doesNotMatch(overseerPrompt, /ask the user to spawn/)
+
+const closed = projectCloseAgent(store, created.agentId, 'done', 'README + smoke landed')
+assert.equal(closed.ok, true)
+if (!closed.ok) throw new Error('close failed')
+assert.ok(closed.actions.some((a) => a.type === 'compact_agent'))
+assert.ok(closed.actions.some((a) => a.type === 'set_status'))
+assert.match(store.memory, /README/)
+
+assert.equal(
+  looksLikeDeferredClose("I'll close the finished workers and archive their threads."),
+  true,
+)
 
 const createTool = DEEPSEEK_CHAT_PROJECT_TOOLS.find((t) => t.function.name === 'project_create_agent')
 assert.ok(createTool)
@@ -124,6 +141,8 @@ const harness = readFileSync(join(here, 'deepseekChatHarness.ts'), 'utf8')
 assert.match(harness, /DEEPSEEK_CHAT_PROJECT_TOOLS/)
 assert.match(harness, /kind: 'project'/)
 assert.match(harness, /deferred-orchestration recovery/)
+assert.match(harness, /deferred-close recovery/)
+assert.match(harness, /project_close_agent/)
 
 const routes = readFileSync(join(here, 'deepseekChatRoutes.ts'), 'utf8')
 assert.match(routes, /projectId/)
