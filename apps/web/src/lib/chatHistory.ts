@@ -567,6 +567,70 @@ export function setChatThreadPinned(thread: ChatThread, pinned: boolean): ChatTh
   return { ...thread, pinned: Boolean(pinned), updatedAt: Date.now() }
 }
 
+/**
+ * Replace a closed worker's transcript with a single compact context turn so
+ * later project_message_agent resumes without re-sending the full history.
+ */
+export function seedCompactedWorkerThread(
+  thread: ChatThread,
+  summary: string,
+  agentTitle?: string,
+): ChatThread {
+  const note = String(summary || '').trim().slice(0, 2_000)
+  if (!note) return thread
+  const label = String(agentTitle || thread.title || 'Worker').trim() || 'Worker'
+  const now = Date.now()
+  const content =
+    `Prior work was compacted for this worker (${label}).\n\nSummary:\n${note}\n\nContinue from this summary; do not assume earlier verbatim transcript is available.`
+  const msg: ChatMessage = {
+    id: uid(),
+    role: 'user',
+    content,
+    createdAt: now,
+  }
+  return {
+    ...thread,
+    updatedAt: now,
+    archived: false,
+    messages: [msg],
+  }
+}
+
+/**
+ * When a live worker thread is near the wire cap, roll oldest turns into one
+ * summary message and keep the newest tail (Overseer close summary preferred).
+ */
+export function rollupOldestChatMessages(
+  thread: ChatThread,
+  keepTail = Math.max(12, Math.floor(API_CHAT_MESSAGES_MAX * 0.6)),
+): ChatThread {
+  const msgs = thread.messages
+  if (msgs.length <= keepTail + 2) return thread
+  const drop = msgs.slice(0, msgs.length - keepTail)
+  const tail = msgs.slice(msgs.length - keepTail)
+  const bits = drop
+    .map((m) => {
+      const body = m.content.trim().replace(/\s+/g, ' ').slice(0, 180)
+      if (!body) return ''
+      return `${m.role}: ${body}`
+    })
+    .filter(Boolean)
+    .slice(0, 16)
+  if (!bits.length) return { ...thread, messages: tail }
+  const now = Date.now()
+  const rollup: ChatMessage = {
+    id: uid(),
+    role: 'user',
+    content: `Context rollup (older turns compacted):\n${bits.join('\n')}`,
+    createdAt: drop[0]?.createdAt || now,
+  }
+  return {
+    ...thread,
+    updatedAt: now,
+    messages: [rollup, ...tail],
+  }
+}
+
 export function setChatThreadArchived(thread: ChatThread, archived: boolean): ChatThread {
   return {
     ...thread,

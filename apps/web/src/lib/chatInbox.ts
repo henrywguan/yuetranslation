@@ -10,6 +10,7 @@ export type InboxAgentStatus =
   | 'needs_attention'
   | 'in_review'
   | 'done'
+  | 'canceled'
   | 'idle'
 
 export type InboxFilter = 'all' | 'needs_attention' | 'working' | 'in_review'
@@ -41,6 +42,10 @@ export type ChatInboxAgent = {
   updatedAt: number
   /** Optional PR / review URL (Phase E). */
   reviewUrl?: string
+  /** Compact summary after project_close_agent — replaces full archived transcript context. */
+  compactSummary?: string
+  /** When the worker was closed (done/canceled). */
+  closedAt?: number
 }
 
 /** `files` = promoted Thread files snapshot (device-local IDB). */
@@ -89,6 +94,7 @@ function asStatus(v: unknown): InboxAgentStatus {
     'needs_attention',
     'in_review',
     'done',
+    'canceled',
     'idle',
   ]
   return ok.includes(v as InboxAgentStatus) ? (v as InboxAgentStatus) : 'idle'
@@ -141,6 +147,9 @@ export function normalizeInboxState(raw: unknown): ChatInboxState {
       threadId: typeof a.threadId === 'string' ? a.threadId : undefined,
       updatedAt: typeof a.updatedAt === 'number' ? a.updatedAt : Date.now(),
       reviewUrl: typeof a.reviewUrl === 'string' ? a.reviewUrl : undefined,
+      compactSummary:
+        typeof a.compactSummary === 'string' ? a.compactSummary.slice(0, 2_000) : undefined,
+      closedAt: typeof a.closedAt === 'number' ? a.closedAt : undefined,
     }))
 
   const workspaces: ChatInboxWorkspace[] = workspacesIn
@@ -378,6 +387,7 @@ export const STATUS_CHIP_LABEL: Record<InboxAgentStatus, string> = {
   needs_attention: 'You',
   in_review: 'Review',
   done: 'Done',
+  canceled: 'Cancel',
 }
 
 export function statusChipLabel(status: InboxAgentStatus | string): string {
@@ -507,6 +517,7 @@ export function setAgentStatus(
   reviewUrl?: string,
 ): ChatInboxState {
   const now = Date.now()
+  const closing = status === 'done' || status === 'canceled'
   return {
     ...state,
     updatedAt: now,
@@ -517,10 +528,83 @@ export function setAgentStatus(
             status,
             updatedAt: now,
             ...(reviewUrl !== undefined ? { reviewUrl } : null),
+            ...(closing && !a.closedAt ? { closedAt: now } : null),
           }
         : a,
     ),
   }
+}
+
+/** Persist Overseer close summary on the agent (Tasks + later wire compaction). */
+export function setAgentCompactSummary(
+  state: ChatInboxState,
+  agentId: string,
+  summary: string,
+  status?: 'done' | 'canceled',
+): ChatInboxState {
+  const now = Date.now()
+  const note = String(summary || '').trim().slice(0, 2_000)
+  return {
+    ...state,
+    updatedAt: now,
+    agents: state.agents.map((a) =>
+      a.id === agentId
+        ? {
+            ...a,
+            compactSummary: note || a.compactSummary,
+            closedAt: now,
+            updatedAt: now,
+            ...(status ? { status } : null),
+          }
+        : a,
+    ),
+  }
+}
+
+/** Build a Workers (compact) block from closed agents for Overseer context. */
+export function buildWorkersCompactBlock(
+  state: ChatInboxState,
+  projectId: string,
+): string {
+  const closed = state.agents.filter(
+    (a) =>
+      a.projectId === projectId &&
+      a.role === 'worker' &&
+      (a.status === 'done' || a.status === 'canceled') &&
+      a.compactSummary?.trim(),
+  )
+  if (!closed.length) return ''
+  const lines = closed
+    .slice(0, 24)
+    .map((a) => `- [${a.status}] ${a.title}: ${a.compactSummary!.trim()}`)
+  return `Workers (compact):\n${lines.join('\n')}`
+}
+
+/** Merge Project memory with compact worker summaries for the API prompt. */
+export function mergeProjectMemoryWithCompacts(
+  state: ChatInboxState,
+  projectId: string,
+  memory?: string,
+): string | undefined {
+  const base = String(memory || '').trim()
+  const block = buildWorkersCompactBlock(state, projectId)
+  if (!base && !block) return undefined
+  if (!block) return base.slice(0, 8_000)
+  if (!base) return block.slice(0, 8_000)
+  // Avoid duplicating lines already appended by project_close_agent into memory.
+  if (base.includes('Workers (compact):') || closedSummariesAlreadyInMemory(base, block)) {
+    return base.slice(0, 8_000)
+  }
+  return `${base}\n\n${block}`.slice(0, 8_000)
+}
+
+function closedSummariesAlreadyInMemory(memory: string, block: string): boolean {
+  const first = block
+    .split('\n')
+    .find((l) => l.startsWith('- ['))
+  if (!first) return false
+  const snippet = first.replace(/^- \[[^\]]+\]\s*/, '').slice(0, 40)
+  return snippet.length > 8 && memory.includes(snippet)
 }
 
 export function markAgentInReview(
@@ -734,3 +818,21 @@ export function looksLikeDeferredOrchestration(text: string): boolean {
 
 export const ORCHESTRATION_STALL_ERROR =
   'Overseer announced worker setup but did not create or message any agents. Say “continue” or rephrase so it calls project tools — Inbox ATTENTION with no workers means orchestration stalled.'
+
+/**
+ * Overseer said it would close/archive workers without project_close_agent.
+ * Keep in sync with apps/api `looksLikeDeferredClose`.
+ */
+export function looksLikeDeferredClose(text: string): boolean {
+  const t = String(text || '').trim()
+  if (!t || t.length > 600) return false
+  if ((t.match(/\n/g) || []).length >= 4) return false
+  return (
+    /\b(i(?:['’]ll| will)|let me|i am going to|i'm going to|i(?:['’]m| am) about to)\b[\s\S]{0,120}\b(close|archive|compact|retire|dismiss|shut down|wrap up)\b[\s\S]{0,120}\b(workers?|agents?|threads?)\b/i.test(
+      t,
+    ) || /\b(project_close_agent)\b/i.test(t)
+  )
+}
+
+export const CLOSE_STALL_ERROR =
+  'Overseer announced closing workers but did not call project_close_agent. Say “continue” so it closes finished workers with a summary — otherwise Tasks keep stale Working rows.'

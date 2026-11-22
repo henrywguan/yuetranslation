@@ -522,8 +522,8 @@ function ComposerChrome({
     setComposerMode,
     buildFromPlan,
     planDraft,
-    setPlanDraft,
     savePlanToWorkspace,
+    requestWorkspaceTab,
     richLayout,
     setRichLayout,
     harnessOn,
@@ -766,6 +766,7 @@ function ComposerChrome({
               disabled={busy || !planDraft.trim()}
               title="Save plan markdown to workspace (plans/latest.md)"
               onClick={() => {
+                requestWorkspaceTab('plan')
                 const res = savePlanToWorkspace()
                 if (res.ok) {
                   setPlanSaveNote(`Saved · ${res.path}`)
@@ -790,7 +791,10 @@ function ComposerChrome({
                     ? 'Plan is empty — write a plan before Build'
                     : 'Switch to Agent and hand the plan to Overseer / workers'
               }
-              onClick={() => void buildFromPlan()}
+              onClick={() => {
+                requestWorkspaceTab('plan')
+                void buildFromPlan()
+              }}
             >
               Build
             </button>
@@ -969,29 +973,10 @@ function ComposerChrome({
         </div>
       ) : null}
 
-      {composerMode === 'plan' ? (
-        <div className="aui-plan-artifact" aria-label="Plan artifact">
-          <div className="aui-plan-artifact-head">
-            <span>Plan</span>
-            <span className="aui-plan-artifact-hint">Edit before Build · optional Save to workspace</span>
-            {planSaveNote ? (
-              <span className="aui-plan-artifact-saved" role="status">
-                {planSaveNote}
-              </span>
-            ) : null}
-          </div>
-          <textarea
-            className="aui-plan-artifact-input"
-            value={planDraft}
-            rows={5}
-            disabled={busy}
-            placeholder="Plan markdown appears here after a Plan reply — edit freely, then Build."
-            onChange={(e) => {
-              setPlanDraft(e.target.value)
-              setPlanSaveNote(null)
-            }}
-          />
-        </div>
+      {composerMode === 'plan' && planSaveNote ? (
+        <p className="aui-plan-artifact-saved" role="status">
+          {planSaveNote} · edit in Workspace → Plan
+        </p>
       ) : null}
 
       {pendingFiles.length ? (

@@ -33,6 +33,7 @@ import {
 } from '../../../lib/chatReviewActivity'
 import { searchStepFromSandboxActivity } from '../../../lib/chatToolCards'
 import {
+  API_CHAT_MESSAGES_MAX,
   apiMessagesFromThread,
   appendChatMessage,
   deleteChatThread,
@@ -42,6 +43,8 @@ import {
   MAX_CONTENT_CHARS,
   patchAssistantContent,
   renameChatThread,
+  rollupOldestChatMessages,
+  seedCompactedWorkerThread,
   setChatThreadArchived,
   upsertChatThread,
   type ChatFileMeta,
@@ -52,11 +55,16 @@ import {
 } from '../../../lib/chatHistory'
 import {
   agentForThread,
+  CLOSE_STALL_ERROR,
+  looksLikeDeferredClose,
   looksLikeDeferredOrchestration,
+  mergeProjectMemoryWithCompacts,
   ORCHESTRATION_STALL_ERROR,
   resolveActiveSandboxSessionId,
+  type ChatInboxAgent,
   type InboxAgentStatus,
 } from '../../../lib/chatInbox'
+import type { ChatWorkspaceTabId } from '../../../lib/chatUiPrefs'
 import { humanizeThrownError } from '../../../lib/apiError'
 import {
   isEmptyAgentReplyRecoverableError,
@@ -178,6 +186,14 @@ export type ChatAuiSession = {
   setPlanDraft: (text: string) => void
   /** Persist current planDraft into the thread workspace as plans/latest.md. */
   savePlanToWorkspace: () => { ok: boolean; path?: string; error?: string }
+  /** Focus Files / Plan / Tasks in the workspace rail (null = none). */
+  workspaceFocusTab: ChatWorkspaceTabId | null
+  requestWorkspaceTab: (tab: ChatWorkspaceTabId) => void
+  clearWorkspaceFocusTab: () => void
+  /** Project agents for the active thread (Tasks tab). */
+  projectAgents: ChatInboxAgent[]
+  projectTitle: string | null
+  openProjectAgent: (agent: ChatInboxAgent) => void
   richLayout: boolean
   setRichLayout: (on: boolean) => void
   harnessOn: boolean
@@ -405,10 +421,25 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     return created.id
   }, [])
 
+  const [workspaceFocusTab, setWorkspaceFocusTab] = useState<ChatWorkspaceTabId | null>(null)
+
+  const requestWorkspaceTab = useCallback((tab: ChatWorkspaceTabId) => {
+    setHarnessOnState(true)
+    writeHarnessFlag(true)
+    setWorkspaceOpenState(true)
+    setWorkspaceFocusTab(tab)
+  }, [])
+
+  const clearWorkspaceFocusTab = useCallback(() => {
+    setWorkspaceFocusTab(null)
+  }, [])
+
   const applyProjectActions = useCallback(
     (actions: Array<Record<string, unknown>>, projectId: string) => {
       const api = inboxRef.current
       if (!api || !projectId) return
+      let spawned = false
+      let closed = false
       for (const raw of actions) {
         const type = String(raw.type || '')
         if (type === 'create_agent') {
@@ -423,23 +454,46 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             pendingProjectMsgsRef.current.push({ agentId, message, projectId })
             setChatDeepAvatarPlanBuildChainBusy(true)
           }
+          spawned = true
           continue
         }
         if (type === 'message_agent') {
           const agentId = String(raw.agentId || '').trim()
           const message = String(raw.message || '').trim()
           if (!agentId || !message) continue
-          if (!api.state.agents.some((a) => a.id === agentId)) {
+          const existing = api.state.agents.find((a) => a.id === agentId)
+          if (!existing) {
             api.spawnWorker(projectId, {
               id: agentId,
               title: `Worker · ${api.state.projects.find((p) => p.id === projectId)?.title || 'Project'}`,
               status: 'queued',
             })
           } else {
+            if (
+              existing.threadId &&
+              (existing.status === 'done' ||
+                existing.status === 'canceled' ||
+                existing.compactSummary)
+            ) {
+              setThreads((prev) => {
+                const cur = prev.find((t) => t.id === existing.threadId)
+                if (!cur) return prev
+                const seeded = seedCompactedWorkerThread(
+                  setChatThreadArchived(cur, false),
+                  existing.compactSummary || 'Prior work compacted.',
+                  existing.title,
+                )
+                return upsertChatThread(
+                  seeded,
+                  prev.filter((t) => t.id !== BOOT_THREAD.id),
+                )
+              })
+            }
             api.updateAgentStatus(agentId, 'queued')
           }
           pendingProjectMsgsRef.current.push({ agentId, message, projectId })
           setChatDeepAvatarPlanBuildChainBusy(true)
+          spawned = true
           continue
         }
         if (type === 'set_status') {
@@ -460,9 +514,43 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           }
           continue
         }
+        if (type === 'compact_agent') {
+          const agentId = String(raw.agentId || '').trim()
+          const summary = typeof raw.summary === 'string' ? raw.summary.trim() : ''
+          const statusRaw = String(raw.status || 'done').trim()
+          const status: 'done' | 'canceled' =
+            statusRaw === 'canceled' ? 'canceled' : 'done'
+          if (!agentId || !summary) continue
+          const agent = api.state.agents.find((a) => a.id === agentId)
+          const threadId = agent?.threadId
+          const title = agent?.title
+          api.compactAgent(agentId, summary, status)
+          if (threadId && raw.archive !== false) {
+            setThreads((prev) => {
+              const cur = prev.find((t) => t.id === threadId)
+              if (!cur) return prev
+              const archived = setChatThreadArchived(
+                seedCompactedWorkerThread(cur, summary, title),
+                true,
+              )
+              return upsertChatThread(
+                archived,
+                prev.filter((t) => t.id !== BOOT_THREAD.id),
+              )
+            })
+          }
+          closed = true
+          continue
+        }
         if (type === 'update_memory') {
           api.updateProjectMemory(projectId, String(raw.memory || ''))
         }
+      }
+      if (spawned || closed) {
+        setHarnessOnState(true)
+        writeHarnessFlag(true)
+        setWorkspaceOpenState(true)
+        setWorkspaceFocusTab('tasks')
       }
     },
     [],
@@ -551,6 +639,12 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     composerModeRef.current = mode
     setComposerModeState(mode)
     writeChatComposerMode(mode)
+    if (mode === 'plan') {
+      setHarnessOnState(true)
+      writeHarnessFlag(true)
+      setWorkspaceOpenState(true)
+      setWorkspaceFocusTab('plan')
+    }
   }, [])
 
   const setHarnessOn = useCallback(
@@ -1000,16 +1094,26 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       }
 
       try {
-        const wireMessages = apiMessagesFromThread(thread).filter((m) => m.content.trim())
+        let sendThread = thread
+        if (sendThread.messages.length > API_CHAT_MESSAGES_MAX - 2) {
+          sendThread = rollupOldestChatMessages(sendThread)
+          thread = sendThread
+          persist(sendThread)
+        }
+        const wireMessages = apiMessagesFromThread(sendThread).filter((m) => m.content.trim())
         const inboxState = inboxRef.current?.state
         const linkedAgent = inboxState ? agentForThread(inboxState, thread.id) : undefined
         const inboxRole =
           linkedAgent?.role === 'overseer' || linkedAgent?.role === 'worker'
             ? linkedAgent.role
             : undefined
-        const projectMemory = linkedAgent?.projectId
+        const rawProjectMemory = linkedAgent?.projectId
           ? inboxState?.projects.find((p) => p.id === linkedAgent.projectId)?.memory
           : undefined
+        const projectMemory =
+          linkedAgent?.projectId && inboxState
+            ? mergeProjectMemoryWithCompacts(inboxState, linkedAgent.projectId, rawProjectMemory)
+            : rawProjectMemory
         const sandboxSessionId = inboxState
           ? resolveActiveSandboxSessionId(inboxState, linkedAgent?.projectId)
           : undefined
@@ -1231,6 +1335,12 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             looksLikeDeferredOrchestration(assembled)
           ) {
             setError(ORCHESTRATION_STALL_ERROR)
+          } else if (
+            overseerTurn &&
+            projectActionsThisTurn === 0 &&
+            looksLikeDeferredClose(assembled)
+          ) {
+            setError(CLOSE_STALL_ERROR)
           } else {
             // call_started search_steps alone are not evidence — need source URLs.
             const hadSearchChrome = Boolean(sources?.length)
@@ -1290,24 +1400,30 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         setBusy(false)
         abortRef.current = null
         if (streamTtsRef.current === liveTts) streamTtsRef.current = null
-        const inboxState = inboxRef.current?.state
+        const inboxApi = inboxRef.current
+        const inboxState = inboxApi?.state
         const linkedAgent = inboxState ? agentForThread(inboxState, thread.id) : undefined
-        if (linkedAgent && inboxRef.current) {
+        if (linkedAgent && inboxApi) {
+          const fresh = inboxApi.state.agents.find((a) => a.id === linkedAgent.id) || linkedAgent
           const hasPendingWorkers = pendingProjectMsgsRef.current.some(
             (p) =>
-              p.projectId === linkedAgent.projectId ||
-              (linkedAgent.role === 'overseer' && Boolean(p.agentId)),
+              p.projectId === fresh.projectId ||
+              (fresh.role === 'overseer' && Boolean(p.agentId)),
           )
           // Keep Overseer Working while worker prompts are queued; otherwise Needs Attention.
-          // Workers always surface under Needs Attention when their turn ends.
-          let nextStatus: InboxAgentStatus =
-            linkedAgent.role === 'worker' || linkedAgent.role === 'overseer'
-              ? 'needs_attention'
-              : 'idle'
-          if (linkedAgent.role === 'overseer' && hasPendingWorkers) {
-            nextStatus = 'working'
+          // Do not revive closed workers that were compacted this turn.
+          if (fresh.status === 'done' || fresh.status === 'canceled') {
+            /* keep closed */
+          } else {
+            let nextStatus: InboxAgentStatus =
+              fresh.role === 'worker' || fresh.role === 'overseer'
+                ? 'needs_attention'
+                : 'idle'
+            if (fresh.role === 'overseer' && hasPendingWorkers) {
+              nextStatus = 'working'
+            }
+            inboxApi.updateAgentStatus(fresh.id, nextStatus)
           }
-          inboxRef.current.updateAgentStatus(linkedAgent.id, nextStatus)
         }
       }
     },
@@ -1817,6 +1933,27 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
   const clearError = useCallback(() => setError(null), [])
 
+  const activeProjectMeta = useMemo(() => {
+    const state = inbox?.state
+    if (!state) return { agents: [] as ChatInboxAgent[], title: null as string | null }
+    const linked = agentForThread(state, activeId)
+    const projectId = linked?.projectId
+    if (!projectId) return { agents: [] as ChatInboxAgent[], title: null as string | null }
+    const project = state.projects.find((p) => p.id === projectId)
+    const agents = state.agents.filter(
+      (a) => a.projectId === projectId && (a.role === 'overseer' || a.role === 'worker'),
+    )
+    return { agents, title: project?.title || null }
+  }, [inbox?.state, activeId])
+
+  const openProjectAgent = useCallback(
+    (agent: ChatInboxAgent) => {
+      if (!agent.threadId) return
+      selectThread(agent.threadId)
+    },
+    [selectThread],
+  )
+
   const session = useMemo<ChatAuiSession>(
     () => ({
       threads: visibleThreads,
@@ -1839,6 +1976,12 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       planDraft,
       setPlanDraft,
       savePlanToWorkspace,
+      workspaceFocusTab,
+      requestWorkspaceTab,
+      clearWorkspaceFocusTab,
+      projectAgents: activeProjectMeta.agents,
+      projectTitle: activeProjectMeta.title,
+      openProjectAgent,
       richLayout,
       setRichLayout,
       harnessOn,
@@ -1892,6 +2035,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       acceptWorkspaceLsConsent,
       activeFollowUps,
       activeId,
+      activeProjectMeta.agents,
+      activeProjectMeta.title,
       activeWorkspace,
       addSchedule,
       archiveThread,
@@ -1899,12 +2044,16 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       busy,
       clearError,
       clearFollowUpQueue,
+      clearWorkspaceFocusTab,
       newChatBusy,
       autoOn,
       composerMode,
       deepThink,
+      openProjectAgent,
       planDraft,
+      requestWorkspaceTab,
       savePlanToWorkspace,
+      workspaceFocusTab,
       dismissFollowUp,
       dismissWorkspaceBuildConsent,
       enabledPlugins,
@@ -1952,6 +2101,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       visibleThreads,
       workspaceBuildConsentHighlight,
       workspaceBuildConsentOpen,
+      workspaceFocusTab,
       workspaceOpen,
     ],
   )

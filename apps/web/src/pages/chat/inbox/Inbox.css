@@ -1117,6 +1117,14 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
   background: var(--ds-surface-2);
 }
 
+.inbox-agent-status.is-canceled {
+  color: var(--ds-text-3);
+}
+
+.inbox-agent-status.is-canceled .inbox-agent-status-dot {
+  background: var(--ds-text-3);
+}
+
 .inbox-agent-status.is-done {
   color: var(--ds-text-3);
   background: transparent;

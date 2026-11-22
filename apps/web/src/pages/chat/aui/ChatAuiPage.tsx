@@ -112,6 +112,15 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
     dismissWorkspaceBuildConsent,
     acceptWorkspaceLsConsent,
     notifyWorkspaceFolderBound,
+    planDraft,
+    setPlanDraft,
+    savePlanToWorkspace,
+    buildFromPlan,
+    workspaceFocusTab,
+    clearWorkspaceFocusTab,
+    projectAgents,
+    projectTitle,
+    openProjectAgent,
   } = useChatAuiSession()
   const inbox = useChatInboxContext()
   const showWorkspace = harnessOn && workspaceOpen
@@ -409,6 +418,19 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           panelWidth={workspacePanelWidth}
           onPanelWidthChange={applyWorkspacePanelWidth}
           consentHighlight={workspaceBuildConsentHighlight}
+          enablePlanTasks
+          focusTab={workspaceFocusTab}
+          onFocusTabConsumed={clearWorkspaceFocusTab}
+          planDraft={planDraft}
+          onPlanDraftChange={setPlanDraft}
+          onSavePlan={savePlanToWorkspace}
+          onBuildPlan={() => {
+            void buildFromPlan()
+          }}
+          planBusy={busy}
+          projectAgents={projectAgents}
+          projectTitle={projectTitle}
+          onOpenAgent={openProjectAgent}
         />
       ) : null}
       <ChatWorkspaceBuildConsentGate

@@ -212,3 +212,112 @@ export function writeChatWorkspacePanelWidth(px: number) {
     /* ignore */
   }
 }
+
+/** Right-rail Workspace tabs: Files / Plan / Tasks. */
+export type ChatWorkspaceTabId = 'files' | 'plan' | 'tasks'
+
+export const CHAT_WORKSPACE_TAB_IDS: readonly ChatWorkspaceTabId[] = [
+  'files',
+  'plan',
+  'tasks',
+] as const
+
+export const CHAT_WORKSPACE_TABS_KEY = 'yue-chat-workspace-tabs-v1'
+export const CHAT_WORKSPACE_ACTIVE_TAB_KEY = 'yue-chat-workspace-active-tab-v1'
+export const CHAT_WORKSPACE_FILES_VIEW_KEY = 'yue-chat-workspace-files-view-v1'
+export const CHAT_WORKSPACE_SCHEDULE_OPEN_KEY = 'yue-chat-workspace-schedule-open-v1'
+
+export type ChatWorkspaceFilesView = 'list' | 'riced'
+
+export function normalizeChatWorkspaceTabId(raw: unknown): ChatWorkspaceTabId {
+  const v = String(raw || '')
+    .trim()
+    .toLowerCase()
+  if (v === 'plan' || v === 'tasks' || v === 'files') return v
+  return 'files'
+}
+
+export function normalizeChatWorkspaceFilesView(raw: unknown): ChatWorkspaceFilesView {
+  return String(raw || '')
+    .trim()
+    .toLowerCase() === 'riced'
+    ? 'riced'
+    : 'list'
+}
+
+export function readChatWorkspaceOpenTabs(
+  fallback: ChatWorkspaceTabId[] = ['files', 'plan', 'tasks'],
+): ChatWorkspaceTabId[] {
+  try {
+    const raw = localStorage.getItem(CHAT_WORKSPACE_TABS_KEY)
+    if (!raw) return [...fallback]
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return [...fallback]
+    const next = parsed
+      .map((t) => normalizeChatWorkspaceTabId(t))
+      .filter((t, i, arr) => arr.indexOf(t) === i)
+    return next.length ? next : [...fallback]
+  } catch {
+    return [...fallback]
+  }
+}
+
+export function writeChatWorkspaceOpenTabs(tabs: ChatWorkspaceTabId[]) {
+  const next = tabs
+    .map((t) => normalizeChatWorkspaceTabId(t))
+    .filter((t, i, arr) => arr.indexOf(t) === i)
+  const saved = next.length ? next : (['files'] as ChatWorkspaceTabId[])
+  try {
+    localStorage.setItem(CHAT_WORKSPACE_TABS_KEY, JSON.stringify(saved))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readChatWorkspaceActiveTab(
+  fallback: ChatWorkspaceTabId = 'files',
+): ChatWorkspaceTabId {
+  try {
+    return normalizeChatWorkspaceTabId(
+      localStorage.getItem(CHAT_WORKSPACE_ACTIVE_TAB_KEY) || fallback,
+    )
+  } catch {
+    return fallback
+  }
+}
+
+export function writeChatWorkspaceActiveTab(tab: ChatWorkspaceTabId) {
+  try {
+    localStorage.setItem(CHAT_WORKSPACE_ACTIVE_TAB_KEY, normalizeChatWorkspaceTabId(tab))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readChatWorkspaceFilesView(
+  fallback: ChatWorkspaceFilesView = 'list',
+): ChatWorkspaceFilesView {
+  try {
+    const raw = localStorage.getItem(CHAT_WORKSPACE_FILES_VIEW_KEY)
+    if (raw == null || raw === '') return fallback
+    return normalizeChatWorkspaceFilesView(raw)
+  } catch {
+    return fallback
+  }
+}
+
+export function writeChatWorkspaceFilesView(view: ChatWorkspaceFilesView) {
+  try {
+    localStorage.setItem(CHAT_WORKSPACE_FILES_VIEW_KEY, normalizeChatWorkspaceFilesView(view))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readChatWorkspaceScheduleOpen(fallback = false): boolean {
+  return readChatFlag(CHAT_WORKSPACE_SCHEDULE_OPEN_KEY, fallback)
+}
+
+export function writeChatWorkspaceScheduleOpen(on: boolean) {
+  writeChatFlag(CHAT_WORKSPACE_SCHEDULE_OPEN_KEY, on)
+}
