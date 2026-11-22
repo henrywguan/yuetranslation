@@ -28,14 +28,16 @@ Chromium can install **two** origin PWAs when manifests differ by `id` / `name` 
 
 `App` swaps `<link rel="manifest">` on `#/chat` so Install / Add to Home Screen targets the chat package. Play TWA packaging still uses the **translator** manifest.
 
-**iOS Add to Home Screen:** Safari bookmarks the document URL and often **strips the hash**. While on chat, the SPA keeps pathname `/chat` (via `syncPwaInstallPathname`) so the Home Screen icon opens `/chat` → `#/chat`, not bare `/` → `#/app`. Re-add the chat icon after that fix if an older bookmark still shows `#/app`.
+**Everyday chat URL:** always **`https://www.jyuttranslate.com/#/chat`** (hash on the site root). Do **not** share or leave the address bar on `/chat#/chat` — that was an overcorrection from dual-PWA work.
+
+**iOS Add to Home Screen:** Safari bookmarks the document URL and often **strips the hash**. From bare `/#/chat`, a stripped bookmark becomes `/` and standalone boot opens `#/app`. Tradeoff: everyday browsing stays `/#/chat`; the chat iOS tip briefly latches pathname `/chat` (`setChatHomescreenPathLatch`) so Add to Home Screen survives as `/chat` → `#/chat`. Chromium Install uses manifest `start_url: /chat` and does not need the latch. Re-add the chat icon if an older bookmark still opens the translator or shows `/chat#/chat`.
 
 **How users get each icon**
 
 | App | Where to install | Opens |
 | --- | --- | --- |
 | JyutTranslate | `#/app` (Account Hub Home Screen panel, landing iOS tip, Chromium Install) | `/#/app` |
-| DeepSeek Chat | `#/chat` (address bar shows `/chat`; chat header Install / iOS tip; Hub “Open DeepSeek Chat to install…”) | `/chat` → `#/chat` |
+| DeepSeek Chat | `/#/chat` (chat header Install / iOS tip latches `/chat` for A2HS; Hub “Open DeepSeek Chat to install…”) | Chromium: `/chat` → `#/chat`; iOS tip A2HS: `/chat` → `#/chat`; browser/share: `/#/chat` |
 
 Add the second icon from a **browser tab**, not from an already-installed PWA window.
 

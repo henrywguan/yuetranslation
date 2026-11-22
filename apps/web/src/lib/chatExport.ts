@@ -73,7 +73,8 @@ export function stashSharedThread(thread: ChatThread): string {
   } catch {
     /* ignore quota */
   }
-  return `${window.location.origin}${window.location.pathname}?share=1#/chat`
+  // Always hash-only on the site root — never `/chat?share=1#/chat`.
+  return `${window.location.origin}/?share=1#/chat`
 }
 
 export function consumeSharedThread(): ChatThread | null {

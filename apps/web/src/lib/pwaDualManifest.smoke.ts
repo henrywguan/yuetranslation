@@ -11,6 +11,7 @@ import {
   pwaInstallPathnameForVariant,
   pwaManifestHref,
   pwaManifestVariantForRoute,
+  resolvePwaDocumentUrl,
   standaloneDefaultRoute,
 } from './pwaManifestLink.js'
 
@@ -63,6 +64,36 @@ assert.equal(standaloneDefaultRoute('/chat/'), 'chat', 'trailing slash /chat ope
 assert.equal(standaloneDefaultRoute('/'), 'app', 'standalone / opens translator')
 assert.equal(standaloneDefaultRoute('/app'), 'app', 'standalone /app opens translator')
 
+// Everyday chat URL is hash-only on the site root — never leave /chat#/chat as the share link.
+const everyday = resolvePwaDocumentUrl({
+  variant: 'chat',
+  pathname: '/chat',
+  hash: '#/chat',
+})
+assert.equal(everyday.pathname, '/', 'everyday chat drops /chat pathname')
+assert.equal(everyday.hash, '#/chat', 'everyday chat keeps #/chat hash')
+const alreadyRoot = resolvePwaDocumentUrl({
+  variant: 'chat',
+  pathname: '/',
+  hash: '#/chat',
+})
+assert.equal(alreadyRoot.pathname, '/', 'root + #/chat stays root')
+assert.equal(alreadyRoot.hash, '#/chat', 'root + #/chat keeps hash')
+const latch = resolvePwaDocumentUrl({
+  variant: 'chat',
+  pathname: '/',
+  hash: '#/chat',
+  homescreenLatch: true,
+})
+assert.equal(latch.pathname, '/chat', 'iOS tip latch uses /chat pathname')
+assert.equal(latch.hash, '#/chat', 'iOS tip latch keeps #/chat')
+const leaveChat = resolvePwaDocumentUrl({
+  variant: 'app',
+  pathname: '/chat',
+  hash: '#/app',
+})
+assert.equal(leaveChat.pathname, '/', 'leaving chat clears /chat pathname')
+
 for (const name of [
   'pwa-chat-192.png',
   'pwa-chat-512.png',
@@ -91,7 +122,9 @@ assert.match(appTsx, /syncPwaManifestLink/, 'App swaps manifest by route')
 assert.match(appTsx, /standaloneDefaultRoute/, 'standalone empty-hash respects /chat path')
 
 const linkTs = readFileSync(join(webRoot, 'src/lib/pwaManifestLink.ts'), 'utf8')
-assert.match(linkTs, /syncPwaInstallPathname/, 'manifest sync keeps /chat pathname for iOS A2HS')
+assert.match(linkTs, /syncPwaInstallPathname/, 'manifest sync normalizes chat document URL')
+assert.match(linkTs, /setChatHomescreenPathLatch/, 'iOS tip can latch /chat for A2HS')
+assert.match(linkTs, /resolvePwaDocumentUrl/, 'pure URL helper for everyday vs latch')
 
 const installBtn = readFileSync(join(webRoot, 'src/components/PwaInstallButton.tsx'), 'utf8')
 assert.match(installBtn, /pwaInstallChat/, 'Install button labels chat package')
@@ -101,13 +134,27 @@ assert.match(hub, /pwaOpenChatToInstall/, 'Account Hub links chat install surfac
 assert.match(hub, /openDeepseekChat/, 'Hub navigates to #/chat for chat PWA')
 assert.match(hub, /pwa-chat-192\.png/, 'Hub shows chat icon')
 assert.match(hub, /pwa-192\.png/, 'Hub shows translator icon')
+assert.match(hub, /\/#\/chat/, 'Hub shows hash-only chat path meta')
 
 const ios = readFileSync(join(webRoot, 'src/components/IosHomescreenGuide.tsx'), 'utf8')
 assert.match(ios, /iosHomescreenTipTitleChat/, 'iOS tip has chat copy')
 assert.match(ios, /apple-touch-icon-chat\.png/, 'iOS preview uses chat icon')
+assert.match(ios, /setChatHomescreenPathLatch/, 'chat tip latches /chat for A2HS only')
 
 const copy = readFileSync(join(webRoot, 'src/lib/uiCopy.ts'), 'utf8')
 assert.match(copy, /pwaInstallChat:/, 'uiCopy has chat install string')
 assert.match(copy, /pwaCapabilitiesHint:[\s\S]*two Home Screen apps/, 'hub hint mentions two PWAs')
+assert.match(copy, /everyday link stays \/#\/chat/, 'tip copy documents everyday /#/chat')
+
+const exportTs = readFileSync(join(webRoot, 'src/lib/chatExport.ts'), 'utf8')
+assert.match(
+  exportTs,
+  /origin\}\/\?share=1#\/chat/,
+  'share links are /?share=1#/chat not /chat?...#/chat',
+)
+
+const docs = readFileSync(join(webRoot, '../../docs/android-twa.md'), 'utf8')
+assert.match(docs, /Everyday chat URL/, 'android-twa docs everyday /#/chat')
+assert.match(docs, /setChatHomescreenPathLatch/, 'android-twa docs iOS latch tradeoff')
 
 console.log('pwaDualManifest.smoke: ok')
