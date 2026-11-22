@@ -79,6 +79,7 @@ export default function App() {
   }, [])
 
   // Swap installable manifest so #/chat can be a second Home Screen / desktop icon.
+  // Also normalizes the address bar to /#/chat (not /chat#/chat) while on chat.
   useEffect(() => {
     syncPwaManifestLink(pwaManifestVariantForRoute(route))
   }, [route])

@@ -1284,9 +1284,9 @@ export const ui = {
     jp: 'zoeng1 JyutTranslate zong1 dou3 zyu2 waa2 min6 — hou2 ci5 kei4 taa1 jing3 jung6 gam2 hoi1!',
   },
   iosHomescreenTipBodyChat: {
-    en: 'Install DeepSeek Chat as its own Home Screen app — separate from the translator. Confirm the address shows /chat before you add.',
-    zh: '將 DeepSeek Chat 裝成獨立主畫面應用——同翻譯器分開。加入前確認網址係 /chat。',
-    jp: 'zoeng1 DeepSeek Chat zong1 sing4 duk6 laap6 zyu2 waa2 min6 jing3 jung6 — tung4 faan1 jik6 hei3 fan1 hoi1. gaa1 jap6 cin4 kok3 jing6 mong5 zi2 hai6 /chat.',
+    en: 'Install DeepSeek Chat as its own Home Screen app — separate from the translator. This tip switches the address to /chat so Home Screen opens chat (everyday link stays /#/chat).',
+    zh: '將 DeepSeek Chat 裝成獨立主畫面應用——同翻譯器分開。呢個提示會暫時改網址做 /chat，等主畫面圖示開到 chat（平時連結係 /#/chat）。',
+    jp: 'zoeng1 DeepSeek Chat zong1 sing4 duk6 laap6 zyu2 waa2 min6 jing3 jung6 — tung4 faan1 jik6 hei3 fan1 hoi1. ni1 go3 tai4 si6 wui5 zaam6 si4 goi2 mong5 zi2 zou6 /chat, dang2 zyu2 waa2 min6 tou4 si6 hoi1 dou3 chat (ping4 si4 lin4 git3 hai6 /#/chat).',
   },
   iosHomescreenShowSteps: {
     en: 'How',
@@ -1309,9 +1309,9 @@ export const ui = {
     jp: 'sin1 daa2 hoi1 faan1 jik6 hei3 (m4 hou2 hai2 zyu2 jip6), zoi3 hai2 Safari gam2 “fan1 hoeng2” (fong1 kwaang1 hoeng3 soeng6 zin3 zeoi2).',
   },
   iosHomescreenStep1Chat: {
-    en: 'Stay on DeepSeek Chat (this page), then tap Share in Safari (box with an arrow up).',
-    zh: '留喺 DeepSeek Chat（呢一頁），再喺 Safari 撳「分享」（方框向上箭嘴）。',
-    jp: 'lau4 hai2 DeepSeek Chat (ni1 jat1 jip6), zoi3 hai2 Safari gam2 “fan1 hoeng2” (fong1 kwaang1 hoeng3 soeng6 zin3 zeoi2).',
+    en: 'Stay on DeepSeek Chat with /chat in the address bar (this tip sets it), then tap Share in Safari (box with an arrow up).',
+    zh: '留喺 DeepSeek Chat，確認網址有 /chat（呢個提示會設好），再喺 Safari 撳「分享」（方框向上箭嘴）。',
+    jp: 'lau4 hai2 DeepSeek Chat, kok3 jing6 mong5 zi2 jau5 /chat (ni1 go3 tai4 si6 wui5 cit3 hou2), zoi3 hai2 Safari gam2 “fan1 hoeng2” (fong1 kwaang1 hoeng3 soeng6 zin3 zeoi2).',
   },
   iosHomescreenStep2: {
     en: 'Select Add to Home Screen.',

@@ -8,7 +8,7 @@ import {
   shouldOfferIosHomescreenGuide,
 } from '../lib/pwaInstall'
 import type { PwaManifestVariant } from '../lib/pwaManifestLink'
-import { pwaManifestVariantForRoute } from '../lib/pwaManifestLink'
+import { pwaManifestVariantForRoute, setChatHomescreenPathLatch } from '../lib/pwaManifestLink'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
 import { useRoute } from '../lib/useHashRoute'
@@ -265,6 +265,14 @@ export function IosHomescreenTip() {
     const t = window.setTimeout(() => setVisible(true), TIP_DELAY_MS)
     return () => window.clearTimeout(t)
   }, [])
+
+  // While the chat tip is up, latch pathname `/chat` so A2HS survives Safari hash strip.
+  // Everyday browsing stays `/#/chat` (latch off restores root pathname).
+  useEffect(() => {
+    if (!visible || variant !== 'chat') return
+    setChatHomescreenPathLatch(true)
+    return () => setChatHomescreenPathLatch(false)
+  }, [visible, variant])
 
   const dismiss = () => {
     dismissIosHomescreenTip()

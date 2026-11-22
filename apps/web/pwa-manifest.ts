@@ -145,6 +145,7 @@ function createAppPwaManifest(root: string) {
 function createChatPwaManifest(root: string) {
   // Distinct id so Chromium installs a second Home Screen / desktop icon.
   // Path-style start_url survives fragment stripping; index.html maps /chat → #/chat.
+  // Everyday browser/share URL remains `${root}#/chat` — do not rewrite the SPA bar to /chat#/chat.
   const startUrl = `${root}chat`
 
   return {
