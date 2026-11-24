@@ -33,6 +33,18 @@ export const CHAT_REVIEW_MAX_DIFFS = 40
 export const CHAT_REVIEW_MAX_RUNS = 40
 export const CHAT_REVIEW_TEXT_CAP = 80_000
 
+/**
+ * Diff pane paint caps — sibling to LIVE_MARKDOWN_STREAM_MAX / LIVE_REASONING_PAINT.
+ * Per-line React spans + long HTML lines freeze the tab when Agent writes ~28KB+
+ * index.html (three.js splash) into Diffs while Working is still on.
+ */
+export const CHAT_DIFF_HIGHLIGHT_MAX_CHARS = 12_000
+export const CHAT_DIFF_HIGHLIGHT_MAX_LINES = 200
+export const CHAT_DIFF_PLAIN_PAINT_CHARS = 8_000
+export const CHAT_DIFF_MAX_LINE_CHARS = 320
+/** Snapshot → +lined preview: keep under highlight caps so DiffPreview stays cheap. */
+export const CHAT_DIFF_SNAPSHOT_MAX_LINES = 160
+
 function uid(prefix: string): string {
   if (typeof crypto !== 'undefined' && 'crypto' in globalThis && 'randomUUID' in crypto) {
     return `${prefix}_${crypto.randomUUID()}`
@@ -211,14 +223,57 @@ export function diffsFromGitOutput(
   }))
 }
 
+/** Truncate a single diff line so layout does not choke on minified HTML. */
+export function truncateDiffLine(line: string, max = CHAT_DIFF_MAX_LINE_CHARS): string {
+  if (line.length <= max) return line
+  return `${line.slice(0, max)}…`
+}
+
+/**
+ * True when Diffs should paint a single plain `<pre>` instead of per-line spans.
+ * Busy Agent turns always use plain — parent re-renders would otherwise rebuild
+ * hundreds of highlighted nodes on every SSE tick.
+ */
+export function shouldUsePlainDiffPreview(opts: {
+  text: string
+  busy?: boolean
+}): boolean {
+  if (opts.busy) return true
+  const text = opts.text || ''
+  if (text.length > CHAT_DIFF_HIGHLIGHT_MAX_CHARS) return true
+  // Cheap line estimate without allocating a full split when tiny.
+  if (text.length <= CHAT_DIFF_HIGHLIGHT_MAX_CHARS) {
+    let lines = 1
+    for (let i = 0; i < text.length; i += 1) {
+      if (text.charCodeAt(i) === 10) {
+        lines += 1
+        if (lines > CHAT_DIFF_HIGHLIGHT_MAX_LINES) return true
+      }
+    }
+  }
+  return false
+}
+
+/** Plain live tail for Diffs while busy / oversized — keeps Working feedback without lockup. */
+export function plainDiffPreviewText(text: string): string {
+  const body = String(text || '')
+  if (body.length <= CHAT_DIFF_PLAIN_PAINT_CHARS) return body
+  return `… (${body.length - CHAT_DIFF_PLAIN_PAINT_CHARS} chars above)\n${body.slice(-CHAT_DIFF_PLAIN_PAINT_CHARS)}`
+}
+
 /** Render a sandbox/workspace file snapshot as a simple +lined preview when no unified diff. */
 export function snapshotAsPatchPreview(path: string, text: string | undefined): string {
   const body = String(text || '')
   if (!body) return `--- a/${path}\n+++ b/${path}\n@@ (empty write) @@\n`
   const lines = body.split('\n')
-  const capped = lines.length > 400 ? lines.slice(0, 400) : lines
-  const numbered = capped.map((l) => `+${l}`).join('\n')
-  const more = lines.length > 400 ? `\n… (${lines.length - 400} more lines)` : ''
+  const capped = lines.length > CHAT_DIFF_SNAPSHOT_MAX_LINES
+    ? lines.slice(0, CHAT_DIFF_SNAPSHOT_MAX_LINES)
+    : lines
+  const numbered = capped.map((l) => `+${truncateDiffLine(l)}`).join('\n')
+  const more =
+    lines.length > CHAT_DIFF_SNAPSHOT_MAX_LINES
+      ? `\n… (${lines.length - CHAT_DIFF_SNAPSHOT_MAX_LINES} more lines)`
+      : ''
   return `--- /dev/null\n+++ b/${path}\n@@\n${numbered}${more}`
 }
 

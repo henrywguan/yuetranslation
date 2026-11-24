@@ -74,9 +74,22 @@ type Props = {
   onSavePlan?: () => { ok: boolean; path?: string; error?: string }
   onBuildPlan?: () => void | Promise<void>
   planBusy?: boolean
+  /** Agent turn still running — defer heavy HTML iframe paint. */
+  agentBusy?: boolean
   projectAgents?: ChatInboxAgent[]
   onOpenAgent?: (agent: ChatInboxAgent) => void
   projectTitle?: string | null
+}
+
+/** Auto-iframe only for tiny static HTML; larger / script-heavy pages need opt-in. */
+const HTML_AUTO_PREVIEW_MAX_CHARS = 4_000
+const HTML_EDITOR_PAINT_CHARS = 12_000
+
+function htmlNeedsOptInPreview(text: string): boolean {
+  if (text.length > HTML_AUTO_PREVIEW_MAX_CHARS) return true
+  // Self-contained three.js / splash pages — parsing scripts freezes even with sandbox="".
+  if (/<script[\s>]/i.test(text)) return true
+  return false
 }
 
 function previewMime(file: ChatWorkspaceFile): 'html' | 'text' {
@@ -286,6 +299,7 @@ export function ChatWorkspacePanel({
   onSavePlan,
   onBuildPlan,
   planBusy = false,
+  agentBusy = false,
   projectAgents = [],
   onOpenAgent,
   projectTitle = null,
@@ -299,6 +313,8 @@ export function ChatWorkspacePanel({
   const [promoteNote, setPromoteNote] = useState<string | null>(null)
   const [planSaveNote, setPlanSaveNote] = useState<string | null>(null)
   const [previewExpanded, setPreviewExpanded] = useState(false)
+  /** Explicit HTML render — never auto for large / scripted files while Agent is Working. */
+  const [htmlLivePreview, setHtmlLivePreview] = useState(false)
   const [localWidth, setLocalWidth] = useState(() => readChatWorkspacePanelWidth())
   const [resizing, setResizing] = useState(false)
   const [openTabs, setOpenTabs] = useState<ChatWorkspaceTabId[]>(() => {
@@ -567,8 +583,21 @@ export function ChatWorkspacePanel({
       ? undefined
       : ({ ['--ds-workspace-w' as string]: `${width}px` } as CSSProperties)
 
-  const isHtmlPreview = selected && previewMime(selected) === 'html' && selected.text
+  const isHtmlPreview = Boolean(selected && previewMime(selected) === 'html' && selected.text)
+  const selectedHtml = isHtmlPreview ? selected!.text || '' : ''
+  const htmlOptIn = isHtmlPreview && htmlNeedsOptInPreview(selectedHtml)
+  // While Agent is Working, keep source text — iframe srcDoc of 28KB three.js freezes the tab.
+  const showHtmlIframe =
+    isHtmlPreview &&
+    !agentBusy &&
+    (!htmlOptIn || htmlLivePreview)
   const visibleTab = openTabs.includes(activeTab) ? activeTab : openTabs[0] || 'files'
+
+  // Reset opt-in when switching files or when a new Agent turn starts.
+  useEffect(() => {
+    setHtmlLivePreview(false)
+    setPreviewExpanded(false)
+  }, [selected?.path, agentBusy])
 
   return (
     <aside
@@ -819,7 +848,19 @@ export function ChatWorkspacePanel({
                   <div className="ds-chat-workspace-preview-meta-row">
                     <div className="ds-chat-workspace-preview-meta">{selected.path}</div>
                     <div className="ds-chat-workspace-preview-actions">
-                      {isHtmlPreview ? (
+                      {showHtmlIframe && htmlOptIn ? (
+                        <button
+                          type="button"
+                          className="ds-chat-workspace-btn"
+                          onClick={() => {
+                            setHtmlLivePreview(false)
+                            setPreviewExpanded(false)
+                          }}
+                        >
+                          Show source
+                        </button>
+                      ) : null}
+                      {showHtmlIframe ? (
                         <IconBtn
                           label={previewExpanded ? 'Exit fullscreen' : 'Expand preview'}
                           pressed={previewExpanded}
@@ -833,21 +874,50 @@ export function ChatWorkspacePanel({
                       </IconBtn>
                     </div>
                   </div>
-                  {isHtmlPreview ? (
+                  {showHtmlIframe ? (
                     <iframe
                       className="ds-chat-workspace-frame"
                       title={selected.path}
                       sandbox=""
-                      srcDoc={selected.text}
+                      // Stable key so parent re-renders do not remount/reload srcDoc.
+                      key={`html-frame:${selected.path}:${selectedHtml.length}`}
+                      srcDoc={selectedHtml}
                     />
                   ) : (
-                    <textarea
-                      className="ds-chat-workspace-editor"
-                      value={selected.text || ''}
-                      spellCheck={false}
-                      onChange={(e) => writeFile(selected.path, e.target.value, selected.mime)}
-                      aria-label={`Edit ${selected.path}`}
-                    />
+                    <>
+                      {isHtmlPreview && (htmlOptIn || agentBusy) ? (
+                        <p className="ds-chat-workspace-hint">
+                          {agentBusy
+                            ? 'Source view while Agent is Working — render HTML when idle to avoid freezing.'
+                            : 'Large or scripted HTML stays as source until you render preview. '}
+                          {!agentBusy ? (
+                            <button
+                              type="button"
+                              className="ds-chat-workspace-btn"
+                              onClick={() => setHtmlLivePreview(true)}
+                            >
+                              Render HTML preview
+                            </button>
+                          ) : null}
+                        </p>
+                      ) : null}
+                      <textarea
+                        className="ds-chat-workspace-editor"
+                        value={
+                          // Cap paint while busy so 28KB+ HTML does not lock the editor.
+                          agentBusy && (selected.text?.length || 0) > HTML_EDITOR_PAINT_CHARS
+                            ? `${(selected.text || '').slice(0, HTML_EDITOR_PAINT_CHARS)}\n\n… (${(selected.text || '').length - HTML_EDITOR_PAINT_CHARS} more chars — full text after Agent finishes)`
+                            : selected.text || ''
+                        }
+                        spellCheck={false}
+                        readOnly={Boolean(
+                          agentBusy && (selected.text?.length || 0) > HTML_EDITOR_PAINT_CHARS,
+                        )}
+                        onChange={(e) => writeFile(selected.path, e.target.value, selected.mime)}
+                        aria-label={`Edit ${selected.path}`}
+                        aria-busy={agentBusy || undefined}
+                      />
+                    </>
                   )}
                 </>
               ) : (
@@ -855,7 +925,7 @@ export function ChatWorkspacePanel({
               )}
             </div>
 
-            {previewExpanded && isHtmlPreview ? (
+            {previewExpanded && showHtmlIframe ? (
               <div className="ds-chat-workspace-preview-overlay" role="dialog" aria-label="HTML preview">
                 <div className="ds-chat-workspace-preview-overlay-bar">
                   <span>{selected!.path}</span>
@@ -871,7 +941,8 @@ export function ChatWorkspacePanel({
                   className="ds-chat-workspace-frame is-fullscreen"
                   title={`${selected!.path} fullscreen`}
                   sandbox=""
-                  srcDoc={selected!.text}
+                  key={`html-frame-full:${selected!.path}:${selectedHtml.length}`}
+                  srcDoc={selectedHtml}
                 />
               </div>
             ) : null}

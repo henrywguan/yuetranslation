@@ -2743,6 +2743,12 @@
   overflow: auto;
 }
 
+/* Live plain Diffs while Agent Working / oversized HTML — single text node, no span storm. */
+.aui-diffs-preview.is-plain-live {
+  color: var(--ds-text-2);
+  opacity: 0.92;
+}
+
 .aui-runs-list {
   list-style: none;
   margin: 0;

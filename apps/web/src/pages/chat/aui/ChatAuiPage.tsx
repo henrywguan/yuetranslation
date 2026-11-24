@@ -397,6 +397,7 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           reviewUrl={reviewUrl}
           sandboxSessionId={sandboxSessionId}
           refreshing={gitDiffBusy}
+          busy={busy}
           sheet={typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches}
           onRefreshGit={() => {
             void refreshGitDiff()
@@ -428,6 +429,7 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
             void buildFromPlan()
           }}
           planBusy={busy}
+          agentBusy={busy}
           projectAgents={projectAgents}
           projectTitle={projectTitle}
           onOpenAgent={openProjectAgent}

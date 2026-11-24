@@ -8,6 +8,7 @@ export function ChatReviewRail({
   reviewUrl,
   sandboxSessionId,
   refreshing,
+  busy,
   sheet,
   onRefreshGit,
   onClose,
@@ -16,6 +17,8 @@ export function ChatReviewRail({
   reviewUrl?: string
   sandboxSessionId?: string
   refreshing?: boolean
+  /** Agent turn still running — Diffs stay live but plain. */
+  busy?: boolean
   sheet?: boolean
   onRefreshGit?: () => void
   onClose?: () => void
@@ -72,6 +75,7 @@ export function ChatReviewRail({
             reviewUrl={reviewUrl}
             sandboxSessionId={sandboxSessionId}
             refreshing={refreshing}
+            busy={busy}
             onRefreshGit={onRefreshGit}
           />
         ) : (

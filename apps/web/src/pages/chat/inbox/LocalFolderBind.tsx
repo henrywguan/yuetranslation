@@ -31,12 +31,14 @@ export function LocalFolderBind({
 
   const runMirror = async (files: Awaited<ReturnType<typeof collectFromFileList>>) => {
     // Empty folders still bind — Agent/Harness must be able to write into them.
-    // Soft tip only; never block connect.
-    const emptyTip = !files.length
-      ? 'Folder is empty (or no text files to mirror) — still connecting so Agent can write here.'
-      : null
+    // Soft tip only during bind; permanent note must not claim “0 files” after Agent writes.
+    const emptyDuringBind = !files.length
     setBusy(true)
-    setStatus(emptyTip || `Mirroring ${files.length} files…`)
+    setStatus(
+      emptyDuringBind
+        ? 'Folder is empty (or no text files to mirror) — still connecting so Agent can write here.'
+        : `Mirroring ${files.length} files…`,
+    )
     try {
       const result = await mirrorFilesToNewSandbox({
         files,
@@ -44,10 +46,9 @@ export function LocalFolderBind({
         projectId,
         onProgress: (done, total) => setStatus(`Mirroring ${done}/${total}…`),
       })
-      const note =
-        emptyTip ||
-        result.note ||
-        `Mirrored ${result.written} files.`
+      const note = emptyDuringBind
+        ? 'Connected — empty folder ready for Agent writes (files show in Diffs / Workspace).'
+        : result.note || `Mirrored ${result.written} files.`
       onBound({
         sessionId: result.sessionId,
         note,
