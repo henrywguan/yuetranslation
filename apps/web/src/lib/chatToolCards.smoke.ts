@@ -122,8 +122,18 @@ assert.match(
 )
 assert.match(
   runtime,
-  /setFollowUpQueue\(\[\]\)[\s\S]*selectThread|Follow-ups are thread-local/,
-  'switching threads clears follow-up queue',
+  /Do NOT abort|background project\/thread streams must keep running/,
+  'selectThread must not abort background project streams',
+)
+assert.match(
+  runtime,
+  /Switching threads keeps other threads|UI filters to active/,
+  'switching threads keeps other threads’ follow-up queues',
+)
+assert.match(
+  runtime,
+  /abortByThreadRef|busyThreadIdsRef/,
+  'per-thread AbortController + busy set for concurrent project runs',
 )
 assert.match(
   runtime,
