@@ -54,16 +54,19 @@ export function isNoSummaryAgentStub(text: string): boolean {
 export function looksLikeBuildOrViewRequest(text: string): boolean {
   const t = String(text || '').trim()
   if (!t || t.length > 2400) return false
+  // Require build/write verbs with website/splash/html targets — avoid "open the settings page".
   const wantsBuild =
     /\b(build|write|create|make|generate|finish|complete)\b/i.test(t) &&
-    /\b(website|web\s*site|site|page|splash|html|index\.html|preview|workspace)\b/i.test(t)
+    /\b(website|web\s*site|site|splash|html|index\.html|preview\.html)\b/i.test(t)
   const wantsView =
-    /\b(so (?:i|we) can|so that (?:i|we) can)\b[\s\S]{0,48}\b(view|see|open|preview|look)\b/i.test(
-      t,
-    ) || /\b(view|preview|open)\b[\s\S]{0,40}\b(website|site|page|splash|html)\b/i.test(t)
+    /\b(so (?:i|we) can|so that (?:i|we) can)\b[\s\S]{0,48}\b(view|see|preview|look)\b/i.test(t) &&
+    /\b(website|web\s*site|site|splash|html|page|preview)\b/i.test(t)
   const continueBuild =
     /\bcontinue\b/i.test(t) &&
-    (wantsBuild || wantsView || /\b(build|website|splash|html|view)\b/i.test(t))
+    (wantsBuild ||
+      wantsView ||
+      /\b(build|website|splash|html|index\.html)\b/i.test(t) ||
+      (/\bview\b/i.test(t) && /\b(website|site|splash|html|page)\b/i.test(t)))
   return wantsBuild || wantsView || continueBuild
 }
 

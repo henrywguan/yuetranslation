@@ -68,6 +68,7 @@ import type { ChatWorkspaceTabId } from '../../../lib/chatUiPrefs'
 import { humanizeThrownError } from '../../../lib/apiError'
 import {
   isEmptyAgentReplyRecoverableError,
+  isEmptyModelReplyError,
   isNoSummaryAgentStub,
   looksLikeBuildOrViewRequest,
   pathFromSandboxActivity,
@@ -1114,7 +1115,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         ...t,
         messages: t.messages.filter((m) => m.id !== assistantId),
       })
-      const recoverEmptyFromWork = (): boolean => {
+      const recoverEmptyFromWork = (opts?: { allowContinue?: boolean }): boolean => {
         const summary =
           summarizeAgentToolWork({
             workspacePaths: workspacePathsThisTurn,
@@ -1122,10 +1123,12 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             projectActions: projectActionsThisTurn,
             toolsUsed: toolsUsedThisTurn,
           }) ||
-          summarizeEmptyContinueRecovery({
-            priorWasNoSummaryStub,
-            userAskedBuildOrView,
-          })
+          (opts?.allowContinue
+            ? summarizeEmptyContinueRecovery({
+                priorWasNoSummaryStub,
+                userAskedBuildOrView,
+              })
+            : '')
         if (!summary) return false
         assembled = summary.slice(0, MAX_CONTENT_CHARS)
         thread = patchAssistantContent(thread, assistantId, assembled, {
@@ -1331,7 +1334,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         if (!assembled.trim()) {
           // Agent tools often land workspace files before a final prose bubble.
           // Prefer a durable summary over a false "No reply" + concern mood.
-          recoverEmptyFromWork()
+          recoverEmptyFromWork({ allowContinue: true })
         }
         if (!avatarReacted && assembled.trim()) {
           const inferred = inferChatDeepAvatarMoodFromText(assembled)
@@ -1390,24 +1393,31 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         flushPaint()
         liveTts?.stop()
         if ((err as Error)?.name === 'AbortError') {
-          if (!assembled.trim() && !recoverEmptyFromWork()) thread = dropEmpty(thread)
+          if (!assembled.trim() && !recoverEmptyFromWork({ allowContinue: true })) {
+            thread = dropEmpty(thread)
+          }
           persist(thread)
         } else {
           const message = humanizeThrownError(err)
+          const emptyModel = isEmptyModelReplyError(message)
           if (
             !assembled.trim() &&
             isEmptyAgentReplyRecoverableError(message) &&
-            recoverEmptyFromWork()
+            recoverEmptyFromWork({ allowContinue: emptyModel })
           ) {
             // Tools already wrote files / images, or Continue after no-summary /
             // build-view ask — keep the recovery bubble, no red banner alone.
+            // Stream stalls keep their Stop/retry banner when no tool work landed.
             persist(thread)
-          } else if (!assembled.trim() && isEmptyAgentReplyRecoverableError(message)) {
-            // Last resort: still avoid a banner-only empty Continue — durable bubble.
+          } else if (
+            !assembled.trim() &&
+            emptyModel &&
+            (priorWasNoSummaryStub || userAskedBuildOrView)
+          ) {
             const fallback =
               summarizeEmptyContinueRecovery({
-                priorWasNoSummaryStub: true,
-                userAskedBuildOrView: userAskedBuildOrView || priorWasNoSummaryStub,
+                priorWasNoSummaryStub,
+                userAskedBuildOrView,
               }) ||
               'Empty model reply — ask me to continue, or to write files into Workspace so you can review them.'
             assembled = fallback.slice(0, MAX_CONTENT_CHARS)

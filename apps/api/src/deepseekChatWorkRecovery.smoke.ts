@@ -59,6 +59,7 @@ assert.equal(
   looksLikeBuildOrViewRequest('continue and build out the website so I can view it'),
   true,
 )
+assert.equal(looksLikeBuildOrViewRequest('open the settings page'), false)
 assert.match(
   summarizeEmptyContinueRecovery({ userAskedBuildOrView: true }),
   /index\.html/,

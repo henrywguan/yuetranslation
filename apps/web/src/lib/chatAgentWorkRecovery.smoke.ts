@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url'
 import {
   agentTurnHadUsefulWork,
   isEmptyAgentReplyRecoverableError,
+  isEmptyModelReplyError,
   isNoSummaryAgentStub,
   looksLikeBuildOrViewRequest,
   normalizeAgentWorkRecoveryPaths,
@@ -53,6 +54,11 @@ assert.equal(
   true,
 )
 assert.equal(looksLikeBuildOrViewRequest('what is the weather?'), false)
+assert.equal(
+  looksLikeBuildOrViewRequest('open the settings page'),
+  false,
+  'ordinary open+page must not trigger build/view recovery',
+)
 
 const continueBubble = summarizeEmptyContinueRecovery({
   priorWasNoSummaryStub: true,
@@ -70,6 +76,14 @@ assert.equal(
   true,
 )
 assert.equal(isEmptyAgentReplyRecoverableError('Rate limited'), false)
+assert.equal(isEmptyModelReplyError('Empty model reply.'), true)
+assert.equal(
+  isEmptyModelReplyError(
+    'Reply stalled (no progress for too long — often Image / tools). Tap Stop working, then Send again or Continue.',
+  ),
+  false,
+  'stall banners must not be replaced by Continue bubbles',
+)
 
 const runtime = readFileSync(join(here, '../pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtime, /summarizeAgentToolWork/, 'AUI recovers empty reply when tools landed')
@@ -81,10 +95,11 @@ assert.match(
   /summarizeAgentToolWork[\s\S]*No reply/,
   'AUI prefers work recovery before No reply',
 )
+assert.match(runtime, /isEmptyModelReplyError/, 'AUI gates Continue bubbles vs stall banners')
 assert.match(
   runtime,
-  /isEmptyAgentReplyRecoverableError[\s\S]*summarizeEmptyContinueRecovery|isEmptyAgentReplyRecoverableError[\s\S]*fallback/,
-  'AUI never leaves only Empty model reply banner when recoverable',
+  /priorWasNoSummaryStub \|\| userAskedBuildOrView/,
+  'AUI last-resort Continue uses real prior/build flags (not hardcoded stub)',
 )
 
 const classic = readFileSync(join(here, '../pages/ChatPage.tsx'), 'utf8')
