@@ -238,7 +238,8 @@ export type ChatAuiSession = {
   selectThread: (id: string) => void
   removeThread: (id: string) => void
   archiveThread: (id: string, archived: boolean) => void
-  stopGeneration: () => void
+  /** Abort the active thread’s in-flight stream (or a specific threadId). */
+  stopGeneration: (threadId?: string) => void
   /** Enqueue a user prompt as a chat turn (scheduled jobs / Workspace). */
   enqueuePrompt: (text: string, threadId?: string) => Promise<boolean>
   /**
@@ -246,7 +247,8 @@ export type ChatAuiSession = {
    * Behavior: Send/Enter/Queue while busy queues for the **current** thread;
    * after that turn finishes (or Stop settles), the next item for that thread
    * auto-sends. Stop does not clear the queue — dismiss chips or Clear.
-   * Switching threads / New chat clears the queue so UI never implies old-thread items.
+   * Switching threads keeps other threads’ queued items (UI filters to active).
+   * New chat clears only the previous active thread’s items.
    */
   followUpQueue: Array<{ id: string; text: string; threadId: string }>
   queueFollowUp: (text: string) => void
@@ -289,7 +291,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [threads, setThreads] = useState<ChatThread[]>(() => [BOOT_THREAD])
   const [activeId, setActiveId] = useState(BOOT_THREAD.id)
   const [historyReady, setHistoryReady] = useState(false)
+  /** True when the *active* thread has an in-flight stream (UI Stop / isRunning). */
   const [busy, setBusy] = useState(false)
+  /** Bumps when any thread starts/settles — wakes project-message flush. */
+  const [busyEpoch, setBusyEpoch] = useState(0)
   const [newChatBusy, setNewChatBusy] = useState(false)
   /** Sync reentry guard (pre-paint double fire). */
   const creatingNewChatRef = useRef(false)
@@ -376,8 +381,29 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const pendingAfterConsentRef = useRef<PendingAfterConsent | null>(null)
   const harnessOnRef = useRef(harnessOn)
   harnessOnRef.current = harnessOn
+  /** Active-thread busy mirror for sync send gates (pre-paint). */
   const busyRef = useRef(busy)
   busyRef.current = busy
+  /** Per-thread in-flight AbortControllers — switching view must not abort others. */
+  const abortByThreadRef = useRef<Map<string, AbortController>>(new Map())
+  /** Thread ids with an in-flight assistant run. */
+  const busyThreadIdsRef = useRef<Set<string>>(new Set())
+  type ThreadStreamUi = {
+    streamingId: string | null
+    thinking: boolean
+    searching: boolean
+    thinkingAuto: boolean
+    searchingAuto: boolean
+  }
+  const emptyThreadStreamUi = (): ThreadStreamUi => ({
+    streamingId: null,
+    thinking: false,
+    searching: false,
+    thinkingAuto: false,
+    searchingAuto: false,
+  })
+  /** Per-thread stream chrome so returning to a Working project restores progress UI. */
+  const streamUiByThreadRef = useRef<Map<string, ThreadStreamUi>>(new Map())
   const [uploadingFile, setUploadingFile] = useState(false)
   const [ocrBusy, setOcrBusy] = useState(false)
   const [pluginCatalog, setPluginCatalog] = useState<DeepseekChatPlugin[]>([])
@@ -399,7 +425,6 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     github_app_installation_id: { set: false },
   })
 
-  const abortRef = useRef<AbortController | null>(null)
   const enabledPluginsRef = useRef(enabledPlugins)
   const pendingFilesRef = useRef(pendingFiles)
   enabledPluginsRef.current = enabledPlugins
@@ -410,6 +435,54 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const activeIdRef = useRef(activeId)
   threadsRef.current = threads
   activeIdRef.current = activeId
+
+  const isThreadBusy = useCallback((threadId: string) => busyThreadIdsRef.current.has(threadId), [])
+
+  const applyStreamUiState = useCallback((ui: ThreadStreamUi) => {
+    setStreamingId(ui.streamingId)
+    setThinking(ui.thinking)
+    setSearching(ui.searching)
+    setThinkingAuto(ui.thinkingAuto)
+    setSearchingAuto(ui.searchingAuto)
+  }, [])
+
+  const patchThreadStreamUi = useCallback(
+    (threadId: string, patch: Partial<ThreadStreamUi>) => {
+      const prev = streamUiByThreadRef.current.get(threadId) || emptyThreadStreamUi()
+      const next = { ...prev, ...patch }
+      streamUiByThreadRef.current.set(threadId, next)
+      if (activeIdRef.current === threadId) applyStreamUiState(next)
+    },
+    [applyStreamUiState],
+  )
+
+  const setThreadBusy = useCallback((threadId: string, on: boolean) => {
+    const had = busyThreadIdsRef.current.has(threadId)
+    if (on === had) {
+      if (activeIdRef.current === threadId) {
+        busyRef.current = on
+        setBusy(on)
+      }
+      return
+    }
+    if (on) busyThreadIdsRef.current.add(threadId)
+    else {
+      busyThreadIdsRef.current.delete(threadId)
+      if (!on) streamUiByThreadRef.current.delete(threadId)
+    }
+    setBusyEpoch((n) => n + 1)
+    if (activeIdRef.current === threadId) {
+      busyRef.current = on
+      setBusy(on)
+    }
+  }, [])
+
+  const abortThread = useCallback((threadId: string) => {
+    const controller = abortByThreadRef.current.get(threadId)
+    if (!controller) return
+    controller.abort()
+    abortByThreadRef.current.delete(threadId)
+  }, [])
   /** Overseer project_* message queue — flushed after the current turn. */
   const pendingProjectMsgsRef = useRef<
     Array<{ agentId: string; message: string; projectId: string }>
@@ -583,7 +656,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     })()
     return () => {
       cancelled = true
-      abortRef.current?.abort()
+      for (const controller of abortByThreadRef.current.values()) {
+        controller.abort()
+      }
+      abortByThreadRef.current.clear()
+      busyThreadIdsRef.current.clear()
     }
   }, [])
 
@@ -721,7 +798,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     }
     if (pending.kind === 'composer') {
       void (async () => {
-        if (!unlocked || busyRef.current) return
+        const tid = activeIdRef.current
+        if (!unlocked || !tid || busyThreadIdsRef.current.has(tid)) return
         const run = runAssistantRef.current
         if (!run) return
         setPendingFiles((prev) => {
@@ -730,10 +808,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           }
           return []
         })
-        busyRef.current = true
-        setBusy(true)
-        let cur =
-          threadsRef.current.find((t) => t.id === activeIdRef.current) || emptyThread()
+        setThreadBusy(tid, true)
+        let cur = threadsRef.current.find((t) => t.id === tid) || emptyThread()
         if (harnessOnRef.current) cur = ensureThreadWorkspace(cur)
         const userStep = appendChatMessage(
           cur,
@@ -755,7 +831,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         await run(thread, pending.fileIds.length ? pending.fileIds : undefined)
       })()
     }
-  }, [clearWorkspaceBuildConsentUi, persist, unlocked])
+  }, [clearWorkspaceBuildConsentUi, persist, setThreadBusy, unlocked])
 
   /** Returns true when the Agent+harness write path may proceed. */
   const ensureWorkspaceBuildConsent = useCallback(async (): Promise<boolean> => {
@@ -896,11 +972,20 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     [busy, ocrBusy, richLayout, unlocked],
   )
 
-  const stopGeneration = useCallback(() => {
-    abortRef.current?.abort()
-    streamTtsRef.current?.stop()
-    streamTtsRef.current = null
-  }, [])
+  const stopGeneration = useCallback(
+    (threadId?: string) => {
+      const tid = threadId || activeIdRef.current
+      if (!tid) return
+      abortThread(tid)
+      // Stop audible TTS only when canceling the thread that owns the current speaker
+      // or when stopping the active view (Stop button / barge-in).
+      if (!threadId || threadId === activeIdRef.current) {
+        streamTtsRef.current?.stop()
+        streamTtsRef.current = null
+      }
+    },
+    [abortThread],
+  )
 
   const armNewChatCooldown = useCallback(() => {
     if (newChatCooldownTimerRef.current) clearTimeout(newChatCooldownTimerRef.current)
@@ -929,9 +1014,15 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
     creatingNewChatRef.current = true
     try {
-      stopGeneration()
-      setFollowUpQueue([])
-      followUpQueueRef.current = []
+      const prevId = activeIdRef.current
+      // Abort-of-self only — other projects/threads keep running in the background.
+      if (prevId) stopGeneration(prevId)
+      // Drop follow-ups for the thread we are leaving; keep other threads’ queues.
+      setFollowUpQueue((prev) => {
+        const next = prevId ? prev.filter((x) => x.threadId !== prevId) : prev
+        followUpQueueRef.current = next
+        return next
+      })
       const created = emptyThread()
       // Keep threadsRef in sync before paint so a rapid second UI click hits the latch.
       const next = upsertChatThread(
@@ -942,6 +1033,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setThreads(next)
       activeIdRef.current = created.id
       setActiveId(created.id)
+      busyRef.current = false
+      setBusy(false)
+      applyStreamUiState(emptyThreadStreamUi())
       applyPlanDraftForThread(created.id)
       setError(null)
       if (!force) armNewChatCooldown()
@@ -949,49 +1043,65 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     } finally {
       creatingNewChatRef.current = false
     }
-  }, [applyPlanDraftForThread, armNewChatCooldown, stopGeneration])
+  }, [applyPlanDraftForThread, applyStreamUiState, armNewChatCooldown, stopGeneration])
 
   const selectThread = useCallback(
     (id: string) => {
       if (id === activeIdRef.current) return
-      stopGeneration()
-      // Follow-ups are thread-local intent — never auto-send into a different chat.
-      setFollowUpQueue([])
-      followUpQueueRef.current = []
-      // Sync activeId + Plan draft before paint so Save/Build cannot hit the wrong thread.
+      // Do NOT abort — background project/thread streams must keep running.
+      // Soft-stop TTS so another project's audio does not play over the new view.
+      streamTtsRef.current?.stop()
+      streamTtsRef.current = null
+      // Sync activeId + Plan draft + busy/stream chrome before paint.
       activeIdRef.current = id
       setActiveId(id)
+      const threadBusy = busyThreadIdsRef.current.has(id)
+      busyRef.current = threadBusy
+      setBusy(threadBusy)
+      applyStreamUiState(streamUiByThreadRef.current.get(id) || emptyThreadStreamUi())
       applyPlanDraftForThread(id)
       setError(null)
     },
-    [applyPlanDraftForThread, stopGeneration],
+    [applyPlanDraftForThread, applyStreamUiState],
   )
 
   const removeThread = useCallback(
     (id: string) => {
-      stopGeneration()
+      // Abort-of-self only for the deleted thread.
+      stopGeneration(id)
+      setFollowUpQueue((prev) => {
+        const next = prev.filter((x) => x.threadId !== id)
+        followUpQueueRef.current = next
+        return next
+      })
+      streamUiByThreadRef.current.delete(id)
+      busyThreadIdsRef.current.delete(id)
       setThreads((prev) => {
         const withoutBoot = prev.filter((t) => t.id !== BOOT_THREAD.id)
         const next = deleteChatThread(id, withoutBoot)
         const live = next.filter((t) => !t.archived)
+        const focus = (nextId: string) => {
+          activeIdRef.current = nextId
+          setActiveId(nextId)
+          const threadBusy = busyThreadIdsRef.current.has(nextId)
+          busyRef.current = threadBusy
+          setBusy(threadBusy)
+          applyStreamUiState(streamUiByThreadRef.current.get(nextId) || emptyThreadStreamUi())
+          applyPlanDraftForThread(nextId)
+        }
         // Clearing the last active agent → fresh empty new-chat window (no leftover messages).
         if (!live.length) {
           const created = emptyThread()
-          setActiveId(created.id)
-          activeIdRef.current = created.id
-          applyPlanDraftForThread(created.id)
+          focus(created.id)
           return [created, ...next]
         }
         if (activeIdRef.current === id) {
-          const nextId = live[0]!.id
-          setActiveId(nextId)
-          activeIdRef.current = nextId
-          applyPlanDraftForThread(nextId)
+          focus(live[0]!.id)
         }
         return next
       })
     },
-    [applyPlanDraftForThread, stopGeneration],
+    [applyPlanDraftForThread, applyStreamUiState, stopGeneration],
   )
 
   const archiveThread = useCallback(
@@ -1002,50 +1112,65 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         if (!cur) return prev
         const next = upsertChatThread(setChatThreadArchived(cur, archived), withoutBoot)
         const live = next.filter((t) => !t.archived)
+        const focus = (nextId: string) => {
+          activeIdRef.current = nextId
+          setActiveId(nextId)
+          const threadBusy = busyThreadIdsRef.current.has(nextId)
+          busyRef.current = threadBusy
+          setBusy(threadBusy)
+          applyStreamUiState(streamUiByThreadRef.current.get(nextId) || emptyThreadStreamUi())
+          applyPlanDraftForThread(nextId)
+        }
         if (archived) {
           // Archiving the last live agent (or the active one with none left) → empty new chat.
           if (!live.length) {
             const created = emptyThread()
-            setActiveId(created.id)
-            activeIdRef.current = created.id
-            applyPlanDraftForThread(created.id)
+            focus(created.id)
             return [created, ...next]
           }
           if (activeIdRef.current === id) {
-            const nextId = live[0]!.id
-            setActiveId(nextId)
-            activeIdRef.current = nextId
-            applyPlanDraftForThread(nextId)
+            focus(live[0]!.id)
           }
         }
         return next
       })
     },
-    [applyPlanDraftForThread],
+    [applyPlanDraftForThread, applyStreamUiState],
   )
 
   const runAssistant = useCallback(
     async (baseThread: ChatThread, fileIds?: string[]) => {
       let thread = baseThread
+      const runThreadId = thread.id
       const assistantStep = appendChatMessage(thread, 'assistant', '')
       thread = assistantStep.thread
       const assistantId = assistantStep.message.id
       persist(thread)
-      setStreamingId(assistantId)
-      setThinking(false)
-      setSearching(false)
-      setThinkingAuto(false)
-      setSearchingAuto(false)
+      patchThreadStreamUi(runThreadId, {
+        streamingId: assistantId,
+        thinking: false,
+        searching: false,
+        thinkingAuto: false,
+        searchingAuto: false,
+      })
       thinkStartedAt.current = null
 
+      // Replace any prior controller for this thread only (Stop / retry).
+      abortThread(runThreadId)
       const controller = new AbortController()
-      abortRef.current = controller
+      abortByThreadRef.current.set(runThreadId, controller)
+      setThreadBusy(runThreadId, true)
 
-      streamTtsRef.current?.stop()
-      streamTtsRef.current = null
+      // TTS is view-global — only reclaim the speaker when this thread is on screen.
+      if (activeIdRef.current === runThreadId) {
+        streamTtsRef.current?.stop()
+        streamTtsRef.current = null
+      }
       const liveTts =
-        canAutoSpeak && autoSpeak ? new StreamingDeepseekChatTts({ voiceId: 'stella' }) : null
-      streamTtsRef.current = liveTts
+        canAutoSpeak && autoSpeak && activeIdRef.current === runThreadId
+          ? new StreamingDeepseekChatTts({ voiceId: 'stella' })
+          : null
+      if (liveTts) streamTtsRef.current = liveTts
 
       let assembled = ''
       let reasoning = ''
@@ -1110,7 +1235,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       }
       const markThinking = () => {
         if (!thinkStartedAt.current) thinkStartedAt.current = Date.now()
-        setThinking(true)
+        patchThreadStreamUi(runThreadId, { thinking: true })
+      }
+      const setThreadError = (message: string | null) => {
+        if (activeIdRef.current === runThreadId) setError(message)
       }
       const dropEmpty = (t: ChatThread) => ({
         ...t,
@@ -1183,7 +1311,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         overseerTurn = linkedAgent?.role === 'overseer' && Boolean(projectId)
         // Overseer chat without projectId means tools cannot attach — surface immediately.
         if (linkedAgent?.role === 'overseer' && !projectId) {
-          setError(
+          setThreadError(
             'Overseer is missing a Project link — open the Project from Inbox so orchestration tools can run.',
           )
         }
@@ -1238,7 +1366,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
               applyWorkspaceWireUpdate(thread.workspace, files),
             )
             setReviewActivity((prev) => applyWorkspaceFilesToDiffs(prev, files))
-            setReviewOpen(true)
+            if (activeIdRef.current === runThreadId) setReviewOpen(true)
             schedulePaint()
           },
           onSandbox: (activity) => {
@@ -1246,7 +1374,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             const sandPath = pathFromSandboxActivity(activity)
             if (sandPath) workspacePathsThisTurn.push(sandPath)
             setReviewActivity((prev) => applySandboxActivity(prev, activity))
-            setReviewOpen(true)
+            if (activeIdRef.current === runThreadId) setReviewOpen(true)
             const reviewUrl =
               typeof activity.reviewUrl === 'string' ? activity.reviewUrl.trim() : ''
             if (reviewUrl && linkedAgent && inboxRef.current) {
@@ -1266,11 +1394,13 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           },
           onStatus: (status, meta) => {
             if (status === 'searching') {
-              setSearching(true)
-              if (meta?.auto) setSearchingAuto(true)
+              patchThreadStreamUi(runThreadId, {
+                searching: true,
+                ...(meta?.auto ? { searchingAuto: true } : null),
+              })
               return
             }
-            if (meta?.auto) setThinkingAuto(true)
+            if (meta?.auto) patchThreadStreamUi(runThreadId, { thinkingAuto: true })
             markThinking()
           },
           onReasoning: (delta) => {
@@ -1286,7 +1416,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             schedulePaint()
           },
           onSearchStep: (step) => {
-            setSearching(true)
+            patchThreadStreamUi(runThreadId, { searching: true })
             searchSteps = [...searchSteps, step].slice(-24)
             schedulePaint()
           },
@@ -1309,8 +1439,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           onDelta: (delta) => {
             const firstToken = assembled.length === 0
             if (firstToken) {
-              setThinking(false)
-              setSearching(false)
+              patchThreadStreamUi(runThreadId, { thinking: false, searching: false })
               pendingThoughtMs = thinkStartedAt.current
                 ? Date.now() - thinkStartedAt.current
                 : undefined
@@ -1345,7 +1474,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           liveTts?.stop()
           thread = dropEmpty(thread)
           persist(thread)
-          setError('No reply — try again.')
+          setThreadError('No reply — try again.')
         } else {
           if (harnessOnRef.current) {
             const assistant = thread.messages.find((m) => m.id === assistantId)
@@ -1358,13 +1487,13 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             projectActionsThisTurn === 0 &&
             looksLikeDeferredOrchestration(assembled)
           ) {
-            setError(ORCHESTRATION_STALL_ERROR)
+            setThreadError(ORCHESTRATION_STALL_ERROR)
           } else if (
             overseerTurn &&
             projectActionsThisTurn === 0 &&
             looksLikeDeferredClose(assembled)
           ) {
-            setError(CLOSE_STALL_ERROR)
+            setThreadError(CLOSE_STALL_ERROR)
           } else {
             // call_started search_steps alone are not evidence — need source URLs.
             const hadSearchChrome = Boolean(sources?.length)
@@ -1373,20 +1502,25 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
               !hadSearchChrome &&
               looksLikeDeferredSearchTurn(assembled, reasoning)
             ) {
-              setError(SEARCH_STALL_ERROR)
+              setThreadError(SEARCH_STALL_ERROR)
             } else if (
               !hadSearchChrome &&
               looksLikeDeferredToolUse(assembled) &&
               !looksLikeDeferredSearchTurn(assembled, reasoning)
             ) {
-              setError(TOOL_STALL_ERROR)
+              setThreadError(TOOL_STALL_ERROR)
             }
           }
           if (liveTts) {
             void liveTts.finish().catch(() => {
               /* ignore */
             })
-          } else if (canAutoSpeak && autoSpeak && assembled.trim()) {
+          } else if (
+            canAutoSpeak &&
+            autoSpeak &&
+            assembled.trim() &&
+            activeIdRef.current === runThreadId
+          ) {
             void speakManual(assembled.trim(), chatSpeakLang(assembled))
           }
         }
@@ -1429,7 +1563,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             })
             persist(thread)
           } else {
-            setError(message)
+            setThreadError(message)
             thread = {
               ...thread,
               messages: thread.messages.filter((m) => m.id !== assistantId || m.content.trim()),
@@ -1439,13 +1573,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         }
       } finally {
         if (paintTimer != null) window.clearTimeout(paintTimer)
-        setStreamingId(null)
-        setThinking(false)
-        setSearching(false)
-        setThinkingAuto(false)
-        setSearchingAuto(false)
-        setBusy(false)
-        abortRef.current = null
+        patchThreadStreamUi(runThreadId, emptyThreadStreamUi())
+        const mapped = abortByThreadRef.current.get(runThreadId)
+        if (mapped === controller) abortByThreadRef.current.delete(runThreadId)
+        setThreadBusy(runThreadId, false)
         if (streamTtsRef.current === liveTts) streamTtsRef.current = null
         const inboxApi = inboxRef.current
         const inboxState = inboxApi?.state
@@ -1475,14 +1606,17 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       }
     },
     [
+      abortThread,
       applyProjectActions,
       autoSpeak,
       canAutoSpeak,
       deepThink,
       paintThread,
+      patchThreadStreamUi,
       persist,
       primaryLanguage,
       searchOn,
+      setThreadBusy,
       speakManual,
     ],
   )
@@ -1534,23 +1668,29 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
   const enqueuePrompt = useCallback(
     async (text: string, threadId?: string): Promise<boolean> => {
-      if (!unlocked || busyRef.current) return false
+      if (!unlocked) return false
       const content = text.trim().slice(0, MAX_CONTENT_CHARS)
       if (!content) return false
+      const tid = threadId || activeIdRef.current
+      if (!tid || isThreadBusy(tid)) return false
       if (!(await ensureWorkspaceBuildConsent())) {
         pendingAfterConsentRef.current = { kind: 'prompt', text: content, threadId }
         return false
       }
-      const tid = threadId || activeIdRef.current
+      // Re-check after consent await — another send may have claimed this thread.
+      if (isThreadBusy(tid)) return false
       if (tid !== activeIdRef.current) {
         activeIdRef.current = tid
         setActiveId(tid)
         applyPlanDraftForThread(tid)
+        const threadBusy = busyThreadIdsRef.current.has(tid)
+        busyRef.current = threadBusy
+        setBusy(threadBusy)
+        applyStreamUiState(streamUiByThreadRef.current.get(tid) || emptyThreadStreamUi())
       }
       setError(null)
-      // Set busy synchronously so a concurrent follow-up flush cannot claim another send.
-      busyRef.current = true
-      setBusy(true)
+      // Latch this thread busy synchronously so a concurrent flush cannot double-send.
+      setThreadBusy(tid, true)
       let cur = threadsRef.current.find((t) => t.id === tid) || emptyThread()
       if (harnessOnRef.current) cur = ensureThreadWorkspace(cur)
       const userStep = appendChatMessage(cur, 'user', content)
@@ -1558,7 +1698,16 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       await runAssistant(userStep.thread)
       return true
     },
-    [applyPlanDraftForThread, ensureWorkspaceBuildConsent, persist, runAssistant, unlocked],
+    [
+      applyPlanDraftForThread,
+      applyStreamUiState,
+      ensureWorkspaceBuildConsent,
+      isThreadBusy,
+      persist,
+      runAssistant,
+      setThreadBusy,
+      unlocked,
+    ],
   )
   enqueuePromptRef.current = enqueuePrompt
 
@@ -1604,7 +1753,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     const chainBusy =
       flushingProjectMsgsRef.current || pendingProjectMsgsRef.current.length > 0
     setChatDeepAvatarPlanBuildChainBusy(chainBusy)
-    if (opts?.settleIfIdle && !chainBusy && !busyRef.current) {
+    if (opts?.settleIfIdle && !chainBusy && busyThreadIdsRef.current.size === 0) {
       settleChatDeepAvatarPlanBuild()
     }
   }, [])
@@ -1732,13 +1881,19 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   }, [activeId, busy, composerMode, threads])
 
   // Flush Overseer project_message / create_agent messages sequentially, then return to Overseer.
+  // Gate on the Overseer thread settling — not on whichever project tab is active.
   useEffect(() => {
-    if (!unlocked || busy || flushingProjectMsgsRef.current) {
-      syncPlanBuildChain({ settleIfIdle: !busy })
+    if (!unlocked || flushingProjectMsgsRef.current) {
+      syncPlanBuildChain({ settleIfIdle: busyThreadIdsRef.current.size === 0 })
       return
     }
     if (!pendingProjectMsgsRef.current.length) {
       syncPlanBuildChain({ settleIfIdle: true })
+      return
+    }
+    const overseerTid = overseerReturnThreadRef.current
+    if (overseerTid && busyThreadIdsRef.current.has(overseerTid)) {
+      syncPlanBuildChain({ settleIfIdle: false })
       return
     }
     flushingProjectMsgsRef.current = true
@@ -1767,7 +1922,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         syncPlanBuildChain({ settleIfIdle: true })
       }
     })()
-  }, [busy, createSilentThread, enqueuePrompt, selectThread, syncPlanBuildChain, unlocked])
+  }, [busyEpoch, createSilentThread, enqueuePrompt, selectThread, syncPlanBuildChain, unlocked])
 
   const onNew = useCallback(
     async (message: AppendMessage) => {
@@ -1780,8 +1935,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         setError(`Message is too long (max ${MAX_CONTENT_CHARS.toLocaleString()} characters).`)
         return
       }
-      // While a turn is running: queue text follow-ups (attachments wait until idle).
-      if (busyRef.current) {
+      const activeTid = activeIdRef.current
+      // While this thread’s turn is running: queue text follow-ups (attachments wait until idle).
+      if (activeTid && isThreadBusy(activeTid)) {
         if (pending.length) {
           setError('Wait for the current reply to finish before attaching files.')
           return
@@ -1805,6 +1961,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         }
         return
       }
+      const tid = activeIdRef.current
+      if (!tid || isThreadBusy(tid)) return
       const fileIds = pending.map((f) => f.fileId)
       const filesMeta: ChatFileMeta[] = pending.map(({ fileId, filename, mime }) => ({
         fileId,
@@ -1818,10 +1976,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         }
         return []
       })
-      busyRef.current = true
-      setBusy(true)
-      let cur =
-        threadsRef.current.find((t) => t.id === activeIdRef.current) || emptyThread()
+      setThreadBusy(tid, true)
+      let cur = threadsRef.current.find((t) => t.id === tid) || emptyThread()
       if (harnessOnRef.current) cur = ensureThreadWorkspace(cur)
       const userStep = appendChatMessage(cur, 'user', content || '(attached file)')
       let thread = userStep.thread
@@ -1836,7 +1992,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       persist(thread)
       await runAssistant(thread, fileIds.length ? fileIds : undefined)
     },
-    [ensureWorkspaceBuildConsent, persist, queueFollowUp, runAssistant, unlocked],
+    [ensureWorkspaceBuildConsent, isThreadBusy, persist, queueFollowUp, runAssistant, setThreadBusy, unlocked],
   )
 
   // Auto-send one queued follow-up for the **active** thread after the turn settles.
@@ -1850,16 +2006,22 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     flushingFollowUpsRef.current = true
     void (async () => {
       try {
-        if (busyRef.current) return
+        if (isThreadBusy(active)) return
         // Claim before await so a second effect pass cannot double-send the same id.
         const rest = followUpQueueRef.current.filter((x) => x.id !== head.id)
         followUpQueueRef.current = rest
         setFollowUpQueue(rest)
-        // If the user left this thread after claim, drop — do not post elsewhere.
-        if (activeIdRef.current !== head.threadId) return
+        // If the user left this thread after claim, keep the item for when they return.
+        if (activeIdRef.current !== head.threadId) {
+          setFollowUpQueue((prev) => {
+            const next = [head, ...prev.filter((x) => x.id !== head.id)].slice(0, 8)
+            followUpQueueRef.current = next
+            return next
+          })
+          return
+        }
         const sent = await enqueuePrompt(head.text, head.threadId)
         if (!sent) {
-          // Only restore if we are still on the same thread (switch clears the queue).
           if (activeIdRef.current !== head.threadId) return
           setFollowUpQueue((prev) => {
             const next = [head, ...prev.filter((x) => x.id !== head.id)].slice(0, 8)
@@ -1871,23 +2033,24 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         flushingFollowUpsRef.current = false
       }
     })()
-  }, [busy, enqueuePrompt, followUpQueue, unlocked])
+  }, [activeId, busy, enqueuePrompt, followUpQueue, isThreadBusy, unlocked])
 
   // In-tab scheduled prompts (Harness Phase 3) — only while tab open + Harness on.
   useEffect(() => {
     if (!harnessOn || !unlocked) return
     const tick = () => {
-      if (busyRef.current || document.visibilityState === 'hidden') return
+      if (document.visibilityState === 'hidden') return
       const due = claimDueScheduleJobs()
       if (!due.length) return
       refreshSchedules()
       const job = due[0]!
+      if (job.threadId && isThreadBusy(job.threadId)) return
       void enqueuePrompt(job.prompt, job.threadId)
     }
     const id = window.setInterval(tick, 15_000)
     tick()
     return () => window.clearInterval(id)
-  }, [enqueuePrompt, harnessOn, refreshSchedules, unlocked])
+  }, [enqueuePrompt, harnessOn, isThreadBusy, refreshSchedules, unlocked])
 
   const onCancel = useCallback(async () => {
     stopGeneration()

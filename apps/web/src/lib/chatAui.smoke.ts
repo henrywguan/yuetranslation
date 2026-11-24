@@ -1108,9 +1108,19 @@ assert.equal(chatDeepAvatarMoodAssetStem('bow'), 'bow')
 assert.equal(chatDeepAvatarMoodAssetStem('fist'), 'fist')
 assert.equal(chatDeepAvatarMoodAssetStem('sleepy'), 'sleepy')
 assert.match(
-  readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8'),
+  runtimeSrc,
   /onAvatar|requestChatDeepAvatarPlay/,
   'runtime wires avatar SSE play/react',
+)
+assert.match(
+  runtimeSrc,
+  /abortByThreadRef|Do NOT abort/,
+  'background project runs: per-thread abort, selectThread does not kill streams',
+)
+assert.match(
+  runtimeSrc,
+  /stopGeneration:\s*\(threadId\?: string\)\s*=> void/,
+  'Stop can target a specific thread id',
 )
 const signalsSrc = readFileSync(join(here, 'chatDeepAvatarSignals.ts'), 'utf8')
 assert.match(signalsSrc, /setChatDeepAvatarListening/, 'dictate → listen bus')
