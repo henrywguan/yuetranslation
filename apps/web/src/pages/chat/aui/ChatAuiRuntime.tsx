@@ -60,6 +60,7 @@ import {
   looksLikeDeferredOrchestration,
   mergeProjectMemoryWithCompacts,
   ORCHESTRATION_STALL_ERROR,
+  projectTaskAgents,
   resolveActiveSandboxSessionId,
   type ChatInboxAgent,
   type InboxAgentStatus,
@@ -1982,15 +1983,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const activeProjectMeta = useMemo(() => {
     const state = inbox?.state
     if (!state) return { agents: [] as ChatInboxAgent[], title: null as string | null }
-    const linked = agentForThread(state, activeId)
-    const projectId = linked?.projectId
-    if (!projectId) return { agents: [] as ChatInboxAgent[], title: null as string | null }
-    const project = state.projects.find((p) => p.id === projectId)
-    const agents = state.agents.filter(
-      (a) => a.projectId === projectId && (a.role === 'overseer' || a.role === 'worker'),
-    )
-    return { agents, title: project?.title || null }
-  }, [inbox?.state, activeId])
+    // Same membership as ProjectAgentStrip: agent.threadId OR project.threadIds.
+    // Without the threadIds fallback, Add-to-Project chats left Tasks empty.
+    const { agents, title } = projectTaskAgents(state, activeId, { busy, activeId })
+    return { agents, title }
+  }, [inbox?.state, activeId, busy])
 
   const openProjectAgent = useCallback(
     (agent: ChatInboxAgent) => {

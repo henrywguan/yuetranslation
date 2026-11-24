@@ -43,7 +43,7 @@ import {
   type ChatSource,
 } from '../../../lib/chatHistory'
 import {
-  agentForThread,
+  projectIdForThread,
   projectNestedViews,
   buildAgentViews,
   resolveProjectGithubWorkspace,
@@ -364,12 +364,7 @@ function ProjectAgentStrip() {
   const { activeId, busy, selectThread, threads } = useChatAuiSession()
   const projectAgents = useMemo(() => {
     if (!inbox?.ready) return []
-    const linked = agentForThread(inbox.state, activeId)
-    let projectId = linked?.projectId || null
-    if (!projectId) {
-      const hit = inbox.state.projects.find((p) => p.threadIds.includes(activeId))
-      projectId = hit?.id || null
-    }
+    const projectId = projectIdForThread(inbox.state, activeId)
     if (!projectId) return []
     const views = buildAgentViews({
       agents: inbox.state.agents,
@@ -614,11 +609,7 @@ function ComposerChrome({
   const threadsDepForMentions = atMatch ? threads : EMPTY_THREADS_FOR_MENTIONS
   const mentionItems = useMemo(() => {
     if (!atMatch) return []
-    const linked = inbox?.ready ? agentForThread(inbox.state, activeId) : undefined
-    let projectId = linked?.projectId || null
-    if (!projectId && inbox?.ready) {
-      projectId = inbox.state.projects.find((p) => p.threadIds.includes(activeId))?.id || null
-    }
+    const projectId = inbox?.ready ? projectIdForThread(inbox.state, activeId) : null
     const project = projectId
       ? inbox?.state.projects.find((p) => p.id === projectId)
       : undefined

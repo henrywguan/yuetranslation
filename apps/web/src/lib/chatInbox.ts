@@ -693,6 +693,53 @@ export function agentForThread(
   return state.agents.find((a) => a.threadId === threadId)
 }
 
+/**
+ * Resolve the Project for a chat thread.
+ * Prefer the linked agent row; fall back to `project.threadIds` so Add-to-Project
+ * chats (no agent row) still see Workspace Tasks / strip / @mentions.
+ */
+export function projectIdForThread(
+  state: ChatInboxState,
+  threadId: string,
+): string | null {
+  const tid = String(threadId || '').trim()
+  if (!tid) return null
+  const linked = agentForThread(state, tid)
+  if (linked?.projectId) return linked.projectId
+  return state.projects.find((p) => p.threadIds.includes(tid))?.id || null
+}
+
+/**
+ * Overseer + worker rows for the Workspace Tasks tab (Cursor-like lifecycle list).
+ * Optional busy overlay marks the active streaming agent Working without mutating Inbox.
+ */
+export function projectTaskAgents(
+  state: ChatInboxState,
+  threadId: string,
+  opts?: { busy?: boolean; activeId?: string },
+): { agents: ChatInboxAgent[]; title: string | null; projectId: string | null } {
+  const projectId = projectIdForThread(state, threadId)
+  if (!projectId) return { agents: [], title: null, projectId: null }
+  const project = state.projects.find((p) => p.id === projectId)
+  const activeId = opts?.activeId
+  const busy = Boolean(opts?.busy && activeId)
+  const agents = state.agents
+    .filter((a) => a.projectId === projectId && (a.role === 'overseer' || a.role === 'worker'))
+    .map((a) => {
+      if (
+        busy &&
+        a.threadId &&
+        a.threadId === activeId &&
+        a.status !== 'done' &&
+        a.status !== 'canceled'
+      ) {
+        return { ...a, status: 'working' as const }
+      }
+      return a
+    })
+  return { agents, title: project?.title || null, projectId }
+}
+
 /** Synthetic agents for classic threads not yet linked to a Project agent. */
 export type ThreadAgentView = {
   id: string
