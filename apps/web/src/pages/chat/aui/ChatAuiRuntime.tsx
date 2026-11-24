@@ -68,7 +68,12 @@ import type { ChatWorkspaceTabId } from '../../../lib/chatUiPrefs'
 import { humanizeThrownError } from '../../../lib/apiError'
 import {
   isEmptyAgentReplyRecoverableError,
+  isEmptyModelReplyError,
+  isNoSummaryAgentStub,
+  looksLikeBuildOrViewRequest,
+  pathFromSandboxActivity,
   summarizeAgentToolWork,
+  summarizeEmptyContinueRecovery,
 } from '../../../lib/chatAgentWorkRecovery'
 import {
   looksLikeDeferredSearchTurn,
@@ -1051,7 +1056,26 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       const workspacePathsThisTurn: string[] = []
       let imagesThisTurn = 0
       let projectActionsThisTurn = 0
+      let toolsUsedThisTurn = false
       let overseerTurn = false
+
+      // Prior no-summary stub / build-view ask — Continue must not end on a red banner alone.
+      let lastUserText = ''
+      let priorWasNoSummaryStub = false
+      for (let i = thread.messages.length - 1; i >= 0; i -= 1) {
+        const m = thread.messages[i]
+        if (!m) continue
+        if (m.id === assistantId) continue
+        if (!lastUserText && m.role === 'user' && m.content.trim()) {
+          lastUserText = m.content
+          continue
+        }
+        if (lastUserText && m.role === 'assistant') {
+          priorWasNoSummaryStub = isNoSummaryAgentStub(m.content)
+          break
+        }
+      }
+      const userAskedBuildOrView = looksLikeBuildOrViewRequest(lastUserText)
 
       /** One React patch per paint — avoid cloning 96k reasoning on every SSE token. */
       const syncStreamBuffersToThread = () => {
@@ -1091,12 +1115,20 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         ...t,
         messages: t.messages.filter((m) => m.id !== assistantId),
       })
-      const recoverEmptyFromWork = (): boolean => {
-        const summary = summarizeAgentToolWork({
-          workspacePaths: workspacePathsThisTurn,
-          imageCount: imagesThisTurn,
-          projectActions: projectActionsThisTurn,
-        })
+      const recoverEmptyFromWork = (opts?: { allowContinue?: boolean }): boolean => {
+        const summary =
+          summarizeAgentToolWork({
+            workspacePaths: workspacePathsThisTurn,
+            imageCount: imagesThisTurn,
+            projectActions: projectActionsThisTurn,
+            toolsUsed: toolsUsedThisTurn,
+          }) ||
+          (opts?.allowContinue
+            ? summarizeEmptyContinueRecovery({
+                priorWasNoSummaryStub,
+                userAskedBuildOrView,
+              })
+            : '')
         if (!summary) return false
         assembled = summary.slice(0, MAX_CONTENT_CHARS)
         thread = patchAssistantContent(thread, assistantId, assembled, {
@@ -1196,6 +1228,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             }
           },
           onWorkspace: (files) => {
+            toolsUsedThisTurn = true
             for (const f of files) {
               if (f?.path) workspacePathsThisTurn.push(f.path)
             }
@@ -1208,6 +1241,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             schedulePaint()
           },
           onSandbox: (activity) => {
+            toolsUsedThisTurn = true
+            const sandPath = pathFromSandboxActivity(activity)
+            if (sandPath) workspacePathsThisTurn.push(sandPath)
             setReviewActivity((prev) => applySandboxActivity(prev, activity))
             setReviewOpen(true)
             const reviewUrl =
@@ -1223,6 +1259,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             }
           },
           onProject: (actions) => {
+            toolsUsedThisTurn = true
             projectActionsThisTurn += actions.length
             if (projectId) applyProjectActions(actions, projectId)
           },
@@ -1297,7 +1334,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         if (!assembled.trim()) {
           // Agent tools often land workspace files before a final prose bubble.
           // Prefer a durable summary over a false "No reply" + concern mood.
-          recoverEmptyFromWork()
+          recoverEmptyFromWork({ allowContinue: true })
         }
         if (!avatarReacted && assembled.trim()) {
           const inferred = inferChatDeepAvatarMoodFromText(assembled)
@@ -1356,16 +1393,39 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         flushPaint()
         liveTts?.stop()
         if ((err as Error)?.name === 'AbortError') {
-          if (!assembled.trim() && !recoverEmptyFromWork()) thread = dropEmpty(thread)
+          if (!assembled.trim() && !recoverEmptyFromWork({ allowContinue: true })) {
+            thread = dropEmpty(thread)
+          }
           persist(thread)
         } else {
           const message = humanizeThrownError(err)
+          const emptyModel = isEmptyModelReplyError(message)
           if (
             !assembled.trim() &&
             isEmptyAgentReplyRecoverableError(message) &&
-            recoverEmptyFromWork()
+            recoverEmptyFromWork({ allowContinue: emptyModel })
           ) {
-            // Tools already wrote files / images — keep the recovery bubble, no red banner.
+            // Tools already wrote files / images, or Continue after no-summary /
+            // build-view ask — keep the recovery bubble, no red banner alone.
+            // Stream stalls keep their Stop/retry banner when no tool work landed.
+            persist(thread)
+          } else if (
+            !assembled.trim() &&
+            emptyModel &&
+            (priorWasNoSummaryStub || userAskedBuildOrView)
+          ) {
+            const fallback =
+              summarizeEmptyContinueRecovery({
+                priorWasNoSummaryStub,
+                userAskedBuildOrView,
+              }) ||
+              'Empty model reply — ask me to continue, or to write files into Workspace so you can review them.'
+            assembled = fallback.slice(0, MAX_CONTENT_CHARS)
+            thread = patchAssistantContent(thread, assistantId, assembled, {
+              reasoning: reasoning || undefined,
+              sources,
+              searchSteps: searchSteps.length ? searchSteps : undefined,
+            })
             persist(thread)
           } else {
             setError(message)

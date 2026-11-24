@@ -49,7 +49,13 @@ import {
   type ChatWorkspaceFileWire,
   type ChatWorkspaceStore,
 } from './deepseekChatWorkspace.js'
-import { summarizeHarnessToolWork } from './deepseekChatWorkRecovery.js'
+import {
+  isNoSummaryAgentStub,
+  looksLikeBuildOrViewRequest,
+  pathFromSandboxActivity,
+  summarizeEmptyContinueRecovery,
+  summarizeHarnessToolWork,
+} from './deepseekChatWorkRecovery.js'
 
 export { DEEPSEEK_CHAT_MAX_TOOL_ROUNDS }
 
@@ -177,6 +183,10 @@ const DEFERRED_ORCHESTRATION_NUDGE =
 
 const DEFERRED_CLOSE_NUDGE =
   'You announced closing, archiving, or compacting Project workers but did not call project_close_agent (with status done|canceled and a summary). Call project_close_agent now for each finished or irrelevant worker. Do not stop after another "I\'ll close workers" sentence — Tasks only update when that tool runs.'
+
+/** Empty Continue after no-summary stub / build-view ask — nudge Agent to write viewable files. */
+const EMPTY_BUILD_VIEW_NUDGE =
+  'The user asked you to continue and build something they can view (or the prior turn ended with tools but no final summary). Call workspace_write or sandbox_write now to create index.html (plus any CSS/JS assets) so they can open Diffs / Workspace and preview. Then reply with a short summary of the files you wrote. Do not end with another empty reply.'
 
 export type DeepseekChatSearchImage = {
   imageUrl: string
@@ -707,6 +717,7 @@ export async function* streamDeepseekChatHarness(
   let deferredOrchestrationRecovered = false
   let deferredCloseRecovered = false
   let deferredToolRecovered = false
+  let deferredBuildViewRecovered = false
   let projectOrchestrationUsed = false
   let projectCloseUsed = false
   let clientToolsUsed = false
@@ -714,17 +725,39 @@ export async function* streamDeepseekChatHarness(
   const pendingImages: Array<{ url: string; prompt: string; id: string }> = []
   const pendingAvatar: Array<{ action: 'list' | 'play' | 'react'; mood?: string }> = []
 
+  // Last user text + prior assistant stub — drive Continue / build-view empty recovery.
+  let lastUserText = ''
+  let priorAssistantWasNoSummaryStub = false
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const m = messages[i]
+    if (!m) continue
+    if (!lastUserText && m.role === 'user' && m.content.trim()) {
+      lastUserText = m.content
+      continue
+    }
+    if (lastUserText && m.role === 'assistant') {
+      priorAssistantWasNoSummaryStub = isNoSummaryAgentStub(m.content)
+      break
+    }
+  }
+  const userAskedBuildOrView = looksLikeBuildOrViewRequest(lastUserText)
+
   const yieldEmptyFinalRecovery = function* (): Generator<
     { kind: 'content_replace'; text: string },
     boolean,
     unknown
   > {
-    const summary = summarizeHarnessToolWork({
-      workspacePaths: writtenWorkspacePaths,
-      imageCount: imagesEmitted,
-      projectActions: projectActionsEmitted,
-      toolsUsed: clientToolsUsed,
-    })
+    const summary =
+      summarizeHarnessToolWork({
+        workspacePaths: writtenWorkspacePaths,
+        imageCount: imagesEmitted,
+        projectActions: projectActionsEmitted,
+        toolsUsed: clientToolsUsed,
+      }) ||
+      summarizeEmptyContinueRecovery({
+        priorWasNoSummaryStub: priorAssistantWasNoSummaryStub,
+        userAskedBuildOrView,
+      })
     if (!summary) return false
     console.warn(
       '[deepseek-chat] empty-final recovery: tools landed work without a visible reply',
@@ -937,6 +970,9 @@ export async function* streamDeepseekChatHarness(
             },
             onSandboxActivity: (activity) => {
               pendingSandboxActivity.push(activity)
+              // sandbox_write / workspace diffs must feed recovery paths (prefer file-list stubs).
+              const sandPath = pathFromSandboxActivity(activity as Record<string, unknown>)
+              if (sandPath) writtenWorkspacePaths.push(sandPath)
             },
           },
         )
@@ -1085,6 +1121,33 @@ export async function* streamDeepseekChatHarness(
       }
     }
 
+    // Empty final: prefer nudging Agent to write viewable files when user asked
+    // Continue / build+view (or prior turn was the no-summary stub), before synthesizing.
+    if (
+      !sanitizeDeepseekChatVisibleText(assistantContent).trim() &&
+      !deferredBuildViewRecovered &&
+      (userAskedBuildOrView || priorAssistantWasNoSummaryStub) &&
+      chatMode === 'agent' &&
+      harnessEnabled &&
+      writtenWorkspacePaths.length === 0 &&
+      imagesEmitted === 0 &&
+      round < DEEPSEEK_CHAT_MAX_TOOL_ROUNDS - 1
+    ) {
+      deferredBuildViewRecovered = true
+      console.warn(
+        '[deepseek-chat] empty-build-view recovery: nudging Agent to write viewable workspace files',
+      )
+      msgs.push({
+        role: 'assistant',
+        content: assistantContent || null,
+        reasoning_content: assistantReasoning || null,
+      })
+      msgs.push({ role: 'user', content: EMPTY_BUILD_VIEW_NUDGE })
+      yield { kind: 'content_replace', text: '' }
+      assistantContent = ''
+      continue
+    }
+
     // Tools (workspace_write / images / project_*) succeeded but the model returned
     // no final prose — synthesize a durable bubble instead of an empty turn.
     if (!sanitizeDeepseekChatVisibleText(assistantContent).trim()) {
@@ -1151,11 +1214,63 @@ export async function generateDeepseekChatHarnessReply(
   let reply = ''
   let reasoning = ''
   let title: string | undefined
+  const workspacePaths: string[] = []
+  let imagesSeen = 0
+  let projectActionsSeen = 0
+  let toolsUsed = false
   for await (const ev of streamDeepseekChatHarness(messages, opts)) {
     if (ev.kind === 'reasoning') reasoning += ev.text
     if (ev.kind === 'delta') reply += ev.text
     if (ev.kind === 'content_replace') reply = ev.text
     if (ev.kind === 'title') title = ev.title
+    if (ev.kind === 'workspace') {
+      toolsUsed = true
+      for (const f of ev.files || []) {
+        if (f?.path) workspacePaths.push(f.path)
+      }
+    }
+    if (ev.kind === 'sandbox') {
+      toolsUsed = true
+      const sandPath = pathFromSandboxActivity(ev.activity as Record<string, unknown>)
+      if (sandPath) workspacePaths.push(sandPath)
+    }
+    if (ev.kind === 'project') {
+      toolsUsed = true
+      projectActionsSeen += ev.actions?.length || 0
+    }
+    if (ev.kind === 'image') {
+      toolsUsed = true
+      imagesSeen += 1
+    }
+  }
+  if (!reply.trim()) {
+    // Align with client isEmptyAgentReplyRecoverableError — recover before throw.
+    let lastUserText = ''
+    let priorStub = false
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const m = messages[i]
+      if (!m) continue
+      if (!lastUserText && m.role === 'user' && m.content.trim()) {
+        lastUserText = m.content
+        continue
+      }
+      if (lastUserText && m.role === 'assistant') {
+        priorStub = isNoSummaryAgentStub(m.content)
+        break
+      }
+    }
+    const recovery =
+      summarizeHarnessToolWork({
+        workspacePaths,
+        imageCount: imagesSeen,
+        projectActions: projectActionsSeen,
+        toolsUsed,
+      }) ||
+      summarizeEmptyContinueRecovery({
+        priorWasNoSummaryStub: priorStub,
+        userAskedBuildOrView: looksLikeBuildOrViewRequest(lastUserText),
+      })
+    if (recovery) reply = recovery
   }
   if (!reply.trim()) throw new Error('Empty model reply.')
   return {

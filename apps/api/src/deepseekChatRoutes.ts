@@ -24,7 +24,13 @@ import {
   generateDeepseekChatHarnessReply,
   streamDeepseekChatHarness,
 } from './deepseekChatHarness.js'
-import { summarizeHarnessToolWork } from './deepseekChatWorkRecovery.js'
+import {
+  isNoSummaryAgentStub,
+  looksLikeBuildOrViewRequest,
+  pathFromSandboxActivity,
+  summarizeEmptyContinueRecovery,
+  summarizeHarnessToolWork,
+} from './deepseekChatWorkRecovery.js'
 import { resolveChatCapabilities, type DeepseekChatPromptContext } from './deepseekChatPrompt.js'
 import {
   deepseekChatSupportsSearch,
@@ -405,6 +411,10 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         }
         if (event.kind === 'sandbox') {
           toolsSideEffects = true
+          const sandPath = pathFromSandboxActivity(
+            event.activity as Record<string, unknown> | undefined,
+          )
+          if (sandPath) workspacePathsSeen.push(sandPath)
           writeSse(res, `data: ${JSON.stringify({ sandbox: event.activity })}\n\n`)
           continue
         }
@@ -443,13 +453,33 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
 
       if (!full.trim()) {
         // Defense in depth: harness should already recover, but if the stream ended
-        // empty after workspace/image/project side-effects, never hard-fail the turn.
-        const recovery = summarizeHarnessToolWork({
-          workspacePaths: workspacePathsSeen,
-          imageCount: imagesSeen,
-          projectActions: projectActionsSeen,
-          toolsUsed: toolsSideEffects,
-        })
+        // empty after workspace/image/project/sandbox side-effects — or after a
+        // Continue / build-view ask following a no-summary stub — never hard-fail.
+        let lastUserText = ''
+        let priorStub = false
+        for (let i = parsed.data.messages.length - 1; i >= 0; i -= 1) {
+          const m = parsed.data.messages[i]
+          if (!m) continue
+          if (!lastUserText && m.role === 'user' && String(m.content || '').trim()) {
+            lastUserText = String(m.content || '')
+            continue
+          }
+          if (lastUserText && m.role === 'assistant') {
+            priorStub = isNoSummaryAgentStub(String(m.content || ''))
+            break
+          }
+        }
+        const recovery =
+          summarizeHarnessToolWork({
+            workspacePaths: workspacePathsSeen,
+            imageCount: imagesSeen,
+            projectActions: projectActionsSeen,
+            toolsUsed: toolsSideEffects,
+          }) ||
+          summarizeEmptyContinueRecovery({
+            priorWasNoSummaryStub: priorStub,
+            userAskedBuildOrView: looksLikeBuildOrViewRequest(lastUserText),
+          })
         if (recovery) {
           full = recovery
           writeSse(res, `data: ${JSON.stringify({ contentReplace: recovery })}\n\n`)
