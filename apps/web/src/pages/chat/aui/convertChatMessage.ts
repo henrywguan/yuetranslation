@@ -1,6 +1,6 @@
 import type { ThreadMessageLike } from '@assistant-ui/react'
 import type { ChatMessage } from '../../../lib/chatHistory'
-import { LIVE_REASONING_KEEP } from '../../../lib/chatHistory'
+import { LIVE_REASONING_KEEP, LIVE_REASONING_PAINT } from '../../../lib/chatHistory'
 
 /**
  * Map device-local ChatMessage → assistant-ui ThreadMessageLike.
@@ -47,8 +47,9 @@ export function convertChatMessage(
   if (message.reasoning?.trim()) {
     parts.push({
       type: 'reasoning',
-      // Keep the latest research steps (same tail window as the live buffer).
-      text: message.reasoning.slice(-LIVE_REASONING_KEEP),
+      // Streaming: feed only the paint tail into assistant-ui (96k parts freeze React).
+      // Settled: keep the larger live buffer for expand/collapse.
+      text: message.reasoning.slice(-(streaming ? LIVE_REASONING_PAINT : LIVE_REASONING_KEEP)),
     })
   }
 

@@ -60,6 +60,26 @@ export function deepseekChatTextLooksLeaked(text: string): boolean {
 }
 
 /**
+ * Append a stream chunk without re-scanning the whole buffer every token.
+ * Full-buffer sanitize is O(n) with multiple regexes — doing it per delta on a
+ * growing DeepThink trace is O(n²) and freezes the tab ("Page Unresponsive").
+ * Chunks are already sanitized at the SSE boundary; only re-scan when a leak
+ * marker appears (incomplete tags spanning chunks).
+ */
+export function appendSanitizedStreamText(prev: string, delta: string): string {
+  const next = String(prev || '') + String(delta || '')
+  if (!next) return next
+  if (deepseekChatTextLooksLeaked(next) || /<\s*\/?\s*sys/i.test(delta || '')) {
+    return sanitizeDeepseekChatVisibleText(next)
+  }
+  return next
+}
+
+/** Yield the SSE parse loop so React can paint Stop / Thinking during long thinks. */
+export const CHAT_STREAM_YIELD_EVERY_MS = 32
+export const CHAT_STREAM_YIELD_EVERY_EVENTS = 24
+
+/**
  * Idle SSE with only heartbeats / no *meaningful* data events — auto-abort so UI never spins forever.
  * Must exceed image tool deadline (~95s) so legitimate generate_image does not trip the client.
  */

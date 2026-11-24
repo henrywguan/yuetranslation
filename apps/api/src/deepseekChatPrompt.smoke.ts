@@ -124,6 +124,18 @@ assert.equal(
   true,
   'tradeoff compare',
 )
+assert.equal(
+  shouldAutoEnableThinking(
+    'If nvidia fell through as a company, how would that have affected the us economy',
+  ),
+  true,
+  'macro counterfactual needs DeepThink (Auto blank-page freeze case)',
+)
+assert.equal(
+  shouldAutoEnableThinking('how would higher interest rates affect housing demand'),
+  true,
+  'how-would-affect analysis',
+)
 
 const autoEasy = resolveChatCapabilities({
   thinking: 'auto',

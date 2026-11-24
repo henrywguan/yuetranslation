@@ -14,6 +14,8 @@ import {
   CHAT_STREAM_FIRST_PROGRESS_MS,
   CHAT_STREAM_IDLE_MS,
   CHAT_STREAM_STALL_ERROR,
+  CHAT_STREAM_YIELD_EVERY_EVENTS,
+  CHAT_STREAM_YIELD_EVERY_MS,
   chatStreamEventIsMeaningfulProgress,
   sanitizeDeepseekChatVisibleText,
 } from './chatVisibleSanitize'
@@ -1218,6 +1220,16 @@ export async function streamDeepseekChat(
   if (typeof idleWatch.unref === 'function') idleWatch.unref()
 
   try {
+    let eventsSinceYield = 0
+    let lastYieldAt = Date.now()
+    const yieldToUi = async () => {
+      eventsSinceYield = 0
+      lastYieldAt = Date.now()
+      // Let React commit Thinking / Stop / live tail before the next SSE burst.
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 0)
+      })
+    }
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
@@ -1226,6 +1238,7 @@ export async function streamDeepseekChat(
       const parts = buffer.split('\n')
       buffer = parts.pop() || ''
       for (const line of parts) {
+        if (stalled || streamAbort.signal.aborted) break
         const trimmed = line.trim()
         if (!trimmed.startsWith('data:')) continue
         const payload = trimmed.slice(5).trim()
@@ -1288,6 +1301,13 @@ export async function streamDeepseekChat(
           handlers.onDelta(sanitizeDeepseekChatVisibleText(parsed.delta))
         }
         if (parsed.model) model = parsed.model
+        eventsSinceYield += 1
+        if (
+          eventsSinceYield >= CHAT_STREAM_YIELD_EVERY_EVENTS ||
+          Date.now() - lastYieldAt >= CHAT_STREAM_YIELD_EVERY_MS
+        ) {
+          await yieldToUi()
+        }
       }
     }
     if (stalled) throw new Error(CHAT_STREAM_STALL_ERROR)
