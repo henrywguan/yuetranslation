@@ -506,34 +506,39 @@ export function InboxShell({
               onNavigate?.()
             }}
           />
-          {sandboxBusy ? <p className="inbox-empty">Starting sandbox…</p> : null}
-          {sandboxNote ? <p className="inbox-empty">{sandboxNote}</p> : null}
-          {localBindWorkspaceId ? (
-            <LocalFolderBind
-              workspaceId={localBindWorkspaceId}
-              projectId={activeProjectId || undefined}
-              onBound={({ sessionId, note, fileCount }) => {
-                bindWorkspaceRef(localBindWorkspaceId, sessionId, activeProjectId || undefined)
-                setSandboxNote(`${note} (${fileCount} files)`)
-                setLocalBindWorkspaceId(null)
-              }}
-              onCancel={() => setLocalBindWorkspaceId(null)}
-            />
-          ) : null}
-          {githubBindWorkspaceId ? (
-            <GithubBind
-              sandboxSessionId={activeSandboxSessionId}
-              onBound={({ repo, note, sandboxSessionId }) => {
-                bindWorkspaceRef(
-                  githubBindWorkspaceId,
-                  sandboxSessionId || repo,
-                  activeProjectId || undefined,
-                )
-                setSandboxNote(note)
-                setGithubBindWorkspaceId(null)
-              }}
-              onCancel={() => setGithubBindWorkspaceId(null)}
-            />
+          {/* Bind chrome lives under Workspaces — collapse with the section, not as stray UI. */}
+          {workspacesOpen ? (
+            <>
+              {sandboxBusy ? <p className="inbox-empty">Starting sandbox…</p> : null}
+              {sandboxNote ? <p className="inbox-empty">{sandboxNote}</p> : null}
+              {localBindWorkspaceId ? (
+                <LocalFolderBind
+                  workspaceId={localBindWorkspaceId}
+                  projectId={activeProjectId || undefined}
+                  onBound={({ sessionId, note, fileCount }) => {
+                    bindWorkspaceRef(localBindWorkspaceId, sessionId, activeProjectId || undefined)
+                    setSandboxNote(`${note} (${fileCount} files)`)
+                    setLocalBindWorkspaceId(null)
+                  }}
+                  onCancel={() => setLocalBindWorkspaceId(null)}
+                />
+              ) : null}
+              {githubBindWorkspaceId ? (
+                <GithubBind
+                  sandboxSessionId={activeSandboxSessionId}
+                  onBound={({ repo, note, sandboxSessionId }) => {
+                    bindWorkspaceRef(
+                      githubBindWorkspaceId,
+                      sandboxSessionId || repo,
+                      activeProjectId || undefined,
+                    )
+                    setSandboxNote(note)
+                    setGithubBindWorkspaceId(null)
+                  }}
+                  onCancel={() => setGithubBindWorkspaceId(null)}
+                />
+              ) : null}
+            </>
           ) : null}
         </div>
 

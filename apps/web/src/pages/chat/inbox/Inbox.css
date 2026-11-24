@@ -1215,6 +1215,67 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
   padding-right: 0.25rem;
 }
 
+/* Local folder connected — brand gold + jade pulse (chat AUI language). */
+.inbox-ws-connected {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  flex-shrink: 0;
+  padding: 0.12rem 0.4rem 0.14rem 0.32rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #c9a227;
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, #e8c547 18%, transparent) 0%,
+    color-mix(in srgb, #3ecf8e 12%, transparent) 55%,
+    color-mix(in srgb, #e8c547 16%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  border: 1px solid color-mix(in srgb, #e8c547 42%, transparent);
+  animation: inbox-ws-connected-sheen 2.8s ease-in-out infinite;
+  padding-right: 0.4rem;
+}
+
+.inbox-ws-connected-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f5e6a3 0%, #e8c547 45%, #3ecf8e 100%);
+  box-shadow: 0 0 0 0 color-mix(in srgb, #e8c547 55%, transparent);
+  animation: inbox-ws-connected-pulse 1.8s ease-out infinite;
+}
+
+@keyframes inbox-ws-connected-sheen {
+  0%,
+  100% {
+    background-position: 0% 50%;
+    color: #c9a227;
+  }
+  50% {
+    background-position: 100% 50%;
+    color: #b8921f;
+  }
+}
+
+@keyframes inbox-ws-connected-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, #e8c547 50%, transparent);
+    transform: scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 0.35rem color-mix(in srgb, #e8c547 0%, transparent);
+    transform: scale(1.05);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, #e8c547 0%, transparent);
+    transform: scale(1);
+  }
+}
+
 .inbox-project-panel {
   padding: 0.35rem 0.4rem 0.5rem;
   border-radius: 0.7rem;
@@ -1453,7 +1514,9 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
     transition: none;
   }
 
-  .inbox-settings-menu {
+  .inbox-settings-menu,
+  .inbox-ws-connected,
+  .inbox-ws-connected-dot {
     animation: none;
   }
 }
