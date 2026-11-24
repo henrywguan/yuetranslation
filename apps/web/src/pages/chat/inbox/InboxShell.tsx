@@ -83,8 +83,14 @@ export function InboxShell({
   } = useChatInboxContext()
   const [sandboxBusy, setSandboxBusy] = useState(false)
   const [sandboxNote, setSandboxNote] = useState<string | null>(null)
-  /** True when the sticky note is the empty-folder bind tip (clear once Diffs/WS have files). */
-  const [sandboxNoteIsEmptyBind, setSandboxNoteIsEmptyBind] = useState(false)
+  /**
+   * Empty-folder bind tip: clear only when Diffs/WS grow past the counts at bind time
+   * (session-global reviewActivity / workspace can already be non-empty).
+   */
+  const [emptyBindBaseline, setEmptyBindBaseline] = useState<{
+    diffs: number
+    files: number
+  } | null>(null)
   const [localBindWorkspaceId, setLocalBindWorkspaceId] = useState<string | null>(null)
   const [githubBindWorkspaceId, setGithubBindWorkspaceId] = useState<string | null>(null)
   const [wizardOpen, setWizardOpen] = useState(false)
@@ -127,20 +133,25 @@ export function InboxShell({
     })
   }
 
-  // Clear stale “empty folder” tip once Diffs or Harness workspace actually has files.
+  // Clear empty-folder tip only when Diffs/WS grow after this bind (not pre-existing files).
   useEffect(() => {
-    if (!sandboxNoteIsEmptyBind) return
+    if (!emptyBindBaseline) return
     const diffCount = reviewActivity.diffs.length
     const wsCount = activeWorkspace?.files?.length || 0
-    if (diffCount > 0 || wsCount > 0) {
-      const n = Math.max(diffCount, wsCount)
-      setSandboxNote(
-        `Agent wrote ${n} file${n === 1 ? '' : 's'} — open Diffs / Workspace (local disk may still be empty until you download).`,
-      )
-      setSandboxNoteIsEmptyBind(false)
-    }
+    const grew =
+      diffCount > emptyBindBaseline.diffs || wsCount > emptyBindBaseline.files
+    if (!grew) return
+    const added = Math.max(
+      diffCount - emptyBindBaseline.diffs,
+      wsCount - emptyBindBaseline.files,
+    )
+    const n = Math.max(1, added)
+    setSandboxNote(
+      `Agent wrote ${n} file${n === 1 ? '' : 's'} — open Diffs / Workspace (local disk may still be empty until you download).`,
+    )
+    setEmptyBindBaseline(null)
   }, [
-    sandboxNoteIsEmptyBind,
+    emptyBindBaseline,
     reviewActivity.diffs.length,
     activeWorkspace?.files?.length,
   ])
@@ -205,7 +216,7 @@ export function InboxShell({
           driver: 'stub',
         })
         bindWorkspaceRef(ws.id, session.id, project.id)
-        setSandboxNoteIsEmptyBind(false)
+        setEmptyBindBaseline(null)
         setSandboxNote(
           note ||
             (fallbackFromFly
@@ -264,7 +275,7 @@ export function InboxShell({
       if (sandboxBusy) return
       setSandboxBusy(true)
       setSandboxNote(null)
-      setSandboxNoteIsEmptyBind(false)
+      setEmptyBindBaseline(null)
       try {
         const ws = addWorkspace('internal', 'Internal sandbox', activeProjectId || undefined)
         const { session, note, fallbackFromFly } = await createChatSandbox({
@@ -544,10 +555,13 @@ export function InboxShell({
                     // Never leave “Folder is empty… (0 files)” after Agent writes land in Diffs.
                     if (fileCount > 0) {
                       setSandboxNote(`${note} (${fileCount} files)`)
-                      setSandboxNoteIsEmptyBind(false)
+                      setEmptyBindBaseline(null)
                     } else {
                       setSandboxNote(note)
-                      setSandboxNoteIsEmptyBind(true)
+                      setEmptyBindBaseline({
+                        diffs: reviewActivity.diffs.length,
+                        files: activeWorkspace?.files?.length || 0,
+                      })
                     }
                     setLocalBindWorkspaceId(null)
                   }}
@@ -563,7 +577,7 @@ export function InboxShell({
                       sandboxSessionId || repo,
                       activeProjectId || undefined,
                     )
-                    setSandboxNoteIsEmptyBind(false)
+                    setEmptyBindBaseline(null)
                     setSandboxNote(note)
                     setGithubBindWorkspaceId(null)
                   }}

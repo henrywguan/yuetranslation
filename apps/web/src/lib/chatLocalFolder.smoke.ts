@@ -62,8 +62,8 @@ assert.match(bind, /onBound\(/, 'bind completes via onBound')
 
 assert.match(
   shell,
-  /sandboxNoteIsEmptyBind|Agent wrote/,
-  'Inbox clears empty-folder tip once Diffs/Workspace have files',
+  /emptyBindBaseline|Agent wrote/,
+  'Inbox clears empty-folder tip once Diffs/Workspace grow past bind baseline',
 )
 
 const api = readFileSync(join(here, 'api.ts'), 'utf8')
