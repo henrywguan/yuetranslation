@@ -23,9 +23,14 @@ import {
   matchesSearch,
   normalizeInboxState,
   ORCHESTRATION_STALL_ERROR,
+  projectIdForThread,
   projectNestedViews,
+  projectTaskAgents,
   renameProject,
   resolveProjectGithubWorkspace,
+  setAgentCompactSummary,
+  setAgentStatus,
+  setAgentThread,
   setProjectDefaultWorkspace,
   setProjectMemory,
   statusChipLabel,
@@ -94,6 +99,91 @@ assert.equal(statusChipLabel('needs_attention'), 'You')
 assert.equal(statusChipLabel('working'), 'Work')
 assert.equal(isIdleStatus('idle'), true)
 assert.equal(isIdleStatus('working'), false)
+
+// Workspace Tasks: threadIds-only membership (Add-to-Project) must resolve agents.
+{
+  const { state: projState, project: proj, overseer: ov } = createProject(
+    emptyInboxState(),
+    'Tasks parity',
+  )
+  const withOverseerThread = setAgentThread(projState, ov.id, 'thread-overseer')
+  const withWorker = createWorker(withOverseerThread, proj.id, {
+    id: 'agent_worker_1',
+    title: 'Worker · docs',
+    status: 'working',
+  }).state
+  const withLoose = attachThreadToProject(withWorker, proj.id, 'thread-loose-only')
+  assert.equal(
+    projectIdForThread(withLoose, 'thread-loose-only'),
+    proj.id,
+    'projectIdForThread falls back to project.threadIds',
+  )
+  assert.equal(
+    projectIdForThread(withLoose, 'thread-overseer'),
+    proj.id,
+    'projectIdForThread prefers agent.projectId',
+  )
+  const tasksFromLoose = projectTaskAgents(withLoose, 'thread-loose-only')
+  assert.equal(tasksFromLoose.projectId, proj.id)
+  assert.equal(tasksFromLoose.title, 'Tasks parity')
+  assert.ok(
+    tasksFromLoose.agents.some((a) => a.role === 'overseer'),
+    'Tasks lists Overseer from threadIds-only chat',
+  )
+  assert.ok(
+    tasksFromLoose.agents.some((a) => a.id === 'agent_worker_1'),
+    'Tasks lists workers for the Project',
+  )
+  // Lifecycle: Working → Needs you → Done / Canceled
+  const needsYou = setAgentStatus(withLoose, 'agent_worker_1', 'needs_attention')
+  assert.equal(
+    projectTaskAgents(needsYou, 'thread-loose-only').agents.find((a) => a.id === 'agent_worker_1')
+      ?.status,
+    'needs_attention',
+  )
+  const done = setAgentCompactSummary(needsYou, 'agent_worker_1', 'Docs landed', 'done')
+  assert.equal(
+    projectTaskAgents(done, 'thread-loose-only').agents.find((a) => a.id === 'agent_worker_1')
+      ?.status,
+    'done',
+  )
+  const canceled = setAgentCompactSummary(
+    setAgentStatus(withLoose, 'agent_worker_1', 'working'),
+    'agent_worker_1',
+    'No longer needed',
+    'canceled',
+  )
+  assert.equal(
+    projectTaskAgents(canceled, 'thread-loose-only').agents.find((a) => a.id === 'agent_worker_1')
+      ?.status,
+    'canceled',
+  )
+  // Busy overlay: active streaming agent shows Working without mutating closed rows
+  const busyOverlay = projectTaskAgents(needsYou, 'thread-overseer', {
+    busy: true,
+    activeId: 'thread-overseer',
+  })
+  assert.equal(
+    busyOverlay.agents.find((a) => a.id === ov.id)?.status,
+    'working',
+    'busy overlay marks active Overseer Working',
+  )
+  assert.equal(
+    busyOverlay.agents.find((a) => a.id === 'agent_worker_1')?.status,
+    'needs_attention',
+    'busy overlay does not rewrite other agents',
+  )
+  // done worker must stay done even if somehow active+busy
+  const doneWithThread = setAgentThread(done, 'agent_worker_1', 'thread-worker-done')
+  assert.equal(
+    projectTaskAgents(doneWithThread, 'thread-worker-done', {
+      busy: true,
+      activeId: 'thread-worker-done',
+    }).agents.find((a) => a.id === 'agent_worker_1')?.status,
+    'done',
+    'busy overlay never revives done/canceled',
+  )
+}
 
 const renamed = renameProject(linked, project.id, 'Harbor Quest')
 assert.equal(renamed.projects[0]?.title, 'Harbor Quest')
@@ -457,6 +547,7 @@ assert.match(runtime, /sandboxSessionId/, 'runtime forwards sandbox session')
 assert.match(runtime, /projectId/, 'runtime forwards project id for Overseer tools')
 assert.match(runtime, /projectAgents/, 'runtime forwards agent snapshot')
 assert.match(runtime, /onProject|applyProjectActions/, 'runtime applies project_* actions')
+assert.match(runtime, /projectTaskAgents/, 'Tasks tab uses shared projectTaskAgents helper')
 assert.match(runtime, /needs_attention/, 'turn end marks Needs Attention')
 assert.match(runtime, /looksLikeDeferredOrchestration/, 'runtime detects stalled Overseer promises')
 assert.match(runtime, /ORCHESTRATION_STALL_ERROR/, 'runtime surfaces orchestration stall error')
@@ -467,6 +558,15 @@ assert.match(
   /!live\.length[\s\S]*emptyThread\(\)/,
   'clearing last live agents opens a fresh empty thread',
 )
+
+const threadSrc = readFileSync(join(root, 'pages/chat/aui/ChatAuiThread.tsx'), 'utf8')
+assert.match(threadSrc, /projectIdForThread/, 'strip/mentions share projectIdForThread')
+
+const panelSrc = readFileSync(join(root, 'components/ChatWorkspacePanel.tsx'), 'utf8')
+assert.match(panelSrc, /Needs you/, 'Tasks tab Needs you section')
+assert.match(panelSrc, /Working/, 'Tasks tab Working section')
+assert.match(panelSrc, /Canceled/, 'Tasks tab Canceled section')
+assert.match(panelSrc, /match: \(s\) => s === 'done'/, 'Tasks tab Done section')
 
 assert.equal(
   looksLikeDeferredOrchestration(

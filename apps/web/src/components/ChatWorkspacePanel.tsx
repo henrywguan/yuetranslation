@@ -1094,8 +1094,8 @@ export function ChatWorkspacePanel({
             ) : null}
             {!projectAgents.length ? (
               <p className="ds-chat-workspace-empty">
-                No Project linked. Create or open a Project from Inbox — Overseer will spawn workers
-                into Tasks.
+                No Project on this chat. Open a Project from Inbox, or Add to Project — Overseer and
+                workers then appear here with Working / Needs you / Done.
               </p>
             ) : (
               <>
