@@ -50,7 +50,11 @@ import {
 import { humanizeThrownError } from '../lib/apiError'
 import {
   isEmptyAgentReplyRecoverableError,
+  isNoSummaryAgentStub,
+  looksLikeBuildOrViewRequest,
+  pathFromSandboxActivity,
   summarizeAgentToolWork,
+  summarizeEmptyContinueRecovery,
 } from '../lib/chatAgentWorkRecovery'
 import {
   looksLikeDeferredSearchTurn,
@@ -1119,6 +1123,23 @@ export function ChatPage() {
     const STREAM_PAINT_MS = 80
     const workspacePathsThisTurn: string[] = []
     let imagesThisTurn = 0
+    let toolsUsedThisTurn = false
+    let lastUserText = ''
+    let priorWasNoSummaryStub = false
+    for (let i = thread.messages.length - 1; i >= 0; i -= 1) {
+      const m = thread.messages[i]
+      if (!m) continue
+      if (m.id === assistantId) continue
+      if (!lastUserText && m.role === 'user' && m.content.trim()) {
+        lastUserText = m.content
+        continue
+      }
+      if (lastUserText && m.role === 'assistant') {
+        priorWasNoSummaryStub = isNoSummaryAgentStub(m.content)
+        break
+      }
+    }
+    const userAskedBuildOrView = looksLikeBuildOrViewRequest(lastUserText)
     const scrollAfterPaint = () => {
       window.requestAnimationFrame(stickMessagesToBottom)
     }
@@ -1166,10 +1187,16 @@ export function ChatPage() {
       messages: t.messages.filter((m) => m.id !== assistantId),
     })
     const recoverEmptyFromWork = (): boolean => {
-      const summary = summarizeAgentToolWork({
-        workspacePaths: workspacePathsThisTurn,
-        imageCount: imagesThisTurn,
-      })
+      const summary =
+        summarizeAgentToolWork({
+          workspacePaths: workspacePathsThisTurn,
+          imageCount: imagesThisTurn,
+          toolsUsed: toolsUsedThisTurn,
+        }) ||
+        summarizeEmptyContinueRecovery({
+          priorWasNoSummaryStub,
+          userAskedBuildOrView,
+        })
       if (!summary) return false
       assembled = summary.slice(0, MAX_CONTENT_CHARS)
       thread = patchAssistantContent(thread, assistantId, assembled, {
@@ -1197,6 +1224,7 @@ export function ChatPage() {
         continueReply: Boolean(continueFromId),
         signal: controller.signal,
         onWorkspace: (files) => {
+          toolsUsedThisTurn = true
           for (const f of files) {
             if (f?.path) workspacePathsThisTurn.push(f.path)
           }
@@ -1205,6 +1233,11 @@ export function ChatPage() {
             applyWorkspaceWireUpdate(thread.workspace, files),
           )
           schedulePaint()
+        },
+        onSandbox: (activity) => {
+          toolsUsedThisTurn = true
+          const sandPath = pathFromSandboxActivity(activity)
+          if (sandPath) workspacePathsThisTurn.push(sandPath)
         },
         onStatus: (status, meta) => {
           if (status === 'searching') {
@@ -1328,6 +1361,20 @@ export function ChatPage() {
           isEmptyAgentReplyRecoverableError(message) &&
           recoverEmptyFromWork()
         ) {
+          persist(thread)
+        } else if (!assembled.trim() && isEmptyAgentReplyRecoverableError(message)) {
+          const fallback =
+            summarizeEmptyContinueRecovery({
+              priorWasNoSummaryStub: true,
+              userAskedBuildOrView: userAskedBuildOrView || priorWasNoSummaryStub,
+            }) ||
+            'Empty model reply — ask me to continue, or to write files into Workspace so you can review them.'
+          assembled = fallback.slice(0, MAX_CONTENT_CHARS)
+          thread = patchAssistantContent(thread, assistantId, assembled, {
+            reasoning: reasoning || undefined,
+            sources,
+            searchSteps: searchSteps.length ? searchSteps : undefined,
+          })
           persist(thread)
         } else {
           setError(message)

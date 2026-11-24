@@ -68,7 +68,11 @@ import type { ChatWorkspaceTabId } from '../../../lib/chatUiPrefs'
 import { humanizeThrownError } from '../../../lib/apiError'
 import {
   isEmptyAgentReplyRecoverableError,
+  isNoSummaryAgentStub,
+  looksLikeBuildOrViewRequest,
+  pathFromSandboxActivity,
   summarizeAgentToolWork,
+  summarizeEmptyContinueRecovery,
 } from '../../../lib/chatAgentWorkRecovery'
 import {
   looksLikeDeferredSearchTurn,
@@ -1051,7 +1055,26 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       const workspacePathsThisTurn: string[] = []
       let imagesThisTurn = 0
       let projectActionsThisTurn = 0
+      let toolsUsedThisTurn = false
       let overseerTurn = false
+
+      // Prior no-summary stub / build-view ask — Continue must not end on a red banner alone.
+      let lastUserText = ''
+      let priorWasNoSummaryStub = false
+      for (let i = thread.messages.length - 1; i >= 0; i -= 1) {
+        const m = thread.messages[i]
+        if (!m) continue
+        if (m.id === assistantId) continue
+        if (!lastUserText && m.role === 'user' && m.content.trim()) {
+          lastUserText = m.content
+          continue
+        }
+        if (lastUserText && m.role === 'assistant') {
+          priorWasNoSummaryStub = isNoSummaryAgentStub(m.content)
+          break
+        }
+      }
+      const userAskedBuildOrView = looksLikeBuildOrViewRequest(lastUserText)
 
       /** One React patch per paint — avoid cloning 96k reasoning on every SSE token. */
       const syncStreamBuffersToThread = () => {
@@ -1092,11 +1115,17 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         messages: t.messages.filter((m) => m.id !== assistantId),
       })
       const recoverEmptyFromWork = (): boolean => {
-        const summary = summarizeAgentToolWork({
-          workspacePaths: workspacePathsThisTurn,
-          imageCount: imagesThisTurn,
-          projectActions: projectActionsThisTurn,
-        })
+        const summary =
+          summarizeAgentToolWork({
+            workspacePaths: workspacePathsThisTurn,
+            imageCount: imagesThisTurn,
+            projectActions: projectActionsThisTurn,
+            toolsUsed: toolsUsedThisTurn,
+          }) ||
+          summarizeEmptyContinueRecovery({
+            priorWasNoSummaryStub,
+            userAskedBuildOrView,
+          })
         if (!summary) return false
         assembled = summary.slice(0, MAX_CONTENT_CHARS)
         thread = patchAssistantContent(thread, assistantId, assembled, {
@@ -1196,6 +1225,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             }
           },
           onWorkspace: (files) => {
+            toolsUsedThisTurn = true
             for (const f of files) {
               if (f?.path) workspacePathsThisTurn.push(f.path)
             }
@@ -1208,6 +1238,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             schedulePaint()
           },
           onSandbox: (activity) => {
+            toolsUsedThisTurn = true
+            const sandPath = pathFromSandboxActivity(activity)
+            if (sandPath) workspacePathsThisTurn.push(sandPath)
             setReviewActivity((prev) => applySandboxActivity(prev, activity))
             setReviewOpen(true)
             const reviewUrl =
@@ -1223,6 +1256,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             }
           },
           onProject: (actions) => {
+            toolsUsedThisTurn = true
             projectActionsThisTurn += actions.length
             if (projectId) applyProjectActions(actions, projectId)
           },
@@ -1365,7 +1399,23 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             isEmptyAgentReplyRecoverableError(message) &&
             recoverEmptyFromWork()
           ) {
-            // Tools already wrote files / images — keep the recovery bubble, no red banner.
+            // Tools already wrote files / images, or Continue after no-summary /
+            // build-view ask — keep the recovery bubble, no red banner alone.
+            persist(thread)
+          } else if (!assembled.trim() && isEmptyAgentReplyRecoverableError(message)) {
+            // Last resort: still avoid a banner-only empty Continue — durable bubble.
+            const fallback =
+              summarizeEmptyContinueRecovery({
+                priorWasNoSummaryStub: true,
+                userAskedBuildOrView: userAskedBuildOrView || priorWasNoSummaryStub,
+              }) ||
+              'Empty model reply — ask me to continue, or to write files into Workspace so you can review them.'
+            assembled = fallback.slice(0, MAX_CONTENT_CHARS)
+            thread = patchAssistantContent(thread, assistantId, assembled, {
+              reasoning: reasoning || undefined,
+              sources,
+              searchSteps: searchSteps.length ? searchSteps : undefined,
+            })
             persist(thread)
           } else {
             setError(message)

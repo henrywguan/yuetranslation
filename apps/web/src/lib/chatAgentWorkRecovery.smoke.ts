@@ -9,8 +9,12 @@ import { fileURLToPath } from 'node:url'
 import {
   agentTurnHadUsefulWork,
   isEmptyAgentReplyRecoverableError,
+  isNoSummaryAgentStub,
+  looksLikeBuildOrViewRequest,
   normalizeAgentWorkRecoveryPaths,
+  pathFromSandboxActivity,
   summarizeAgentToolWork,
+  summarizeEmptyContinueRecovery,
 } from './chatAgentWorkRecovery.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -30,6 +34,33 @@ assert.match(henry, /Notes\.ini/)
 assert.equal(agentTurnHadUsefulWork({ workspacePaths: ['a.md'] }), true)
 assert.equal(agentTurnHadUsefulWork({}), false)
 
+assert.equal(
+  pathFromSandboxActivity({ kind: 'diff', path: 'index.html', source: 'sandbox' }),
+  'index.html',
+)
+assert.equal(pathFromSandboxActivity({ kind: 'run', argv: ['ls'] }), null)
+
+assert.equal(
+  isNoSummaryAgentStub(
+    'Done — tools finished this turn, but the model returned no final summary. Ask me to continue…',
+  ),
+  true,
+)
+assert.equal(isNoSummaryAgentStub('Done — wrote 1 workspace file'), false)
+
+assert.equal(
+  looksLikeBuildOrViewRequest('continue and build the website so he can view it'),
+  true,
+)
+assert.equal(looksLikeBuildOrViewRequest('what is the weather?'), false)
+
+const continueBubble = summarizeEmptyContinueRecovery({
+  priorWasNoSummaryStub: true,
+  userAskedBuildOrView: true,
+})
+assert.match(continueBubble, /empty completion/i)
+assert.match(continueBubble, /index\.html/)
+
 assert.equal(isEmptyAgentReplyRecoverableError('Empty model reply.'), true)
 assert.equal(isEmptyAgentReplyRecoverableError('No reply — try again.'), true)
 assert.equal(
@@ -43,15 +74,24 @@ assert.equal(isEmptyAgentReplyRecoverableError('Rate limited'), false)
 const runtime = readFileSync(join(here, '../pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtime, /summarizeAgentToolWork/, 'AUI recovers empty reply when tools landed')
 assert.match(runtime, /workspacePathsThisTurn/, 'AUI tracks workspace writes this turn')
+assert.match(runtime, /pathFromSandboxActivity/, 'AUI records sandbox write paths for recovery')
+assert.match(runtime, /summarizeEmptyContinueRecovery/, 'AUI recovers empty Continue after stub')
 assert.match(
   runtime,
   /summarizeAgentToolWork[\s\S]*No reply/,
   'AUI prefers work recovery before No reply',
 )
+assert.match(
+  runtime,
+  /isEmptyAgentReplyRecoverableError[\s\S]*summarizeEmptyContinueRecovery|isEmptyAgentReplyRecoverableError[\s\S]*fallback/,
+  'AUI never leaves only Empty model reply banner when recoverable',
+)
 
 const classic = readFileSync(join(here, '../pages/ChatPage.tsx'), 'utf8')
 assert.match(classic, /summarizeAgentToolWork/, 'Classic recovers empty reply when tools landed')
 assert.match(classic, /workspacePathsThisTurn/, 'Classic tracks workspace writes this turn')
+assert.match(classic, /pathFromSandboxActivity/, 'Classic records sandbox write paths')
+assert.match(classic, /summarizeEmptyContinueRecovery/, 'Classic recovers empty Continue')
 
 const streamSmoke = readFileSync(join(here, 'chatStream.smoke.ts'), 'utf8')
 assert.match(
