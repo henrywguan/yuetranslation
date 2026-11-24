@@ -98,6 +98,8 @@ assert.match(panel, /Download all as zip|IcZip|aria-label=\{label\}/, 'panel ico
 assert.match(panel, /Save to Workspaces/, 'panel promote to Inbox Workspaces')
 assert.match(panel, /ds-chat-workspace-resize/, 'panel resize handle')
 assert.match(panel, /Expand preview|IcExpand/, 'HTML fullscreen preview')
+assert.match(panel, /htmlNeedsOptInPreview|Render HTML preview|agentBusy/, 'large HTML defer iframe')
+assert.match(panel, /HTML_AUTO_PREVIEW_MAX_CHARS|showHtmlIframe/, 'scripted HTML not auto-iframe')
 assert.match(panel, /enablePlanTasks/, 'Plan/Tasks tabs gated')
 assert.match(panel, /is-readonly/, 'path is read-only text')
 assert.match(panel, /is-riced|Riced desktop/, 'riced desktop files view')

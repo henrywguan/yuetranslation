@@ -53,7 +53,18 @@ assert.doesNotMatch(
   'empty mirror must not early-return before onBound',
 )
 assert.match(bind, /Folder is empty|still connecting/, 'soft tip when nothing to mirror')
+assert.match(
+  bind,
+  /empty folder ready for Agent writes|files show in Diffs/,
+  'empty bind note does not stick as “0 files” forever',
+)
 assert.match(bind, /onBound\(/, 'bind completes via onBound')
+
+assert.match(
+  shell,
+  /emptyBindBaseline|Agent wrote/,
+  'Inbox clears empty-folder tip once Diffs/Workspace grow past bind baseline',
+)
 
 const api = readFileSync(join(here, 'api.ts'), 'utf8')
 assert.match(api, /writeChatSandboxFile/, 'mirror writes via sandbox FS API')

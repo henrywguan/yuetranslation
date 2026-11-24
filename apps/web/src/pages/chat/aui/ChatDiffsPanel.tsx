@@ -1,35 +1,115 @@
-import { useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { fetchChatGithubPrChecks } from '../../../lib/api'
 import type { ChatDiffEntry, ChatReviewActivity } from '../../../lib/chatReviewActivity'
-import { snapshotAsPatchPreview } from '../../../lib/chatReviewActivity'
+import {
+  CHAT_DIFF_HIGHLIGHT_MAX_LINES,
+  plainDiffPreviewText,
+  shouldUsePlainDiffPreview,
+  snapshotAsPatchPreview,
+  truncateDiffLine,
+} from '../../../lib/chatReviewActivity'
 import {
   parseGithubPrUrl,
   summarizePrChecks,
   type ChatPrCheckSummary,
 } from '../../../lib/chatPrChecks'
 
-function DiffPreview({ text, path }: { text: string; path: string }) {
+/**
+ * Highlighted per-line paint — only for idle + small patches.
+ * While Agent is Working (or for 28KB+ HTML), we keep a live plain `<pre>` so
+ * Diffs never rebuild hundreds of spans on every SSE tick.
+ */
+const HighlightedDiffPreview = memo(function HighlightedDiffPreview({
+  text,
+  path,
+}: {
+  text: string
+  path: string
+}) {
   const lines = text.split('\n')
-  const show = lines.length > 500 ? lines.slice(0, 500) : lines
-  const truncated = lines.length > 500
+  const show =
+    lines.length > CHAT_DIFF_HIGHLIGHT_MAX_LINES
+      ? lines.slice(0, CHAT_DIFF_HIGHLIGHT_MAX_LINES)
+      : lines
+  const truncated = lines.length > CHAT_DIFF_HIGHLIGHT_MAX_LINES
   return (
     <pre className="aui-diffs-preview" tabIndex={0} aria-label={`Diff for ${path}`}>
       {show.map((line, i) => {
+        const clipped = truncateDiffLine(line)
         let cls = 'aui-diff-line'
-        if (line.startsWith('+') && !line.startsWith('+++')) cls += ' is-add'
-        else if (line.startsWith('-') && !line.startsWith('---')) cls += ' is-del'
-        else if (line.startsWith('@@')) cls += ' is-hunk'
-        else if (line.startsWith('diff ') || line.startsWith('index ')) cls += ' is-meta'
+        if (clipped.startsWith('+') && !clipped.startsWith('+++')) cls += ' is-add'
+        else if (clipped.startsWith('-') && !clipped.startsWith('---')) cls += ' is-del'
+        else if (clipped.startsWith('@@')) cls += ' is-hunk'
+        else if (clipped.startsWith('diff ') || clipped.startsWith('index ')) cls += ' is-meta'
         return (
           <span key={i} className={cls}>
-            {line || ' '}
+            {clipped || ' '}
             {'\n'}
           </span>
         )
       })}
-      {truncated ? <span className="aui-diff-line is-meta">… ({lines.length - 500} more lines)</span> : null}
+      {truncated ? (
+        <span className="aui-diff-line is-meta">
+          … ({lines.length - CHAT_DIFF_HIGHLIGHT_MAX_LINES} more lines)
+        </span>
+      ) : null}
     </pre>
   )
+})
+
+function DiffPreview({
+  text,
+  path,
+  busy,
+}: {
+  text: string
+  path: string
+  busy?: boolean
+}) {
+  const usePlain = shouldUsePlainDiffPreview({ text, busy })
+  // Defer highlight until idle so opening Diffs mid-run never locks the tab.
+  const [allowHighlight, setAllowHighlight] = useState(!usePlain)
+
+  useEffect(() => {
+    if (usePlain) {
+      setAllowHighlight(false)
+      return
+    }
+    let cancelled = false
+    let idleId: number | undefined
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    const enable = () => {
+      if (!cancelled) setAllowHighlight(true)
+    }
+    if (typeof requestIdleCallback === 'function') {
+      idleId = requestIdleCallback(enable, { timeout: 400 })
+    } else {
+      timeoutId = setTimeout(enable, 0)
+    }
+    return () => {
+      cancelled = true
+      if (idleId !== undefined && typeof cancelIdleCallback === 'function') {
+        cancelIdleCallback(idleId)
+      }
+      if (timeoutId !== undefined) clearTimeout(timeoutId)
+    }
+  }, [usePlain, text, path])
+
+  if (usePlain || !allowHighlight) {
+    const shown = plainDiffPreviewText(text)
+    return (
+      <pre
+        className="aui-diffs-preview is-plain-live"
+        tabIndex={0}
+        aria-busy={busy || undefined}
+        aria-label={`Diff for ${path}${busy ? ' (live)' : ''}`}
+      >
+        {shown}
+      </pre>
+    )
+  }
+
+  return <HighlightedDiffPreview text={text} path={path} />
 }
 
 function PrChecksGlance({ reviewUrl }: { reviewUrl: string }) {
@@ -110,6 +190,7 @@ export function ChatDiffsPanel({
   reviewUrl,
   sandboxSessionId,
   refreshing,
+  busy,
   onRefreshGit,
   onClose,
 }: {
@@ -117,6 +198,8 @@ export function ChatDiffsPanel({
   reviewUrl?: string
   sandboxSessionId?: string
   refreshing?: boolean
+  /** Agent turn still running — keep Diffs live but plain. */
+  busy?: boolean
   onRefreshGit?: () => void
   onClose?: () => void
 }) {
@@ -209,7 +292,7 @@ export function ChatDiffsPanel({
           </ul>
           {selected ? (
             previewText ? (
-              <DiffPreview text={previewText} path={selected.path} />
+              <DiffPreview text={previewText} path={selected.path} busy={busy} />
             ) : (
               <p className="aui-review-empty aui-diffs-missing">
                 No patch text for <code>{selected.path}</code> yet — re-run the write or refresh{' '}

@@ -9,13 +9,19 @@ import { fileURLToPath } from 'node:url'
 import {
   applySandboxActivity,
   applyWorkspaceFilesToDiffs,
+  CHAT_DIFF_HIGHLIGHT_MAX_CHARS,
+  CHAT_DIFF_PLAIN_PAINT_CHARS,
+  CHAT_DIFF_SNAPSHOT_MAX_LINES,
   diffsFromGitOutput,
   emptyReviewActivity,
   formatArgv,
   mergeGitDiffs,
+  plainDiffPreviewText,
   shouldShowReviewRail,
+  shouldUsePlainDiffPreview,
   splitUnifiedDiffByPath,
   snapshotAsPatchPreview,
+  truncateDiffLine,
 } from './chatReviewActivity.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -74,6 +80,26 @@ assert.ok(gitDiffs.some((d) => d.path === 'foo.ts' && d.source === 'git'))
 assert.ok(gitDiffs.some((d) => d.path === 'bar.ts'))
 assert.match(snapshotAsPatchPreview('x.ts', 'hi'), /\+hi/)
 
+// Large HTML / busy Diffs — plain live paint (sibling to LIVE_MARKDOWN_STREAM_MAX).
+assert.equal(shouldUsePlainDiffPreview({ text: 'tiny', busy: true }), true, 'busy → plain')
+assert.equal(
+  shouldUsePlainDiffPreview({ text: 'x'.repeat(CHAT_DIFF_HIGHLIGHT_MAX_CHARS + 1) }),
+  true,
+  'oversized → plain',
+)
+assert.equal(shouldUsePlainDiffPreview({ text: '+ok\n', busy: false }), false, 'small idle → highlight')
+assert.ok(truncateDiffLine('a'.repeat(500)).endsWith('…'), 'long lines clipped')
+assert.ok(
+  plainDiffPreviewText('z'.repeat(CHAT_DIFF_PLAIN_PAINT_CHARS + 50)).startsWith('…'),
+  'plain paints a live tail',
+)
+const fatHtml = Array.from({ length: CHAT_DIFF_SNAPSHOT_MAX_LINES + 40 }, (_, i) =>
+  `<div id="row-${i}">${'x'.repeat(400)}</div>`,
+).join('\n')
+const snap = snapshotAsPatchPreview('index.html', fatHtml)
+assert.ok(snap.split('\n').length < fatHtml.split('\n').length + 10, 'snapshot caps lines')
+assert.doesNotMatch(snap, /x{350}/, 'snapshot truncates long HTML lines')
+
 act = mergeGitDiffs(emptyReviewActivity(), gitStdout)
 assert.ok(act.diffs.length >= 1)
 
@@ -121,6 +147,11 @@ assert.match(diffs, /Open PR|reviewUrl/, 'diffs surface PR CTA')
 assert.match(diffs, /PrChecksGlance|fetchChatGithubPrChecks|aui-pr-checks/, 'in-app PR checks glance')
 assert.match(diffs, /git diff/, 'diffs can refresh via git')
 assert.match(diffs, /DiffPreview|aui-diff-line|snapshotAsPatchPreview/, 'diffs show patch substance')
+assert.match(diffs, /shouldUsePlainDiffPreview|is-plain-live/, 'large/busy diffs use plain live paint')
+assert.match(diffs, /requestIdleCallback|allowHighlight/, 'highlight deferred until idle')
+assert.match(diffs, /busy\?/, 'DiffsPanel accepts busy from Agent turn')
+
+assert.match(rail, /busy=\{busy\}/, 'review rail forwards busy to Diffs')
 
 const prChecks = readFileSync(join(here, 'chatPrChecks.ts'), 'utf8')
 assert.match(prChecks, /parseGithubPrUrl|summarizePrChecks/, 'PR checks helpers')

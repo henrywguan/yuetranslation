@@ -65,6 +65,8 @@ export function InboxShell({
     selectThread,
     archiveThread,
     removeThread,
+    reviewActivity,
+    activeWorkspace,
   } = useChatAuiSession()
   const {
     state,
@@ -81,6 +83,14 @@ export function InboxShell({
   } = useChatInboxContext()
   const [sandboxBusy, setSandboxBusy] = useState(false)
   const [sandboxNote, setSandboxNote] = useState<string | null>(null)
+  /**
+   * Empty-folder bind tip: clear only when Diffs/WS grow past the counts at bind time
+   * (session-global reviewActivity / workspace can already be non-empty).
+   */
+  const [emptyBindBaseline, setEmptyBindBaseline] = useState<{
+    diffs: number
+    files: number
+  } | null>(null)
   const [localBindWorkspaceId, setLocalBindWorkspaceId] = useState<string | null>(null)
   const [githubBindWorkspaceId, setGithubBindWorkspaceId] = useState<string | null>(null)
   const [wizardOpen, setWizardOpen] = useState(false)
@@ -122,6 +132,29 @@ export function InboxShell({
       return next
     })
   }
+
+  // Clear empty-folder tip only when Diffs/WS grow after this bind (not pre-existing files).
+  useEffect(() => {
+    if (!emptyBindBaseline) return
+    const diffCount = reviewActivity.diffs.length
+    const wsCount = activeWorkspace?.files?.length || 0
+    const grew =
+      diffCount > emptyBindBaseline.diffs || wsCount > emptyBindBaseline.files
+    if (!grew) return
+    const added = Math.max(
+      diffCount - emptyBindBaseline.diffs,
+      wsCount - emptyBindBaseline.files,
+    )
+    const n = Math.max(1, added)
+    setSandboxNote(
+      `Agent wrote ${n} file${n === 1 ? '' : 's'} — open Diffs / Workspace (local disk may still be empty until you download).`,
+    )
+    setEmptyBindBaseline(null)
+  }, [
+    emptyBindBaseline,
+    reviewActivity.diffs.length,
+    activeWorkspace?.files?.length,
+  ])
 
   const openAgent = (agent: ChatInboxAgent) => {
     if (agent.threadId && threads.some((t) => t.id === agent.threadId)) {
@@ -183,6 +216,7 @@ export function InboxShell({
           driver: 'stub',
         })
         bindWorkspaceRef(ws.id, session.id, project.id)
+        setEmptyBindBaseline(null)
         setSandboxNote(
           note ||
             (fallbackFromFly
@@ -241,6 +275,7 @@ export function InboxShell({
       if (sandboxBusy) return
       setSandboxBusy(true)
       setSandboxNote(null)
+      setEmptyBindBaseline(null)
       try {
         const ws = addWorkspace('internal', 'Internal sandbox', activeProjectId || undefined)
         const { session, note, fallbackFromFly } = await createChatSandbox({
@@ -517,7 +552,17 @@ export function InboxShell({
                   projectId={activeProjectId || undefined}
                   onBound={({ sessionId, note, fileCount }) => {
                     bindWorkspaceRef(localBindWorkspaceId, sessionId, activeProjectId || undefined)
-                    setSandboxNote(`${note} (${fileCount} files)`)
+                    // Never leave “Folder is empty… (0 files)” after Agent writes land in Diffs.
+                    if (fileCount > 0) {
+                      setSandboxNote(`${note} (${fileCount} files)`)
+                      setEmptyBindBaseline(null)
+                    } else {
+                      setSandboxNote(note)
+                      setEmptyBindBaseline({
+                        diffs: reviewActivity.diffs.length,
+                        files: activeWorkspace?.files?.length || 0,
+                      })
+                    }
                     setLocalBindWorkspaceId(null)
                   }}
                   onCancel={() => setLocalBindWorkspaceId(null)}
@@ -532,6 +577,7 @@ export function InboxShell({
                       sandboxSessionId || repo,
                       activeProjectId || undefined,
                     )
+                    setEmptyBindBaseline(null)
                     setSandboxNote(note)
                     setGithubBindWorkspaceId(null)
                   }}
