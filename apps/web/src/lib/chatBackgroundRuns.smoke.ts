@@ -69,4 +69,35 @@ assert.match(
   'any-thread settle wakes project flush / busy epoch',
 )
 
+const flushBlock = runtime.slice(
+  runtime.indexOf('// Flush Overseer project_message'),
+  runtime.indexOf('const onNew = useCallback'),
+)
+assert.match(
+  flushBlock,
+  /pendingProjectMsgsRef\.current\[0\]/,
+  'flush peeks head — does not shift before send succeeds',
+)
+assert.match(
+  flushBlock,
+  /if \(isThreadBusy\(threadId\)\) break/,
+  'flush waits when worker thread is busy (no dropped messages)',
+)
+assert.match(
+  flushBlock,
+  /if \(sent\)[\s\S]*shift\(\)[\s\S]*continue[\s\S]*leave the head for the next busyEpoch/,
+  'flush only shifts on success; failed send keeps head unless consent owns it',
+)
+assert.match(
+  flushBlock,
+  /settleIfIdle:\s*pendingProjectMsgsRef\.current\.length === 0/,
+  'chain settle only when flush queue is empty',
+)
+
+assert.match(
+  runtime,
+  /isThreadBusy\(targetThreadId\)[\s\S]*Wait for the current reply to finish, then Build/,
+  'Build gates on target Overseer thread busy, not only active tab',
+)
+
 console.log('chatBackgroundRuns.smoke: ok')
