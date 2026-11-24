@@ -229,6 +229,11 @@ assert.match(shell, /ProjectPanel/, 'overseer project panel')
 assert.match(shell, /collapseProjects|setActiveProjectId\(null\)/, 'Projects chevron closes panel')
 assert.match(shell, /inbox-band/, 'Inbox/Projects/Workspaces section bands')
 assert.match(shell, /WorkspaceList/, 'workspaces list')
+assert.match(
+  shell,
+  /workspacesOpen\s*\?\s*\([\s\S]*LocalFolderBind/,
+  'inbox-local-bind collapses with Workspaces section',
+)
 assert.match(shell, /ArchiveList/, 'archive browser section')
 assert.match(shell, /renameProjectTitle/, 'project rename wired')
 assert.match(shell, /ArchiveIcon|DeleteIcon/, 'archive/delete icons as children')
@@ -314,6 +319,12 @@ assert.match(workspaceList, /Internal sandbox/, 'internal sandbox create still a
 assert.match(workspaceList, /files: 'Files'/, 'promoted Thread files kind label')
 assert.match(workspaceList, /onOpen/, 'open promoted files workspace')
 assert.match(workspaceList, /Save to Workspaces/, 'empty copy mentions promote path')
+assert.match(
+  workspaceList,
+  /inbox-ws-connected/,
+  'local folder shows Connected status when bound',
+)
+assert.match(workspaceList, /localConnected|kind === 'local'.*ref/, 'Connected only while local ref set')
 assert.doesNotMatch(
   workspaceList,
   /kind: 'files'/,
@@ -334,6 +345,9 @@ assert.match(icons, /function UnarchiveIcon/, 'UnarchiveIcon exported')
 const inboxCss = readFileSync(join(root, 'pages/chat/inbox/Inbox.css'), 'utf8')
 assert.match(inboxCss, /\.inbox-scroll/, 'inbox body scrolls inside drawer')
 assert.match(inboxCss, /\.inbox-band/, 'horizontal separators between Inbox bands')
+assert.match(inboxCss, /\.inbox-ws-connected/, 'Connected gold status styles')
+assert.match(inboxCss, /inbox-ws-connected-sheen|inbox-ws-connected-pulse/, 'Connected animation')
+assert.match(inboxCss, /#e8c547|#E8C547/, 'Connected uses brand gold')
 assert.match(inboxCss, /\.inbox-project-panel[\s\S]*max-height/, 'project panel capped inside drawer')
 assert.match(inboxCss, /\.inbox-band\s*\{[^}]*flex-shrink:\s*0/, 'bands do not shrink under neighbors')
 assert.match(

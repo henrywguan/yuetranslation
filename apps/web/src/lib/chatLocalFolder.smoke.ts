@@ -46,6 +46,14 @@ const bind = readFileSync(join(root, 'pages/chat/inbox/LocalFolderBind.tsx'), 'u
 assert.match(bind, /showDirectoryPicker|Choose folder/)
 assert.match(bind, /Upload \.zip mirror/)
 assert.match(bind, /webkitdirectory/)
+// Empty folders must still bind (Agent write target) — soft tip only, no hard reject.
+assert.doesNotMatch(
+  bind,
+  /if\s*\(\s*!files\.length\s*\)\s*\{[^}]*return/,
+  'empty mirror must not early-return before onBound',
+)
+assert.match(bind, /Folder is empty|still connecting/, 'soft tip when nothing to mirror')
+assert.match(bind, /onBound\(/, 'bind completes via onBound')
 
 const api = readFileSync(join(here, 'api.ts'), 'utf8')
 assert.match(api, /writeChatSandboxFile/, 'mirror writes via sandbox FS API')

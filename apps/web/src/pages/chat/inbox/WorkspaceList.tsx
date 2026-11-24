@@ -100,30 +100,47 @@ export function WorkspaceList({
       {open ? (
         workspaces.length ? (
           <ul className="inbox-list">
-            {workspaces.map((w) => (
-              <li key={w.id} className="inbox-list-item">
-                <button
-                  type="button"
-                  className="inbox-list-btn"
-                  title={w.kind === 'files' ? `Open ${w.title}` : w.ref || w.title}
-                  onClick={() => {
-                    if (w.kind === 'files') onOpen?.(w.id)
-                  }}
-                >
-                  {w.title}
-                  {w.kind !== 'files' && w.ref ? ` · ${w.ref.slice(0, 12)}…` : ''}
-                </button>
-                <span className="inbox-workspace-kind">{KIND_LABEL[w.kind]}</span>
-                <button
-                  type="button"
-                  className="inbox-list-del"
-                  aria-label={`Remove ${w.title}`}
-                  onClick={() => onDelete(w.id)}
-                >
-                  ×
-                </button>
-              </li>
-            ))}
+            {workspaces.map((w) => {
+              const localConnected = w.kind === 'local' && Boolean(w.ref)
+              return (
+                <li key={w.id} className="inbox-list-item">
+                  <button
+                    type="button"
+                    className="inbox-list-btn"
+                    title={w.kind === 'files' ? `Open ${w.title}` : w.ref || w.title}
+                    onClick={() => {
+                      if (w.kind === 'files') onOpen?.(w.id)
+                    }}
+                  >
+                    {w.title}
+                    {w.kind !== 'files' && w.ref && !localConnected
+                      ? ` · ${w.ref.slice(0, 12)}…`
+                      : ''}
+                  </button>
+                  {localConnected ? (
+                    <span
+                      className="inbox-ws-connected"
+                      role="status"
+                      aria-label="Local folder connected"
+                      title="Local folder connected"
+                    >
+                      <span className="inbox-ws-connected-dot" aria-hidden />
+                      Connected
+                    </span>
+                  ) : (
+                    <span className="inbox-workspace-kind">{KIND_LABEL[w.kind]}</span>
+                  )}
+                  <button
+                    type="button"
+                    className="inbox-list-del"
+                    aria-label={`Remove ${w.title}`}
+                    onClick={() => onDelete(w.id)}
+                  >
+                    ×
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         ) : (
           <p className="inbox-empty">
