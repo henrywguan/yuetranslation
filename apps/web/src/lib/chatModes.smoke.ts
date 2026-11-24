@@ -231,7 +231,16 @@ assert.match(
   /Wait for the current reply to finish, then Build/,
   'buildFromPlan busy path sets wait-for-reply error (keeps Plan)',
 )
-assert.match(runtime, /if \(busyRef\.current\) \{\s*setError/, 'busy Build is not a silent no-op')
+assert.match(
+  runtime,
+  /isThreadBusy\(targetThreadId\)[\s\S]*Wait for the current reply to finish, then Build/,
+  'busy Build gates on target thread (not only active tab)',
+)
+assert.match(
+  runtime,
+  /const sent = await enqueuePrompt\(prompt, targetThreadId\)[\s\S]*if \(!sent\)/,
+  'Build checks enqueuePrompt result (no silent no-op)',
+)
 
 assert.match(css, /\.aui-plan-artifact/, 'plan artifact CSS')
 assert.match(css, /\.aui-composer\.is-drag-over/, 'composer drop affordance')

@@ -101,6 +101,7 @@ import {
 } from '../../../lib/chatDeepAvatarPlayBus'
 import { readChatDeepAvatarCharacter } from '../../../lib/chatDeepAvatarCharacter'
 import {
+  abortChatDeepAvatarPlanBuild,
   markChatDeepAvatarPlanBuild,
   setChatDeepAvatarPlanBuildChainBusy,
   settleChatDeepAvatarPlanBuild,
@@ -1783,13 +1784,26 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const buildFromPlan = useCallback(async () => {
     // Keep Plan selected while a reply is in flight — never silent-switch to Agent.
     if (!unlocked) return
-    if (busyRef.current) {
-      setError('Wait for the current reply to finish, then Build.')
-      return
-    }
     const planText = planDraftRef.current.trim()
     if (!planText) {
       setError('Plan is empty — write or restore a plan before Build.')
+      return
+    }
+    // Resolve target before busy checks — Project Builds go to Overseer, which may
+    // be a background thread while the user is on a worker tab.
+    const tid = activeIdRef.current
+    const inboxState = inboxRef.current?.state
+    const linked = inboxState ? agentForThread(inboxState, tid) : undefined
+    const inProject = Boolean(linked?.projectId)
+    let targetThreadId = tid
+    if (inProject && linked?.projectId && linked.role !== 'overseer') {
+      const overseer = inboxState?.agents.find(
+        (a) => a.projectId === linked.projectId && a.role === 'overseer' && a.threadId,
+      )
+      if (overseer?.threadId) targetThreadId = overseer.threadId
+    }
+    if (targetThreadId && isThreadBusy(targetThreadId)) {
+      setError('Wait for the current reply to finish, then Build.')
       return
     }
     // Build always enables Agent + harness writes — require storage consent first.
@@ -1803,27 +1817,26 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       openWorkspaceBuildConsentGate()
       return
     }
-    if (!harnessOnRef.current) setHarnessOn(true)
-    const tid = activeIdRef.current
-    const inboxState = inboxRef.current?.state
-    const linked = inboxState ? agentForThread(inboxState, tid) : undefined
-    const inProject = Boolean(linked?.projectId)
-    // Prefer Overseer thread when building inside a Project.
-    let targetThreadId = tid
-    if (inProject && linked?.projectId && linked.role !== 'overseer') {
-      const overseer = inboxState?.agents.find(
-        (a) => a.projectId === linked.projectId && a.role === 'overseer' && a.threadId,
-      )
-      if (overseer?.threadId) targetThreadId = overseer.threadId
+    // Re-check after consent await — a background stream may have claimed the target.
+    if (targetThreadId && isThreadBusy(targetThreadId)) {
+      setError('Wait for the current reply to finish, then Build.')
+      return
     }
+    if (!harnessOnRef.current) setHarnessOn(true)
     // Latch Deep credit. In-project Builds stay chain-busy until worker flush settles.
     markChatDeepAvatarPlanBuild()
     setChatDeepAvatarPlanBuildChainBusy(inProject)
     setComposerMode('agent')
     const prompt = buildPlanBuildPrompt(planText, inProject)
-    await enqueuePrompt(prompt, targetThreadId)
+    const sent = await enqueuePrompt(prompt, targetThreadId)
+    if (!sent) {
+      setChatDeepAvatarPlanBuildChainBusy(false)
+      abortChatDeepAvatarPlanBuild()
+      setError('Wait for the current reply to finish, then Build.')
+    }
   }, [
     enqueuePrompt,
+    isThreadBusy,
     localWorkspaceIdsForConsent,
     openWorkspaceBuildConsentGate,
     setComposerMode,
@@ -1901,7 +1914,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     void (async () => {
       try {
         while (pendingProjectMsgsRef.current.length) {
-          const next = pendingProjectMsgsRef.current.shift()!
+          const next = pendingProjectMsgsRef.current[0]!
           const api = inboxRef.current
           const agent = api?.state.agents.find((a) => a.id === next.agentId)
           let threadId = agent?.threadId
@@ -1910,19 +1923,48 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             api?.bindAgentThread(next.agentId, threadId)
             api?.linkThread(next.projectId, threadId)
           }
-          await enqueuePrompt(next.message, threadId)
+          // Wait for a busy worker — never shift until send succeeds (background runs).
+          if (isThreadBusy(threadId)) break
+          const sent = await enqueuePrompt(next.message, threadId)
+          if (sent) {
+            pendingProjectMsgsRef.current.shift()
+            continue
+          }
+          // Consent gate claimed this prompt — hand off (avoid double-send on resume).
+          // Otherwise leave the head for the next busyEpoch (busy race after await).
+          const pending = pendingAfterConsentRef.current
+          if (
+            pending?.kind === 'prompt' &&
+            pending.text === next.message &&
+            (!pending.threadId || pending.threadId === threadId)
+          ) {
+            pendingProjectMsgsRef.current.shift()
+          }
+          break
         }
-        const returnTo = overseerReturnThreadRef.current
-        overseerReturnThreadRef.current = null
-        if (returnTo && returnTo !== activeIdRef.current) {
-          selectThread(returnTo)
+        if (!pendingProjectMsgsRef.current.length) {
+          const returnTo = overseerReturnThreadRef.current
+          overseerReturnThreadRef.current = null
+          if (returnTo && returnTo !== activeIdRef.current) {
+            selectThread(returnTo)
+          }
         }
       } finally {
         flushingProjectMsgsRef.current = false
-        syncPlanBuildChain({ settleIfIdle: true })
+        syncPlanBuildChain({
+          settleIfIdle: pendingProjectMsgsRef.current.length === 0,
+        })
       }
     })()
-  }, [busyEpoch, createSilentThread, enqueuePrompt, selectThread, syncPlanBuildChain, unlocked])
+  }, [
+    busyEpoch,
+    createSilentThread,
+    enqueuePrompt,
+    isThreadBusy,
+    selectThread,
+    syncPlanBuildChain,
+    unlocked,
+  ])
 
   const onNew = useCallback(
     async (message: AppendMessage) => {
