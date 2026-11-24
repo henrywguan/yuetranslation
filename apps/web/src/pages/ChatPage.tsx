@@ -59,6 +59,7 @@ import {
   TOOL_STALL_ERROR,
 } from '../lib/chatSearchStall'
 import {
+  appendSanitizedStreamText,
   deepseekChatTextLooksLeaked,
   sanitizeDeepseekChatVisibleText,
 } from '../lib/chatVisibleSanitize'
@@ -1114,11 +1115,22 @@ export function ChatPage() {
     // Coalesce stream paints — never persist per token (idle disk write at end).
     let paintTimer: number | null = null
     let needsPaint = false
+    let pendingThoughtMs: number | undefined
     const STREAM_PAINT_MS = 80
     const workspacePathsThisTurn: string[] = []
     let imagesThisTurn = 0
     const scrollAfterPaint = () => {
       window.requestAnimationFrame(stickMessagesToBottom)
+    }
+    /** One React patch per paint — avoid cloning huge reasoning on every SSE token. */
+    const syncStreamBuffersToThread = () => {
+      thread = patchAssistantContent(thread, assistantId, assembled, {
+        reasoning: reasoning || undefined,
+        ...(pendingThoughtMs != null ? { thoughtMs: pendingThoughtMs } : null),
+        sources,
+        searchSteps: searchSteps.length ? searchSteps : undefined,
+      })
+      pendingThoughtMs = undefined
     }
     const schedulePaint = () => {
       needsPaint = true
@@ -1127,6 +1139,7 @@ export function ChatPage() {
         paintTimer = null
         if (!needsPaint) return
         needsPaint = false
+        syncStreamBuffersToThread()
         paintThread(thread)
         scrollAfterPaint()
       }, STREAM_PAINT_MS)
@@ -1137,6 +1150,7 @@ export function ChatPage() {
         paintTimer = null
       }
       needsPaint = false
+      syncStreamBuffersToThread()
       paintThread(thread)
       scrollAfterPaint()
     }
@@ -1203,31 +1217,19 @@ export function ChatPage() {
         },
         onReasoning: (delta) => {
           markThinking()
-          reasoning += delta
-          reasoning = sanitizeDeepseekChatVisibleText(reasoning)
+          reasoning = appendSanitizedStreamText(reasoning, delta)
           if (reasoning.length > LIVE_REASONING_KEEP) {
             reasoning = reasoning.slice(-LIVE_REASONING_KEEP)
           }
-          thread = patchAssistantContent(thread, assistantId, assembled, { reasoning })
           schedulePaint()
         },
         onSources: (next) => {
           sources = next
-          thread = patchAssistantContent(thread, assistantId, assembled, {
-            reasoning: reasoning || undefined,
-            sources,
-            searchSteps: searchSteps.length ? searchSteps : undefined,
-          })
           schedulePaint()
         },
         onSearchStep: (step) => {
           setSearching(true)
           searchSteps = [...searchSteps, step].slice(-24)
-          thread = patchAssistantContent(thread, assistantId, assembled, {
-            reasoning: reasoning || undefined,
-            sources,
-            searchSteps,
-          })
           schedulePaint()
         },
         onTitle: (title) => {
@@ -1239,21 +1241,11 @@ export function ChatPage() {
           const md = `\n\n![${image.prompt.slice(0, 80)}](${image.url})`
           if (!assembled.includes(image.url)) {
             assembled = `${assembled}${md}`.slice(0, MAX_CONTENT_CHARS)
-            thread = patchAssistantContent(thread, assistantId, assembled, {
-              reasoning: reasoning || undefined,
-              sources,
-              searchSteps: searchSteps.length ? searchSteps : undefined,
-            })
             schedulePaint()
           }
         },
         onContentReplace: (text) => {
           assembled = sanitizeDeepseekChatVisibleText(text).slice(0, MAX_CONTENT_CHARS)
-          thread = patchAssistantContent(thread, assistantId, assembled, {
-            reasoning: reasoning || undefined,
-            sources,
-            searchSteps: searchSteps.length ? searchSteps : undefined,
-          })
           schedulePaint()
         },
         onDelta: (delta) => {
@@ -1261,26 +1253,26 @@ export function ChatPage() {
           if (firstToken) {
             setThinking(false)
             setSearching(false)
+            pendingThoughtMs = thinkStartedAt.current
+              ? Date.now() - thinkStartedAt.current
+              : undefined
           }
-          assembled += delta
-          assembled = sanitizeDeepseekChatVisibleText(assembled)
+          assembled = appendSanitizedStreamText(assembled, delta)
           if (assembled.length > MAX_CONTENT_CHARS) {
             assembled = assembled.slice(0, MAX_CONTENT_CHARS)
           }
           if (!deepseekChatTextLooksLeaked(delta)) liveTts?.feed(delta)
-          thread = firstToken
-            ? patchAssistantContent(thread, assistantId, assembled, {
-                reasoning: reasoning || undefined,
-                thoughtMs: thinkStartedAt.current ? Date.now() - thinkStartedAt.current : undefined,
-                sources,
-                searchSteps: searchSteps.length ? searchSteps : undefined,
-              })
-            : patchAssistantContent(thread, assistantId, assembled)
           schedulePaint()
         },
       })
       flushPaint()
       assembled = sanitizeDeepseekChatVisibleText(assembled).slice(0, MAX_CONTENT_CHARS)
+      reasoning = sanitizeDeepseekChatVisibleText(reasoning)
+      if (reasoning.length > LIVE_REASONING_KEEP) {
+        reasoning = reasoning.slice(-LIVE_REASONING_KEEP)
+      }
+      syncStreamBuffersToThread()
+      paintThread(thread)
       if (!assembled.trim()) {
         // Agent tools often land workspace files before a final prose bubble.
         recoverEmptyFromWork()

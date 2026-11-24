@@ -345,6 +345,16 @@ export function shouldAutoEnableThinking(userText: string): boolean {
   if (/\b(algorithm|big[- ]?o|time complexity|optimize (this|the)|refactor (this|the))\b/i.test(t)) {
     return true
   }
+  // Counterfactual / macro impact asks — long CoT, not a greeting.
+  if (/\bhow would\b.{0,120}\b(affect|impact|have affected|changed)\b/i.test(t)) return true
+  if (
+    /\b(what if|counterfactual|fell through|went bankrupt|collapsed as a (company|business))\b/i.test(
+      t,
+    ) &&
+    t.length > 48
+  ) {
+    return true
+  }
   return false
 }
 

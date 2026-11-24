@@ -121,8 +121,9 @@ export const LIVE_REASONING_KEEP = 96_000
 /**
  * While streaming, only paint this many chars of the trace — rewriting a
  * 50k+ `<pre>` every paint freezes the tab even with coalesced React updates.
+ * Keep a live tail (not austerity blank) but stay well under the freeze cliff.
  */
-export const LIVE_REASONING_PAINT = 16_000
+export const LIVE_REASONING_PAINT = 8_000
 /**
  * Raw localStorage payload above this is cleared on hydrate — JSON.parse of
  * multi‑MB DeepThink history freezes Chrome on "Loading conversation…".

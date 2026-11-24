@@ -77,6 +77,7 @@ import {
   TOOL_STALL_ERROR,
 } from '../../../lib/chatSearchStall'
 import {
+  appendSanitizedStreamText,
   deepseekChatTextLooksLeaked,
   sanitizeDeepseekChatVisibleText,
 } from '../../../lib/chatVisibleSanitize'
@@ -1046,11 +1047,22 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       let searchSteps: ChatSearchStep[] = []
       let paintTimer: number | null = null
       let needsPaint = false
+      let pendingThoughtMs: number | undefined
       const workspacePathsThisTurn: string[] = []
       let imagesThisTurn = 0
       let projectActionsThisTurn = 0
       let overseerTurn = false
 
+      /** One React patch per paint — avoid cloning 96k reasoning on every SSE token. */
+      const syncStreamBuffersToThread = () => {
+        thread = patchAssistantContent(thread, assistantId, assembled, {
+          reasoning: reasoning || undefined,
+          ...(pendingThoughtMs != null ? { thoughtMs: pendingThoughtMs } : null),
+          sources,
+          searchSteps: searchSteps.length ? searchSteps : undefined,
+        })
+        pendingThoughtMs = undefined
+      }
       const schedulePaint = () => {
         needsPaint = true
         if (paintTimer != null) return
@@ -1058,6 +1070,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           paintTimer = null
           if (!needsPaint) return
           needsPaint = false
+          syncStreamBuffersToThread()
           paintThread(thread)
         }, STREAM_PAINT_MS)
       }
@@ -1067,6 +1080,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           paintTimer = null
         }
         needsPaint = false
+        syncStreamBuffersToThread()
         paintThread(thread)
       }
       const markThinking = () => {
@@ -1205,11 +1219,6 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             const step = searchStepFromSandboxActivity(activity)
             if (step) {
               searchSteps = [...searchSteps, step].slice(-24)
-              thread = patchAssistantContent(thread, assistantId, assembled, {
-                reasoning: reasoning || undefined,
-                sources,
-                searchSteps,
-              })
               schedulePaint()
             }
           },
@@ -1228,31 +1237,19 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           },
           onReasoning: (delta) => {
             markThinking()
-            reasoning += delta
-            reasoning = sanitizeDeepseekChatVisibleText(reasoning)
+            reasoning = appendSanitizedStreamText(reasoning, delta)
             if (reasoning.length > LIVE_REASONING_KEEP) {
               reasoning = reasoning.slice(-LIVE_REASONING_KEEP)
             }
-            thread = patchAssistantContent(thread, assistantId, assembled, { reasoning })
             schedulePaint()
           },
           onSources: (next) => {
             sources = next
-            thread = patchAssistantContent(thread, assistantId, assembled, {
-              reasoning: reasoning || undefined,
-              sources,
-              searchSteps: searchSteps.length ? searchSteps : undefined,
-            })
             schedulePaint()
           },
           onSearchStep: (step) => {
             setSearching(true)
             searchSteps = [...searchSteps, step].slice(-24)
-            thread = patchAssistantContent(thread, assistantId, assembled, {
-              reasoning: reasoning || undefined,
-              sources,
-              searchSteps,
-            })
             schedulePaint()
           },
           onTitle: (title) => {
@@ -1264,21 +1261,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             const md = `\n\n![${image.prompt.slice(0, 80)}](${image.url})`
             if (!assembled.includes(image.url)) {
               assembled = `${assembled}${md}`.slice(0, MAX_CONTENT_CHARS)
-              thread = patchAssistantContent(thread, assistantId, assembled, {
-                reasoning: reasoning || undefined,
-                sources,
-                searchSteps: searchSteps.length ? searchSteps : undefined,
-              })
               schedulePaint()
             }
           },
           onContentReplace: (text) => {
             assembled = sanitizeDeepseekChatVisibleText(text).slice(0, MAX_CONTENT_CHARS)
-            thread = patchAssistantContent(thread, assistantId, assembled, {
-              reasoning: reasoning || undefined,
-              sources,
-              searchSteps: searchSteps.length ? searchSteps : undefined,
-            })
             schedulePaint()
           },
           onDelta: (delta) => {
@@ -1286,28 +1273,27 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             if (firstToken) {
               setThinking(false)
               setSearching(false)
+              pendingThoughtMs = thinkStartedAt.current
+                ? Date.now() - thinkStartedAt.current
+                : undefined
             }
-            assembled += delta
-            assembled = sanitizeDeepseekChatVisibleText(assembled)
+            assembled = appendSanitizedStreamText(assembled, delta)
             if (assembled.length > MAX_CONTENT_CHARS) {
               assembled = assembled.slice(0, MAX_CONTENT_CHARS)
             }
             if (!deepseekChatTextLooksLeaked(delta)) liveTts?.feed(delta)
-            thread = firstToken
-              ? patchAssistantContent(thread, assistantId, assembled, {
-                  reasoning: reasoning || undefined,
-                  thoughtMs: thinkStartedAt.current
-                    ? Date.now() - thinkStartedAt.current
-                    : undefined,
-                  sources,
-                  searchSteps: searchSteps.length ? searchSteps : undefined,
-                })
-              : patchAssistantContent(thread, assistantId, assembled)
             schedulePaint()
           },
         })
         flushPaint()
         assembled = sanitizeDeepseekChatVisibleText(assembled).slice(0, MAX_CONTENT_CHARS)
+        reasoning = sanitizeDeepseekChatVisibleText(reasoning)
+        if (reasoning.length > LIVE_REASONING_KEEP) {
+          reasoning = reasoning.slice(-LIVE_REASONING_KEEP)
+        }
+        // Final sanitize may have changed buffers after the last paint.
+        syncStreamBuffersToThread()
+        paintThread(thread)
         if (!assembled.trim()) {
           // Agent tools often land workspace files before a final prose bubble.
           // Prefer a durable summary over a false "No reply" + concern mood.

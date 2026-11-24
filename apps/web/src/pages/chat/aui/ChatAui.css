@@ -1150,9 +1150,30 @@
   min-height: 1.2em;
 }
 
+/* Long mid-stream answers: live plain tail (tokens stay visible; no full MD reparse). */
+.aui-md.is-plain .aui-md-plain-live {
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+}
+
+.aui-md.is-streaming.is-plain .aui-md-plain-live::after {
+  content: '|';
+  display: inline-block;
+  margin-left: 0.05em;
+  color: var(--ds-blue);
+  animation: ds-chat-caret 0.9s steps(1) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .aui-md.is-streaming :where(p:last-child, li:last-child, pre:last-child, h1:last-child, h2:last-child, h3:last-child)::after,
-  .aui-md.is-streaming > .aui-md-placeholder::after {
+  .aui-md.is-streaming > .aui-md-placeholder::after,
+  .aui-md.is-streaming.is-plain .aui-md-plain-live::after {
     animation: none;
   }
 }

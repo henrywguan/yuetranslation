@@ -135,7 +135,12 @@ function useMessageSources(): ChatSource[] {
 /**
  * Live markdown while the assistant token-stream is open — intentional premium
  * feel (Henry OK'd mid-stream markdown over the classic plain-text settle path).
+ * Long answers still fall back to a live plain tail: full `parseBlocks` every
+ * paint freezes the tab ("Page Unresponsive") once the bubble grows.
  */
+const LIVE_MARKDOWN_STREAM_MAX = 2_400
+const LIVE_PLAIN_PAINT = 8_000
+
 function MarkdownText() {
   const { text } = useMessagePartText()
   const streaming = useAuiState((s) => s.message.status?.type === 'running')
@@ -147,6 +152,16 @@ function MarkdownText() {
       </div>
     ) : (
       <span className="aui-msg-empty" aria-hidden />
+    )
+  }
+  // Keep mid-stream markdown for short replies; switch to live plain for long ones.
+  if (streaming && text.length > LIVE_MARKDOWN_STREAM_MAX) {
+    const shown =
+      text.length > LIVE_PLAIN_PAINT ? `…\n${text.slice(-LIVE_PLAIN_PAINT)}` : text
+    return (
+      <div className="aui-md is-streaming is-plain" aria-busy="true">
+        <pre className="aui-md-plain-live">{shown}</pre>
+      </div>
     )
   }
   return (
@@ -447,7 +462,7 @@ type ComposerChromeProps = {
 
 /** Live mode / busy chips — placement follows companion dock (bar above composer, stage above portrait). */
 function ComposerStatusCluster({ placement }: { placement: 'bar' | 'stage' }) {
-  const { thinking, searching, thinkingAuto, searchingAuto, composerMode, busy } =
+  const { thinking, searching, thinkingAuto, searchingAuto, composerMode, busy, autoOn } =
     useChatAuiSession()
   const chips: ReactNode[] = []
   if (thinking) {
@@ -461,6 +476,14 @@ function ComposerStatusCluster({ placement }: { placement: 'bar' | 'stage' }) {
     chips.push(
       <span key="searching" className="aui-status">
         {searchingAuto ? 'Auto · Searching…' : 'Searching…'}
+      </span>,
+    )
+  }
+  // Agent Auto turns that skip DeepThink still need live chrome — never Stop + blank void.
+  if (busy && !thinking && !searching && composerMode === 'agent') {
+    chips.push(
+      <span key="working" className="aui-status" role="status">
+        {autoOn ? 'Auto · Working…' : 'Working…'}
       </span>,
     )
   }
