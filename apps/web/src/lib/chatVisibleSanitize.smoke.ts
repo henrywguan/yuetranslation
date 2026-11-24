@@ -104,6 +104,12 @@ assert.match(leakedAppend, /Hello/)
 assert.match(leakedAppend, /bye/)
 assert.ok(!/system_reminder/i.test(leakedAppend), 'append re-sanitizes when leak appears')
 
+// Split junk tag across chunks — must not flash raw tool_call markup mid-stream.
+const splitJunk = appendSanitizedStreamText('Answer: <', 'tool_call>secret</tool_call> done')
+assert.match(splitJunk, /Answer:/)
+assert.match(splitJunk, /done/)
+assert.ok(!/tool_call/i.test(splitJunk), 'split tool_call tags are scrubbed on assemble')
+
 const here = path.dirname(fileURLToPath(import.meta.url))
 const apiSrc = readFileSync(path.resolve(here, './api.ts'), 'utf8')
 assert.match(apiSrc, /CHAT_STREAM_IDLE_MS/, 'streamDeepseekChat has idle watchdog')
