@@ -1785,6 +1785,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         activeIdRef.current = tid
         setActiveId(tid)
         applyPlanDraftForThread(tid)
+        loadReviewForThread(tid)
         const threadBusy = busyThreadIdsRef.current.has(tid)
         busyRef.current = threadBusy
         setBusy(threadBusy)
@@ -1805,6 +1806,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       applyStreamUiState,
       ensureWorkspaceBuildConsent,
       isThreadBusy,
+      loadReviewForThread,
       persist,
       runAssistant,
       setThreadBusy,

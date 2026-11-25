@@ -475,23 +475,23 @@ type ComposerChromeProps = {
 
 /** Live mode / busy chips — placement follows companion dock (bar above composer, stage above portrait). */
 function ComposerStatusCluster({ placement }: { placement: 'bar' | 'stage' }) {
-  const { thinking, searching, thinkingAuto, searchingAuto, composerMode, busy, autoOn } =
+  const { thinking, searching, thinkingAuto, searchingAuto, composerMode, busy, autoOn, activeId } =
     useChatAuiSession()
   const [doneFlash, setDoneFlash] = useState(false)
-  const wasBusyRef = useRef(false)
+  /** Only flash Done when *this* thread settles — not when switching away from a Working tab. */
+  const wasBusyOnThreadRef = useRef<{ id: string; busy: boolean }>({ id: '', busy: false })
 
   useEffect(() => {
-    if (wasBusyRef.current && !busy) {
+    const prev = wasBusyOnThreadRef.current
+    if (prev.id === activeId && prev.busy && !busy) {
       setDoneFlash(true)
       const t = window.setTimeout(() => setDoneFlash(false), 1600)
-      wasBusyRef.current = false
+      wasBusyOnThreadRef.current = { id: activeId, busy: false }
       return () => window.clearTimeout(t)
     }
-    if (busy) {
-      wasBusyRef.current = true
-      setDoneFlash(false)
-    }
-  }, [busy])
+    wasBusyOnThreadRef.current = { id: activeId, busy }
+    if (prev.id !== activeId) setDoneFlash(false)
+  }, [activeId, busy])
 
   const chips: ReactNode[] = []
   if (thinking) {

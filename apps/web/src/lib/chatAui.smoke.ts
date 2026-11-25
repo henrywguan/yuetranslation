@@ -639,6 +639,11 @@ assert.match(
 )
 assert.match(
   thread,
+  /wasBusyOnThreadRef|prev\.id === activeId/,
+  'Done flash only when the viewed thread settles (not on tab switch)',
+)
+assert.match(
+  thread,
   /regenerateLastAssistant|Regenerate/,
   'Regenerate on last assistant turn',
 )

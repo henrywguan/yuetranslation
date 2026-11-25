@@ -112,6 +112,11 @@ assert.match(
 )
 assert.match(
   runtime,
+  /enqueuePrompt[\s\S]*loadReviewForThread\(tid\)/,
+  'enqueuePrompt syncs Diffs/Runs when switching target thread',
+)
+assert.match(
+  runtime,
   /prev\.filter\(\(x\) => x\.threadId !== tid\)/,
   'clearFollowUpQueue only drops the active thread',
 )
