@@ -85,7 +85,7 @@ export function InboxShell({
   const [sandboxNote, setSandboxNote] = useState<string | null>(null)
   /**
    * Empty-folder bind tip: clear only when Diffs/WS grow past the counts at bind time
-   * (session-global reviewActivity / workspace can already be non-empty).
+   * (active-thread reviewActivity / workspace can already be non-empty).
    */
   const [emptyBindBaseline, setEmptyBindBaseline] = useState<{
     diffs: number

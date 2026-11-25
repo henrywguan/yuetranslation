@@ -32,6 +32,11 @@ import { startChatDeepAvatarCloudSync } from '../../../lib/chatDeepAvatarCloudSy
 import { openApp, openPricing } from '../../../lib/siteLinks'
 import { useYueStore } from '../../../lib/store'
 import { useAppViewportLock } from '../../../lib/useAppViewportLock'
+import {
+  setNeedsYouFavicon,
+  shouldShowNeedsYouAttention,
+  withNeedsYouTitle,
+} from '../../../lib/chatNeedsYouAttention'
 import { useDocumentMeta } from '../../../lib/useDocumentMeta'
 import { safeShellViewportHeight } from '../../../lib/visualViewportHeight'
 import '../../ChatPage.css'
@@ -43,6 +48,45 @@ import { ChatAuiThread } from './ChatAuiThread'
 import { ChatDeepAvatarIntroOverlay } from './ChatDeepAvatarIntro'
 import { ChatReviewRail } from './ChatReviewRail'
 import { ChatWorkspaceBuildConsentGate } from './ChatWorkspaceBuildConsentGate'
+
+const CHAT_DOC_TITLE = 'DeepSeek Chat — JyutTranslate'
+
+/** Tab title + favicon badge when a backgrounded agent hits needs_attention. */
+function ChatNeedsYouAttention() {
+  const inbox = useChatInboxContext()
+  const hasNeedsAttention = useMemo(
+    () => inbox.state.agents.some((a) => a.status === 'needs_attention'),
+    [inbox.state.agents],
+  )
+  const [hidden, setHidden] = useState(
+    () => typeof document !== 'undefined' && document.hidden,
+  )
+
+  useEffect(() => {
+    const sync = () => setHidden(document.hidden)
+    document.addEventListener('visibilitychange', sync)
+    window.addEventListener('focus', sync)
+    return () => {
+      document.removeEventListener('visibilitychange', sync)
+      window.removeEventListener('focus', sync)
+    }
+  }, [])
+
+  useEffect(() => {
+    const active = shouldShowNeedsYouAttention({
+      documentHidden: hidden,
+      hasNeedsAttention,
+    })
+    document.title = withNeedsYouTitle(CHAT_DOC_TITLE, active)
+    setNeedsYouFavicon(active)
+    return () => {
+      document.title = CHAT_DOC_TITLE
+      setNeedsYouFavicon(false)
+    }
+  }, [hasNeedsAttention, hidden])
+
+  return null
+}
 
 const MENU_ICON = (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
@@ -489,7 +533,7 @@ function GateShell({
 export function ChatAuiPage() {
   useAppViewportLock(true)
   useDocumentMeta({
-    title: 'DeepSeek Chat — JyutTranslate',
+    title: CHAT_DOC_TITLE,
     description: 'General AI chat powered by DeepSeek. Family and Business.',
     path: '/#/chat',
   })
@@ -565,6 +609,7 @@ export function ChatAuiPage() {
   return (
     <ChatInboxProvider>
       <ChatAuiRuntimeProvider unlocked={unlocked}>
+        <ChatNeedsYouAttention />
         <AuiShell unlocked={unlocked} />
       </ChatAuiRuntimeProvider>
     </ChatInboxProvider>

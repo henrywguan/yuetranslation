@@ -15,15 +15,34 @@ import {
   setChatThreadPinned,
   type ChatThread,
 } from './chatHistory.js'
-import { applyChatSkill, CHAT_SKILLS, filterChatSkills, translationChatPrefill } from './chatSkills.js'
+import {
+  applyChatSkill,
+  CHAT_SKILLS,
+  CHAT_SLASH_MODES,
+  filterChatSkills,
+  resolveChatSlashPick,
+  translationChatPrefill,
+} from './chatSkills.js'
 import { chatSpeakLang } from './chatVoice.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
 assert.ok(CHAT_SKILLS.length >= 5)
+assert.ok(CHAT_SLASH_MODES.some((s) => s.slash === '/plan'))
+assert.ok(CHAT_SLASH_MODES.some((s) => s.slash === '/ask'))
+assert.ok(CHAT_SLASH_MODES.some((s) => s.slash === '/agent'))
+assert.ok(CHAT_SLASH_MODES.some((s) => s.slash === '/clear'))
 assert.ok(filterChatSkills('/wea').some((s) => s.slash === '/weather'))
+assert.ok(filterChatSkills('/p').some((s) => s.slash === '/plan'))
+assert.equal(resolveChatSlashPick(CHAT_SLASH_MODES[0]!).kind, 'mode')
+assert.equal(resolveChatSlashPick(CHAT_SLASH_MODES.find((s) => s.slash === '/clear')!).kind, 'clear')
 assert.match(applyChatSkill(CHAT_SKILLS[0]!, '你好'), /你好/)
 assert.match(translationChatPrefill({ source: '你好', translation: 'hello', fromLang: 'yue', toLang: 'en' }), /Help me understand/)
+
+const threadSrc = readFileSync(join(here, '../pages/chat/aui/ChatAuiThread.tsx'), 'utf8')
+assert.match(threadSrc, /ChatSkillMenu|filterChatSkills|resolveChatSlashPick/, 'AUI wires slash menu')
+assert.match(threadSrc, /retryLastTurn|Continue|Regenerate/, 'AUI Retry / Continue / Regenerate')
+assert.match(threadSrc, /is-done|Done/, 'Working→Done settle chip')
 
 const arts = extractChatArtifacts('Intro\n\n```html\n<h1>Hi</h1>\n```\n\n```mermaid\ngraph TD;A-->B\n```\n')
 assert.ok(arts.some((a) => a.kind === 'html'))

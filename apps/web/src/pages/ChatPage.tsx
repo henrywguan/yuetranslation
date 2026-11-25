@@ -102,8 +102,8 @@ import {
   type ChatThread,
 } from '../lib/chatHistory'
 import {
-  applyChatSkill,
   filterChatSkills,
+  resolveChatSlashPick,
   type ChatSkill,
 } from '../lib/chatSkills'
 import {
@@ -1661,7 +1661,14 @@ export function ChatPage() {
   }
 
   const pickSkill = (skill: ChatSkill) => {
-    setDraftAndResize(applyChatSkill(skill))
+    const resolved = resolveChatSlashPick(skill)
+    if (resolved.kind === 'mode' || resolved.kind === 'clear') {
+      // Classic composer has no Agent/Ask/Plan pills — clear slash token only.
+      setDraftAndResize('')
+      inputRef.current?.focus()
+      return
+    }
+    setDraftAndResize(resolved.text)
     inputRef.current?.focus()
   }
 

@@ -12,9 +12,14 @@ import {
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { ChatDictateButton } from '../../../components/ChatDictateButton'
 import { ChatPluginKeysModal } from '../../../components/ChatPluginKeysModal'
-import { ChatSourcesList } from '../../../components/ChatShellExtras'
+import { ChatSkillMenu, ChatSourcesList } from '../../../components/ChatShellExtras'
 import { DeepSeekMark } from '../../../components/DeepSeekMark'
 import { SpeakButton } from '../../../components/SpeakButton'
+import {
+  filterChatSkills,
+  resolveChatSlashPick,
+  type ChatSkill,
+} from '../../../lib/chatSkills'
 import {
   ChatDeepAvatar,
   ChatDeepAvatarCelebrateFx,
@@ -319,7 +324,9 @@ function ToolActivityCards() {
 
 function AssistantMessage() {
   const streaming = useAuiState((s) => s.message.status?.type === 'running')
+  const isLast = useAuiState((s) => s.message.isLast)
   const sources = useMessageSources()
+  const { busy, regenerateLastAssistant } = useChatAuiSession()
 
   return (
     <MessagePrimitive.Root className="aui-msg is-assistant">
@@ -339,6 +346,17 @@ function AssistantMessage() {
       <div className="aui-actions">
         <ActionBarPrimitive.Root hideWhenRunning autohide="not-last" className="aui-actions-row">
           <AuiCopyButton />
+          {isLast ? (
+            <button
+              type="button"
+              className="aui-action-btn"
+              disabled={busy}
+              title="Regenerate this reply"
+              onClick={() => void regenerateLastAssistant()}
+            >
+              Regenerate
+            </button>
+          ) : null}
         </ActionBarPrimitive.Root>
         <AssistantSpeakSlot />
       </div>
@@ -457,8 +475,24 @@ type ComposerChromeProps = {
 
 /** Live mode / busy chips — placement follows companion dock (bar above composer, stage above portrait). */
 function ComposerStatusCluster({ placement }: { placement: 'bar' | 'stage' }) {
-  const { thinking, searching, thinkingAuto, searchingAuto, composerMode, busy, autoOn } =
+  const { thinking, searching, thinkingAuto, searchingAuto, composerMode, busy, autoOn, activeId } =
     useChatAuiSession()
+  const [doneFlash, setDoneFlash] = useState(false)
+  /** Only flash Done when *this* thread settles — not when switching away from a Working tab. */
+  const wasBusyOnThreadRef = useRef<{ id: string; busy: boolean }>({ id: '', busy: false })
+
+  useEffect(() => {
+    const prev = wasBusyOnThreadRef.current
+    if (prev.id === activeId && prev.busy && !busy) {
+      setDoneFlash(true)
+      const t = window.setTimeout(() => setDoneFlash(false), 1600)
+      wasBusyOnThreadRef.current = { id: activeId, busy: false }
+      return () => window.clearTimeout(t)
+    }
+    wasBusyOnThreadRef.current = { id: activeId, busy }
+    if (prev.id !== activeId) setDoneFlash(false)
+  }, [activeId, busy])
+
   const chips: ReactNode[] = []
   if (thinking) {
     chips.push(
@@ -479,6 +513,13 @@ function ComposerStatusCluster({ placement }: { placement: 'bar' | 'stage' }) {
     chips.push(
       <span key="working" className="aui-status" role="status">
         {autoOn ? 'Auto · Working…' : 'Working…'}
+      </span>,
+    )
+  }
+  if (doneFlash && !busy) {
+    chips.push(
+      <span key="done" className="aui-status is-done" role="status">
+        Done
       </span>,
     )
   }
@@ -571,6 +612,22 @@ function ComposerChrome({
   } = useChatAuiSession()
   const [composerDragOver, setComposerDragOver] = useState(false)
   const [planSaveNote, setPlanSaveNote] = useState<string | null>(null)
+  const skillSuggestions = useMemo(() => filterChatSkills(draft), [draft])
+
+  const pickSkill = (skill: ChatSkill) => {
+    const resolved = resolveChatSlashPick(skill)
+    if (resolved.kind === 'mode') {
+      setComposerMode(resolved.mode)
+      aui.composer.setText('')
+      return
+    }
+    if (resolved.kind === 'clear') {
+      aui.composer.setText('')
+      clearFollowUpQueue()
+      return
+    }
+    aui.composer.setText(resolved.text)
+  }
 
   // Solo / Conversation handoff — classic ChatPage already consumed this; AUI is default.
   useEffect(() => {
@@ -993,6 +1050,10 @@ function ComposerChrome({
         </p>
       ) : null}
 
+      {skillSuggestions.length ? (
+        <ChatSkillMenu skills={skillSuggestions} onPick={pickSkill} />
+      ) : null}
+
       {pendingFiles.length ? (
         <ul className="aui-pending-files">
           {pendingFiles.map((f) => (
@@ -1196,7 +1257,17 @@ function ComposerChrome({
 }
 
 export function ChatAuiThread() {
-  const { historyReady, error, clearError, busy, composerMode, searchOn } = useChatAuiSession()
+  const {
+    historyReady,
+    error,
+    clearError,
+    busy,
+    composerMode,
+    searchOn,
+    retryLastTurn,
+    continueLastAssistant,
+    continueAvailable,
+  } = useChatAuiSession()
   const [dock, setDock] = useChatDeepAvatarDock()
   const [avatarCharacter] = useChatDeepAvatarCharacter()
   const [celebrateMode] = useChatDeepAvatarCelebrateMode()
@@ -1303,8 +1374,37 @@ export function ChatAuiThread() {
             {error ? (
               <div className="aui-error" role="alert">
                 <span>{error}</span>
-                <button type="button" onClick={clearError}>
-                  Dismiss
+                <span className="aui-error-actions">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void retryLastTurn()}
+                  >
+                    Retry
+                  </button>
+                  {continueAvailable ? (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void continueLastAssistant()}
+                    >
+                      Continue
+                    </button>
+                  ) : null}
+                  <button type="button" onClick={clearError}>
+                    Dismiss
+                  </button>
+                </span>
+              </div>
+            ) : continueAvailable ? (
+              <div className="aui-continue-bar" role="status">
+                <span>Stopped — continue from here?</span>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void continueLastAssistant()}
+                >
+                  Continue
                 </button>
               </div>
             ) : null}

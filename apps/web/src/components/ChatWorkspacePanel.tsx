@@ -319,6 +319,8 @@ export function ChatWorkspacePanel({
   const [promoteBusy, setPromoteBusy] = useState(false)
   const [promoteNote, setPromoteNote] = useState<string | null>(null)
   const [planSaveNote, setPlanSaveNote] = useState<string | null>(null)
+  /** Plan defaults to rendered MD (like Files #849); Edit source for textarea. */
+  const [planShowSource, setPlanShowSource] = useState(false)
   const [previewExpanded, setPreviewExpanded] = useState(false)
   /** Explicit HTML render — never auto for large / scripted files while Agent is Working. */
   const [htmlLivePreview, setHtmlLivePreview] = useState(false)
@@ -1082,23 +1084,39 @@ export function ChatWorkspacePanel({
             <div className="ds-chat-workspace-plan-head">
               <span>Plan</span>
               <span className="ds-chat-workspace-hint">Edit before Build · optional Save</span>
+              {planDraft.trim() ? (
+                <button
+                  type="button"
+                  className="ds-chat-workspace-btn"
+                  disabled={planBusy}
+                  onClick={() => setPlanShowSource((v) => !v)}
+                >
+                  {planShowSource ? 'Show preview' : 'Edit source'}
+                </button>
+              ) : null}
               {planSaveNote ? (
                 <span className="ds-chat-workspace-plan-saved" role="status">
                   {planSaveNote}
                 </span>
               ) : null}
             </div>
-            <textarea
-              className="ds-chat-workspace-plan-editor"
-              value={planDraft}
-              rows={14}
-              disabled={planBusy}
-              placeholder="Plan markdown appears here after a Plan reply — edit freely, then Build."
-              onChange={(e) => {
-                onPlanDraftChange?.(e.target.value)
-                setPlanSaveNote(null)
-              }}
-            />
+            {planShowSource || !planDraft.trim() ? (
+              <textarea
+                className="ds-chat-workspace-plan-editor"
+                value={planDraft}
+                rows={14}
+                disabled={planBusy}
+                placeholder="Plan markdown appears here after a Plan reply — edit freely, then Build."
+                onChange={(e) => {
+                  onPlanDraftChange?.(e.target.value)
+                  setPlanSaveNote(null)
+                }}
+              />
+            ) : (
+              <div className="ds-chat-workspace-plan-md" aria-label="Plan markdown preview">
+                {renderChatMarkdown(planDraft)}
+              </div>
+            )}
             <div className="ds-chat-workspace-plan-actions">
               <button
                 type="button"
