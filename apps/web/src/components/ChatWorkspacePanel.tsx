@@ -40,6 +40,7 @@ import {
   type ChatWorkspaceFilesView,
   type ChatWorkspaceTabId,
 } from '../lib/chatUiPrefs'
+import { renderChatMarkdown } from '../lib/renderChatMarkdown'
 
 type Props = {
   workspace: ChatWorkspace | undefined
@@ -92,8 +93,14 @@ function htmlNeedsOptInPreview(text: string): boolean {
   return false
 }
 
-function previewMime(file: ChatWorkspaceFile): 'html' | 'text' {
+function previewMime(file: ChatWorkspaceFile): 'html' | 'markdown' | 'text' {
   if (file.mime?.includes('html') || /\.html?$/i.test(file.path)) return 'html'
+  if (
+    file.mime?.includes('markdown') ||
+    /\.(md|markdown|mdx)$/i.test(file.path)
+  ) {
+    return 'markdown'
+  }
   return 'text'
 }
 
@@ -315,6 +322,8 @@ export function ChatWorkspacePanel({
   const [previewExpanded, setPreviewExpanded] = useState(false)
   /** Explicit HTML render — never auto for large / scripted files while Agent is Working. */
   const [htmlLivePreview, setHtmlLivePreview] = useState(false)
+  /** Markdown defaults to rendered preview; source toggle for edit. */
+  const [mdShowSource, setMdShowSource] = useState(false)
   const [localWidth, setLocalWidth] = useState(() => readChatWorkspacePanelWidth())
   const [resizing, setResizing] = useState(false)
   const [openTabs, setOpenTabs] = useState<ChatWorkspaceTabId[]>(() => {
@@ -408,7 +417,14 @@ export function ChatWorkspacePanel({
     if (!file) return
     const text = (await file.text()).slice(0, CHAT_WORKSPACE_MAX_TEXT_CHARS)
     const path = `uploads/${file.name.replace(/[^\w.\u3400-\u9fff-]+/g, '_').slice(0, 80) || 'file.txt'}`
-    writeFile(path, text, file.type || 'text/plain')
+    const mime =
+      file.type ||
+      (/\.(md|markdown|mdx)$/i.test(file.name)
+        ? 'text/markdown'
+        : /\.html?$/i.test(file.name)
+          ? 'text/html'
+          : 'text/plain')
+    writeFile(path, text, mime)
   }
 
   const applyWidth = (px: number, persist: boolean) => {
@@ -502,7 +518,12 @@ export function ChatWorkspacePanel({
         : suggested
     if (raw == null) return
     const path = normalizeWorkspacePath(raw) || suggested
-    writeFile(path, selected?.path === path ? selected.text || '' : '')
+    const mime = /\.(md|markdown|mdx)$/i.test(path)
+      ? 'text/markdown'
+      : /\.html?$/i.test(path)
+        ? 'text/html'
+        : 'text/plain'
+    writeFile(path, selected?.path === path ? selected.text || '' : '', mime)
   }
 
   const promote = async () => {
@@ -583,7 +604,9 @@ export function ChatWorkspacePanel({
       ? undefined
       : ({ ['--ds-workspace-w' as string]: `${width}px` } as CSSProperties)
 
-  const isHtmlPreview = Boolean(selected && previewMime(selected) === 'html' && selected.text)
+  const previewKind = selected ? previewMime(selected) : 'text'
+  const isHtmlPreview = Boolean(selected && previewKind === 'html' && selected.text)
+  const isMarkdownPreview = Boolean(selected && previewKind === 'markdown')
   const selectedHtml = isHtmlPreview ? selected!.text || '' : ''
   const htmlOptIn = isHtmlPreview && htmlNeedsOptInPreview(selectedHtml)
   // While Agent is Working, keep source text — iframe srcDoc of 28KB three.js freezes the tab.
@@ -591,12 +614,14 @@ export function ChatWorkspacePanel({
     isHtmlPreview &&
     !agentBusy &&
     (!htmlOptIn || htmlLivePreview)
+  const showMarkdownRendered = isMarkdownPreview && !mdShowSource
   const visibleTab = openTabs.includes(activeTab) ? activeTab : openTabs[0] || 'files'
 
-  // Reset opt-in when switching files or when a new Agent turn starts.
+  // Reset opt-in / md source when switching files or when a new Agent turn starts.
   useEffect(() => {
     setHtmlLivePreview(false)
     setPreviewExpanded(false)
+    setMdShowSource(false)
   }, [selected?.path, agentBusy])
 
   return (
@@ -848,6 +873,15 @@ export function ChatWorkspacePanel({
                   <div className="ds-chat-workspace-preview-meta-row">
                     <div className="ds-chat-workspace-preview-meta">{selected.path}</div>
                     <div className="ds-chat-workspace-preview-actions">
+                      {isMarkdownPreview ? (
+                        <button
+                          type="button"
+                          className="ds-chat-workspace-btn"
+                          onClick={() => setMdShowSource((v) => !v)}
+                        >
+                          {mdShowSource ? 'Show preview' : 'Edit source'}
+                        </button>
+                      ) : null}
                       {showHtmlIframe && htmlOptIn ? (
                         <button
                           type="button"
@@ -883,6 +917,17 @@ export function ChatWorkspacePanel({
                       key={`html-frame:${selected.path}:${selectedHtml.length}`}
                       srcDoc={selectedHtml}
                     />
+                  ) : showMarkdownRendered ? (
+                    <div
+                      className="ds-chat-workspace-md"
+                      aria-label={`Markdown preview for ${selected.path}`}
+                    >
+                      {(selected.text || '').trim()
+                        ? renderChatMarkdown(selected.text || '')
+                        : (
+                          <p className="ds-chat-workspace-empty">Empty markdown file.</p>
+                        )}
+                    </div>
                   ) : (
                     <>
                       {isHtmlPreview && (htmlOptIn || agentBusy) ? (
