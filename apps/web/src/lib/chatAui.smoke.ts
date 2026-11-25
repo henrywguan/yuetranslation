@@ -617,6 +617,31 @@ assert.match(
   /visibleThreads|activeFollowUps|clearError = useCallback/,
   'runtime memoizes visible threads / follow-ups / clearError',
 )
+assert.match(
+  runtimeSrc,
+  /retryLastTurn|continueLastAssistant|regenerateLastAssistant|continueAvailable/,
+  'runtime exposes Retry / Continue / Regenerate',
+)
+assert.match(
+  thread,
+  /ChatSkillMenu|\/plan|\/ask|\/agent|\/clear/,
+  'AUI slash mode palette on skill menu',
+)
+assert.match(
+  thread,
+  /aui-error-actions|Retry|continueAvailable/,
+  'error banner Retry + Continue after Stop',
+)
+assert.match(
+  thread,
+  /is-done[\s\S]*Done|Done[\s\S]*is-done/,
+  'Working→Done settle chip',
+)
+assert.match(
+  thread,
+  /regenerateLastAssistant|Regenerate/,
+  'Regenerate on last assistant turn',
+)
 assert.match(avatarSrc, /useChatDeepAvatarCharacter/, 'persisted character hook')
 assert.match(avatarSrc, /CHAT_DEEP_AVATAR_CHARACTER_EVENT/, 'same-tab character sync')
 assert.match(avatarSrc, /useChatDeepAvatarCelebrateMode/, 'celebrate mode hook')

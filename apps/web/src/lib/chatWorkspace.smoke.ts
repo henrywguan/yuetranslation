@@ -103,6 +103,7 @@ assert.match(panel, /HTML_AUTO_PREVIEW_MAX_CHARS|showHtmlIframe/, 'scripted HTML
 assert.match(panel, /previewMime[\s\S]*markdown|showMarkdownRendered/, 'md previewMime + rendered branch')
 assert.match(panel, /renderChatMarkdown/, 'workspace md uses chat markdown pipeline')
 assert.match(panel, /mdShowSource|Edit source|Show preview/, 'md source/preview toggle')
+assert.match(panel, /planShowSource|plan-md|Show preview/, 'Plan tab rendered MD + Edit/Preview')
 assert.match(panel, /ds-chat-workspace-md/, 'md preview container class')
 assert.match(panel, /enablePlanTasks/, 'Plan/Tasks tabs gated')
 assert.match(panel, /is-readonly/, 'path is read-only text')

@@ -32,6 +32,7 @@ import {
   type ChatReviewActivity,
 } from '../../../lib/chatReviewActivity'
 import { searchStepFromSandboxActivity } from '../../../lib/chatToolCards'
+import { pushAssistantAlternate, canContinueAssistant } from '../../../lib/chatBranching'
 import {
   API_CHAT_MESSAGES_MAX,
   apiMessagesFromThread,
@@ -177,6 +178,17 @@ export type ChatAuiSession = {
   error: string | null
   clearError: () => void
   setError: (message: string | null) => void
+  /** Re-run the last user turn after an error (or empty failed assistant). */
+  retryLastTurn: () => Promise<void>
+  /**
+   * Continue the last assistant after Stop (prefix completion) when partial
+   * content remains. Also offered on recoverable empty-model banners.
+   */
+  continueLastAssistant: () => Promise<void>
+  /** True when the active thread can Continue (stopped partial or canContinue). */
+  continueAvailable: boolean
+  /** Regenerate the last assistant turn (stash prior body as alternate). */
+  regenerateLastAssistant: () => Promise<void>
   /** Cursor-like Auto — server picks DeepThink / Search per turn. */
   autoOn: boolean
   setAutoOn: (on: boolean) => void
@@ -346,7 +358,12 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     setPlanDraftState(stored)
   }, [])
   const [richLayout, setRichLayoutState] = useState(() => readChatFlag(CHAT_RICH_LAYOUT_KEY, false))
+  /** Per-thread Diffs/Runs — background writes must not bleed into the viewed tab. */
+  const reviewByThreadRef = useRef<Map<string, ChatReviewActivity>>(new Map())
   const [reviewActivity, setReviewActivity] = useState<ChatReviewActivity>(() => emptyReviewActivity())
+  /** Thread ids where Stop left a continue-able partial assistant. */
+  const continueAfterStopRef = useRef<Set<string>>(new Set())
+  const [continueEpoch, setContinueEpoch] = useState(0)
   const [reviewOpen, setReviewOpenState] = useState(false)
   const [gitDiffBusy, setGitDiffBusy] = useState(false)
   type FollowUpItem = { id: string; text: string; threadId: string }
@@ -438,6 +455,28 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   activeIdRef.current = activeId
 
   const isThreadBusy = useCallback((threadId: string) => busyThreadIdsRef.current.has(threadId), [])
+
+  const applyReviewForThread = useCallback(
+    (threadId: string, updater: (prev: ChatReviewActivity) => ChatReviewActivity) => {
+      if (!threadId || threadId === BOOT_THREAD.id) return
+      const prev = reviewByThreadRef.current.get(threadId) || emptyReviewActivity()
+      const next = updater(prev)
+      reviewByThreadRef.current.set(threadId, next)
+      if (activeIdRef.current === threadId) setReviewActivity(next)
+    },
+    [],
+  )
+
+  const loadReviewForThread = useCallback((threadId: string) => {
+    setReviewActivity(reviewByThreadRef.current.get(threadId) || emptyReviewActivity())
+  }, [])
+
+  const markContinueAfterStop = useCallback((threadId: string, on: boolean) => {
+    if (!threadId) return
+    if (on) continueAfterStopRef.current.add(threadId)
+    else continueAfterStopRef.current.delete(threadId)
+    setContinueEpoch((n) => n + 1)
+  }, [])
 
   const applyStreamUiState = useCallback((ui: ThreadStreamUi) => {
     setStreamingId(ui.streamingId)
@@ -585,13 +624,20 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             typeof raw.reviewUrl === 'string' ? raw.reviewUrl.trim() : undefined
           if (status === 'in_review' && reviewUrl) {
             api.markInReview(agentId, reviewUrl)
-            setReviewActivity((prev) =>
-              applySandboxActivity(prev, { kind: 'pr', reviewUrl, at: Date.now() }),
-            )
-            setReviewOpen(true)
+            const agentThread =
+              api.state.agents.find((a) => a.id === agentId)?.threadId || activeIdRef.current
+            if (agentThread) {
+              applyReviewForThread(agentThread, (prev) =>
+                applySandboxActivity(prev, { kind: 'pr', reviewUrl, at: Date.now() }),
+              )
+            }
+            if (agentThread && activeIdRef.current === agentThread) setReviewOpen(true)
           } else {
             api.updateAgentStatus(agentId, status, reviewUrl)
-            if (status === 'in_review') setReviewOpen(true)
+            const agentThread = api.state.agents.find((a) => a.id === agentId)?.threadId
+            if (status === 'in_review' && agentThread && activeIdRef.current === agentThread) {
+              setReviewOpen(true)
+            }
           }
           continue
         }
@@ -1038,13 +1084,14 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setBusy(false)
       applyStreamUiState(emptyThreadStreamUi())
       applyPlanDraftForThread(created.id)
+      loadReviewForThread(created.id)
       setError(null)
       if (!force) armNewChatCooldown()
       return created.id
     } finally {
       creatingNewChatRef.current = false
     }
-  }, [applyPlanDraftForThread, applyStreamUiState, armNewChatCooldown, stopGeneration])
+  }, [applyPlanDraftForThread, applyStreamUiState, armNewChatCooldown, loadReviewForThread, stopGeneration])
 
   const selectThread = useCallback(
     (id: string) => {
@@ -1053,7 +1100,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       // Soft-stop TTS so another project's audio does not play over the new view.
       streamTtsRef.current?.stop()
       streamTtsRef.current = null
-      // Sync activeId + Plan draft + busy/stream chrome before paint.
+      // Sync activeId + Plan draft + busy/stream chrome + Diffs/Runs before paint.
       activeIdRef.current = id
       setActiveId(id)
       const threadBusy = busyThreadIdsRef.current.has(id)
@@ -1061,9 +1108,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setBusy(threadBusy)
       applyStreamUiState(streamUiByThreadRef.current.get(id) || emptyThreadStreamUi())
       applyPlanDraftForThread(id)
+      loadReviewForThread(id)
       setError(null)
     },
-    [applyPlanDraftForThread, applyStreamUiState],
+    [applyPlanDraftForThread, applyStreamUiState, loadReviewForThread],
   )
 
   const removeThread = useCallback(
@@ -1077,6 +1125,8 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       })
       streamUiByThreadRef.current.delete(id)
       busyThreadIdsRef.current.delete(id)
+      reviewByThreadRef.current.delete(id)
+      continueAfterStopRef.current.delete(id)
       setThreads((prev) => {
         const withoutBoot = prev.filter((t) => t.id !== BOOT_THREAD.id)
         const next = deleteChatThread(id, withoutBoot)
@@ -1089,6 +1139,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           setBusy(threadBusy)
           applyStreamUiState(streamUiByThreadRef.current.get(nextId) || emptyThreadStreamUi())
           applyPlanDraftForThread(nextId)
+          loadReviewForThread(nextId)
         }
         // Clearing the last active agent → fresh empty new-chat window (no leftover messages).
         if (!live.length) {
@@ -1102,7 +1153,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         return next
       })
     },
-    [applyPlanDraftForThread, applyStreamUiState, stopGeneration],
+    [applyPlanDraftForThread, applyStreamUiState, loadReviewForThread, stopGeneration],
   )
 
   const archiveThread = useCallback(
@@ -1121,6 +1172,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           setBusy(threadBusy)
           applyStreamUiState(streamUiByThreadRef.current.get(nextId) || emptyThreadStreamUi())
           applyPlanDraftForThread(nextId)
+          loadReviewForThread(nextId)
         }
         if (archived) {
           // Archiving the last live agent (or the active one with none left) → empty new chat.
@@ -1136,17 +1188,57 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         return next
       })
     },
-    [applyPlanDraftForThread, applyStreamUiState],
+    [applyPlanDraftForThread, applyStreamUiState, loadReviewForThread],
   )
 
   const runAssistant = useCallback(
-    async (baseThread: ChatThread, fileIds?: string[]) => {
+    async (
+      baseThread: ChatThread,
+      fileIds?: string[],
+      opts?: { continueFromId?: string; seedAlternates?: ChatMessage['alternates'] },
+    ) => {
       let thread = baseThread
       const runThreadId = thread.id
-      const assistantStep = appendChatMessage(thread, 'assistant', '')
-      thread = assistantStep.thread
-      const assistantId = assistantStep.message.id
-      persist(thread)
+      const continueFromId = opts?.continueFromId
+      let assistantId: string
+      let assembled = ''
+      let reasoning = ''
+      let sources: ChatSource[] | undefined
+      let searchSteps: ChatSearchStep[] = []
+
+      markContinueAfterStop(runThreadId, false)
+
+      if (continueFromId) {
+        const existing = thread.messages.find(
+          (m) => m.id === continueFromId && m.role === 'assistant',
+        )
+        if (!existing) return
+        assistantId = existing.id
+        assembled = existing.content
+        reasoning = existing.reasoning || ''
+        sources = existing.sources
+        searchSteps = existing.searchSteps || []
+        persist(thread)
+      } else {
+        const assistantStep = appendChatMessage(thread, 'assistant', '')
+        thread = assistantStep.thread
+        assistantId = assistantStep.message.id
+        if (opts?.seedAlternates?.length) {
+          thread = {
+            ...thread,
+            messages: thread.messages.map((m) =>
+              m.id === assistantId
+                ? {
+                    ...m,
+                    alternates: opts.seedAlternates,
+                    activeAlternate: opts.seedAlternates!.length,
+                  }
+                : m,
+            ),
+          }
+        }
+        persist(thread)
+      }
       patchThreadStreamUi(runThreadId, {
         streamingId: assistantId,
         thinking: false,
@@ -1173,10 +1265,6 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           : null
       if (liveTts) streamTtsRef.current = liveTts
 
-      let assembled = ''
-      let reasoning = ''
-      let sources: ChatSource[] | undefined
-      let searchSteps: ChatSearchStep[] = []
       let paintTimer: number | null = null
       let needsPaint = false
       let pendingThoughtMs: number | undefined
@@ -1338,6 +1426,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           fileIds,
           plugins: enabledPluginsRef.current,
           primaryLang: primaryLanguage,
+          continueReply: Boolean(continueFromId),
           avatarCharacter,
           avatarName,
           avatarTrait,
@@ -1366,7 +1455,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
               thread,
               applyWorkspaceWireUpdate(thread.workspace, files),
             )
-            setReviewActivity((prev) => applyWorkspaceFilesToDiffs(prev, files))
+            applyReviewForThread(runThreadId, (prev) =>
+              applyWorkspaceFilesToDiffs(prev, files),
+            )
             if (activeIdRef.current === runThreadId) setReviewOpen(true)
             schedulePaint()
           },
@@ -1374,7 +1465,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
             toolsUsedThisTurn = true
             const sandPath = pathFromSandboxActivity(activity)
             if (sandPath) workspacePathsThisTurn.push(sandPath)
-            setReviewActivity((prev) => applySandboxActivity(prev, activity))
+            applyReviewForThread(runThreadId, (prev) => applySandboxActivity(prev, activity))
             if (activeIdRef.current === runThreadId) setReviewOpen(true)
             const reviewUrl =
               typeof activity.reviewUrl === 'string' ? activity.reviewUrl.trim() : ''
@@ -1531,6 +1622,9 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         if ((err as Error)?.name === 'AbortError') {
           if (!assembled.trim() && !recoverEmptyFromWork({ allowContinue: true })) {
             thread = dropEmpty(thread)
+          } else if (assembled.trim()) {
+            // Stop left a partial — offer Continue (prefix) on this thread.
+            markContinueAfterStop(runThreadId, true)
           }
           persist(thread)
         } else {
@@ -1609,9 +1703,11 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     [
       abortThread,
       applyProjectActions,
+      applyReviewForThread,
       autoSpeak,
       canAutoSpeak,
       deepThink,
+      markContinueAfterStop,
       paintThread,
       patchThreadStreamUi,
       persist,
@@ -1663,8 +1759,13 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   }, [])
 
   const clearFollowUpQueue = useCallback(() => {
-    followUpQueueRef.current = []
-    setFollowUpQueue([])
+    // Per-thread Clear — never wipe other projects’ queued follow-ups (#846).
+    const tid = activeIdRef.current
+    setFollowUpQueue((prev) => {
+      const next = tid ? prev.filter((x) => x.threadId !== tid) : prev
+      followUpQueueRef.current = next
+      return next
+    })
   }, [])
 
   const enqueuePrompt = useCallback(
@@ -1725,25 +1826,28 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     setGitDiffBusy(true)
     try {
       const result = await execChatSandbox(sessionId, ['git', 'diff', '--no-color'])
-      setReviewActivity((prev) => {
-        const withRun = applySandboxActivity(prev, {
-          kind: 'run',
-          argv: result.argv?.length ? result.argv : ['git', 'diff', '--no-color'],
-          stdout: result.stdout,
-          stderr: result.stderr,
-          exitCode: result.code ?? undefined,
-          ok: result.ok,
-          at: Date.now(),
+      const tid = activeIdRef.current
+      if (tid) {
+        applyReviewForThread(tid, (prev) => {
+          const withRun = applySandboxActivity(prev, {
+            kind: 'run',
+            argv: result.argv?.length ? result.argv : ['git', 'diff', '--no-color'],
+            stdout: result.stdout,
+            stderr: result.stderr,
+            exitCode: result.code ?? undefined,
+            ok: result.ok,
+            at: Date.now(),
+          })
+          return mergeGitDiffs(withRun, result.stdout || result.stderr || '')
         })
-        return mergeGitDiffs(withRun, result.stdout || result.stderr || '')
-      })
+      }
       setReviewOpen(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'git diff failed')
     } finally {
       setGitDiffBusy(false)
     }
-  }, [])
+  }, [applyReviewForThread])
 
   /**
    * Plan→Build Deep latch: keep chainBusy while workers are queued/flushing so the
@@ -2185,6 +2289,86 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
 
   const clearError = useCallback(() => setError(null), [])
 
+  const continueAvailable = useMemo(() => {
+    void continueEpoch
+    const tid = activeId
+    if (!tid || busy) return false
+    if (continueAfterStopRef.current.has(tid)) return true
+    const thread = threads.find((t) => t.id === tid)
+    return thread ? canContinueAssistant(thread) && Boolean(error) : false
+  }, [activeId, busy, continueEpoch, error, threads])
+
+  const retryLastTurn = useCallback(async () => {
+    if (!unlocked) return
+    const tid = activeIdRef.current
+    if (!tid || isThreadBusy(tid)) return
+    let cur = threadsRef.current.find((t) => t.id === tid)
+    if (!cur) return
+    // Drop trailing empty / failed assistant so we re-attach fresh.
+    const msgs = [...cur.messages]
+    while (msgs.length && msgs[msgs.length - 1]?.role === 'assistant') {
+      const last = msgs[msgs.length - 1]!
+      if (last.content.trim() && !error) break
+      msgs.pop()
+    }
+    const lastUserIdx = (() => {
+      for (let i = msgs.length - 1; i >= 0; i -= 1) {
+        if (msgs[i]?.role === 'user') return i
+      }
+      return -1
+    })()
+    if (lastUserIdx < 0) return
+    const userMsg = msgs[lastUserIdx]!
+    const truncated: ChatThread = {
+      ...cur,
+      messages: msgs.slice(0, lastUserIdx + 1),
+      updatedAt: Date.now(),
+    }
+    setError(null)
+    markContinueAfterStop(tid, false)
+    persist(truncated)
+    setThreadBusy(tid, true)
+    await runAssistant(truncated, userMsg.fileIds)
+  }, [error, isThreadBusy, markContinueAfterStop, persist, runAssistant, setThreadBusy, unlocked])
+
+  const continueLastAssistant = useCallback(async () => {
+    if (!unlocked) return
+    const tid = activeIdRef.current
+    if (!tid || isThreadBusy(tid)) return
+    const cur = threadsRef.current.find((t) => t.id === tid)
+    if (!cur) return
+    const last = cur.messages[cur.messages.length - 1]
+    if (!last || last.role !== 'assistant' || !last.content.trim()) return
+    setError(null)
+    markContinueAfterStop(tid, false)
+    setThreadBusy(tid, true)
+    await runAssistant(cur, undefined, { continueFromId: last.id })
+  }, [isThreadBusy, markContinueAfterStop, runAssistant, setThreadBusy, unlocked])
+
+  const regenerateLastAssistant = useCallback(async () => {
+    if (!unlocked) return
+    const tid = activeIdRef.current
+    if (!tid || isThreadBusy(tid)) return
+    const cur = threadsRef.current.find((t) => t.id === tid)
+    if (!cur) return
+    const idx = cur.messages.length - 1
+    if (idx < 1) return
+    const current = cur.messages[idx]
+    const prev = cur.messages[idx - 1]
+    if (!current || current.role !== 'assistant' || !prev || prev.role !== 'user') return
+    const stashAlts = pushAssistantAlternate(current).alternates
+    const truncated: ChatThread = {
+      ...cur,
+      messages: cur.messages.slice(0, idx),
+      updatedAt: Date.now(),
+    }
+    setError(null)
+    markContinueAfterStop(tid, false)
+    persist(truncated)
+    setThreadBusy(tid, true)
+    await runAssistant(truncated, prev.fileIds, { seedAlternates: stashAlts })
+  }, [isThreadBusy, markContinueAfterStop, persist, runAssistant, setThreadBusy, unlocked])
+
   const activeProjectMeta = useMemo(() => {
     const state = inbox?.state
     if (!state) return { agents: [] as ChatInboxAgent[], title: null as string | null }
@@ -2212,6 +2396,10 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       error,
       clearError,
       setError,
+      retryLastTurn,
+      continueLastAssistant,
+      continueAvailable,
+      regenerateLastAssistant,
       autoOn,
       setAutoOn,
       deepThink,
@@ -2293,13 +2481,17 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       clearError,
       clearFollowUpQueue,
       clearWorkspaceFocusTab,
+      continueAvailable,
+      continueLastAssistant,
       newChatBusy,
       autoOn,
       composerMode,
       deepThink,
       openProjectAgent,
       planDraft,
+      regenerateLastAssistant,
       requestWorkspaceTab,
+      retryLastTurn,
       savePlanToWorkspace,
       workspaceFocusTab,
       dismissFollowUp,

@@ -1909,6 +1909,11 @@
   white-space: nowrap;
 }
 
+.aui-status.is-done {
+  color: color-mix(in srgb, var(--ds-blue) 70%, var(--ds-text-3));
+  font-weight: 600;
+}
+
 /* Live status chips — bar: above composer; stage: above avatar head in stage toggle. */
 .aui-status-cluster {
   display: flex;
@@ -2123,6 +2128,13 @@
   font-size: 0.875rem;
 }
 
+.aui-error-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.55rem;
+  align-items: center;
+}
+
 .aui-error button {
   appearance: none;
   border: 0;
@@ -2131,6 +2143,40 @@
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+}
+
+.aui-error button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.aui-continue-bar {
+  max-width: none;
+  margin: 0;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--ds-divider);
+  background: color-mix(in srgb, var(--ds-blue) 8%, var(--ds-canvas));
+  color: var(--ds-text-2);
+  font-size: 0.8125rem;
+}
+
+.aui-continue-bar button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-blue);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.aui-continue-bar button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .aui-scroll-bottom {

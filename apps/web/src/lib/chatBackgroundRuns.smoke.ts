@@ -100,4 +100,28 @@ assert.match(
   'Build gates on target Overseer thread busy, not only active tab',
 )
 
+assert.match(
+  runtime,
+  /reviewByThreadRef|applyReviewForThread|loadReviewForThread/,
+  'Diffs/Runs reviewActivity scoped per thread',
+)
+assert.match(
+  selectFn,
+  /loadReviewForThread/,
+  'selectThread swaps review activity with the viewed thread',
+)
+assert.match(
+  runtime,
+  /prev\.filter\(\(x\) => x\.threadId !== tid\)/,
+  'clearFollowUpQueue only drops the active thread',
+)
+assert.doesNotMatch(
+  runtime.slice(
+    runtime.indexOf('const clearFollowUpQueue = useCallback'),
+    runtime.indexOf('const enqueuePrompt = useCallback'),
+  ),
+  /setFollowUpQueue\(\[\]\)/,
+  'clearFollowUpQueue must not wipe every thread',
+)
+
 console.log('chatBackgroundRuns.smoke: ok')

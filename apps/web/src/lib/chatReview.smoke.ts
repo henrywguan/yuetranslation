@@ -164,6 +164,7 @@ assert.match(runs, /aui-run-out|aui-run-err|No stdout/, 'runs surface command ou
 const runtime = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtime, /onSandbox/, 'runtime consumes sandbox SSE')
 assert.match(runtime, /reviewActivity/, 'session exposes review activity')
+assert.match(runtime, /reviewByThreadRef|applyReviewForThread/, 'review activity is per-thread')
 assert.match(runtime, /refreshGitDiff|execChatSandbox/, 'git diff refresh wired')
 
 const api = readFileSync(join(here, 'api.ts'), 'utf8')

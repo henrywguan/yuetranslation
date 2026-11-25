@@ -2457,6 +2457,21 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   resize: vertical;
 }
 
+.ds-chat-workspace-plan-md {
+  flex: 1;
+  min-height: 12rem;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.55rem;
+  background: var(--ds-canvas);
+  color: var(--ds-text);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  padding: 0.65rem 0.7rem;
+  overflow: auto;
+}
+
 .ds-chat-workspace-plan-actions {
   display: flex;
   gap: 0.4rem;
