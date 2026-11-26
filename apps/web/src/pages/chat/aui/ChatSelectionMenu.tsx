@@ -90,6 +90,14 @@ function SelectionIncludeBtn() {
   )
 }
 
+/**
+ * SelectionToolbarPrimitive portals to document.body with a default z-index of 50.
+ * `.ds-chat` is position:fixed; z-index:120 — without an override the toolbar paints
+ * under the opaque shell (same class of bug as celebrate FX needing z≥130).
+ * Stay above chat shell / celebrate / intro; below mood picker (160).
+ */
+export const SELECTION_MENU_Z_INDEX = 150
+
 /** Portal menu near selection — Copy | Reply | Include. */
 export function ChatSelectionMenu() {
   // Escape clears selection (toolbar dismisses when collapsed).
@@ -109,6 +117,7 @@ export function ChatSelectionMenu() {
       className="aui-selection-menu"
       role="toolbar"
       aria-label="Selection actions"
+      style={{ zIndex: SELECTION_MENU_Z_INDEX }}
     >
       <SelectionCopyBtn />
       <SelectionReplyBtn />
