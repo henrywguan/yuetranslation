@@ -3774,13 +3774,27 @@
   outline-offset: 1px;
 }
 
-/* —— History scrubber rail —— */
+/* —— History scrubber rail (Cursor-parity: thin reactive hairline) ——
+ * Sits in a reserved right gutter; native scrollbar is suppressed while the
+ * rail is mounted so chunky dots never overlay scroll chrome. Idle → faint;
+ * hover / focus / drag → full opacity. */
+.aui-thread:has(.aui-scrubber) .aui-viewport {
+  /* Room for the hairline; hide native bar so it cannot fight the rail. */
+  padding-right: 1.35rem;
+  scrollbar-width: none;
+}
+
+.aui-thread:has(.aui-scrubber) .aui-viewport::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 .aui-scrubber {
   position: absolute;
   top: 0.85rem;
   right: 0.2rem;
   bottom: max(7.5rem, calc(env(safe-area-inset-bottom, 0px) + 6.5rem));
-  width: 1.1rem;
+  width: 0.85rem;
   z-index: 4;
   display: flex;
   align-items: stretch;
@@ -3790,64 +3804,178 @@
   cursor: ns-resize;
   touch-action: none;
   outline: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+
+/* Reveal on thread hover, keyboard focus, or active drag — luxury idle. */
+.aui-thread:hover .aui-scrubber,
+.aui-scrubber:focus-within,
+.aui-scrubber.is-dragging {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .aui-scrubber:focus-visible .aui-scrubber-track {
   outline: 2px solid color-mix(in srgb, var(--ds-blue) 55%, transparent);
-  outline-offset: 2px;
+  outline-offset: 3px;
   border-radius: 999px;
 }
 
 .aui-scrubber-track {
   position: relative;
-  width: 0.28rem;
+  width: 2px;
   flex: 1;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--ds-divider) 70%, transparent);
+  background: color-mix(in srgb, var(--ds-divider) 55%, transparent);
   min-height: 0;
-  overflow: hidden;
+  /* Must stay visible — scaled dots used to clip here. */
+  overflow: visible;
 }
 
+/* Hairline marks (not chunky dots). Hit target is wider via ::after. */
 .aui-scrubber-tick {
   appearance: none;
   border: 0;
   padding: 0;
   position: absolute;
   left: 50%;
-  width: 0.5rem;
-  height: 0.5rem;
-  margin-left: -0.25rem;
-  margin-top: -0.25rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ds-text-3) 55%, transparent);
+  width: 6px;
+  height: 2px;
+  margin-left: -3px;
+  margin-top: -1px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--ds-text-3) 42%, transparent);
   cursor: pointer;
   transition:
-    transform 0.14s ease,
+    width 0.14s ease,
+    margin-left 0.14s ease,
     background 0.14s ease,
-    box-shadow 0.14s ease;
+    opacity 0.14s ease;
+}
+
+.aui-scrubber-tick::after {
+  content: '';
+  position: absolute;
+  inset: -6px -4px;
 }
 
 .aui-scrubber-tick.is-user {
-  background: color-mix(in srgb, var(--ds-blue) 45%, var(--ds-text-3));
+  background: color-mix(in srgb, var(--ds-blue) 50%, transparent);
 }
 
 .aui-scrubber-tick.is-assistant {
-  background: color-mix(in srgb, var(--ds-text-2) 40%, transparent);
+  background: color-mix(in srgb, var(--ds-text-2) 38%, transparent);
 }
 
 .aui-scrubber-tick.is-active {
-  transform: scale(1.35);
-  background: var(--ds-blue);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ds-blue) 22%, transparent);
+  width: 8px;
+  margin-left: -4px;
+  background: color-mix(in srgb, var(--ds-blue) 85%, white);
 }
 
 .aui-scrubber-tick:hover {
-  transform: scale(1.25);
+  width: 10px;
+  margin-left: -5px;
+  background: color-mix(in srgb, var(--ds-blue) 70%, var(--ds-text-2));
+}
+
+/* Soft sliding thumb — primary “where am I” cue (replaces scaled dots). */
+.aui-scrubber-thumb {
+  position: absolute;
+  left: 50%;
+  width: 4px;
+  height: 1.15rem;
+  margin-left: -2px;
+  margin-top: -0.575rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ds-blue) 72%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ds-blue) 18%, transparent);
+  pointer-events: none;
+  transition: top 0.12s ease;
+  z-index: 1;
+}
+
+.aui-scrubber.is-dragging .aui-scrubber-thumb {
+  transition: none;
+  background: var(--ds-blue);
+}
+
+/* Touch / coarse pointer: keep a soft idle presence (no hover to reveal). */
+@media (hover: none) {
+  .aui-scrubber {
+    opacity: 0.5;
+    pointer-events: auto;
+  }
+
+  .aui-thread:hover .aui-scrubber,
+  .aui-scrubber:focus-within,
+  .aui-scrubber.is-dragging {
+    opacity: 1;
+  }
+}
+
+.aui-scrubber-preview {
+  position: absolute;
+  right: calc(100% + 0.45rem);
+  transform: translateY(-50%);
+  max-width: 14rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--ds-canvas) 96%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ds-divider) 80%, transparent);
+  box-shadow: 0 8px 24px color-mix(in srgb, black 18%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  pointer-events: none;
+  z-index: 5;
+  animation: aui-scrubber-preview-in 0.14s ease both;
+}
+
+@keyframes aui-scrubber-preview-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.aui-scrubber-preview-role {
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-text-3);
+}
+
+.aui-scrubber-preview-text {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--ds-text);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 @media (max-width: 420px) {
   .aui-scrubber {
     display: none;
+  }
+
+  .aui-thread:has(.aui-scrubber) .aui-viewport {
+    padding-right: 1rem;
+    scrollbar-width: auto;
+  }
+
+  .aui-thread:has(.aui-scrubber) .aui-viewport::-webkit-scrollbar {
+    width: unset;
+    height: unset;
   }
 }
 
@@ -3987,10 +4115,14 @@
     animation: none;
   }
 
+  .aui-scrubber,
   .aui-scrubber-tick,
+  .aui-scrubber-thumb,
+  .aui-scrubber-preview,
   .aui-mood-picker-card,
   .aui-agent-pill {
     transition: none;
+    animation: none;
   }
 }
 
