@@ -158,13 +158,39 @@ assert.match(overlaySrc, /shouldSnapChatDeepAvatar3dHome|writeChatDeepAvatar3dPo
 assert.match(overlaySrc, /isChatDeepAvatar3dPointerBlocked|DRAG_THRESHOLD/, 'mic/scroll safe drag')
 assert.match(overlaySrc, /prefers-reduced-motion|usePrefersReducedMotion/, 'reduced-motion gate')
 assert.match(overlaySrc, /createPortal|\.ds-chat/, 'portals onto .ds-chat for page-wide drag')
+// Regression: portal canvas is created only after surfaceEl — mountScene must
+// re-run when surfaceEl appears or WebGL never attaches (invisible 3D).
+assert.match(
+  overlaySrc,
+  /mountScene\([\s\S]*?\[solo,\s*onActiveChange,\s*surfaceEl\]/,
+  'WebGL mount deps include surfaceEl (portal canvas race)',
+)
+assert.match(overlaySrc, /if\s*\(\s*!surfaceEl\s*\)\s*return/, 'skip mount until portal surface ready')
 assert.doesNotMatch(overlaySrc, /[Ll]ive2[Dd]|Cubism/, 'no Live2D / Cubism in 3d overlay')
 assert.doesNotMatch(libSrc, /[Ll]ive2[Dd]|Cubism/, 'no Live2D in 3d lib')
 
 assert.match(threadSrc, /ChatDeepAvatar3DGate/, 'thread mounts 3d gate')
 assert.match(threadSrc, /useChatDeepAvatar3dEnabled|companion3d/, 'thread reads 3d toggle')
 assert.match(threadSrc, /layoutRef|is-3d-companion|hideGifFor3d/, 'layout hosts overlay + hides GIF')
+assert.match(
+  threadSrc,
+  /ChatDeepAvatar3DGate[\s\S]*?enabled=\{companion3d\}[\s\S]*?character=\{avatarCharacter\}/,
+  '3D gate wired to companion3d enable + character (Boy/Girl/Both)',
+)
 assert.match(settingsSrc, /useChatDeepAvatar3dEnabled|3D companion/, 'Inbox Companion has 3D toggle')
+assert.match(
+  settingsSrc,
+  /setCompanion3d\(!companion3d\)/,
+  'Inbox 3D companion toggle flips enable pref',
+)
+
+// Gate dual-mounts boy+girl overlays when character is Both.
+assert.match(
+  overlaySrc,
+  /solos\.map\(\(solo\)\s*=>\s*\([\s\S]*?<ChatDeepAvatar3DOverlay[\s\S]*?key=\{solo\}/,
+  'Both mode maps solos → dual ChatDeepAvatar3DOverlay mounts',
+)
+assert.match(overlaySrc, /duoOffset=\{duo\}/, 'Both dual dock offset passed to overlays')
 
 assert.match(auiCss, /\.aui-deep-avatar-3d-handle\b/, '3d handle styles')
 assert.match(auiCss, /\.aui-avatar-dock-frame\.is-3d-active\b/, 'dock hides GIF under 3d')
@@ -182,6 +208,13 @@ const boyGlb = join(root, '../public/chat-avatar/boy/deep.glb')
 const girlGlb = join(root, '../public/chat-avatar/girl/deep.glb')
 assert.equal(existsSync(boyGlb), true, 'boy deep.glb shipped')
 assert.equal(existsSync(girlGlb), true, 'girl deep.glb shipped')
+assert.equal(chatDeepAvatarGlbSrc('boy'), '/chat-avatar/boy/deep.glb', 'boy glb public src')
+assert.equal(chatDeepAvatarGlbSrc('girl'), '/chat-avatar/girl/deep.glb', 'girl glb public src')
+assert.deepEqual(
+  [...chatDeepAvatar3dSolosToMount('both')].map((id) => chatDeepAvatarGlbSrc(id)),
+  ['/chat-avatar/boy/deep.glb', '/chat-avatar/girl/deep.glb'],
+  'Both dual mount → boy + girl deep.glb srcs',
+)
 {
   const boyBytes = statSync(boyGlb).size
   const girlBytes = statSync(girlGlb).size
@@ -190,6 +223,10 @@ assert.equal(existsSync(girlGlb), true, 'girl deep.glb shipped')
   // Soft ceiling — Harbor scouts are ~5 MiB; fail loud if we ship a 40 MiB Hunyuan.
   assert.ok(boyBytes < 12 * 1024 * 1024, `boy glb too large for iPhone WebGL (${boyBytes})`)
   assert.ok(girlBytes < 12 * 1024 * 1024, `girl glb too large for iPhone WebGL (${girlBytes})`)
+  // glTF container magic — catches accidental HTML/LFS pointer commits.
+  const magic = (p: string) => readFileSync(p).subarray(0, 4).toString('utf8')
+  assert.equal(magic(boyGlb), 'glTF', 'boy deep.glb is a real GLB')
+  assert.equal(magic(girlGlb), 'glTF', 'girl deep.glb is a real GLB')
 }
 
 // Synthetic pointer-block check via Element-like closest.
