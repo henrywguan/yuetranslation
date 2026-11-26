@@ -345,10 +345,19 @@ export function ChatDeepAvatar3DOverlay({
   }, [solo])
 
   useLayoutEffect(() => {
-    setSurfaceEl(resolveSurface())
+    // Prefer `.ds-chat` so free-float covers inbox/workspace; fall back to layout.
+    // Re-resolve once after paint in case the layout ref commits a tick later.
+    const sync = () => setSurfaceEl(resolveSurface())
+    sync()
+    const raf = requestAnimationFrame(sync)
+    return () => cancelAnimationFrame(raf)
   }, [layoutRef])
 
   useEffect(() => {
+    // Portal canvas only exists after surfaceEl is known — without this dep the
+    // first effect run sees canvasRef=null and never mounts WebGL (Boy/Girl/Both
+    // stay invisible while the GIF path remains). Remount when surface appears.
+    if (!surfaceEl) return
     const canvas = canvasRef.current
     if (!canvas) return
     let cancelled = false
@@ -374,9 +383,9 @@ export function ChatDeepAvatar3DOverlay({
       bundleRef.current = null
       onActiveChange?.(false)
     }
-    // remount on solo change only — mood updates via setMood below
+    // remount on solo / portal surface — mood updates via setMood below
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mood applied in separate effect
-  }, [solo, onActiveChange])
+  }, [solo, onActiveChange, surfaceEl])
 
   // Play-bus / FSM mood → AnimationMixer clip (missing → idle bob).
   useEffect(() => {
