@@ -1,8 +1,8 @@
 /**
- * `#/chat` 3D companion chrome stub — transparent three.js character overlay.
- * Placeholder procedural mesh (or `deep.glb` when baked). Drag anywhere over
- * the chat layout; soft-snap home to bar/stage dock. GIF path remains fallback
- * for reduced-motion / WebGL failure / toggle off. GIF moods stay the 2D path.
+ * `#/chat` 3D companion — transparent three.js overlay + mood→clip mixer.
+ * Loads `deep.glb` when present (procedural stub otherwise). Drag anywhere over
+ * `.ds-chat`; soft-snap home to bar/stage dock. Both mode mounts two independent
+ * GLBs (boy + girl). Celebrate / pair fullscreen stay on the 2D GIF path.
  */
 import {
   useEffect,
@@ -20,20 +20,25 @@ import {
   CHAT_DEEP_AVATAR_3D_DRAG_THRESHOLD_PX,
   CHAT_DEEP_AVATAR_3D_EVENT,
   CHAT_DEEP_AVATAR_3D_POSE_EVENT,
+  chatDeepAvatar3dDuoDockOffsetX,
+  chatDeepAvatar3dSolosToMount,
   chatDeepAvatar3dStubTint,
   chatDeepAvatarGlbSrc,
   isChatDeepAvatar3dPointerBlocked,
   readChatDeepAvatar3dEnabled,
   readChatDeepAvatar3dPose,
+  resolveChatDeepAvatar3dClipName,
   shouldSnapChatDeepAvatar3dHome,
   writeChatDeepAvatar3dEnabled,
   writeChatDeepAvatar3dPose,
   type ChatDeepAvatar3dPose,
 } from '../../../lib/chatDeepAvatar3d'
 import {
+  isChatDeepAvatarBothMode,
   normalizeChatDeepAvatarCharacter,
   type ChatDeepAvatarCharacterId,
   type ChatDeepAvatarMood,
+  type ChatDeepAvatarSoloId,
 } from '../../../lib/chatDeepAvatarCharacter'
 import { useChatDeepAvatarDisplayName } from './ChatDeepAvatar'
 
@@ -80,16 +85,16 @@ function disposeObject3D(root: THREE.Object3D) {
   })
 }
 
-/** Tiny chibi stand-in until Higgsfield `deep.glb` lands. */
-function buildStubFigure(character: ChatDeepAvatarCharacterId): THREE.Group {
-  const tint = chatDeepAvatar3dStubTint(character)
+/** Tiny chibi stand-in until / when `deep.glb` fails to load. */
+function buildStubFigure(solo: ChatDeepAvatarSoloId): THREE.Group {
+  const tint = chatDeepAvatar3dStubTint(solo)
   const group = new THREE.Group()
   group.name = 'chat-avatar-3d-stub'
 
   const bodyMat = new THREE.MeshLambertMaterial({ color: tint })
   const skinMat = new THREE.MeshLambertMaterial({ color: 0xffe0c8 })
   const accentMat = new THREE.MeshLambertMaterial({
-    color: character === 'girl' ? 0xf2d4e8 : 0x2a9d6e,
+    color: solo === 'girl' ? 0xf2d4e8 : 0x2a9d6e,
   })
 
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 0.55, 6, 12), bodyMat)
@@ -123,12 +128,48 @@ type SceneBundle = {
   camera: THREE.PerspectiveCamera
   root: THREE.Group
   figure: THREE.Object3D
+  mixer: THREE.AnimationMixer | null
+  clips: THREE.AnimationClip[]
+  action: THREE.AnimationAction | null
+  clipName: string | null
+  setMood: (mood: ChatDeepAvatarMood) => void
   dispose: () => void
+}
+
+function playClip(bundle: SceneBundle, mood: ChatDeepAvatarMood) {
+  if (!bundle.mixer || !bundle.clips.length) {
+    bundle.clipName = null
+    return
+  }
+  const names = bundle.clips.map((c) => c.name)
+  const want = resolveChatDeepAvatar3dClipName(mood, names)
+  if (!want) {
+    bundle.clipName = null
+    return
+  }
+  if (bundle.clipName === want && bundle.action) return
+  const clip = bundle.clips.find((c) => c.name === want)
+  if (!clip) {
+    bundle.clipName = null
+    return
+  }
+  const next = bundle.mixer.clipAction(clip)
+  next.reset()
+  next.enabled = true
+  next.setLoop(THREE.LoopRepeat, Infinity)
+  next.clampWhenFinished = false
+  if (bundle.action && bundle.action !== next) {
+    bundle.action.crossFadeTo(next, 0.18, false)
+  }
+  next.play()
+  bundle.action = next
+  bundle.clipName = want
 }
 
 async function mountScene(
   canvas: HTMLCanvasElement,
-  character: ChatDeepAvatarCharacterId,
+  solo: ChatDeepAvatarSoloId,
+  initialMood: ChatDeepAvatarMood,
 ): Promise<SceneBundle | null> {
   let renderer: THREE.WebGLRenderer
   try {
@@ -159,24 +200,29 @@ async function mountScene(
   const root = new THREE.Group()
   scene.add(root)
 
-  let figure: THREE.Object3D = buildStubFigure(character)
+  let figure: THREE.Object3D = buildStubFigure(solo)
   root.add(figure)
 
-  const glbUrl = chatDeepAvatarGlbSrc(character)
+  let mixer: THREE.AnimationMixer | null = null
+  let clips: THREE.AnimationClip[] = []
+
+  const glbUrl = chatDeepAvatarGlbSrc(solo)
   try {
     const loader = new GLTFLoader()
-    const gltf = await new Promise<THREE.Group | null>((resolve) => {
-      loader.load(
-        glbUrl,
-        (g) => resolve(g.scene),
-        undefined,
-        () => resolve(null),
-      )
-    })
+    const gltf = await new Promise<Awaited<ReturnType<typeof loader.loadAsync>> | null>(
+      (resolve) => {
+        loader.load(
+          glbUrl,
+          (g) => resolve(g),
+          undefined,
+          () => resolve(null),
+        )
+      },
+    )
     if (gltf) {
       const wrap = new THREE.Group()
       wrap.name = 'chat-avatar-3d-glb'
-      wrap.add(gltf)
+      wrap.add(gltf.scene)
       wrap.updateMatrixWorld(true)
       const box = new THREE.Box3().setFromObject(wrap)
       const size = new THREE.Vector3()
@@ -189,35 +235,62 @@ async function mountScene(
       root.remove(figure)
       figure = wrap
       root.add(figure)
+      clips = gltf.animations?.slice() ?? []
+      if (clips.length) mixer = new THREE.AnimationMixer(figure)
     }
   } catch {
     /* keep procedural stub */
   }
 
-  const dispose = () => {
-    cancelAnimationFrame(raf)
-    disposeObject3D(root)
-    renderer.dispose()
+  const bundle: SceneBundle = {
+    renderer,
+    scene,
+    camera,
+    root,
+    figure,
+    mixer,
+    clips,
+    action: null,
+    clipName: null,
+    setMood: (mood) => playClip(bundle, mood),
+    dispose: () => {
+      cancelAnimationFrame(raf)
+      mixer?.stopAllAction()
+      disposeObject3D(root)
+      renderer.dispose()
+    },
   }
+
+  playClip(bundle, initialMood)
 
   let raf = 0
   let last = performance.now()
   const tick = (now: number) => {
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now
-    root.rotation.y += dt * 0.35
-    root.position.y = Math.sin(now / 650) * 0.04
+    if (mixer && bundle.clipName) {
+      mixer.update(dt)
+      // Gentle yaw when a clip is playing (less bob so clips read).
+      root.rotation.y += dt * 0.18
+    } else {
+      // Missing clip → idle bob (procedural stub / unskinned GLB).
+      root.rotation.y += dt * 0.35
+      root.position.y = Math.sin(now / 650) * 0.04
+    }
     renderer.render(scene, camera)
     raf = requestAnimationFrame(tick)
   }
   raf = requestAnimationFrame(tick)
 
-  return { renderer, scene, camera, root, figure, dispose }
+  return bundle
 }
 
 type OverlayProps = {
-  character: ChatDeepAvatarCharacterId
+  /** Solo mesh identity (always boy|girl — Both mounts two overlays). */
+  solo: ChatDeepAvatarSoloId
   mood: ChatDeepAvatarMood
+  /** Offset dock home for dual side-by-side. */
+  duoOffset: boolean
   /** Bar / stage dock origin — home snap + follow when docked. */
   dockRef: RefObject<HTMLElement | null>
   /** Fallback layout; surface prefers `.ds-chat` so drag covers inbox/workspace. */
@@ -227,21 +300,22 @@ type OverlayProps = {
 }
 
 /**
- * Floating 3D companion. Parent mounts only when Companion → 3D is on and
- * reduced-motion is off. Pointer events live only on the handle.
+ * Floating 3D companion for one solo. Parent mounts only when Companion → 3D
+ * is on and reduced-motion is off. Pointer events live only on the handle.
  */
 export function ChatDeepAvatar3DOverlay({
-  character,
+  solo,
   mood,
+  duoOffset,
   dockRef,
   layoutRef,
   onActiveChange,
 }: OverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const handleRef = useRef<HTMLDivElement | null>(null)
-  const char = normalizeChatDeepAvatarCharacter(character)
-  const name = useChatDeepAvatarDisplayName(char)
-  const [pose, setPose] = useState<ChatDeepAvatar3dPose>(() => readChatDeepAvatar3dPose(char))
+  const bundleRef = useRef<SceneBundle | null>(null)
+  const name = useChatDeepAvatarDisplayName(solo)
+  const [pose, setPose] = useState<ChatDeepAvatar3dPose>(() => readChatDeepAvatar3dPose(solo))
   const [webglOk, setWebglOk] = useState(true)
   const [dragging, setDragging] = useState(false)
   const [surfaceEl, setSurfaceEl] = useState<HTMLElement | null>(null)
@@ -261,14 +335,14 @@ export function ChatDeepAvatar3DOverlay({
   }
 
   useEffect(() => {
-    const sync = () => setPose(readChatDeepAvatar3dPose(char))
+    const sync = () => setPose(readChatDeepAvatar3dPose(solo))
     window.addEventListener(CHAT_DEEP_AVATAR_3D_POSE_EVENT, sync)
     return () => window.removeEventListener(CHAT_DEEP_AVATAR_3D_POSE_EVENT, sync)
-  }, [char])
+  }, [solo])
 
   useEffect(() => {
-    setPose(readChatDeepAvatar3dPose(char))
-  }, [char])
+    setPose(readChatDeepAvatar3dPose(solo))
+  }, [solo])
 
   useLayoutEffect(() => {
     setSurfaceEl(resolveSurface())
@@ -279,7 +353,7 @@ export function ChatDeepAvatar3DOverlay({
     if (!canvas) return
     let cancelled = false
     let bundle: SceneBundle | null = null
-    void mountScene(canvas, char).then((b) => {
+    void mountScene(canvas, solo, mood).then((b) => {
       if (cancelled) {
         b?.dispose()
         return
@@ -290,15 +364,24 @@ export function ChatDeepAvatar3DOverlay({
         return
       }
       bundle = b
+      bundleRef.current = b
       setWebglOk(true)
       onActiveChange?.(true)
     })
     return () => {
       cancelled = true
       bundle?.dispose()
+      bundleRef.current = null
       onActiveChange?.(false)
     }
-  }, [char, onActiveChange])
+    // remount on solo change only — mood updates via setMood below
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mood applied in separate effect
+  }, [solo, onActiveChange])
+
+  // Play-bus / FSM mood → AnimationMixer clip (missing → idle bob).
+  useEffect(() => {
+    bundleRef.current?.setMood(mood)
+  }, [mood])
 
   // Follow dock origin while docked; keep free-float % otherwise.
   useLayoutEffect(() => {
@@ -315,7 +398,8 @@ export function ChatDeepAvatar3DOverlay({
         const dock = dockRef.current
         if (dock) {
           const dr = dock.getBoundingClientRect()
-          const cx = dr.left + dr.width / 2 - lr.left
+          const ox = duoOffset ? chatDeepAvatar3dDuoDockOffsetX(solo) : 0
+          const cx = dr.left + dr.width / 2 - lr.left + ox
           const cy = dr.top + dr.height * 0.42 - lr.top
           handle.style.left = `${cx}px`
           handle.style.top = `${cy}px`
@@ -336,7 +420,7 @@ export function ChatDeepAvatar3DOverlay({
       window.removeEventListener('resize', place)
       window.removeEventListener('scroll', place, true)
     }
-  }, [pose, dockRef, layoutRef, dragging, surfaceEl])
+  }, [pose, dockRef, layoutRef, dragging, surfaceEl, duoOffset, solo])
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return
@@ -408,13 +492,14 @@ export function ChatDeepAvatar3DOverlay({
     }
     if (dock) {
       const dr = dock.getBoundingClientRect()
-      const dcx = dr.left + dr.width / 2 - lr.left
+      const ox = duoOffset ? chatDeepAvatar3dDuoDockOffsetX(solo) : 0
+      const dcx = dr.left + dr.width / 2 - lr.left + ox
       const dcy = dr.top + dr.height * 0.42 - lr.top
       if (shouldSnapChatDeepAvatar3dHome(cx, cy, dcx, dcy)) {
         next = { x: dcx / lr.width, y: dcy / lr.height, docked: true }
       }
     }
-    const saved = writeChatDeepAvatar3dPose(char, next)
+    const saved = writeChatDeepAvatar3dPose(solo, next)
     setPose(saved)
   }
 
@@ -430,9 +515,10 @@ export function ChatDeepAvatar3DOverlay({
     <div
       ref={handleRef}
       className={`aui-deep-avatar-3d-handle${dragging ? ' is-dragging' : ''}${pose.docked ? ' is-docked' : ' is-free'}`}
-      data-character={char}
+      data-character={solo}
       data-mood={mood}
       data-docked={pose.docked ? '1' : '0'}
+      data-duo={duoOffset ? '1' : '0'}
       style={style}
       role="img"
       aria-label={`${name} 3D companion — drag anywhere; drop near dock to snap home`}
@@ -448,19 +534,59 @@ export function ChatDeepAvatar3DOverlay({
   )
 }
 
-type GateProps = OverlayProps & {
-  /** Companion → 3D toggle (parent may pass hook value). */
+type GateProps = {
   enabled: boolean
+  character: ChatDeepAvatarCharacterId
+  mood: ChatDeepAvatarMood
+  dockRef: RefObject<HTMLElement | null>
+  layoutRef: RefObject<HTMLElement | null>
+  onActiveChange?: (active: boolean) => void
 }
 
-/** Reduced-motion + toggle gate — mounts overlay only when 3D should show. */
+/**
+ * Reduced-motion + toggle gate. When companion is Both, mounts two independent
+ * GLB overlays (boy + girl) that can chill or collaborate anywhere on `.ds-chat`.
+ */
 export function ChatDeepAvatar3DGate(props: GateProps) {
   const reduce = usePrefersReducedMotion()
   const active = props.enabled && !reduce
+  const char = normalizeChatDeepAvatarCharacter(props.character)
+  const solos = chatDeepAvatar3dSolosToMount(char)
+  const duo = isChatDeepAvatarBothMode(char)
   const onActiveChange = props.onActiveChange
+  const liveCount = useRef(0)
+  const parentActiveRef = useRef(onActiveChange)
+  parentActiveRef.current = onActiveChange
+
+  // Stable per-solo reporter so overlay scene mounts aren't torn down each render.
+  const reportRef = useRef((on: boolean) => {
+    if (on) liveCount.current += 1
+    else liveCount.current = Math.max(0, liveCount.current - 1)
+    parentActiveRef.current?.(liveCount.current > 0)
+  })
+
   useEffect(() => {
-    if (!active) onActiveChange?.(false)
-  }, [active, onActiveChange])
+    if (!active) {
+      liveCount.current = 0
+      parentActiveRef.current?.(false)
+    }
+  }, [active])
+
   if (!active) return null
-  return <ChatDeepAvatar3DOverlay {...props} />
+
+  return (
+    <>
+      {solos.map((solo) => (
+        <ChatDeepAvatar3DOverlay
+          key={solo}
+          solo={solo}
+          mood={props.mood}
+          duoOffset={duo}
+          dockRef={props.dockRef}
+          layoutRef={props.layoutRef}
+          onActiveChange={reportRef.current}
+        />
+      ))}
+    </>
+  )
 }
