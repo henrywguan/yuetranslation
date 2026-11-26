@@ -80,6 +80,8 @@ export default defineConfig({
           // Companion intro MP4/poster — multi‑MB runtime fetch; keep out of SW (2 MiB cap).
           '**/chat-avatar/**/intro.mp4',
           '**/chat-avatar/**/intro-poster.*',
+          // Chat 3D companion GLBs (stub → Higgsfield bake) — runtime-fetch only.
+          '**/chat-avatar/**/*.glb',
         ],
         maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
         additionalManifestEntries: [

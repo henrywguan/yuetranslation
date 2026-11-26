@@ -81,11 +81,13 @@ const cloud = normalizeChatDeepAvatarCloudPrefs({
   names: { girl: 'Momo' },
   trait: 'coach',
   soundEnabled: false,
+  companion3d: true,
   updatedAt: '2026-01-01T00:00:00.000Z',
 })
 assert.equal(cloud?.character, 'girl')
 assert.equal(cloud?.trait, 'coach')
 assert.equal(cloud?.soundEnabled, false)
+assert.equal(cloud?.companion3d, true)
 
 // Companion Sound defaults ON when unset; only explicit off is silent.
 {

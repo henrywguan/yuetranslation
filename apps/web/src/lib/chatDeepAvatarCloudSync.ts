@@ -14,6 +14,10 @@ import {
   writeChatDeepAvatarCelebrateMode,
   writeChatDeepAvatarCharacter,
 } from './chatDeepAvatarCharacter'
+import {
+  readChatDeepAvatar3dEnabled,
+  writeChatDeepAvatar3dEnabled,
+} from './chatDeepAvatar3d'
 
 let pushTimer: number | null = null
 let started = false
@@ -24,6 +28,7 @@ export function pullChatDeepAvatarFromEntitlement(
   applyChatDeepAvatarCloudPrefs(cloud as ChatDeepAvatarCloudPrefs | null, {
     writeCharacter: writeChatDeepAvatarCharacter,
     writeCelebrateMode: writeChatDeepAvatarCelebrateMode,
+    writeCompanion3d: writeChatDeepAvatar3dEnabled,
   })
 }
 
@@ -40,6 +45,7 @@ export async function pushChatDeepAvatarPrefsNow() {
   const blob = buildLocalChatDeepAvatarCloudPrefs({
     character: readChatDeepAvatarCharacter(),
     celebrateMode: readChatDeepAvatarCelebrateMode(),
+    companion3d: readChatDeepAvatar3dEnabled(),
   })
   try {
     await saveChatDeepAvatarPrefs(blob as Record<string, unknown>)

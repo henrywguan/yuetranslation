@@ -185,6 +185,11 @@ assert.match(
   'Companion notes trim on blur only (Space works while typing)',
 )
 assert.match(settingsMenu, /Sound /, 'Companion sound toggle')
+assert.match(
+  settingsMenu,
+  /useChatDeepAvatar3dEnabled|3D companion/,
+  'Companion 3D chrome toggle',
+)
 assert.match(settingsMenu, /inbox-settings-celebrate|Celebrate/, 'settings menu has Celebrate section')
 assert.match(
   settingsMenu,
@@ -677,6 +682,8 @@ assert.match(avatarSrc, /pickChatDeepAvatarOutroMood|setOutro/, 'outro latch wir
 assert.match(avatarSrc, /Priority \(high → low\)/, 'documents mood priority')
 assert.match(avatarSrc, /celebrate \/ proud \/ eureka|proud.*eureka/, 'documents proud/eureka outros')
 assert.doesNotMatch(avatarSrc, /[Ll]ive2[Dd]|Cubism/, 'no Live2D / Cubism in avatar')
+assert.match(thread, /ChatDeepAvatar3DGate/, 'thread mounts 3D companion gate')
+assert.match(auiCss, /\.aui-deep-avatar-3d-handle\b/, '3D companion handle CSS')
 assert.doesNotMatch(avatarSrc, /ChatDeepAvatarCharacterPicker|ChatDeepAvatarBubble/, 'picker/bubble moved out of avatar module')
 assert.doesNotMatch(auiCss, /\.aui-avatar-char-picker\b/, 'composer-adjacent character picker CSS removed')
 assert.match(auiCss, /\.aui-deep-avatar-fx\b/, 'fullscreen celebrate overlay styles')
@@ -916,6 +923,7 @@ assert.equal(
 const viteCfg = readFileSync(join(root, '../vite.config.ts'), 'utf8')
 assert.match(viteCfg, /chat-avatar\/\*\*\/intro\.mp4/, 'SW globIgnores intro mp4')
 assert.match(viteCfg, /intro-poster/, 'SW globIgnores intro poster')
+assert.match(viteCfg, /chat-avatar\/\*\*\/\*\.glb/, 'SW excludes chat-avatar GLBs')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CELEBRATE_MODE_KEY/, 'celebrate mode localStorage key')
 assert.match(charSrc, /CHAT_DEEP_AVATAR_CELEBRATE_MODE_EVENT/, 'celebrate mode change event')
 assert.match(charSrc, /shouldFullscreenCelebrate/, 'fullscreen gate helper')
