@@ -1327,6 +1327,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  /* Grow so the toolbar can pin to the bottom edge of the main column. */
+  align-self: stretch;
 }
 
 /* Message Copy — icon-only, reuse Solo .copy-btn weight next to SpeakButton. */
@@ -1343,8 +1345,9 @@
 }
 
 .aui-agent-strip {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.35rem;
   align-items: center;
   margin: 0 0 0.45rem;
@@ -1352,6 +1355,98 @@
   min-width: 0;
 }
 
+.aui-agent-pill {
+  appearance: none;
+  border: 1px solid var(--ds-blue-soft-border);
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
+  border-radius: 999px;
+  padding: 0.28rem 0.55rem 0.28rem 0.65rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: min(100%, 18rem);
+  min-width: 0;
+  min-height: 1.85rem;
+  height: 1.85rem;
+  box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.18s ease,
+    transform 0.15s ease;
+}
+
+.aui-agent-pill:hover,
+.aui-agent-pill.is-open {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ds-blue) 14%, transparent);
+}
+
+.aui-agent-pill.is-overseer {
+  border-color: color-mix(in srgb, var(--ds-blue) 42%, var(--ds-divider));
+}
+
+.aui-agent-pill-caret {
+  flex-shrink: 0;
+  opacity: 0.7;
+  font-size: 0.65rem;
+  margin-left: 0.1rem;
+}
+
+.aui-agent-dropdown {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 0.3rem);
+  z-index: 8;
+  margin: 0;
+  padding: 0.3rem;
+  list-style: none;
+  min-width: min(100%, 16rem);
+  max-width: min(22rem, 92vw);
+  max-height: 14rem;
+  overflow: auto;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.85rem;
+  background: var(--ds-canvas);
+  box-shadow: 0 14px 36px rgba(26, 27, 30, 0.14);
+  animation: aui-rise 0.18s ease both;
+}
+
+.aui-agent-dropdown-item {
+  appearance: none;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-2);
+  border-radius: 0.55rem;
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: left;
+  min-width: 0;
+}
+
+.aui-agent-dropdown-item:hover,
+.aui-agent-dropdown-item.is-active {
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
+}
+
+.aui-agent-dropdown-item.is-overseer:not(.is-active) {
+  color: var(--ds-text);
+}
+
+/* Legacy chip classes kept for shared role/title bits inside pill + dropdown. */
 .aui-agent-chip {
   appearance: none;
   border: 1px solid var(--ds-divider);
@@ -1368,24 +1463,6 @@
   gap: 0.35rem;
   max-width: 100%;
   min-width: 0;
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    transform 0.15s ease;
-}
-
-.aui-agent-chip:hover {
-  transform: translateY(-1px);
-}
-
-.aui-agent-chip.is-active {
-  border-color: var(--ds-blue-soft-border);
-  background: var(--ds-blue-soft);
-  color: var(--ds-blue);
-}
-
-.aui-agent-chip.is-overseer:not(.is-active) {
-  border-color: color-mix(in srgb, var(--ds-blue) 28%, var(--ds-divider));
 }
 
 .aui-agent-chip-role {
@@ -1403,6 +1480,8 @@
   white-space: nowrap;
 }
 
+.aui-agent-pill .inbox-agent-status,
+.aui-agent-dropdown-item .inbox-agent-status,
 .aui-agent-chip .inbox-agent-status {
   flex-shrink: 0;
 }
@@ -1657,6 +1736,7 @@
   position: relative;
   width: 100%;
   min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -1985,6 +2065,8 @@
   gap: 0.35rem;
   width: 100%;
   min-width: 0;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .aui-composer-toolbar-start,
@@ -3485,6 +3567,267 @@
   .aui-ws-consent-gate-btn:hover:not(:disabled),
   .aui-ws-consent-gate-btn:focus-visible {
     transform: none;
+  }
+}
+
+/* —— Selection floating menu (Copy | Reply | Include) —— */
+.aui-selection-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.28rem 0.35rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ds-blue-soft-border) 70%, var(--ds-divider));
+  background: color-mix(in srgb, var(--ds-canvas) 92%, var(--ds-blue-soft));
+  box-shadow:
+    0 10px 28px rgba(26, 27, 30, 0.16),
+    0 0 0 1px color-mix(in srgb, var(--ds-blue) 8%, transparent);
+  backdrop-filter: blur(10px);
+  animation: aui-rise 0.16s ease both;
+}
+
+.aui-selection-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 650;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.aui-selection-btn:hover {
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
+}
+
+.aui-selection-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ds-blue) 70%, transparent);
+  outline-offset: 1px;
+}
+
+/* —— History scrubber rail —— */
+.aui-scrubber {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.2rem;
+  bottom: max(7.5rem, calc(env(safe-area-inset-bottom, 0px) + 6.5rem));
+  width: 1.1rem;
+  z-index: 4;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0.35rem 0;
+  box-sizing: border-box;
+  cursor: ns-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.aui-scrubber:focus-visible .aui-scrubber-track {
+  outline: 2px solid color-mix(in srgb, var(--ds-blue) 55%, transparent);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+.aui-scrubber-track {
+  position: relative;
+  width: 0.28rem;
+  flex: 1;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ds-divider) 70%, transparent);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.aui-scrubber-tick {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  position: absolute;
+  left: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: -0.25rem;
+  margin-top: -0.25rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ds-text-3) 55%, transparent);
+  cursor: pointer;
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.aui-scrubber-tick.is-user {
+  background: color-mix(in srgb, var(--ds-blue) 45%, var(--ds-text-3));
+}
+
+.aui-scrubber-tick.is-assistant {
+  background: color-mix(in srgb, var(--ds-text-2) 40%, transparent);
+}
+
+.aui-scrubber-tick.is-active {
+  transform: scale(1.35);
+  background: var(--ds-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ds-blue) 22%, transparent);
+}
+
+.aui-scrubber-tick:hover {
+  transform: scale(1.25);
+}
+
+@media (max-width: 420px) {
+  .aui-scrubber {
+    display: none;
+  }
+}
+
+/* —— Companion mood fullscreen picker —— */
+.aui-mood-btn {
+  font-size: 1rem;
+  line-height: 1;
+  min-width: 2.15rem;
+}
+
+.aui-mood-picker {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  display: grid;
+  place-items: center;
+  padding: max(0.75rem, env(safe-area-inset-top, 0px)) 0.85rem
+    max(0.75rem, env(safe-area-inset-bottom, 0px));
+  background:
+    radial-gradient(
+      ellipse 55% 45% at 50% 30%,
+      color-mix(in srgb, var(--ds-blue) 18%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, #0b1220 72%, transparent);
+  backdrop-filter: blur(12px);
+  animation: aui-rise 0.22s ease both;
+}
+
+.aui-mood-picker-panel {
+  width: min(42rem, 100%);
+  max-height: min(88vh, 40rem);
+  display: flex;
+  flex-direction: column;
+  border-radius: 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--ds-blue-soft-border) 60%, var(--ds-divider));
+  background: color-mix(in srgb, var(--ds-canvas) 94%, var(--ds-blue-soft));
+  box-shadow: 0 24px 64px rgba(8, 12, 24, 0.35);
+  overflow: hidden;
+}
+
+.aui-mood-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem 0.65rem;
+  border-bottom: 1px solid var(--ds-divider);
+}
+
+.aui-mood-picker-head h2 {
+  margin: 0;
+  font-family: Syne, system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ds-text);
+}
+
+.aui-mood-picker-close {
+  appearance: none;
+  border: 0;
+  background: var(--ds-surface-1);
+  color: var(--ds-text-2);
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.aui-mood-picker-close:hover {
+  color: var(--ds-text);
+  background: var(--ds-blue-soft);
+}
+
+.aui-mood-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.65rem;
+  padding: 0.85rem 1rem 1.1rem;
+  overflow: auto;
+  min-height: 0;
+}
+
+.aui-mood-picker-card {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  border-radius: 0.9rem;
+  padding: 0.45rem 0.4rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  min-width: 0;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.aui-mood-picker-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--ds-blue-soft-border);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--ds-blue) 12%, transparent);
+}
+
+.aui-mood-picker-card.is-energy {
+  border-color: color-mix(in srgb, var(--ds-blue) 35%, var(--ds-divider));
+}
+
+.aui-mood-picker-gif {
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: contain;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--ds-canvas) 80%, transparent);
+  pointer-events: none;
+}
+
+.aui-mood-picker-label {
+  font-size: 0.7rem;
+  font-weight: 650;
+  color: var(--ds-text-2);
+  text-align: center;
+  line-height: 1.2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aui-selection-menu,
+  .aui-mood-picker,
+  .aui-agent-dropdown {
+    animation: none;
+  }
+
+  .aui-scrubber-tick,
+  .aui-mood-picker-card,
+  .aui-agent-pill {
+    transition: none;
   }
 }
 
