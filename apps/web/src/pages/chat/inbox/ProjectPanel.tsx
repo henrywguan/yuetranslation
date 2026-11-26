@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { ChatInboxAgent, ChatInboxProject } from '../../../lib/chatInbox'
+import { isCloudBackedProject, type ChatInboxAgent, type ChatInboxProject } from '../../../lib/chatInbox'
+import { CloudBadge } from './ProjectCloudMenu'
 
 export function ProjectDraftPanel({
   title,
@@ -54,15 +55,23 @@ export function ProjectDraftPanel({
 export function ProjectPanel({
   project,
   agents,
+  loggedIn,
+  moveBusy,
   onOpenAgent,
   onRename,
   onMemoryChange,
+  onMoveToCloud,
+  onSignIn,
 }: {
   project: ChatInboxProject
   agents: ChatInboxAgent[]
+  loggedIn?: boolean
+  moveBusy?: boolean
   onOpenAgent: (agent: ChatInboxAgent) => void
   onRename?: (title: string) => void
   onMemoryChange: (memory: string) => void
+  onMoveToCloud?: (projectId: string) => void
+  onSignIn?: () => void
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(project.title)
@@ -121,10 +130,35 @@ export function ProjectPanel({
             title="Focus Overseer chat · double-click to rename"
           >
             {project.title}
+            <CloudBadge project={project} />
             <span aria-hidden>· Rules</span>
           </button>
         )}
       </div>
+      {onMoveToCloud ? (
+        <div className="inbox-project-cloud-row">
+          <button
+            type="button"
+            className="inbox-new-chat inbox-new-chat--quiet"
+            disabled={moveBusy}
+            onClick={() => {
+              if (!loggedIn) {
+                onSignIn?.()
+                return
+              }
+              onMoveToCloud(project.id)
+            }}
+          >
+            {moveBusy
+              ? 'Uploading…'
+              : !loggedIn
+                ? 'Sign in to move to cloud'
+                : isCloudBackedProject(project)
+                  ? 'Sync to cloud'
+                  : 'Move project to cloud'}
+          </button>
+        </div>
+      ) : null}
       <div className="inbox-rules-card">
         <div className="inbox-rules-head">
           <span className="inbox-rules-title">Project Rules</span>

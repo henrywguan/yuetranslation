@@ -3,12 +3,15 @@ import {
   ThreadListPrimitive,
   useAuiState,
 } from '@assistant-ui/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { openAuthScreen } from '../../../lib/auth'
 import { createChatSandbox } from '../../../lib/api'
+import { uploadProjectToCloud } from '../../../lib/chatCloudSync'
 import {
   buildAgentViews,
   countByFilter,
   filterAgentViews,
+  isCloudBackedProject,
   matchesSearch,
   projectNestedViews,
   ungroupedAgentViews,
@@ -19,6 +22,7 @@ import {
   type ThreadAgentView,
 } from '../../../lib/chatInbox'
 import { CHAT_THREAD_DRAG_MIME } from '../../../lib/chatPrChecks'
+import { useYueStore } from '../../../lib/store'
 import { useChatAuiSession } from '../aui/ChatAuiRuntime'
 import { ArchiveList } from './ArchiveList'
 import { ChatProjectMenu } from './ChatProjectMenu'
@@ -67,6 +71,7 @@ export function InboxShell({
     removeThread,
     reviewActivity,
     activeWorkspace,
+    setError,
   } = useChatAuiSession()
   const {
     state,
@@ -80,9 +85,14 @@ export function InboxShell({
     bindWorkspaceRef,
     bindAgentThread,
     updateProjectMemory,
+    replaceState,
   } = useChatInboxContext()
+  const entitlement = useYueStore((s) => s.entitlement)
+  const loggedIn = Boolean(entitlement?.loggedIn)
   const [sandboxBusy, setSandboxBusy] = useState(false)
   const [sandboxNote, setSandboxNote] = useState<string | null>(null)
+  const [movingProjectId, setMovingProjectId] = useState<string | null>(null)
+  const [cloudNote, setCloudNote] = useState<string | null>(null)
   /**
    * Empty-folder bind tip: clear only when Diffs/WS grow past the counts at bind time
    * (active-thread reviewActivity / workspace can already be non-empty).
@@ -267,6 +277,41 @@ export function InboxShell({
   const removeChatFromProject = (threadId: string) => {
     unlinkThread(threadId)
   }
+
+  const moveProjectToCloud = useCallback(
+    async (projectId: string) => {
+      if (movingProjectId) return
+      if (!loggedIn) {
+        openAuthScreen()
+        return
+      }
+      const project = state.projects.find((p) => p.id === projectId)
+      setMovingProjectId(projectId)
+      setCloudNote(
+        isCloudBackedProject(project)
+          ? `Syncing “${project?.title || 'project'}”…`
+          : `Moving “${project?.title || 'project'}” to cloud…`,
+      )
+      setError(null)
+      try {
+        const result = await uploadProjectToCloud(projectId, {
+          state,
+          threads,
+        })
+        replaceState(result.state)
+        setCloudNote(
+          `Cloud · ${result.threadCount} chat${result.threadCount === 1 ? '' : 's'} synced`,
+        )
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Move to cloud failed'
+        setCloudNote(null)
+        setError(message)
+      } finally {
+        setMovingProjectId(null)
+      }
+    },
+    [loggedIn, movingProjectId, replaceState, setError, state, threads],
+  )
 
   const createWorkspaceKind = async (kind: ChatInboxWorkspaceKind) => {
     // `files` entries are created via Thread files → Save to Workspaces only.
@@ -475,6 +520,8 @@ export function InboxShell({
             open={projectsOpen}
             dimEmpty={filterActive}
             createDisabled={wizardOpen}
+            loggedIn={loggedIn}
+            movingProjectId={movingProjectId}
             onToggle={toggleProjects}
             onSelect={(id) => {
               selectProject(id)
@@ -500,6 +547,10 @@ export function InboxShell({
                 return next
               })
             }}
+            onMoveToCloud={(id) => {
+              void moveProjectToCloud(id)
+            }}
+            onSignIn={() => openAuthScreen()}
           />
 
           {wizardOpen ? (
@@ -518,11 +569,18 @@ export function InboxShell({
             <ProjectPanel
               project={activeProject}
               agents={state.agents}
+              loggedIn={loggedIn}
+              moveBusy={movingProjectId === activeProject.id}
               onOpenAgent={openAgent}
               onRename={(title) => renameProjectTitle(activeProject.id, title)}
               onMemoryChange={(memory) => updateProjectMemory(activeProject.id, memory)}
+              onMoveToCloud={(id) => {
+                void moveProjectToCloud(id)
+              }}
+              onSignIn={() => openAuthScreen()}
             />
           ) : null}
+          {cloudNote ? <p className="inbox-empty inbox-cloud-note">{cloudNote}</p> : null}
         </div>
 
         <div className="inbox-band">

@@ -4,6 +4,7 @@ import { CHAT_THREAD_DRAG_MIME } from '../../../lib/chatPrChecks'
 import { ChatProjectMenu } from './ChatProjectMenu'
 import { ArchiveIcon, DeleteIcon } from './InboxIcons'
 import { InboxTickerName } from './InboxTickerName'
+import { CloudBadge, ProjectCloudMenu } from './ProjectCloudMenu'
 import { StatusChip } from './StatusChip'
 
 export function ProjectList({
@@ -16,6 +17,8 @@ export function ProjectList({
   open,
   dimEmpty,
   createDisabled,
+  loggedIn,
+  movingProjectId,
   onToggle,
   onSelect,
   onToggleExpand,
@@ -27,6 +30,8 @@ export function ProjectList({
   onCreate,
   onRename,
   onDelete,
+  onMoveToCloud,
+  onSignIn,
 }: {
   projects: ChatInboxProject[]
   /** Full project list for Add-to-Project menus (not just visible/filtered). */
@@ -40,6 +45,8 @@ export function ProjectList({
   /** When a status/search filter is active, dim folders with no matching children. */
   dimEmpty?: boolean
   createDisabled?: boolean
+  loggedIn?: boolean
+  movingProjectId?: string | null
   onToggle: () => void
   onSelect: (projectId: string | null) => void
   onToggleExpand: (projectId: string) => void
@@ -51,6 +58,8 @@ export function ProjectList({
   onCreate: () => void
   onRename: (projectId: string, title: string) => void
   onDelete: (projectId: string) => void
+  onMoveToCloud?: (projectId: string) => void
+  onSignIn?: () => void
 }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
@@ -190,19 +199,35 @@ export function ProjectList({
                         }}
                       >
                         {p.title}
+                        <CloudBadge project={p} />
                       </button>
                     )}
                     <span className="inbox-list-meta" title="Agents & chats in project">
                       {children.length}
                     </span>
-                    <button
-                      type="button"
-                      className="inbox-list-del"
-                      aria-label={`Delete ${p.title}`}
-                      onClick={() => onDelete(p.id)}
-                    >
-                      ×
-                    </button>
+                    {onMoveToCloud ? (
+                      <ProjectCloudMenu
+                        project={p}
+                        loggedIn={Boolean(loggedIn)}
+                        busy={movingProjectId === p.id}
+                        onMoveToCloud={onMoveToCloud}
+                        onSignIn={() => onSignIn?.()}
+                        onRename={() => {
+                          setDraft(p.title)
+                          setEditingId(p.id)
+                        }}
+                        onDelete={() => onDelete(p.id)}
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        className="inbox-list-del"
+                        aria-label={`Delete ${p.title}`}
+                        onClick={() => onDelete(p.id)}
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                   {expanded ? (
                     children.length ? (

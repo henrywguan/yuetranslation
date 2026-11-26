@@ -1,6 +1,8 @@
 /**
- * Local DeepSeek Chat threads (device-local).
- * Full Supabase cloud sync is deferred — see `chatDeferred.ts`.
+ * Local DeepSeek Chat threads (device-local IndexedDB/localStorage working set).
+ * Inbox Projects can opt into cloud via “Move project to cloud”
+ * (`chatCloudSync.ts` + `chat_cloud_*` tables). Loose threads stay device-local;
+ * see `chatDeferred.ts` for remaining deferred chat capabilities.
  */
 import { normalizeWorkspace, pruneWorkspace } from './chatWorkspace.js'
 
@@ -94,6 +96,8 @@ export type ChatThread = {
 }
 
 const STORAGE_KEY = 'yue-deepseek-chat-v1'
+/** Fired after chat thread disk writes — cloud project sync debounce listens here. */
+export const CHAT_THREADS_CHANGED_EVENT = 'yue-chat-threads-changed'
 const MAX_THREADS = 40
 const MAX_MESSAGES = 80
 /** Drop DeepThink traces except on the newest N assistant rows per thread. */
@@ -453,6 +457,13 @@ function commitDiskWrite(threads: ChatThread[]) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(threads))
   } catch {
     /* ignore quota */
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent(CHAT_THREADS_CHANGED_EVENT, { detail: threads }))
+    } catch {
+      /* ignore */
+    }
   }
 }
 

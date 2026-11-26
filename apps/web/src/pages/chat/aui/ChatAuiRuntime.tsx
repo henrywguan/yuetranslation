@@ -72,6 +72,7 @@ import {
   type ChatSource,
   type ChatThread,
 } from '../../../lib/chatHistory'
+import { CHAT_CLOUD_HYDRATE_EVENT, mergeCloudThreadsIntoHistory } from '../../../lib/chatCloudSync'
 import {
   agentForThread,
   CLOSE_STALL_ERROR,
@@ -737,6 +738,21 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       abortByThreadRef.current.clear()
       busyThreadIdsRef.current.clear()
     }
+  }, [])
+
+  // Cloud project hydrate — merge remote transcripts into the live thread list.
+  useEffect(() => {
+    const onHydrate = (e: Event) => {
+      const detail = (e as CustomEvent<{ threads?: ChatThread[] }>).detail
+      if (!detail?.threads?.length) return
+      setThreads((prev) => {
+        const withoutBoot = prev.filter((t) => t.id !== BOOT_THREAD.id)
+        const { threads: merged } = mergeCloudThreadsIntoHistory(withoutBoot, detail.threads!)
+        return merged.length ? merged : [emptyThread()]
+      })
+    }
+    window.addEventListener(CHAT_CLOUD_HYDRATE_EVENT, onHydrate)
+    return () => window.removeEventListener(CHAT_CLOUD_HYDRATE_EVENT, onHydrate)
   }, [])
 
   const refreshPlugins = useCallback(async () => {
