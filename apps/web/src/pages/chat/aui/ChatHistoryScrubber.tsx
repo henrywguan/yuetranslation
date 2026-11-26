@@ -1,5 +1,6 @@
 /**
  * Slim vertical history scrubber on the message viewport — Cursor-like jump rail.
+ * Thin reactive hairline (not chunky dots over the native scrollbar).
  */
 import { useAuiState } from '@assistant-ui/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -41,7 +42,12 @@ function viewportProgress(viewport: HTMLElement): number {
   return viewport.scrollTop / max
 }
 
-/** Right-edge tick rail — one tick per message; drag/click jumps. */
+function tickTopPct(index: number, count: number): number {
+  if (count <= 1) return 0
+  return (index / (count - 1)) * 100
+}
+
+/** Right-edge hairline rail — one mark per message; drag/click jumps. */
 export function ChatHistoryScrubber() {
   const messages = useAuiState((s) => s.thread.messages)
   const ticks = useMemo(() => {
@@ -54,7 +60,11 @@ export function ChatHistoryScrubber() {
   }, [messages])
 
   const [active, setActive] = useState(0)
-  const dragging = useRef(false)
+  const [dragging, setDragging] = useState(false)
+  const [hoverPreview, setHoverPreview] = useState<{ tick: ScrubberTick; topPct: number } | null>(
+    null,
+  )
+  const draggingRef = useRef(false)
   const railRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -62,7 +72,7 @@ export function ChatHistoryScrubber() {
     if (!viewport || !ticks.length) return
 
     const sync = () => {
-      if (dragging.current) return
+      if (draggingRef.current) return
       // Prefer intersection: which message is nearest the upper third of the viewport.
       const mid = viewport.scrollTop + viewport.clientHeight * 0.28
       let best = 0
@@ -105,10 +115,12 @@ export function ChatHistoryScrubber() {
 
   if (ticks.length < 2) return null
 
+  const thumbPct = tickTopPct(active, ticks.length)
+
   return (
     <div
       ref={railRef}
-      className="aui-scrubber"
+      className={`aui-scrubber${dragging ? ' is-dragging' : ''}`}
       role="slider"
       aria-label="Message history"
       aria-valuemin={0}
@@ -131,16 +143,18 @@ export function ChatHistoryScrubber() {
       }}
       onPointerDown={(e) => {
         if (e.button !== 0) return
-        dragging.current = true
+        draggingRef.current = true
+        setDragging(true)
         railRef.current?.setPointerCapture(e.pointerId)
         jumpFromClientY(e.clientY)
       }}
       onPointerMove={(e) => {
-        if (!dragging.current) return
+        if (!draggingRef.current) return
         jumpFromClientY(e.clientY)
       }}
       onPointerUp={(e) => {
-        dragging.current = false
+        draggingRef.current = false
+        setDragging(false)
         try {
           railRef.current?.releasePointerCapture(e.pointerId)
         } catch {
@@ -148,21 +162,28 @@ export function ChatHistoryScrubber() {
         }
       }}
       onPointerCancel={() => {
-        dragging.current = false
+        draggingRef.current = false
+        setDragging(false)
+      }}
+      onPointerLeave={() => {
+        if (!draggingRef.current) setHoverPreview(null)
       }}
     >
       <div className="aui-scrubber-track" aria-hidden>
         {ticks.map((t, i) => {
-          const topPct = ticks.length <= 1 ? 0 : (i / (ticks.length - 1)) * 100
+          const topPct = tickTopPct(i, ticks.length)
           return (
             <button
               key={t.id}
               type="button"
               className={`aui-scrubber-tick is-${t.role}${i === active ? ' is-active' : ''}`}
               style={{ top: `${topPct}%` }}
-              title={`${t.role}: ${t.snippet}`}
               aria-label={`${t.role}: ${t.snippet}`}
               tabIndex={-1}
+              onPointerEnter={() => setHoverPreview({ tick: t, topPct })}
+              onPointerLeave={() => {
+                if (!draggingRef.current) setHoverPreview(null)
+              }}
               onClick={(e) => {
                 e.stopPropagation()
                 setActive(i)
@@ -171,7 +192,18 @@ export function ChatHistoryScrubber() {
             />
           )
         })}
+        <div className="aui-scrubber-thumb" style={{ top: `${thumbPct}%` }} />
       </div>
+      {hoverPreview ? (
+        <div
+          className="aui-scrubber-preview"
+          role="tooltip"
+          style={{ top: `${hoverPreview.topPct}%` }}
+        >
+          <span className="aui-scrubber-preview-role">{hoverPreview.tick.role}</span>
+          <span className="aui-scrubber-preview-text">{hoverPreview.tick.snippet}</span>
+        </div>
+      ) : null}
     </div>
   )
 }

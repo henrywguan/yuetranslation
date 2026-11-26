@@ -113,9 +113,18 @@ assert.match(
   'selection menu CSS z-index above .ds-chat',
 )
 assert.match(css, /\.aui-scrubber/, 'scrubber CSS')
+assert.match(css, /\.aui-scrubber-thumb/, 'scrubber sliding thumb')
+assert.match(css, /\.aui-scrubber-preview/, 'scrubber hover preview')
+assert.match(css, /scrollbar-width:\s*none/, 'suppress native bar under scrubber')
+assert.doesNotMatch(css, /\.aui-scrubber-tick\s*\{[^}]*width:\s*0\.5rem/, 'no chunky 0.5rem dots')
 assert.match(css, /\.aui-agent-pill/, 'agent pill CSS')
 assert.match(css, /\.aui-composer-toolbar[\s\S]*margin-top:\s*auto|\.aui-composer-row-wrap[\s\S]*flex:\s*1/, 'toolbar bottom pin')
 assert.match(css, /\.aui-mood-picker/, 'mood picker CSS')
+
+const scrubberSrc = readFileSync(join(root, 'pages/chat/aui/ChatHistoryScrubber.tsx'), 'utf8')
+assert.match(scrubberSrc, /aui-scrubber-thumb/, 'thumb in scrubber component')
+assert.match(scrubberSrc, /aui-scrubber-preview/, 'preview in scrubber component')
+assert.match(scrubberSrc, /is-dragging/, 'drag state class')
 
 // Message bodies must opt into quote-selectable so SelectionToolbar accepts user+assistant text.
 assert.match(thread, /is-user[\s\S]*data-aui-quote-selectable/, 'user msgs quote-selectable')
