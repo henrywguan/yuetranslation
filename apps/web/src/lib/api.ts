@@ -1455,6 +1455,20 @@ export async function deleteChatSandbox(id: string): Promise<void> {
   if (!res.ok) await throwApiError(res, 'Failed to destroy sandbox')
 }
 
+/** Read one text file from a sandbox session. */
+export async function readChatSandboxFile(
+  sessionId: string,
+  path: string,
+): Promise<{ path: string; text: string }> {
+  const res = await apiFetch(`/chat/sandbox/${encodeURIComponent(sessionId)}/fs/read`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path }),
+  })
+  if (!res.ok) await throwApiError(res, 'Sandbox read failed')
+  return (await res.json()) as { path: string; text: string }
+}
+
 /** Write one text file into a sandbox session. */
 export async function writeChatSandboxFile(
   sessionId: string,

@@ -20,10 +20,24 @@ import {
   ocrDeepseekChatFile,
   streamDeepseekChat,
   uploadDeepseekChatFile,
+  writeChatSandboxFile,
   type DeepseekChatPlugin,
   type DeepseekChatPluginKeyHint,
   type DeepseekChatPluginKeyId,
 } from '../../../lib/api'
+import {
+  applyHunkDecisionsToPatch,
+  clearDiffDecision,
+  gitAddArgv,
+  gitCommitArgv,
+  gitStatusPathArgv,
+  looksLikeUnifiedDiff,
+  pathsToStageForCommit,
+  rejectArgvAttempts,
+  removeDiffPath,
+  sanitizeCommitMessage,
+  setDiffDecision,
+} from '../../../lib/chatDiffReview'
 import {
   applySandboxActivity,
   applyWorkspaceFilesToDiffs,
@@ -144,6 +158,7 @@ import {
   maybeSeedArtifactsIntoWorkspace,
   patchThreadWorkspace,
   readHarnessFlag,
+  removeWorkspaceFile,
   workspaceWirePayload,
   writeHarnessFlag,
   type ChatWorkspace,
@@ -273,6 +288,14 @@ export type ChatAuiSession = {
   setReviewOpen: (on: boolean) => void
   refreshGitDiff: () => Promise<void>
   gitDiffBusy: boolean
+  /** Keep / Reject / Commit busy latch for Diffs panel. */
+  diffReviewBusy: boolean
+  keepDiff: (path: string) => Promise<void>
+  rejectDiff: (path: string) => Promise<void>
+  keepAllDiffs: () => Promise<void>
+  rejectAllDiffs: () => Promise<void>
+  rejectDiffHunks: (path: string, rejectIndexes: number[]) => Promise<void>
+  commitKeptDiffs: (message: string) => Promise<void>
   /**
    * Agent + harness write gate: bind local folder OR localStorage consent.
    * Highlight pulses the WS tab/panel until resolved.
@@ -366,6 +389,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   const [continueEpoch, setContinueEpoch] = useState(0)
   const [reviewOpen, setReviewOpenState] = useState(false)
   const [gitDiffBusy, setGitDiffBusy] = useState(false)
+  const [diffReviewBusy, setDiffReviewBusy] = useState(false)
   type FollowUpItem = { id: string; text: string; threadId: string }
   const [followUpQueue, setFollowUpQueue] = useState<FollowUpItem[]>([])
   /** Keep in sync only via queue helpers — never mirror from render (avoids reclaim races). */
@@ -1815,12 +1839,43 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
   )
   enqueuePromptRef.current = enqueuePrompt
 
-  const refreshGitDiff = useCallback(async () => {
+  const resolveReviewSandboxId = useCallback((): string | undefined => {
     const inboxState = inboxRef.current?.state
-    if (!inboxState) return
+    if (!inboxState) return undefined
     const thread = threadsRef.current.find((t) => t.id === activeIdRef.current)
     const linked = thread ? agentForThread(inboxState, thread.id) : undefined
-    const sessionId = resolveActiveSandboxSessionId(inboxState, linked?.projectId)
+    return resolveActiveSandboxSessionId(inboxState, linked?.projectId)
+  }, [])
+
+  const recordSandboxRun = useCallback(
+    (
+      tid: string,
+      result: {
+        argv?: string[]
+        stdout?: string
+        stderr?: string
+        code?: number | null
+        ok?: boolean
+      },
+      fallbackArgv: string[],
+    ) => {
+      applyReviewForThread(tid, (prev) =>
+        applySandboxActivity(prev, {
+          kind: 'run',
+          argv: result.argv?.length ? result.argv : fallbackArgv,
+          stdout: result.stdout,
+          stderr: result.stderr,
+          exitCode: result.code ?? undefined,
+          ok: result.ok,
+          at: Date.now(),
+        }),
+      )
+    },
+    [applyReviewForThread],
+  )
+
+  const refreshGitDiff = useCallback(async () => {
+    const sessionId = resolveReviewSandboxId()
     if (!sessionId) {
       setError('No sandbox session — create an Internal sandbox in Workspaces first.')
       return
@@ -1849,7 +1904,231 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
     } finally {
       setGitDiffBusy(false)
     }
-  }, [applyReviewForThread])
+  }, [applyReviewForThread, resolveReviewSandboxId])
+
+  const keepDiff = useCallback(
+    async (path: string) => {
+      const p = String(path || '').trim()
+      const tid = activeIdRef.current
+      if (!p || !tid) return
+      setDiffReviewBusy(true)
+      setError(null)
+      try {
+        const sessionId = resolveReviewSandboxId()
+        if (sessionId) {
+          const argv = gitAddArgv(p)
+          const result = await execChatSandbox(sessionId, argv)
+          recordSandboxRun(tid, result, argv)
+          if (!result.ok) {
+            // Still mark kept — file may already match index / untracked add failed softly.
+            applyReviewForThread(tid, (prev) => setDiffDecision(prev, p, 'kept'))
+            if (result.stderr?.trim()) {
+              setError(`Keep staged with warning: ${result.stderr.trim().slice(0, 240)}`)
+            }
+            return
+          }
+        }
+        applyReviewForThread(tid, (prev) => setDiffDecision(prev, p, 'kept'))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Keep failed')
+      } finally {
+        setDiffReviewBusy(false)
+      }
+    },
+    [applyReviewForThread, recordSandboxRun, resolveReviewSandboxId],
+  )
+
+  const rejectDiff = useCallback(
+    async (path: string) => {
+      const p = String(path || '').trim()
+      const tid = activeIdRef.current
+      if (!p || !tid) return
+      setDiffReviewBusy(true)
+      setError(null)
+      try {
+        const sessionId = resolveReviewSandboxId()
+        const entry = (reviewByThreadRef.current.get(tid) || emptyReviewActivity()).diffs.find(
+          (d) => d.path === p,
+        )
+        let reverted = false
+        if (sessionId) {
+          let statusPorcelain = ''
+          try {
+            const st = await execChatSandbox(sessionId, gitStatusPathArgv(p))
+            statusPorcelain = st.stdout || ''
+            recordSandboxRun(tid, st, gitStatusPathArgv(p))
+          } catch {
+            /* status optional */
+          }
+          const attempts = rejectArgvAttempts({
+            path: p,
+            patchText: entry?.text,
+            statusPorcelain,
+          })
+          for (const argv of attempts) {
+            const result = await execChatSandbox(sessionId, argv)
+            recordSandboxRun(tid, result, argv)
+            if (result.ok) {
+              reverted = true
+              break
+            }
+          }
+        }
+        // Workspace harness mirror — drop the file from the thread workspace.
+        const cur = threadsRef.current.find((t) => t.id === tid)
+        if (cur?.workspace && (entry?.source === 'workspace' || !sessionId)) {
+          const nextWs = removeWorkspaceFile(cur.workspace, p)
+          if (nextWs !== cur.workspace) persist(patchThreadWorkspace(cur, nextWs))
+          reverted = true
+        }
+        if (!reverted && !sessionId) {
+          setError('Reject needs a sandbox session or a workspace file to revert.')
+          return
+        }
+        if (!reverted && sessionId) {
+          setError(`Could not revert ${p} in the sandbox.`)
+          return
+        }
+        applyReviewForThread(tid, (prev) => removeDiffPath(setDiffDecision(prev, p, 'rejected'), p))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Reject failed')
+      } finally {
+        setDiffReviewBusy(false)
+      }
+    },
+    [applyReviewForThread, persist, recordSandboxRun, resolveReviewSandboxId],
+  )
+
+  const keepAllDiffs = useCallback(async () => {
+    const tid = activeIdRef.current
+    if (!tid) return
+    const pending = (reviewByThreadRef.current.get(tid) || emptyReviewActivity()).diffs.filter(
+      (d) => {
+        const dec = (reviewByThreadRef.current.get(tid) || emptyReviewActivity()).decisions?.[d.path]
+        return dec !== 'kept' && dec !== 'rejected'
+      },
+    )
+    for (const d of pending) {
+      await keepDiff(d.path)
+    }
+  }, [keepDiff])
+
+  const rejectAllDiffs = useCallback(async () => {
+    const tid = activeIdRef.current
+    if (!tid) return
+    const act = reviewByThreadRef.current.get(tid) || emptyReviewActivity()
+    const pending = act.diffs.filter((d) => {
+      const dec = act.decisions?.[d.path]
+      return dec !== 'kept' && dec !== 'rejected'
+    })
+    for (const d of pending) {
+      await rejectDiff(d.path)
+    }
+  }, [rejectDiff])
+
+  const rejectDiffHunks = useCallback(
+    async (path: string, rejectIndexes: number[]) => {
+      const p = String(path || '').trim()
+      const tid = activeIdRef.current
+      if (!p || !tid || !rejectIndexes.length) return
+      const entry = (reviewByThreadRef.current.get(tid) || emptyReviewActivity()).diffs.find(
+        (d) => d.path === p,
+      )
+      if (!entry || !looksLikeUnifiedDiff(entry.text)) {
+        setError('Hunk review needs a unified git diff — refresh git diff first.')
+        return
+      }
+      const rebuilt = applyHunkDecisionsToPatch({
+        patch: entry.text || '',
+        rejectIndexes,
+      })
+      if (!rebuilt.ok) {
+        setError('Could not apply hunk picks for this patch.')
+        return
+      }
+      setDiffReviewBusy(true)
+      setError(null)
+      try {
+        const sessionId = resolveReviewSandboxId()
+        if (!sessionId) {
+          setError('Hunk Apply needs a sandbox session.')
+          return
+        }
+        await writeChatSandboxFile(sessionId, p, rebuilt.text)
+        applyReviewForThread(tid, (prev) =>
+          applySandboxActivity(prev, {
+            kind: 'diff',
+            path: p,
+            text: rebuilt.text,
+            source: 'sandbox',
+            at: Date.now(),
+          }),
+        )
+        // Re-diff so Keep/Reject see the residual patch.
+        const result = await execChatSandbox(sessionId, ['git', 'diff', '--no-color', '--', p])
+        recordSandboxRun(tid, result, ['git', 'diff', '--no-color', '--', p])
+        if (result.ok && (result.stdout || '').trim()) {
+          applyReviewForThread(tid, (prev) => mergeGitDiffs(prev, result.stdout || ''))
+        } else {
+          // No residual diff — treat as fully resolved / kept shape.
+          applyReviewForThread(tid, (prev) => removeDiffPath(prev, p))
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Hunk apply failed')
+      } finally {
+        setDiffReviewBusy(false)
+      }
+    },
+    [applyReviewForThread, recordSandboxRun, resolveReviewSandboxId],
+  )
+
+  const commitKeptDiffs = useCallback(
+    async (message: string) => {
+      const tid = activeIdRef.current
+      const msg = sanitizeCommitMessage(message)
+      if (!tid || !msg) return
+      const sessionId = resolveReviewSandboxId()
+      if (!sessionId) {
+        setError('Commit needs a sandbox session with git.')
+        return
+      }
+      setDiffReviewBusy(true)
+      setError(null)
+      try {
+        const act = reviewByThreadRef.current.get(tid) || emptyReviewActivity()
+        const paths = pathsToStageForCommit(act)
+        if (!paths.length) {
+          setError('Keep at least one file before Commit.')
+          return
+        }
+        for (const p of paths) {
+          const addArgv = gitAddArgv(p)
+          const addResult = await execChatSandbox(sessionId, addArgv)
+          recordSandboxRun(tid, addResult, addArgv)
+        }
+        const commitArgv = gitCommitArgv(msg)
+        const result = await execChatSandbox(sessionId, commitArgv)
+        recordSandboxRun(tid, result, commitArgv)
+        if (!result.ok) {
+          setError(
+            (result.stderr || result.stdout || 'git commit failed').trim().slice(0, 320),
+          )
+          return
+        }
+        // Drop committed paths from the review list.
+        applyReviewForThread(tid, (prev) => {
+          let next = prev
+          for (const p of paths) next = removeDiffPath(clearDiffDecision(next, p), p)
+          return next
+        })
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Commit failed')
+      } finally {
+        setDiffReviewBusy(false)
+      }
+    },
+    [applyReviewForThread, recordSandboxRun, resolveReviewSandboxId],
+  )
 
   /**
    * Plan→Build Deep latch: keep chainBusy while workers are queued/flushing so the
@@ -2463,6 +2742,13 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       setReviewOpen,
       refreshGitDiff,
       gitDiffBusy,
+      diffReviewBusy,
+      keepDiff,
+      rejectDiff,
+      keepAllDiffs,
+      rejectAllDiffs,
+      rejectDiffHunks,
+      commitKeptDiffs,
       workspaceBuildConsentOpen,
       workspaceBuildConsentHighlight,
       dismissWorkspaceBuildConsent,
@@ -2483,15 +2769,22 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
       clearError,
       clearFollowUpQueue,
       clearWorkspaceFocusTab,
+      commitKeptDiffs,
       continueAvailable,
       continueLastAssistant,
+      diffReviewBusy,
       newChatBusy,
       autoOn,
       composerMode,
       deepThink,
+      keepAllDiffs,
+      keepDiff,
       openProjectAgent,
       planDraft,
       regenerateLastAssistant,
+      rejectAllDiffs,
+      rejectDiff,
+      rejectDiffHunks,
       requestWorkspaceTab,
       retryLastTurn,
       savePlanToWorkspace,

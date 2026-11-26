@@ -22,11 +22,16 @@ export type ChatRunEntry = {
   at: number
 }
 
+/** Per-path Keep / Reject decision for Diffs review (PR2). */
+export type ChatDiffDecision = 'pending' | 'kept' | 'rejected'
+
 export type ChatReviewActivity = {
   diffs: ChatDiffEntry[]
   runs: ChatRunEntry[]
   /** Latest PR / review link from tools or Inbox agent. */
   reviewUrl?: string
+  /** Path → Keep/Reject. Missing key = pending. Reset when a path is rewritten. */
+  decisions?: Record<string, ChatDiffDecision>
 }
 
 export const CHAT_REVIEW_MAX_DIFFS = 40
@@ -85,9 +90,13 @@ export function applySandboxActivity(
       at,
     }
     const without = state.diffs.filter((d) => d.path !== path)
+    // Fresh write resets Keep/Reject for this path.
+    const decisions = { ...(state.decisions || {}) }
+    delete decisions[path]
     next = {
       ...state,
       diffs: [entry, ...without].slice(0, CHAT_REVIEW_MAX_DIFFS),
+      decisions: Object.keys(decisions).length ? decisions : undefined,
     }
   }
 
@@ -284,12 +293,18 @@ export function mergeGitDiffs(
   const entries = diffsFromGitOutput(stdout)
   if (!entries.length) return state
   const byPath = new Map(state.diffs.map((d) => [d.path, d]))
-  for (const e of entries) byPath.set(e.path, e)
+  const decisions = { ...(state.decisions || {}) }
+  for (const e of entries) {
+    byPath.set(e.path, e)
+    // Fresh git refresh clears prior Keep/Reject for rewritten paths.
+    delete decisions[e.path]
+  }
   return {
     ...state,
     diffs: [...byPath.values()]
       .sort((a, b) => b.at - a.at)
       .slice(0, CHAT_REVIEW_MAX_DIFFS),
+    decisions: Object.keys(decisions).length ? decisions : undefined,
   }
 }
 

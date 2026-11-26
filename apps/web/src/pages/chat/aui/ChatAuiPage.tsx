@@ -150,6 +150,13 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
     setReviewOpen,
     refreshGitDiff,
     gitDiffBusy,
+    diffReviewBusy,
+    keepDiff,
+    rejectDiff,
+    keepAllDiffs,
+    rejectAllDiffs,
+    rejectDiffHunks,
+    commitKeptDiffs,
     activeId,
     workspaceBuildConsentOpen,
     workspaceBuildConsentHighlight,
@@ -442,9 +449,28 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
           sandboxSessionId={sandboxSessionId}
           refreshing={gitDiffBusy}
           busy={busy}
+          reviewBusy={diffReviewBusy}
           sheet={typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches}
           onRefreshGit={() => {
             void refreshGitDiff()
+          }}
+          onKeep={(path) => {
+            void keepDiff(path)
+          }}
+          onReject={(path) => {
+            void rejectDiff(path)
+          }}
+          onKeepAll={() => {
+            void keepAllDiffs()
+          }}
+          onRejectAll={() => {
+            void rejectAllDiffs()
+          }}
+          onRejectHunks={(path, indexes) => {
+            void rejectDiffHunks(path, indexes)
+          }}
+          onCommit={(message) => {
+            void commitKeptDiffs(message)
           }}
           onClose={() => setReviewOpen(false)}
         />

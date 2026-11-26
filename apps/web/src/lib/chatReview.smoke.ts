@@ -150,8 +150,12 @@ assert.match(diffs, /DiffPreview|aui-diff-line|snapshotAsPatchPreview/, 'diffs s
 assert.match(diffs, /shouldUsePlainDiffPreview|is-plain-live/, 'large/busy diffs use plain live paint')
 assert.match(diffs, /requestIdleCallback|allowHighlight/, 'highlight deferred until idle')
 assert.match(diffs, /busy\?/, 'DiffsPanel accepts busy from Agent turn')
+assert.match(diffs, /onKeep|Keep/, 'diffs Keep review action')
+assert.match(diffs, /onReject|Reject/, 'diffs Reject review action')
+assert.match(diffs, /Commit kept|onCommit/, 'diffs Commit chrome')
 
 assert.match(rail, /busy=\{busy\}/, 'review rail forwards busy to Diffs')
+assert.match(rail, /onKeep=\{onKeep\}/, 'review rail forwards Keep')
 
 const prChecks = readFileSync(join(here, 'chatPrChecks.ts'), 'utf8')
 assert.match(prChecks, /parseGithubPrUrl|summarizePrChecks/, 'PR checks helpers')
@@ -166,10 +170,14 @@ assert.match(runtime, /onSandbox/, 'runtime consumes sandbox SSE')
 assert.match(runtime, /reviewActivity/, 'session exposes review activity')
 assert.match(runtime, /reviewByThreadRef|applyReviewForThread/, 'review activity is per-thread')
 assert.match(runtime, /refreshGitDiff|execChatSandbox/, 'git diff refresh wired')
+assert.match(runtime, /keepDiff|rejectDiff|commitKeptDiffs/, 'Keep/Reject/Commit runtime')
 
 const api = readFileSync(join(here, 'api.ts'), 'utf8')
 assert.match(api, /onSandbox/, 'stream client handles sandbox events')
 assert.match(api, /execChatSandbox/, 'web API can exec sandbox for review')
+
+const diffReview = readFileSync(join(here, 'chatDiffReview.ts'), 'utf8')
+assert.match(diffReview, /setDiffDecision|rejectArgvAttempts|gitCommitArgv/, 'diff review helpers')
 
 const harness = readFileSync(
   join(root, '../../api/src/deepseekChatHarness.ts'),
