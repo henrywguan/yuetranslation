@@ -44,8 +44,8 @@ export const DeepseekChatBodySchema = z.object({
   locale: z.string().trim().max(32).optional(),
   /** Account Hub primary language (`yue`, `cmn`, `en`, …). */
   primaryLang: z.string().trim().max(24).optional(),
-  /** Active companion character (`boy` / `girl`). */
-  avatarCharacter: z.enum(['boy', 'girl']).optional(),
+  /** Active companion character (`boy` / `girl` / `both`). */
+  avatarCharacter: z.enum(['boy', 'girl', 'both']).optional(),
   /** User-renamed companion display name. */
   avatarName: z.string().trim().max(24).optional(),
   /** Companion trait preset. */

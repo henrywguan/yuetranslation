@@ -330,6 +330,27 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
   flex-shrink: 0;
 }
 
+.inbox-settings-companion-thumb.is-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  padding: 2px;
+  place-items: center;
+}
+
+.inbox-settings-companion-thumb.is-duo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.inbox-settings-companion-hint {
+  display: block;
+  font: 500 0.68rem/1.3 'Noto Sans', system-ui, sans-serif;
+  color: var(--ds-text-3, #7a879c);
+  padding: 0 0.2rem 0.15rem;
+}
+
 .inbox-settings-rename,
 .inbox-settings-notes {
   display: grid;

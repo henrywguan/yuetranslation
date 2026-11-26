@@ -265,6 +265,50 @@
   min-height: 0;
 }
 
+/* Both mode — side-by-side solo tiles (always both visible). */
+.aui-deep-avatar-duo {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 100%;
+}
+
+.aui-deep-avatar-duo.is-portrait .aui-deep-avatar {
+  width: 48%;
+  max-width: 2.75rem;
+}
+
+.aui-deep-avatar-duo.is-stage .aui-deep-avatar {
+  width: 46%;
+  max-width: 9rem;
+}
+
+.aui-deep-avatar-duo.is-hero {
+  gap: 0.75rem;
+  max-width: min(92vw, 36rem);
+}
+
+.aui-deep-avatar-duo.is-hero .aui-deep-avatar {
+  width: min(42vw, 16rem);
+}
+
+.aui-avatar-dock-frame.is-both .aui-avatar-dock-origin {
+  width: 100%;
+}
+
+.aui-composer-portrait:has(.aui-deep-avatar-duo) {
+  width: 7.25rem;
+}
+
+.aui-deep-avatar.is-pair .aui-deep-avatar-img {
+  width: min(72vw, 22rem);
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
 /* Avatar + MapleStory nameplate stack (nameplate sits outside FLIP origin). */
 .aui-avatar-dock-frame {
   display: flex;

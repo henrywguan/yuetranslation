@@ -21,7 +21,7 @@ export type DeepseekChatPromptContext = {
    */
   primaryLang?: string
   /** Active chat companion character. */
-  avatarCharacter?: 'boy' | 'girl'
+  avatarCharacter?: 'boy' | 'girl' | 'both'
   /** User-facing companion display name. */
   avatarName?: string
   /** Companion trait preset. */
@@ -271,7 +271,11 @@ export function buildDeepseekChatSystem(ctx: DeepseekChatPromptContext = {}): st
   const avatarCharacter = normalizeChatDeepAvatarCharacter(ctx.avatarCharacter)
   const avatarName = sanitizeChatDeepAvatarName(
     ctx.avatarName,
-    avatarCharacter === 'girl' ? 'DS Girl' : 'DS Boy',
+    avatarCharacter === 'both'
+      ? 'DS Boy & DS Girl'
+      : avatarCharacter === 'girl'
+        ? 'DS Girl'
+        : 'DS Boy',
   )
   const avatarTrait = normalizeChatDeepAvatarTrait(ctx.avatarTrait)
   parts.push(

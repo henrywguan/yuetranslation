@@ -14,10 +14,13 @@ import {
   chatDeepAvatarIntroSrc,
   chatDeepAvatarMoodAssetStem,
   chatDeepAvatarMoodSrc,
+  chatDeepAvatarPairSrc,
   isChatDeepAvatarDeepFinish,
   normalizeChatDeepAvatarCelebrateMode,
+  normalizeChatDeepAvatarCharacter,
   normalizeChatDeepAvatarDockMode,
   pickChatDeepAvatarOutroMood,
+  resolveChatDeepAvatarPairPlaySrc,
   shouldFullscreenCelebrate,
   shouldPlayChatDeepAvatarIntro,
 } from './chatDeepAvatarCharacter'
@@ -932,8 +935,38 @@ assert.match(charSrc, /isChatDeepAvatarDeepFinish/, 'deep-finish helper')
 assert.match(charSrc, /chatDeepAvatarMoodAssetStem/, 'mood → GIF stem helper')
 assert.match(charSrc, /DS Boy/, 'DS Boy label')
 assert.match(charSrc, /DS Girl/, 'DS Girl label')
+assert.match(charSrc, /Both/, 'Both companion label')
 assert.match(charSrc, /\/chat-avatar\/boy/, 'boy asset dir')
 assert.match(charSrc, /\/chat-avatar\/girl/, 'girl asset dir')
+assert.match(charSrc, /\/chat-avatar\/both/, 'both pair asset dir')
+assert.equal(normalizeChatDeepAvatarCharacter('both'), 'both')
+assert.equal(chatDeepAvatarPairSrc('celebrate'), '/chat-avatar/both/pair-celebrate.gif')
+assert.equal(resolveChatDeepAvatarPairPlaySrc('fist'), '/chat-avatar/both/pair-highfive.gif')
+assert.equal(
+  pickChatDeepAvatarOutroMood({
+    durationMs: 1000,
+    composerMode: 'agent',
+    searchOn: false,
+    planBuild: true,
+  }),
+  'handoff',
+  'Plan→Build outro latches handoff',
+)
+assert.equal(
+  existsSync(join(root, '../public/chat-avatar/both/pair-highfive.gif')),
+  true,
+  'pair-highfive.gif committed',
+)
+assert.equal(
+  existsSync(join(root, '../public/chat-avatar/both/pair-handoff.gif')),
+  true,
+  'pair-handoff.gif committed',
+)
+assert.match(avatarSrc, /ChatDeepAvatarDuo/, 'Both mode dual mount component')
+assert.match(auiCss, /\.aui-deep-avatar-duo\b/, 'duo portrait CSS')
+const threadSrc = readFileSync(join(root, 'pages/chat/aui/ChatAuiThread.tsx'), 'utf8')
+assert.match(threadSrc, /ChatDeepAvatarDuo/, 'Thread mounts duo for Both')
+assert.match(threadSrc, /isChatDeepAvatarBothMode/, 'Thread gates dual mount')
 
 // Pure helpers — celebrate mode / outro / deep finish (no DOM).
 assert.equal(normalizeChatDeepAvatarCelebrateMode(''), 'every')

@@ -17,7 +17,13 @@ import {
   sanitizeChatDeepAvatarNotes,
   writeChatDeepAvatarSoundEnabled,
 } from './chatDeepAvatarPersona.ts'
-import { chatDeepAvatarMoodAssetStem, chatDeepAvatarMoodSrc } from './chatDeepAvatarCharacter.ts'
+import {
+  chatDeepAvatarMoodAssetStem,
+  chatDeepAvatarMoodSrc,
+  chatDeepAvatarPairSrc,
+  normalizeChatDeepAvatarCharacter,
+  resolveChatDeepAvatarPairPlaySrc,
+} from './chatDeepAvatarCharacter.ts'
 import {
   consumeChatDeepAvatarOutroSuppression,
   inferChatDeepAvatarMoodFromText,
@@ -88,6 +94,22 @@ assert.equal(cloud?.character, 'girl')
 assert.equal(cloud?.trait, 'coach')
 assert.equal(cloud?.soundEnabled, false)
 assert.equal(cloud?.companion3d, true)
+
+assert.equal(normalizeChatDeepAvatarCharacter('both'), 'both')
+assert.equal(normalizeChatDeepAvatarCharacter('duo'), 'both')
+const bothCloud = normalizeChatDeepAvatarCloudPrefs({ character: 'both' })
+assert.equal(bothCloud?.character, 'both')
+assert.equal(chatDeepAvatarPairSrc('highfive'), '/chat-avatar/both/pair-highfive.gif')
+assert.equal(resolveChatDeepAvatarPairPlaySrc('fist'), '/chat-avatar/both/pair-highfive.gif')
+assert.equal(resolveChatDeepAvatarPairPlaySrc('handoff'), '/chat-avatar/both/pair-handoff.gif')
+assert.match(
+  buildChatDeepAvatarPersonaPromptBlock({
+    character: 'both',
+    name: 'Kai & Momo',
+    trait: 'cheerful',
+  }),
+  /duo/,
+)
 
 // Companion Sound defaults ON when unset; only explicit off is silent.
 {

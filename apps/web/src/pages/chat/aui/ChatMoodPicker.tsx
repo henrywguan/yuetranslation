@@ -6,6 +6,9 @@ import {
   CHAT_DEEP_AVATAR_MOODS,
   chatDeepAvatarMoodSrc,
   chatDeepAvatarPosterSrc,
+  chatDeepAvatarPrimarySolo,
+  isChatDeepAvatarBothMode,
+  resolveChatDeepAvatarPairPlaySrc,
   type ChatDeepAvatarCharacterId,
   type ChatDeepAvatarMood,
 } from '../../../lib/chatDeepAvatarCharacter'
@@ -60,7 +63,10 @@ export function ChatMoodPicker({ open, character, onClose }: ChatMoodPickerProps
         <div className="aui-mood-picker-grid">
           {ENTRIES.map((entry) => {
             const mood = entry.id as ChatDeepAvatarMood
-            const src = chatDeepAvatarMoodSrc(character, mood)
+            const both = isChatDeepAvatarBothMode(character)
+            const pairSrc = both ? resolveChatDeepAvatarPairPlaySrc(mood) : null
+            const solo = chatDeepAvatarPrimarySolo(character)
+            const src = pairSrc || chatDeepAvatarMoodSrc(solo, mood)
             return (
               <button
                 key={entry.id}
@@ -82,7 +88,7 @@ export function ChatMoodPicker({ open, character, onClose }: ChatMoodPickerProps
                   loading="lazy"
                   onError={(e) => {
                     const img = e.currentTarget
-                    img.src = chatDeepAvatarPosterSrc(character)
+                    img.src = chatDeepAvatarPosterSrc(solo)
                   }}
                 />
                 <span className="aui-mood-picker-label">{entry.label}</span>
