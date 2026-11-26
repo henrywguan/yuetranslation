@@ -16,11 +16,13 @@ import {
   markAgentInReview,
   markProjectCloudSynced,
   renameProject,
+  renameWorkspace,
   setAgentStatus,
   setAgentThread,
   setProjectDefaultWorkspace,
   setProjectMemory,
   setWorkspaceRef,
+  touchWorkspace,
   type ChatInboxAgent,
   type ChatInboxProject,
   type ChatInboxState,
@@ -148,10 +150,25 @@ export function useChatInbox() {
   )
 
   const bindWorkspaceRef = useCallback(
-    (workspaceId: string, ref: string, projectId?: string) => {
+    (workspaceId: string, ref: string, projectId?: string, title?: string) => {
       let next = setWorkspaceRef(stateRef.current, workspaceId, ref)
+      if (title?.trim()) next = renameWorkspace(next, workspaceId, title.trim())
       if (projectId) next = setProjectDefaultWorkspace(next, projectId, workspaceId)
       commit(next)
+    },
+    [commit],
+  )
+
+  const renameWorkspaceTitle = useCallback(
+    (workspaceId: string, title: string) => {
+      commit(renameWorkspace(stateRef.current, workspaceId, title))
+    },
+    [commit],
+  )
+
+  const touchWorkspaceAccess = useCallback(
+    (workspaceId: string) => {
+      commit(touchWorkspace(stateRef.current, workspaceId))
     },
     [commit],
   )
@@ -229,6 +246,8 @@ export function useChatInbox() {
     addWorkspace,
     removeWorkspace,
     bindWorkspaceRef,
+    renameWorkspaceTitle,
+    touchWorkspaceAccess,
     spawnWorker,
     bindAgentThread,
     updateAgentStatus,

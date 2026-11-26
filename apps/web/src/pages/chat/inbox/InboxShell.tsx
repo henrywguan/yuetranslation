@@ -83,6 +83,7 @@ export function InboxShell({
     addWorkspace,
     removeWorkspace,
     bindWorkspaceRef,
+    touchWorkspaceAccess,
     bindAgentThread,
     updateProjectMemory,
     replaceState,
@@ -598,6 +599,7 @@ export function InboxShell({
               onOpenFilesWorkspace?.(id)
               onNavigate?.()
             }}
+            onTouchLocal={(id) => touchWorkspaceAccess(id)}
           />
           {/* Bind chrome lives under Workspaces — collapse with the section, not as stray UI. */}
           {workspacesOpen ? (
@@ -608,8 +610,13 @@ export function InboxShell({
                 <LocalFolderBind
                   workspaceId={localBindWorkspaceId}
                   projectId={activeProjectId || undefined}
-                  onBound={({ sessionId, note, fileCount }) => {
-                    bindWorkspaceRef(localBindWorkspaceId, sessionId, activeProjectId || undefined)
+                  onBound={({ sessionId, note, fileCount, folderName }) => {
+                    bindWorkspaceRef(
+                      localBindWorkspaceId,
+                      sessionId,
+                      activeProjectId || undefined,
+                      folderName,
+                    )
                     // Never leave “Folder is empty… (0 files)” after Agent writes land in Diffs.
                     if (fileCount > 0) {
                       setSandboxNote(`${note} (${fileCount} files)`)

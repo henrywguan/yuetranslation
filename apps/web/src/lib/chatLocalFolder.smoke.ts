@@ -11,6 +11,8 @@ import {
   collectFromZipBytes,
   LOCAL_FOLDER_DB,
   localFolderCapabilities,
+  openLocalFolderConnection,
+  probeLocalFolderConnection,
 } from './chatLocalFolder'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -59,14 +61,30 @@ assert.match(
   'empty bind note does not stick as “0 files” forever',
 )
 assert.match(bind, /onBound\(/, 'bind completes via onBound')
+assert.match(bind, /folderName/, 'bind reports folder leaf name when available')
 
 assert.match(
   shell,
   /emptyBindBaseline|Agent wrote/,
   'Inbox clears empty-folder tip once Diffs/Workspace grow past bind baseline',
 )
+assert.match(shell, /onTouchLocal|touchWorkspaceAccess/, 'Inbox bumps last-access on open folder')
+
+const wsList = readFileSync(join(root, 'pages/chat/inbox/WorkspaceList.tsx'), 'utf8')
+assert.match(wsList, /Open folder/, 'workspace list Open folder action')
+assert.match(wsList, /Refresh properties|Last access/, 'workspace list connection properties')
+
+// Helpers export (Node has no handles — probe returns empty connection).
+assert.equal(typeof probeLocalFolderConnection, 'function')
+assert.equal(typeof openLocalFolderConnection, 'function')
 
 const api = readFileSync(join(here, 'api.ts'), 'utf8')
 assert.match(api, /writeChatSandboxFile/, 'mirror writes via sandbox FS API')
+
+const missing = await probeLocalFolderConnection('ws_missing')
+assert.equal(missing.hasHandle, false)
+assert.equal(missing.permission, 'unavailable')
+const missingOpen = await openLocalFolderConnection('ws_missing')
+assert.equal(missingOpen.hasHandle, false)
 
 console.log('chatLocalFolder.smoke: ok')

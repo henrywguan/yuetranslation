@@ -118,7 +118,8 @@
  * panel palette here so background/border/shadow stay opaque (bare text over
  * the sidebar was the #803 regression).
  */
-.inbox-settings-menu.is-portaled {
+.inbox-settings-menu.is-portaled,
+.inbox-portaled-menu.is-portaled {
   /* Light defaults (match ChatPage.css `.ds-chat`) */
   --ds-blue: #4d6bfe;
   --ds-blue-soft: #ebefff;
@@ -135,6 +136,7 @@
 
   position: fixed;
   left: auto;
+  /* Above `.ds-chat` (120) — same band as settings / celebrate; below mood picker (160). */
   z-index: 130;
   overflow-x: hidden;
   overflow-y: auto;
@@ -150,7 +152,8 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  html:not([data-theme='light']) .inbox-settings-menu.is-portaled {
+  html:not([data-theme='light']) .inbox-settings-menu.is-portaled,
+  html:not([data-theme='light']) .inbox-portaled-menu.is-portaled {
     --ds-blue-soft: #1e2240;
     --ds-blue-soft-border: #2a3360;
     --ds-canvas: #0e0e10;
@@ -165,7 +168,8 @@
   }
 }
 
-html[data-theme='dark'] .inbox-settings-menu.is-portaled {
+html[data-theme='dark'] .inbox-settings-menu.is-portaled,
+html[data-theme='dark'] .inbox-portaled-menu.is-portaled {
   --ds-blue-soft: #1e2240;
   --ds-blue-soft-border: #2a3360;
   --ds-canvas: #0e0e10;
@@ -179,7 +183,8 @@ html[data-theme='dark'] .inbox-settings-menu.is-portaled {
   color-scheme: dark;
 }
 
-html[data-theme='light'] .inbox-settings-menu.is-portaled {
+html[data-theme='light'] .inbox-settings-menu.is-portaled,
+html[data-theme='light'] .inbox-portaled-menu.is-portaled {
   --ds-blue-soft: #ebefff;
   --ds-blue-soft-border: #c5cdff;
   --ds-canvas: #ffffff;
@@ -1393,6 +1398,88 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
   text-transform: uppercase;
   color: var(--ds-text-3);
   padding-right: 0.25rem;
+}
+
+.inbox-ws-tree {
+  gap: 0.25rem;
+}
+
+.inbox-ws-node {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.inbox-ws-node.is-local > .inbox-list-item {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+}
+
+.inbox-ws-local-props {
+  margin: 0 0.15rem 0.2rem 1.5rem;
+  padding: 0.45rem 0.55rem 0.5rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-surface-1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.inbox-ws-local-props-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.28rem;
+}
+
+.inbox-ws-local-props-grid > div {
+  display: grid;
+  grid-template-columns: 5.2rem minmax(0, 1fr);
+  gap: 0.35rem;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.inbox-ws-local-props-grid dt {
+  margin: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-text-3);
+}
+
+.inbox-ws-local-props-grid dd {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ds-text);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.inbox-ws-local-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.7rem;
+  color: var(--ds-text-2);
+}
+
+.inbox-ws-local-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.inbox-ws-local-actions .inbox-new-chat {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+}
+
+.inbox-ws-local-status {
+  padding: 0;
+  color: var(--ds-text-2);
 }
 
 /* Local folder connected — brand gold + jade pulse (chat AUI language). */

@@ -496,6 +496,36 @@ export function setWorkspaceRef(
   }
 }
 
+/** Rename a workspace title (e.g. local folder leaf name). Metadata only — never FS handles. */
+export function renameWorkspace(
+  state: ChatInboxState,
+  workspaceId: string,
+  title: string,
+): ChatInboxState {
+  const nextTitle = title.trim() || 'Untitled workspace'
+  const now = Date.now()
+  return {
+    ...state,
+    updatedAt: now,
+    workspaces: state.workspaces.map((w) =>
+      w.id === workspaceId ? { ...w, title: nextTitle, updatedAt: now } : w,
+    ),
+  }
+}
+
+/** Bump `updatedAt` for last-access display without changing ref. */
+export function touchWorkspace(state: ChatInboxState, workspaceId: string): ChatInboxState {
+  const now = Date.now()
+  let found = false
+  const workspaces = state.workspaces.map((w) => {
+    if (w.id !== workspaceId) return w
+    found = true
+    return { ...w, updatedAt: now }
+  })
+  if (!found) return state
+  return { ...state, updatedAt: now, workspaces }
+}
+
 export function setProjectDefaultWorkspace(
   state: ChatInboxState,
   projectId: string,

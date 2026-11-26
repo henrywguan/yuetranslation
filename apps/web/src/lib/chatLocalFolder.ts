@@ -83,6 +83,92 @@ export async function loadDirectoryHandle(
   }
 }
 
+export type LocalFolderPermission = PermissionState | 'unavailable'
+
+/** Device-local probe — never syncs the FS handle to cloud. */
+export type LocalFolderConnectionInfo = {
+  hasHandle: boolean
+  /** Folder leaf name from the File System Access handle (browsers omit full path). */
+  name: string | null
+  permission: LocalFolderPermission
+}
+
+async function queryHandlePermission(
+  handle: FileSystemDirectoryHandle,
+  mode: 'read' | 'readwrite',
+): Promise<PermissionState | 'unavailable'> {
+  try {
+    const h = handle as FileSystemDirectoryHandle & {
+      queryPermission?: (opts: { mode: 'read' | 'readwrite' }) => Promise<PermissionState>
+    }
+    if (typeof h.queryPermission !== 'function') return 'unavailable'
+    return await h.queryPermission({ mode })
+  } catch {
+    return 'unavailable'
+  }
+}
+
+async function requestHandlePermission(
+  handle: FileSystemDirectoryHandle,
+  mode: 'read' | 'readwrite',
+): Promise<PermissionState | 'unavailable'> {
+  try {
+    const h = handle as FileSystemDirectoryHandle & {
+      requestPermission?: (opts: { mode: 'read' | 'readwrite' }) => Promise<PermissionState>
+    }
+    if (typeof h.requestPermission !== 'function') return 'unavailable'
+    return await h.requestPermission({ mode })
+  } catch {
+    return 'denied'
+  }
+}
+
+/** Read handle name + current permission without prompting. */
+export async function probeLocalFolderConnection(
+  workspaceId: string,
+): Promise<LocalFolderConnectionInfo> {
+  const handle = await loadDirectoryHandle(workspaceId)
+  if (!handle) {
+    return { hasHandle: false, name: null, permission: 'unavailable' }
+  }
+  const permission = await queryHandlePermission(handle, 'read')
+  return {
+    hasHandle: true,
+    name: typeof handle.name === 'string' && handle.name.trim() ? handle.name.trim() : null,
+    permission,
+  }
+}
+
+/**
+ * Re-open / re-grant the bound directory (gesture-safe).
+ * Browsers do not expose a Finder/Explorer reveal for directory handles —
+ * this verifies the live connection and returns the leaf folder name.
+ */
+export async function openLocalFolderConnection(
+  workspaceId: string,
+): Promise<LocalFolderConnectionInfo> {
+  const handle = await loadDirectoryHandle(workspaceId)
+  if (!handle) {
+    return { hasHandle: false, name: null, permission: 'unavailable' }
+  }
+  let permission = await queryHandlePermission(handle, 'readwrite')
+  if (permission !== 'granted') {
+    permission = await requestHandlePermission(handle, 'readwrite')
+  }
+  // Fallback: some engines only expose read.
+  if (permission !== 'granted') {
+    permission = await queryHandlePermission(handle, 'read')
+    if (permission !== 'granted') {
+      permission = await requestHandlePermission(handle, 'read')
+    }
+  }
+  return {
+    hasHandle: true,
+    name: typeof handle.name === 'string' && handle.name.trim() ? handle.name.trim() : null,
+    permission,
+  }
+}
+
 export async function pickLocalDirectory(): Promise<FileSystemDirectoryHandle | null> {
   if (typeof window === 'undefined' || typeof window.showDirectoryPicker !== 'function') {
     return null
