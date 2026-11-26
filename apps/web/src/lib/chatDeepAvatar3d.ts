@@ -5,10 +5,12 @@
  * (or `deep.glb` when present under public/).
  */
 import {
-  CHAT_DEEP_AVATAR_CHARACTERS,
   CHAT_DEEP_AVATAR_DIR,
+  CHAT_DEEP_AVATAR_SOLOS,
+  chatDeepAvatarPrimarySolo,
   normalizeChatDeepAvatarCharacter,
   type ChatDeepAvatarCharacterId,
+  type ChatDeepAvatarSoloId,
 } from './chatDeepAvatarCharacter'
 import { CHAT_DEEP_AVATAR_PREFS_CHANGED_EVENT } from './chatDeepAvatarPersona'
 
@@ -35,7 +37,8 @@ export type ChatDeepAvatar3dPose = {
   docked: boolean
 }
 
-export type ChatDeepAvatar3dPoseMap = Record<ChatDeepAvatarCharacterId, ChatDeepAvatar3dPose>
+/** Pose map is per-solo only — Both mode reuses the primary (boy) pose until duo 3D exists. */
+export type ChatDeepAvatar3dPoseMap = Record<ChatDeepAvatarSoloId, ChatDeepAvatar3dPose>
 
 const DEFAULT_POSE: ChatDeepAvatar3dPose = { x: 0.12, y: 0.82, docked: true }
 
@@ -67,7 +70,7 @@ export function normalizeChatDeepAvatar3dPoseMap(raw: unknown): ChatDeepAvatar3d
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return defaults
   const obj = raw as Record<string, unknown>
   const out = { ...defaults }
-  for (const id of CHAT_DEEP_AVATAR_CHARACTERS) {
+  for (const id of CHAT_DEEP_AVATAR_SOLOS) {
     if (obj[id] != null) out[id] = normalizeChatDeepAvatar3dPose(obj[id])
   }
   return out
@@ -114,7 +117,7 @@ export function readChatDeepAvatar3dPoseMap(): ChatDeepAvatar3dPoseMap {
 export function readChatDeepAvatar3dPose(
   character: ChatDeepAvatarCharacterId = 'boy',
 ): ChatDeepAvatar3dPose {
-  const id = normalizeChatDeepAvatarCharacter(character)
+  const id = chatDeepAvatarPrimarySolo(normalizeChatDeepAvatarCharacter(character))
   return readChatDeepAvatar3dPoseMap()[id]
 }
 
@@ -122,7 +125,7 @@ export function writeChatDeepAvatar3dPose(
   character: ChatDeepAvatarCharacterId,
   pose: Partial<ChatDeepAvatar3dPose>,
 ) {
-  const id = normalizeChatDeepAvatarCharacter(character)
+  const id = chatDeepAvatarPrimarySolo(normalizeChatDeepAvatarCharacter(character))
   const map = readChatDeepAvatar3dPoseMap()
   const nextPose = normalizeChatDeepAvatar3dPose({ ...map[id], ...pose })
   const next = { ...map, [id]: nextPose }
@@ -139,7 +142,7 @@ export function writeChatDeepAvatar3dPose(
 
 /** Future Higgsfield bake path — runtime-fetch only (never SW-precache). */
 export function chatDeepAvatarGlbSrc(character: ChatDeepAvatarCharacterId): string {
-  const id = normalizeChatDeepAvatarCharacter(character)
+  const id = chatDeepAvatarPrimarySolo(normalizeChatDeepAvatarCharacter(character))
   return `${CHAT_DEEP_AVATAR_DIR[id]}/deep.glb`
 }
 
