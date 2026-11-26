@@ -2674,7 +2674,7 @@
   color: var(--ds-text);
   text-align: left;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 0.4rem;
   align-items: center;
   padding: 0.35rem 0.45rem;
@@ -2710,6 +2710,207 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--ds-mono);
+}
+
+.aui-diffs-counts {
+  font-size: 0.65rem;
+  font-weight: 650;
+  color: var(--ds-text-3);
+  letter-spacing: 0.02em;
+}
+
+.aui-diffs-decision {
+  flex-shrink: 0;
+  font-size: 0.58rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.35rem;
+  border: 1px solid var(--ds-divider);
+}
+
+.aui-diffs-decision.is-kept {
+  color: color-mix(in srgb, #166534 80%, var(--ds-text));
+  border-color: color-mix(in srgb, #16a34a 35%, var(--ds-divider));
+  background: color-mix(in srgb, #16a34a 12%, var(--ds-canvas));
+}
+
+.aui-diffs-decision.is-rejected {
+  color: color-mix(in srgb, #991b1b 80%, var(--ds-text));
+  border-color: color-mix(in srgb, #dc2626 35%, var(--ds-divider));
+  background: color-mix(in srgb, #dc2626 10%, var(--ds-canvas));
+}
+
+.aui-diffs-file.is-kept {
+  opacity: 0.88;
+}
+
+.aui-diffs-file.is-rejected {
+  opacity: 0.55;
+}
+
+.aui-diffs-bulk,
+.aui-diffs-file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.aui-diffs-keep {
+  border-color: color-mix(in srgb, #16a34a 40%, var(--ds-divider));
+  color: color-mix(in srgb, #166534 75%, var(--ds-text));
+  background: color-mix(in srgb, #16a34a 10%, var(--ds-canvas));
+}
+
+.aui-diffs-keep:hover:not(:disabled) {
+  border-color: color-mix(in srgb, #16a34a 55%, var(--ds-divider));
+  background: color-mix(in srgb, #16a34a 16%, var(--ds-canvas));
+  color: color-mix(in srgb, #166534 90%, var(--ds-text));
+}
+
+.aui-diffs-reject {
+  border-color: color-mix(in srgb, #dc2626 40%, var(--ds-divider));
+  color: color-mix(in srgb, #991b1b 75%, var(--ds-text));
+  background: color-mix(in srgb, #dc2626 8%, var(--ds-canvas));
+}
+
+.aui-diffs-reject:hover:not(:disabled) {
+  border-color: color-mix(in srgb, #dc2626 55%, var(--ds-divider));
+  background: color-mix(in srgb, #dc2626 14%, var(--ds-canvas));
+  color: color-mix(in srgb, #991b1b 90%, var(--ds-text));
+}
+
+.aui-diffs-status {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 650;
+  color: var(--ds-text-3);
+}
+
+.aui-diffs-status.is-kept {
+  color: color-mix(in srgb, #166534 70%, var(--ds-text-2));
+}
+
+.aui-diffs-status.is-rejected {
+  color: color-mix(in srgb, #991b1b 70%, var(--ds-text-2));
+}
+
+.aui-diffs-hunks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-height: 6.5rem;
+  overflow: auto;
+}
+
+.aui-diffs-hunk {
+  appearance: none;
+  width: 100%;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-canvas);
+  color: var(--ds-text-2);
+  text-align: left;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.28rem 0.4rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.68rem;
+}
+
+.aui-diffs-hunk:hover:not(:disabled) {
+  border-color: var(--ds-blue-soft-border);
+  background: var(--ds-blue-soft);
+}
+
+.aui-diffs-hunk.is-reject {
+  border-color: color-mix(in srgb, #dc2626 40%, var(--ds-divider));
+  background: color-mix(in srgb, #dc2626 8%, var(--ds-canvas));
+}
+
+.aui-diffs-hunk-mark {
+  font-size: 0.58rem;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ds-text-3);
+}
+
+.aui-diffs-hunk.is-reject .aui-diffs-hunk-mark {
+  color: color-mix(in srgb, #991b1b 80%, var(--ds-text));
+}
+
+.aui-diffs-hunk-head {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--ds-mono);
+  font-size: 0.65rem;
+}
+
+.aui-diffs-commit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.5rem;
+  border: 1px solid var(--ds-divider);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--ds-surface-1) 80%, var(--ds-canvas));
+  animation: aui-rise 0.28s ease both;
+}
+
+.aui-diffs-commit-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--ds-text-2);
+}
+
+.aui-diffs-commit-row {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.aui-diffs-commit-input {
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-canvas);
+  color: var(--ds-text);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.55rem;
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+.aui-diffs-commit-input:focus {
+  outline: none;
+  border-color: var(--ds-blue-soft-border);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ds-blue) 18%, transparent);
+}
+
+.aui-diffs-commit-btn {
+  border-color: var(--ds-blue-soft-border);
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
+}
+
+.aui-diffs-commit-hint {
+  margin: 0;
+  font-size: 0.65rem;
+  color: var(--ds-text-3);
+  line-height: 1.35;
 }
 
 .aui-diffs-missing {

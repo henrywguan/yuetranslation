@@ -9,8 +9,15 @@ export function ChatReviewRail({
   sandboxSessionId,
   refreshing,
   busy,
+  reviewBusy,
   sheet,
   onRefreshGit,
+  onKeep,
+  onReject,
+  onKeepAll,
+  onRejectAll,
+  onRejectHunks,
+  onCommit,
   onClose,
 }: {
   activity: ChatReviewActivity
@@ -19,8 +26,15 @@ export function ChatReviewRail({
   refreshing?: boolean
   /** Agent turn still running — Diffs stay live but plain. */
   busy?: boolean
+  reviewBusy?: boolean
   sheet?: boolean
   onRefreshGit?: () => void
+  onKeep?: (path: string) => void
+  onReject?: (path: string) => void
+  onKeepAll?: () => void
+  onRejectAll?: () => void
+  onRejectHunks?: (path: string, rejectIndexes: number[]) => void
+  onCommit?: (message: string) => void
   onClose?: () => void
 }) {
   const [tab, setTab] = useState<ReviewPaneTab>(() =>
@@ -76,7 +90,14 @@ export function ChatReviewRail({
             sandboxSessionId={sandboxSessionId}
             refreshing={refreshing}
             busy={busy}
+            reviewBusy={reviewBusy}
             onRefreshGit={onRefreshGit}
+            onKeep={onKeep}
+            onReject={onReject}
+            onKeepAll={onKeepAll}
+            onRejectAll={onRejectAll}
+            onRejectHunks={onRejectHunks}
+            onCommit={onCommit}
           />
         ) : (
           <ChatRunsPanel activity={activity} />
