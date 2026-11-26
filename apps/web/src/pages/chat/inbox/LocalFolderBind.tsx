@@ -20,9 +20,16 @@ export function LocalFolderBind({
 }: {
   workspaceId: string
   projectId?: string
-  onBound: (result: { sessionId: string; note: string; fileCount: number }) => void
+  onBound: (result: {
+    sessionId: string
+    note: string
+    fileCount: number
+    /** Leaf folder name from FS Access handle when available (device-local). */
+    folderName?: string
+  }) => void
   onCancel: () => void
 }) {
+  const folderNameRef = useRef<string | undefined>(undefined)
   const caps = localFolderCapabilities()
   const dirInputRef = useRef<HTMLInputElement>(null)
   const zipInputRef = useRef<HTMLInputElement>(null)
@@ -53,6 +60,7 @@ export function LocalFolderBind({
         sessionId: result.sessionId,
         note,
         fileCount: result.written,
+        folderName: folderNameRef.current,
       })
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Mirror failed')
@@ -83,6 +91,10 @@ export function LocalFolderBind({
                     setStatus('Cancelled.')
                     return
                   }
+                  folderNameRef.current =
+                    typeof handle.name === 'string' && handle.name.trim()
+                      ? handle.name.trim()
+                      : undefined
                   await saveDirectoryHandle(workspaceId, handle)
                   const files = await collectFromDirectoryHandle(handle)
                   await runMirror(files)
@@ -132,6 +144,9 @@ export function LocalFolderBind({
           void (async () => {
             setBusy(true)
             try {
+              const first = list[0] as File & { webkitRelativePath?: string }
+              const rel = String(first.webkitRelativePath || '').split('/')[0]
+              folderNameRef.current = rel?.trim() || undefined
               const files = await collectFromFileList(list)
               await runMirror(files)
             } finally {

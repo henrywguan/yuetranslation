@@ -473,6 +473,10 @@ assert.match(
   'local folder shows Connected status when bound',
 )
 assert.match(workspaceList, /localConnected|kind === 'local'.*ref/, 'Connected only while local ref set')
+assert.match(workspaceList, /inbox-project-expand|toggleLocalExpand/, 'local folder expand affordance')
+assert.match(workspaceList, /onDoubleClick|Open folder/, 'local folder open via double-click / Open folder')
+assert.match(workspaceList, /inbox-ws-local-props|Last access|connection properties/, 'local folder properties panel')
+assert.match(workspaceList, /openLocalFolderConnection|probeLocalFolderConnection/, 'FS Access probe/open helpers')
 assert.doesNotMatch(
   workspaceList,
   /kind: 'files'/,
@@ -480,7 +484,7 @@ assert.doesNotMatch(
 )
 assert.doesNotMatch(
   workspaceList,
-  /className="inbox-new-chat"[\s\S]*Local folder|className="inbox-new-chat"[\s\S]*GitHub repo/,
+  /className="inbox-new-chat"[^>]*>\s*Local folder|className="inbox-new-chat"[^>]*>\s*GitHub repo/,
   'no full-width Local/GitHub CTAs competing with New chat',
 )
 
@@ -496,6 +500,13 @@ assert.match(inboxCss, /\.inbox-band/, 'horizontal separators between Inbox band
 assert.match(inboxCss, /\.inbox-ws-connected/, 'Connected gold status styles')
 assert.match(inboxCss, /inbox-ws-connected-sheen|inbox-ws-connected-pulse/, 'Connected animation')
 assert.match(inboxCss, /#e8c547|#E8C547/, 'Connected uses brand gold')
+assert.match(inboxCss, /\.inbox-portaled-menu\.is-portaled/, 'portaled project/ws menu CSS')
+assert.match(
+  inboxCss,
+  /\.inbox-portaled-menu\.is-portaled[\s\S]*?z-index:\s*130/,
+  'portaled menus sit above .ds-chat (120)',
+)
+assert.match(inboxCss, /\.inbox-ws-local-props/, 'local folder properties styles')
 assert.match(inboxCss, /\.inbox-project-panel[\s\S]*max-height/, 'project panel capped inside drawer')
 assert.match(inboxCss, /\.inbox-band\s*\{[^}]*flex-shrink:\s*0/, 'bands do not shrink under neighbors')
 assert.match(
@@ -613,12 +624,25 @@ assert.match(panel, /onMoveToCloud|Move project to cloud/, 'project panel Move t
 const cloudMenu = readFileSync(join(root, 'pages/chat/inbox/ProjectCloudMenu.tsx'), 'utf8')
 assert.match(cloudMenu, /Move project to cloud/, 'cloud menu label')
 assert.match(cloudMenu, /Sign in|onSignIn/, 'guests prompted to sign in')
+assert.match(cloudMenu, /createPortal/, 'Project ⋯ menu portals past list overflow')
+assert.match(cloudMenu, /inbox-portaled-menu|is-portaled/, 'portaled project menu class')
+assert.match(cloudMenu, /inbox-list-action/, 'Project actions use inbox-list-action trigger')
 
 const hook = readFileSync(join(root, 'pages/chat/inbox/useChatInbox.ts'), 'utf8')
 assert.match(hook, /renameProjectTitle/, 'hook exposes renameProjectTitle')
 assert.match(hook, /renameProject\(/, 'hook commits renameProject')
+assert.match(hook, /renameWorkspaceTitle|touchWorkspaceAccess/, 'hook local folder title/last-access')
 assert.match(hook, /unlinkThread|detachThreadFromProject|linkChatToProject/, 'hook Add/Remove Project APIs')
 assert.match(hook, /CHAT_CLOUD_HYDRATE_EVENT|replaceState|stampProjectCloud/, 'hook cloud hydrate hooks')
+
+const inboxLib = readFileSync(join(here, 'chatInbox.ts'), 'utf8')
+assert.match(inboxLib, /export function renameWorkspace/, 'renameWorkspace for folder leaf name')
+assert.match(inboxLib, /export function touchWorkspace/, 'touchWorkspace for last access')
+assert.doesNotMatch(
+  inboxLib,
+  /FileSystemDirectoryHandle|showDirectoryPicker/,
+  'inbox state never stores FS handles (device IDB only)',
+)
 
 const tiles = readFileSync(join(root, 'pages/chat/inbox/FilterTiles.tsx'), 'utf8')
 assert.match(tiles, /label: 'All'/)
