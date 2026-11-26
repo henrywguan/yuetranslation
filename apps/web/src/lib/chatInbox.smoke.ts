@@ -400,6 +400,12 @@ assert.match(projectList, /is-archive|is-delete/, 'nested Archive/Delete contras
 assert.match(projectList, /New project|inbox-empty-cta/, 'empty Projects CTA')
 assert.match(projectList, /is-dimmed|dimEmpty/, 'dim empty folders under filter')
 assert.match(projectList, /inbox-agent-role--overseer/, 'Overseer badge distinct from workers')
+assert.match(projectList, /InboxTickerName|inbox-agent-trigger--ticker/, 'nested agent names use ticker wrapper')
+
+const tickerName = readFileSync(join(root, 'pages/chat/inbox/InboxTickerName.tsx'), 'utf8')
+assert.match(tickerName, /inbox-agent-name-marquee/, 'ticker viewport class')
+assert.match(tickerName, /ResizeObserver|scrollWidth/, 'overflow detection for ticker')
+assert.match(tickerName, /inbox-agent-name-label--dup|aria-hidden/, 'seamless ticker duplicate label')
 
 const workspaceList = readFileSync(join(root, 'pages/chat/inbox/WorkspaceList.tsx'), 'utf8')
 assert.match(workspaceList, /inbox-ws-menu/, 'workspaces + opens create menu')
@@ -468,6 +474,27 @@ assert.match(
   'mobile/short-drawer density rules',
 )
 assert.match(inboxCss, /\.inbox-project-children/, 'nested project agent list styles')
+assert.match(
+  inboxCss,
+  /\.inbox-project-children \.inbox-agent-trigger--ticker/,
+  'nested agent triggers drop ellipsis for ticker',
+)
+assert.match(inboxCss, /@keyframes inbox-agent-name-ticker/, 'agent name ticker keyframes')
+assert.match(
+  inboxCss,
+  /\.inbox-agent-name-marquee\s*\{[^}]*overflow-x:\s*auto/,
+  'agent name marquee keeps manual horizontal scroll',
+)
+assert.match(
+  inboxCss,
+  /prefers-reduced-motion: reduce[\s\S]*inbox-agent-name-marquee\.is-overflowing[\s\S]*animation:\s*none/,
+  'reduced motion stills agent name ticker',
+)
+assert.match(
+  inboxCss,
+  /prefers-reduced-motion: reduce[\s\S]*inbox-agent-name-label--dup[\s\S]*display:\s*none/,
+  'reduced motion hides ticker duplicate',
+)
 assert.match(
   inboxCss,
   /\.inbox-agent-row\s*\{[^}]*flex-shrink:\s*0/,
