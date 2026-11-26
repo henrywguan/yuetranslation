@@ -26,15 +26,19 @@ import {
   type DeepseekChatPluginKeyId,
 } from '../../../lib/api'
 import {
-  applyHunkDecisionsToPatch,
+  allHunksRejected,
+  buildRejectHunksPatch,
+  CHAT_DIFF_REJECT_PATCH_PATH,
   clearDiffDecision,
   gitAddArgv,
+  gitApplyReverseArgv,
   gitCommitArgv,
   gitStatusPathArgv,
   looksLikeUnifiedDiff,
   pathsToStageForCommit,
   rejectArgvAttempts,
   removeDiffPath,
+  rmPathArgv,
   sanitizeCommitMessage,
   setDiffDecision,
 } from '../../../lib/chatDiffReview'
@@ -2038,12 +2042,18 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         setError('Hunk review needs a unified git diff — refresh git diff first.')
         return
       }
-      const rebuilt = applyHunkDecisionsToPatch({
+      // All hunks marked → same as full-file Reject (avoids a no-op residual).
+      if (allHunksRejected(entry.text || '', rejectIndexes)) {
+        await rejectDiff(p)
+        return
+      }
+      const built = buildRejectHunksPatch({
+        path: p,
         patch: entry.text || '',
         rejectIndexes,
       })
-      if (!rebuilt.ok) {
-        setError('Could not apply hunk picks for this patch.')
+      if (!built.ok) {
+        setError('Could not build hunk reject patch.')
         return
       }
       setDiffReviewBusy(true)
@@ -2054,23 +2064,33 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           setError('Hunk Apply needs a sandbox session.')
           return
         }
-        await writeChatSandboxFile(sessionId, p, rebuilt.text)
-        applyReviewForThread(tid, (prev) =>
-          applySandboxActivity(prev, {
-            kind: 'diff',
-            path: p,
-            text: rebuilt.text,
-            source: 'sandbox',
-            at: Date.now(),
-          }),
-        )
-        // Re-diff so Keep/Reject see the residual patch.
+        // Prefer git apply --reverse so regions between hunks stay intact.
+        await writeChatSandboxFile(sessionId, CHAT_DIFF_REJECT_PATCH_PATH, built.patch)
+        const applyArgv = gitApplyReverseArgv(CHAT_DIFF_REJECT_PATCH_PATH)
+        const applyResult = await execChatSandbox(sessionId, applyArgv)
+        recordSandboxRun(tid, applyResult, applyArgv)
+        // Best-effort cleanup of the temp patch (ignore failure).
+        try {
+          await execChatSandbox(sessionId, rmPathArgv(CHAT_DIFF_REJECT_PATCH_PATH))
+        } catch {
+          /* ignore */
+        }
+        if (!applyResult.ok) {
+          setError(
+            (applyResult.stderr || applyResult.stdout || 'git apply --reverse failed')
+              .trim()
+              .slice(0, 320),
+          )
+          return
+        }
         const result = await execChatSandbox(sessionId, ['git', 'diff', '--no-color', '--', p])
         recordSandboxRun(tid, result, ['git', 'diff', '--no-color', '--', p])
         if (result.ok && (result.stdout || '').trim()) {
-          applyReviewForThread(tid, (prev) => mergeGitDiffs(prev, result.stdout || ''))
+          applyReviewForThread(tid, (prev) => {
+            const cleared = clearDiffDecision(prev, p)
+            return mergeGitDiffs(cleared, result.stdout || '')
+          })
         } else {
-          // No residual diff — treat as fully resolved / kept shape.
           applyReviewForThread(tid, (prev) => removeDiffPath(prev, p))
         }
       } catch (err) {
@@ -2079,7 +2099,7 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
         setDiffReviewBusy(false)
       }
     },
-    [applyReviewForThread, recordSandboxRun, resolveReviewSandboxId],
+    [applyReviewForThread, recordSandboxRun, rejectDiff, resolveReviewSandboxId],
   )
 
   const commitKeptDiffs = useCallback(
@@ -2105,6 +2125,14 @@ export function ChatAuiRuntimeProvider({ children, unlocked }: Props) {
           const addArgv = gitAddArgv(p)
           const addResult = await execChatSandbox(sessionId, addArgv)
           recordSandboxRun(tid, addResult, addArgv)
+          if (!addResult.ok) {
+            setError(
+              (addResult.stderr || addResult.stdout || `git add failed for ${p}`)
+                .trim()
+                .slice(0, 320),
+            )
+            return
+          }
         }
         const commitArgv = gitCommitArgv(msg)
         const result = await execChatSandbox(sessionId, commitArgv)

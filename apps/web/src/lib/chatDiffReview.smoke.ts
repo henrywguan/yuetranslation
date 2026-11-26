@@ -7,12 +7,15 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
-  applyHunkDecisionsToPatch,
+  allHunksRejected,
+  buildRejectHunksPatch,
+  CHAT_DIFF_REJECT_PATCH_PATH,
   clearDiffDecision,
   countDiffDecisions,
   decisionLabel,
   diffDecisionFor,
   gitAddArgv,
+  gitApplyReverseArgv,
   gitCheckoutHeadArgv,
   gitCommitArgv,
   gitRestoreArgv,
@@ -98,22 +101,21 @@ const hunks = splitPatchHunks(unified)
 assert.equal(hunks.length, 2)
 assert.match(hunks[0]!.header, /^@@/)
 
-const bothKept = applyHunkDecisionsToPatch({ patch: unified, rejectIndexes: [] })
-assert.equal(bothKept.ok, true)
-if (bothKept.ok) {
-  assert.match(bothKept.text, /new/)
-  assert.match(bothKept.text, /extra/)
-  assert.match(bothKept.text, /kept2/)
-  assert.doesNotMatch(bothKept.text, /^old$/m)
-}
-
-const rejectFirst = applyHunkDecisionsToPatch({ patch: unified, rejectIndexes: [0] })
+const rejectFirst = buildRejectHunksPatch({
+  path: 'foo.ts',
+  patch: unified,
+  rejectIndexes: [0],
+})
 assert.equal(rejectFirst.ok, true)
 if (rejectFirst.ok) {
-  assert.match(rejectFirst.text, /old/)
-  assert.doesNotMatch(rejectFirst.text, /^new$/m)
-  assert.match(rejectFirst.text, /kept2/)
+  assert.equal(rejectFirst.rejectedCount, 1)
+  assert.match(rejectFirst.patch, /diff --git a\/foo\.ts/)
+  assert.match(rejectFirst.patch, /\+new/)
+  assert.doesNotMatch(rejectFirst.patch, /\+kept2/)
 }
+assert.equal(allHunksRejected(unified, [0, 1]), true)
+assert.equal(allHunksRejected(unified, [0]), false)
+assert.deepEqual(gitApplyReverseArgv(CHAT_DIFF_REJECT_PATCH_PATH)[2], '--reverse')
 
 assert.equal(isNewFilePatch('--- /dev/null\n+++ b/x.ts\n@@\n+hi\n'), true)
 assert.equal(isNewFilePatch(unified), false)
@@ -172,6 +174,8 @@ assert.match(rail, /onCommit=\{onCommit\}/, 'rail forwards Commit')
 const runtime = readFileSync(join(root, 'pages/chat/aui/ChatAuiRuntime.tsx'), 'utf8')
 assert.match(runtime, /keepDiff|rejectDiff|commitKeptDiffs/, 'runtime review actions')
 assert.match(runtime, /rejectArgvAttempts|gitCommitArgv/, 'runtime uses review argv helpers')
+assert.match(runtime, /buildRejectHunksPatch|gitApplyReverseArgv/, 'hunk reject uses git apply -R')
+assert.match(runtime, /addResult\.ok/, 'Commit aborts when git add fails')
 assert.match(runtime, /diffReviewBusy/, 'runtime exposes review busy')
 
 const page = readFileSync(join(root, 'pages/chat/aui/ChatAuiPage.tsx'), 'utf8')

@@ -229,36 +229,50 @@ export function sanitizeCommitMessage(raw: string): string {
 }
 
 /**
- * Apply Keep/Reject at hunk level against a unified patch string (pure, offline).
- * Keep = leave hunk; Reject = drop added lines + restore deleted lines into a new full file body.
- * Returns null when the patch is not a reconstructable unified diff.
+ * Build a mini unified patch containing only the hunks marked for Reject.
+ * Used with `git apply --reverse` so multi-hunk files stay intact between regions.
  */
-export function applyHunkDecisionsToPatch(opts: {
+export function buildRejectHunksPatch(opts: {
+  path: string
   patch: string
-  /** Hunk indexes to reject (drop). Missing = keep. */
   rejectIndexes: Iterable<number>
-}): { ok: true; text: string } | { ok: false; reason: string } {
+}): { ok: true; patch: string; rejectedCount: number } | { ok: false; reason: string } {
   const reject = new Set([...opts.rejectIndexes])
+  if (!reject.size) return { ok: false, reason: 'no_rejects' }
   const hunks = splitPatchHunks(opts.patch)
   if (!hunks.length) return { ok: false, reason: 'no_hunks' }
-  const lines: string[] = []
-  for (const h of hunks) {
-    if (reject.has(h.index)) {
-      // Reconstruct prior content from '-' lines only.
-      for (const line of h.text.split('\n').slice(1)) {
-        if (line.startsWith('-') && !line.startsWith('---')) lines.push(line.slice(1))
-        else if (line.startsWith(' ') || line === '') lines.push(line.startsWith(' ') ? line.slice(1) : line)
-        // '+' lines discarded
-      }
-    } else {
-      for (const line of h.text.split('\n').slice(1)) {
-        if (line.startsWith('+') && !line.startsWith('+++')) lines.push(line.slice(1))
-        else if (line.startsWith(' ') || line === '') lines.push(line.startsWith(' ') ? line.slice(1) : line)
-        // '-' discarded (kept change)
-      }
-    }
+  const selected = hunks.filter((h) => reject.has(h.index))
+  if (!selected.length) return { ok: false, reason: 'no_matching_hunks' }
+  const path = String(opts.path || '').trim() || 'file'
+  const headerLines = [
+    `diff --git a/${path} b/${path}`,
+    `--- a/${path}`,
+    `+++ b/${path}`,
+  ]
+  const body = selected.map((h) => h.text).join('\n')
+  return {
+    ok: true,
+    patch: `${headerLines.join('\n')}\n${body}\n`,
+    rejectedCount: selected.length,
   }
-  return { ok: true, text: lines.join('\n') }
+}
+
+/** True when every hunk in the patch is marked for Reject (→ full-file Reject). */
+export function allHunksRejected(
+  patch: string,
+  rejectIndexes: Iterable<number>,
+): boolean {
+  const hunks = splitPatchHunks(patch)
+  if (!hunks.length) return false
+  const reject = new Set([...rejectIndexes])
+  return hunks.every((h) => reject.has(h.index))
+}
+
+/** Sandbox-relative path for a temporary reverse-apply patch. */
+export const CHAT_DIFF_REJECT_PATCH_PATH = '.yue-chat-reject.patch'
+
+export function gitApplyReverseArgv(patchPath: string): string[] {
+  return ['git', 'apply', '--reverse', '--', patchPath]
 }
 
 /** Label for decision chip in the file list. */
