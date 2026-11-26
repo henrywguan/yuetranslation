@@ -16,8 +16,8 @@ export type ChatDeepAvatarPlayRequest = {
   mood: ChatDeepAvatarMood
   /** User/tool demo — always try fullscreen + audio. */
   forceFullscreen: boolean
-  /** Soft react stays in-frame unless high-energy. */
-  source: 'play' | 'react' | 'sentiment'
+  /** Soft react stays in-frame unless high-energy. Picker = manual mood gallery. */
+  source: 'play' | 'react' | 'sentiment' | 'picker'
   at: number
 }
 
@@ -47,7 +47,7 @@ export function requestChatDeepAvatarPlay(
   const showcase = normalizeChatDeepAvatarShowcaseMood(moodRaw)
   const mood = showcaseMoodToClipMood(showcase)
   const source = opts?.source ?? 'play'
-  // avatar_play demos always fullscreen; reacts follow showcase highEnergy.
+  // avatar_play demos always fullscreen; reacts / picker follow showcase highEnergy.
   const forceFullscreen =
     opts?.forceFullscreen !== undefined
       ? Boolean(opts.forceFullscreen)

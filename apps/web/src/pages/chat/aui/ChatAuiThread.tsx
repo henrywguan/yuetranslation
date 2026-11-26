@@ -10,6 +10,13 @@ import {
   useMessagePartText,
 } from '@assistant-ui/react'
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { ChatHistoryScrubber } from './ChatHistoryScrubber'
+import { ChatMoodPicker } from './ChatMoodPicker'
+import { ChatSelectionMenu } from './ChatSelectionMenu'
+import {
+  pickActiveAgentStripItem,
+  sortAgentStripDropdown,
+} from '../../../lib/chatSelectionChrome'
 import { ChatDictateButton } from '../../../components/ChatDictateButton'
 import { ChatPluginKeysModal } from '../../../components/ChatPluginKeysModal'
 import { ChatSkillMenu, ChatSourcesList } from '../../../components/ChatShellExtras'
@@ -253,7 +260,9 @@ function UserMessage() {
   return (
     <MessagePrimitive.Root className="aui-msg is-user">
       <div className="aui-bubble is-user">
-        <MessagePrimitive.Parts components={{ Text: MarkdownText }} />
+        <div data-aui-quote-selectable="">
+          <MessagePrimitive.Parts components={{ Text: MarkdownText }} />
+        </div>
       </div>
       <ActionBarPrimitive.Root hideWhenRunning className="aui-actions">
         <AuiCopyButton />
@@ -332,13 +341,15 @@ function AssistantMessage() {
     <MessagePrimitive.Root className="aui-msg is-assistant">
       <div className="aui-bubble is-assistant">
         <ToolActivityCards />
-        <MessagePrimitive.Parts
-          components={{
-            Text: MarkdownText,
-            Reasoning: ReasoningText,
-            Source: SourcePartSilent,
-          }}
-        />
+        <div data-aui-quote-selectable="">
+          <MessagePrimitive.Parts
+            components={{
+              Text: MarkdownText,
+              Reasoning: ReasoningText,
+              Source: SourcePartSilent,
+            }}
+          />
+        </div>
       </div>
       {!streaming && sources.length ? (
         <ChatSourcesList sources={sources} defaultOpen={sources.length <= 4} />
@@ -376,10 +387,12 @@ function EditComposer() {
   )
 }
 
-/** In-thread Project agents (Overseer + workers) — jump without leaving the composer. */
+/** In-thread Project agents — active pill + dropdown (was a wrap row of chips). */
 function ProjectAgentStrip() {
   const inbox = useChatInboxContextOptional()
   const { activeId, busy, selectThread, threads } = useChatAuiSession()
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
   const projectAgents = useMemo(() => {
     if (!inbox?.ready) return []
     const projectId = projectIdForThread(inbox.state, activeId)
@@ -396,30 +409,84 @@ function ProjectAgentStrip() {
     )
   }, [activeId, busy, inbox, threads])
 
-  if (!projectAgents.length) return null
+  const items = useMemo(
+    () =>
+      projectAgents.map((a) => ({
+        id: a.id,
+        threadId: a.threadId,
+        title: a.title,
+        role: a.role,
+        status: a.status,
+      })),
+    [projectAgents],
+  )
+  const active = useMemo(() => pickActiveAgentStripItem(items, activeId), [activeId, items])
+  const dropdown = useMemo(() => sortAgentStripDropdown(items, activeId), [activeId, items])
+
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  if (!active || !items.length) return null
+
+  const activeRoleLabel = active.role === 'overseer' ? 'Overseer' : 'Worker'
 
   return (
-    <div className="aui-agent-strip" role="toolbar" aria-label="Project agents">
-      {projectAgents.map((a) => {
-        const active = a.threadId === activeId
-        const roleLabel = a.role === 'overseer' ? 'Overseer' : 'Worker'
-        return (
-          <button
-            key={a.id}
-            type="button"
-            className={`aui-agent-chip${active ? ' is-active' : ''}${a.role === 'overseer' ? ' is-overseer' : ''}`}
-            aria-current={active ? 'true' : undefined}
-            title={`${roleLabel}: ${a.title}`}
-            onClick={() => {
-              if (a.threadId && a.threadId !== activeId) selectThread(a.threadId)
-            }}
-          >
-            <span className="aui-agent-chip-role">{roleLabel}</span>
-            <span className="aui-agent-chip-title">{a.title}</span>
-            <StatusChip status={a.status} />
-          </button>
-        )
-      })}
+    <div className="aui-agent-strip" ref={rootRef}>
+      <button
+        type="button"
+        className={`aui-agent-pill${active.role === 'overseer' ? ' is-overseer' : ''}${open ? ' is-open' : ''}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`Project agents · ${activeRoleLabel}: ${active.title}`}
+        title={`${activeRoleLabel}: ${active.title}`}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="aui-agent-chip-role">{activeRoleLabel}</span>
+        <span className="aui-agent-chip-title">{active.title}</span>
+        <StatusChip status={active.status} />
+        <span className="aui-agent-pill-caret" aria-hidden>
+          ▾
+        </span>
+      </button>
+      {open ? (
+        <ul className="aui-agent-dropdown" role="listbox" aria-label="Project agents">
+          {dropdown.map((a) => {
+            const roleLabel = a.role === 'overseer' ? 'Overseer' : 'Worker'
+            const isActive = a.threadId === activeId
+            return (
+              <li key={a.id} role="presentation">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={isActive}
+                  className={`aui-agent-dropdown-item${isActive ? ' is-active' : ''}${a.role === 'overseer' ? ' is-overseer' : ''}`}
+                  onClick={() => {
+                    setOpen(false)
+                    if (a.threadId && a.threadId !== activeId) selectThread(a.threadId)
+                  }}
+                >
+                  <span className="aui-agent-chip-role">{roleLabel}</span>
+                  <span className="aui-agent-chip-title">{a.title}</span>
+                  <StatusChip status={a.status} />
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      ) : null}
     </div>
   )
 }
@@ -612,6 +679,7 @@ function ComposerChrome({
   } = useChatAuiSession()
   const [composerDragOver, setComposerDragOver] = useState(false)
   const [planSaveNote, setPlanSaveNote] = useState<string | null>(null)
+  const [moodPickerOpen, setMoodPickerOpen] = useState(false)
   const skillSuggestions = useMemo(() => filterChatSkills(draft), [draft])
 
   const pickSkill = (skill: ChatSkill) => {
@@ -1197,6 +1265,17 @@ function ComposerChrome({
                 >
                   {ocrBusy ? '…' : 'OCR'}
                 </button>
+                <button
+                  type="button"
+                  className="aui-attach aui-mood-btn"
+                  title="Companion moods"
+                  aria-label="Companion moods"
+                  aria-haspopup="dialog"
+                  aria-expanded={moodPickerOpen}
+                  onClick={() => setMoodPickerOpen(true)}
+                >
+                  ☺
+                </button>
               </div>
               <div className="aui-composer-toolbar-end">
                 <ChatDictateButton
@@ -1252,6 +1331,11 @@ function ComposerChrome({
           }}
         />
       ) : null}
+      <ChatMoodPicker
+        open={moodPickerOpen}
+        character={avatarCharacter}
+        onClose={() => setMoodPickerOpen(false)}
+      />
     </ComposerPrimitive.Root>
   )
 }
@@ -1421,6 +1505,8 @@ export function ChatAuiThread() {
           </ThreadPrimitive.ViewportFooter>
         </ThreadPrimitive.Viewport>
 
+        <ChatHistoryScrubber />
+        <ChatSelectionMenu />
         <ThreadPrimitive.ScrollToBottom className="aui-scroll-bottom">↓</ThreadPrimitive.ScrollToBottom>
       </ThreadPrimitive.Root>
       <ChatDeepAvatarCelebrateFx
