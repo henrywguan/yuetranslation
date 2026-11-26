@@ -28,6 +28,7 @@ import {
   writeChatWorkspacePanelWidth,
 } from '../../../lib/chatUiPrefs'
 import type { ChatWorkspace } from '../../../lib/chatWorkspace'
+import { startChatCloudProjectSync } from '../../../lib/chatCloudSync'
 import { startChatDeepAvatarCloudSync } from '../../../lib/chatDeepAvatarCloudSync'
 import { openApp, openPricing } from '../../../lib/siteLinks'
 import { useYueStore } from '../../../lib/store'
@@ -613,6 +614,7 @@ export function ChatAuiPage() {
   useEffect(() => {
     if (!entitlement?.loggedIn) return
     startChatDeepAvatarCloudSync(entitlement.prefs?.chatDeepAvatar ?? null)
+    startChatCloudProjectSync()
   }, [entitlement?.loggedIn, entitlement?.prefs?.chatDeepAvatar])
 
   if (entitlement && !loggedIn) {

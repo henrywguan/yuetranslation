@@ -25,6 +25,9 @@ import {
   ORCHESTRATION_STALL_ERROR,
   projectIdForThread,
   projectNestedViews,
+  isCloudBackedProject,
+  markProjectCloudSynced,
+  mergeCloudProjectsIntoInbox,
   projectTaskAgents,
   renameProject,
   resolveProjectGithubWorkspace,
@@ -275,15 +278,61 @@ assert.equal(matchesSearch('Harbor Quest', 'quest'), true)
 assert.equal(matchesSearch('Harbor Quest', 'xyz'), false)
 
 const normalized = normalizeInboxState({
-  projects: [{ id: 'p1', title: '  ', threadIds: ['a', 2, 'b'] }],
+  projects: [
+    {
+      id: 'p1',
+      title: '  ',
+      threadIds: ['a', 2, 'b'],
+      cloudId: 'p1',
+      cloudSyncedAt: 99,
+    },
+  ],
   agents: [{ id: 'a1', status: 'nope', role: 'wizard' }],
   workspaces: [{ kind: 'usb' }],
 })
 assert.equal(normalized.projects[0]?.title, 'Untitled project')
 assert.deepEqual(normalized.projects[0]?.threadIds, ['a', 'b'])
+assert.equal(normalized.projects[0]?.cloudId, 'p1')
+assert.equal(normalized.projects[0]?.cloudSyncedAt, 99)
+assert.ok(isCloudBackedProject(normalized.projects[0]))
 assert.equal(normalized.agents[0]?.status, 'idle')
 assert.equal(normalized.agents[0]?.role, 'thread')
 assert.equal(normalized.workspaces[0]?.kind, 'internal')
+
+const stamped = markProjectCloudSynced(withProj, project.id, {
+  cloudId: project.id,
+  cloudSyncedAt: 1234,
+})
+assert.equal(stamped.projects[0]?.cloudSyncedAt, 1234)
+assert.ok(isCloudBackedProject(stamped.projects[0]))
+
+const mergedCloud = mergeCloudProjectsIntoInbox(emptyInboxState(), [
+  {
+    id: 'cloud_p',
+    title: 'From cloud',
+    createdAt: 1,
+    updatedAt: 50,
+    cloudId: 'cloud_p',
+    cloudSyncedAt: 50,
+    threadIds: ['t-cloud'],
+    agents: [
+      {
+        id: 'agent_cloud',
+        projectId: 'cloud_p',
+        title: 'Overseer',
+        status: 'idle',
+        role: 'overseer',
+        threadId: 't-cloud',
+        updatedAt: 50,
+      },
+    ],
+    workspaces: [],
+  },
+])
+assert.equal(mergedCloud.projects.length, 1)
+assert.equal(mergedCloud.projects[0]?.title, 'From cloud')
+assert.ok(isCloudBackedProject(mergedCloud.projects[0]))
+assert.ok(mergedCloud.agents.some((a) => a.id === 'agent_cloud'))
 
 const withMemory = setProjectMemory(withProj, project.id, 'Shared brief')
 assert.equal(withMemory.projects[0]?.memory, 'Shared brief')
@@ -300,6 +349,7 @@ assert.ok(withWorker.projects[0]?.threadIds.includes('w-thread'))
 const page = readFileSync(join(root, 'pages/chat/aui/ChatAuiPage.tsx'), 'utf8')
 assert.match(page, /InboxShell/, 'AUI page mounts InboxShell')
 assert.match(page, /ChatInboxProvider/, 'Inbox provider wraps runtime')
+assert.match(page, /startChatCloudProjectSync/, 'signed-in cloud project hydrate + sync')
 assert.match(page, /aria-label="Inbox"/, 'sidebar labeled Inbox')
 const auiShellFn = page.slice(page.indexOf('function AuiShell'), page.indexOf('function GateShell'))
 assert.doesNotMatch(auiShellFn, /ds-chat-sidebar-foot/, 'sidebar foot removed — settings cog owns chrome')
@@ -316,6 +366,7 @@ assert.match(shell, /inbox-header-actions/, 'settings + New project share header
 assert.match(shell, /FilterTiles/, 'filter tiles')
 assert.match(shell, /ProjectList/, 'projects list')
 assert.match(shell, /ProjectPanel/, 'overseer project panel')
+assert.match(shell, /uploadProjectToCloud|moveProjectToCloud|onMoveToCloud/, 'Move project to cloud wired')
 assert.match(shell, /collapseProjects|setActiveProjectId\(null\)/, 'Projects chevron closes panel')
 assert.match(shell, /inbox-band/, 'Inbox/Projects/Workspaces section bands')
 assert.match(shell, /WorkspaceList/, 'workspaces list')
@@ -389,6 +440,7 @@ assert.match(projectList, /onToggleExpand|expandedProjectIds/, 'per-project expa
 assert.match(projectList, /onOpenView/, 'nested rows open Overseer/workers/chats')
 assert.match(projectList, /StatusChip/, 'nested rows use compact status chips')
 assert.match(projectList, /ChatProjectMenu|onAddChatToProject|onRemoveChatFromProject/, 'project nest Add/Remove menu')
+assert.match(projectList, /ProjectCloudMenu|onMoveToCloud|CloudBadge/, 'Move project to cloud overflow')
 assert.match(projectList, /onDrop|is-drop-target|CHAT_THREAD_DRAG_MIME/, 'Project rows accept chat drops')
 assert.match(projectList, /isChatThreadDrag/, 'drop target only claims chat MIME')
 assert.doesNotMatch(
@@ -542,6 +594,7 @@ assert.match(inboxCss, /\.inbox-chat-menu/, 'Add/Remove project menu styles')
 assert.match(inboxCss, /\.inbox-list-action\.is-archive|\.is-delete/, 'Archive/Delete rest contrast CSS')
 assert.match(inboxCss, /\.inbox-project-node\.is-drop-target/, 'drop target highlight')
 assert.match(inboxCss, /\.inbox-rules-card|\.inbox-memory--rules/, 'Project Rules editor styles')
+assert.match(inboxCss, /\.inbox-cloud-badge/, 'Cloud badge styles')
 assert.match(
   inboxCss,
   /\.inbox-agent-status\.is-idle \.inbox-agent-status-label/,
@@ -555,11 +608,17 @@ assert.match(panel, /Project Rules|inbox-rules-card/, 'prominent Project Rules e
 assert.match(panel, /Overseer/, 'auto-orchestrate rules panel copy')
 assert.doesNotMatch(panel, /workers\.map|role === 'worker'/, 'workers listed under project tree, not panel')
 assert.match(panel, /onRename|double-click to rename/, 'project panel supports rename')
+assert.match(panel, /onMoveToCloud|Move project to cloud/, 'project panel Move to cloud')
+
+const cloudMenu = readFileSync(join(root, 'pages/chat/inbox/ProjectCloudMenu.tsx'), 'utf8')
+assert.match(cloudMenu, /Move project to cloud/, 'cloud menu label')
+assert.match(cloudMenu, /Sign in|onSignIn/, 'guests prompted to sign in')
 
 const hook = readFileSync(join(root, 'pages/chat/inbox/useChatInbox.ts'), 'utf8')
 assert.match(hook, /renameProjectTitle/, 'hook exposes renameProjectTitle')
 assert.match(hook, /renameProject\(/, 'hook commits renameProject')
 assert.match(hook, /unlinkThread|detachThreadFromProject|linkChatToProject/, 'hook Add/Remove Project APIs')
+assert.match(hook, /CHAT_CLOUD_HYDRATE_EVENT|replaceState|stampProjectCloud/, 'hook cloud hydrate hooks')
 
 const tiles = readFileSync(join(root, 'pages/chat/inbox/FilterTiles.tsx'), 'utf8')
 assert.match(tiles, /label: 'All'/)
@@ -620,5 +679,8 @@ assert.match(api, /createChatSandbox/, 'web API creates sandboxes')
 assert.match(api, /sandboxSessionId/, 'web API client sends sandboxSessionId')
 assert.match(api, /projectAgents/, 'web API client sends projectAgents')
 assert.match(api, /onProject/, 'web API client handles project SSE')
+assert.match(api, /fetchChatCloudProjects|moveChatCloudProject/, 'web API cloud project move/list')
+
+assert.match(runtime, /CHAT_CLOUD_HYDRATE_EVENT|mergeCloudThreadsIntoHistory/, 'runtime merges cloud threads')
 
 console.log('chatInbox.smoke: ok')

@@ -27,6 +27,13 @@ export type ChatInboxProject = {
   overseerAgentId?: string
   /** Shared notes the Overseer / workers see each turn (Phase B). */
   memory?: string
+  /**
+   * Cloud-backed project id (same as `id` after Move to cloud).
+   * When set with `cloudSyncedAt`, Inbox shows the Cloud badge and ongoing sync applies.
+   */
+  cloudId?: string
+  /** Last successful cloud upsert (ms). */
+  cloudSyncedAt?: number
 }
 
 export type ChatInboxAgentRole = 'overseer' | 'worker' | 'thread'
@@ -73,6 +80,8 @@ export const CHAT_INBOX_DB = 'yue-chat-inbox-v1'
 export const CHAT_INBOX_STORE = 'inbox'
 export const CHAT_INBOX_KEY = 'state'
 export const CHAT_INBOX_LS_KEY = 'yue-chat-inbox-v1'
+/** Fired after IndexedDB / localStorage inbox writes — cloud sync debounce listens here. */
+export const CHAT_INBOX_CHANGED_EVENT = 'yue-chat-inbox-changed'
 
 const MAX_PROJECTS = 40
 const MAX_AGENTS = 120
@@ -133,6 +142,8 @@ export function normalizeInboxState(raw: unknown): ChatInboxState {
       overseerAgentId: typeof p.overseerAgentId === 'string' ? p.overseerAgentId : undefined,
       memory:
         typeof p.memory === 'string' ? p.memory.slice(0, 8_000) : undefined,
+      cloudId: typeof p.cloudId === 'string' ? p.cloudId : undefined,
+      cloudSyncedAt: typeof p.cloudSyncedAt === 'number' ? p.cloudSyncedAt : undefined,
     }))
 
   const agents: ChatInboxAgent[] = agentsIn
@@ -243,6 +254,35 @@ export async function saveChatInbox(state: ChatInboxState): Promise<void> {
     })
   } catch {
     /* LS already written */
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent(CHAT_INBOX_CHANGED_EVENT, { detail: next }))
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+export function isCloudBackedProject(project: ChatInboxProject | null | undefined): boolean {
+  return Boolean(project?.cloudSyncedAt && project.cloudId)
+}
+
+/** Stamp a project as cloud-backed after a successful move / upsert. */
+export function markProjectCloudSynced(
+  state: ChatInboxState,
+  projectId: string,
+  opts?: { cloudId?: string; cloudSyncedAt?: number },
+): ChatInboxState {
+  const now = Date.now()
+  const cloudSyncedAt = opts?.cloudSyncedAt ?? now
+  const cloudId = opts?.cloudId || projectId
+  return {
+    ...state,
+    updatedAt: now,
+    projects: state.projects.map((p) =>
+      p.id === projectId ? { ...p, cloudId, cloudSyncedAt, updatedAt: Math.max(p.updatedAt, now) } : p,
+    ),
   }
 }
 
@@ -633,6 +673,90 @@ export function setAgentThread(
     next = attachThreadToProject(next, agent.projectId, threadId)
   }
   return next
+}
+
+/**
+ * Merge cloud hydrate blobs into local inbox (last-write-wins on project.updatedAt).
+ * Agents / workspaces for a cloud project replace local rows for that projectId when remote is newer.
+ */
+export function mergeCloudProjectsIntoInbox(
+  local: ChatInboxState,
+  remoteProjects: Array<{
+    id: string
+    title: string
+    memory?: string
+    createdAt: number
+    updatedAt: number
+    cloudId?: string
+    cloudSyncedAt?: number
+    threadIds: string[]
+    defaultWorkspaceId?: string
+    overseerAgentId?: string
+    agents?: ChatInboxAgent[]
+    workspaces?: ChatInboxWorkspace[]
+  }>,
+): ChatInboxState {
+  if (!remoteProjects.length) return local
+  const now = Date.now()
+  const projects = [...local.projects]
+  let agents = [...local.agents]
+  let workspaces = [...local.workspaces]
+  let changed = false
+
+  for (const remote of remoteProjects) {
+    const idx = projects.findIndex((p) => p.id === remote.id)
+    const localProj = idx >= 0 ? projects[idx]! : null
+    const remoteWins = !localProj || remote.updatedAt >= localProj.updatedAt
+    if (!remoteWins && isCloudBackedProject(localProj)) {
+      // Keep local newer edits; still ensure cloud stamps exist.
+      if (!localProj.cloudSyncedAt) {
+        projects[idx!] = {
+          ...localProj,
+          cloudId: remote.cloudId || remote.id,
+          cloudSyncedAt: remote.cloudSyncedAt || remote.updatedAt,
+        }
+        changed = true
+      }
+      continue
+    }
+
+    const nextProj: ChatInboxProject = {
+      id: remote.id,
+      title: remote.title || localProj?.title || 'Untitled project',
+      createdAt: remote.createdAt || localProj?.createdAt || now,
+      updatedAt: Math.max(remote.updatedAt, localProj?.updatedAt || 0),
+      threadIds: remote.threadIds?.length ? remote.threadIds : localProj?.threadIds || [],
+      defaultWorkspaceId: remote.defaultWorkspaceId ?? localProj?.defaultWorkspaceId,
+      overseerAgentId: remote.overseerAgentId ?? localProj?.overseerAgentId,
+      memory: remote.memory ?? localProj?.memory,
+      cloudId: remote.cloudId || remote.id,
+      cloudSyncedAt: remote.cloudSyncedAt || remote.updatedAt,
+    }
+
+    if (idx >= 0) projects[idx] = nextProj
+    else projects.unshift(nextProj)
+    changed = true
+
+    if (Array.isArray(remote.agents)) {
+      agents = agents.filter((a) => a.projectId !== remote.id)
+      agents = [...remote.agents.filter((a) => a.projectId === remote.id), ...agents]
+    }
+    if (Array.isArray(remote.workspaces)) {
+      workspaces = workspaces.filter((w) => w.projectId !== remote.id)
+      workspaces = [
+        ...remote.workspaces.filter((w) => w.projectId === remote.id),
+        ...workspaces,
+      ]
+    }
+  }
+
+  if (!changed) return local
+  return normalizeInboxState({
+    projects: projects.slice(0, MAX_PROJECTS),
+    agents: agents.slice(0, MAX_AGENTS),
+    workspaces: workspaces.slice(0, MAX_WORKSPACES),
+    updatedAt: now,
+  })
 }
 
 export function setProjectMemory(

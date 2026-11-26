@@ -1609,3 +1609,61 @@ export async function fetchChatGithubPrChecks(opts: {
   if (!data.checks) throw new Error('PR checks returned no summary')
   return data.checks
 }
+
+/** Cloud Inbox Project hydrate blob from GET /api/chat/cloud/projects. */
+export type ChatCloudProjectHydrate = {
+  id: string
+  title: string
+  memory?: string
+  createdAt: number
+  updatedAt: number
+  cloudId: string
+  cloudSyncedAt: number
+  threadIds: string[]
+  defaultWorkspaceId?: string
+  overseerAgentId?: string
+  agents?: unknown[]
+  workspaces?: unknown[]
+  threads?: unknown[]
+}
+
+/** GET /api/chat/cloud/projects — signed-in cloud Inbox Projects + threads. */
+export async function fetchChatCloudProjects(): Promise<ChatCloudProjectHydrate[]> {
+  const res = await apiFetch('/chat/cloud/projects')
+  if (res.status === 401) return []
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw Object.assign(new Error(data.message || 'Failed to load cloud projects'), {
+      code: res.status,
+    })
+  }
+  return Array.isArray(data.projects) ? (data.projects as ChatCloudProjectHydrate[]) : []
+}
+
+/** POST /api/chat/cloud/projects/:id/move — upsert project + thread snapshot. */
+export async function moveChatCloudProject(
+  projectId: string,
+  body: {
+    project: Record<string, unknown>
+    agents?: unknown[]
+    workspaces?: unknown[]
+    threads?: unknown[]
+  },
+): Promise<{ cloudId: string; cloudSyncedAt: number; threadCount: number }> {
+  const res = await apiFetch(`/chat/cloud/projects/${encodeURIComponent(projectId)}/move`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw Object.assign(new Error(data.message || 'Failed to move project to cloud'), {
+      code: res.status,
+    })
+  }
+  return {
+    cloudId: typeof data.cloudId === 'string' ? data.cloudId : projectId,
+    cloudSyncedAt:
+      typeof data.cloudSyncedAt === 'number' ? data.cloudSyncedAt : Date.now(),
+    threadCount: typeof data.threadCount === 'number' ? data.threadCount : 0,
+  }
+}

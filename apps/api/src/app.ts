@@ -41,6 +41,7 @@ import {
 } from './usage.js'
 import { submitBugReport } from './bugReport.js'
 import { getHistory, putHistory } from './history.js'
+import { getChatCloudProjects, postChatCloudProjectMove } from './chatCloudProjects.js'
 import {
   getHarborQuest,
   getHarborQuestLeaderboard,
@@ -186,6 +187,13 @@ app.use((req, res, next) => {
     return jsonLarge(req, res, next)
   }
   if (req.method === 'POST' && req.path === '/api/chat/files') {
+    return jsonChatFile(req, res, next)
+  }
+  // Cloud project move can include many pruned transcripts.
+  if (
+    req.method === 'POST' &&
+    /^\/api\/chat\/cloud\/projects\/[^/]+\/move$/.test(req.path)
+  ) {
     return jsonChatFile(req, res, next)
   }
   return jsonSmall(req, res, next)
@@ -2096,6 +2104,8 @@ app.get('/api/admin/push/sends', adminListPushSends)
 app.post('/api/admin/push/send', adminSendPush)
 app.post('/api/admin/practice-partner/chat', adminPracticePartnerChat)
 app.post('/api/chat', postDeepseekChat)
+app.get('/api/chat/cloud/projects', getChatCloudProjects)
+app.post('/api/chat/cloud/projects/:id/move', postChatCloudProjectMove)
 app.post('/api/chat/files', postDeepseekChatFile)
 app.post('/api/chat/tts', postDeepseekChatTts)
 app.post('/api/chat/asr', postDeepseekChatAsr)

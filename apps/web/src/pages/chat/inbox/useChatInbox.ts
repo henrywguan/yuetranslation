@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { CHAT_CLOUD_HYDRATE_EVENT } from '../../../lib/chatCloudSync'
 import {
   attachThreadToProject,
   createProject,
@@ -13,6 +14,7 @@ import {
   loadChatInbox,
   saveChatInbox,
   markAgentInReview,
+  markProjectCloudSynced,
   renameProject,
   setAgentStatus,
   setAgentThread,
@@ -54,6 +56,18 @@ export function useChatInbox() {
     persistTimer.current = window.setTimeout(() => {
       void saveChatInbox(next)
     }, 180)
+  }, [])
+
+  // Cloud hydrate writes IDB directly — mirror into React without a second disk write.
+  useEffect(() => {
+    const onHydrate = (e: Event) => {
+      const detail = (e as CustomEvent<{ inbox?: ChatInboxState }>).detail
+      if (!detail?.inbox) return
+      stateRef.current = detail.inbox
+      setState(detail.inbox)
+    }
+    window.addEventListener(CHAT_CLOUD_HYDRATE_EVENT, onHydrate)
+    return () => window.removeEventListener(CHAT_CLOUD_HYDRATE_EVENT, onHydrate)
   }, [])
 
   useEffect(() => {
@@ -189,6 +203,21 @@ export function useChatInbox() {
     [commit],
   )
 
+  /** Replace inbox state (cloud hydrate / move stamp). */
+  const replaceState = useCallback(
+    (next: ChatInboxState) => {
+      commit(next)
+    },
+    [commit],
+  )
+
+  const stampProjectCloud = useCallback(
+    (projectId: string, opts?: { cloudId?: string; cloudSyncedAt?: number }) => {
+      commit(markProjectCloudSynced(stateRef.current, projectId, opts))
+    },
+    [commit],
+  )
+
   return {
     ready,
     state,
@@ -206,5 +235,7 @@ export function useChatInbox() {
     markInReview,
     updateProjectMemory,
     compactAgent,
+    replaceState,
+    stampProjectCloud,
   }
 }

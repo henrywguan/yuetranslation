@@ -971,6 +971,42 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
   white-space: nowrap;
 }
 
+.inbox-cloud-badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.3rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-blue);
+  background: color-mix(in srgb, var(--ds-blue) 12%, transparent);
+  vertical-align: middle;
+}
+
+.inbox-project-cloud-row {
+  display: flex;
+  padding: 0 0.5rem 0.35rem;
+}
+
+.inbox-cloud-note {
+  color: var(--ds-blue);
+}
+
+.inbox-ws-menu-item--danger {
+  color: var(--ds-danger);
+}
+
+.inbox-project-menu-wrap .inbox-chat-menu-trigger {
+  opacity: 0;
+}
+
+.inbox-list-item:hover .inbox-project-menu-wrap .inbox-chat-menu-trigger,
+.inbox-list-item:focus-within .inbox-project-menu-wrap .inbox-chat-menu-trigger {
+  opacity: 1;
+}
+
 .inbox-list-del {
   appearance: none;
   border: 0;
