@@ -61,8 +61,9 @@ Plan→Build / Overseer settle latches `handoff` (pair clip in Both; solo stems 
 Inbox settings → Companion → **3D companion** toggles floating three.js characters (`ChatDeepAvatar3D`). Default remains GIF moods. With 3D on:
 
 - Runtime meshes: `{boy,girl}/deep.glb` (Higgsfield Meshy image→3D from bust refs; SW-excluded). Procedural stub if a GLB fails to load.
-- Mood play-bus → `AnimationMixer` clip names (`Idle` / `Sit` / `Wave` / `Think` aliases). Missing clip → idle bob; celebrate / pair fullscreen stay on the 2D GIF path.
-- **Both + 3D:** two independent draggable GLBs (boy + girl), default docked side-by-side on the composer; each can chill or collaborate anywhere on `.ds-chat`. Poses persist per solo.
+- Mood play-bus → `AnimationMixer` clip names (`Idle` / `Sit` / `Wave` / `Think` + ambient `Walk` / `Interact` / `Study` / `Work`). Missing clip → idle bob; celebrate / pair fullscreen stay on the 2D GIF path.
+- **Ambient idle AI:** when play-bus mood is resting, companions undock and wander on `.ds-chat`, picking study / work / walk / idle dwells. Speak / wave / celebrate (etc.) still override briefly.
+- **Both + 3D:** two independent draggable GLBs (boy + girl), default docked side-by-side on the composer; each can chill or collaborate anywhere on `.ds-chat`. When near each other they prefer **Interact**. Poses persist per solo.
 - Drag anywhere over `#/chat` (inbox / workspace / composer / empty chrome); soft-snap home to the bar/stage dock
 - `prefers-reduced-motion` and WebGL failure fall back to GIF; mic / composer controls stay interactive (handle-only pointer events)
 - Stays on three.js GLB / procedural mesh (no Live2D / Cubism; no Azure VO for the avatar)

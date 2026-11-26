@@ -1,8 +1,9 @@
 /**
- * `#/chat` 3D companion — transparent three.js overlay + mood→clip mixer.
- * Loads `deep.glb` when present (procedural stub otherwise). Drag anywhere over
- * `.ds-chat`; soft-snap home to bar/stage dock. Both mode mounts two independent
- * GLBs (boy + girl). Celebrate / pair fullscreen stay on the 2D GIF path.
+ * `#/chat` 3D companion — transparent three.js overlay + mood→clip mixer +
+ * ambient idle AI (wander / study / work / interact). Loads `deep.glb` when
+ * present (procedural stub otherwise). Drag anywhere over `.ds-chat`; soft-snap
+ * home to bar/stage dock. Both mode mounts two independent GLBs that collaborate
+ * when near. Celebrate / pair fullscreen stay on the 2D GIF path.
  */
 import {
   useEffect,
@@ -33,6 +34,18 @@ import {
   writeChatDeepAvatar3dPose,
   type ChatDeepAvatar3dPose,
 } from '../../../lib/chatDeepAvatar3d'
+import {
+  chatDeepAvatar3dCompanionsNear,
+  chatDeepAvatar3dMoodOverridesAmbient,
+  pickChatDeepAvatar3dBehavior,
+  pickChatDeepAvatar3dDwellMs,
+  pickChatDeepAvatar3dWanderTarget,
+  publishChatDeepAvatar3dLivePose,
+  readChatDeepAvatar3dPartnerPose,
+  resolveChatDeepAvatar3dBehaviorClipName,
+  stepChatDeepAvatar3dWalk,
+  type ChatDeepAvatar3dBehavior,
+} from '../../../lib/chatDeepAvatar3dBehavior'
 import {
   isChatDeepAvatarBothMode,
   normalizeChatDeepAvatarCharacter,
@@ -133,17 +146,13 @@ type SceneBundle = {
   action: THREE.AnimationAction | null
   clipName: string | null
   setMood: (mood: ChatDeepAvatarMood) => void
+  setBehavior: (behavior: ChatDeepAvatar3dBehavior) => void
+  playNamedClip: (want: string | null) => void
   dispose: () => void
 }
 
-function playClip(bundle: SceneBundle, mood: ChatDeepAvatarMood) {
-  if (!bundle.mixer || !bundle.clips.length) {
-    bundle.clipName = null
-    return
-  }
-  const names = bundle.clips.map((c) => c.name)
-  const want = resolveChatDeepAvatar3dClipName(mood, names)
-  if (!want) {
+function playNamedClip(bundle: SceneBundle, want: string | null) {
+  if (!bundle.mixer || !bundle.clips.length || !want) {
     bundle.clipName = null
     return
   }
@@ -164,6 +173,24 @@ function playClip(bundle: SceneBundle, mood: ChatDeepAvatarMood) {
   next.play()
   bundle.action = next
   bundle.clipName = want
+}
+
+function playMoodClip(bundle: SceneBundle, mood: ChatDeepAvatarMood) {
+  if (!bundle.mixer || !bundle.clips.length) {
+    bundle.clipName = null
+    return
+  }
+  const names = bundle.clips.map((c) => c.name)
+  playNamedClip(bundle, resolveChatDeepAvatar3dClipName(mood, names))
+}
+
+function playBehaviorClip(bundle: SceneBundle, behavior: ChatDeepAvatar3dBehavior) {
+  if (!bundle.mixer || !bundle.clips.length) {
+    bundle.clipName = null
+    return
+  }
+  const names = bundle.clips.map((c) => c.name)
+  playNamedClip(bundle, resolveChatDeepAvatar3dBehaviorClipName(behavior, names))
 }
 
 async function mountScene(
@@ -252,7 +279,9 @@ async function mountScene(
     clips,
     action: null,
     clipName: null,
-    setMood: (mood) => playClip(bundle, mood),
+    setMood: (mood) => playMoodClip(bundle, mood),
+    setBehavior: (behavior) => playBehaviorClip(bundle, behavior),
+    playNamedClip: (want) => playNamedClip(bundle, want),
     dispose: () => {
       cancelAnimationFrame(raf)
       mixer?.stopAllAction()
@@ -261,7 +290,7 @@ async function mountScene(
     },
   }
 
-  playClip(bundle, initialMood)
+  playMoodClip(bundle, initialMood)
 
   let raf = 0
   let last = performance.now()
@@ -271,7 +300,10 @@ async function mountScene(
     if (mixer && bundle.clipName) {
       mixer.update(dt)
       // Gentle yaw when a clip is playing (less bob so clips read).
-      root.rotation.y += dt * 0.18
+      // Ambient walk faces travel direction via root.userData.ambientFacing.
+      if (!root.userData.ambientFacing) {
+        root.rotation.y += dt * 0.18
+      }
     } else {
       // Missing clip → idle bob (procedural stub / unskinned GLB).
       root.rotation.y += dt * 0.35
@@ -387,10 +419,149 @@ export function ChatDeepAvatar3DOverlay({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mood applied in separate effect
   }, [solo, onActiveChange, surfaceEl])
 
-  // Play-bus / FSM mood → AnimationMixer clip (missing → idle bob).
+  // Play-bus / FSM mood briefly overrides ambient AI.
+  const moodOverride = chatDeepAvatar3dMoodOverridesAmbient(mood)
   useEffect(() => {
-    bundleRef.current?.setMood(mood)
-  }, [mood])
+    const b = bundleRef.current
+    if (!b) return
+    if (moodOverride) {
+      b.root.userData.ambientFacing = false
+      b.setMood(mood)
+    }
+  }, [mood, moodOverride])
+
+  // Ambient idle AI: wander / study / work; Both prefers interact when near.
+  useEffect(() => {
+    if (moodOverride || dragging) return
+    let cancelled = false
+    let raf = 0
+    let last = performance.now()
+    let behavior: ChatDeepAvatar3dBehavior = 'idle'
+    let target: { x: number; y: number } | null = null
+    let dwellUntil = 0
+    let nextPickAt = performance.now() + 600 + Math.random() * 900
+    let persistAt = 0
+
+    const ensureUndocked = (cur: ChatDeepAvatar3dPose): ChatDeepAvatar3dPose => {
+      if (!cur.docked) return cur
+      const surface = resolveSurface()
+      const handle = handleRef.current
+      if (!surface || !handle) return { ...cur, docked: false }
+      const lr = surface.getBoundingClientRect()
+      const hr = handle.getBoundingClientRect()
+      const x = Math.min(1, Math.max(0, (hr.left + hr.width / 2 - lr.left) / lr.width))
+      const y = Math.min(1, Math.max(0, (hr.top + hr.height / 2 - lr.top) / lr.height))
+      const next = writeChatDeepAvatar3dPose(solo, { x, y, docked: false })
+      setPose(next)
+      return next
+    }
+
+    const applyBehaviorClip = (next: ChatDeepAvatar3dBehavior) => {
+      behavior = next
+      bundleRef.current?.setBehavior(next)
+      const root = bundleRef.current?.root
+      if (root) root.userData.ambientFacing = next === 'walk'
+    }
+
+    const pickNext = (now: number, pos: { x: number; y: number }) => {
+      const partner = duoOffset ? readChatDeepAvatar3dPartnerPose(solo) : null
+      const preferInteract = Boolean(partner && chatDeepAvatar3dCompanionsNear(pos, partner))
+      const next = pickChatDeepAvatar3dBehavior(Math.random, { preferInteract })
+      if (next === 'walk') {
+        target = pickChatDeepAvatar3dWanderTarget()
+        // When Both + near, walk toward partner instead of a random chill spot.
+        if (preferInteract && partner) {
+          target = {
+            x: (pos.x + partner.x) / 2 + (solo === 'boy' ? -0.04 : 0.04),
+            y: (pos.y + partner.y) / 2,
+          }
+        }
+        dwellUntil = 0
+        applyBehaviorClip('walk')
+      } else {
+        target = null
+        dwellUntil = now + pickChatDeepAvatar3dDwellMs(next)
+        applyBehaviorClip(next)
+      }
+      nextPickAt = now + 40_000 // safety; dwell/arrive re-picks sooner
+    }
+
+    const tick = (now: number) => {
+      if (cancelled) return
+      const dt = Math.min(0.05, (now - last) / 1000)
+      last = now
+      const b = bundleRef.current
+      const handle = handleRef.current
+      const surface = resolveSurface()
+      if (!b || !handle || !surface) {
+        raf = requestAnimationFrame(tick)
+        return
+      }
+
+      let pos = readChatDeepAvatar3dPose(solo)
+      publishChatDeepAvatar3dLivePose(solo, { x: pos.x, y: pos.y })
+
+      if (now >= nextPickAt || (behavior !== 'walk' && dwellUntil > 0 && now >= dwellUntil)) {
+        pos = ensureUndocked(pos)
+        pickNext(now, pos)
+      }
+
+      if (behavior === 'walk' && target) {
+        pos = ensureUndocked(pos)
+        const stepped = stepChatDeepAvatar3dWalk({ x: pos.x, y: pos.y }, target, dt)
+        // Face travel direction (screen X → yaw).
+        const dx = target.x - pos.x
+        if (Math.abs(dx) > 0.002 && b.root) {
+          const wantYaw = dx > 0 ? 0.55 : -0.55
+          b.root.rotation.y += (wantYaw - b.root.rotation.y) * Math.min(1, dt * 4)
+          b.root.userData.ambientFacing = true
+        }
+        const lr = surface.getBoundingClientRect()
+        handle.style.left = `${stepped.x * lr.width}px`
+        handle.style.top = `${stepped.y * lr.height}px`
+        publishChatDeepAvatar3dLivePose(solo, { x: stepped.x, y: stepped.y })
+        if (stepped.arrived) {
+          const saved = writeChatDeepAvatar3dPose(solo, {
+            x: stepped.x,
+            y: stepped.y,
+            docked: false,
+          })
+          setPose(saved)
+          target = null
+          // Arrive → short idle / study / work / interact dwell.
+          const partner = duoOffset ? readChatDeepAvatar3dPartnerPose(solo) : null
+          const preferInteract = Boolean(
+            partner && chatDeepAvatar3dCompanionsNear(saved, partner),
+          )
+          const dwell = pickChatDeepAvatar3dBehavior(Math.random, {
+            preferInteract: preferInteract || undefined,
+          })
+          const settled: ChatDeepAvatar3dBehavior =
+            dwell === 'walk' ? (preferInteract ? 'interact' : 'idle') : dwell
+          dwellUntil = now + pickChatDeepAvatar3dDwellMs(settled)
+          applyBehaviorClip(settled)
+          nextPickAt = dwellUntil
+        } else if (now >= persistAt) {
+          // Light persist while walking so refresh keeps progress.
+          persistAt = now + 1200
+          writeChatDeepAvatar3dPose(solo, { x: stepped.x, y: stepped.y, docked: false })
+        }
+      }
+
+      raf = requestAnimationFrame(tick)
+    }
+
+    // Kick ambient shortly after mount so mood clip can settle first.
+    applyBehaviorClip('idle')
+    raf = requestAnimationFrame(tick)
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(raf)
+      publishChatDeepAvatar3dLivePose(solo, null)
+      const root = bundleRef.current?.root
+      if (root) root.userData.ambientFacing = false
+    }
+  }, [solo, moodOverride, dragging, duoOffset])
 
   // Follow dock origin while docked; keep free-float % otherwise.
   useLayoutEffect(() => {
