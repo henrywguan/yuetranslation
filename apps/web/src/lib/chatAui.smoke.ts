@@ -97,11 +97,16 @@ assert.doesNotMatch(
   /<header className="ds-chat-top"[\s\S]*ds-chat-main aui-main/,
   'top bar must not precede ds-chat-main in AuiShell',
 )
-// History popup: classic absolute sidebar + backdrop under `.ds-chat` — never an
-// unstyled in-flow scrim (that shoved main right). Esc dismisses the float/sheet.
-assert.match(auiShellFn, /ds-chat-sidebar-backdrop/, 'history uses classic absolute backdrop')
+// History drawer flush left: classic absolute sidebar + absolute backdrop under
+// `.ds-chat` — never an unstyled in-flow scrim (that shoved main right). Desktop
+// push layout hides the backdrop via CSS (not a floating Esc/scrim modal).
+assert.match(auiShellFn, /ds-chat-sidebar-backdrop/, 'mobile history uses classic absolute backdrop')
 assert.doesNotMatch(auiShellFn, /ds-chat-sidebar-scrim/, 'no unstyled in-flow scrim')
-assert.match(auiShellFn, /Escape|keydown/, 'Esc closes Inbox popup')
+assert.doesNotMatch(
+  auiShellFn,
+  /Popup Inbox: Esc|Escape[\s\S]*setSidebarOpen\(false\)/,
+  'desktop push Inbox is not Esc-dismiss modal',
+)
 assert.match(
   auiShellFn,
   /ds-chat-sidebar[\s\S]*ds-chat-main aui-main/,
@@ -280,16 +285,21 @@ assert.match(
   /\.ds-chat\.aui-chat \.ds-chat-menu-btn[\s\S]*display:\s*grid/,
   'AUI keeps menu btn on desktop to collapse Inbox',
 )
-assert.match(auiCss, /is-inbox-collapsed/, 'desktop collapsed Inbox popup rules')
+assert.match(auiCss, /is-inbox-collapsed/, 'desktop collapsed Inbox width rules')
 assert.match(
   auiCss,
-  /position:\s*absolute[\s\S]*border-radius:\s*1rem|border-radius:\s*1rem[\s\S]*position:\s*absolute/,
-  'desktop Inbox is a floating popup panel',
+  /\.ds-chat\.aui-chat \.ds-chat-sidebar[\s\S]*position:\s*relative[\s\S]*flex:\s*0\s+0\s+var\(--ds-sidebar-w\)/,
+  'desktop Inbox is in-flow push (not floating popup)',
 )
 assert.match(
   auiCss,
-  /\.ds-chat\.aui-chat \.ds-chat-sidebar-backdrop[\s\S]*display:\s*block/,
-  'desktop popup keeps backdrop scrim',
+  /\.ds-chat\.aui-chat \.ds-chat-sidebar-backdrop[\s\S]*display:\s*none/,
+  'desktop push Inbox hides backdrop scrim',
+)
+assert.doesNotMatch(
+  auiCss,
+  /Float over main|Cursor-like popup reveal/,
+  'no floating popup copy left in AUI Inbox chrome',
 )
 assert.match(
   auiCss,
