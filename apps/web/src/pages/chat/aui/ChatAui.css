@@ -3780,7 +3780,7 @@
  * hover / focus / drag → full opacity. */
 .aui-thread:has(.aui-scrubber) .aui-viewport {
   /* Room for the hairline; hide native bar so it cannot fight the rail. */
-  padding-right: 1.35rem;
+  padding-right: 1.85rem;
   scrollbar-width: none;
 }
 
@@ -3792,7 +3792,8 @@
 .aui-scrubber {
   position: absolute;
   top: 0.85rem;
-  right: 0.2rem;
+  /* Nudge left of the window/edge scrollbar on desktop. */
+  right: 0.75rem;
   bottom: max(7.5rem, calc(env(safe-area-inset-bottom, 0px) + 6.5rem));
   width: 0.85rem;
   z-index: 4;
