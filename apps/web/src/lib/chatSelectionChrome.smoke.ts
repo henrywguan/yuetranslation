@@ -97,11 +97,28 @@ assert.match(thread, /aria-expanded|listbox|aui-agent-pill/, 'agent pill dropdow
 assert.match(thread, /ChatMoodPicker|requestChatDeepAvatarPlay|aui-mood-picker/, 'mood overlay')
 assert.match(thread, /margin-top:\s*auto|aui-composer-toolbar/, 'toolbar present')
 
+const menuSrc = readFileSync(join(root, 'pages/chat/aui/ChatSelectionMenu.tsx'), 'utf8')
+assert.match(menuSrc, /SELECTION_MENU_Z_INDEX\s*=\s*150/, 'z-index constant above .ds-chat 120')
+assert.match(menuSrc, /style=\{\{\s*zIndex:\s*SELECTION_MENU_Z_INDEX\s*\}\}/, 'override body-portal default z=50')
+assert.match(menuSrc, />\s*Copy\s*</, 'Copy action')
+assert.match(menuSrc, />\s*Reply\s*</, 'Reply action')
+assert.match(menuSrc, />\s*Include\s*</, 'Include / Add to chat action')
+assert.match(menuSrc, /SelectionToolbarPrimitive\.Root/, 'assistant-ui selection primitive')
+
 const css = readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8')
 assert.match(css, /\.aui-selection-menu/, 'selection menu CSS')
+assert.match(
+  css,
+  /\.aui-selection-menu[\s\S]*?z-index:\s*150\s*!important/,
+  'selection menu CSS z-index above .ds-chat',
+)
 assert.match(css, /\.aui-scrubber/, 'scrubber CSS')
 assert.match(css, /\.aui-agent-pill/, 'agent pill CSS')
 assert.match(css, /\.aui-composer-toolbar[\s\S]*margin-top:\s*auto|\.aui-composer-row-wrap[\s\S]*flex:\s*1/, 'toolbar bottom pin')
 assert.match(css, /\.aui-mood-picker/, 'mood picker CSS')
+
+// Message bodies must opt into quote-selectable so SelectionToolbar accepts user+assistant text.
+assert.match(thread, /is-user[\s\S]*data-aui-quote-selectable/, 'user msgs quote-selectable')
+assert.match(thread, /is-assistant[\s\S]*data-aui-quote-selectable/, 'assistant msgs quote-selectable')
 
 console.log('chatSelectionChrome.smoke.ts: ok')

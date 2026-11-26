@@ -3667,7 +3667,10 @@
   }
 }
 
-/* —— Selection floating menu (Copy | Reply | Include) —— */
+/* —— Selection floating menu (Copy | Reply | Include) ——
+ * Portaled to document.body by SelectionToolbarPrimitive (default z-index 50).
+ * Must sit above `.ds-chat` (z-index 120) or the opaque shell hides it —
+ * ChatSelectionMenu sets inline z-index 150; keep CSS in sync as a fallback. */
 .aui-selection-menu {
   display: inline-flex;
   align-items: center;
@@ -3681,6 +3684,8 @@
     0 0 0 1px color-mix(in srgb, var(--ds-blue) 8%, transparent);
   backdrop-filter: blur(10px);
   animation: aui-rise 0.16s ease both;
+  /* Inline style from ChatSelectionMenu wins; !important guards if style prop is dropped. */
+  z-index: 150 !important;
 }
 
 .aui-selection-btn {
