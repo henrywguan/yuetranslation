@@ -181,9 +181,6 @@ export function ChatHistoryScrubber() {
               aria-label={`${t.role}: ${t.snippet}`}
               tabIndex={-1}
               onPointerEnter={() => setHoverPreview({ tick: t, topPct })}
-              onPointerLeave={() => {
-                if (!draggingRef.current) setHoverPreview(null)
-              }}
               onClick={(e) => {
                 e.stopPropagation()
                 setActive(i)
@@ -196,12 +193,12 @@ export function ChatHistoryScrubber() {
       </div>
       {hoverPreview ? (
         <div
-          className="aui-scrubber-preview"
+          className={`aui-scrubber-preview${previewAlignClass(hoverPreview.topPct)}`}
           role="tooltip"
           style={{ top: `${hoverPreview.topPct}%` }}
         >
           <span className="aui-scrubber-preview-role">{hoverPreview.tick.role}</span>
-          <span className="aui-scrubber-preview-text">{hoverPreview.tick.snippet}</span>
+          <span className="aui-scrubber-preview-text">{hoverPreview.tick.text}</span>
         </div>
       ) : null}
     </div>
@@ -211,4 +208,11 @@ export function ChatHistoryScrubber() {
 function tickLabel(t: ScrubberTick | undefined): string {
   if (!t) return ''
   return `${t.role}: ${t.snippet}`
+}
+
+/** Keep tall full-message previews inside the rail near top/bottom ticks. */
+function previewAlignClass(topPct: number): string {
+  if (topPct < 18) return ' is-align-start'
+  if (topPct > 82) return ' is-align-end'
+  return ' is-align-center'
 }
