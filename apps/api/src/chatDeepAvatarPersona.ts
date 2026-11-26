@@ -71,6 +71,8 @@ export type ChatDeepAvatarCloudPrefs = {
   trait?: ChatDeepAvatarTrait
   notes?: string
   soundEnabled?: boolean
+  /** Companion → 3D companion chrome (device pose stays local). */
+  companion3d?: boolean
   updatedAt?: string
 }
 
@@ -160,6 +162,7 @@ export function normalizeChatDeepAvatarCloudPrefs(raw: unknown): ChatDeepAvatarC
   if (obj.trait != null) out.trait = normalizeChatDeepAvatarTrait(obj.trait)
   if (obj.notes != null) out.notes = sanitizeChatDeepAvatarNotes(obj.notes)
   if (obj.soundEnabled != null) out.soundEnabled = Boolean(obj.soundEnabled)
+  if (obj.companion3d != null) out.companion3d = Boolean(obj.companion3d)
   if (typeof obj.updatedAt === 'string' && obj.updatedAt.trim()) {
     out.updatedAt = obj.updatedAt.trim().slice(0, 40)
   }

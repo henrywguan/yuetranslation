@@ -41,6 +41,10 @@ import {
   type ChatDeepAvatarDockMode,
   type ChatDeepAvatarMood,
 } from './ChatDeepAvatar'
+import {
+  ChatDeepAvatar3DGate,
+  useChatDeepAvatar3dEnabled,
+} from './ChatDeepAvatar3D'
 import type { DeepseekChatPluginKeyId } from '../../../lib/api'
 import {
   applyMentionInsert,
@@ -538,6 +542,8 @@ type ComposerChromeProps = {
   portraitLips: number
   avatarCharacter: ChatDeepAvatarCharacterId
   dimPortrait: boolean
+  /** Live 3D overlay owns the face — hide dock GIF to avoid a double companion. */
+  hideGifFor3d?: boolean
 }
 
 /** Live mode / busy chips — placement follows companion dock (bar above composer, stage above portrait). */
@@ -626,6 +632,7 @@ function ComposerChrome({
   portraitLips,
   avatarCharacter,
   dimPortrait,
+  hideGifFor3d = false,
 }: ComposerChromeProps) {
   const aui = useAui()
   const draft = useAuiState((s) => s.composer.text)
@@ -1176,7 +1183,9 @@ function ComposerChrome({
             onClick={onToggleDock}
             aria-label="Show large companion"
           >
-            <span className={`aui-avatar-dock-frame${dimPortrait ? ' is-fx-dimmed' : ''}`}>
+            <span
+              className={`aui-avatar-dock-frame${dimPortrait ? ' is-fx-dimmed' : ''}${hideGifFor3d ? ' is-3d-active' : ''}`}
+            >
               <span className="aui-avatar-dock-origin" ref={dockRef}>
                 <ChatDeepAvatar
                   mood={portraitMood}
@@ -1355,7 +1364,10 @@ export function ChatAuiThread() {
   const [dock, setDock] = useChatDeepAvatarDock()
   const [avatarCharacter] = useChatDeepAvatarCharacter()
   const [celebrateMode] = useChatDeepAvatarCelebrateMode()
+  const [companion3d] = useChatDeepAvatar3dEnabled()
+  const [companion3dLive, setCompanion3dLive] = useState(false)
   const dockRef = useRef<HTMLElement | null>(null)
+  const layoutRef = useRef<HTMLDivElement | null>(null)
   const {
     mood: portraitMood,
     outroMood: portraitOutroMood,
@@ -1375,6 +1387,7 @@ export function ChatAuiThread() {
     deepFinish: portraitDeep,
     celebrateMode,
   })
+  const hideGifFor3d = companion3dLive
 
   const onToggleDock = () => {
     // Prefer ignore while fullscreen celebrate owns the screen.
@@ -1383,7 +1396,10 @@ export function ChatAuiThread() {
   }
 
   return (
-    <div className={`aui-layout${dock === 'stage' ? ' is-avatar-stage' : ''}`}>
+    <div
+      ref={layoutRef}
+      className={`aui-layout${dock === 'stage' ? ' is-avatar-stage' : ''}${companion3dLive ? ' is-3d-companion' : ''}`}
+    >
       {dock === 'stage' ? (
         <aside className="aui-avatar-stage" aria-label="Companion stage">
           <button
@@ -1394,7 +1410,7 @@ export function ChatAuiThread() {
           >
             <ComposerStatusCluster placement="stage" />
             <span
-              className={`aui-avatar-dock-frame is-stage${dimPortrait ? ' is-fx-dimmed' : ''}`}
+              className={`aui-avatar-dock-frame is-stage${dimPortrait ? ' is-fx-dimmed' : ''}${hideGifFor3d ? ' is-3d-active' : ''}`}
             >
               <span className="aui-avatar-dock-origin" ref={dockRef}>
                 <ChatDeepAvatar
@@ -1501,6 +1517,7 @@ export function ChatAuiThread() {
               portraitLips={portraitLips}
               avatarCharacter={avatarCharacter}
               dimPortrait={dimPortrait}
+              hideGifFor3d={hideGifFor3d}
             />
           </ThreadPrimitive.ViewportFooter>
         </ThreadPrimitive.Viewport>
@@ -1509,6 +1526,14 @@ export function ChatAuiThread() {
         <ChatSelectionMenu />
         <ThreadPrimitive.ScrollToBottom className="aui-scroll-bottom">↓</ThreadPrimitive.ScrollToBottom>
       </ThreadPrimitive.Root>
+      <ChatDeepAvatar3DGate
+        enabled={companion3d}
+        character={avatarCharacter}
+        mood={portraitMood}
+        dockRef={dockRef}
+        layoutRef={layoutRef}
+        onActiveChange={setCompanion3dLive}
+      />
       <ChatDeepAvatarCelebrateFx
         open={celebrateFx}
         sessionKey={celebrateFxKey}

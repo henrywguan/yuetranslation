@@ -31,6 +31,7 @@ import {
   useChatDeepAvatarSoundEnabled,
   useChatDeepAvatarTrait,
 } from '../aui/ChatDeepAvatar'
+import { useChatDeepAvatar3dEnabled } from '../aui/ChatDeepAvatar3D'
 import { CheckIcon, CloseIcon, PencilIcon, SettingsIcon } from './InboxIcons'
 
 type MenuPos = { top: number; right: number; maxHeight: number }
@@ -58,6 +59,7 @@ export function InboxSettingsMenu() {
   const [trait, setTrait] = useChatDeepAvatarTrait()
   const [notes, setNotes] = useChatDeepAvatarNotes()
   const [soundOn, setSoundOn] = useChatDeepAvatarSoundEnabled()
+  const [companion3d, setCompanion3d] = useChatDeepAvatar3dEnabled()
   const [menuPos, setMenuPos] = useState<MenuPos | null>(null)
   const [companionOpen, setCompanionOpen] = useState(() =>
     readChatFlag(CHAT_INBOX_COMPANION_OPEN_KEY, true),
@@ -388,6 +390,16 @@ export function InboxSettingsMenu() {
                     onClick={() => setSoundOn(!soundOn)}
                   >
                     Sound {soundOn ? 'on' : 'off'}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitemcheckbox"
+                    aria-checked={companion3d}
+                    className={`inbox-settings-companion-item inbox-settings-3d${companion3d ? ' is-active' : ''}`}
+                    title="Placeholder 3D companion — drag anywhere; GIF stays the fallback"
+                    onClick={() => setCompanion3d(!companion3d)}
+                  >
+                    3D companion {companion3d ? 'on' : 'off'}
                   </button>
                 </div>
               ) : null}

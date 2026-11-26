@@ -163,6 +163,8 @@ export type ChatDeepAvatarCloudPrefs = {
   trait?: ChatDeepAvatarTrait
   notes?: string
   soundEnabled?: boolean
+  /** Companion → 3D companion chrome (GIF remains fallback). Pose stays device-local. */
+  companion3d?: boolean
   /** ISO timestamp — newer wins on merge. */
   updatedAt?: string
 }
@@ -332,6 +334,7 @@ export function normalizeChatDeepAvatarCloudPrefs(raw: unknown): ChatDeepAvatarC
   if (obj.trait != null) out.trait = normalizeChatDeepAvatarTrait(obj.trait)
   if (obj.notes != null) out.notes = sanitizeChatDeepAvatarNotes(obj.notes)
   if (obj.soundEnabled != null) out.soundEnabled = Boolean(obj.soundEnabled)
+  if (obj.companion3d != null) out.companion3d = Boolean(obj.companion3d)
   if (typeof obj.updatedAt === 'string' && obj.updatedAt.trim()) {
     out.updatedAt = obj.updatedAt.trim().slice(0, 40)
   }
@@ -341,6 +344,7 @@ export function normalizeChatDeepAvatarCloudPrefs(raw: unknown): ChatDeepAvatarC
 export function buildLocalChatDeepAvatarCloudPrefs(base: {
   character: ChatDeepAvatarCharacterId
   celebrateMode: ChatDeepAvatarCelebrateMode
+  companion3d?: boolean
 }): ChatDeepAvatarCloudPrefs {
   return {
     character: base.character,
@@ -349,6 +353,7 @@ export function buildLocalChatDeepAvatarCloudPrefs(base: {
     trait: readChatDeepAvatarTrait(),
     notes: readChatDeepAvatarNotes(),
     soundEnabled: readChatDeepAvatarSoundEnabled(),
+    companion3d: base.companion3d,
     updatedAt: new Date().toISOString(),
   }
 }
@@ -362,6 +367,7 @@ export function applyChatDeepAvatarCloudPrefs(
   writers: {
     writeCharacter: (id: ChatDeepAvatarCharacterId) => void
     writeCelebrateMode: (mode: ChatDeepAvatarCelebrateMode) => void
+    writeCompanion3d?: (on: boolean) => void
   },
 ) {
   const normalized = normalizeChatDeepAvatarCloudPrefs(cloud)
@@ -383,6 +389,7 @@ export function applyChatDeepAvatarCloudPrefs(
   if (normalized.trait) writeChatDeepAvatarTrait(normalized.trait)
   if (normalized.notes != null) writeChatDeepAvatarNotes(normalized.notes)
   if (normalized.soundEnabled != null) writeChatDeepAvatarSoundEnabled(normalized.soundEnabled)
+  if (normalized.companion3d != null) writers.writeCompanion3d?.(normalized.companion3d)
   try {
     localStorage.setItem(
       'yue-deepseek-chat-avatar-cloud-updated-v1',
