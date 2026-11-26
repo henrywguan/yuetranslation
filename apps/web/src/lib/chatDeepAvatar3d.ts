@@ -203,8 +203,8 @@ export const CHAT_DEEP_AVATAR_3D_CLIP_ALIASES: Record<ChatDeepAvatarMood, readon
   idle: ['Idle', 'idle', 'Idle_02', 'Idle_03'],
   happy: ['Wave', 'Big_Wave_Hello', 'Idle', 'idle'],
   think: ['Think', 'Confused_Scratch', 'Idle', 'idle'],
-  speak: ['Speak', 'Talk', 'Idle', 'idle'],
-  listen: ['Listen', 'Idle', 'idle'],
+  speak: ['Interact', 'Stand_and_Chat', 'Talk', 'Speak', 'Idle', 'idle'],
+  listen: ['Interact', 'Listening_Gesture', 'Listen', 'Idle', 'idle'],
   concern: ['Idle', 'idle'],
   celebrate: ['Wave', 'Big_Wave_Hello', 'Idle', 'idle'],
   proud: ['Idle', 'idle'],
@@ -214,14 +214,26 @@ export const CHAT_DEEP_AVATAR_3D_CLIP_ALIASES: Record<ChatDeepAvatarMood, readon
   wave: ['Wave', 'Big_Wave_Hello', 'Wave_One_Hand', 'Idle', 'idle'],
   nod: ['Nod', 'Idle', 'idle'],
   relieved: ['Idle', 'idle'],
-  sleepy: ['Sit', 'Chair_Sit_Idle_M', 'Chair_Sit_Idle_F', 'Idle', 'idle'],
-  highfive: ['Wave', 'Big_Wave_Hello', 'Idle', 'idle'],
-  handshake: ['Wave', 'Idle', 'idle'],
-  handoff: ['Idle', 'idle'],
+  sleepy: ['Sit', 'Chair_Sit_Idle_M', 'Chair_Sit_Idle_F', 'Study', 'Idle', 'idle'],
+  highfive: ['Interact', 'Stand_and_Chat', 'Wave', 'Big_Wave_Hello', 'Idle', 'idle'],
+  handshake: ['Interact', 'Stand_and_Chat', 'Wave', 'Idle', 'idle'],
+  handoff: ['Interact', 'Idle', 'idle'],
 }
 
-/** Canonical clip vocabulary we try to ship in deep.glb (Meshy / Harbor names). */
-export const CHAT_DEEP_AVATAR_3D_CANON_CLIPS = ['Idle', 'Sit', 'Wave', 'Think'] as const
+/**
+ * Canonical clip vocabulary shipped in deep.glb.
+ * Ambient AI uses Walk / Interact / Study / Work / Idle; play-bus still maps Wave/Sit/Think.
+ */
+export const CHAT_DEEP_AVATAR_3D_CANON_CLIPS = [
+  'Idle',
+  'Sit',
+  'Wave',
+  'Think',
+  'Walk',
+  'Interact',
+  'Study',
+  'Work',
+] as const
 
 /**
  * Resolve the best clip name for a mood from the GLB's animation list.

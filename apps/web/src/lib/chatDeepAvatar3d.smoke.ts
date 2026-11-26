@@ -82,6 +82,10 @@ assert.ok(CHAT_DEEP_AVATAR_3D_CLIP_ALIASES.wave.includes('Wave'))
 assert.ok(CHAT_DEEP_AVATAR_3D_CLIP_ALIASES.think.includes('Think'))
 assert.ok(CHAT_DEEP_AVATAR_3D_CLIP_ALIASES.sleepy.some((n) => /sit/i.test(n)))
 assert.ok(CHAT_DEEP_AVATAR_3D_CANON_CLIPS.includes('Idle'))
+assert.ok(CHAT_DEEP_AVATAR_3D_CANON_CLIPS.includes('Walk'))
+assert.ok(CHAT_DEEP_AVATAR_3D_CANON_CLIPS.includes('Interact'))
+assert.ok(CHAT_DEEP_AVATAR_3D_CANON_CLIPS.includes('Study'))
+assert.ok(CHAT_DEEP_AVATAR_3D_CANON_CLIPS.includes('Work'))
 assert.equal(
   resolveChatDeepAvatar3dClipName('wave', ['Idle', 'Wave', 'Sit', 'Think']),
   'Wave',
@@ -150,6 +154,8 @@ assert.match(overlaySrc, /from 'three'/, 'overlay uses three.js')
 assert.match(overlaySrc, /GLTFLoader/, 'overlay can load deep.glb when present')
 assert.match(overlaySrc, /AnimationMixer/, 'mood → clip mixer')
 assert.match(overlaySrc, /resolveChatDeepAvatar3dClipName/, 'clip resolve wired')
+assert.match(overlaySrc, /chatDeepAvatar3dBehavior|setBehavior|ambient/, 'ambient idle AI wired')
+assert.match(overlaySrc, /stepChatDeepAvatar3dWalk|preferInteract/, 'wander + Both interact')
 assert.match(overlaySrc, /buildStubFigure|CapsuleGeometry|SphereGeometry/, 'procedural stub mesh')
 assert.match(overlaySrc, /ChatDeepAvatar3DGate|useChatDeepAvatar3dEnabled/, 'toggle gate + hook')
 assert.match(overlaySrc, /chatDeepAvatar3dSolosToMount/, 'Both dual solo mount helper')
@@ -227,6 +233,22 @@ assert.deepEqual(
   const magic = (p: string) => readFileSync(p).subarray(0, 4).toString('utf8')
   assert.equal(magic(boyGlb), 'glTF', 'boy deep.glb is a real GLB')
   assert.equal(magic(girlGlb), 'glTF', 'girl deep.glb is a real GLB')
+  // Ambient clip vocabulary must be present after Meshy merge.
+  const animNames = (p: string) => {
+    const buf = readFileSync(p)
+    const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength)
+    const jsonLen = view.getUint32(12, true)
+    const json = JSON.parse(buf.subarray(20, 20 + jsonLen).toString('utf8')) as {
+      animations?: { name?: string }[]
+    }
+    return (json.animations ?? []).map((a) => a.name ?? '')
+  }
+  for (const who of [boyGlb, girlGlb]) {
+    const names = animNames(who)
+    for (const need of ['Idle', 'Walk', 'Interact', 'Study', 'Work', 'Wave', 'Sit', 'Think']) {
+      assert.ok(names.includes(need), `${who} missing clip ${need} (have ${names.join(',')})`)
+    }
+  }
 }
 
 // Synthetic pointer-block check via Element-like closest.
