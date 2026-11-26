@@ -695,6 +695,7 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
 }
 
 .inbox-list-item {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
@@ -704,6 +705,41 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
   min-height: 2.15rem;
   flex-shrink: 0;
   overflow: hidden;
+  padding-left: 0.2rem;
+  transition:
+    background 0.16s ease,
+    transform 0.16s ease;
+}
+
+/* Cursor LINE active rail — shared with `.aui-thread-item` in ChatAui.css. */
+.inbox-list-item::before,
+.inbox-agent-row::before {
+  content: '';
+  position: absolute;
+  left: 0.1rem;
+  top: 50%;
+  width: 2.5px;
+  height: 0;
+  border-radius: 999px;
+  background: var(--ds-blue);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ds-blue) 45%, transparent);
+  transform: translateY(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    height 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease;
+}
+
+.inbox-list-item:hover,
+.inbox-agent-row:hover {
+  background: color-mix(in srgb, var(--ds-surface-2) 70%, transparent);
+  transform: translateX(1px);
+}
+
+.inbox-list-item:focus-within,
+.inbox-agent-row:focus-within {
+  background: color-mix(in srgb, var(--ds-surface-2) 85%, transparent);
 }
 
 .inbox-list-item:has(.inbox-list-meta):has(.inbox-list-del) {
@@ -888,7 +924,13 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
 }
 
 .inbox-list-item.is-active {
-  background: var(--ds-blue-soft);
+  background: color-mix(in srgb, var(--ds-blue-soft) 72%, transparent);
+}
+
+.inbox-list-item.is-active::before,
+.inbox-agent-row.is-active::before {
+  height: 58%;
+  opacity: 1;
 }
 
 .inbox-list-btn {
@@ -907,10 +949,11 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
 .inbox-list-btn:hover {
-  background: var(--ds-surface-2);
+  background: transparent;
 }
 
 .inbox-list-item.is-active .inbox-list-btn {
@@ -1042,15 +1085,19 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
 }
 
 .inbox-agent-row {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.2rem;
   border-radius: 0.55rem;
-  padding: 0.1rem;
+  padding: 0.1rem 0.1rem 0.1rem 0.3rem;
   min-height: 2.15rem;
   flex-shrink: 0;
   overflow: hidden;
+  transition:
+    background 0.16s ease,
+    transform 0.16s ease;
 }
 
 .inbox-agent-row:has(.inbox-list-action),
@@ -1064,7 +1111,12 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
 }
 
 .inbox-agent-row.is-active {
-  background: var(--ds-blue-soft);
+  background: color-mix(in srgb, var(--ds-blue-soft) 72%, transparent);
+}
+
+.inbox-agent-row.is-active .inbox-agent-trigger {
+  color: var(--ds-blue);
+  font-weight: 600;
 }
 
 .inbox-agent-trigger {
@@ -1466,6 +1518,19 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
 @media (prefers-reduced-motion: reduce) {
   .inbox-project-wizard {
     animation: none;
+  }
+
+  .inbox-list-item,
+  .inbox-list-item::before,
+  .inbox-agent-row,
+  .inbox-agent-row::before,
+  .inbox-list-btn {
+    transition: none;
+  }
+
+  .inbox-list-item:hover,
+  .inbox-agent-row:hover {
+    transform: none;
   }
 }
 

@@ -49,45 +49,76 @@
   min-width: 0;
 }
 
-/* Inbox chrome: menu toggles sidebar on desktop too (classic hid the button). */
+/*
+ * Inbox history: Cursor-like popup reveal (not an in-flow static drawer).
+ * Desktop floats a rounded panel over the thread; mobile keeps a soft edge sheet.
+ * Menu toggles open/closed on both breakpoints (classic hid the button ≥900px).
+ */
+.ds-chat.aui-chat .ds-chat-sidebar-backdrop {
+  background: color-mix(in srgb, var(--ds-text) 22%, transparent);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 1;
+  transition: opacity 0.22s ease;
+}
+
+.ds-chat.aui-chat .ds-chat-sidebar {
+  background: color-mix(in srgb, var(--ds-canvas) 92%, var(--ds-surface-1));
+  border-right: 1px solid color-mix(in srgb, var(--ds-divider) 85%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ds-divider) 55%, transparent),
+    0 18px 48px -18px color-mix(in srgb, var(--ds-text) 28%, transparent),
+    0 4px 14px -6px color-mix(in srgb, var(--ds-text) 14%, transparent);
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.22s ease,
+    box-shadow 0.22s ease;
+  will-change: transform, opacity;
+}
+
 @media (min-width: 900px) {
   .ds-chat.aui-chat .ds-chat-menu-btn {
     display: grid;
   }
 
+  /* Soft scrim — classic ChatPage.css hides backdrop ≥900px; restore for popup. */
   .ds-chat.aui-chat .ds-chat-sidebar-backdrop {
-    display: none;
+    display: block;
+    background: color-mix(in srgb, var(--ds-text) 10%, transparent);
   }
 
   .ds-chat.aui-chat .ds-chat-sidebar {
-    position: relative;
-    transform: none;
+    /* Float over main — never squeeze the thread column. */
+    position: absolute;
+    inset: 0.65rem auto 0.65rem 0.65rem;
     width: var(--ds-sidebar-w);
-    flex: 0 0 var(--ds-sidebar-w);
-    max-width: var(--ds-sidebar-w);
-    transition:
-      flex-basis 0.2s ease,
-      width 0.2s ease,
-      max-width 0.2s ease,
-      padding 0.2s ease,
-      opacity 0.15s ease,
-      border-color 0.15s ease;
+    max-width: min(var(--ds-sidebar-w), calc(100% - 1.3rem));
+    flex: none;
+    height: auto;
+    border-radius: 1rem;
+    border-right: 1px solid color-mix(in srgb, var(--ds-divider) 80%, transparent);
+    transform: translateX(calc(-100% - 0.85rem)) scale(0.985);
+    opacity: 0;
+    pointer-events: none;
     overflow: hidden;
+    z-index: 5;
+  }
+
+  .ds-chat.aui-chat .ds-chat-sidebar.is-open {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .ds-chat.aui-chat.is-inbox-collapsed .ds-chat-sidebar,
   .ds-chat.aui-chat .ds-chat-sidebar:not(.is-open) {
-    flex-basis: 0;
-    width: 0;
-    max-width: 0;
-    padding-left: 0;
-    padding-right: 0;
-    border-right-color: transparent;
+    /* Popup closed — keep measured width for resize persistence; hide via motion. */
+    transform: translateX(calc(-100% - 0.85rem)) scale(0.985);
     opacity: 0;
     pointer-events: none;
   }
 
-  /* Edge drag — live width, no collapse transition while resizing. */
+  /* Edge drag — live width, no open/close transition while resizing. */
   .ds-chat.aui-chat.is-inbox-resizing .ds-chat-sidebar {
     transition: none;
   }
@@ -98,7 +129,7 @@
     right: 0;
     bottom: 0;
     width: 0.55rem;
-    margin-right: -0.28rem;
+    margin-right: -0.12rem;
     z-index: 6;
     cursor: col-resize;
     touch-action: none;
@@ -144,11 +175,27 @@
   }
 }
 
-/* Mobile / short: keep absolute drawer — never show a resize grip. */
+/* Mobile / short: soft edge sheet — never show a resize grip. */
 @media (max-width: 899px) {
+  .ds-chat.aui-chat .ds-chat-sidebar {
+    border-radius: 0 0.95rem 0.95rem 0;
+    transform: translateX(-105%) scale(0.99);
+  }
+
+  .ds-chat.aui-chat .ds-chat-sidebar.is-open {
+    transform: translateX(0) scale(1);
+  }
+
   .ds-chat.aui-chat .ds-chat-sidebar-resize {
     display: none !important;
     pointer-events: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-chat.aui-chat .ds-chat-sidebar,
+  .ds-chat.aui-chat .ds-chat-sidebar-backdrop {
+    transition: none;
   }
 }
 
@@ -466,6 +513,16 @@
   .aui-avatar-stage {
     transition: none;
   }
+
+  .aui-thread-item,
+  .aui-thread-item::before,
+  .aui-thread-trigger {
+    transition: none;
+  }
+
+  .aui-thread-item:hover {
+    transform: none;
+  }
 }
 
 /* History drawer uses classic `.ds-chat-sidebar` (absolute under `.ds-chat`) —
@@ -489,20 +546,59 @@
 }
 
 .aui-thread-item {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 0.2rem;
   border-radius: 0.55rem;
-  padding: 0.15rem;
+  padding: 0.15rem 0.15rem 0.15rem 0.35rem;
   min-height: 2.15rem;
   flex-shrink: 0;
   overflow: hidden;
+  transition:
+    background 0.16s ease,
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+/* Cursor LINE — vertical active rail (shared with Inbox.css list rows). */
+.aui-thread-item::before {
+  content: '';
+  position: absolute;
+  left: 0.12rem;
+  top: 50%;
+  width: 2.5px;
+  height: 0;
+  border-radius: 999px;
+  background: var(--ds-blue);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ds-blue) 45%, transparent);
+  transform: translateY(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    height 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease;
+}
+
+.aui-thread-item:hover {
+  background: color-mix(in srgb, var(--ds-surface-2) 70%, transparent);
+  transform: translateX(1px);
+}
+
+.aui-thread-item:focus-within {
+  background: color-mix(in srgb, var(--ds-surface-2) 85%, transparent);
 }
 
 .aui-thread-item[data-active],
 .aui-thread-item:has([data-active]) {
-  background: var(--ds-blue-soft);
+  background: color-mix(in srgb, var(--ds-blue-soft) 72%, transparent);
+}
+
+.aui-thread-item[data-active]::before,
+.aui-thread-item:has([data-active])::before {
+  height: 58%;
+  opacity: 1;
 }
 
 .aui-thread-trigger {
@@ -519,6 +615,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  transition: color 0.15s ease;
+}
+
+.aui-thread-item[data-active] .aui-thread-trigger,
+.aui-thread-item:has([data-active]) .aui-thread-trigger {
+  color: var(--ds-blue);
+  font-weight: 600;
 }
 
 .aui-thread-archive,

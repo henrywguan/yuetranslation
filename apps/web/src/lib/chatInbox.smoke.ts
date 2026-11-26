@@ -510,6 +510,16 @@ assert.match(
   /\.inbox-list-item\s*\{[^}]*flex-shrink:\s*0/,
   'list rows do not compress into neighbors',
 )
+assert.match(
+  inboxCss,
+  /\.inbox-list-item::before|\.inbox-agent-row::before/,
+  'Cursor LINE active rail on inbox rows',
+)
+assert.match(
+  inboxCss,
+  /\.inbox-list-item\.is-active::before|\.inbox-agent-row\.is-active::before/,
+  'LINE expands on active inbox rows',
+)
 assert.match(inboxCss, /\.inbox-agent-status-dot/, 'status chip colored dot')
 assert.match(
   inboxCss,

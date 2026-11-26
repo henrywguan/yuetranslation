@@ -97,10 +97,11 @@ assert.doesNotMatch(
   /<header className="ds-chat-top"[\s\S]*ds-chat-main aui-main/,
   'top bar must not precede ds-chat-main in AuiShell',
 )
-// History drawer flush left: classic absolute sidebar + absolute backdrop under
-// `.ds-chat` — never an unstyled in-flow scrim (that shoved main right).
-assert.match(auiShellFn, /ds-chat-sidebar-backdrop/, 'mobile history uses classic absolute backdrop')
+// History popup: classic absolute sidebar + backdrop under `.ds-chat` — never an
+// unstyled in-flow scrim (that shoved main right). Esc dismisses the float/sheet.
+assert.match(auiShellFn, /ds-chat-sidebar-backdrop/, 'history uses classic absolute backdrop')
 assert.doesNotMatch(auiShellFn, /ds-chat-sidebar-scrim/, 'no unstyled in-flow scrim')
+assert.match(auiShellFn, /Escape|keydown/, 'Esc closes Inbox popup')
 assert.match(
   auiShellFn,
   /ds-chat-sidebar[\s\S]*ds-chat-main aui-main/,
@@ -279,7 +280,22 @@ assert.match(
   /\.ds-chat\.aui-chat \.ds-chat-menu-btn[\s\S]*display:\s*grid/,
   'AUI keeps menu btn on desktop to collapse Inbox',
 )
-assert.match(auiCss, /is-inbox-collapsed/, 'desktop collapsed Inbox width rules')
+assert.match(auiCss, /is-inbox-collapsed/, 'desktop collapsed Inbox popup rules')
+assert.match(
+  auiCss,
+  /position:\s*absolute[\s\S]*border-radius:\s*1rem|border-radius:\s*1rem[\s\S]*position:\s*absolute/,
+  'desktop Inbox is a floating popup panel',
+)
+assert.match(
+  auiCss,
+  /\.ds-chat\.aui-chat \.ds-chat-sidebar-backdrop[\s\S]*display:\s*block/,
+  'desktop popup keeps backdrop scrim',
+)
+assert.match(
+  auiCss,
+  /\.aui-thread-item::before[\s\S]*height:\s*58%|\.aui-thread-item\[data-active\]::before/,
+  'Cursor LINE active indicator on thread rows',
+)
 assert.match(auiCss, /\.ds-chat-sidebar-resize/, 'desktop resize grip styles')
 assert.match(
   auiCss,
