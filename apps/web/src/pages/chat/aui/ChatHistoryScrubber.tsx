@@ -152,21 +152,25 @@ export function ChatHistoryScrubber() {
       }}
     >
       <div className="aui-scrubber-track" aria-hidden>
-        {ticks.map((t, i) => (
-          <button
-            key={t.id}
-            type="button"
-            className={`aui-scrubber-tick is-${t.role}${i === active ? ' is-active' : ''}`}
-            title={`${t.role}: ${t.snippet}`}
-            aria-label={`${t.role}: ${t.snippet}`}
-            tabIndex={-1}
-            onClick={(e) => {
-              e.stopPropagation()
-              setActive(i)
-              scrollToMessage(t.id)
-            }}
-          />
-        ))}
+        {ticks.map((t, i) => {
+          const topPct = ticks.length <= 1 ? 0 : (i / (ticks.length - 1)) * 100
+          return (
+            <button
+              key={t.id}
+              type="button"
+              className={`aui-scrubber-tick is-${t.role}${i === active ? ' is-active' : ''}`}
+              style={{ top: `${topPct}%` }}
+              title={`${t.role}: ${t.snippet}`}
+              aria-label={`${t.role}: ${t.snippet}`}
+              tabIndex={-1}
+              onClick={(e) => {
+                e.stopPropagation()
+                setActive(i)
+                scrollToMessage(t.id)
+              }}
+            />
+          )
+        })}
       </div>
     </div>
   )

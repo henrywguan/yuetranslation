@@ -60,8 +60,9 @@ export function requestChatDeepAvatarPlay(
     source,
     at: Date.now(),
   }
-  // Tool/sentiment moods replace the post-run celebrate latch for this turn.
-  suppressNaturalOutro = true
+  // Tool/sentiment/play moods replace the post-run celebrate latch for this turn.
+  // Manual mood-picker demos must not steal the next assistant outro.
+  if (source !== 'picker') suppressNaturalOutro = true
   emit()
   return current
 }

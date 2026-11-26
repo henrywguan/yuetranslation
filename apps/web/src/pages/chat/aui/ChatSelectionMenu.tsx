@@ -6,13 +6,14 @@ import { SelectionToolbarPrimitive, useAui } from '@assistant-ui/react'
 import { useEffect } from 'react'
 import { applySelectionInclude, applySelectionReply } from '../../../lib/chatSelectionChrome'
 
-function focusComposerInput() {
+/** Focus composer; optional caret offset (Reply lands after the quote block). */
+function focusComposerInput(caretAt?: number) {
   const el = document.querySelector<HTMLTextAreaElement>('.aui-composer-input')
   if (!el) return
   el.focus()
-  const len = el.value.length
+  const pos = caretAt == null ? el.value.length : Math.max(0, Math.min(el.value.length, caretAt))
   try {
-    el.setSelectionRange(len, len)
+    el.setSelectionRange(pos, pos)
   } catch {
     /* ignore */
   }
@@ -55,10 +56,13 @@ function SelectionReplyBtn() {
         const text = selectedText()
         if (!text) return
         const draft = aui.composer.getState().text ?? ''
-        aui.composer.setText(applySelectionReply(draft, text))
+        const next = applySelectionReply(draft, text)
+        // Caret after quote + blank line (before any preserved prior draft).
+        const quoteEnd = next.indexOf('\n\n')
+        const caret = quoteEnd >= 0 ? quoteEnd + 2 : next.length
+        aui.composer.setText(next)
         clearSelection()
-        // Focus after React paints the new draft.
-        requestAnimationFrame(() => focusComposerInput())
+        requestAnimationFrame(() => focusComposerInput(caret))
       }}
     >
       Reply

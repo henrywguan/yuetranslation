@@ -9,6 +9,11 @@ import { fileURLToPath } from 'node:url'
 import { CHAT_DEEP_AVATAR_MOODS } from './chatDeepAvatarCharacter.js'
 import { CHAT_DEEP_AVATAR_SHOWCASE } from './chatDeepAvatarPersona.js'
 import {
+  __resetChatDeepAvatarPlayBusForTests,
+  peekChatDeepAvatarOutroSuppression,
+  requestChatDeepAvatarPlay,
+} from './chatDeepAvatarPlayBus.js'
+import {
   applySelectionInclude,
   applySelectionReply,
   buildMoodPickerEntries,
@@ -30,6 +35,12 @@ assert.equal(formatSelectionReplyQuote('  '), '')
 
 assert.equal(applySelectionReply('', 'hi'), '> hi\n\n')
 assert.equal(applySelectionReply('draft', 'hi'), '> hi\n\ndraft')
+{
+  const replied = applySelectionReply('keep typing', 'quote me')
+  const caret = replied.indexOf('\n\n') + 2
+  assert.equal(replied.slice(0, caret), '> quote me\n\n')
+  assert.equal(replied.slice(caret), 'keep typing')
+}
 
 assert.equal(
   formatSelectionIncludeBlock('excerpt'),
@@ -71,6 +82,13 @@ const moods = buildMoodPickerEntries([...CHAT_DEEP_AVATAR_MOODS], [...CHAT_DEEP_
 assert.equal(moods.length, CHAT_DEEP_AVATAR_MOODS.length)
 assert.ok(moods.some((m) => m.id === 'celebrate' && m.highEnergy))
 assert.ok(moods.some((m) => m.id === 'idle' && m.label === 'Idle'))
+
+__resetChatDeepAvatarPlayBusForTests()
+requestChatDeepAvatarPlay('happy', { source: 'picker', forceFullscreen: false })
+assert.equal(peekChatDeepAvatarOutroSuppression(), false, 'picker must not steal next outro')
+requestChatDeepAvatarPlay('celebrate', { source: 'play', forceFullscreen: true })
+assert.equal(peekChatDeepAvatarOutroSuppression(), true, 'play still suppresses natural outro')
+__resetChatDeepAvatarPlayBusForTests()
 
 const thread = readFileSync(join(root, 'pages/chat/aui/ChatAuiThread.tsx'), 'utf8')
 assert.match(thread, /SelectionToolbarPrimitive|ChatSelectionMenu|aui-selection-menu/, 'selection menu')

@@ -3641,25 +3641,23 @@
   flex: 1;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ds-divider) 70%, transparent);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.15rem 0;
-  gap: 0.12rem;
   min-height: 0;
+  overflow: hidden;
 }
 
 .aui-scrubber-tick {
   appearance: none;
   border: 0;
   padding: 0;
-  width: 0.55rem;
-  height: 0.55rem;
+  position: absolute;
+  left: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: -0.25rem;
+  margin-top: -0.25rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ds-text-3) 55%, transparent);
   cursor: pointer;
-  flex-shrink: 0;
   transition:
     transform 0.14s ease,
     background 0.14s ease,
