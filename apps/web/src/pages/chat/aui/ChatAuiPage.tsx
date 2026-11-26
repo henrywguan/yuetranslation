@@ -244,20 +244,6 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
     }
   }, [sidebarResizing])
 
-  /* Popup Inbox: Esc dismisses (desktop float + mobile sheet). */
-  useEffect(() => {
-    if (!sidebarOpen) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
-      const t = e.target as HTMLElement | null
-      if (t?.closest?.('input, textarea, select, [contenteditable="true"]')) return
-      e.preventDefault()
-      setSidebarOpen(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [sidebarOpen])
-
   const applySidebarWidth = (px: number, persist: boolean) => {
     const next = clampChatInboxSidebarWidth(
       px,
@@ -322,8 +308,9 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
       <h1 id={titleId} className="aui-sr-only">
         DeepSeek Chat
       </h1>
-      {/* Backdrop + popup are siblings of main under `.ds-chat` (classic absolute
-          under shell). Never an unstyled in-flow scrim — that shoved main right. */}
+      {/* Backdrop + drawer are siblings of main under `.ds-chat` (classic). An
+          unstyled in-flow scrim pushed main right and left a black gap.
+          Desktop hides the backdrop and uses in-flow push (see ChatAui.css). */}
       {sidebarOpen ? (
         <button
           type="button"
@@ -345,7 +332,7 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
         </div>
         <InboxShell
           onNavigate={() => {
-            // Popup closes after pick on narrow; desktop float stays for multi-browse.
+            // Mobile drawer closes after pick; desktop push Inbox stays unless menu collapses it.
             if (typeof window !== 'undefined' && window.matchMedia('(max-width: 899px)').matches) {
               setSidebarOpen(false)
             }
