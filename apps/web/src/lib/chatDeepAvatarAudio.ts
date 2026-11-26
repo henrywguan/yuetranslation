@@ -7,8 +7,12 @@
  */
 import {
   CHAT_DEEP_AVATAR_DIR,
+  chatDeepAvatarMoodAssetStem,
+  chatDeepAvatarPrimarySolo,
+  isChatDeepAvatarBothMode,
   type ChatDeepAvatarCharacterId,
   type ChatDeepAvatarMood,
+  type ChatDeepAvatarSoloId,
 } from './chatDeepAvatarCharacter'
 import {
   highEnergyAvatarMood,
@@ -53,8 +57,8 @@ export type ChatDeepAvatarAudioEnergy = 'soft' | 'cheer' | 'hype'
  */
 export function chatDeepAvatarSfxEnergy(mood: ChatDeepAvatarMood | string): ChatDeepAvatarAudioEnergy {
   const id = normalizeChatDeepAvatarShowcaseMood(mood, 'idle')
-  if (id === 'celebrate') return 'cheer'
-  if (id === 'eureka' || id === 'fist' || id === 'proud') return 'hype'
+  if (id === 'celebrate' || id === 'handoff' || id === 'handshake') return 'cheer'
+  if (id === 'eureka' || id === 'fist' || id === 'proud' || id === 'highfive') return 'hype'
   if (highEnergyAvatarMood(id)) return 'cheer'
   return 'soft'
 }
@@ -65,12 +69,21 @@ export function chatDeepAvatarSfxSrc(mood: ChatDeepAvatarMood | string): string 
   return `${SFX_DIR}/${energy}.mp3`
 }
 
+/** VO filename stem — collaboration moods reuse closest solo line. */
+function chatDeepAvatarVoStem(mood: ChatDeepAvatarMood | string): string {
+  const id = normalizeChatDeepAvatarShowcaseMood(mood, 'celebrate')
+  // Dedicated VO files only exist for solo GIF moods; map pair moods onto those.
+  return chatDeepAvatarMoodAssetStem(id as ChatDeepAvatarMood)
+}
+
 export function chatDeepAvatarVoSrc(
-  character: ChatDeepAvatarCharacterId,
+  character: ChatDeepAvatarCharacterId | ChatDeepAvatarSoloId,
   mood: ChatDeepAvatarMood | string,
 ): string {
-  const id = normalizeChatDeepAvatarShowcaseMood(mood, 'celebrate')
-  return `${CHAT_DEEP_AVATAR_DIR[character]}/vo/${id}.mp3`
+  const solo = chatDeepAvatarPrimarySolo(
+    character === 'both' || character === 'boy' || character === 'girl' ? character : 'boy',
+  )
+  return `${CHAT_DEEP_AVATAR_DIR[solo]}/vo/${chatDeepAvatarVoStem(mood)}.mp3`
 }
 
 type PlayOpts = {
@@ -88,6 +101,8 @@ type Session = {
   gen: number
   sfx: HTMLAudioElement | null
   vo: HTMLAudioElement | null
+  /** Optional staggered second VO (Both mode). */
+  vo2: HTMLAudioElement | null
   lips: boolean
 }
 
@@ -113,6 +128,7 @@ function stopSession() {
   if (!s) return
   disposeAudio(s.sfx)
   disposeAudio(s.vo)
+  disposeAudio(s.vo2)
   if (s.lips) lipBus?.setPlaying(false)
 }
 
@@ -154,19 +170,28 @@ export async function playChatDeepAvatarEmotionAudio(opts: PlayOpts): Promise<{
   sfx.volume = ttsBusy ? Math.min(0.35, opts.busySfxVolume ?? 0.28) : 0.55
 
   let vo: HTMLAudioElement | null = null
+  let voSecondary: HTMLAudioElement | null = null
+  const duo = isChatDeepAvatarBothMode(opts.character)
   if (!ttsBusy) {
-    vo = new Audio(chatDeepAvatarVoSrc(opts.character, opts.mood))
+    vo = new Audio(chatDeepAvatarVoSrc(duo ? 'boy' : opts.character, opts.mood))
     vo.preload = 'auto'
     vo.volume = 0.9
+    if (duo) {
+      // Slightly staggered Pixie line under Archie — pair frames may be SFX-led.
+      voSecondary = new Audio(chatDeepAvatarVoSrc('girl', opts.mood))
+      voSecondary.preload = 'auto'
+      voSecondary.volume = 0.72
+    }
   }
 
   if (myGen !== playGen) {
     disposeAudio(sfx)
     disposeAudio(vo)
+    disposeAudio(voSecondary)
     return { played: false, needsUnmute: false, stop: stopSession }
   }
 
-  active = { gen: myGen, sfx, vo, lips: false }
+  active = { gen: myGen, sfx, vo, vo2: voSecondary, lips: false }
 
   const tryPlay = async (audio: HTMLAudioElement, muted: boolean) => {
     if (!isCurrent(myGen)) return false
@@ -217,6 +242,15 @@ export async function playChatDeepAvatarEmotionAudio(opts: PlayOpts): Promise<{
     }
   }
 
+  if (voSecondary && isCurrent(myGen)) {
+    window.setTimeout(() => {
+      if (!isCurrent(myGen) || !voSecondary) return
+      void tryPlay(voSecondary, needsUnmute).catch(() => {
+        /* ignore secondary VO failures */
+      })
+    }, 160)
+  }
+
   if (!isCurrent(myGen)) {
     return { played: false, needsUnmute: false, stop: stopSession }
   }
@@ -227,7 +261,7 @@ export async function playChatDeepAvatarEmotionAudio(opts: PlayOpts): Promise<{
 export function unmuteChatDeepAvatarEmotionAudio() {
   const s = active
   if (!s) return
-  for (const a of [s.sfx, s.vo]) {
+  for (const a of [s.sfx, s.vo, s.vo2]) {
     if (!a) continue
     a.muted = false
     void a.play().catch(() => {

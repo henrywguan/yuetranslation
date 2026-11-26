@@ -898,7 +898,7 @@ export type DeepseekChatStreamHandlers = {
   /** Account Hub primary language for DeepSeek user metadata. */
   primaryLang?: string
   /** DeepSeek chat companion identity for the system prompt. */
-  avatarCharacter?: 'boy' | 'girl'
+  avatarCharacter?: 'boy' | 'girl' | 'both'
   avatarName?: string
   avatarTrait?: 'cheerful' | 'calm' | 'witty' | 'coach'
   avatarNotes?: string
@@ -1107,7 +1107,9 @@ export async function streamDeepseekChat(
   const plugins = (handlers.plugins || []).map(String).filter(Boolean).slice(0, 16)
   const primaryLang = String(handlers.primaryLang || '').trim().slice(0, 24) || undefined
   const avatarCharacter =
-    handlers.avatarCharacter === 'girl' || handlers.avatarCharacter === 'boy'
+    handlers.avatarCharacter === 'girl' ||
+    handlers.avatarCharacter === 'boy' ||
+    handlers.avatarCharacter === 'both'
       ? handlers.avatarCharacter
       : undefined
   const avatarName = String(handlers.avatarName || '').trim().slice(0, 24) || undefined

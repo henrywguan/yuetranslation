@@ -1,7 +1,8 @@
 /**
  * DeepSeek Chat companion avatar — GIF clip state machine + TTS lip approx.
- * Characters: DS Boy / DS Girl under `apps/web/public/chat-avatar/{boy,girl}/`
+ * Characters: DS Boy / DS Girl / Both under `apps/web/public/chat-avatar/{boy,girl,both}/`
  * (Higgsfield gpt_image_2_6, 720² transparent loops ≈ 3× hero CSS).
+ * Both = always side-by-side solos; pair clips fullscreen for high-energy popups.
  *
  * Moods: idle / think / listen / speak / happy / celebrate / proud / eureka / concern
  * plus performance clips (bow / fist / wave / nod / relieved / sleepy).
@@ -34,6 +35,8 @@ import {
   CHAT_DEEP_AVATAR_DOCK_EVENT,
   chatDeepAvatarMoodSrc,
   chatDeepAvatarPosterSrc,
+  chatDeepAvatarPrimarySolo,
+  isChatDeepAvatarBothMode,
   isChatDeepAvatarDeepFinish,
   isChatDeepAvatarOutroMood,
   normalizeChatDeepAvatarCelebrateMode,
@@ -43,6 +46,7 @@ import {
   readChatDeepAvatarCelebrateMode,
   readChatDeepAvatarCharacter,
   readChatDeepAvatarDockMode,
+  resolveChatDeepAvatarPairPlaySrc,
   shouldFullscreenCelebrate,
   writeChatDeepAvatarCelebrateMode,
   writeChatDeepAvatarCharacter,
@@ -51,6 +55,7 @@ import {
   type ChatDeepAvatarCharacterId,
   type ChatDeepAvatarDockMode,
   type ChatDeepAvatarMood,
+  type ChatDeepAvatarSoloId,
 } from '../../../lib/chatDeepAvatarCharacter'
 import {
   bindChatDeepAvatarAudioLipBus,
@@ -96,6 +101,7 @@ import { isTtsPlaying } from '../../../lib/tts'
 export type {
   ChatDeepAvatarMood,
   ChatDeepAvatarCharacterId,
+  ChatDeepAvatarSoloId,
   ChatDeepAvatarCelebrateMode,
   ChatDeepAvatarDockMode,
 }
@@ -395,7 +401,7 @@ export function useChatDeepAvatarDock(): [
 
 export function useChatDeepAvatarNameEditor(): [
   ReturnType<typeof readChatDeepAvatarNames>,
-  (character: ChatDeepAvatarCharacterId, name: string) => void,
+  (character: ChatDeepAvatarSoloId, name: string) => void,
 ] {
   const [names, setNames] = useState(() => readChatDeepAvatarNames())
   useEffect(() => {
@@ -403,7 +409,7 @@ export function useChatDeepAvatarNameEditor(): [
     window.addEventListener(CHAT_DEEP_AVATAR_NAMES_EVENT, onChange)
     return () => window.removeEventListener(CHAT_DEEP_AVATAR_NAMES_EVENT, onChange)
   }, [])
-  const setName = (character: ChatDeepAvatarCharacterId, name: string) => {
+  const setName = (character: ChatDeepAvatarSoloId, name: string) => {
     setNames(writeChatDeepAvatarNames({ [character]: name }))
   }
   return [names, setName]
@@ -541,10 +547,12 @@ export function ChatDeepAvatar({
   dimmed = false,
 }: Props) {
   const reduceMotion = usePrefersReducedMotion()
-  const charLabel = useChatDeepAvatarDisplayName(character)
+  // Single-tile mounts always resolve to a solo asset folder (Both uses DuoFrame).
+  const solo = chatDeepAvatarPrimarySolo(character)
+  const charLabel = useChatDeepAvatarDisplayName(solo)
   const src = reduceMotion
-    ? chatDeepAvatarPosterSrc(character)
-    : chatDeepAvatarMoodSrc(character, mood)
+    ? chatDeepAvatarPosterSrc(solo)
+    : chatDeepAvatarMoodSrc(solo, mood)
   const sizeClass = sizeClassName(size)
   const speaking = mood === 'speak'
   const lipsOn = speaking && !reduceMotion && lipLevel > 0.04
@@ -554,9 +562,9 @@ export function ChatDeepAvatar({
 
   return (
     <div
-      className={`${sizeClass}${speaking ? ' is-speaking' : ''}${dimmed ? ' is-fx-dimmed' : ''} is-char-${character}${lipsOn ? ' is-lips' : ''} ${className}`.trim()}
+      className={`${sizeClass}${speaking ? ' is-speaking' : ''}${dimmed ? ' is-fx-dimmed' : ''} is-char-${solo}${lipsOn ? ' is-lips' : ''} ${className}`.trim()}
       data-mood={mood}
-      data-character={character}
+      data-character={solo}
       aria-hidden={label ? undefined : true}
       role={label ? 'img' : undefined}
       aria-label={label ?? `${charLabel} · ${mood}`}
@@ -585,6 +593,61 @@ export function ChatDeepAvatar({
         />
       ) : null}
       {speaking ? <span className="aui-deep-avatar-pulse" aria-hidden /> : null}
+    </div>
+  )
+}
+
+type DuoProps = {
+  mood: ChatDeepAvatarMood
+  /** Soft-idle mood for the non-emphasized tile (Both mode). */
+  secondaryMood?: ChatDeepAvatarMood
+  size?: Size
+  className?: string
+  label?: string
+  lipLevel?: number
+  /** Which solo gets lips / speak emphasis; the other soft-idles. */
+  emphasize?: ChatDeepAvatarSoloId
+  dimmed?: boolean
+}
+
+/**
+ * Always-visible Boy | Girl tiles for Companion = Both.
+ * Soft moods stay dual in-frame; high-energy pair pops use CelebrateFx.
+ */
+export function ChatDeepAvatarDuo({
+  mood,
+  secondaryMood = 'idle',
+  size = 'portrait',
+  className = '',
+  label,
+  lipLevel = 0,
+  emphasize = 'boy',
+  dimmed = false,
+}: DuoProps) {
+  const boyMood = emphasize === 'boy' ? mood : secondaryMood
+  const girlMood = emphasize === 'girl' ? mood : secondaryMood
+  return (
+    <div
+      className={`aui-deep-avatar-duo is-${size}${dimmed ? ' is-fx-dimmed' : ''}${className ? ` ${className}` : ''}`}
+      data-character="both"
+      role={label ? 'img' : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+    >
+      <ChatDeepAvatar
+        mood={boyMood}
+        size={size}
+        character="boy"
+        lipLevel={emphasize === 'boy' ? lipLevel : 0}
+        dimmed={dimmed}
+      />
+      <ChatDeepAvatar
+        mood={girlMood}
+        size={size}
+        character="girl"
+        lipLevel={emphasize === 'girl' ? lipLevel : 0}
+        dimmed={dimmed}
+      />
     </div>
   )
 }
@@ -824,10 +887,12 @@ export function ChatDeepAvatarCelebrateFx({
   // Soft demos (sleepy / bow / wave…) skip gold stars + cheer wash so they do not
   // read as the celebrate/hurray path. High-energy keeps the full pop.
   const cheerFx = highEnergyAvatarMood(mood)
+  const both = isChatDeepAvatarBothMode(character)
+  const pairSrc = both ? resolveChatDeepAvatarPairPlaySrc(mood) : null
 
   return createPortal(
     <div
-      className={`aui-deep-avatar-fx is-${phase}${cheerFx ? ' is-cheer' : ' is-soft'}`}
+      className={`aui-deep-avatar-fx is-${phase}${cheerFx ? ' is-cheer' : ' is-soft'}${both ? ' is-both' : ''}`}
       data-mood={mood}
       style={flip}
       role="presentation"
@@ -842,7 +907,28 @@ export function ChatDeepAvatarCelebrateFx({
       />
       <div className="aui-deep-avatar-fx-stage" aria-hidden>
         <div className="aui-deep-avatar-fx-fly" ref={flyRef}>
-          <ChatDeepAvatar mood={mood} size="hero" character={character} className="is-fx-pop" />
+          {pairSrc ? (
+            <div className="aui-deep-avatar is-hero is-char-both is-fx-pop is-pair" data-mood={mood}>
+              <img
+                key={pairSrc}
+                className="aui-deep-avatar-img"
+                src={pairSrc}
+                alt=""
+                width={720}
+                height={720}
+                decoding="async"
+                draggable={false}
+                onError={(e) => {
+                  // Graceful fallback: hide broken pair; dual solos mount below via parent remount path.
+                  e.currentTarget.style.display = 'none'
+                }}
+              />
+            </div>
+          ) : both ? (
+            <ChatDeepAvatarDuo mood={mood} size="hero" className="is-fx-pop" emphasize="boy" />
+          ) : (
+            <ChatDeepAvatar mood={mood} size="hero" character={character} className="is-fx-pop" />
+          )}
         </div>
       </div>
       {needsUnmute ? (

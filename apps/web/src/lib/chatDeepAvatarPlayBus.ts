@@ -17,7 +17,7 @@ export type ChatDeepAvatarPlayRequest = {
   /** User/tool demo — always try fullscreen + audio. */
   forceFullscreen: boolean
   /** Soft react stays in-frame unless high-energy. Picker = manual mood gallery. */
-  source: 'play' | 'react' | 'sentiment' | 'picker'
+  source: 'play' | 'react' | 'sentiment' | 'picker' | 'picker'
   at: number
 }
 

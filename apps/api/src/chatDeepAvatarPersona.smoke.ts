@@ -10,12 +10,17 @@ import {
   CHAT_DEEP_AVATAR_SHOWCASE,
   buildChatDeepAvatarPersonaPromptBlock,
   isChatDeepAvatarMoodId,
+  normalizeChatDeepAvatarCharacter,
   normalizeChatDeepAvatarMoodId,
   sanitizeChatDeepAvatarNotes,
 } from './chatDeepAvatarPersona.js'
 
 assert.ok(CHAT_DEEP_AVATAR_SHOWCASE.length >= 15)
+assert.equal(normalizeChatDeepAvatarCharacter('both'), 'both')
+assert.equal(normalizeChatDeepAvatarCharacter('girl'), 'girl')
 assert.equal(isChatDeepAvatarMoodId('fist'), true)
+assert.equal(isChatDeepAvatarMoodId('handoff'), true)
+assert.equal(normalizeChatDeepAvatarMoodId('high five'), 'highfive')
 assert.equal(isChatDeepAvatarMoodId('nope'), false)
 assert.equal(normalizeChatDeepAvatarMoodId('BOW'), 'bow')
 assert.equal(normalizeChatDeepAvatarMoodId('???'), 'celebrate')
@@ -42,6 +47,14 @@ assert.match(block, /Scout/)
 assert.match(block, /avatar_list/)
 assert.match(block, /\nremember spaces$/)
 assert.doesNotMatch(block, /  remember spaces  /)
+
+const duo = buildChatDeepAvatarPersonaPromptBlock({
+  character: 'both',
+  name: 'Scout & Pix',
+  trait: 'cheerful',
+})
+assert.match(duo, /duo/)
+assert.match(duo, /handoff/)
 
 const here = dirname(fileURLToPath(import.meta.url))
 const tools = readFileSync(join(here, 'deepseekChatTools.ts'), 'utf8')

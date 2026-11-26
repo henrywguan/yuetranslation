@@ -5,8 +5,11 @@ import {
   CHAT_DEEP_AVATAR_CELEBRATE_MODE_HINT,
   CHAT_DEEP_AVATAR_CELEBRATE_MODE_LABEL,
   CHAT_DEEP_AVATAR_CELEBRATE_MODES,
+  CHAT_DEEP_AVATAR_CHARACTER_LABEL,
   CHAT_DEEP_AVATAR_CHARACTERS,
   chatDeepAvatarPosterSrc,
+  isChatDeepAvatarBothMode,
+  type ChatDeepAvatarSoloId,
 } from '../../../lib/chatDeepAvatarCharacter'
 import {
   CHAT_DEEP_AVATAR_NAME_MAX,
@@ -105,18 +108,23 @@ export function InboxSettingsMenu() {
     }
   }
 
+  const renameSolo: ChatDeepAvatarSoloId | null =
+    character === 'boy' || character === 'girl' ? character : null
+
   const beginRename = () => {
-    setNameDraft(names[character])
+    if (!renameSolo) return
+    setNameDraft(names[renameSolo])
     setRenaming(true)
   }
 
   const cancelRename = () => {
-    setNameDraft(names[character])
+    if (renameSolo) setNameDraft(names[renameSolo])
     setRenaming(false)
   }
 
   const commitRename = () => {
-    setName(character, nameDraft)
+    if (!renameSolo) return
+    setName(renameSolo, nameDraft)
     setRenaming(false)
   }
 
@@ -130,9 +138,9 @@ export function InboxSettingsMenu() {
   }
 
   useEffect(() => {
-    if (!renaming) return
-    setNameDraft(names[character])
-  }, [character, names, renaming])
+    if (!renaming || !renameSolo) return
+    setNameDraft(names[renameSolo])
+  }, [renameSolo, names, renaming])
 
   useEffect(() => {
     if (!renaming) return
@@ -250,6 +258,10 @@ export function InboxSettingsMenu() {
                   <div className="inbox-settings-companion-row">
                     {CHAT_DEEP_AVATAR_CHARACTERS.map((id) => {
                       const active = character === id
+                      const both = isChatDeepAvatarBothMode(id)
+                      const label = both
+                        ? CHAT_DEEP_AVATAR_CHARACTER_LABEL.both
+                        : names[id as ChatDeepAvatarSoloId]
                       return (
                         <button
                           key={id}
@@ -262,23 +274,53 @@ export function InboxSettingsMenu() {
                             setCharacter(id)
                           }}
                         >
-                          <img
-                            className="inbox-settings-companion-thumb"
-                            src={chatDeepAvatarPosterSrc(id)}
-                            alt=""
-                            width={36}
-                            height={36}
-                            decoding="async"
-                            draggable={false}
-                          />
-                          <span>{names[id]}</span>
+                          {both ? (
+                            <span className="inbox-settings-companion-thumb is-duo" aria-hidden>
+                              <img
+                                src={chatDeepAvatarPosterSrc('boy')}
+                                alt=""
+                                width={20}
+                                height={20}
+                                decoding="async"
+                                draggable={false}
+                              />
+                              <img
+                                src={chatDeepAvatarPosterSrc('girl')}
+                                alt=""
+                                width={20}
+                                height={20}
+                                decoding="async"
+                                draggable={false}
+                              />
+                            </span>
+                          ) : (
+                            <img
+                              className="inbox-settings-companion-thumb"
+                              src={chatDeepAvatarPosterSrc(id)}
+                              alt=""
+                              width={36}
+                              height={36}
+                              decoding="async"
+                              draggable={false}
+                            />
+                          )}
+                          <span>{label}</span>
                         </button>
                       )
                     })}
                   </div>
                   <div className="inbox-settings-rename">
                     <span className="inbox-settings-companion-label">Name</span>
-                    {renaming ? (
+                    {isChatDeepAvatarBothMode(character) ? (
+                      <div className="inbox-settings-rename-view">
+                        <span className="inbox-settings-rename-text">
+                          {names.boy} & {names.girl}
+                        </span>
+                        <span className="inbox-settings-companion-hint">
+                          Rename via Boy or Girl
+                        </span>
+                      </div>
+                    ) : renaming && renameSolo ? (
                       <div className="inbox-settings-rename-edit">
                         <input
                           ref={nameInputRef}
@@ -286,7 +328,7 @@ export function InboxSettingsMenu() {
                           className="inbox-settings-rename-input"
                           maxLength={CHAT_DEEP_AVATAR_NAME_MAX}
                           value={nameDraft}
-                          aria-label={`Rename ${names[character]}`}
+                          aria-label={`Rename ${names[renameSolo]}`}
                           onChange={(e) =>
                             setNameDraft(e.target.value.slice(0, CHAT_DEEP_AVATAR_NAME_MAX))
                           }
@@ -321,20 +363,20 @@ export function InboxSettingsMenu() {
                           <CloseIcon size={14} />
                         </button>
                       </div>
-                    ) : (
+                    ) : renameSolo ? (
                       <div className="inbox-settings-rename-view">
-                        <span className="inbox-settings-rename-text">{names[character]}</span>
+                        <span className="inbox-settings-rename-text">{names[renameSolo]}</span>
                         <button
                           type="button"
                           className="inbox-settings-rename-btn"
                           title="Edit name"
-                          aria-label={`Edit name ${names[character]}`}
+                          aria-label={`Edit name ${names[renameSolo]}`}
                           onClick={beginRename}
                         >
                           <PencilIcon size={14} />
                         </button>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                   <div className="inbox-settings-trait" role="group" aria-label="Trait">
                     <span className="inbox-settings-companion-label">Trait</span>

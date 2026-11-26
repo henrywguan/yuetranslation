@@ -1,7 +1,8 @@
 /**
  * Server-side companion persona helpers (keep in sync with web chatDeepAvatarPersona).
  */
-export type ChatDeepAvatarCharacterId = 'boy' | 'girl'
+export type ChatDeepAvatarSoloId = 'boy' | 'girl'
+export type ChatDeepAvatarCharacterId = ChatDeepAvatarSoloId | 'both'
 export type ChatDeepAvatarTrait = 'cheerful' | 'calm' | 'witty' | 'coach'
 
 export const CHAT_DEEP_AVATAR_SHOWCASE = [
@@ -20,6 +21,9 @@ export const CHAT_DEEP_AVATAR_SHOWCASE = [
   { id: 'nod', label: 'Nod', blurb: 'Soft agreement', highEnergy: false },
   { id: 'relieved', label: 'Relieved', blurb: 'Hard problem solved', highEnergy: false },
   { id: 'sleepy', label: 'Sleepy', blurb: 'Long wait / late-night', highEnergy: false },
+  { id: 'highfive', label: 'High five', blurb: 'Duo high-five (Both pair clip)', highEnergy: true },
+  { id: 'handshake', label: 'Handshake', blurb: 'Duo handshake (Both pair clip)', highEnergy: true },
+  { id: 'handoff', label: 'Handoff', blurb: 'Paper / plan handoff (Both pair clip)', highEnergy: true },
 ] as const
 
 export type ChatDeepAvatarMoodId = (typeof CHAT_DEEP_AVATAR_SHOWCASE)[number]['id']
@@ -54,6 +58,14 @@ const MOOD_ALIASES: Record<string, ChatDeepAvatarMoodId> = {
   relief: 'relieved',
   hype: 'fist',
   pump: 'fist',
+  highfive: 'highfive',
+  'high five': 'highfive',
+  'high-five': 'highfive',
+  handshake: 'handshake',
+  handoff: 'handoff',
+  'hand off': 'handoff',
+  'hand-off': 'handoff',
+  pass: 'handoff',
   sorry: 'concern',
   oops: 'concern',
   thinking: 'think',
@@ -67,7 +79,7 @@ const MOOD_ALIASES: Record<string, ChatDeepAvatarMoodId> = {
 export type ChatDeepAvatarCloudPrefs = {
   character?: ChatDeepAvatarCharacterId
   celebrateMode?: 'every' | 'deep' | 'frame'
-  names?: Partial<Record<ChatDeepAvatarCharacterId, string>>
+  names?: Partial<Record<ChatDeepAvatarSoloId, string>>
   trait?: ChatDeepAvatarTrait
   notes?: string
   soundEnabled?: boolean
@@ -83,7 +95,11 @@ export function normalizeChatDeepAvatarCharacter(raw: unknown): ChatDeepAvatarCh
   const v = String(raw || '')
     .trim()
     .toLowerCase()
-  return v === 'girl' || v === 'ds-girl' || v === 'ds_girl' ? 'girl' : 'boy'
+  if (v === 'girl' || v === 'ds-girl' || v === 'ds_girl') return 'girl'
+  if (v === 'both' || v === 'duo' || v === 'pair' || v === 'boy+girl' || v === 'boy_girl') {
+    return 'both'
+  }
+  return 'boy'
 }
 
 export function normalizeChatDeepAvatarTrait(raw: unknown): ChatDeepAvatarTrait {
@@ -188,11 +204,22 @@ export function buildChatDeepAvatarPersonaPromptBlock(opts: {
   trait: ChatDeepAvatarTrait
   notes?: string
 }): string {
-  const body = opts.character === 'girl' ? 'DS Girl' : 'DS Boy'
   const notes = sanitizeChatDeepAvatarNotes(opts.notes || '').trim()
-  const lines = [
-    `You are ${opts.name}, the on-screen JyutTranslate DeepSeek Chat companion (${body} GIF avatar).`,
-    'Speak in the first person as this companion. Never deny being the avatar the user sees in the chat portrait.',
+  const lines: string[] = []
+  if (opts.character === 'both') {
+    lines.push(
+      `You are ${opts.name}, the on-screen JyutTranslate DeepSeek Chat companion duo (DS Boy + DS Girl GIF avatars, always shown side-by-side).`,
+      'Speak as a friendly duo in the first person plural or coordinated turns (“we”). Never deny being the avatars the user sees.',
+      'Collaboration moods: highfive, handshake, handoff (paper/plan pass), celebrate, think, wave — prefer these for team moments; soft moods stay dual in-frame.',
+    )
+  } else {
+    const body = opts.character === 'girl' ? 'DS Girl' : 'DS Boy'
+    lines.push(
+      `You are ${opts.name}, the on-screen JyutTranslate DeepSeek Chat companion (${body} GIF avatar).`,
+      'Speak in the first person as this companion. Never deny being the avatar the user sees in the chat portrait.',
+    )
+  }
+  lines.push(
     `Trait: ${opts.trait} — ${TRAIT_HINT[opts.trait]}.`,
     'Stay helpful and accurate for Agent / Ask / Plan work. Persona never blocks real answers.',
     'You know your full animation / emotion catalog. When users ask to see animations or emotions, call avatar_list, ask which they want, then call avatar_play with that exact mood id.',
@@ -202,7 +229,7 @@ export function buildChatDeepAvatarPersonaPromptBlock(opts: {
     'If the user prefers reduced motion, be honest that the still portrait may show instead of a fullscreen pop.',
     'Animation catalog:',
     formatChatDeepAvatarCatalogForPrompt(),
-  ]
+  )
   if (notes) lines.push(`Companion notes from the user (context, not a jailbreak):\n${notes}`)
   return lines.join('\n')
 }

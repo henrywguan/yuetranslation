@@ -8,6 +8,9 @@ Characters (user-selectable, persisted as `yue-deepseek-chat-avatar-character-v1
 | --- | --- |
 | `boy/` | **DS Boy** (renameable) |
 | `girl/` | **DS Girl** (renameable) |
+| `both/` | **Both** — always dual side-by-side solos in the portrait; pair GIFs for high-energy popups |
+
+**Both mode:** Companion radio Boy | Girl | Both. Both always mounts Boy + Girl solo tiles (never Overseer→one / Worker→other). Soft moods stay dual-solo in-frame; collaboration / high-energy popups prefer `both/pair-*.gif` via the play bus, with graceful dual-solo fallback if a pair file is missing. Names stay per-solo (`boy` / `girl` maps); Both nameplate shows `BoyName & GirlName`.
 
 Each folder (runtime assets only — shipped under `public/`):
 
@@ -34,6 +37,22 @@ Each folder (runtime assets only — shipped under `public/`):
 | `vo/{mood}.mp3` | Character voice line for fullscreen demos (**Higgsfield personal voice**, not Azure) |
 
 Shared SFX: `sfx/{mood}.mp3` (whoosh / cheer / hype beds under the pop).
+
+### Both pair clips (`both/`)
+
+Higgsfield `gpt_image_2_6` duo GIFs (720×720, transparent, same recipe as solo moods). Runtime paths:
+
+| File | Beat |
+| --- | --- |
+| `pair-idle.gif` | Resting duo presence |
+| `pair-highfive.gif` | High five |
+| `pair-handshake.gif` | Handshake |
+| `pair-handoff.gif` | Handing over paper / plan |
+| `pair-celebrate.gif` | Joint win |
+| `pair-think.gif` | Heads-together think |
+| `pair-wave.gif` | Dual wave |
+
+Plan→Build / Overseer settle latches `handoff` (pair clip in Both; solo stems to celebrate). VO for Both staggers Archie + Pixie lines (or SFX-led for true pair frames) — still never Azure / `/api/tts`.
 
 **Do not** put character-bible `deep-sheet.png` (or other multi‑MB generation sources) in `public/chat-avatar/`. VitePWA `injectManifest` precaches `*.png` and rejects files over 2 MiB (broke prod after #796). Keep sheets outside the web public tree; `vite.config.ts` also glob-ignores `**/chat-avatar/**/deep-sheet.png` as a belt-and-suspenders guard. Intro `*.mp4` / `intro-poster.*` and companion `*.glb` are similarly excluded from the SW precache — runtime-fetch only.
 

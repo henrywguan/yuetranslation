@@ -30,6 +30,7 @@ import {
 import {
   ChatDeepAvatar,
   ChatDeepAvatarCelebrateFx,
+  ChatDeepAvatarDuo,
   ChatDeepAvatarNameplate,
   useChatDeepAvatarCelebrateFx,
   useChatDeepAvatarCelebrateMode,
@@ -45,6 +46,7 @@ import {
   ChatDeepAvatar3DGate,
   useChatDeepAvatar3dEnabled,
 } from './ChatDeepAvatar3D'
+import { isChatDeepAvatarBothMode } from '../../../lib/chatDeepAvatarCharacter'
 import type { DeepseekChatPluginKeyId } from '../../../lib/api'
 import {
   applyMentionInsert,
@@ -1184,17 +1186,34 @@ function ComposerChrome({
             aria-label="Show large companion"
           >
             <span
-              className={`aui-avatar-dock-frame${dimPortrait ? ' is-fx-dimmed' : ''}${hideGifFor3d ? ' is-3d-active' : ''}`}
+              className={`aui-avatar-dock-frame${isChatDeepAvatarBothMode(avatarCharacter) ? ' is-both' : ''}${dimPortrait ? ' is-fx-dimmed' : ''}${hideGifFor3d ? ' is-3d-active' : ''}`}
             >
               <span className="aui-avatar-dock-origin" ref={dockRef}>
-                <ChatDeepAvatar
-                  mood={portraitMood}
-                  size="portrait"
-                  lipLevel={portraitLips}
-                  character={avatarCharacter}
-                  label="DeepSeek companion"
-                  dimmed={dimPortrait}
-                />
+                {isChatDeepAvatarBothMode(avatarCharacter) ? (
+                  <ChatDeepAvatarDuo
+                    mood={portraitMood}
+                    secondaryMood={
+                      portraitMood === 'speak' ||
+                      portraitMood === 'listen' ||
+                      portraitMood === 'think'
+                        ? 'idle'
+                        : portraitMood
+                    }
+                    size="portrait"
+                    lipLevel={portraitLips}
+                    label="DeepSeek companions"
+                    dimmed={dimPortrait}
+                  />
+                ) : (
+                  <ChatDeepAvatar
+                    mood={portraitMood}
+                    size="portrait"
+                    lipLevel={portraitLips}
+                    character={avatarCharacter}
+                    label="DeepSeek companion"
+                    dimmed={dimPortrait}
+                  />
+                )}
               </span>
               <ChatDeepAvatarNameplate character={avatarCharacter} size="portrait" />
             </span>
@@ -1410,17 +1429,34 @@ export function ChatAuiThread() {
           >
             <ComposerStatusCluster placement="stage" />
             <span
-              className={`aui-avatar-dock-frame is-stage${dimPortrait ? ' is-fx-dimmed' : ''}${hideGifFor3d ? ' is-3d-active' : ''}`}
+              className={`aui-avatar-dock-frame is-stage${isChatDeepAvatarBothMode(avatarCharacter) ? ' is-both' : ''}${dimPortrait ? ' is-fx-dimmed' : ''}${hideGifFor3d ? ' is-3d-active' : ''}`}
             >
               <span className="aui-avatar-dock-origin" ref={dockRef}>
-                <ChatDeepAvatar
-                  mood={portraitMood}
-                  size="stage"
-                  lipLevel={portraitLips}
-                  character={avatarCharacter}
-                  label="DeepSeek companion"
-                  dimmed={dimPortrait}
-                />
+                {isChatDeepAvatarBothMode(avatarCharacter) ? (
+                  <ChatDeepAvatarDuo
+                    mood={portraitMood}
+                    secondaryMood={
+                      portraitMood === 'speak' ||
+                      portraitMood === 'listen' ||
+                      portraitMood === 'think'
+                        ? 'idle'
+                        : portraitMood
+                    }
+                    size="stage"
+                    lipLevel={portraitLips}
+                    label="DeepSeek companions"
+                    dimmed={dimPortrait}
+                  />
+                ) : (
+                  <ChatDeepAvatar
+                    mood={portraitMood}
+                    size="stage"
+                    lipLevel={portraitLips}
+                    character={avatarCharacter}
+                    label="DeepSeek companion"
+                    dimmed={dimPortrait}
+                  />
+                )}
               </span>
               <ChatDeepAvatarNameplate character={avatarCharacter} size="stage" />
             </span>
