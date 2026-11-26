@@ -22,6 +22,7 @@ import {
   formatSelectionReplyQuote,
   pickActiveAgentStripItem,
   scrubberActiveIndex,
+  scrubberPreviewText,
   scrubberSnippet,
   sortAgentStripDropdown,
 } from './chatSelectionChrome.js'
@@ -51,16 +52,23 @@ assert.match(applySelectionInclude('keep me', 'x'), /^keep me\n\nIncluded:/)
 
 assert.equal(scrubberSnippet('one two three', 7), 'one tw…')
 assert.equal(scrubberSnippet('  hi  '), 'hi')
+assert.equal(scrubberPreviewText('  line one\n  line two  '), 'line one\n  line two')
+assert.equal(scrubberPreviewText('   '), '…')
 
+const longBody =
+  'Hello world from user — this is the complete message body that must appear in the hover preview, not a tiny 48-char clip.'
 const ticks = buildScrubberTicks([
-  { id: 'u1', role: 'user', content: 'Hello world from user' },
-  { id: 'a1', role: 'assistant', text: 'Reply here' },
+  { id: 'u1', role: 'user', content: longBody },
+  { id: 'a1', role: 'assistant', text: 'Reply here\nwith a second line' },
 ])
 assert.equal(ticks.length, 2)
 assert.equal(ticks[0]!.id, 'u1')
 assert.equal(ticks[0]!.role, 'user')
 assert.match(ticks[0]!.snippet, /Hello/)
+assert.ok(ticks[0]!.snippet.length <= 48, 'aria snippet stays compact')
+assert.equal(ticks[0]!.text, longBody, 'preview keeps full message')
 assert.equal(ticks[1]!.id, 'a1')
+assert.match(ticks[1]!.text, /second line/, 'preview keeps newlines')
 
 assert.equal(scrubberActiveIndex(0, 5), 0)
 assert.equal(scrubberActiveIndex(1, 5), 4)
@@ -115,6 +123,12 @@ assert.match(
 assert.match(css, /\.aui-scrubber/, 'scrubber CSS')
 assert.match(css, /\.aui-scrubber-thumb/, 'scrubber sliding thumb')
 assert.match(css, /\.aui-scrubber-preview/, 'scrubber hover preview')
+assert.match(css, /\.aui-scrubber-preview-text[\s\S]*white-space:\s*pre-wrap/, 'full-message preview wraps')
+assert.doesNotMatch(
+  css,
+  /\.aui-scrubber-preview-text[\s\S]*-webkit-line-clamp:\s*3/,
+  'preview must not clamp to 3 tiny lines',
+)
 assert.match(css, /scrollbar-width:\s*none/, 'suppress native bar under scrubber')
 assert.doesNotMatch(css, /\.aui-scrubber-tick\s*\{[^}]*width:\s*0\.5rem/, 'no chunky 0.5rem dots')
 assert.match(css, /\.aui-agent-pill/, 'agent pill CSS')
@@ -124,6 +138,7 @@ assert.match(css, /\.aui-mood-picker/, 'mood picker CSS')
 const scrubberSrc = readFileSync(join(root, 'pages/chat/aui/ChatHistoryScrubber.tsx'), 'utf8')
 assert.match(scrubberSrc, /aui-scrubber-thumb/, 'thumb in scrubber component')
 assert.match(scrubberSrc, /aui-scrubber-preview/, 'preview in scrubber component')
+assert.match(scrubberSrc, /tick\.text/, 'preview renders full tick text')
 assert.match(scrubberSrc, /is-dragging/, 'drag state class')
 
 // Message bodies must opt into quote-selectable so SelectionToolbar accepts user+assistant text.

@@ -42,16 +42,25 @@ export function applySelectionInclude(draft: string, selected: string): string {
 export type ScrubberTick = {
   id: string
   role: 'user' | 'assistant' | 'system' | string
+  /** Short one-line clip for aria / compact labels. */
   snippet: string
+  /** Full message body for the hover preview card. */
+  text: string
   index: number
 }
 
-/** Truncate message text for scrubber hover preview. */
+/** Truncate message text for compact scrubber labels (aria). */
 export function scrubberSnippet(text: string, max = 48): string {
   const one = text.replace(/\s+/g, ' ').trim()
   if (!one) return '…'
   if (one.length <= max) return one
   return `${one.slice(0, Math.max(1, max - 1))}…`
+}
+
+/** Normalize full message text for the scrubber hover preview (keep line breaks). */
+export function scrubberPreviewText(text: string): string {
+  const normalized = text.replace(/\r\n/g, '\n').replace(/[ \t]+\n/g, '\n').trim()
+  return normalized || '…'
 }
 
 /** Build scrubber ticks from thread messages (id + role + text). */
@@ -64,6 +73,7 @@ export function buildScrubberTicks(
       id: m.id,
       role: m.role,
       snippet: scrubberSnippet(raw),
+      text: scrubberPreviewText(raw),
       index,
     }
   })

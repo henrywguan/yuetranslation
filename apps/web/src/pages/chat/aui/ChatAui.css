@@ -3919,48 +3919,61 @@
 .aui-scrubber-preview {
   position: absolute;
   right: calc(100% + 0.45rem);
-  transform: translateY(-50%);
-  max-width: 14rem;
-  padding: 0.4rem 0.55rem;
-  border-radius: 0.45rem;
-  background: color-mix(in srgb, var(--ds-canvas) 96%, transparent);
+  width: min(36rem, calc(100vw - 3.5rem));
+  max-width: min(36rem, calc(100vw - 3.5rem));
+  max-height: min(70vh, 32rem);
+  padding: 0.65rem 0.8rem 0.75rem;
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--ds-canvas) 97%, transparent);
   border: 1px solid color-mix(in srgb, var(--ds-divider) 80%, transparent);
-  box-shadow: 0 8px 24px color-mix(in srgb, black 18%, transparent);
+  box-shadow: 0 12px 36px color-mix(in srgb, black 22%, transparent);
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  pointer-events: none;
+  gap: 0.35rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
   z-index: 5;
   animation: aui-scrubber-preview-in 0.14s ease both;
+}
+
+.aui-scrubber-preview.is-align-center {
+  transform: translateY(-50%);
+}
+
+.aui-scrubber-preview.is-align-start {
+  transform: translateY(0);
+}
+
+.aui-scrubber-preview.is-align-end {
+  transform: translateY(-100%);
 }
 
 @keyframes aui-scrubber-preview-in {
   from {
     opacity: 0;
-    transform: translateY(-50%) translateX(4px);
   }
   to {
     opacity: 1;
-    transform: translateY(-50%) translateX(0);
   }
 }
 
 .aui-scrubber-preview-role {
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   font-weight: 650;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ds-text-3);
+  flex: 0 0 auto;
 }
 
 .aui-scrubber-preview-text {
-  font-size: 0.72rem;
-  line-height: 1.35;
+  font-size: 0.95rem;
+  line-height: 1.5;
   color: var(--ds-text);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 @media (max-width: 420px) {
