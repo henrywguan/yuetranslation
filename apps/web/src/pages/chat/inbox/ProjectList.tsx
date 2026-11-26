@@ -3,6 +3,7 @@ import type { ChatInboxProject, ThreadAgentView } from '../../../lib/chatInbox'
 import { CHAT_THREAD_DRAG_MIME } from '../../../lib/chatPrChecks'
 import { ChatProjectMenu } from './ChatProjectMenu'
 import { ArchiveIcon, DeleteIcon } from './InboxIcons'
+import { InboxTickerName } from './InboxTickerName'
 import { StatusChip } from './StatusChip'
 
 export function ProjectList({
@@ -233,18 +234,26 @@ export function ProjectList({
                             >
                               <button
                                 type="button"
-                                className="inbox-list-btn inbox-agent-trigger"
+                                className="inbox-list-btn inbox-agent-trigger inbox-agent-trigger--ticker"
                                 onClick={() => onOpenView(v)}
-                                title={v.role === 'overseer' ? 'Overseer' : v.role}
+                                title={
+                                  v.role === 'overseer'
+                                    ? `Overseer · ${v.title}`
+                                    : v.role === 'worker'
+                                      ? `Worker · ${v.title}`
+                                      : v.title
+                                }
                               >
-                                {v.role === 'overseer' ? (
-                                  <span className="inbox-agent-role inbox-agent-role--overseer">
-                                    Overseer ·{' '}
-                                  </span>
-                                ) : v.role === 'worker' ? (
-                                  <span className="inbox-agent-role">Worker · </span>
-                                ) : null}
-                                {v.title}
+                                <InboxTickerName>
+                                  {v.role === 'overseer' ? (
+                                    <span className="inbox-agent-role inbox-agent-role--overseer">
+                                      Overseer ·{' '}
+                                    </span>
+                                  ) : v.role === 'worker' ? (
+                                    <span className="inbox-agent-role">Worker · </span>
+                                  ) : null}
+                                  {v.title}
+                                </InboxTickerName>
                               </button>
                               <StatusChip status={v.status} />
                               {canMoveChat && v.threadId ? (

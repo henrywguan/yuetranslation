@@ -1084,6 +1084,77 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
   min-width: 0;
 }
 
+/* Nested project agents: full name (no ellipsis) + ticker + manual scroll. */
+.inbox-project-children .inbox-agent-trigger--ticker {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.inbox-agent-name-marquee {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ds-blue) 45%, var(--ds-divider)) transparent;
+  /* Keep row click/drag usable; scrollbar still receives pointer. */
+  overscroll-behavior-x: contain;
+}
+
+.inbox-agent-name-marquee::-webkit-scrollbar {
+  height: 4px;
+}
+
+.inbox-agent-name-marquee::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ds-blue) 45%, var(--ds-divider));
+}
+
+.inbox-agent-name-marquee::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.inbox-agent-name-track {
+  --inbox-ticker-gap: 1.5rem;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--inbox-ticker-gap);
+  width: max-content;
+  max-width: none;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.inbox-agent-name-label {
+  display: inline;
+  white-space: nowrap;
+}
+
+.inbox-agent-name-marquee.is-overflowing .inbox-agent-name-track {
+  animation: inbox-agent-name-ticker var(--inbox-ticker-duration, 12s) linear infinite;
+}
+
+.inbox-project-children .inbox-list-item:hover .inbox-agent-name-marquee.is-overflowing .inbox-agent-name-track,
+.inbox-project-children .inbox-list-item:focus-within .inbox-agent-name-marquee.is-overflowing .inbox-agent-name-track,
+.inbox-agent-name-marquee.is-overflowing:hover .inbox-agent-name-track,
+.inbox-agent-name-marquee.is-overflowing:focus-within .inbox-agent-name-track {
+  animation-play-state: paused;
+}
+
+/* Two equal labels + one gap → shift by label+gap = 50% + gap/2. */
+@keyframes inbox-agent-name-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-50% - (var(--inbox-ticker-gap) / 2)));
+  }
+}
+
 .inbox-agent-status {
   display: inline-flex;
   align-items: center;
@@ -1539,5 +1610,13 @@ html[data-theme='light'] .inbox-settings-menu.is-portaled {
   .inbox-ws-connected,
   .inbox-ws-connected-dot {
     animation: none;
+  }
+
+  .inbox-agent-name-marquee.is-overflowing .inbox-agent-name-track {
+    animation: none;
+  }
+
+  .inbox-agent-name-label--dup {
+    display: none;
   }
 }
