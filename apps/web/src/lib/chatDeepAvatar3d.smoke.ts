@@ -1,16 +1,21 @@
 /**
- * `#/chat` 3D companion chrome stub — prefs, paths, snap, no Live2D.
+ * `#/chat` 3D companion — prefs, GLB paths, clip map, dual Both mount, no Live2D.
  * Run: npx tsx apps/web/src/lib/chatDeepAvatar3d.smoke.ts
  */
 import assert from 'node:assert/strict'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
+  CHAT_DEEP_AVATAR_3D_CANON_CLIPS,
+  CHAT_DEEP_AVATAR_3D_CLIP_ALIASES,
   CHAT_DEEP_AVATAR_3D_DRAG_THRESHOLD_PX,
+  CHAT_DEEP_AVATAR_3D_DUO_OFFSET_PX,
   CHAT_DEEP_AVATAR_3D_KEY,
   CHAT_DEEP_AVATAR_3D_POSE_KEY,
   CHAT_DEEP_AVATAR_3D_SNAP_PX,
+  chatDeepAvatar3dDuoDockOffsetX,
+  chatDeepAvatar3dSolosToMount,
   chatDeepAvatar3dStubTint,
   chatDeepAvatarGlbSrc,
   defaultChatDeepAvatar3dPose,
@@ -19,6 +24,7 @@ import {
   normalizeChatDeepAvatar3dPoseMap,
   readChatDeepAvatar3dEnabled,
   readChatDeepAvatar3dPose,
+  resolveChatDeepAvatar3dClipName,
   shouldSnapChatDeepAvatar3dHome,
   writeChatDeepAvatar3dEnabled,
   writeChatDeepAvatar3dPose,
@@ -44,12 +50,20 @@ assert.equal(CHAT_DEEP_AVATAR_3D_KEY, 'yue-deepseek-chat-avatar-3d-v1')
 assert.equal(CHAT_DEEP_AVATAR_3D_POSE_KEY, 'yue-deepseek-chat-avatar-3d-pose-v1')
 assert.ok(CHAT_DEEP_AVATAR_3D_SNAP_PX >= 48)
 assert.ok(CHAT_DEEP_AVATAR_3D_DRAG_THRESHOLD_PX >= 4)
+assert.ok(CHAT_DEEP_AVATAR_3D_DUO_OFFSET_PX >= 24)
 
 assert.equal(chatDeepAvatarGlbSrc('boy'), '/chat-avatar/boy/deep.glb')
 assert.equal(chatDeepAvatarGlbSrc('girl'), '/chat-avatar/girl/deep.glb')
+assert.equal(chatDeepAvatarGlbSrc('both'), '/chat-avatar/boy/deep.glb', 'both primary solo → boy glb helper')
 assert.notEqual(chatDeepAvatar3dStubTint('boy'), chatDeepAvatar3dStubTint('girl'))
 
-assert.equal(normalizeChatDeepAvatar3dPose(null).docked, true)
+assert.deepEqual([...chatDeepAvatar3dSolosToMount('boy')], ['boy'])
+assert.deepEqual([...chatDeepAvatar3dSolosToMount('girl')], ['girl'])
+assert.deepEqual([...chatDeepAvatar3dSolosToMount('both')], ['boy', 'girl'])
+assert.equal(chatDeepAvatar3dDuoDockOffsetX('boy'), -CHAT_DEEP_AVATAR_3D_DUO_OFFSET_PX)
+assert.equal(chatDeepAvatar3dDuoDockOffsetX('girl'), CHAT_DEEP_AVATAR_3D_DUO_OFFSET_PX)
+
+assert.equal(normalizeChatDeepAvatar3dPose(null, 'boy').docked, true)
 assert.equal(normalizeChatDeepAvatar3dPose({ x: 2, y: -1, docked: false }).x, 1)
 assert.equal(normalizeChatDeepAvatar3dPose({ x: 2, y: -1, docked: false }).y, 0)
 assert.equal(normalizeChatDeepAvatar3dPose({ x: 0.5, y: 0.5, docked: false }).docked, false)
@@ -61,6 +75,31 @@ assert.equal(map.girl.docked, true)
 assert.equal(shouldSnapChatDeepAvatar3dHome(10, 10, 10, 10), true)
 assert.equal(shouldSnapChatDeepAvatar3dHome(0, 0, 500, 500), false)
 assert.equal(shouldSnapChatDeepAvatar3dHome(0, 0, 40, 40, 72), true)
+
+// Clip mapping — play-bus moods → AnimationMixer names.
+assert.ok(CHAT_DEEP_AVATAR_3D_CLIP_ALIASES.idle.includes('Idle'))
+assert.ok(CHAT_DEEP_AVATAR_3D_CLIP_ALIASES.wave.includes('Wave'))
+assert.ok(CHAT_DEEP_AVATAR_3D_CLIP_ALIASES.think.includes('Think'))
+assert.ok(CHAT_DEEP_AVATAR_3D_CLIP_ALIASES.sleepy.some((n) => /sit/i.test(n)))
+assert.ok(CHAT_DEEP_AVATAR_3D_CANON_CLIPS.includes('Idle'))
+assert.equal(
+  resolveChatDeepAvatar3dClipName('wave', ['Idle', 'Wave', 'Sit', 'Think']),
+  'Wave',
+)
+assert.equal(resolveChatDeepAvatar3dClipName('idle', ['Idle', 'Wave', 'Sit', 'Think']), 'Idle')
+assert.equal(resolveChatDeepAvatar3dClipName('think', ['Idle', 'Wave', 'Sit', 'Think']), 'Think')
+assert.equal(resolveChatDeepAvatar3dClipName('sleepy', ['Idle', 'Wave', 'Sit', 'Think']), 'Sit')
+assert.equal(
+  resolveChatDeepAvatar3dClipName('idle', ['Armature|Idle|baselayer']),
+  'Armature|Idle|baselayer',
+  'Meshy Armature|Idle|baselayer matches Idle alias',
+)
+assert.equal(resolveChatDeepAvatar3dClipName('nod', []), null, 'no clips → null (idle bob)')
+assert.equal(
+  resolveChatDeepAvatar3dClipName('fist', ['Take 001']),
+  'Take 001',
+  'unknown mood falls back to first clip',
+)
 
 {
   const g = globalThis as { localStorage?: Storage; window?: unknown }
@@ -89,7 +128,12 @@ assert.equal(shouldSnapChatDeepAvatar3dHome(0, 0, 40, 40, 72), true)
   const pose = writeChatDeepAvatar3dPose('boy', { x: 0.4, y: 0.5, docked: false })
   assert.equal(pose.docked, false)
   assert.equal(readChatDeepAvatar3dPose('boy').x, 0.4)
-  assert.equal(readChatDeepAvatar3dPose('girl').docked, defaultChatDeepAvatar3dPose().docked)
+  assert.equal(readChatDeepAvatar3dPose('girl').docked, defaultChatDeepAvatar3dPose('girl').docked)
+
+  // Dual Both poses stay independent.
+  writeChatDeepAvatar3dPose('girl', { x: 0.7, y: 0.6, docked: false })
+  assert.equal(readChatDeepAvatar3dPose('girl').x, 0.7)
+  assert.equal(readChatDeepAvatar3dPose('boy').x, 0.4)
 }
 
 const cloud = normalizeChatDeepAvatarCloudPrefs({
@@ -104,8 +148,12 @@ assert.match(cloudSync, /readChatDeepAvatar3dEnabled|writeChatDeepAvatar3dEnable
 
 assert.match(overlaySrc, /from 'three'/, 'overlay uses three.js')
 assert.match(overlaySrc, /GLTFLoader/, 'overlay can load deep.glb when present')
+assert.match(overlaySrc, /AnimationMixer/, 'mood → clip mixer')
+assert.match(overlaySrc, /resolveChatDeepAvatar3dClipName/, 'clip resolve wired')
 assert.match(overlaySrc, /buildStubFigure|CapsuleGeometry|SphereGeometry/, 'procedural stub mesh')
 assert.match(overlaySrc, /ChatDeepAvatar3DGate|useChatDeepAvatar3dEnabled/, 'toggle gate + hook')
+assert.match(overlaySrc, /chatDeepAvatar3dSolosToMount/, 'Both dual solo mount helper')
+assert.match(overlaySrc, /isChatDeepAvatarBothMode|duoOffset/, 'Both dual offset')
 assert.match(overlaySrc, /shouldSnapChatDeepAvatar3dHome|writeChatDeepAvatar3dPose/, 'snap + persist')
 assert.match(overlaySrc, /isChatDeepAvatar3dPointerBlocked|DRAG_THRESHOLD/, 'mic/scroll safe drag')
 assert.match(overlaySrc, /prefers-reduced-motion|usePrefersReducedMotion/, 'reduced-motion gate')
@@ -127,19 +175,22 @@ assert.match(
 )
 
 assert.match(viteCfg, /chat-avatar\/\*\*\/\*\.glb/, 'SW globIgnores chat-avatar GLBs')
-assert.match(readme, /3D companion|deep\.glb/, 'README documents 3d stub')
+assert.match(readme, /deep\.glb|3D companion/, 'README documents 3d companion / deep.glb')
 
-// Stub ships without baked GLBs (Higgsfield bake is a later phase).
-assert.equal(
-  existsSync(join(root, '../public/chat-avatar/boy/deep.glb')),
-  false,
-  'boy deep.glb not baked yet (procedural stub)',
-)
-assert.equal(
-  existsSync(join(root, '../public/chat-avatar/girl/deep.glb')),
-  false,
-  'girl deep.glb not baked yet (procedural stub)',
-)
+// Baked runtime GLBs (Higgsfield Meshy) — keep under Harbor-ish mobile budget.
+const boyGlb = join(root, '../public/chat-avatar/boy/deep.glb')
+const girlGlb = join(root, '../public/chat-avatar/girl/deep.glb')
+assert.equal(existsSync(boyGlb), true, 'boy deep.glb shipped')
+assert.equal(existsSync(girlGlb), true, 'girl deep.glb shipped')
+{
+  const boyBytes = statSync(boyGlb).size
+  const girlBytes = statSync(girlGlb).size
+  assert.ok(boyBytes > 10_000, 'boy glb non-empty')
+  assert.ok(girlBytes > 10_000, 'girl glb non-empty')
+  // Soft ceiling — Harbor scouts are ~5 MiB; fail loud if we ship a 40 MiB Hunyuan.
+  assert.ok(boyBytes < 12 * 1024 * 1024, `boy glb too large for iPhone WebGL (${boyBytes})`)
+  assert.ok(girlBytes < 12 * 1024 * 1024, `girl glb too large for iPhone WebGL (${girlBytes})`)
+}
 
 // Synthetic pointer-block check via Element-like closest.
 {

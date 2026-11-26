@@ -56,14 +56,16 @@ Plan→Build / Overseer settle latches `handoff` (pair clip in Both; solo stems 
 
 **Do not** put character-bible `deep-sheet.png` (or other multi‑MB generation sources) in `public/chat-avatar/`. VitePWA `injectManifest` precaches `*.png` and rejects files over 2 MiB (broke prod after #796). Keep sheets outside the web public tree; `vite.config.ts` also glob-ignores `**/chat-avatar/**/deep-sheet.png` as a belt-and-suspenders guard. Intro `*.mp4` / `intro-poster.*` and companion `*.glb` are similarly excluded from the SW precache — runtime-fetch only.
 
-### 3D companion chrome (stub)
+### 3D companion (`deep.glb`)
 
-Inbox settings → Companion → **3D companion** toggles a floating three.js character (`ChatDeepAvatar3D`). Default remains GIF moods. With 3D on:
+Inbox settings → Companion → **3D companion** toggles floating three.js characters (`ChatDeepAvatar3D`). Default remains GIF moods. With 3D on:
 
-- Placeholder procedural mesh (boy jade / girl rose) until Higgsfield sheet→`deep.glb` bake lands under `{boy,girl}/deep.glb`
-- Drag anywhere over `#/chat` (inbox / workspace / composer / empty chrome); soft-snap home to the bar/stage dock; pose persists per character in localStorage
+- Runtime meshes: `{boy,girl}/deep.glb` (Higgsfield Meshy image→3D from bust refs; SW-excluded). Procedural stub if a GLB fails to load.
+- Mood play-bus → `AnimationMixer` clip names (`Idle` / `Sit` / `Wave` / `Think` aliases). Missing clip → idle bob; celebrate / pair fullscreen stay on the 2D GIF path.
+- **Both + 3D:** two independent draggable GLBs (boy + girl), default docked side-by-side on the composer; each can chill or collaborate anywhere on `.ds-chat`. Poses persist per solo.
+- Drag anywhere over `#/chat` (inbox / workspace / composer / empty chrome); soft-snap home to the bar/stage dock
 - `prefers-reduced-motion` and WebGL failure fall back to GIF; mic / composer controls stay interactive (handle-only pointer events)
-- Stays on three.js GLB / procedural mesh (no 2D puppet SDK)
+- Stays on three.js GLB / procedural mesh (no Live2D / Cubism; no Azure VO for the avatar)
 
 Performance moods (`bow` / `fist` / `wave` / `nod` / `relieved` / `sleepy`) ship dedicated 720×720 Higgsfield `gpt_image_2_6` GIFs (same recipe as proud/eureka). Runtime stem fallbacks remain in `chatDeepAvatarMoodAssetStem` if a file is missing.
 
