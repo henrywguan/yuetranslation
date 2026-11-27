@@ -30,6 +30,10 @@ import {
 import type { ChatWorkspace } from '../../../lib/chatWorkspace'
 import { startChatCloudProjectSync } from '../../../lib/chatCloudSync'
 import { startChatDeepAvatarCloudSync } from '../../../lib/chatDeepAvatarCloudSync'
+import {
+  releaseChatDeepAvatarIntroShell,
+  retainChatDeepAvatarIntroShell,
+} from '../../../lib/chatDeepAvatarIntroAudio'
 import { openApp, openPricing } from '../../../lib/siteLinks'
 import { useYueStore } from '../../../lib/store'
 import { useAppViewportLock } from '../../../lib/useAppViewportLock'
@@ -120,6 +124,12 @@ function TopBrand() {
 
 function AuiShell({ unlocked }: { unlocked: boolean }) {
   const titleId = useId()
+  // One intro visit per AuiShell mount. Deferred release cancels on Strict remount
+  // so the companion intro does not re-arm / restart mid-clip.
+  useEffect(() => {
+    retainChatDeepAvatarIntroShell()
+    return () => releaseChatDeepAvatarIntroShell()
+  }, [])
   // Desktop defaults open; menu still toggles Inbox chrome open/closed.
   const [sidebarOpen, setSidebarOpen] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(min-width: 900px)').matches,

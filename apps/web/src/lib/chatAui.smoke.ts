@@ -901,6 +901,18 @@ assert.match(
   /createElement\('video'\)|takePrimedChatDeepAvatarIntro/,
   'intro mounts video imperatively (prime-safe)',
 )
+assert.match(introSrc, /applyChatDeepAvatarIntroPlaybackRate|playbackRate/, 'intro applies 3× playbackRate')
+assert.match(introSrc, /wasChatDeepAvatarIntroArmed|markChatDeepAvatarIntroArmed/, 'once-per-visit arm latch')
+assert.match(introSrc, /adoptLiveChatDeepAvatarIntroVideo/, 'live video handoff (no Strict restart)')
+assert.match(introSrc, /startInFlight/, 'guards re-entrant start()/canplay')
+assert.match(page, /retainChatDeepAvatarIntroShell/, 'AuiShell retains intro shell visit')
+assert.match(page, /releaseChatDeepAvatarIntroShell/, 'AuiShell releases intro shell visit')
+const introAudioSrc = readFileSync(join(here, 'chatDeepAvatarIntroAudio.ts'), 'utf8')
+assert.match(
+  introAudioSrc,
+  /CHAT_DEEP_AVATAR_INTRO_PLAYBACK_RATE\s*=\s*3/,
+  'intro playback rate constant is 3',
+)
 assert.match(
   introSrc,
   /setPhase\('enter'\)[\s\S]*REDUCED_HOLD_MS/,

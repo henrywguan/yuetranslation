@@ -108,7 +108,17 @@ assert.doesNotMatch(auiCss, /\.aui-deep-avatar-intro-unmute\b/, 'Tap-for-sound u
 assert.match(audioSrc, /export function primeChatDeepAvatarIntro/, 'gesture prime helper')
 assert.match(audioSrc, /export function takePrimedChatDeepAvatarIntro/, 'prime adopt helper')
 assert.match(audioSrc, /readChatDeepAvatarSoundEnabled/, 'prime respects Sound pref')
+assert.match(audioSrc, /CHAT_DEEP_AVATAR_INTRO_PLAYBACK_RATE\s*=\s*3/, 'intro rate locked at 3×')
+assert.match(audioSrc, /retainChatDeepAvatarIntroShell/, 'shell visit retain for once-per-enter')
+assert.match(audioSrc, /adoptLiveChatDeepAvatarIntroVideo/, 'live video handoff survives Strict remount')
+assert.match(introSrc, /playbackRate|applyChatDeepAvatarIntroPlaybackRate/, 'overlay applies 3× rate')
+assert.match(introSrc, /wasChatDeepAvatarIntroArmed|markChatDeepAvatarIntroArmed/, 'once-per-visit arm latch')
+assert.match(introSrc, /adoptLiveChatDeepAvatarIntroVideo|resumeOnly/, 'overlay resumes live video instead of restart')
+assert.match(introSrc, /startInFlight/, 'start() re-entrancy gate')
 assert.match(siteLinks, /primeChatDeepAvatarIntro/, 'openDeepseekChat primes intro in-gesture')
+const pageSrc = readFileSync(join(here, '../pages/chat/aui/ChatAuiPage.tsx'), 'utf8')
+assert.match(pageSrc, /retainChatDeepAvatarIntroShell/, 'AuiShell retains intro visit')
+assert.match(pageSrc, /releaseChatDeepAvatarIntroShell/, 'AuiShell releases intro visit on leave')
 
 // layoutIntroContainElement writes absolute contain styles onto a stub element.
 {

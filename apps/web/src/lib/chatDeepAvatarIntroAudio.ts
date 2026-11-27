@@ -10,6 +10,10 @@
  * same synchronous turn — Chrome/Safari often keep the unlock. If the browser
  * remutes or rejects audible play, keep muted motion going so the overlay
  * never lands on a frozen hold frame.
+ *
+ * Visit latch + live-video handoff: React Strict Mode (and effect re-runs)
+ * remount the overlay without leaving `#/chat`. Module state survives so the
+ * intro arms/plays once per chat shell visit, not once per effect pass.
  */
 import {
   chatDeepAvatarIntroSrc,
@@ -18,6 +22,9 @@ import {
 } from './chatDeepAvatarCharacter'
 import { readChatDeepAvatarSoundEnabled } from './chatDeepAvatarPersona'
 
+/** Fullscreen companion intro plays at 3× (Henry). */
+export const CHAT_DEEP_AVATAR_INTRO_PLAYBACK_RATE = 3
+
 export type PrimedChatIntro = {
   character: ChatDeepAvatarCharacterId
   video: HTMLVideoElement
@@ -25,18 +32,49 @@ export type PrimedChatIntro = {
   unmuted: boolean
 }
 
+export type LiveChatIntroVideo = {
+  visitId: number
+  character: ChatDeepAvatarCharacterId
+  src: string
+  video: HTMLVideoElement
+}
+
 let primed: PrimedChatIntro | null = null
 
-function disposePrimed(entry: PrimedChatIntro | null) {
-  if (!entry) return
+/** Monotonic id for the current `#/chat` shell visit. */
+let chatShellVisitId = 0
+/** Visit currently retained by ChatAuiPage (Strict Mode remount reuse). */
+let retainedVisitId: number | null = null
+let shellReleaseTimer: ReturnType<typeof setTimeout> | null = null
+/** Character already armed for `chatShellVisitId` (skip Strict double-arm). */
+let armedCharacterForVisit: { visitId: number; character: ChatDeepAvatarCharacterId } | null =
+  null
+/** Imperative video that survives overlay effect teardown within one visit. */
+let liveIntro: LiveChatIntroVideo | null = null
+
+function disposeVideoElement(video: HTMLVideoElement) {
   try {
-    entry.video.pause()
+    video.pause()
   } catch {
     /* ignore */
   }
   try {
-    entry.video.removeAttribute('src')
-    entry.video.load()
+    video.removeAttribute('src')
+    video.load()
+  } catch {
+    /* ignore */
+  }
+}
+
+function disposePrimed(entry: PrimedChatIntro | null) {
+  if (!entry) return
+  disposeVideoElement(entry.video)
+}
+
+/** Apply the locked intro rate (safe on any HTMLVideoElement). */
+export function applyChatDeepAvatarIntroPlaybackRate(video: HTMLVideoElement) {
+  try {
+    video.playbackRate = CHAT_DEEP_AVATAR_INTRO_PLAYBACK_RATE
   } catch {
     /* ignore */
   }
@@ -50,9 +88,109 @@ export function clearPrimedChatDeepAvatarIntro() {
 
 function keepMutedMotion(video: HTMLVideoElement) {
   video.muted = true
+  applyChatDeepAvatarIntroPlaybackRate(video)
   void video.play().catch(() => {
     /* overlay will retry */
   })
+}
+
+/**
+ * Retain a `#/chat` shell visit. Strict Mode remount cancels a pending release
+ * and reuses the same visit id so the intro does not re-arm / restart.
+ * Safe if the overlay already lazy-started the visit (child effects first).
+ */
+export function retainChatDeepAvatarIntroShell(): number {
+  if (shellReleaseTimer != null) {
+    clearTimeout(shellReleaseTimer)
+    shellReleaseTimer = null
+  }
+  if (retainedVisitId != null) return retainedVisitId
+  chatShellVisitId += 1
+  retainedVisitId = chatShellVisitId
+  armedCharacterForVisit = null
+  clearLiveChatDeepAvatarIntroVideo()
+  return chatShellVisitId
+}
+
+/**
+ * Schedule visit release. Deferred so Strict Mode's immediate remount can
+ * cancel via `retainChatDeepAvatarIntroShell`.
+ */
+export function releaseChatDeepAvatarIntroShell(): void {
+  if (shellReleaseTimer != null) clearTimeout(shellReleaseTimer)
+  shellReleaseTimer = setTimeout(() => {
+    shellReleaseTimer = null
+    retainedVisitId = null
+    armedCharacterForVisit = null
+    clearLiveChatDeepAvatarIntroVideo()
+    clearPrimedChatDeepAvatarIntro()
+  }, 0)
+}
+
+/** Current visit id; lazy-starts one if the overlay mounts before shell retain. */
+export function getChatDeepAvatarIntroVisitId(): number {
+  if (retainedVisitId != null) return retainedVisitId
+  chatShellVisitId += 1
+  retainedVisitId = chatShellVisitId
+  return chatShellVisitId
+}
+
+/** True when this character was already armed for the current shell visit. */
+export function wasChatDeepAvatarIntroArmed(
+  character: ChatDeepAvatarCharacterId,
+): boolean {
+  const visit = getChatDeepAvatarIntroVisitId()
+  return (
+    armedCharacterForVisit != null &&
+    armedCharacterForVisit.visitId === visit &&
+    armedCharacterForVisit.character === character
+  )
+}
+
+export function markChatDeepAvatarIntroArmed(character: ChatDeepAvatarCharacterId): void {
+  armedCharacterForVisit = {
+    visitId: getChatDeepAvatarIntroVisitId(),
+    character,
+  }
+}
+
+/** Clear arm latch so a companion pick change can re-play within the visit. */
+export function clearChatDeepAvatarIntroArmed(): void {
+  armedCharacterForVisit = null
+}
+
+export function peekLiveChatDeepAvatarIntroVideo(): LiveChatIntroVideo | null {
+  return liveIntro
+}
+
+export function adoptLiveChatDeepAvatarIntroVideo(
+  character: ChatDeepAvatarCharacterId,
+  src: string,
+): LiveChatIntroVideo | null {
+  const visit = getChatDeepAvatarIntroVisitId()
+  if (
+    !liveIntro ||
+    liveIntro.visitId !== visit ||
+    liveIntro.character !== character ||
+    liveIntro.src !== src
+  ) {
+    return null
+  }
+  return liveIntro
+}
+
+export function setLiveChatDeepAvatarIntroVideo(entry: LiveChatIntroVideo): void {
+  if (liveIntro && liveIntro.video !== entry.video) {
+    disposeVideoElement(liveIntro.video)
+  }
+  liveIntro = entry
+}
+
+export function clearLiveChatDeepAvatarIntroVideo(): void {
+  if (liveIntro) {
+    disposeVideoElement(liveIntro.video)
+    liveIntro = null
+  }
 }
 
 /**
@@ -82,6 +220,7 @@ export function primeChatDeepAvatarIntro(character?: ChatDeepAvatarCharacterId) 
   video.setAttribute('playsinline', '')
   video.setAttribute('webkit-playsinline', '')
   video.volume = 1
+  applyChatDeepAvatarIntroPlaybackRate(video)
   // Muted play first (gesture-safe), then unmute in the same turn.
   video.muted = true
 
@@ -93,6 +232,7 @@ export function primeChatDeepAvatarIntro(character?: ChatDeepAvatarCharacterId) 
     void attempt
       .then(() => {
         if (primed?.video !== video) return
+        applyChatDeepAvatarIntroPlaybackRate(video)
         // Browser remuted us — keep motion; overlay shows Unmute.
         if (video.muted) {
           keepMutedMotion(video)
@@ -120,6 +260,7 @@ export function takePrimedChatDeepAvatarIntro(
   }
   const out = primed
   primed = null
+  applyChatDeepAvatarIntroPlaybackRate(out.video)
   return out
 }
 
