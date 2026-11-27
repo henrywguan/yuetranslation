@@ -3,6 +3,9 @@
  * Tap / Esc / video end dismisses for this visit only — no persistent “seen” latch.
  * Character from Companion pick (`readChatDeepAvatarCharacter`).
  *
+ * Plays **once per chat shell visit** (module visit latch + live-video handoff)
+ * so React Strict Mode / effect re-runs cannot restart the clip. Rate: 3×.
+ *
  * Audio follows Companion Sound (default ON). Prefer unmuted playback from the
  * start (`primeChatDeepAvatarIntro` inside `openDeepseekChat`). When the browser
  * blocks unmuted autoplay (direct `#/chat` / hard refresh), play muted motion
@@ -16,8 +19,17 @@
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { createPortal } from 'react-dom'
 import {
+  adoptLiveChatDeepAvatarIntroVideo,
+  applyChatDeepAvatarIntroPlaybackRate,
+  clearChatDeepAvatarIntroArmed,
+  clearLiveChatDeepAvatarIntroVideo,
   clearPrimedChatDeepAvatarIntro,
+  getChatDeepAvatarIntroVisitId,
+  markChatDeepAvatarIntroArmed,
+  peekLiveChatDeepAvatarIntroVideo,
+  setLiveChatDeepAvatarIntroVideo,
   takePrimedChatDeepAvatarIntro,
+  wasChatDeepAvatarIntroArmed,
 } from '../../../lib/chatDeepAvatarIntroAudio'
 import { layoutIntroContainElement } from '../../../lib/chatDeepAvatarIntroLayout'
 import {
@@ -52,6 +64,8 @@ export function ChatDeepAvatarIntroOverlay() {
   const exitTimer = useRef<number | null>(null)
   const finishing = useRef(false)
   const played = useRef(false)
+  /** Sync gate so canplay cannot re-enter start() before play() resolves. */
+  const startInFlight = useRef(false)
   /** Swallow the click that unlocked policy-muted audio so we don't dismiss. */
   const unlockConsumedClick = useRef(false)
   const soundEnabledRef = useRef(soundEnabled)
@@ -65,6 +79,7 @@ export function ChatDeepAvatarIntroOverlay() {
 
   const clearSession = () => {
     finishing.current = true
+    clearLiveChatDeepAvatarIntroVideo()
     setSession(null)
   }
 
@@ -96,6 +111,7 @@ export function ChatDeepAvatarIntroOverlay() {
   const playMutedMotion = async (v: HTMLVideoElement) => {
     setPolicyLock(true)
     v.muted = true
+    applyChatDeepAvatarIntroPlaybackRate(v)
     try {
       await v.play()
       played.current = true
@@ -111,6 +127,7 @@ export function ChatDeepAvatarIntroOverlay() {
     setPolicyLock(false)
     v.muted = false
     v.volume = 1
+    applyChatDeepAvatarIntroPlaybackRate(v)
     try {
       // Restart so the full clip plays with sound (never mid-silent).
       if (v.currentTime > 0.05) v.currentTime = 0
@@ -129,21 +146,45 @@ export function ChatDeepAvatarIntroOverlay() {
     return true
   }
 
-  // Arm whenever `#/chat` mounts (or companion pick changes) if an intro clip ships.
+  // Arm once per `#/chat` shell visit (+ companion pick change). Module latch
+  // survives Strict Mode so setSession is not fired twice for the same visit.
   useEffect(() => {
     if (!shouldPlayChatDeepAvatarIntro(character)) {
       clearPrimedChatDeepAvatarIntro()
+      clearChatDeepAvatarIntroArmed()
       setSession(null)
       return
     }
     const src = chatDeepAvatarIntroSrc(character)
     if (!src) {
       clearPrimedChatDeepAvatarIntro()
+      clearChatDeepAvatarIntroArmed()
       setSession(null)
       return
     }
+    // Idempotent: same character already armed this visit. Restore overlay only when
+    // a live video is still active (Strict remount mid-play) — never after dismiss.
+    if (wasChatDeepAvatarIntroArmed(character)) {
+      setSession((prev) => {
+        if (prev && prev.character === character && prev.src === src) return prev
+        const live = peekLiveChatDeepAvatarIntroVideo()
+        const visit = getChatDeepAvatarIntroVisitId()
+        if (
+          live &&
+          live.visitId === visit &&
+          live.character === character &&
+          live.src === src
+        ) {
+          return { character, src }
+        }
+        return prev
+      })
+      return
+    }
+    markChatDeepAvatarIntroArmed(character)
     finishing.current = false
     played.current = false
+    startInFlight.current = false
     unlockConsumedClick.current = false
     policyMutedRef.current = false
     setPolicyMuted(false)
@@ -159,6 +200,7 @@ export function ChatDeepAvatarIntroOverlay() {
   useEffect(() => {
     if (!session || !reducedMotion) return
     clearPrimedChatDeepAvatarIntro()
+    markChatDeepAvatarIntroArmed(session.character)
     setPhase('enter')
     const hold = window.setTimeout(() => setPhase('exit'), REDUCED_HOLD_MS)
     const done = window.setTimeout(() => clearSession(), REDUCED_HOLD_MS + EXIT_MS)
@@ -169,7 +211,8 @@ export function ChatDeepAvatarIntroOverlay() {
   }, [session, reducedMotion])
 
   // Mount video imperatively so a gesture-primed element can be adopted without
-  // React reconciling away the in-gesture play() unlock.
+  // React reconciling away the in-gesture play() unlock. Live handoff reuses the
+  // same element across Strict Mode teardown so playback does not restart.
   useLayoutEffect(() => {
     if (!session || reducedMotion) return
     const stage = stageRef.current
@@ -177,15 +220,31 @@ export function ChatDeepAvatarIntroOverlay() {
 
     let cancelled = false
     let v: HTMLVideoElement
-    const primed = takePrimedChatDeepAvatarIntro(session.character)
+    let resumeOnly = false
+    const live = adoptLiveChatDeepAvatarIntroVideo(session.character, session.src)
+    const primed = live ? null : takePrimedChatDeepAvatarIntro(session.character)
     const fromPrime = Boolean(primed)
 
-    if (primed) {
+    if (live) {
+      v = live.video
+      v.className = 'aui-deep-avatar-intro-video'
+      v.setAttribute('playsinline', '')
+      v.setAttribute('webkit-playsinline', '')
+      v.removeAttribute('poster')
+      applyChatDeepAvatarIntroPlaybackRate(v)
+      resumeOnly = !v.paused || v.currentTime > 0.05 || played.current
+      if (resumeOnly) {
+        played.current = true
+        if (v.muted && wantAudible()) setPolicyLock(true)
+        else setPolicyLock(false)
+      }
+    } else if (primed) {
       v = primed.video
       v.className = 'aui-deep-avatar-intro-video'
       v.setAttribute('playsinline', '')
       v.setAttribute('webkit-playsinline', '')
       v.removeAttribute('poster')
+      applyChatDeepAvatarIntroPlaybackRate(v)
       if (wantAudible() && primed.unmuted) {
         v.muted = false
         setPolicyLock(false)
@@ -198,6 +257,12 @@ export function ChatDeepAvatarIntroOverlay() {
         setPolicyLock(false)
       }
       played.current = !v.paused
+      setLiveChatDeepAvatarIntroVideo({
+        visitId: getChatDeepAvatarIntroVisitId(),
+        character: session.character,
+        src: session.src,
+        video: v,
+      })
     } else {
       v = document.createElement('video')
       v.className = 'aui-deep-avatar-intro-video'
@@ -208,8 +273,15 @@ export function ChatDeepAvatarIntroOverlay() {
       v.src = session.src
       // No poster — avoid a static still that looks like a broken / tap-to-start load.
       v.removeAttribute('poster')
+      applyChatDeepAvatarIntroPlaybackRate(v)
       v.muted = !wantAudible()
       setPolicyLock(false)
+      setLiveChatDeepAvatarIntroVideo({
+        visitId: getChatDeepAvatarIntroVisitId(),
+        character: session.character,
+        src: session.src,
+        video: v,
+      })
     }
 
     const onEnded = () => beginExit()
@@ -223,8 +295,14 @@ export function ChatDeepAvatarIntroOverlay() {
 
     const start = async () => {
       if (cancelled || finishing.current) return
+      if (played.current || startInFlight.current) {
+        setPhase('play')
+        return
+      }
+      startInFlight.current = true
       layoutIntroContainElement(v, stage)
       setPhase('play')
+      applyChatDeepAvatarIntroPlaybackRate(v)
       const audible = wantAudible()
       if (!audible) {
         setPolicyLock(false)
@@ -234,12 +312,15 @@ export function ChatDeepAvatarIntroOverlay() {
           if (!cancelled) played.current = true
         } catch {
           beginExit()
+        } finally {
+          startInFlight.current = false
         }
         return
       }
 
       if (fromPrime && !v.paused && !v.muted) {
         played.current = true
+        startInFlight.current = false
         setPolicyLock(false)
         return
       }
@@ -247,6 +328,7 @@ export function ChatDeepAvatarIntroOverlay() {
       // Adopted muted-but-playing prime: keep motion; Unmute on next gesture.
       if (fromPrime && !v.paused && v.muted) {
         played.current = true
+        startInFlight.current = false
         setPolicyLock(true)
         return
       }
@@ -262,6 +344,8 @@ export function ChatDeepAvatarIntroOverlay() {
         if (cancelled) return
         // Autoplay with sound blocked — play muted motion (never hold frame 0).
         await playMutedMotion(v)
+      } finally {
+        startInFlight.current = false
       }
     }
 
@@ -271,13 +355,22 @@ export function ChatDeepAvatarIntroOverlay() {
     v.addEventListener('loadedmetadata', onMeta)
     if (v.readyState >= 1) onMeta()
 
-    void start()
+    if (resumeOnly) {
+      setPhase('play')
+      if (v.paused && !finishing.current) {
+        void v.play().catch(() => {
+          /* keep timeline; failSafe may exit */
+        })
+      }
+    } else {
+      void start()
+    }
 
     const onReady = () => {
       v.removeEventListener('canplay', onReady)
-      if (!played.current && !cancelled) void start()
+      if (!played.current && !cancelled && !startInFlight.current) void start()
     }
-    if (!played.current && v.readyState < 2) {
+    if (!resumeOnly && !played.current && v.readyState < 2) {
       v.addEventListener('canplay', onReady)
     }
 
@@ -305,11 +398,8 @@ export function ChatDeepAvatarIntroOverlay() {
       window.removeEventListener('resize', onResize)
       window.visualViewport?.removeEventListener('resize', onResize)
       ro?.disconnect()
-      try {
-        v.pause()
-      } catch {
-        /* ignore */
-      }
+      // Detach from stage but do NOT pause/dispose — live handoff reattaches on
+      // Strict Mode remount. Real dismiss clears via clearLiveChatDeepAvatarIntroVideo.
       if (videoRef.current === v) videoRef.current = null
       if (stage.contains(v)) stage.removeChild(v)
     }
@@ -331,6 +421,7 @@ export function ChatDeepAvatarIntroOverlay() {
     if (!session || reducedMotion) return
     const v = videoRef.current
     if (!v) return
+    applyChatDeepAvatarIntroPlaybackRate(v)
     if (!soundEnabled || sessionMuted) {
       setPolicyLock(false)
       v.muted = true
@@ -432,6 +523,7 @@ export function ChatDeepAvatarIntroOverlay() {
     setSessionMuted(next)
     const v = videoRef.current
     if (!v) return
+    applyChatDeepAvatarIntroPlaybackRate(v)
     if (next) {
       setPolicyLock(false)
       v.muted = true
