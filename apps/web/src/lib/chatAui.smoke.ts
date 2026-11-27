@@ -207,13 +207,15 @@ assert.match(
   'Celebrate lists Every / Deep / Frame modes',
 )
 assert.match(settingsMenu, /useChatDeepAvatarCelebrateMode/, 'Celebrate uses persisted mode hook')
-assert.match(settingsMenu, /createPortal/, 'Celebrate/Companion settings portal past sidebar overflow')
+assert.match(settingsMenu, /createPortal/, 'settings cover portals into Inbox shell')
 assert.match(settingsMenu, /is-portaled/, 'portaled settings menu class')
+assert.match(settingsMenu, /is-cover/, 'settings uses full Inbox chrome cover class')
 assert.match(
   settingsMenu,
-  /querySelector\('\.ds-chat'\)|querySelector\("\.ds-chat"\)/,
-  'settings portal prefers .ds-chat so DS tokens stay in scope',
+  /querySelector\('\.inbox-shell'\)|querySelector\("\.inbox-shell"\)/,
+  'settings portal prefers .inbox-shell so the cover fills Inbox chrome',
 )
+assert.match(settingsMenu, /inbox-settings-panel-close|Close settings/, 'cover has close control')
 assert.match(settingsMenu, /first\?\.focus\(\)|querySelector.*menuitem/, 'portaled menu focuses first item on open')
 assert.match(settingsMenu, /triggerRef\.current\?\.focus/, 'Esc/dismiss restores focus to cog')
 assert.match(
@@ -222,26 +224,37 @@ assert.match(
   'Celebrate renders after Companion in the cog menu',
 )
 const settingsInboxCss = readFileSync(join(root, 'pages/chat/inbox/Inbox.css'), 'utf8')
-assert.match(settingsInboxCss, /inbox-settings-menu\.is-portaled/, 'portaled settings CSS')
+assert.match(settingsInboxCss, /\.inbox-shell\s*\{[\s\S]*position:\s*relative/, 'inbox-shell is positioning context for cover')
+assert.match(settingsInboxCss, /inbox-settings-menu\.is-portaled\.is-cover/, 'portaled settings cover CSS')
 assert.match(
   settingsInboxCss,
-  /\.inbox-settings-menu\.is-portaled[\s\S]*z-index:\s*130/,
-  'portaled settings sits above sidebar chrome (and at body fallback above .ds-chat 120)',
+  /\.inbox-settings-menu\.is-portaled\.is-cover[\s\S]*inset:\s*0/,
+  'settings cover fills inbox-shell (absolute inset)',
 )
 assert.match(
   settingsInboxCss,
-  /\.inbox-settings-menu\.is-portaled[\s\S]*--ds-canvas:\s*#ffffff/,
-  'portaled settings redeclares --ds-canvas (body fallback opaque panel)',
+  /\.inbox-settings-menu\.is-portaled\.is-cover[\s\S]*width:\s*100%/,
+  'settings cover spans full sidebar width',
 )
 assert.match(
   settingsInboxCss,
-  /\.inbox-settings-menu\.is-portaled[\s\S]*background:\s*var\(--ds-canvas\)/,
+  /\.inbox-settings-menu\.is-portaled\.is-cover[\s\S]*--ds-canvas:\s*#ffffff/,
+  'portaled settings redeclares --ds-canvas (opaque cover)',
+)
+assert.match(
+  settingsInboxCss,
+  /\.inbox-settings-menu\.is-portaled\.is-cover[\s\S]*background:\s*var\(--ds-canvas\)/,
   'portaled settings forces solid canvas background',
 )
 assert.match(
   settingsInboxCss,
-  /html\[data-theme='dark'\]\s*\.inbox-settings-menu\.is-portaled[\s\S]*--ds-canvas:\s*#0e0e10/,
+  /html\[data-theme='dark'\]\s*\.inbox-settings-menu\.is-portaled\.is-cover[\s\S]*--ds-canvas:\s*#0e0e10/,
   'portaled settings dark theme canvas',
+)
+assert.match(
+  settingsInboxCss,
+  /\.inbox-settings-menu\.is-portaled\.is-cover\.is-fixed-fallback[\s\S]*z-index:\s*130/,
+  'fixed body fallback stays above .ds-chat (120)',
 )
 assert.match(
   readFileSync(join(root, 'pages/chat/aui/ChatAui.css'), 'utf8'),
@@ -814,7 +827,7 @@ assert.match(
 )
 assert.match(
   inboxCss,
-  /\.inbox-settings-menu\.is-portaled[\s\S]*--ds-surface:\s*var\(--ds-surface-1\)/,
+  /\.inbox-settings-menu\.is-portaled\.is-cover[\s\S]*--ds-surface:\s*var\(--ds-surface-1\)/,
   'portaled settings aliases --ds-surface to surface-1',
 )
 assert.match(

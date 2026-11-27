@@ -351,7 +351,7 @@ assert.match(page, /InboxShell/, 'AUI page mounts InboxShell')
 assert.match(page, /ChatInboxProvider/, 'Inbox provider wraps runtime')
 assert.match(page, /startChatCloudProjectSync/, 'signed-in cloud project hydrate + sync')
 assert.match(page, /aria-label="Inbox"/, 'sidebar labeled Inbox')
-const auiShellFn = page.slice(page.indexOf('function AuiShell'), page.indexOf('function GateShell'))
+const auiShellFn = page.slice(page.indexOf('function AuiShell'), page.indexOf('function GateTopBar'))
 assert.doesNotMatch(auiShellFn, /ds-chat-sidebar-foot/, 'sidebar foot removed — settings cog owns chrome')
 assert.doesNotMatch(
   auiShellFn,
