@@ -60,6 +60,8 @@ Code defaults in `apps/api/src/env.ts`. **Production overrides** in `vercel.json
 | AI vision OCR fallbacks | `YUE_FREE_AI_VISION_COUNT` (default **200**) hard cap | `YUE_FAMILY_AI_VISION_COUNT` (default **2000**) hard cap | `YUE_BUSINESS_AI_VISION_COUNT` (default **10000**) hard cap |
 | DeepSeek Chat (`#/chat`) | Locked CTA → pricing | Yes — `YUE_FAMILY_CHAT_TURNS` (default **3000**) | Yes — `YUE_BUSINESS_CHAT_TURNS` (default **0** = unlimited) |
 
+Owner-fallback (intentional): a quiet key chord on the `#/chat` gate can mint a **server HMAC** session (`X-Yue-Chat-Gate`) with **Family-equivalent chat only** (same turn cap as Family). Not a separate unlimited tier. Client obfuscation is not secrecy — treat as owner recovery when Google auth fails. Set `YUE_CHAT_GATE_SECRET` in production; unlock/challenge endpoints are IP rate-limited.
+
 Marketing copy rounds Free live as “~1 hr” and Family live as “~8 hr”; production sets Free live to **60 minutes** and Family live to **480 minutes** via `vercel.json`. Prefer this table + env over stale marketing blurbs when debugging quotas.
 
 Camera and Documents share the **same access gate** (plan can use cam/docs) but **separate meters**. Cam hard meter is **scan credits** (`camera_translate_count`); `cameraSeconds` is admin session logging only. Details: [camera.md](./camera.md).

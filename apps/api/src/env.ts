@@ -138,6 +138,15 @@ export const env = {
    */
   chatSecretsKey: (process.env.YUE_CHAT_SECRETS_KEY || '').trim(),
   /**
+   * HMAC material for #/chat owner-fallback gate tokens (Family-equivalent chat only).
+   * Falls back to YUE_CHAT_SECRETS_KEY / SUPABASE_SERVICE_ROLE hash when empty.
+   */
+  chatGateSecret: (process.env.YUE_CHAT_GATE_SECRET || '').trim(),
+  /** IP rate limit for GET /api/chat/gate/challenge. 0 = disable. */
+  chatGateChallengeRlPerMin: Number(process.env.YUE_CHAT_GATE_CHALLENGE_RL_PER_MIN || 20),
+  /** IP rate limit for POST /api/chat/gate/unlock. 0 = disable. */
+  chatGateUnlockRlPerMin: Number(process.env.YUE_CHAT_GATE_UNLOCK_RL_PER_MIN || 8),
+  /**
    * Allow loading dictionaries under non-commercial licenses (words.hk).
    * Keep off for paid/ad-supported commercial deployments unless you have a separate license.
    */

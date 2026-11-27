@@ -83,10 +83,11 @@ assert.match(
 const page = readFileSync(join(root, 'pages/chat/aui/ChatAuiPage.tsx'), 'utf8')
 assert.match(page, /ChatAuiRuntimeProvider/, 'AUI page wraps runtime')
 assert.match(page, /canUseDeepseekChat/, 'AUI page keeps Family gate')
+assert.match(page, /ChatSignInGate/, 'AUI page uses shared Google/chord gate')
 assert.match(page, /ds-chat-top-brand/, 'AUI uses classic centered brand classes')
 // Header must be nested under main — a header sibling of main under row-flex
 // .ds-chat vertically centered the chrome and hid the composer on iPhone.
-const auiShellFn = page.slice(page.indexOf('function AuiShell'), page.indexOf('function GateShell'))
+const auiShellFn = page.slice(page.indexOf('function AuiShell'), page.indexOf('function GateTopBar'))
 assert.match(
   auiShellFn,
   /ds-chat-main aui-main[\s\S]*<header className="ds-chat-top"[\s\S]*ChatAuiThread/,

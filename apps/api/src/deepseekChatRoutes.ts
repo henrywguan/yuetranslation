@@ -8,18 +8,20 @@
  */
 import type { Response } from 'express'
 import type { AuthedRequest } from './auth.js'
-import { requireAuth } from './auth.js'
 import { generateDeepseekChatAgentReply, streamDeepseekChatAgent } from './deepseekChatAgent.js'
 import {
-  addDeepseekChatTurns,
-  canUseDeepseekChat,
   deepseekChatModel,
   DeepseekChatBodySchema,
   deepseekChatPayloadMessage,
   deepseekChatPayloadReason,
-  deepseekChatTurnLimit,
-  getDeepseekChatTurns,
 } from './deepseekChat.js'
+import {
+  allowChatCallerRate,
+  enforceChatCallerQuota,
+  recordChatCallerTurn,
+  resolveChatCaller,
+} from './chatGateUnlock.js'
+import type { GuestRequest } from './guest.js'
 import {
   generateDeepseekChatHarnessReply,
   streamDeepseekChatHarness,
@@ -39,8 +41,6 @@ import {
 import { loadChatPluginCredentials } from './deepseekChatPluginKeys.js'
 import type { ChatPluginCredentials } from './deepseekChatPluginKeys.js'
 import { env, openaiConfigured } from './env.js'
-import { resolveEntitlement } from './entitlements.js'
-import { allowUserRateOrReject } from './guestRateLimit.js'
 
 /** SSE comment cadence — keeps the function response active during long DeepSeek thinks. */
 export const DEEPSEEK_CHAT_SSE_HEARTBEAT_MS = 12_000
@@ -152,30 +152,15 @@ async function* chatStreamEvents(
   })
 }
 
-/** POST /api/chat — signed-in Family/Business (or admin) general assistant. */
+/** POST /api/chat — Family/Business/admin, or owner-fallback gate token (Family-equivalent). */
 export async function postDeepseekChat(req: AuthedRequest, res: Response) {
-  const auth = requireAuth(req, res)
-  if (!auth) return
+  const caller = await resolveChatCaller(req as GuestRequest, res)
+  if (!caller) return
 
-  if (!allowUserRateOrReject(res, auth.userId, 'deepseekChat', env.chatRlPerMin)) return
+  if (!allowChatCallerRate(res, caller, 'deepseekChat', env.chatRlPerMin)) return
 
   if (!openaiConfigured()) {
     res.status(503).json({ message: 'Chat model is not configured.' })
-    return
-  }
-
-  const entitlement = await resolveEntitlement(auth)
-  if (entitlement.disabled) {
-    res.status(403).json({ message: 'Account disabled.', code: 'account_disabled' })
-    return
-  }
-
-  if (!canUseDeepseekChat(entitlement.plan, entitlement.isAdmin)) {
-    res.status(403).json({
-      message: 'DeepSeek Chat is included with Family and Business.',
-      code: 'chat_plan_required',
-      upgradeUrl: entitlement.upgradeUrl,
-    })
     return
   }
 
@@ -203,20 +188,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     return
   }
 
-  const turnLimit = deepseekChatTurnLimit(entitlement.plan, entitlement.isAdmin)
-  if (turnLimit > 0 && !env.openMode) {
-    const used = await getDeepseekChatTurns(auth.userId)
-    if (used >= turnLimit) {
-      res.status(402).json({
-        message: 'Monthly DeepSeek Chat limit reached.',
-        code: 'chat_quota_exhausted',
-        used,
-        limit: turnLimit,
-        upgradeUrl: entitlement.upgradeUrl,
-      })
-      return
-    }
-  }
+  if (!(await enforceChatCallerQuota(res, caller))) return
 
   const stream = wantsStream(req)
   const lastUser =
@@ -260,7 +232,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
     avatarName: parsed.data.avatarName,
     avatarTrait: parsed.data.avatarTrait,
     avatarNotes: parsed.data.avatarNotes,
-    plan: entitlement.isAdmin ? `admin (${entitlement.plan})` : entitlement.plan,
+    plan: caller.isAdmin ? `admin (${caller.plan})` : caller.plan,
     searchEnabled,
     harnessEnabled,
     chatMode,
@@ -270,7 +242,9 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
   }
   const fileIds = parsed.data.fileIds
   const plugins = parsed.data.plugins
-  const pluginCreds = await loadChatPluginCredentials(auth.userId)
+  const pluginCreds = caller.userId.startsWith('gate:')
+    ? ({} as ChatPluginCredentials)
+    : await loadChatPluginCredentials(caller.userId)
 
   try {
     if (!stream) {
@@ -288,13 +262,13 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
             pluginCreds,
             continueReply,
             workspaceFiles,
-            userId: auth.userId,
+            userId: caller.userId,
             sandboxSessionId,
             projectId,
             projectAgents,
           },
         )
-        void addDeepseekChatTurns(auth.userId, 1)
+        recordChatCallerTurn(caller)
         res.json({ ok: true, reply, model, reasoning: reasoning || undefined, title })
         return
       } catch (err) {
@@ -312,7 +286,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
           thinkingEnabled,
           prompt: { ...promptBase, mode: 'tools', searchEnabled: false },
         })
-        void addDeepseekChatTurns(auth.userId, 1)
+        recordChatCallerTurn(caller)
         res.json({ ok: true, reply, model, reasoning: reasoning || undefined })
         return
       }
@@ -364,7 +338,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
         continueReply,
         harnessEnabled,
         workspaceFiles,
-        auth.userId,
+        caller.userId,
         sandboxSessionId,
         projectId,
         projectAgents,
@@ -490,7 +464,7 @@ export async function postDeepseekChat(req: AuthedRequest, res: Response) {
           return
         }
       }
-      void addDeepseekChatTurns(auth.userId, 1)
+      recordChatCallerTurn(caller)
       writeSse(res, `data: ${JSON.stringify({ done: true, model: deepseekChatModel() })}\n\n`)
       writeSse(res, 'data: [DONE]\n\n')
       res.end()

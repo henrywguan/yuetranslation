@@ -120,6 +120,7 @@ import {
   writeChatPluginIds,
   writeChatWorkspacePanelWidth,
 } from '../lib/chatUiPrefs'
+import { ChatSignInGate, useChatGateUnlocked } from '../components/ChatSignInGate'
 import { openAuthScreen } from '../lib/auth'
 import { canUseDeepseekChat } from '../lib/chatAccess'
 import { setChatAuiEnabled } from '../lib/chatAuiFlag'
@@ -964,7 +965,8 @@ export function ChatPage() {
     stickMessagesToBottom()
   }, [activeId, active.messages.length, lastMessageId, streamingId, busy, thinking, searching])
 
-  const unlocked = canUseDeepseekChat(entitlement)
+  const gateUnlocked = useChatGateUnlocked()
+  const unlocked = canUseDeepseekChat(entitlement) || gateUnlocked
   const loggedIn = Boolean(entitlement?.loggedIn)
   const canAutoSpeak = Boolean(entitlement?.allowed?.autoSpeak)
   const skillSuggestions = filterChatSkills(draft)
@@ -1833,49 +1835,12 @@ export function ChatPage() {
     </header>
   )
 
-  if (entitlement && !loggedIn) {
-    return (
-      <div className="ds-chat">
-        {shellChrome}
-        <div className="ds-chat-main">
-          {topBar()}
-          <div className="ds-chat-gate">
-            <DeepSeekMark className="ds-chat-empty-mark" />
-            <h1>Sign in to chat</h1>
-            <p>DeepSeek Chat is available on Family and Business plans.</p>
-            <button type="button" className="ds-chat-gate-cta" onClick={() => openAuthScreen()}>
-              Sign in
-            </button>
-            <button type="button" className="ds-chat-gate-secondary" onClick={() => openApp()}>
-              Back to app
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+  if (entitlement && !loggedIn && !unlocked) {
+    return <ChatSignInGate mode="signin" shell={shellChrome} topBar={topBar()} />
   }
 
   if (entitlement && loggedIn && !unlocked) {
-    return (
-      <div className="ds-chat">
-        {shellChrome}
-        <div className="ds-chat-main">
-          {topBar()}
-          <div className="ds-chat-gate">
-            <DeepSeekMark className="ds-chat-empty-mark" />
-            <h1>Family or Business</h1>
-            <p>Upgrade to unlock DeepSeek chat on the go.</p>
-            <button type="button" className="ds-chat-gate-cta" onClick={() => openPricing()}>
-              View plans
-            </button>
-            <button type="button" className="ds-chat-gate-secondary" onClick={() => openApp()}>
-              Back to app
-            </button>
-          </div>
-          <IosHomescreenTip />
-        </div>
-      </div>
-    )
+    return <ChatSignInGate mode="upgrade" shell={shellChrome} topBar={topBar()} />
   }
 
   const showWorkspace = harnessOn && workspaceOpen

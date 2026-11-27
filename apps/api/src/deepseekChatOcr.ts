@@ -5,11 +5,9 @@
 import type { Response } from 'express'
 import { z } from 'zod'
 import type { AuthedRequest } from './auth.js'
-import { requireAuth } from './auth.js'
-import { canUseDeepseekChat } from './deepseekChat.js'
+import { allowChatCallerRate, resolveChatCaller } from './chatGateUnlock.js'
 import { env, openaiConfigured } from './env.js'
-import { resolveEntitlement } from './entitlements.js'
-import { allowUserRateOrReject } from './guestRateLimit.js'
+import type { GuestRequest } from './guest.js'
 
 const MAX_BYTES = 6_000_000
 
@@ -42,29 +40,15 @@ export function formatOcrPages(
 
 /** POST /api/chat/ocr — one-shot OCR → text for composer prefill. */
 export async function postDeepseekChatOcr(req: AuthedRequest, res: Response) {
-  const auth = requireAuth(req, res)
-  if (!auth) return
+  const caller = await resolveChatCaller(req as GuestRequest, res)
+  if (!caller) return
 
-  if (!allowUserRateOrReject(res, auth.userId, 'deepseekChatOcr', Math.min(10, env.chatRlPerMin || 10))) {
+  if (!allowChatCallerRate(res, caller, 'deepseekChatOcr', Math.min(10, env.chatRlPerMin || 10))) {
     return
   }
 
   if (!openaiConfigured() || !env.openaiApiKey) {
     res.status(503).json({ message: 'Chat model is not configured.' })
-    return
-  }
-
-  const entitlement = await resolveEntitlement(auth)
-  if (entitlement.disabled) {
-    res.status(403).json({ message: 'Account disabled.', code: 'account_disabled' })
-    return
-  }
-  if (!canUseDeepseekChat(entitlement.plan, entitlement.isAdmin)) {
-    res.status(403).json({
-      message: 'DeepSeek Chat is included with Family and Business.',
-      code: 'chat_plan_required',
-      upgradeUrl: entitlement.upgradeUrl,
-    })
     return
   }
 

@@ -1,9 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { ChatWorkspacePanel } from '../../../components/ChatWorkspacePanel'
 import { DeepSeekMark } from '../../../components/DeepSeekMark'
-import { IosHomescreenTip } from '../../../components/IosHomescreenGuide'
 import { PwaInstallButton } from '../../../components/PwaInstallButton'
-import { openAuthScreen } from '../../../lib/auth'
+import { ChatSignInGate, useChatGateUnlocked } from '../../../components/ChatSignInGate'
 import { canUseDeepseekChat } from '../../../lib/chatAccess'
 import { isChatAuiEnabled, setChatAuiEnabled } from '../../../lib/chatAuiFlag'
 import { resolveActiveSandboxSessionId } from '../../../lib/chatInbox'
@@ -34,7 +33,7 @@ import {
   releaseChatDeepAvatarIntroShell,
   retainChatDeepAvatarIntroShell,
 } from '../../../lib/chatDeepAvatarIntroAudio'
-import { openApp, openPricing } from '../../../lib/siteLinks'
+import { openApp } from '../../../lib/siteLinks'
 import { useYueStore } from '../../../lib/store'
 import { useAppViewportLock } from '../../../lib/useAppViewportLock'
 import {
@@ -533,41 +532,15 @@ function AuiShell({ unlocked }: { unlocked: boolean }) {
   )
 }
 
-function GateShell({
-  title,
-  body,
-  primaryLabel,
-  onPrimary,
-}: {
-  title: string
-  body: string
-  primaryLabel: string
-  onPrimary: () => void
-}) {
+function GateTopBar() {
   return (
-    <div className="ds-chat aui-chat">
-      <div className="ds-chat-main aui-main">
-        <header className="ds-chat-top">
-          <button type="button" className="ds-chat-icon-btn" aria-label="Back to app" onClick={() => openApp()}>
-            {BACK_ICON}
-          </button>
-          <TopBrand />
-          <span className="ds-chat-top-spacer" />
-        </header>
-        <div className="ds-chat-gate">
-          <DeepSeekMark className="ds-chat-empty-mark" />
-          <h1>{title}</h1>
-          <p>{body}</p>
-          <button type="button" className="ds-chat-gate-cta" onClick={onPrimary}>
-            {primaryLabel}
-          </button>
-          <button type="button" className="ds-chat-gate-secondary" onClick={() => openApp()}>
-            Back to app
-          </button>
-        </div>
-        <IosHomescreenTip />
-      </div>
-    </div>
+    <header className="ds-chat-top">
+      <button type="button" className="ds-chat-icon-btn" aria-label="Back to app" onClick={() => openApp()}>
+        {BACK_ICON}
+      </button>
+      <TopBrand />
+      <span className="ds-chat-top-spacer" />
+    </header>
   )
 }
 
@@ -619,7 +592,8 @@ export function ChatAuiPage() {
 
   const entitlement = useYueStore((s) => s.entitlement)
   const loggedIn = Boolean(entitlement?.loggedIn)
-  const unlocked = canUseDeepseekChat(entitlement)
+  const gateUnlocked = useChatGateUnlocked()
+  const unlocked = canUseDeepseekChat(entitlement) || gateUnlocked
 
   useEffect(() => {
     if (!entitlement?.loggedIn) return
@@ -627,24 +601,22 @@ export function ChatAuiPage() {
     startChatCloudProjectSync()
   }, [entitlement?.loggedIn, entitlement?.prefs?.chatDeepAvatar])
 
-  if (entitlement && !loggedIn) {
+  if (entitlement && !loggedIn && !unlocked) {
     return (
-      <GateShell
-        title="Sign in to chat"
-        body="DeepSeek Chat is available on Family and Business plans."
-        primaryLabel="Sign in"
-        onPrimary={() => openAuthScreen()}
+      <ChatSignInGate
+        mode="signin"
+        className="ds-chat aui-chat"
+        topBar={<GateTopBar />}
       />
     )
   }
 
   if (entitlement && loggedIn && !unlocked) {
     return (
-      <GateShell
-        title="Family or Business"
-        body="Upgrade to unlock DeepSeek chat on the go."
-        primaryLabel="View plans"
-        onPrimary={() => openPricing()}
+      <ChatSignInGate
+        mode="upgrade"
+        className="ds-chat aui-chat"
+        topBar={<GateTopBar />}
       />
     )
   }
