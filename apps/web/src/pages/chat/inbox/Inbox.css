@@ -1,6 +1,7 @@
 /* Chat Inbox sidebar — JyutTranslate navigation chrome (not stock Cursor). */
 
 .inbox-shell {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
@@ -112,13 +113,9 @@
 }
 
 /*
- * Portaled (prefer `.ds-chat`, else `body`) so Companion + Celebrate are never
- * clipped by sidebar / inbox-shell `overflow: hidden`.
- * When the host is `body`, `.ds-chat` tokens are out of scope — redeclare the
- * panel palette here so background/border/shadow stay opaque (bare text over
- * the sidebar was the #803 regression).
+ * Portaled project / workspace menus (still floating dropdowns).
+ * Prefer `.ds-chat` / `body` hosts — redeclare DS tokens so body fallback stays opaque.
  */
-.inbox-settings-menu.is-portaled,
 .inbox-portaled-menu.is-portaled {
   /* Light defaults (match ChatPage.css `.ds-chat`) */
   --ds-blue: #4d6bfe;
@@ -127,7 +124,6 @@
   --ds-canvas: #ffffff;
   --ds-surface-1: #f5f6f8;
   --ds-surface-2: #eceef2;
-  /* Alias — name/notes fields must not fall back to bare #fff in dark */
   --ds-surface: var(--ds-surface-1);
   --ds-divider: #e4e6eb;
   --ds-text: #1a1b1e;
@@ -136,14 +132,13 @@
 
   position: fixed;
   left: auto;
-  /* Above `.ds-chat` (120) — same band as settings / celebrate; below mood picker (160). */
+  /* Above `.ds-chat` (120); below mood picker (160). */
   z-index: 130;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
-  /* Solid panel — do not rely on inheritance from `.ds-chat`. */
   background: var(--ds-canvas);
   border: 1px solid var(--ds-divider);
   color: var(--ds-text);
@@ -151,8 +146,119 @@
   color-scheme: light;
 }
 
+/*
+ * Settings cog — full Inbox chrome cover (not a floating dropdown).
+ * Portals into `.inbox-shell` with absolute inset so header / list / trash
+ * cannot peek through. Own scroll so Companion + Celebrate are never clipped.
+ * Token redeclaration kept for `.ds-chat` / `body` fixed fallback.
+ */
+.inbox-settings-menu.is-portaled.is-cover {
+  --ds-blue: #4d6bfe;
+  --ds-blue-soft: #ebefff;
+  --ds-blue-soft-border: #c5cdff;
+  --ds-canvas: #ffffff;
+  --ds-surface-1: #f5f6f8;
+  --ds-surface-2: #eceef2;
+  --ds-surface: var(--ds-surface-1);
+  --ds-divider: #e4e6eb;
+  --ds-text: #1a1b1e;
+  --ds-text-2: #6a6b70;
+  --ds-text-3: #9a9ba0;
+
+  position: absolute;
+  inset: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  z-index: 40;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: var(--ds-canvas);
+  color: var(--ds-text);
+  color-scheme: light;
+  animation: inbox-settings-in 0.16s ease;
+}
+
+.inbox-settings-menu.is-portaled.is-cover.is-fixed-fallback {
+  position: fixed;
+  /* top/left/width/height from inline style (measured Inbox chrome) */
+  inset: auto;
+  z-index: 130;
+}
+
+.inbox-settings-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding: 0.55rem 0.65rem 0.45rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ds-blue) 28%, var(--ds-divider));
+}
+
+.inbox-settings-panel-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ds-text);
+}
+
+.inbox-settings-panel-close {
+  appearance: none;
+  border: 1px solid var(--ds-divider);
+  background: var(--ds-canvas);
+  color: var(--ds-text);
+  border-radius: 0.55rem;
+  width: 2rem;
+  height: 2rem;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.inbox-settings-panel-close:hover {
+  border-color: var(--ds-blue-soft-border);
+  background: var(--ds-blue-soft);
+  color: var(--ds-blue);
+}
+
+.inbox-settings-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.35rem 0.35rem 0.65rem;
+}
+
 @media (prefers-color-scheme: dark) {
-  html:not([data-theme='light']) .inbox-settings-menu.is-portaled,
+  html:not([data-theme='light']) .inbox-settings-menu.is-portaled.is-cover,
   html:not([data-theme='light']) .inbox-portaled-menu.is-portaled {
     --ds-blue-soft: #1e2240;
     --ds-blue-soft-border: #2a3360;
@@ -168,7 +274,7 @@
   }
 }
 
-html[data-theme='dark'] .inbox-settings-menu.is-portaled,
+html[data-theme='dark'] .inbox-settings-menu.is-portaled.is-cover,
 html[data-theme='dark'] .inbox-portaled-menu.is-portaled {
   --ds-blue-soft: #1e2240;
   --ds-blue-soft-border: #2a3360;
@@ -183,7 +289,7 @@ html[data-theme='dark'] .inbox-portaled-menu.is-portaled {
   color-scheme: dark;
 }
 
-html[data-theme='light'] .inbox-settings-menu.is-portaled,
+html[data-theme='light'] .inbox-settings-menu.is-portaled.is-cover,
 html[data-theme='light'] .inbox-portaled-menu.is-portaled {
   --ds-blue-soft: #ebefff;
   --ds-blue-soft-border: #c5cdff;
