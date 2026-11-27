@@ -104,6 +104,7 @@ import {
 } from './admin.js'
 import { getPushConfig, subscribePush, unsubscribePush } from './pushRoutes.js'
 import { scheduleHouseholdUsageBackfillOnStartup } from './startupBackfill.js'
+import { getChatGateChallenge, postChatGateUnlock } from './chatGateUnlock.js'
 import { postDeepseekChat } from './deepseekChatRoutes.js'
 import { postDeepseekChatFile } from './deepseekChatFiles.js'
 import { postDeepseekChatOcr } from './deepseekChatOcr.js'
@@ -2103,6 +2104,8 @@ app.get('/api/admin/push/stats', adminPushStats)
 app.get('/api/admin/push/sends', adminListPushSends)
 app.post('/api/admin/push/send', adminSendPush)
 app.post('/api/admin/practice-partner/chat', adminPracticePartnerChat)
+app.get('/api/chat/gate/challenge', getChatGateChallenge)
+app.post('/api/chat/gate/unlock', postChatGateUnlock)
 app.post('/api/chat', postDeepseekChat)
 app.get('/api/chat/cloud/projects', getChatCloudProjects)
 app.post('/api/chat/cloud/projects/:id/move', postChatCloudProjectMove)

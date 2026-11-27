@@ -7,6 +7,7 @@ import type {
 } from './types'
 import type { PrimaryLang } from './primaryLanguagePref'
 import { getAccessToken } from './auth'
+import { chatGateHeaders } from './chatGateSession'
 import { captureDiagnostic } from './diagnostics'
 import { guestDeviceHeaders } from './guestDevice'
 import { messageFromApiBody } from './apiError'
@@ -48,6 +49,7 @@ async function apiFetch(path: string, init: RequestInit = {}) {
   const headers: Record<string, string> = {
     ...(init.body ? { 'Content-Type': 'application/json' } : {}),
     ...guestDeviceHeaders(),
+    ...chatGateHeaders(),
     ...((init.headers as Record<string, string>) || {}),
   }
   if (WP_NONCE) headers['X-WP-Nonce'] = WP_NONCE

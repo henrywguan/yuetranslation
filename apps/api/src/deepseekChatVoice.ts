@@ -5,11 +5,9 @@
 import type { Response } from 'express'
 import { z } from 'zod'
 import type { AuthedRequest } from './auth.js'
-import { requireAuth } from './auth.js'
-import { canUseDeepseekChat } from './deepseekChat.js'
+import { allowChatCallerRate, resolveChatCaller } from './chatGateUnlock.js'
 import { env, openaiConfigured } from './env.js'
-import { resolveEntitlement } from './entitlements.js'
-import { allowUserRateOrReject } from './guestRateLimit.js'
+import type { GuestRequest } from './guest.js'
 
 function toolsBase(openaiBaseUrl = env.openaiBaseUrl): string {
   const trimmed = openaiBaseUrl.trim().replace(/\/+$/, '')
@@ -18,26 +16,13 @@ function toolsBase(openaiBaseUrl = env.openaiBaseUrl): string {
 }
 
 async function gateChatVoice(req: AuthedRequest, res: Response, bucket: string): Promise<boolean> {
-  const auth = requireAuth(req, res)
-  if (!auth) return false
-  if (!allowUserRateOrReject(res, auth.userId, bucket, Math.min(20, env.chatRlPerMin || 20))) {
+  const caller = await resolveChatCaller(req as GuestRequest, res)
+  if (!caller) return false
+  if (!allowChatCallerRate(res, caller, bucket, Math.min(20, env.chatRlPerMin || 20))) {
     return false
   }
   if (!openaiConfigured() || !env.openaiApiKey) {
     res.status(503).json({ message: 'Chat model is not configured.' })
-    return false
-  }
-  const entitlement = await resolveEntitlement(auth)
-  if (entitlement.disabled) {
-    res.status(403).json({ message: 'Account disabled.', code: 'account_disabled' })
-    return false
-  }
-  if (!canUseDeepseekChat(entitlement.plan, entitlement.isAdmin)) {
-    res.status(403).json({
-      message: 'DeepSeek Chat is included with Family and Business.',
-      code: 'chat_plan_required',
-      upgradeUrl: entitlement.upgradeUrl,
-    })
     return false
   }
   return true
