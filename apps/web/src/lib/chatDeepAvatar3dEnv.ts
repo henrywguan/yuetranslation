@@ -18,20 +18,21 @@ export type ChatDeepAvatar3dEnvSnapId =
   | 'path_c'
 
 /**
- * Floor snap points in room metres (Blender X/Y → Three.js X/Z after GLB load).
- * Match empties placed in the Jutsu build: SNAP_* / PATH_*.
+ * Floor snap points in room metres (glTF node translations from the Jutsu bake).
+ * Open front faces −Z (`CAM_main` at z≈−3.55). Match SNAP_* / PATH_* empties —
+ * do **not** flip Z vs the GLB or the docked view paints a grey wall.
  */
 export const CHAT_DEEP_AVATAR_3D_ENV_SNAPS: Record<
   ChatDeepAvatar3dEnvSnapId,
   { x: number; z: number; yaw: number }
 > = {
-  desk: { x: -0.9, z: -0.9, yaw: 0 },
-  chair: { x: -0.9, z: -0.35, yaw: Math.PI },
-  snack: { x: 0.9, z: 0.4, yaw: -0.6 },
-  sofa: { x: 1.0, z: -0.85, yaw: Math.PI },
-  path_a: { x: -0.4, z: 0.6, yaw: 0.2 },
-  path_b: { x: 0.5, z: 0.2, yaw: -0.4 },
-  path_c: { x: -0.2, z: -0.2, yaw: 0.8 },
+  desk: { x: -0.9, z: 0.9, yaw: 0 },
+  chair: { x: -0.9, z: 0.35, yaw: 0 },
+  snack: { x: 0.9, z: -0.4, yaw: 0.6 },
+  sofa: { x: 1.0, z: 0.85, yaw: Math.PI },
+  path_a: { x: -0.4, z: -0.6, yaw: -0.2 },
+  path_b: { x: 0.5, z: -0.2, yaw: 0.4 },
+  path_c: { x: -0.2, z: 0.2, yaw: -0.8 },
 }
 
 /** Which ambient behavior prefers which snap. */
@@ -58,8 +59,8 @@ export const CHAT_DEEP_AVATAR_3D_WALK_SNAPS: readonly ChatDeepAvatar3dEnvSnapId[
 export const CHAT_DEEP_AVATAR_3D_ENV_BOUNDS = {
   xMin: -1.5,
   xMax: 1.5,
-  zMin: -1.35,
-  zMax: 1.2,
+  zMin: -1.2,
+  zMax: 1.35,
 } as const
 
 /** Character height scale vs authored 1m Meshy rig inside a ~2.6m room. */
@@ -87,7 +88,7 @@ export const CHAT_DEEP_AVATAR_3D_ENV_PROPS: readonly ChatDeepAvatar3dEnvProp[] =
     id: 'desk',
     src: '/chat-avatar/env/props/desk.glb',
     x: -0.9,
-    z: -0.95,
+    z: 0.95,
     yaw: 0,
     height: 0.78,
     hidePrefixes: ['PRP_desk_', 'PRP_monitor_', 'PRP_keyboard'],
@@ -96,8 +97,8 @@ export const CHAT_DEEP_AVATAR_3D_ENV_PROPS: readonly ChatDeepAvatar3dEnvProp[] =
     id: 'chair',
     src: '/chat-avatar/env/props/chair.glb',
     x: -0.9,
-    z: -0.32,
-    yaw: Math.PI,
+    z: 0.32,
+    yaw: 0,
     height: 1.05,
     hidePrefixes: ['PRP_chair_'],
   },
@@ -105,8 +106,8 @@ export const CHAT_DEEP_AVATAR_3D_ENV_PROPS: readonly ChatDeepAvatar3dEnvProp[] =
     id: 'lamp',
     src: '/chat-avatar/env/props/lamp.glb',
     x: -1.45,
-    z: 0.2,
-    yaw: 0.3,
+    z: -0.2,
+    yaw: -0.3,
     height: 1.55,
     hidePrefixes: ['PRP_lamp_'],
   },
@@ -114,8 +115,8 @@ export const CHAT_DEEP_AVATAR_3D_ENV_PROPS: readonly ChatDeepAvatar3dEnvProp[] =
     id: 'bookshelf',
     src: '/chat-avatar/env/props/bookshelf.glb',
     x: 1.25,
-    z: -1.35,
-    yaw: Math.PI,
+    z: 1.35,
+    yaw: 0,
     height: 1.65,
     hidePrefixes: ['PRP_shelf_', 'PRP_book_'],
   },
@@ -123,8 +124,8 @@ export const CHAT_DEEP_AVATAR_3D_ENV_PROPS: readonly ChatDeepAvatar3dEnvProp[] =
     id: 'plant',
     src: '/chat-avatar/env/props/plant.glb',
     x: -1.4,
-    z: -1.2,
-    yaw: 0.4,
+    z: 1.2,
+    yaw: -0.4,
     height: 0.85,
     hidePrefixes: ['PRP_plant_', 'PRP_leaf_'],
   },
@@ -132,8 +133,8 @@ export const CHAT_DEEP_AVATAR_3D_ENV_PROPS: readonly ChatDeepAvatar3dEnvProp[] =
     id: 'rug',
     src: '/chat-avatar/env/props/rug.glb',
     x: 0.15,
-    z: 0.15,
-    yaw: 0.15,
+    z: -0.15,
+    yaw: -0.15,
     height: 0.04,
     hidePrefixes: ['ENV_rug'],
   },
@@ -141,7 +142,7 @@ export const CHAT_DEEP_AVATAR_3D_ENV_PROPS: readonly ChatDeepAvatar3dEnvProp[] =
     id: 'sofa',
     src: '/chat-avatar/env/props/sofa.glb',
     x: 1.05,
-    z: -0.7,
+    z: 0.7,
     yaw: Math.PI,
     height: 0.85,
     hidePrefixes: ['PRP_sofa_'],
@@ -150,8 +151,8 @@ export const CHAT_DEEP_AVATAR_3D_ENV_PROPS: readonly ChatDeepAvatar3dEnvProp[] =
     id: 'side-table',
     src: '/chat-avatar/env/props/side-table.glb',
     x: 0.85,
-    z: 0.35,
-    yaw: 0.2,
+    z: -0.35,
+    yaw: -0.2,
     height: 0.45,
     hidePrefixes: ['PRP_side_'],
   },
@@ -159,8 +160,8 @@ export const CHAT_DEEP_AVATAR_3D_ENV_PROPS: readonly ChatDeepAvatar3dEnvProp[] =
     id: 'snack',
     src: '/chat-avatar/env/props/snack.glb',
     x: 0.88,
-    z: 0.38,
-    yaw: -0.4,
+    z: -0.38,
+    yaw: 0.4,
     height: 0.12,
     hidePrefixes: ['PRP_plate', 'PRP_mug'],
   },
@@ -168,8 +169,8 @@ export const CHAT_DEEP_AVATAR_3D_ENV_PROPS: readonly ChatDeepAvatar3dEnvProp[] =
     id: 'wall-art',
     src: '/chat-avatar/env/props/wall-art.glb',
     x: -0.2,
-    z: -1.52,
-    yaw: 0,
+    z: 1.52,
+    yaw: Math.PI,
     height: 0.55,
     hidePrefixes: ['PRP_art_'],
   },

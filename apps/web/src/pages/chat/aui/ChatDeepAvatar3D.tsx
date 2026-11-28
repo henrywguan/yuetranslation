@@ -389,10 +389,11 @@ async function mountScene(
     const aspect = Math.max(0.5, w / Math.max(1, h))
     camera.aspect = aspect
     if (env) {
-      // Peek into the open-front room (matches Jutsu CAM_main intent).
+      // Peek into the open-front room — must match Jutsu `CAM_main` (z≈−3.55).
+      // +Z puts the lens behind ENV_wall_back and paints a grey slab (Both dock bug).
       camera.fov = aspect < 0.85 ? 42 : 36
-      camera.position.set(0.12, 1.55, 3.45)
-      camera.lookAt(0.05, 0.95, -0.35)
+      camera.position.set(0.15, 1.55, -3.55)
+      camera.lookAt(0.05, 0.95, 0.35)
     } else {
       camera.fov = 32
       camera.position.set(0, 0.95, 3.4)

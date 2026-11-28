@@ -31,9 +31,18 @@ assert.equal(CHAT_DEEP_AVATAR_3D_BEHAVIOR_SNAP.eat, 'snack')
 assert.equal(CHAT_DEEP_AVATAR_3D_BEHAVIOR_SNAP.study, 'chair')
 assert.ok(CHAT_DEEP_AVATAR_3D_WALK_SNAPS.includes('path_a'))
 
+// glTF SNAP_* / CAM_main use −Z open front — regressions flip Z and grey-wall the dock.
+assert.ok(CHAT_DEEP_AVATAR_3D_ENV_SNAPS.chair.z > 0, 'chair snap Z matches SNAP_chair (+Z)')
+assert.ok(CHAT_DEEP_AVATAR_3D_ENV_SNAPS.desk.z > CHAT_DEEP_AVATAR_3D_ENV_SNAPS.chair.z)
+assert.ok(CHAT_DEEP_AVATAR_3D_ENV_SNAPS.snack.z < 0, 'snack snap Z matches SNAP_snack (−Z)')
+assert.ok(
+  CHAT_DEEP_AVATAR_3D_ENV_PROPS.find((p) => p.id === 'desk')!.z > 0,
+  'desk prop Z matches room (+Z back)',
+)
+
 const clamped = clampChatDeepAvatar3dEnvPos(99, -99)
 assert.ok(clamped.x <= 1.5 && clamped.x >= -1.5)
-assert.ok(clamped.z <= 1.2 && clamped.z >= -1.35)
+assert.ok(clamped.z <= 1.35 && clamped.z >= -1.2)
 
 const snap = pickChatDeepAvatar3dEnvWalkSnap(() => 0)
 assert.ok(CHAT_DEEP_AVATAR_3D_WALK_SNAPS.includes(snap))
