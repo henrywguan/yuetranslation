@@ -80,6 +80,18 @@ function signChallenge(nonce: string, exp: number): string {
   return createHmac('sha256', gateSecret()).update(`ch1:${nonce}:${exp}`).digest('base64url')
 }
 
+/**
+ * Derive session iat/exp from the signed challenge expiry so the same unlock
+ * payload always mints the same token (serverless-safe replay = idempotent).
+ */
+export function gateTokenTimesFromChallengeExp(challengeExpMs: number): {
+  iat: number
+  exp: number
+} {
+  const iat = Math.floor((challengeExpMs - CHALLENGE_TTL_MS) / 1000)
+  return { iat, exp: iat + Math.floor(TOKEN_TTL_MS / 1000) }
+}
+
 function verifyChallengeSig(nonce: string, exp: number, sig: string): boolean {
   try {
     const expected = Buffer.from(signChallenge(nonce, exp))
@@ -211,13 +223,15 @@ export function postChatGateUnlock(req: GuestRequest, res: Response) {
     return
   }
 
-  const now = Math.floor(Date.now() / 1000)
+  // Idempotent mint: replay of the same signed challenge returns the same token
+  // (no shared spent-nonce store required across Vercel isolates).
+  const times = gateTokenTimesFromChallengeExp(exp)
   const payload: GatePayload = {
     v: 1,
     sub: subjectFor(req),
     scope: 'fc',
-    iat: now,
-    exp: now + Math.floor(TOKEN_TTL_MS / 1000),
+    iat: times.iat,
+    exp: times.exp,
   }
   const token = signPayload(payload)
   res.json({
