@@ -49,6 +49,7 @@ import {
 import {
   CHAT_DEEP_AVATAR_3D_BEHAVIOR_SNAP,
   CHAT_DEEP_AVATAR_3D_ENV_CHAR_HEIGHT,
+  CHAT_DEEP_AVATAR_3D_ENV_PROPS,
   CHAT_DEEP_AVATAR_3D_ENV_SNAPS,
   chatDeepAvatar3dEnvSrc,
   clampChatDeepAvatar3dEnvPos,
@@ -152,6 +153,8 @@ type SceneBundle = {
   camera: THREE.PerspectiveCamera
   /** Room / office group (null when env GLB missing). */
   env: THREE.Object3D | null
+  /** Meshy hero props layered into the room (may be empty). */
+  props: THREE.Group | null
   /** Character transform root — moved in room XZ when env is loaded. */
   root: THREE.Group
   figure: THREE.Object3D
@@ -261,6 +264,7 @@ async function mountScene(
   scene.add(fill)
 
   let env: THREE.Object3D | null = null
+  let propsGroup: THREE.Group | null = null
   try {
     const envGltf = await loadGltf(chatDeepAvatar3dEnvSrc())
     if (envGltf) {
@@ -289,6 +293,45 @@ async function mountScene(
       for (const o of strip) o.parent?.remove(o)
       scene.add(wrap)
       env = wrap
+
+      // Layer compressed Meshy hero props; hide procedural stand-ins they replace.
+      propsGroup = new THREE.Group()
+      propsGroup.name = 'chat-avatar-3d-props'
+      scene.add(propsGroup)
+      const hidePrefixes = new Set<string>()
+      await Promise.all(
+        CHAT_DEEP_AVATAR_3D_ENV_PROPS.map(async (prop) => {
+          const g = await loadGltf(prop.src)
+          if (!g || !propsGroup) return
+          const node = new THREE.Group()
+          node.name = `prop-${prop.id}`
+          node.add(g.scene)
+          node.updateMatrixWorld(true)
+          const box = new THREE.Box3().setFromObject(node)
+          const size = new THREE.Vector3()
+          box.getSize(size)
+          const h = Math.max(0.01, size.y || 1)
+          const scale = prop.height / h
+          node.scale.setScalar(scale)
+          node.updateMatrixWorld(true)
+          const box2 = new THREE.Box3().setFromObject(node)
+          node.position.set(prop.x, -box2.min.y, prop.z)
+          node.rotation.y = prop.yaw
+          propsGroup.add(node)
+          for (const p of prop.hidePrefixes) hidePrefixes.add(p)
+        }),
+      )
+      if (hidePrefixes.size) {
+        wrap.traverse((o) => {
+          const n = o.name || ''
+          for (const prefix of hidePrefixes) {
+            if (n === prefix || n.startsWith(prefix)) {
+              o.visible = false
+              break
+            }
+          }
+        })
+      }
     }
   } catch {
     /* character-only fallback */
@@ -363,6 +406,7 @@ async function mountScene(
     scene,
     camera,
     env,
+    props: propsGroup,
     root,
     figure,
     mixer,
@@ -406,6 +450,7 @@ async function mountScene(
       cancelAnimationFrame(raf)
       mixer?.stopAllAction()
       if (env) disposeObject3D(env)
+      if (propsGroup) disposeObject3D(propsGroup)
       disposeObject3D(root)
       renderer.dispose()
     },

@@ -126,6 +126,7 @@ assert.match(overlaySrc, /pickChatDeepAvatar3dBehavior|setBehavior/, 'overlay ru
 assert.match(overlaySrc, /stepChatDeepAvatar3dWalk/, 'overlay wanders on .ds-chat when undocked')
 assert.match(overlaySrc, /stepRoomWalk|setRoomSnap|is-office-frame/, 'office frame ambient uses room snaps')
 assert.match(overlaySrc, /chatDeepAvatar3dEnvSrc|CHAT_DEEP_AVATAR_3D_ENV/, 'overlay loads office env')
+assert.match(overlaySrc, /CHAT_DEEP_AVATAR_3D_ENV_PROPS|prop-/, 'overlay layers Meshy props')
 assert.match(overlaySrc, /preferInteract|chatDeepAvatar3dCompanionsNear/, 'Both near → interact')
 assert.match(libSrc, /'Walk'/, 'canon clips include Walk')
 assert.match(libSrc, /'Interact'/, 'canon clips include Interact')

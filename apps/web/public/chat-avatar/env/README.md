@@ -5,8 +5,10 @@ frame becomes this virtual workspace (walls, floor, carpet, windows, desk, sofa�
 
 | File | Role |
 | --- | --- |
-| `office-env.glb` | Higgsfield **3D Jutsu** room shell + procedural furniture (~166 KiB) |
-| `props/` | Optional Meshy image→3D hero props (same art direction; not required) |
+| `office-env.glb` | Higgsfield **3D Jutsu** room shell + procedural stand-ins (~166 KiB) |
+| `props/*.glb` | Meshy image→3D heroes, **locally compressed** (simplify + 256px WebP) — ~5 MiB total |
+
+Raw Meshy exports were ~10 MiB each (~100 MiB set). Only compressed copies ship in `public/`. Runtime hides matching `PRP_*` stand-ins once a prop loads.
 
 **Snap markers** (authored as empties in Jutsu; runtime uses the constants in
 `apps/web/src/lib/chatDeepAvatar3dEnv.ts`):
