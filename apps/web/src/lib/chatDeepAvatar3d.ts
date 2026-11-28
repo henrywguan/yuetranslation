@@ -233,6 +233,8 @@ export const CHAT_DEEP_AVATAR_3D_CANON_CLIPS = [
   'Interact',
   'Study',
   'Work',
+  'Eat',
+  'DeskNap',
 ] as const
 
 /**

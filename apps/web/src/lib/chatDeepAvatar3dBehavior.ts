@@ -6,7 +6,14 @@
 import type { ChatDeepAvatarSoloId } from './chatDeepAvatarCharacter'
 
 /** Ambient behaviors when play-bus mood is idle / resting. */
-export type ChatDeepAvatar3dBehavior = 'idle' | 'walk' | 'study' | 'work' | 'interact'
+export type ChatDeepAvatar3dBehavior =
+  | 'idle'
+  | 'walk'
+  | 'study'
+  | 'work'
+  | 'interact'
+  | 'eat'
+  | 'deskNap'
 
 /** Canonical clip names we bake into deep.glb for ambient AI. */
 export const CHAT_DEEP_AVATAR_3D_BEHAVIOR_CLIPS = [
@@ -15,6 +22,8 @@ export const CHAT_DEEP_AVATAR_3D_BEHAVIOR_CLIPS = [
   'Interact',
   'Study',
   'Work',
+  'Eat',
+  'DeskNap',
 ] as const
 
 export type ChatDeepAvatar3dBehaviorClip = (typeof CHAT_DEEP_AVATAR_3D_BEHAVIOR_CLIPS)[number]
@@ -24,11 +33,13 @@ export const CHAT_DEEP_AVATAR_3D_BEHAVIOR_ALIASES: Record<
   ChatDeepAvatar3dBehavior,
   readonly string[]
 > = {
-  idle: ['Idle', 'idle', 'Idle_02', 'Idle_03'],
-  walk: ['Walk', 'Casual_Walk_inplace', 'Casual_Walk', 'Walking_A', 'Idle'],
+  idle: ['Idle', 'idle', 'Idle_02', 'Idle_03', 'Sit', 'Chair_Sit_Idle_M', 'Chair_Sit_Idle_F'],
+  walk: ['Walk', 'Casual_Walk_inplace', 'Casual_Walk', 'TextingWalk', 'Texting_Walk', 'Walking_A', 'Idle'],
   interact: ['Interact', 'Stand_and_Chat', 'Talk_with_Hands_Open', 'Agree_Gesture', 'Wave', 'Idle'],
   study: ['Study', 'Sitting_Answering_Questions', 'Sit', 'Chair_Sit_Idle_M', 'Chair_Sit_Idle_F', 'Think', 'Idle'],
   work: ['Work', 'Phone_Conversation', 'Phone_Call_Gesture', 'Texting_Walk_inplace', 'Idle'],
+  eat: ['Eat', 'Sit_and_Drink', 'Stand_and_Drink', 'Sit', 'Idle'],
+  deskNap: ['DeskNap', 'Sleep_on_Desk', 'Sit_and_Doze_Off', 'Sit', 'Sleepy', 'Idle'],
 }
 
 /** Moods that briefly pause ambient AI (play-bus / FSM overrides). */
@@ -66,6 +77,8 @@ export const CHAT_DEEP_AVATAR_3D_DWELL_MS = {
   study: [5200, 9000],
   work: [4800, 8500],
   interact: [4200, 7800],
+  eat: [4800, 8200],
+  deskNap: [5500, 9500],
 } as const
 
 type Rng = () => number
@@ -147,11 +160,13 @@ export function pickChatDeepAvatar3dBehavior(
     return 'idle'
   }
   const roll = rng()
-  // Default solo mix: walk around, then study/work, light idle.
-  if (roll < 0.34) return 'walk'
-  if (roll < 0.54) return 'study'
-  if (roll < 0.74) return 'work'
-  if (roll < 0.88) return 'idle'
+  // Default solo mix: walk, desk work/study, snack, nap, idle.
+  if (roll < 0.28) return 'walk'
+  if (roll < 0.44) return 'study'
+  if (roll < 0.58) return 'work'
+  if (roll < 0.7) return 'eat'
+  if (roll < 0.8) return 'deskNap'
+  if (roll < 0.9) return 'idle'
   return 'walk'
 }
 
@@ -167,7 +182,11 @@ export function pickChatDeepAvatar3dDwellMs(
         ? CHAT_DEEP_AVATAR_3D_DWELL_MS.work
         : behavior === 'interact'
           ? CHAT_DEEP_AVATAR_3D_DWELL_MS.interact
-          : CHAT_DEEP_AVATAR_3D_DWELL_MS.idle
+          : behavior === 'eat'
+            ? CHAT_DEEP_AVATAR_3D_DWELL_MS.eat
+            : behavior === 'deskNap'
+              ? CHAT_DEEP_AVATAR_3D_DWELL_MS.deskNap
+              : CHAT_DEEP_AVATAR_3D_DWELL_MS.idle
   return Math.round(randRange(rng, range[0], range[1]))
 }
 

@@ -56,15 +56,16 @@ Plan→Build / Overseer settle latches `handoff` (pair clip in Both; solo stems 
 
 **Do not** put character-bible `deep-sheet.png` (or other multi‑MB generation sources) in `public/chat-avatar/`. VitePWA `injectManifest` precaches `*.png` and rejects files over 2 MiB (broke prod after #796). Keep sheets outside the web public tree; `vite.config.ts` also glob-ignores `**/chat-avatar/**/deep-sheet.png` as a belt-and-suspenders guard. Intro `*.mp4` / `intro-poster.*` and companion `*.glb` are similarly excluded from the SW precache — runtime-fetch only.
 
-### 3D companion (`deep.glb`)
+### 3D companion (`deep.glb` + office env)
 
-Inbox settings → Companion → **3D companion** toggles floating three.js characters (`ChatDeepAvatar3D`). Default remains GIF moods. With 3D on:
+Inbox settings → Companion → **3D companion** toggles three.js characters (`ChatDeepAvatar3D`). Default remains GIF moods. With 3D on:
 
 - Runtime meshes: `{boy,girl}/deep.glb` (Higgsfield Meshy image→3D from bust refs; SW-excluded). Procedural stub if a GLB fails to load.
-- Mood play-bus → `AnimationMixer` clip names (`Idle` / `Sit` / `Wave` / `Think` + ambient `Walk` / `Interact` / `Study` / `Work`). Missing clip → idle bob; celebrate / pair fullscreen stay on the 2D GIF path.
-- **Ambient idle AI:** when play-bus mood is resting, companions undock and wander on `.ds-chat`, picking study / work / walk / idle dwells. Speak / wave / celebrate (etc.) still override briefly.
-- **Both + 3D:** two independent draggable GLBs (boy + girl), default docked side-by-side on the composer; each can chill or collaborate anywhere on `.ds-chat`. When near each other they prefer **Interact**. Poses persist per solo.
-- Drag anywhere over `#/chat` (inbox / workspace / composer / empty chrome); soft-snap home to the bar/stage dock
+- **Office / house frame:** `env/office-env.glb` (Higgsfield 3D Jutsu — walls, floor, carpet, windows, desk, sofa, plant…). When docked, the **avatar frame** becomes this diorama; characters sit at the desk, snack, nap, and walk room paths.
+- Mood play-bus → `AnimationMixer` clip names (`Idle` / `Sit` / `Wave` / `Think` + ambient `Walk` / `Interact` / `Study` / `Work` / `Eat` / `DeskNap`). Missing clip → idle bob; celebrate / pair fullscreen stay on the 2D GIF path.
+- **Ambient idle AI:** when play-bus mood is resting and the companion is docked with the office env, they stay in-frame and cycle desk / snack / walk snaps. Undocked (dragged out) still wanders on `.ds-chat`. Speak / wave / celebrate (etc.) still override briefly.
+- **Both + 3D:** two independent draggable GLBs (boy + girl), default docked on the composer / stage; each can chill in the office or collaborate when near. Poses persist per solo.
+- Drag anywhere over `#/chat` to undock; soft-snap home to the bar/stage dock restores the office frame
 - `prefers-reduced-motion` and WebGL failure fall back to GIF; mic / composer controls stay interactive (handle-only pointer events)
 - Stays on three.js GLB / procedural mesh (no Live2D / Cubism; no Azure VO for the avatar)
 
