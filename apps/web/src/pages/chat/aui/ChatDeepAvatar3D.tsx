@@ -47,6 +47,16 @@ import {
   type ChatDeepAvatar3dBehavior,
 } from '../../../lib/chatDeepAvatar3dBehavior'
 import {
+  CHAT_DEEP_AVATAR_3D_BEHAVIOR_SNAP,
+  CHAT_DEEP_AVATAR_3D_ENV_CHAR_HEIGHT,
+  CHAT_DEEP_AVATAR_3D_ENV_PROPS,
+  CHAT_DEEP_AVATAR_3D_ENV_SNAPS,
+  chatDeepAvatar3dEnvSrc,
+  clampChatDeepAvatar3dEnvPos,
+  pickChatDeepAvatar3dEnvWalkSnap,
+  type ChatDeepAvatar3dEnvSnapId,
+} from '../../../lib/chatDeepAvatar3dEnv'
+import {
   isChatDeepAvatarBothMode,
   normalizeChatDeepAvatarCharacter,
   type ChatDeepAvatarCharacterId,
@@ -56,6 +66,8 @@ import {
 import { useChatDeepAvatarDisplayName } from './ChatDeepAvatar'
 
 const HANDLE_SIZE_PX = 112
+/** Stage / bar dock diorama fills the avatar frame (office + character). */
+const FRAME_MIN_PX = 160
 const DPR_CAP = 1.5
 
 function usePrefersReducedMotion(): boolean {
@@ -139,15 +151,28 @@ type SceneBundle = {
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
   camera: THREE.PerspectiveCamera
+  /** Room / office group (null when env GLB missing). */
+  env: THREE.Object3D | null
+  /** Meshy hero props layered into the room (may be empty). */
+  props: THREE.Group | null
+  /** Character transform root — moved in room XZ when env is loaded. */
   root: THREE.Group
   figure: THREE.Object3D
   mixer: THREE.AnimationMixer | null
   clips: THREE.AnimationClip[]
   action: THREE.AnimationAction | null
   clipName: string | null
+  /** World metres when living in the office (Blender X → Three X, Y → Z). */
+  roomPos: { x: number; z: number; yaw: number }
   setMood: (mood: ChatDeepAvatarMood) => void
   setBehavior: (behavior: ChatDeepAvatar3dBehavior) => void
   playNamedClip: (want: string | null) => void
+  setRoomSnap: (snap: ChatDeepAvatar3dEnvSnapId) => void
+  stepRoomWalk: (
+    target: { x: number; z: number },
+    dt: number,
+  ) => { arrived: boolean }
+  resize: (w: number, h: number) => void
   dispose: () => void
 }
 
@@ -193,6 +218,18 @@ function playBehaviorClip(bundle: SceneBundle, behavior: ChatDeepAvatar3dBehavio
   playNamedClip(bundle, resolveChatDeepAvatar3dBehaviorClipName(behavior, names))
 }
 
+function loadGltf(url: string): Promise<Awaited<ReturnType<GLTFLoader['loadAsync']>> | null> {
+  const loader = new GLTFLoader()
+  return new Promise((resolve) => {
+    loader.load(
+      url,
+      (g) => resolve(g),
+      undefined,
+      () => resolve(null),
+    )
+  })
+}
+
 async function mountScene(
   canvas: HTMLCanvasElement,
   solo: ChatDeepAvatarSoloId,
@@ -212,19 +249,96 @@ async function mountScene(
   renderer.setClearColor(0x000000, 0)
   renderer.setPixelRatio(Math.min(DPR_CAP, window.devicePixelRatio || 1))
   renderer.setSize(HANDLE_SIZE_PX, HANDLE_SIZE_PX, false)
+  renderer.outputColorSpace = THREE.SRGBColorSpace
 
   const scene = new THREE.Scene()
-  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 20)
-  camera.position.set(0, 0.95, 3.4)
-  camera.lookAt(0, 0.75, 0)
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 40)
 
-  const hemi = new THREE.HemisphereLight(0xffffff, 0x444466, 1.05)
+  const hemi = new THREE.HemisphereLight(0xfff6ea, 0x445566, 0.85)
   scene.add(hemi)
-  const key = new THREE.DirectionalLight(0xffffff, 0.65)
-  key.position.set(2.2, 4, 3)
+  const key = new THREE.DirectionalLight(0xfff2d8, 0.9)
+  key.position.set(-2.4, 4.2, 1.2)
   scene.add(key)
+  const fill = new THREE.PointLight(0xdde8ff, 18, 12, 2)
+  fill.position.set(1.4, 2.1, 1.8)
+  scene.add(fill)
+
+  let env: THREE.Object3D | null = null
+  let propsGroup: THREE.Group | null = null
+  try {
+    const envGltf = await loadGltf(chatDeepAvatar3dEnvSrc())
+    if (envGltf) {
+      const wrap = new THREE.Group()
+      wrap.name = 'chat-avatar-3d-env'
+      wrap.add(envGltf.scene)
+      // Drop authored cameras/lights/empties from the exported GLB — we own framing.
+      const strip: THREE.Object3D[] = []
+      wrap.traverse((o) => {
+        const n = o.name || ''
+        if (
+          o.type === 'PerspectiveCamera' ||
+          o.type === 'OrthographicCamera' ||
+          o.type === 'DirectionalLight' ||
+          o.type === 'PointLight' ||
+          o.type === 'SpotLight' ||
+          o.type === 'HemisphereLight' ||
+          n.startsWith('CAM_') ||
+          n.startsWith('LGT_') ||
+          n.startsWith('SNAP_') ||
+          n.startsWith('PATH_')
+        ) {
+          strip.push(o)
+        }
+      })
+      for (const o of strip) o.parent?.remove(o)
+      scene.add(wrap)
+      env = wrap
+
+      // Layer compressed Meshy hero props; hide procedural stand-ins they replace.
+      propsGroup = new THREE.Group()
+      propsGroup.name = 'chat-avatar-3d-props'
+      scene.add(propsGroup)
+      const hidePrefixes = new Set<string>()
+      await Promise.all(
+        CHAT_DEEP_AVATAR_3D_ENV_PROPS.map(async (prop) => {
+          const g = await loadGltf(prop.src)
+          if (!g || !propsGroup) return
+          const node = new THREE.Group()
+          node.name = `prop-${prop.id}`
+          node.add(g.scene)
+          node.updateMatrixWorld(true)
+          const box = new THREE.Box3().setFromObject(node)
+          const size = new THREE.Vector3()
+          box.getSize(size)
+          const h = Math.max(0.01, size.y || 1)
+          const scale = prop.height / h
+          node.scale.setScalar(scale)
+          node.updateMatrixWorld(true)
+          const box2 = new THREE.Box3().setFromObject(node)
+          node.position.set(prop.x, -box2.min.y, prop.z)
+          node.rotation.y = prop.yaw
+          propsGroup.add(node)
+          for (const p of prop.hidePrefixes) hidePrefixes.add(p)
+        }),
+      )
+      if (hidePrefixes.size) {
+        wrap.traverse((o) => {
+          const n = o.name || ''
+          for (const prefix of hidePrefixes) {
+            if (n === prefix || n.startsWith(prefix)) {
+              o.visible = false
+              break
+            }
+          }
+        })
+      }
+    }
+  } catch {
+    /* character-only fallback */
+  }
 
   const root = new THREE.Group()
+  root.name = 'chat-avatar-3d-char'
   scene.add(root)
 
   let figure: THREE.Object3D = buildStubFigure(solo)
@@ -233,19 +347,8 @@ async function mountScene(
   let mixer: THREE.AnimationMixer | null = null
   let clips: THREE.AnimationClip[] = []
 
-  const glbUrl = chatDeepAvatarGlbSrc(solo)
   try {
-    const loader = new GLTFLoader()
-    const gltf = await new Promise<Awaited<ReturnType<typeof loader.loadAsync>> | null>(
-      (resolve) => {
-        loader.load(
-          glbUrl,
-          (g) => resolve(g),
-          undefined,
-          () => resolve(null),
-        )
-      },
-    )
+    const gltf = await loadGltf(chatDeepAvatarGlbSrc(solo))
     if (gltf) {
       const wrap = new THREE.Group()
       wrap.name = 'chat-avatar-3d-glb'
@@ -255,7 +358,8 @@ async function mountScene(
       const size = new THREE.Vector3()
       box.getSize(size)
       const h = size.y || 1
-      const scale = 1.55 / h
+      const targetH = env ? CHAT_DEEP_AVATAR_3D_ENV_CHAR_HEIGHT : 1.55
+      const scale = targetH / h
       wrap.scale.setScalar(scale)
       wrap.position.y = -box.min.y * scale
       disposeObject3D(figure)
@@ -269,27 +373,93 @@ async function mountScene(
     /* keep procedural stub */
   }
 
+  const chair = CHAT_DEEP_AVATAR_3D_ENV_SNAPS.chair
+  const roomPos = { x: chair.x, z: chair.z, yaw: chair.yaw }
+
+  const applyRoomPos = (x: number, z: number, yaw: number) => {
+    const c = clampChatDeepAvatar3dEnvPos(x, z)
+    root.position.set(c.x, 0, c.z)
+    root.rotation.y = yaw
+    roomPos.x = c.x
+    roomPos.z = c.z
+    roomPos.yaw = yaw
+  }
+
+  const frameCamera = (w: number, h: number) => {
+    const aspect = Math.max(0.5, w / Math.max(1, h))
+    camera.aspect = aspect
+    if (env) {
+      // Peek into the open-front room (matches Jutsu CAM_main intent).
+      camera.fov = aspect < 0.85 ? 42 : 36
+      camera.position.set(0.12, 1.55, 3.45)
+      camera.lookAt(0.05, 0.95, -0.35)
+    } else {
+      camera.fov = 32
+      camera.position.set(0, 0.95, 3.4)
+      camera.lookAt(0, 0.75, 0)
+    }
+    camera.updateProjectionMatrix()
+  }
+
   const bundle: SceneBundle = {
     renderer,
     scene,
     camera,
+    env,
+    props: propsGroup,
     root,
     figure,
     mixer,
     clips,
     action: null,
     clipName: null,
+    roomPos,
     setMood: (mood) => playMoodClip(bundle, mood),
     setBehavior: (behavior) => playBehaviorClip(bundle, behavior),
     playNamedClip: (want) => playNamedClip(bundle, want),
+    setRoomSnap: (snap) => {
+      const s = CHAT_DEEP_AVATAR_3D_ENV_SNAPS[snap]
+      applyRoomPos(s.x, s.z, s.yaw)
+    },
+    stepRoomWalk: (target, dt) => {
+      const speed = 0.85
+      const dx = target.x - roomPos.x
+      const dz = target.z - roomPos.z
+      const dist = Math.hypot(dx, dz)
+      const step = speed * Math.max(0, dt)
+      if (dist < 0.04 || step >= dist) {
+        const yaw = Math.atan2(dx, dz)
+        applyRoomPos(target.x, target.z, yaw)
+        return { arrived: true }
+      }
+      const t = step / dist
+      const nx = roomPos.x + dx * t
+      const nz = roomPos.z + dz * t
+      const yaw = Math.atan2(dx, dz)
+      applyRoomPos(nx, nz, yaw)
+      root.userData.ambientFacing = true
+      return { arrived: false }
+    },
+    resize: (w, h) => {
+      const ww = Math.max(FRAME_MIN_PX, Math.floor(w))
+      const hh = Math.max(FRAME_MIN_PX, Math.floor(h))
+      renderer.setSize(ww, hh, false)
+      frameCamera(ww, hh)
+    },
     dispose: () => {
       cancelAnimationFrame(raf)
       mixer?.stopAllAction()
+      if (env) disposeObject3D(env)
+      if (propsGroup) disposeObject3D(propsGroup)
       disposeObject3D(root)
       renderer.dispose()
     },
   }
 
+  if (env) {
+    applyRoomPos(chair.x, chair.z, chair.yaw)
+  }
+  frameCamera(HANDLE_SIZE_PX, HANDLE_SIZE_PX)
   playMoodClip(bundle, initialMood)
 
   let raf = 0
@@ -299,13 +469,10 @@ async function mountScene(
     last = now
     if (mixer && bundle.clipName) {
       mixer.update(dt)
-      // Gentle yaw when a clip is playing (less bob so clips read).
-      // Ambient walk faces travel direction via root.userData.ambientFacing.
-      if (!root.userData.ambientFacing) {
+      if (!env && !root.userData.ambientFacing) {
         root.rotation.y += dt * 0.18
       }
-    } else {
-      // Missing clip → idle bob (procedural stub / unskinned GLB).
+    } else if (!env) {
       root.rotation.y += dt * 0.35
       root.position.y = Math.sin(now / 650) * 0.04
     }
@@ -430,14 +597,15 @@ export function ChatDeepAvatar3DOverlay({
     }
   }, [mood, moodOverride])
 
-  // Ambient idle AI: wander / study / work; Both prefers interact when near.
+  // Ambient idle AI: in-office snaps when env loads; else page wander.
   useEffect(() => {
     if (moodOverride || dragging) return
     let cancelled = false
     let raf = 0
     let last = performance.now()
     let behavior: ChatDeepAvatar3dBehavior = 'idle'
-    let target: { x: number; y: number } | null = null
+    let screenTarget: { x: number; y: number } | null = null
+    let roomTarget: { x: number; z: number } | null = null
     let dwellUntil = 0
     let nextPickAt = performance.now() + 600 + Math.random() * 900
     let persistAt = 0
@@ -463,27 +631,81 @@ export function ChatDeepAvatar3DOverlay({
       if (root) root.userData.ambientFacing = next === 'walk'
     }
 
-    const pickNext = (now: number, pos: { x: number; y: number }) => {
+    const settleAfterArrive = (now: number, preferInteract: boolean) => {
+      const dwell = pickChatDeepAvatar3dBehavior(Math.random, {
+        preferInteract: preferInteract || undefined,
+      })
+      const settled: ChatDeepAvatar3dBehavior =
+        dwell === 'walk' ? (preferInteract ? 'interact' : 'idle') : dwell
+      const b = bundleRef.current
+      if (b?.env) {
+        const snapKey =
+          settled === 'eat' || settled === 'deskNap' || settled === 'study' || settled === 'work'
+            ? settled === 'deskNap'
+              ? 'study'
+              : settled
+            : settled === 'interact'
+              ? 'interact'
+              : 'idle'
+        b.setRoomSnap(CHAT_DEEP_AVATAR_3D_BEHAVIOR_SNAP[snapKey])
+      }
+      dwellUntil = now + pickChatDeepAvatar3dDwellMs(settled)
+      applyBehaviorClip(settled)
+      nextPickAt = dwellUntil
+    }
+
+    const pickNextOffice = (now: number) => {
+      const next = pickChatDeepAvatar3dBehavior(Math.random)
+      const b = bundleRef.current
+      if (next === 'walk') {
+        const snapId = pickChatDeepAvatar3dEnvWalkSnap()
+        const snap = CHAT_DEEP_AVATAR_3D_ENV_SNAPS[snapId]
+        roomTarget = { x: snap.x, z: snap.z }
+        screenTarget = null
+        dwellUntil = 0
+        applyBehaviorClip('walk')
+      } else {
+        roomTarget = null
+        screenTarget = null
+        if (b?.env) {
+          const snapKey =
+            next === 'eat' || next === 'deskNap' || next === 'study' || next === 'work'
+              ? next === 'deskNap'
+                ? 'study'
+                : next
+              : next === 'interact'
+                ? 'interact'
+                : 'idle'
+          b.setRoomSnap(CHAT_DEEP_AVATAR_3D_BEHAVIOR_SNAP[snapKey])
+        }
+        dwellUntil = now + pickChatDeepAvatar3dDwellMs(next)
+        applyBehaviorClip(next)
+      }
+      nextPickAt = now + 40_000
+    }
+
+    const pickNextScreen = (now: number, pos: { x: number; y: number }) => {
       const partner = duoOffset ? readChatDeepAvatar3dPartnerPose(solo) : null
       const preferInteract = Boolean(partner && chatDeepAvatar3dCompanionsNear(pos, partner))
       const next = pickChatDeepAvatar3dBehavior(Math.random, { preferInteract })
       if (next === 'walk') {
-        target = pickChatDeepAvatar3dWanderTarget()
-        // When Both + near, walk toward partner instead of a random chill spot.
+        screenTarget = pickChatDeepAvatar3dWanderTarget()
         if (preferInteract && partner) {
-          target = {
+          screenTarget = {
             x: (pos.x + partner.x) / 2 + (solo === 'boy' ? -0.04 : 0.04),
             y: (pos.y + partner.y) / 2,
           }
         }
+        roomTarget = null
         dwellUntil = 0
         applyBehaviorClip('walk')
       } else {
-        target = null
+        screenTarget = null
+        roomTarget = null
         dwellUntil = now + pickChatDeepAvatar3dDwellMs(next)
         applyBehaviorClip(next)
       }
-      nextPickAt = now + 40_000 // safety; dwell/arrive re-picks sooner
+      nextPickAt = now + 40_000
     }
 
     const tick = (now: number) => {
@@ -498,19 +720,34 @@ export function ChatDeepAvatar3DOverlay({
         return
       }
 
+      const inOffice = Boolean(b.env) && readChatDeepAvatar3dPose(solo).docked
       let pos = readChatDeepAvatar3dPose(solo)
       publishChatDeepAvatar3dLivePose(solo, { x: pos.x, y: pos.y })
 
       if (now >= nextPickAt || (behavior !== 'walk' && dwellUntil > 0 && now >= dwellUntil)) {
-        pos = ensureUndocked(pos)
-        pickNext(now, pos)
+        if (inOffice) {
+          // Stay docked — the avatar frame is the workspace.
+          if (!pos.docked) {
+            pos = writeChatDeepAvatar3dPose(solo, { ...pos, docked: true })
+            setPose(pos)
+          }
+          pickNextOffice(now)
+        } else {
+          pos = ensureUndocked(pos)
+          pickNextScreen(now, pos)
+        }
       }
 
-      if (behavior === 'walk' && target) {
+      if (behavior === 'walk' && inOffice && roomTarget) {
+        const arrived = b.stepRoomWalk(roomTarget, dt).arrived
+        if (arrived) {
+          roomTarget = null
+          settleAfterArrive(now, false)
+        }
+      } else if (behavior === 'walk' && screenTarget) {
         pos = ensureUndocked(pos)
-        const stepped = stepChatDeepAvatar3dWalk({ x: pos.x, y: pos.y }, target, dt)
-        // Face travel direction (screen X → yaw).
-        const dx = target.x - pos.x
+        const stepped = stepChatDeepAvatar3dWalk({ x: pos.x, y: pos.y }, screenTarget, dt)
+        const dx = screenTarget.x - pos.x
         if (Math.abs(dx) > 0.002 && b.root) {
           const wantYaw = dx > 0 ? 0.55 : -0.55
           b.root.rotation.y += (wantYaw - b.root.rotation.y) * Math.min(1, dt * 4)
@@ -527,22 +764,13 @@ export function ChatDeepAvatar3DOverlay({
             docked: false,
           })
           setPose(saved)
-          target = null
-          // Arrive → short idle / study / work / interact dwell.
+          screenTarget = null
           const partner = duoOffset ? readChatDeepAvatar3dPartnerPose(solo) : null
           const preferInteract = Boolean(
             partner && chatDeepAvatar3dCompanionsNear(saved, partner),
           )
-          const dwell = pickChatDeepAvatar3dBehavior(Math.random, {
-            preferInteract: preferInteract || undefined,
-          })
-          const settled: ChatDeepAvatar3dBehavior =
-            dwell === 'walk' ? (preferInteract ? 'interact' : 'idle') : dwell
-          dwellUntil = now + pickChatDeepAvatar3dDwellMs(settled)
-          applyBehaviorClip(settled)
-          nextPickAt = dwellUntil
+          settleAfterArrive(now, preferInteract)
         } else if (now >= persistAt) {
-          // Light persist while walking so refresh keeps progress.
           persistAt = now + 1200
           writeChatDeepAvatar3dPose(solo, { x: stepped.x, y: stepped.y, docked: false })
         }
@@ -551,8 +779,9 @@ export function ChatDeepAvatar3DOverlay({
       raf = requestAnimationFrame(tick)
     }
 
-    // Kick ambient shortly after mount so mood clip can settle first.
     applyBehaviorClip('idle')
+    const b0 = bundleRef.current
+    if (b0?.env) b0.setRoomSnap('chair')
     raf = requestAnimationFrame(tick)
     return () => {
       cancelled = true
@@ -563,7 +792,7 @@ export function ChatDeepAvatar3DOverlay({
     }
   }, [solo, moodOverride, dragging, duoOffset])
 
-  // Follow dock origin while docked; keep free-float % otherwise.
+  // Follow dock origin while docked; fill the avatar frame when the office env is loaded.
   useLayoutEffect(() => {
     const surface = resolveSurface() || surfaceEl
     const handle = handleRef.current
@@ -573,18 +802,35 @@ export function ChatDeepAvatar3DOverlay({
     const place = () => {
       const lr = surface.getBoundingClientRect()
       if (lr.width < 8 || lr.height < 8) return
+      const b = bundleRef.current
+      const dock = dockRef.current
 
-      if (pose.docked) {
-        const dock = dockRef.current
-        if (dock) {
-          const dr = dock.getBoundingClientRect()
-          const ox = duoOffset ? chatDeepAvatar3dDuoDockOffsetX(solo) : 0
-          const cx = dr.left + dr.width / 2 - lr.left + ox
-          const cy = dr.top + dr.height * 0.42 - lr.top
-          handle.style.left = `${cx}px`
-          handle.style.top = `${cy}px`
-          return
-        }
+      if (pose.docked && dock && b?.env) {
+        const dr = dock.getBoundingClientRect()
+        const w = Math.max(FRAME_MIN_PX, Math.floor(dr.width))
+        const h = Math.max(FRAME_MIN_PX, Math.floor(dr.height))
+        handle.style.width = `${w}px`
+        handle.style.height = `${h}px`
+        handle.style.left = `${dr.left + dr.width / 2 - lr.left}px`
+        handle.style.top = `${dr.top + dr.height / 2 - lr.top}px`
+        handle.classList.add('is-office-frame')
+        b.resize(w, h)
+        return
+      }
+
+      handle.classList.remove('is-office-frame')
+      handle.style.width = `${HANDLE_SIZE_PX}px`
+      handle.style.height = `${HANDLE_SIZE_PX}px`
+      if (b && !b.env) b.resize(HANDLE_SIZE_PX, HANDLE_SIZE_PX)
+
+      if (pose.docked && dock) {
+        const dr = dock.getBoundingClientRect()
+        const ox = duoOffset ? chatDeepAvatar3dDuoDockOffsetX(solo) : 0
+        const cx = dr.left + dr.width / 2 - lr.left + ox
+        const cy = dr.top + dr.height * 0.42 - lr.top
+        handle.style.left = `${cx}px`
+        handle.style.top = `${cy}px`
+        return
       }
       handle.style.left = `${pose.x * lr.width}px`
       handle.style.top = `${pose.y * lr.height}px`
@@ -593,14 +839,18 @@ export function ChatDeepAvatar3DOverlay({
     place()
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(place) : null
     ro?.observe(surface)
+    if (dockRef.current) ro?.observe(dockRef.current)
     window.addEventListener('resize', place)
     window.addEventListener('scroll', place, true)
+    // Env may finish loading a tick after mount — re-place once WebGL reports active.
+    const t = window.setTimeout(place, 80)
     return () => {
+      window.clearTimeout(t)
       ro?.disconnect()
       window.removeEventListener('resize', place)
       window.removeEventListener('scroll', place, true)
     }
-  }, [pose, dockRef, layoutRef, dragging, surfaceEl, duoOffset, solo])
+  }, [pose, dockRef, layoutRef, dragging, surfaceEl, duoOffset, solo, webglOk])
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return
@@ -701,8 +951,8 @@ export function ChatDeepAvatar3DOverlay({
       data-duo={duoOffset ? '1' : '0'}
       style={style}
       role="img"
-      aria-label={`${name} 3D companion — drag anywhere; drop near dock to snap home`}
-      title="Drag anywhere · drop near dock to snap home"
+      aria-label={`${name} 3D companion — office in the avatar frame; drag to undock`}
+      title="Office lives in the avatar frame · drag to undock · drop near dock to snap home"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={finishDrag}

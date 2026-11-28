@@ -30,13 +30,15 @@ const libSrc = readFileSync(join(here, 'chatDeepAvatar3d.ts'), 'utf8')
 
 assert.deepEqual(
   [...CHAT_DEEP_AVATAR_3D_BEHAVIOR_CLIPS],
-  ['Idle', 'Walk', 'Interact', 'Study', 'Work'],
+  ['Idle', 'Walk', 'Interact', 'Study', 'Work', 'Eat', 'DeskNap'],
 )
 assert.ok(CHAT_DEEP_AVATAR_3D_BEHAVIOR_ALIASES.idle.includes('Idle'))
 assert.ok(CHAT_DEEP_AVATAR_3D_BEHAVIOR_ALIASES.walk.includes('Walk'))
 assert.ok(CHAT_DEEP_AVATAR_3D_BEHAVIOR_ALIASES.interact.includes('Interact'))
 assert.ok(CHAT_DEEP_AVATAR_3D_BEHAVIOR_ALIASES.study.includes('Study'))
 assert.ok(CHAT_DEEP_AVATAR_3D_BEHAVIOR_ALIASES.work.includes('Work'))
+assert.ok(CHAT_DEEP_AVATAR_3D_BEHAVIOR_ALIASES.eat.includes('Eat'))
+assert.ok(CHAT_DEEP_AVATAR_3D_BEHAVIOR_ALIASES.deskNap.includes('DeskNap'))
 
 assert.equal(chatDeepAvatar3dMoodOverridesAmbient('idle'), false)
 assert.equal(chatDeepAvatar3dMoodOverridesAmbient('think'), false)
@@ -121,11 +123,24 @@ assert.equal(readChatDeepAvatar3dPartnerPose('girl'), null)
 
 assert.match(overlaySrc, /chatDeepAvatar3dMoodOverridesAmbient/, 'overlay gates ambient on mood')
 assert.match(overlaySrc, /pickChatDeepAvatar3dBehavior|setBehavior/, 'overlay runs ambient AI')
-assert.match(overlaySrc, /stepChatDeepAvatar3dWalk/, 'overlay wanders on .ds-chat')
+assert.match(overlaySrc, /stepChatDeepAvatar3dWalk/, 'overlay wanders on .ds-chat when undocked')
+assert.match(overlaySrc, /stepRoomWalk|setRoomSnap|is-office-frame/, 'office frame ambient uses room snaps')
+assert.match(overlaySrc, /chatDeepAvatar3dEnvSrc|CHAT_DEEP_AVATAR_3D_ENV/, 'overlay loads office env')
+assert.match(overlaySrc, /CHAT_DEEP_AVATAR_3D_ENV_PROPS|prop-/, 'overlay layers Meshy props')
 assert.match(overlaySrc, /preferInteract|chatDeepAvatar3dCompanionsNear/, 'Both near → interact')
 assert.match(libSrc, /'Walk'/, 'canon clips include Walk')
 assert.match(libSrc, /'Interact'/, 'canon clips include Interact')
 assert.match(libSrc, /'Study'/, 'canon clips include Study')
 assert.match(libSrc, /'Work'/, 'canon clips include Work')
+assert.match(libSrc, /'Eat'/, 'canon clips include Eat')
+assert.match(libSrc, /'DeskNap'/, 'canon clips include DeskNap')
+assert.equal(
+  resolveChatDeepAvatar3dBehaviorClipName('eat', ['Idle', 'Eat', 'DeskNap']),
+  'Eat',
+)
+assert.equal(
+  resolveChatDeepAvatar3dBehaviorClipName('deskNap', ['Idle', 'Eat', 'DeskNap']),
+  'DeskNap',
+)
 
 console.log('chatDeepAvatar3dBehavior.smoke: ok')

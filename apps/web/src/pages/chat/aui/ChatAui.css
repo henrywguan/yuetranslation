@@ -372,6 +372,23 @@
   z-index: 55;
 }
 
+/* Docked + office env — canvas fills the avatar frame (stage or bar portrait). */
+.aui-deep-avatar-3d-handle.is-office-frame {
+  border-radius: 0.85rem;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ds-divider) 70%, transparent),
+    0 10px 28px color-mix(in srgb, #000 28%, transparent);
+  cursor: grab;
+}
+
+.aui-deep-avatar-3d-handle.is-office-frame .aui-deep-avatar-3d-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+}
+
 .aui-deep-avatar-3d-handle:focus-visible {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ds-blue) 70%, transparent);
 }

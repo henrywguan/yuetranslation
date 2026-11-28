@@ -86,6 +86,8 @@ assert.ok(CHAT_DEEP_AVATAR_3D_CANON_CLIPS.includes('Walk'))
 assert.ok(CHAT_DEEP_AVATAR_3D_CANON_CLIPS.includes('Interact'))
 assert.ok(CHAT_DEEP_AVATAR_3D_CANON_CLIPS.includes('Study'))
 assert.ok(CHAT_DEEP_AVATAR_3D_CANON_CLIPS.includes('Work'))
+assert.ok(CHAT_DEEP_AVATAR_3D_CANON_CLIPS.includes('Eat'))
+assert.ok(CHAT_DEEP_AVATAR_3D_CANON_CLIPS.includes('DeskNap'))
 assert.equal(
   resolveChatDeepAvatar3dClipName('wave', ['Idle', 'Wave', 'Sit', 'Think']),
   'Wave',
@@ -245,7 +247,18 @@ assert.deepEqual(
   }
   for (const who of [boyGlb, girlGlb]) {
     const names = animNames(who)
-    for (const need of ['Idle', 'Walk', 'Interact', 'Study', 'Work', 'Wave', 'Sit', 'Think']) {
+    for (const need of [
+      'Idle',
+      'Walk',
+      'Interact',
+      'Study',
+      'Work',
+      'Wave',
+      'Sit',
+      'Think',
+      'Eat',
+      'DeskNap',
+    ]) {
       assert.ok(names.includes(need), `${who} missing clip ${need} (have ${names.join(',')})`)
     }
   }
