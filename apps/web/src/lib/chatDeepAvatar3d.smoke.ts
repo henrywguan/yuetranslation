@@ -214,6 +214,17 @@ assert.doesNotMatch(
   /if\s*\(\s*b\s*&&\s*!b\.env\s*\)\s*b\.resize\(HANDLE_SIZE_PX/,
   'undock resize must not skip when env is present',
 )
+// Office open front is −Z (Jutsu CAM_main). +Z camera paints ENV_wall_back → grey spheres.
+assert.match(
+  overlaySrc,
+  /camera\.position\.set\(\s*0\.15\s*,\s*1\.55\s*,\s*-3\.55\s*\)/,
+  'office camera matches CAM_main (−Z open front)',
+)
+assert.doesNotMatch(
+  overlaySrc,
+  /camera\.position\.set\(\s*0\.12\s*,\s*1\.55\s*,\s*3\.45\s*\)/,
+  'must not keep flipped +Z office camera',
+)
 
 assert.match(auiCss, /\.aui-deep-avatar-3d-handle\b/, '3d handle styles')
 assert.match(auiCss, /\.aui-avatar-dock-frame\.is-3d-active\b/, 'dock hides GIF under 3d')
