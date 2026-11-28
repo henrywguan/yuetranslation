@@ -10,16 +10,20 @@ import {
   CHAT_DEEP_AVATAR_3D_BEHAVIOR_ALIASES,
   CHAT_DEEP_AVATAR_3D_BEHAVIOR_CLIPS,
   CHAT_DEEP_AVATAR_3D_NEAR_DIST,
+  CHAT_DEEP_AVATAR_3D_ROOM_NEAR_DIST,
   CHAT_DEEP_AVATAR_3D_WANDER_MARGIN,
   chatDeepAvatar3dCompanionsNear,
   chatDeepAvatar3dMoodOverridesAmbient,
   chatDeepAvatar3dPoseDistance,
+  chatDeepAvatar3dRoomCompanionsNear,
   clearChatDeepAvatar3dLivePoses,
   pickChatDeepAvatar3dBehavior,
   pickChatDeepAvatar3dDwellMs,
   pickChatDeepAvatar3dWanderTarget,
   publishChatDeepAvatar3dLivePose,
+  publishChatDeepAvatar3dLiveRoomPose,
   readChatDeepAvatar3dPartnerPose,
+  readChatDeepAvatar3dPartnerRoomPose,
   resolveChatDeepAvatar3dBehaviorClipName,
   stepChatDeepAvatar3dWalk,
 } from './chatDeepAvatar3dBehavior.ts'
@@ -27,6 +31,7 @@ import {
 const here = dirname(fileURLToPath(import.meta.url))
 const overlaySrc = readFileSync(join(here, '../pages/chat/aui/ChatDeepAvatar3D.tsx'), 'utf8')
 const libSrc = readFileSync(join(here, 'chatDeepAvatar3d.ts'), 'utf8')
+const behaviorSrc = readFileSync(join(here, 'chatDeepAvatar3dBehavior.ts'), 'utf8')
 
 assert.deepEqual(
   [...CHAT_DEEP_AVATAR_3D_BEHAVIOR_CLIPS],
@@ -121,13 +126,36 @@ assert.equal(readChatDeepAvatar3dPartnerPose('boy'), null)
 publishChatDeepAvatar3dLivePose('boy', null)
 assert.equal(readChatDeepAvatar3dPartnerPose('girl'), null)
 
+assert.ok(CHAT_DEEP_AVATAR_3D_ROOM_NEAR_DIST >= 0.4)
+publishChatDeepAvatar3dLiveRoomPose('boy', { x: -0.9, z: 0.35 })
+assert.deepEqual(readChatDeepAvatar3dPartnerRoomPose('girl'), { x: -0.9, z: 0.35 })
+assert.equal(
+  chatDeepAvatar3dRoomCompanionsNear({ x: -0.9, z: 0.35 }, { x: -0.7, z: 0.4 }),
+  true,
+)
+assert.equal(
+  chatDeepAvatar3dRoomCompanionsNear({ x: -0.9, z: 0.35 }, { x: 1.0, z: 0.85 }),
+  false,
+)
+publishChatDeepAvatar3dLiveRoomPose('boy', null)
+assert.equal(readChatDeepAvatar3dPartnerRoomPose('girl'), null)
+
 assert.match(overlaySrc, /chatDeepAvatar3dMoodOverridesAmbient/, 'overlay gates ambient on mood')
 assert.match(overlaySrc, /pickChatDeepAvatar3dBehavior|setBehavior/, 'overlay runs ambient AI')
 assert.match(overlaySrc, /stepChatDeepAvatar3dWalk/, 'overlay wanders on .ds-chat when undocked')
 assert.match(overlaySrc, /stepRoomWalk|setRoomSnap|is-office-frame/, 'office frame ambient uses room snaps')
 assert.match(overlaySrc, /chatDeepAvatar3dEnvSrc|CHAT_DEEP_AVATAR_3D_ENV/, 'overlay loads office env')
 assert.match(overlaySrc, /CHAT_DEEP_AVATAR_3D_ENV_PROPS|prop-/, 'overlay layers Meshy props')
-assert.match(overlaySrc, /preferInteract|chatDeepAvatar3dCompanionsNear/, 'Both near → interact')
+assert.match(
+  overlaySrc,
+  /preferInteract|chatDeepAvatar3dRoomCompanionsNear|chatDeepAvatar3dCompanionsNear/,
+  'Both near → interact (room proximity in shared office)',
+)
+assert.match(
+  behaviorSrc,
+  /chatDeepAvatar3dRoomCompanionsNear|CHAT_DEEP_AVATAR_3D_ROOM_NEAR_DIST/,
+  'room-metre near helper for shared office Both',
+)
 assert.match(libSrc, /'Walk'/, 'canon clips include Walk')
 assert.match(libSrc, /'Interact'/, 'canon clips include Interact')
 assert.match(libSrc, /'Study'/, 'canon clips include Study')

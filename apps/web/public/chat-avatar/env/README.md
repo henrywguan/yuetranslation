@@ -1,7 +1,8 @@
 # Chat 3D companion — office / house environment
 
-Runtime diorama for Inbox → Companion → **3D companion**. When docked, the avatar
-frame becomes this virtual workspace (walls, floor, carpet, windows, desk, sofa…).
+Runtime diorama for Inbox → Companion → **3D companion**. The avatar frame
+(small undocked or big docked) is **one** shared office. Companion **Both** puts
+boy + girl inside that same room — never a second env per character.
 
 | File | Role |
 | --- | --- |

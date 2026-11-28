@@ -1,5 +1,5 @@
 /**
- * `#/chat` 3D companion — prefs, GLB paths, clip map, dual Both mount, no Live2D.
+ * `#/chat` 3D companion — prefs, GLB paths, clip map, shared Both office, no Live2D.
  * Run: npx tsx apps/web/src/lib/chatDeepAvatar3d.smoke.ts
  */
 import assert from 'node:assert/strict'
@@ -160,8 +160,8 @@ assert.match(overlaySrc, /chatDeepAvatar3dBehavior|setBehavior|ambient/, 'ambien
 assert.match(overlaySrc, /stepChatDeepAvatar3dWalk|preferInteract/, 'wander + Both interact')
 assert.match(overlaySrc, /buildStubFigure|CapsuleGeometry|SphereGeometry/, 'procedural stub mesh')
 assert.match(overlaySrc, /ChatDeepAvatar3DGate|useChatDeepAvatar3dEnabled/, 'toggle gate + hook')
-assert.match(overlaySrc, /chatDeepAvatar3dSolosToMount/, 'Both dual solo mount helper')
-assert.match(overlaySrc, /isChatDeepAvatarBothMode|duoOffset/, 'Both dual offset')
+assert.match(overlaySrc, /chatDeepAvatar3dSolosToMount/, 'Both solos → shared scene helper')
+assert.match(overlaySrc, /data-shared-office|shared office/, 'shared office frame (not dual rooms)')
 assert.match(overlaySrc, /shouldSnapChatDeepAvatar3dHome|writeChatDeepAvatar3dPose/, 'snap + persist')
 assert.match(overlaySrc, /isChatDeepAvatar3dPointerBlocked|DRAG_THRESHOLD/, 'mic/scroll safe drag')
 assert.match(overlaySrc, /prefers-reduced-motion|usePrefersReducedMotion/, 'reduced-motion gate')
@@ -170,7 +170,7 @@ assert.match(overlaySrc, /createPortal|\.ds-chat/, 'portals onto .ds-chat for pa
 // re-run when surfaceEl appears or WebGL never attaches (invisible 3D).
 assert.match(
   overlaySrc,
-  /mountScene\([\s\S]*?\[solo,\s*onActiveChange,\s*surfaceEl\]/,
+  /mountScene\([\s\S]*?\[solosKey,\s*onActiveChange,\s*surfaceEl\]/,
   'WebGL mount deps include surfaceEl (portal canvas race)',
 )
 assert.match(overlaySrc, /if\s*\(\s*!surfaceEl\s*\)\s*return/, 'skip mount until portal surface ready')
@@ -192,17 +192,31 @@ assert.match(
   'Inbox 3D companion toggle flips enable pref',
 )
 
-// Gate dual-mounts boy+girl overlays when character is Both.
+// Gate mounts ONE overlay; Both puts boy+girl inside the shared office scene.
 assert.match(
   overlaySrc,
-  /solos\.map\(\(solo\)\s*=>\s*\([\s\S]*?<ChatDeepAvatar3DOverlay[\s\S]*?key=\{solo\}/,
-  'Both mode maps solos → dual ChatDeepAvatar3DOverlay mounts',
+  /<ChatDeepAvatar3DOverlay[\s\S]*?solos=\{solos\}/,
+  'Gate mounts a single ChatDeepAvatar3DOverlay with solos list',
 )
-assert.match(overlaySrc, /duoOffset=\{duo\}/, 'Both dual dock offset passed to overlays')
+assert.doesNotMatch(
+  overlaySrc,
+  /solos\.map\(\(solo\)\s*=>\s*\([\s\S]*?<ChatDeepAvatar3DOverlay/,
+  'must not dual-mount separate overlays per solo (dual-room bug)',
+)
+assert.doesNotMatch(
+  overlaySrc,
+  /split\s*=\s*Boolean\(duoOffset\)/,
+  'must not half-width split the shared office frame',
+)
+assert.doesNotMatch(
+  overlaySrc,
+  /Math\.floor\(\s*(?:split\s*\?\s*)?dr\.width\s*\/\s*2\s*\)/,
+  'must not size the office to half the dock width',
+)
 assert.match(
   overlaySrc,
-  /split\s*=\s*Boolean\(duoOffset\)|dr\.width\s*\/\s*2/,
-  'Both + office uses half-width frames (no stacked full docks)',
+  /Math\.max\(FRAME_MIN_PX,\s*Math\.floor\(dr\.width\)\)/,
+  'docked office fills the full avatar frame width',
 )
 assert.match(
   overlaySrc,
@@ -213,6 +227,16 @@ assert.doesNotMatch(
   overlaySrc,
   /if\s*\(\s*b\s*&&\s*!b\.env\s*\)\s*b\.resize\(HANDLE_SIZE_PX/,
   'undock resize must not skip when env is present',
+)
+assert.match(
+  overlaySrc,
+  /chatDeepAvatar3dRoomCompanionsNear|publishChatDeepAvatar3dLiveRoomPose/,
+  'Both interact uses shared-room proximity',
+)
+assert.match(
+  overlaySrc,
+  /agents:\s*Map|mountCharacter/,
+  'one scene hosts multiple CharAgents',
 )
 // Office open front is −Z (Jutsu CAM_main). +Z camera paints ENV_wall_back → grey spheres.
 assert.match(
@@ -247,7 +271,7 @@ assert.equal(chatDeepAvatarGlbSrc('girl'), '/chat-avatar/girl/deep.glb', 'girl g
 assert.deepEqual(
   [...chatDeepAvatar3dSolosToMount('both')].map((id) => chatDeepAvatarGlbSrc(id)),
   ['/chat-avatar/boy/deep.glb', '/chat-avatar/girl/deep.glb'],
-  'Both dual mount → boy + girl deep.glb srcs',
+  'Both shared scene → boy + girl deep.glb srcs',
 )
 {
   const boyBytes = statSync(boyGlb).size

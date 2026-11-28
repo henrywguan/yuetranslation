@@ -65,8 +65,11 @@ export const CHAT_DEEP_AVATAR_3D_WANDER_MARGIN = {
   yMax: 0.78,
 } as const
 
-/** How close (normalized layout space) counts as "near" for Both interact. */
+/** How close (normalized layout space) counts as "near" for Both interact (legacy screen wander). */
 export const CHAT_DEEP_AVATAR_3D_NEAR_DIST = 0.14
+
+/** How close (room metres XZ) counts as "near" for Both interact inside the shared office. */
+export const CHAT_DEEP_AVATAR_3D_ROOM_NEAR_DIST = 0.55
 
 /** Walk speed in normalized layout units per second. */
 export const CHAT_DEEP_AVATAR_3D_WALK_SPEED = 0.055
@@ -215,8 +218,9 @@ export function resolveChatDeepAvatar3dBehaviorClipName(
   return availableClipNames[0] ?? null
 }
 
-/** Shared live poses so dual Both overlays can sense proximity. */
+/** Shared live poses so Both companions in one scene can sense proximity. */
 const livePos = new Map<ChatDeepAvatarSoloId, { x: number; y: number }>()
+const liveRoom = new Map<ChatDeepAvatarSoloId, { x: number; z: number }>()
 
 export function publishChatDeepAvatar3dLivePose(
   solo: ChatDeepAvatarSoloId,
@@ -233,6 +237,37 @@ export function readChatDeepAvatar3dPartnerPose(
   return livePos.get(other) ?? null
 }
 
+export function publishChatDeepAvatar3dLiveRoomPose(
+  solo: ChatDeepAvatarSoloId,
+  pose: { x: number; z: number } | null,
+) {
+  if (!pose) liveRoom.delete(solo)
+  else liveRoom.set(solo, { x: pose.x, z: pose.z })
+}
+
+export function readChatDeepAvatar3dPartnerRoomPose(
+  solo: ChatDeepAvatarSoloId,
+): { x: number; z: number } | null {
+  const other: ChatDeepAvatarSoloId = solo === 'boy' ? 'girl' : 'boy'
+  return liveRoom.get(other) ?? null
+}
+
+export function chatDeepAvatar3dRoomDistance(
+  a: { x: number; z: number },
+  b: { x: number; z: number },
+): number {
+  return Math.hypot(a.x - b.x, a.z - b.z)
+}
+
+export function chatDeepAvatar3dRoomCompanionsNear(
+  a: { x: number; z: number },
+  b: { x: number; z: number },
+  threshold = CHAT_DEEP_AVATAR_3D_ROOM_NEAR_DIST,
+): boolean {
+  return chatDeepAvatar3dRoomDistance(a, b) <= threshold
+}
+
 export function clearChatDeepAvatar3dLivePoses() {
   livePos.clear()
+  liveRoom.clear()
 }

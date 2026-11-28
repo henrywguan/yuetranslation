@@ -2,7 +2,7 @@
  * `#/chat` 3D companion — toggle, pose persist, GLB paths, mood→clip map.
  * Runtime: imperative three.js overlay (Harbor pattern). Not a 2D puppet SDK.
  * Higgsfield sheet/bust → `public/chat-avatar/{boy,girl}/deep.glb` (SW-ignored).
- * Both mode mounts two free-floating GLBs (boy + girl) with independent poses.
+ * Both mode loads boy + girl into **one** shared office scene (single canvas).
  */
 import {
   CHAT_DEEP_AVATAR_DIR,
@@ -32,8 +32,8 @@ export const CHAT_DEEP_AVATAR_3D_SNAP_PX = 72
 export const CHAT_DEEP_AVATAR_3D_DRAG_THRESHOLD_PX = 8
 
 /**
- * Side-by-side dock offset (CSS px) when Both + 3D: boy left of dock center,
- * girl right. Shared `.aui-avatar-dock-origin` is the midpoint.
+ * Legacy screen-wander dock offset (CSS px). Unused once the office env loads —
+ * Both shares one full-frame room instead of half-width dual docks (#872).
  */
 export const CHAT_DEEP_AVATAR_3D_DUO_OFFSET_PX = 40
 
@@ -166,7 +166,10 @@ export function writeChatDeepAvatar3dPose(
   return nextPose
 }
 
-/** Solos to mount as independent 3D overlays for the current companion pick. */
+/**
+ * Solos to place inside the shared 3D scene for the current companion pick.
+ * Both → boy + girl in one office; solo → that one model in the same room.
+ */
 export function chatDeepAvatar3dSolosToMount(
   character: ChatDeepAvatarCharacterId,
 ): readonly ChatDeepAvatarSoloId[] {
@@ -313,7 +316,7 @@ export function shouldSnapChatDeepAvatar3dHome(
   return dx * dx + dy * dy <= snapPx * snapPx
 }
 
-/** Dock-local X offset for a solo when Both dual GLBs are side-by-side. */
+/** Legacy dock-local X offset (kept for smokes / env-less fallback). */
 export function chatDeepAvatar3dDuoDockOffsetX(solo: ChatDeepAvatarSoloId): number {
   return solo === 'girl' ? CHAT_DEEP_AVATAR_3D_DUO_OFFSET_PX : -CHAT_DEEP_AVATAR_3D_DUO_OFFSET_PX
 }
