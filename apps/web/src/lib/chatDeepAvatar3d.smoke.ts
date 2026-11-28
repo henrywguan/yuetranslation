@@ -199,6 +199,21 @@ assert.match(
   'Both mode maps solos → dual ChatDeepAvatar3DOverlay mounts',
 )
 assert.match(overlaySrc, /duoOffset=\{duo\}/, 'Both dual dock offset passed to overlays')
+assert.match(
+  overlaySrc,
+  /split\s*=\s*Boolean\(duoOffset\)|dr\.width\s*\/\s*2/,
+  'Both + office uses half-width frames (no stacked full docks)',
+)
+assert.match(
+  overlaySrc,
+  /if\s*\(\s*b\s*\)\s*b\.resize\(HANDLE_SIZE_PX,\s*HANDLE_SIZE_PX\)/,
+  'undock always resizes renderer (env may still be loaded)',
+)
+assert.doesNotMatch(
+  overlaySrc,
+  /if\s*\(\s*b\s*&&\s*!b\.env\s*\)\s*b\.resize\(HANDLE_SIZE_PX/,
+  'undock resize must not skip when env is present',
+)
 
 assert.match(auiCss, /\.aui-deep-avatar-3d-handle\b/, '3d handle styles')
 assert.match(auiCss, /\.aui-avatar-dock-frame\.is-3d-active\b/, 'dock hides GIF under 3d')

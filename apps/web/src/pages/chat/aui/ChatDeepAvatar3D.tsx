@@ -807,11 +807,16 @@ export function ChatDeepAvatar3DOverlay({
 
       if (pose.docked && dock && b?.env) {
         const dr = dock.getBoundingClientRect()
-        const w = Math.max(FRAME_MIN_PX, Math.floor(dr.width))
+        // Both mode: half-width office frames side-by-side (keep duo offset).
+        const split = Boolean(duoOffset)
+        const w = Math.max(FRAME_MIN_PX, Math.floor(split ? dr.width / 2 : dr.width))
         const h = Math.max(FRAME_MIN_PX, Math.floor(dr.height))
+        const ox = split
+          ? (solo === 'boy' ? -Math.floor(dr.width / 4) : Math.floor(dr.width / 4))
+          : 0
         handle.style.width = `${w}px`
         handle.style.height = `${h}px`
-        handle.style.left = `${dr.left + dr.width / 2 - lr.left}px`
+        handle.style.left = `${dr.left + dr.width / 2 - lr.left + ox}px`
         handle.style.top = `${dr.top + dr.height / 2 - lr.top}px`
         handle.classList.add('is-office-frame')
         b.resize(w, h)
@@ -821,7 +826,8 @@ export function ChatDeepAvatar3DOverlay({
       handle.classList.remove('is-office-frame')
       handle.style.width = `${HANDLE_SIZE_PX}px`
       handle.style.height = `${HANDLE_SIZE_PX}px`
-      if (b && !b.env) b.resize(HANDLE_SIZE_PX, HANDLE_SIZE_PX)
+      // Always resize on undock — env may still be loaded from the office frame.
+      if (b) b.resize(HANDLE_SIZE_PX, HANDLE_SIZE_PX)
 
       if (pose.docked && dock) {
         const dr = dock.getBoundingClientRect()
