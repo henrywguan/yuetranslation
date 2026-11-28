@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { DeepSeekMark } from './DeepSeekMark'
 import { GoogleIcon } from './GoogleIcon'
 import { IosHomescreenTip } from './IosHomescreenGuide'
@@ -37,9 +37,26 @@ export function ChatSignInGate({ mode, shell, topBar, className }: Props) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [, setTick] = useState(0)
+  const gateRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    return attachChatGateChord(() => setTick((n) => n + 1))
+    const node = gateRef.current
+    // Pull focus onto the gate so arrow keys are not stolen by the URL bar / prior control.
+    try {
+      node?.focus({ preventScroll: true })
+    } catch {
+      node?.focus()
+    }
+    return attachChatGateChord({
+      onUnlocked: () => setTick((n) => n + 1),
+      onResult: (result) => {
+        if (result.ok) {
+          setMessage(null)
+          return
+        }
+        setMessage(result.message)
+      },
+    })
   }, [])
 
   const googleSignIn = async () => {
@@ -69,7 +86,13 @@ export function ChatSignInGate({ mode, shell, topBar, className }: Props) {
       {shell}
       <div className="ds-chat-main">
         {topBar}
-        <div className="ds-chat-gate">
+        <div
+          ref={gateRef}
+          className="ds-chat-gate"
+          tabIndex={-1}
+          role="group"
+          aria-label={title}
+        >
           <DeepSeekMark className="ds-chat-empty-mark" />
           <h1>{title}</h1>
           <p>{body}</p>
