@@ -25,9 +25,7 @@ const SEQ_DIGEST_HEX =
 const GATE_HEADER = 'x-yue-chat-gate'
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 30 // 30 days
 const CHALLENGE_TTL_MS = 1000 * 60 * 5
-
-type Challenge = { exp: number }
-const challenges = new Map<string, Challenge>()
+const DEV_GATE_FALLBACK = 'yue-dev-chat-gate'
 
 /** Best-effort Family turn meter for anonymous gate subjects (no auth.users row). */
 const gateTurnMonths = new Map<string, { month: string; count: number }>()
@@ -40,15 +38,57 @@ export type ChatCaller = {
   upgradeUrl?: string
 }
 
-function gateSecret(): Buffer {
-  const raw = (
+/** True when a real secret source is configured (not the hardcoded local-dev fallback). */
+export function hasConfiguredChatGateSecret(): boolean {
+  return Boolean(
+    env.chatGateSecret ||
+      env.chatSecretsKey ||
+      (process.env.SUPABASE_SERVICE_ROLE || '').trim() ||
+      (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim(),
+  )
+}
+
+function gateSecretMaterial(): string {
+  return (
     env.chatGateSecret ||
     env.chatSecretsKey ||
     process.env.SUPABASE_SERVICE_ROLE ||
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    'yue-dev-chat-gate'
+    DEV_GATE_FALLBACK
   ).trim()
-  return createHash('sha256').update(`cg1:${raw}`).digest()
+}
+
+function gateSecret(): Buffer {
+  return createHash('sha256').update(`cg1:${gateSecretMaterial()}`).digest()
+}
+
+/** Fail closed on Vercel / production when no real secret material is available. */
+function rejectIfGateMisconfigured(res: Response): boolean {
+  if (hasConfiguredChatGateSecret()) return false
+  const onVercel = Boolean(process.env.VERCEL)
+  const prodish = process.env.NODE_ENV === 'production' || onVercel
+  if (!prodish) return false
+  res.status(503).json({
+    message:
+      'Chat gate unlock is not configured. Set YUE_CHAT_GATE_SECRET on Vercel (Project → Settings → Environment Variables), then redeploy.',
+    code: 'chat_gate_misconfigured',
+  })
+  return true
+}
+
+function signChallenge(nonce: string, exp: number): string {
+  return createHmac('sha256', gateSecret()).update(`ch1:${nonce}:${exp}`).digest('base64url')
+}
+
+function verifyChallengeSig(nonce: string, exp: number, sig: string): boolean {
+  try {
+    const expected = Buffer.from(signChallenge(nonce, exp))
+    const got = Buffer.from(String(sig || '').trim())
+    if (got.length !== expected.length) return false
+    return timingSafeEqual(got, expected)
+  } catch {
+    return false
+  }
 }
 
 function b64url(buf: Buffer | string): string {
@@ -62,12 +102,6 @@ function fromB64url(s: string): Buffer {
 
 function monthKey(d = new Date()): string {
   return `${d.getUTCFullYear()}_${String(d.getUTCMonth() + 1).padStart(2, '0')}`
-}
-
-function pruneChallenges(now = Date.now()) {
-  for (const [k, v] of challenges) {
-    if (v.exp <= now) challenges.delete(k)
-  }
 }
 
 function readGateHeader(req: AuthedRequest): string {
@@ -115,26 +149,34 @@ function subjectFor(req: GuestRequest): string {
   return `ip:${clientIp(req)}`
 }
 
-/** GET /api/chat/gate/challenge */
+/**
+ * GET /api/chat/gate/challenge
+ * Stateless signed challenge (works across Vercel serverless instances).
+ * Returns { n, exp, s } — client echoes all three on unlock.
+ */
 export function getChatGateChallenge(req: AuthedRequest, res: Response) {
   if (!allowIpRateOrReject(req, res, 'chatGateChallenge', env.chatGateChallengeRlPerMin)) return
-  pruneChallenges()
+  if (rejectIfGateMisconfigured(res)) return
   const nonce = b64url(randomBytes(18))
   const exp = Date.now() + CHALLENGE_TTL_MS
-  challenges.set(nonce, { exp })
-  res.json({ n: nonce, exp })
+  const s = signChallenge(nonce, exp)
+  res.json({ n: nonce, exp, s })
 }
 
 const UnlockBody = z.object({
   n: z.string().trim().min(8).max(64),
-  /** sha256 hex of `${nonce}:${sequenceJoined}` */
+  /** Challenge expiry (ms epoch) from GET /challenge — required for stateless verify. */
+  exp: z.number().int().positive(),
+  /** HMAC challenge signature from GET /challenge. */
+  s: z.string().trim().min(16).max(128),
+  /** sha256 hex of `${nonce}:${sha256(sequenceJoined)}` */
   p: z.string().trim().regex(/^[a-f0-9]{64}$/i),
 })
 
 /** POST /api/chat/gate/unlock */
 export function postChatGateUnlock(req: GuestRequest, res: Response) {
   if (!allowIpRateOrReject(req, res, 'chatGateUnlock', env.chatGateUnlockRlPerMin)) return
-  pruneChallenges()
+  if (rejectIfGateMisconfigured(res)) return
 
   const parsed = UnlockBody.safeParse(req.body)
   if (!parsed.success) {
@@ -142,11 +184,18 @@ export function postChatGateUnlock(req: GuestRequest, res: Response) {
     return
   }
 
-  const { n, p } = parsed.data
-  const ch = challenges.get(n)
-  challenges.delete(n)
-  if (!ch || ch.exp <= Date.now()) {
+  const { n, exp, s, p } = parsed.data
+  if (exp <= Date.now()) {
     res.status(400).json({ message: 'Challenge expired.', code: 'chat_gate_challenge_expired' })
+    return
+  }
+  // Reject absurd future exp (clock skew / forged large TTL).
+  if (exp > Date.now() + CHALLENGE_TTL_MS + 60_000) {
+    res.status(400).json({ message: 'Challenge expired.', code: 'chat_gate_challenge_expired' })
+    return
+  }
+  if (!verifyChallengeSig(n, exp, s)) {
+    res.status(403).json({ message: 'Unlock failed.', code: 'chat_gate_denied' })
     return
   }
 
@@ -306,8 +355,11 @@ export function allowChatCallerRate(
 
 /** Test helpers */
 export function resetChatGateStateForTests() {
-  challenges.clear()
   gateTurnMonths.clear()
+}
+
+export function __testSignChallenge(nonce: string, exp: number): string {
+  return signChallenge(nonce, exp)
 }
 
 export function __testSignGateToken(sub: string, ttlSec = 3600): string {

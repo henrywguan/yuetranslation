@@ -1361,6 +1361,11 @@ html[data-theme='light'] .ds-chat-assistant-body code {
   flex-direction: column;
   gap: 0.85rem;
   align-items: center;
+  outline: none; /* programmatic focus for quiet chord; avoid visible ring */
+}
+
+.ds-chat-gate:focus-visible {
+  outline: none;
 }
 
 .ds-chat-gate h1 {

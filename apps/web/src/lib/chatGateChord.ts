@@ -2,7 +2,7 @@
  * Quiet chord listener for the #/chat gate.
  * Codes are XOR+chunked — no obvious branded sequence strings in source.
  */
-import { redeemChatGateChord } from './chatGateRedeem'
+import { redeemChatGateChord, type ChatGateRedeemResult } from './chatGateRedeem'
 
 const XOR_KEY = [0x5a, 0x3c, 0x91, 0xe2, 0x17, 0xb4, 0x6d, 0x08]
 
@@ -33,11 +33,19 @@ function decodeTarget(): string[] {
   return plain.split('|').filter(Boolean)
 }
 
+export type ChatGateChordHandlers = {
+  onUnlocked?: () => void
+  onResult?: (result: ChatGateRedeemResult) => void
+}
+
 /**
- * While the chat gate is visible, listen for the quiet chord.
- * Returns an unsubscribe.
+ * While the chat gate is visible, listen for the quiet chord on document (capture).
+ * Returns an unsubscribe. Prefer focusing the gate root (tabIndex=-1) when shown.
  */
-export function attachChatGateChord(onUnlocked?: () => void): () => void {
+export function attachChatGateChord(handlers?: ChatGateChordHandlers | (() => void)): () => void {
+  const onUnlocked = typeof handlers === 'function' ? handlers : handlers?.onUnlocked
+  const onResult = typeof handlers === 'function' ? undefined : handlers?.onResult
+
   let target: string[] | null = null
   try {
     target = decodeTarget()
@@ -48,24 +56,34 @@ export function attachChatGateChord(onUnlocked?: () => void): () => void {
 
   let idx = 0
   let busy = false
+  const targetSet = new Set(target)
 
   const onKey = (ev: KeyboardEvent) => {
     if (busy) return
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return
-    const tag = (ev.target as HTMLElement | null)?.tagName
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || (ev.target as HTMLElement | null)?.isContentEditable) {
+    // Ignore OS key-repeat so a held arrow does not skip the sequence.
+    if (ev.repeat) return
+    const el = ev.target as HTMLElement | null
+    const tag = el?.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable) {
       return
     }
     const code = ev.code
     if (!code) return
     if (code === target![idx]) {
+      // Stop arrow-key focus/scroll steal while the chord is in progress.
+      if (targetSet.has(code)) {
+        ev.preventDefault()
+        ev.stopPropagation()
+      }
       idx += 1
       if (idx >= target!.length) {
         idx = 0
         busy = true
         void redeemChatGateChord(target!.join('|'))
-          .then((ok) => {
-            if (ok) onUnlocked?.()
+          .then((result) => {
+            onResult?.(result)
+            if (result.ok) onUnlocked?.()
           })
           .finally(() => {
             busy = false
@@ -73,9 +91,14 @@ export function attachChatGateChord(onUnlocked?: () => void): () => void {
       }
     } else {
       idx = code === target![0] ? 1 : 0
+      if (idx === 1 && targetSet.has(code)) {
+        ev.preventDefault()
+        ev.stopPropagation()
+      }
     }
   }
 
-  window.addEventListener('keydown', onKey, true)
-  return () => window.removeEventListener('keydown', onKey, true)
+  // document + capture: works even when a gate button holds focus.
+  document.addEventListener('keydown', onKey, true)
+  return () => document.removeEventListener('keydown', onKey, true)
 }
